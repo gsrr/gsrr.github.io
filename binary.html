@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>二進位蠟燭遊戲</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background-color: #f8f4e3;
+    }
+    h1 {
+      margin-top: 20px;
+    }
+    .candles {
+      display: flex;
+      flex-direction: row-reverse;
+      justify-content: center;
+      margin: 30px 0 10px;
+    }
+    .candle-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0 5px;
+      cursor: pointer;
+    }
+    .candle {
+      width: 30px;
+      height: 80px;
+      border-radius: 5px;
+      background-color: #ccc;
+      position: relative;
+      box-shadow: 0 0 5px #999;
+      transition: background-color 0.3s, box-shadow 0.3s;
+    }
+    .candle.on {
+      background-color: orange;
+      box-shadow: 0 0 20px gold;
+    }
+    .flame {
+      width: 10px;
+      height: 10px;
+      background: yellow;
+      border-radius: 50%;
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+    }
+    .candle.on .flame {
+      display: block;
+    }
+    .label {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #333;
+    }
+    #display {
+      font-size: 20px;
+      margin-top: 20px;
+    }
+    button {
+      font-size: 16px;
+      padding: 8px 16px;
+      background: #ff944d;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      margin: 10px;
+    }
+    button:hover {
+      background: #ff751a;
+    }
+    #result {
+      font-size: 18px;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🕯️ 二進位蠟燭遊戲</h1>
+
+  <div class="candles" id="candles"></div>
+  <div id="display">請選擇一個模式開始：</div>
+
+  <div>
+    <button onclick="startAnimation()">播放動畫</button>
+    <button onclick="startChallenge()">進入挑戰模式</button>
+    <button onclick="checkAnswer()">提交答案</button>
+  </div>
+
+  <div id="result"></div>
+
+  <!-- 音效 -->
+  <audio id="beep" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_44cc173a64.mp3" preload="auto"></audio>
+  <audio id="bgm" src="https://cdn.pixabay.com/download/audio/2022/10/17/audio_56ce6c4426.mp3" preload="auto"></audio>
+
+  <script>
+    const candleContainer = document.getElementById('candles');
+    const display = document.getElementById('display');
+    const result = document.getElementById('result');
+    const beep = document.getElementById('beep');
+    const bgm = document.getElementById('bgm');
+    let targetNumber = 0;
+
+    // 建立 10 根蠟燭（右到左，bit0 在右）
+    for (let i = 0; i < 10; i++) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'candle-container';
+      wrapper.dataset.index = i;
+
+      const candle = document.createElement('div');
+      candle.className = 'candle';
+      const flame = document.createElement('div');
+      flame.className = 'flame';
+      candle.appendChild(flame);
+
+      const label = document.createElement('div');
+      label.className = 'label';
+      label.textContent = i + 1;
+
+      wrapper.appendChild(candle);
+      wrapper.appendChild(label);
+      candleContainer.appendChild(wrapper);
+
+      // 點擊切換亮滅
+      wrapper.addEventListener('click', () => {
+        candle.classList.toggle('on');
+        beep.currentTime = 0;
+        beep.play();
+      });
+    }
+
+    function updateCandles(number) {
+      const binary = number.toString(2).padStart(10, '0');
+      const candles = document.querySelectorAll('.candle');
+      candles.forEach((candle, index) => {
+        const bit = binary[9 - index]; // 右邊是低位
+        candle.classList.toggle('on', bit === '1');
+      });
+      display.textContent = `數字：${number}（二進位：${binary}）`;
+      beep.currentTime = 0;
+      beep.play();
+    }
+
+    function startAnimation() {
+      let current = 1;
+      display.textContent = '播放動畫中...';
+      result.textContent = '';
+      bgm.currentTime = 0;
+      bgm.play();
+
+      const interval = setInterval(() => {
+        updateCandles(current);
+        current++;
+        if (current > 10) {
+          clearInterval(interval);
+          bgm.pause();
+          setTimeout(() => {
+            startChallenge(); // 動畫結束後自動開始挑戰
+          }, 1000);
+        }
+      }, 1000);
+    }
+
+    function startChallenge() {
+      targetNumber = Math.floor(Math.random() * 100) + 1;
+      display.textContent = `挑戰數字：${targetNumber}，請點選要點亮的蠟燭 🔥`;
+      result.textContent = '';
+      document.querySelectorAll('.candle').forEach(c => c.classList.remove('on'));
+    }
+
+    function checkAnswer() {
+      let userValue = 0;
+      const candles = document.querySelectorAll('.candle');
+      candles.forEach((candle, index) => {
+        if (candle.classList.contains('on')) {
+          userValue += Math.pow(2, index);
+        }
+      });
+
+      if (userValue === targetNumber) {
+        result.textContent = `✅ 正確！你成功轉換成 ${targetNumber}`;
+        result.style.color = 'green';
+      } else {
+        result.textContent = `❌ 錯誤。你的答案是 ${userValue}，正確答案如下：`;
+        result.style.color = 'red';
+        showAnswer(targetNumber);
+      }
+    }
+
+    function showAnswer(number) {
+      const binary = number.toString(2).padStart(10, '0');
+      const candles = document.querySelectorAll('.candle');
+      candles.forEach((candle, index) => {
+        const bit = binary[9 - index];
+        candle.classList.toggle('on', bit === '1');
+      });
+    }
+  </script>
+</body>
+</html>
