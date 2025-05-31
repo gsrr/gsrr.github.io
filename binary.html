@@ -97,6 +97,8 @@
   <!-- 音效 -->
   <audio id="beep" src="beep-07a.mp3" preload="auto"></audio>
   <audio id="bgm" src="simple-acoustic-folk-138360.mp3" preload="auto"></audio>
+  <audio id="correct-sound" src="correct-6033.mp3" preload="auto"></audio>
+  <audio id="wrong-sound" src="wrong-answer-20582.mp3" preload="auto"></audio>
 
   <script>
     const candleContainer = document.getElementById('candles');
@@ -156,7 +158,7 @@
       const interval = setInterval(() => {
         updateCandles(current);
         current++;
-        if (current > 10) {
+        if (current > 20) {
           clearInterval(interval);
           bgm.pause();
           setTimeout(() => {
@@ -173,24 +175,31 @@
       document.querySelectorAll('.candle').forEach(c => c.classList.remove('on'));
     }
 
-    function checkAnswer() {
-      let userValue = 0;
-      const candles = document.querySelectorAll('.candle');
-      candles.forEach((candle, index) => {
-        if (candle.classList.contains('on')) {
-          userValue += Math.pow(2, index);
-        }
-      });
+	function checkAnswer() {
+	  let userValue = 0;
+	  const candles = document.querySelectorAll('.candle');
+	  candles.forEach((candle, index) => {
+		if (candle.classList.contains('on')) {
+		  userValue += Math.pow(2, index);
+		}
+	  });
 
-      if (userValue === targetNumber) {
-        result.textContent = `✅ 正確！你成功轉換成 ${targetNumber}`;
-        result.style.color = 'green';
-      } else {
-        result.textContent = `❌ 錯誤。你的答案是 ${userValue}，正確答案如下：`;
-        result.style.color = 'red';
-        showAnswer(targetNumber);
-      }
-    }
+	  const correctSound = document.getElementById('correct-sound');
+	  const wrongSound = document.getElementById('wrong-sound');
+
+	  if (userValue === targetNumber) {
+		result.textContent = `✅ 正確！你成功轉換成 ${targetNumber}`;
+		result.style.color = 'green';
+		correctSound.currentTime = 0;
+		correctSound.play();
+	  } else {
+		result.textContent = `❌ 錯誤。你的答案是 ${userValue}，正確答案如下：`;
+		result.style.color = 'red';
+		wrongSound.currentTime = 0;
+		wrongSound.play();
+		showAnswer(targetNumber);
+	  }
+	}
 
     function showAnswer(number) {
       const binary = number.toString(2).padStart(10, '0');
