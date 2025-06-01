@@ -52,16 +52,16 @@
     const maxAnimals = 10;
 
     const animalList = [
-      { name: "貓", key: "cat", url: "https://cdn-icons-png.flaticon.com/512/616/616408.png" },
+      { name: "貓", key: "cat", url: "https://cdn-icons-png.flaticon.com/512/616/616430.png" },
       { name: "狗", key: "dog", url: "https://cdn-icons-png.flaticon.com/512/616/616408.png" },
-      { name: "兔子", key: "rabbit", url: "https://cdn-icons-png.flaticon.com/512/616/616408.png" },
-      { name: "老鼠", key: "mouse", url: "https://cdn-icons-png.flaticon.com/512/616/616408.png" },
-      { name: "鳥", key: "bird", url: "https://cdn-icons-png.flaticon.com/512/616/616408.png" },
-      { name: "青蛙", key: "frog", url: "https://cdn-icons-png.flaticon.com/512/616/616408.png" },
-      { name: "馬", key: "horse", url: "https://cdn-icons-png.flaticon.com/512/616/616408.png" },
-      { name: "豬", key: "pig", url: "https://cdn-icons-png.flaticon.com/512/616/616408.png" },
-      { name: "熊", key: "bear", url: "https://cdn-icons-png.flaticon.com/512/616/616408.png" },
-      { name: "狐狸", key: "fox", url: "https://cdn-icons-png.flaticon.com/512/616/616408.png" }
+      { name: "企鵝", key: "penguin", url: "https://cdn-icons-png.flaticon.com/512/616/616436.png" },
+      { name: "向日葵", key: "sunflower", url: "https://cdn-icons-png.flaticon.com/512/616/616441.png" },
+      { name: "鳥", key: "bird", url: "https://cdn-icons-png.flaticon.com/512/616/616438.png" },
+      { name: "猴子", key: "monkey", url: "https://cdn-icons-png.flaticon.com/512/616/616429.png" },
+      { name: "貓頭鷹", key: "owl", url: "https://cdn-icons-png.flaticon.com/512/616/616451.png" },
+      { name: "毛毛蟲", key: "worm", url: "https://cdn-icons-png.flaticon.com/512/616/616466.png" },
+      { name: "蜜蜂", key: "bee", url: "https://cdn-icons-png.flaticon.com/512/616/616464.png" },
+      { name: "馬", key: "horse", url: "https://cdn-icons-png.flaticon.com/512/616/616460.png" }
     ];
 
     let stack = [];
@@ -76,6 +76,7 @@
     let timer = null;
     let prediction = [];
 	let grapInterval = 2;
+	let globalDemo = false;
 
     const loadImage = (url) => new Promise((resolve) => {
       const img = new Image();
@@ -119,7 +120,7 @@
     function drawTimer() {
       ctx.fillStyle = "black";
       ctx.font = "20px Arial";
-      ctx.fillText(`時間：${secondsElapsed} / ${timeLimit} 秒`, 20, 30);
+      ctx.fillText(`時間：${secondsElapsed} / ${timeLimit} 秒 (${grapInterval}秒)`, 20, 30);
     }
 
     function drawHand() {
@@ -134,6 +135,7 @@
     }
 
     function update() {
+		update_time = false;
       if (!gameStarted) return;
 
       if (!fallingAnimal && currentIndex < maxAnimals && secondsElapsed > currentIndex) {
@@ -150,6 +152,10 @@
           fallingAnimal.velocity = 0;
           fallingAnimal.landed = true;
           stack.push(fallingAnimal);
+		  if(secondsElapsed % grapInterval != 0)
+		  {
+			update_time = true;
+		  }
           fallingAnimal = null;
         }
       }
@@ -169,15 +175,28 @@
         grabHandX -= grabSpeed;
         if (grabHandX <= well.x + well.width / 2) {
           stack.pop();
+		  //alert("pop")
           grabbing = false;
+		  update_time = true;
         }
       }
 
       if (secondsElapsed >= timeLimit && !fallingAnimal && !grabbing) {
-        gameStarted = false;
-        clearInterval(timer);
-        showResult();
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawWell();
+	  drawTimer();
+			  for (const animal of stack) {
+        drawAnimal(animal);
       }
+		gameStarted = false;
+        clearInterval(timer);
+		timer = setTimeout(showResult, 500);
+        //showResult();
+      }
+	  if(update_time)
+	  {
+		secondsElapsed++;
+	  }
     }
 
 function arraysEqual(a, b) {
@@ -193,8 +212,16 @@ function arraysEqual(a, b) {
 	
 
 function showResult() {
-  const remaining = stack.map(a => a.key);
-  const correct = arraysEqual(prediction, remaining);
+	const remaining = stack.map(a => a.key);
+	const correct = arraysEqual(prediction, remaining);
+	if(globalDemo == true)
+	{
+		let msg = `時間到！\n實際剩下的有：${remaining.join(", ")}\n`;
+		alert(msg);
+		return;
+	}
+  
+  
   let msg = `
     時間到！\n
     你預測的有：${prediction.join(", ")}\n
@@ -232,7 +259,12 @@ function showResult() {
         checkbox.type = "checkbox";
         checkbox.value = a.key;
         label.appendChild(checkbox);
-        label.appendChild(document.createTextNode(" " + a.name));
+        //label.appendChild(document.createTextNode(" " + a.name));
+		const img = document.createElement("img");
+		img.src=a.url;
+		img.width = 50;
+		img.alt = a.key;
+		label.appendChild(img);
         predictionBox.appendChild(label);
       });
 
@@ -256,7 +288,7 @@ function showResult() {
       predictionBox.style.display = "block";
     }
 
-    function startGame(limitSeconds, grapRandomTime) {
+    function startGame(limitSeconds, grapRandomTime, demo) {
       stack = [];
       currentIndex = 0;
       secondsElapsed = 0;
@@ -266,17 +298,21 @@ function showResult() {
       grabbing = false;
       grabHandX = canvas.width;
 	  grapInterval = grapRandomTime;
+	  globalDemo = demo;
 
-      timer = setInterval(() => {
+	  
+      //timer = setInterval(() => {
+	  timer = setTimeout(() => {
         secondsElapsed++;
       }, 1000);
+	  
 
       requestAnimationFrame(animate);
     }
 
     tutorialBtn.addEventListener("click", () => {
       predictionBox.style.display = "none";
-      startGame(10, 2);
+      startGame(10, 2, true);
     });
 
 challengeBtn.addEventListener("click", () => {
@@ -289,7 +325,7 @@ challengeBtn.addEventListener("click", () => {
 
   // 2. 顯示預測選項後開始
   showPredictionOptions(() => {
-    startGame(randomTime, grapRandomTime);
+    startGame(randomTime, grapRandomTime, false);
   });
 });
 
