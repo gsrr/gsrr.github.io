@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>動物井遊戲（挑戰模式）</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #f0f8ff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      min-height: 100vh;
+      margin: 0;
+    }
+    #timeDisplay {
+      position: absolute;
+      top: 100px;
+      left: 100px;
+      font-size: 20px;
+      font-weight: bold;
+      background: rgba(255,255,255,0.8);
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      user-select: none;
+    }
+    #pools {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      width: 100%;
+      max-width: 900px;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+    #leftGrass {
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,100,0,0.4);
+      flex-shrink: 0;
+      width: 320px;
+      height: 100px;
+      background: transparent;
+    }
+    #rightCave {
+      border-radius: 10px;
+      box-shadow: inset 0 0 10px #444;
+      background: #5c4a3e;
+      flex-shrink: 0;
+      width: 320px;
+      height: 100px;
+      user-select: none;
+    }
+    #game {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      margin-bottom: 20px;
+    }
+    canvas#wellCanvas {
+      border-radius: 10px;
+      width: 180px;
+      height: 240px;
+      flex-shrink: 0;
+      background: transparent;
+    }
+    #log {
+      margin-top: 20px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      max-width: 600px;
+      text-align: left;
+      background: #fff;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      min-height: 50px;
+      width: 100%;
+      max-width: 600px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      background: #4caf50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin: 10px;
+      user-select: none;
+    }
+    #challengeOptions {
+      margin: 10px 0;
+      display: none;
+      flex-wrap: wrap;
+      max-width: 600px;
+      justify-content: center;
+    }
+    .animal-option {
+      font-size: 28px;
+      margin: 5px;
+      cursor: pointer;
+    }
+    .animal-option.selected {
+      background: yellow;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div id="timeDisplay">Time: 0</div>
+  <h1>🕳️ 動物井遊戲（挑戰模式）</h1>
+ <div id="buttonGroup">
+    <button onclick="startGame()" id="startBtn">開始遊戲</button>
+    <button onclick="prepareChallenge()" id="challengeBtn">開始挑戰</button>
+    <button onclick="submitChallenge()" id="submitBtn" style="display:none">提交答案並開始動畫</button>
+  </div>
+
+  <div id="pools">
+    <canvas id="leftGrass" width="320" height="100" title="救起的動物草地池"></canvas>
+    <canvas id="wellCanvas" width="180" height="240" title="井和上帝之手"></canvas>
+    <canvas id="rightCave" width="320" height="100" title="掉落前的動物洞窟池"></canvas>
+  </div>
+
+  <div id="challengeOptions"></div>
+  <div id="log"></div>
+
+  <script>
+    const animals = ['🐶','🐱','🐾','🐭','🐔','🐍','🐗','🐘','🐯','🐋'];
+    let cavePool = [];
+    let wellStack = [];
+    let rescuedPool = [];
+    let time = 0;
+    let rescueCounter = 0;
+    let challengeTime = 0;
+    let selectedAnimals = [];
+    const timeDisplay = document.getElementById('timeDisplay');
+    const startBtn = document.getElementById('startBtn');
+    const logEl = document.getElementById('log');
+    const challengeOptions = document.getElementById('challengeOptions');
+    const submitBtn = document.getElementById('submitBtn');
+
+    const leftGrassCanvas = document.getElementById('leftGrass');
+    const grassCtx = leftGrassCanvas.getContext('2d');
+    const wellCanvas = document.getElementById('wellCanvas');
+    const ctx = wellCanvas.getContext('2d');
+    const rightCave = document.getElementById('rightCave');
+    const caveCtx = rightCave.getContext('2d');
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function log(msg) {
+      logEl.textContent += msg + '\n';
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    async function dropAnimal() {
+      if (cavePool.length === 0) return;
+      let animal = cavePool.shift();
+      await sleep(500);
+      wellStack.push(animal);
+	  playSound('dropSound');
+      drawWell();
+      drawCave();
+      log(`🐾 動物 ${animal} 從洞窟掉入井中`);
+    }
+
+    async function rescueAnimal() {
+      if (wellStack.length === 0) return;
+      let animal = wellStack.pop();
+      log(`✋ 上帝之手開始救援 ${animal}`);
+      await sleep(500);
+      rescuedPool.push(animal);
+      drawAnimalsOnGrass();
+      drawWell();
+	  playSound('rescueSound');
+      log(`✅ 動物救起放到草地`);
+    }
+
+    async function gameLoop(duration) {
+      if (time >= duration) {
+        log('⏰ 遊戲結束!');
+        log(`井中剩餘動物: ${wellStack.join(' ') || '無'}`);
+		if (time != 10)
+			checkChallengeAnswer();
+        startBtn.disabled = false;
+        return;
+      }
+      time++;
+      timeDisplay.textContent = `Time: ${time}`;
+      await dropAnimal();
+      if (rescueCounter % 2 === 0) {
+        await rescueAnimal();
+      }
+      rescueCounter++;
+      setTimeout(() => gameLoop(duration), 1000);
+    }
+
+    function startGame() {
+		playBGM();
+      time = 0;
+      rescueCounter = 0;
+      cavePool = [...animals];
+      wellStack = [];
+      rescuedPool = [];
+      logEl.textContent = '';
+      timeDisplay.textContent = `Time: 0`;
+      startBtn.disabled = true;
+      challengeOptions.style.display = 'none';
+      submitBtn.style.display = 'none';
+      drawAnimalsOnGrass();
+      drawWell();
+      drawCave();
+      gameLoop(10);
+    }
+
+    function prepareChallenge() {
+      time = 0;
+      rescueCounter = 0;
+      cavePool = [...animals];
+      wellStack = [];
+      rescuedPool = [];
+      selectedAnimals = [];
+      logEl.textContent = '';
+      timeDisplay.textContent = `Time: 0`;
+      challengeTime = Math.floor(Math.random() * 10) + 1;
+      log(`🎯 請選擇你預測 ${challengeTime} 秒後井中會有哪些動物？`);
+
+      challengeOptions.innerHTML = '';
+      challengeOptions.style.display = 'flex';
+      submitBtn.style.display = 'inline-block';
+
+      animals.forEach(animal => {
+        const span = document.createElement('span');
+        span.textContent = animal;
+        span.className = 'animal-option';
+        span.onclick = () => {
+          if (span.classList.contains('selected')) {
+            span.classList.remove('selected');
+            selectedAnimals = selectedAnimals.filter(a => a !== animal);
+          } else {
+            span.classList.add('selected');
+            selectedAnimals.push(animal);
+          }
+        };
+        challengeOptions.appendChild(span);
+      });
+
+      drawAnimalsOnGrass();
+      drawWell();
+      drawCave();
+    }
+
+    function submitChallenge() {
+      log('🎬 動畫開始！');
+      challengeOptions.style.display = 'none';
+      submitBtn.style.display = 'none';
+      gameLoop(challengeTime);
+    }
+
+    function checkChallengeAnswer() {
+      const correctSet = new Set(wellStack);
+      const selectedSet = new Set(selectedAnimals);
+      const allCorrect = [...correctSet].every(a => selectedSet.has(a)) && correctSet.size === selectedSet.size;
+      if (allCorrect) {
+	  playSound('correctSound');
+        log('🎉 恭喜你答對了！');
+      } else {
+	  playSound('wrongSound');
+        log(`❌ 答錯了！正確井中動物是：${[...correctSet].join(' ')}`);
+      }
+    }
+
+    function drawWell() {
+      ctx.clearRect(0, 0, wellCanvas.width, wellCanvas.height);
+
+      // Draw realistic well: circle top, brick body
+      ctx.fillStyle = '#666';
+      ctx.beginPath();
+      ctx.ellipse(90, 30, 50, 15, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#888';
+      ctx.fillRect(40, 30, 100, 170);
+
+      ctx.strokeStyle = '#555';
+      for (let y = 30; y < 200; y += 20) {
+        ctx.beginPath();
+        ctx.moveTo(40, y);
+        ctx.lineTo(140, y);
+        ctx.stroke();
+      }
+
+      ctx.font = '28px serif';
+      for (let i = 0; i < wellStack.length; i++) {
+        ctx.fillText(wellStack[i], 80, 190 - i * 30);
+      }
+    }
+
+    function drawAnimalsOnGrass() {
+      grassCtx.clearRect(0, 0, leftGrassCanvas.width, leftGrassCanvas.height);
+      for (let i = 0; i < rescuedPool.length; i++) {
+        grassCtx.font = '28px serif';
+        grassCtx.fillText(rescuedPool[i], 10 + i * 30, 60);
+      }
+    }
+
+    function drawCave() {
+      caveCtx.clearRect(0, 0, rightCave.width, rightCave.height);
+      for (let i = 0; i < cavePool.length; i++) {
+        caveCtx.font = '28px serif';
+        caveCtx.fillText(cavePool[i], 10 + i * 30, 60);
+      }
+    }
+
+    drawAnimalsOnGrass();
+    drawWell();
+    drawCave();
+	
+	
+	function playBGM() {
+  const bgm = document.getElementById('bgm');
+  bgm.volume = 0.3;
+  bgm.play().catch(() => {
+    console.log('背景音樂播放被阻擋，請與畫面互動後觸發播放。');
+  });
+}
+
+function playSound(id) {
+  const sound = document.getElementById(id);
+  if (sound) {
+    sound.currentTime = 0;
+    sound.play();
+  }
+}
+  </script>
+  
+  <audio id="bgm" loop>
+  <source src="simple-acoustic-folk-138360.mp3" type="audio/mpeg" />
+</audio>
+<audio id="dropSound">
+  <source src="dropping-books-84622.mp3" type="audio/mpeg" />
+</audio>
+<audio id="rescueSound">
+  <source src="correct-6033.mp3" type="audio/mpeg" />
+</audio>
+<audio id="correctSound">
+  <source src="correct-6033.mp3" type="audio/mpeg" />
+</audio>
+<audio id="wrongSound">
+  <source src="wrong-answer-20582.mp3" type="audio/mpeg" />
+</audio>
+
+</body>
+</html>
