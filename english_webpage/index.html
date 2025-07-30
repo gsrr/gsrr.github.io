@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Story Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f0f0f0;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      height: 100vh;
+    }
+    .sidebar {
+      width: 200px;
+      background: #333;
+      color: white;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .sidebar h2 {
+      font-size: 20px;
+      margin-top: 0;
+    }
+    .story-list {
+      list-style: none;
+      padding: 0;
+    }
+    .story-list li {
+      cursor: pointer;
+      padding: 10px;
+      border-radius: 6px;
+    }
+    .story-list li:hover {
+      background: #555;
+    }
+    .story-list li.active {
+      background: #777;
+      font-weight: bold;
+    }
+    .main {
+      flex: 1;
+      background: #f8f8f8;
+      padding: 40px;
+      box-sizing: border-box;
+    }
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 80vh;
+      gap: 20px;
+    }
+    .controls img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      flex-grow: 1;
+      cursor: pointer;
+      border: 4px solid #ddd;
+      border-radius: 10px;
+    }
+    .arrow {
+      font-size: 30px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .title {
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <h2>Stories</h2>
+    <ul class="story-list" id="storyList"></ul>
+  </div>
+
+  <div class="main">
+    <div class="title" id="storyTitle">Story Viewer</div>
+    <div class="controls">
+      <div class="arrow" id="leftArrow">←</div>
+      <img id="storyImage" src="" alt="Story page">
+      <div class="arrow" id="rightArrow">→</div>
+    </div>
+  </div>
+
+  <script>
+    const stories = [
+      { name: "story1", pages: [1, 2, 3, 4, 5, 6] },
+      { name: "story2", pages: [1, 2, 3] },
+      { name: "story3", pages: [1] }
+    ];
+
+    let currentStory = stories[0];
+    let currentIndex = 0;
+    let audioPlayer = null;
+    let autoPlay = false; // 是否自動連播
+
+    const storyListEl = document.getElementById('storyList');
+    const storyTitleEl = document.getElementById('storyTitle');
+    const imageEl = document.getElementById('storyImage');
+    const leftArrow = document.getElementById('leftArrow');
+    const rightArrow = document.getElementById('rightArrow');
+
+    function renderStoryList() {
+      storyListEl.innerHTML = '';
+      stories.forEach((story, i) => {
+        const li = document.createElement('li');
+        li.textContent = story.name;
+        li.className = story === currentStory ? 'active' : '';
+        li.addEventListener('click', () => {
+          currentStory = story;
+          currentIndex = 0;
+          autoPlay = true; // 點故事自動連播
+          renderStoryList();
+          updateStoryDisplay();
+        });
+        storyListEl.appendChild(li);
+      });
+    }
+
+    function playAudio() {
+      if(audioPlayer){
+        audioPlayer.pause();
+        audioPlayer = null;
+      }
+      const pageNum = currentStory.pages[currentIndex];
+      audioPlayer = new Audio(`storys/${currentStory.name}/page${pageNum}.mp3`);
+      audioPlayer.play();
+
+      audioPlayer.onended = () => {
+        if(autoPlay){
+          if(currentIndex < currentStory.pages.length - 1){
+            currentIndex++;
+            updateStoryDisplay();
+          } else {
+            autoPlay = false; // 播完全部頁面，停止自動播放
+          }
+        }
+      }
+    }
+
+    function updateStoryDisplay() {
+      const pageNum = currentStory.pages[currentIndex];
+      storyTitleEl.textContent = currentStory.name + ` - Page ${pageNum}`;
+      imageEl.src = `storys/${currentStory.name}/page${pageNum}.png`;
+      playAudio();
+    }
+
+    imageEl.addEventListener('click', () => {
+      autoPlay = false; // 點圖片後停止自動連播
+      playAudio();
+    });
+
+    leftArrow.addEventListener('click', () => {
+      autoPlay = false; // 點箭頭停止自動連播
+      currentIndex = Math.max(0, currentIndex - 1);
+      updateStoryDisplay();
+    });
+
+    rightArrow.addEventListener('click', () => {
+      autoPlay = false; // 點箭頭停止自動連播
+      currentIndex = Math.min(currentStory.pages.length - 1, currentIndex + 1);
+      updateStoryDisplay();
+    });
+
+    // 初始化
+    renderStoryList();
+    updateStoryDisplay();
+  </script>
+
+</body>
+</html>
