@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>English Word Game</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      background: linear-gradient(120deg, #f0f4f8, #d9e4ec);
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      padding: 20px;
+      font-weight: 600;
+      color: #2d3748;
+    }
+    .game-container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 40px;
+      padding: 20px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 20px;
+      text-align: center;
+    }
+    .image-frame {
+      width: 380px;
+      height: 380px;
+      border-radius: 12px;
+      background: #f9fafb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .image-frame img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .option-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .option-row span {
+      font-weight: 600;
+      color: #555;
+    }
+    button {
+      flex: 1;
+      padding: 12px 20px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      background: #f1f5f9;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+      font-family: 'Poppins', sans-serif;
+    }
+    button:hover {
+      background: #e2e8f0;
+      transform: translateX(4px);
+    }
+    .replay-btn {
+      margin-top: 20px;
+      padding: 10px 18px;
+      font-size: 16px;
+      border-radius: 8px;
+      background: #3b82f6;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .replay-btn:hover {
+      background: #2563eb;
+    }
+    .result {
+      font-size: 36px;
+      font-weight: 600;
+      margin: 20px;
+      text-align: center;
+    }
+    .correct { color: #22c55e; }
+    .wrong { color: #ef4444; }
+    .score {
+      font-size: 20px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>English Word Game</h1>
+  <p id="progress" style="text-align:center;"></p>
+
+  <div class="game-container">
+    <div class="card">
+      <div class="image-frame">
+        <img id="questionImage" src="" alt="Question">
+      </div>
+    </div>
+    <div class="card">
+      <div class="options" id="options"></div>
+      <button class="replay-btn" onclick="replayOptions()">🔊 Replay Options</button>
+    </div>
+  </div>
+
+  <div class="result" id="result"></div>
+  <div class="score" id="score"></div>
+
+  <script>
+    const allImages = [
+      "attic.png", "crash.png", "dust.png", "dusty.png", "fix.png", "jump.png",
+      "langind.png", "midnight_snack.png", "moon.png", "pack_a_picnic.png",
+      "rock.png", "rocket.png", "silver_light.png", "sleep.png", "speed.png",
+      "splash.png", "unpack_a_picnic.png"
+    ];
+
+    let questions = [];
+    let current = 0, correctCount = 0, wrongCount = 0;
+    let currentSpeakText = ""; // 用來記錄本題選項，供重播使用
+	let currentAnswerIndex = -1; // 記錄正確答案的索引
+
+    function shuffle(arr) {
+      return arr.sort(() => Math.random() - 0.5);
+    }
+
+    function initGame() {
+      const selected = shuffle([...allImages]).slice(0, 10);
+      questions = selected.map(img => {
+        const answer = img.split(".")[0];
+        const others = shuffle(allImages.filter(i => i !== img))
+                        .slice(0, 3).map(i => i.split(".")[0]);
+        const options = shuffle([answer, ...others]);
+        return { img, answer, options };
+      });
+      showQuestion();
+    }
+
+    function speak(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "en-US";
+      speechSynthesis.speak(utterance);
+    }
+
+    function replayOptions() {
+      if (currentSpeakText) {
+        speechSynthesis.cancel();
+        speak(currentSpeakText);
+      }
+    }
+
+    function showQuestion() {
+      if (current >= questions.length) {
+        document.body.innerHTML = `
+          <h2 style="text-align:center;">Game Over!</h2>
+          <p style="text-align:center;">✅ Correct: ${correctCount}</p>
+          <p style="text-align:center;">❌ Wrong: ${wrongCount}</p>
+        `;
+        return;
+      }
+
+      const q = questions[current];
+      document.getElementById("progress").textContent = `Question ${current+1} of ${questions.length}`;
+      document.getElementById("questionImage").src = "images/" + q.img;
+
+      const optionsDiv = document.getElementById("options");
+      optionsDiv.innerHTML = "";
+      currentSpeakText = ""; // 清空上一題的語音文字
+	  currentAnswerIndex = -1;
+
+      q.options.forEach((opt, idx) => {
+        const row = document.createElement("div");
+        row.className = "option-row";
+
+        const label = document.createElement("span");
+        label.textContent = `(${idx + 1})`;
+
+        const btn = document.createElement("button");
+        btn.textContent = opt.replace(/_/g, " ");
+        btn.onclick = () => checkAnswer(opt, q.answer, idx);
+
+        row.appendChild(label);
+        row.appendChild(btn);
+        optionsDiv.appendChild(row);
+
+        currentSpeakText += `${idx + 1}. ${opt.replace(/_/g, " ")}. `;
+		if (opt === q.answer) {
+          currentAnswerIndex = idx;
+        }
+		
+      });
+
+      document.getElementById("result").textContent = "";
+      document.getElementById("score").textContent = `Score: ✅ ${correctCount} ❌ ${wrongCount}`;
+
+      // 自動播一次
+      speechSynthesis.cancel();
+      setTimeout(() => replayOptions(), 500);
+    }
+
+    function checkAnswer(selected, answer, idx) {
+      const resultDiv = document.getElementById("result");
+      if (selected === answer) {
+        resultDiv.textContent = "O";
+        resultDiv.className = "result correct";
+        correctCount++;
+      } else {
+        resultDiv.textContent = "X";
+        resultDiv.className = "result wrong";
+        wrongCount++;
+        // 播報正確答案
+        speechSynthesis.cancel();
+        const correctText = `The correct answer is number ${currentAnswerIndex + 1}. ${answer.replace(/_/g, " ")}.`;
+        speak(correctText);
+      }
+      current++;
+      setTimeout(showQuestion, 2000); // 多留 2 秒給答錯語音播
+    }
+
+    initGame();
+  </script>
+</body>
+</html>
