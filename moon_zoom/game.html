@@ -3,23 +3,46 @@
 <head>
   <meta charset="UTF-8">
   <title>English Word Game</title>
-
-  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 
   <style>
     body {
       font-family: 'Poppins', sans-serif;
       margin: 0;
-      background: linear-gradient(120deg, #f0f4f8, #d9e4ec);
+      background: #d9f0e6;
       color: #333;
     }
-    h1 {
+    /* 標題與進度條 */
+    .header {
       text-align: center;
-      padding: 20px;
-      font-weight: 600;
-      color: #2d3748;
+      margin: 20px 0;
     }
+    .header h1 {
+      font-size: 48px;
+      font-weight: 700;
+      background: linear-gradient(90deg, #3b82f6, #22c55e);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+      margin: 0;
+    }
+    .progress-bar {
+      width: 60%;
+      height: 18px;
+      margin: 15px auto 0;
+      background: #e5e7eb;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    }
+    #progressFill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #3b82f6, #22c55e);
+      border-radius: 10px;
+      transition: width 0.5s ease;
+    }
+    /* 遊戲容器 */
     .game-container {
       display: flex;
       justify-content: center;
@@ -27,18 +50,47 @@
       gap: 40px;
       padding: 20px;
     }
-    .card {
+    /* 左邊選項 */
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .option-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .option-row span {
+      font-weight: 600;
+      font-size: 20px;
+      color: #333;
+      width: 40px;
+      text-align: right;
+    }
+    .option-btn {
       background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      padding: 20px;
+      border: 3px solid #4caf50;
+      border-radius: 12px;
+      padding: 15px;
+      font-size: 22px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+      width: 180px;
       text-align: center;
     }
+    .option-btn:hover {
+      background: #e6ffe6;
+      transform: scale(1.05);
+    }
+    /* 右邊圖片 */
     .image-frame {
-      width: 380px;
-      height: 380px;
-      border-radius: 12px;
-      background: #f9fafb;
+      width: 300px;
+      height: 300px;
+      background: #fff;
+      border: 3px solid #4caf50;
+      border-radius: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -49,100 +101,88 @@
       max-height: 100%;
       object-fit: contain;
     }
-    .options {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-    .option-row {
+    /* 底部分數 + Replay */
+    .status-bar {
+      margin: 30px auto;
+      padding: 12px 20px;
+      background: #fff;
+      border: 2px solid #3b82f6;
+      border-radius: 12px;
+      width: fit-content;
+      font-size: 22px;
+      font-weight: 600;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 15px;
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
     }
-    .option-row span {
-      font-weight: 600;
-      color: #555;
-    }
-    button {
-      flex: 1;
-      padding: 12px 20px;
-      font-size: 18px;
-      border: none;
-      border-radius: 8px;
-      background: #f1f5f9;
-      cursor: pointer;
-      transition: background 0.3s, transform 0.2s;
-      font-family: 'Poppins', sans-serif;
-    }
-    button:hover {
-      background: #e2e8f0;
-      transform: translateX(4px);
-    }
-    .replay-btn {
-      margin-top: 20px;
-      padding: 10px 18px;
-      font-size: 16px;
-      border-radius: 8px;
+    .status-bar button {
       background: #3b82f6;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
       color: white;
       cursor: pointer;
-      transition: background 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s, transform 0.2s;
     }
-    .replay-btn:hover {
+    .status-bar button:hover {
       background: #2563eb;
+      transform: scale(1.1);
     }
-    .result {
-      font-size: 36px;
-      font-weight: 600;
-      margin: 20px;
-      text-align: center;
-    }
-    .correct { color: #22c55e; }
-    .wrong { color: #ef4444; }
-    .score {
-      font-size: 20px;
-      text-align: center;
-      margin-bottom: 20px;
-    }
+    .status-bar span.correct { color: #22c55e; }
+    .status-bar span.wrong { color: #ef4444; }
   </style>
 </head>
 <body>
-  <h1>English Word Game</h1>
-  <p id="progress" style="text-align:center;"></p>
+  <header class="header">
+    <h1>English Word Game</h1>
+    <div class="progress-bar">
+      <div id="progressFill"></div>
+    </div>
+  </header>
 
   <div class="game-container">
-    <div class="card">
-      <div class="image-frame">
-        <img id="questionImage" src="" alt="Question">
-      </div>
-    </div>
-    <div class="card">
-      <div class="options" id="options"></div>
-      <button class="replay-btn" onclick="replayOptions()">🔊 Replay Options</button>
+    <!-- 左邊選項 -->
+    <div class="options" id="options"></div>
+
+    <!-- 右邊圖片 -->
+    <div class="image-frame">
+      <img id="questionImage" src="" alt="Question">
     </div>
   </div>
 
-  <div class="result" id="result"></div>
-  <div class="score" id="score"></div>
+  <!-- 底部狀態列：Replay + Score -->
+  <div class="status-bar">
+    <button onclick="replayOptions()">🔊</button>
+    <div id="score"></div>
+  </div>
 
   <script>
     const allImages = [
       "attic.png", "crash.png", "dust.png", "dusty.png", "fix.png", "jump.png",
-      "langind.png", "midnight_snack.png", "moon.png", "pack_a_picnic.png",
+      "landing.png", "midnight_snack.png", "moon.png", "pack_a_picnic.png",
       "rock.png", "rocket.png", "silver_light.png", "sleep.png", "speed.png",
       "splash.png", "unpack_a_picnic.png"
     ];
 
     let questions = [];
     let current = 0, correctCount = 0, wrongCount = 0;
-    let currentSpeakText = ""; // 用來記錄本題選項，供重播使用
-	let currentAnswerIndex = -1; // 記錄正確答案的索引
+    let currentSpeakText = "";
+    let currentAnswerIndex = -1;
 
     function shuffle(arr) {
       return arr.sort(() => Math.random() - 0.5);
     }
 
     function initGame() {
+      speechSynthesis.cancel();
+      speechSynthesis.speak(new SpeechSynthesisUtterance(" "));
+
       const selected = shuffle([...allImages]).slice(0, 10);
       questions = selected.map(img => {
         const answer = img.split(".")[0];
@@ -171,20 +211,23 @@
       if (current >= questions.length) {
         document.body.innerHTML = `
           <h2 style="text-align:center;">Game Over!</h2>
-          <p style="text-align:center;">✅ Correct: ${correctCount}</p>
-          <p style="text-align:center;">❌ Wrong: ${wrongCount}</p>
+          <p style="text-align:center; font-size:22px;">✅ Correct: ${correctCount}</p>
+          <p style="text-align:center; font-size:22px;">❌ Wrong: ${wrongCount}</p>
         `;
         return;
       }
 
       const q = questions[current];
-      document.getElementById("progress").textContent = `Question ${current+1} of ${questions.length}`;
       document.getElementById("questionImage").src = "images/" + q.img;
+
+      // 更新進度條
+      const progressPercent = ((current+1) / questions.length) * 100;
+      document.getElementById("progressFill").style.width = progressPercent + "%";
 
       const optionsDiv = document.getElementById("options");
       optionsDiv.innerHTML = "";
-      currentSpeakText = ""; // 清空上一題的語音文字
-	  currentAnswerIndex = -1;
+      currentSpeakText = "";
+      currentAnswerIndex = -1;
 
       q.options.forEach((opt, idx) => {
         const row = document.createElement("div");
@@ -194,6 +237,7 @@
         label.textContent = `(${idx + 1})`;
 
         const btn = document.createElement("button");
+        btn.className = "option-btn";
         btn.textContent = opt.replace(/_/g, " ");
         btn.onclick = () => checkAnswer(opt, q.answer, idx);
 
@@ -202,40 +246,37 @@
         optionsDiv.appendChild(row);
 
         currentSpeakText += `${idx + 1}. ${opt.replace(/_/g, " ")}. `;
-		if (opt === q.answer) {
-          currentAnswerIndex = idx;
-        }
-		
+        if (opt === q.answer) currentAnswerIndex = idx;
       });
 
-      document.getElementById("result").textContent = "";
-      document.getElementById("score").textContent = `Score: ✅ ${correctCount} ❌ ${wrongCount}`;
+      updateScore();
 
-      // 自動播一次
+      // 自動語音播放選項
       speechSynthesis.cancel();
-      setTimeout(() => replayOptions(), 500);
+      setTimeout(() => replayOptions(), current === 0 ? 1000 : 500);
     }
 
     function checkAnswer(selected, answer, idx) {
-      const resultDiv = document.getElementById("result");
       if (selected === answer) {
-        resultDiv.textContent = "O";
-        resultDiv.className = "result correct";
         correctCount++;
       } else {
-        resultDiv.textContent = "X";
-        resultDiv.className = "result wrong";
         wrongCount++;
-        // 播報正確答案
         speechSynthesis.cancel();
-        const correctText = `The correct answer is number ${currentAnswerIndex + 1}. ${answer.replace(/_/g, " ")}.`;
-        speak(correctText);
+        speak(`The correct answer is number ${currentAnswerIndex + 1}. ${answer.replace(/_/g, " ")}.`);
       }
+      updateScore();
       current++;
-      setTimeout(showQuestion, 2000); // 多留 2 秒給答錯語音播
+      setTimeout(showQuestion, 2000);
+    }
+
+    function updateScore() {
+      document.getElementById("score").innerHTML =
+        `<span class="correct">✅ ${correctCount}</span> 
+         <span class="wrong">❌ ${wrongCount}</span>`;
     }
 
     initGame();
   </script>
 </body>
 </html>
+
