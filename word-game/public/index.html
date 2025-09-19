@@ -26,6 +26,13 @@
       text-shadow: 2px 2px 6px rgba(0,0,0,0.1);
       margin: 0;
     }
+    .header select {
+      margin-top: 10px;
+      font-size: 18px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      border: 2px solid #3b82f6;
+    }
     .progress-bar {
       width: 60%;
       height: 18px;
@@ -141,9 +148,10 @@
 <body>
   <header class="header">
     <h1>English Word Game</h1>
-    <div class="progress-bar">
-      <div id="progressFill"></div>
-    </div>
+    <select id="storySelect" onchange="loadStory()">
+      <option value="">-- Select Story --</option>
+    </select>
+    <div class="progress-bar"><div id="progressFill"></div></div>
   </header>
 
   <div class="game-container">
@@ -167,13 +175,37 @@
     let current = 0, correctCount = 0, wrongCount = 0;
     let currentSpeakText = "";
     let currentAnswerIndex = -1;
+    let currentStory = "";
 
-    async function initGame() {
-      speechSynthesis.cancel();
-      speechSynthesis.speak(new SpeechSynthesisUtterance(" "));
+    // 載入故事清單
+    async function loadStories() {
+      const res = await fetch("/api/stories");
+      const data = await res.json();
+      const select = document.getElementById("storySelect");
+      data.stories.forEach(story => {
+        const opt = document.createElement("option");
+        opt.value = story;
+        opt.textContent = story;
+        select.appendChild(opt);
+      });
+      // 預設自動載入第一個故事
+      if (data.stories.length > 0) {
+        select.value = data.stories[0];
+        loadStory();
+      }
+    }
 
-      // 從後端 API 抓題目
-      const res = await fetch("/api/questions");
+    // 選擇故事後載入題目
+    async function loadStory() {
+      const story = document.getElementById("storySelect").value;
+      if (!story) return;
+
+      currentStory = story;
+      current = 0;
+      correctCount = 0;
+      wrongCount = 0;
+
+      const res = await fetch(`/api/questions/${story}`);
       const data = await res.json();
       questions = data.questions;
 
@@ -199,6 +231,7 @@
           <h2 style="text-align:center;">Game Over!</h2>
           <p style="text-align:center; font-size:22px;">✅ Correct: ${correctCount}</p>
           <p style="text-align:center; font-size:22px;">❌ Wrong: ${wrongCount}</p>
+          <p style="text-align:center;"><a href="/">Play Again</a></p>
         `;
         return;
       }
@@ -236,8 +269,6 @@
       });
 
       updateScore();
-
-      // 自動語音播放選項
       speechSynthesis.cancel();
       setTimeout(() => replayOptions(), current === 0 ? 1000 : 500);
     }
@@ -248,7 +279,7 @@
       } else {
         wrongCount++;
         speechSynthesis.cancel();
-        speak(`The correct answer is number ${currentAnswerIndex + 1}. ${answer.replace(/_/g, " ")}.`);
+        speak(`The correct answer is number ${currentAnswerIndex + 1}. ${answer.replace(/_/g," ")}.`);
       }
       updateScore();
       current++;
@@ -261,7 +292,8 @@
          <span class="wrong">❌ ${wrongCount}</span>`;
     }
 
-    initGame();
+    // 初始化
+    loadStories();
   </script>
 </body>
 </html>
