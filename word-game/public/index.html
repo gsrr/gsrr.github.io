@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>English Word Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      background: #d9f0e6;
+      color: #333;
+    }
+    /* 標題與進度條 */
+    .header {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .header h1 {
+      font-size: 48px;
+      font-weight: 700;
+      background: linear-gradient(90deg, #3b82f6, #22c55e);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+      margin: 0;
+    }
+    .progress-bar {
+      width: 60%;
+      height: 18px;
+      margin: 15px auto 0;
+      background: #e5e7eb;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    }
+    #progressFill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #3b82f6, #22c55e);
+      border-radius: 10px;
+      transition: width 0.5s ease;
+    }
+    /* 遊戲容器 */
+    .game-container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 40px;
+      padding: 20px;
+    }
+    /* 左邊選項 */
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .option-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .option-row span {
+      font-weight: 600;
+      font-size: 20px;
+      color: #333;
+      width: 40px;
+      text-align: right;
+    }
+    .option-btn {
+      background: #fff;
+      border: 3px solid #4caf50;
+      border-radius: 12px;
+      padding: 15px;
+      font-size: 22px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+      width: 180px;
+      text-align: center;
+    }
+    .option-btn:hover {
+      background: #e6ffe6;
+      transform: scale(1.05);
+    }
+    /* 右邊圖片 */
+    .image-frame {
+      width: 300px;
+      height: 300px;
+      background: #fff;
+      border: 3px solid #4caf50;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .image-frame img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    /* 底部分數 + Replay */
+    .status-bar {
+      margin: 30px auto;
+      padding: 12px 20px;
+      background: #fff;
+      border: 2px solid #3b82f6;
+      border-radius: 12px;
+      width: fit-content;
+      font-size: 22px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+    }
+    .status-bar button {
+      background: #3b82f6;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s, transform 0.2s;
+    }
+    .status-bar button:hover {
+      background: #2563eb;
+      transform: scale(1.1);
+    }
+    .status-bar span.correct { color: #22c55e; }
+    .status-bar span.wrong { color: #ef4444; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>English Word Game</h1>
+    <div class="progress-bar">
+      <div id="progressFill"></div>
+    </div>
+  </header>
+
+  <div class="game-container">
+    <!-- 左邊選項 -->
+    <div class="options" id="options"></div>
+
+    <!-- 右邊圖片 -->
+    <div class="image-frame">
+      <img id="questionImage" src="" alt="Question">
+    </div>
+  </div>
+
+  <!-- 底部狀態列：Replay + Score -->
+  <div class="status-bar">
+    <button onclick="replayOptions()">🔊</button>
+    <div id="score"></div>
+  </div>
+
+  <script>
+    let questions = [];
+    let current = 0, correctCount = 0, wrongCount = 0;
+    let currentSpeakText = "";
+    let currentAnswerIndex = -1;
+
+    async function initGame() {
+      speechSynthesis.cancel();
+      speechSynthesis.speak(new SpeechSynthesisUtterance(" "));
+
+      // 從後端 API 抓題目
+      const res = await fetch("/api/questions");
+      const data = await res.json();
+      questions = data.questions;
+
+      showQuestion();
+    }
+
+    function speak(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "en-US";
+      speechSynthesis.speak(utterance);
+    }
+
+    function replayOptions() {
+      if (currentSpeakText) {
+        speechSynthesis.cancel();
+        speak(currentSpeakText);
+      }
+    }
+
+    function showQuestion() {
+      if (current >= questions.length) {
+        document.body.innerHTML = `
+          <h2 style="text-align:center;">Game Over!</h2>
+          <p style="text-align:center; font-size:22px;">✅ Correct: ${correctCount}</p>
+          <p style="text-align:center; font-size:22px;">❌ Wrong: ${wrongCount}</p>
+        `;
+        return;
+      }
+
+      const q = questions[current];
+      document.getElementById("questionImage").src = "/images/" + q.img;
+
+      // 更新進度條
+      const progressPercent = ((current+1) / questions.length) * 100;
+      document.getElementById("progressFill").style.width = progressPercent + "%";
+
+      const optionsDiv = document.getElementById("options");
+      optionsDiv.innerHTML = "";
+      currentSpeakText = "";
+      currentAnswerIndex = -1;
+
+      q.options.forEach((opt, idx) => {
+        const row = document.createElement("div");
+        row.className = "option-row";
+
+        const label = document.createElement("span");
+        label.textContent = `(${idx + 1})`;
+
+        const btn = document.createElement("button");
+        btn.className = "option-btn";
+        btn.textContent = opt.replace(/_/g, " ");
+        btn.onclick = () => checkAnswer(opt, q.answer, idx);
+
+        row.appendChild(label);
+        row.appendChild(btn);
+        optionsDiv.appendChild(row);
+
+        currentSpeakText += `${idx + 1}. ${opt.replace(/_/g, " ")}. `;
+        if (opt === q.answer) currentAnswerIndex = idx;
+      });
+
+      updateScore();
+
+      // 自動語音播放選項
+      speechSynthesis.cancel();
+      setTimeout(() => replayOptions(), current === 0 ? 1000 : 500);
+    }
+
+    function checkAnswer(selected, answer, idx) {
+      if (selected === answer) {
+        correctCount++;
+      } else {
+        wrongCount++;
+        speechSynthesis.cancel();
+        speak(`The correct answer is number ${currentAnswerIndex + 1}. ${answer.replace(/_/g, " ")}.`);
+      }
+      updateScore();
+      current++;
+      setTimeout(showQuestion, 2000);
+    }
+
+    function updateScore() {
+      document.getElementById("score").innerHTML =
+        `<span class="correct">✅ ${correctCount}</span>
+         <span class="wrong">❌ ${wrongCount}</span>`;
+    }
+
+    initGame();
+  </script>
+</body>
+</html>
+
