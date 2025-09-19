@@ -2,10 +2,10 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
+const sharp = require("sharp");
 
 const app = express();
 app.use(cors());
-app.use("/images", express.static(path.join(__dirname, "images")));
 app.use(express.static(path.join(__dirname, "public"))); // 前端頁面
 
 // API: 列出有哪些故事
@@ -33,10 +33,32 @@ app.get("/api/questions/:story", (req, res) => {
     const answer = img.replace(".png", "");
     const others = files.filter(f => f !== img).sort(() => Math.random() - 0.5).slice(0, 3);
     const options = [answer, ...others.map(f => f.replace(".png", ""))].sort(() => Math.random() - 0.5);
-    return { img: `${story}/${img}`, answer, options };
+    // 注意這裡改成 /api/image/
+    return { img: `/api/image/${story}/${img}`, answer, options };
   });
 
   res.json({ questions });
+});
+
+// API: 動態壓縮圖片並輸出 webp
+app.get("/api/image/:story/:file", async (req, res) => {
+  const { story, file } = req.params;
+  const filePath = path.join(__dirname, "images", story, file);
+
+  if (!fs.existsSync(filePath)) {
+    return res.sendStatus(404);
+  }
+
+  try {
+    res.type("image/webp");
+    sharp(filePath)
+      .resize(400, 400, { fit: "inside" })   // 最大 400px，保持比例
+      .webp({ quality: 80 })                 // 壓縮品質 80
+      .pipe(res);
+  } catch (err) {
+    console.error("Image processing error:", err);
+    res.sendStatus(500);
+  }
 });
 
 const PORT = 3000;
