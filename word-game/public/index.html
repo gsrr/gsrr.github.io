@@ -16,7 +16,6 @@
     .wrong-answer { background:#ffe6e6 !important; border-color:#ef4444 !important; }
     .correct-answer { background:#e6ffe6 !important; border-color:#22c55e !important; }
 
-    /* 圖片框：填滿寬度、不超過 300px 高度，背景透明 */
     .image-frame { 
       width:100%; 
       max-height:300px; 
@@ -32,16 +31,18 @@
       max-height:300px; 
       object-fit:contain; 
     }
+
+    @media (max-width: 768px) {
+      .col-md-6 { width:100%; }
+    }
   </style>
 </head>
 <body>
-  <div class="container py-4">
-    <!-- 標題區 -->
+  <div id="gameContainer" class="container py-4">
     <div class="text-center mb-4">
       <h1>English Word Game</h1>
     </div>
 
-    <!-- 下拉選單 -->
     <div class="row justify-content-center mb-3">
       <div class="col-md-6">
         <select id="storySelect" class="form-select form-select-lg border-primary" onchange="loadStory()">
@@ -50,7 +51,6 @@
       </div>
     </div>
 
-    <!-- 進度條 -->
     <div class="row justify-content-center mb-4">
       <div class="col-md-6">
         <div class="progress" style="height: 20px;">
@@ -59,12 +59,9 @@
       </div>
     </div>
 
-    <!-- 遊戲容器 -->
     <div class="row">
-      <!-- 左邊選項 -->
       <div class="col-md-6" id="options"></div>
 
-      <!-- 右邊圖片 -->
       <div class="col-md-6 text-center">
         <div class="card shadow-sm">
           <div class="card-body p-0">
@@ -76,7 +73,7 @@
       </div>
     </div>
 
-    <!-- 底部分數列 -->
+    <!-- 分數區 -->
     <div class="row justify-content-center mt-4">
       <div class="col-md-6">
         <div class="card shadow-sm text-center">
@@ -87,6 +84,13 @@
         </div>
       </div>
     </div>
+
+    <!-- 瀏覽人數 -->
+    <div class="row justify-content-center mt-3">
+      <div class="col-md-6 text-center">
+        <p id="visitorCount" class="fw-bold text-secondary"></p>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -94,15 +98,20 @@
     let current = 0, correctCount = 0, wrongCount = 0;
     let currentSpeakText = "";
     let currentAnswerIndex = -1;
+    let locked = false;
 
-    // Tone.js 音效
     const synth = new Tone.Synth().toDestination();
-    function playCorrectSound() {
-      synth.triggerAttackRelease("C6", "8n");
-    }
+    function playCorrectSound() { synth.triggerAttackRelease("C6", "8n"); }
     function playWrongSound() {
       synth.triggerAttackRelease("C3", "8n");
       setTimeout(() => synth.triggerAttackRelease("C2", "8n"), 150);
+    }
+
+    async function loadVisitors() {
+      const res = await fetch("/api/visit"); // 每次載入頁面會 +1
+      const data = await res.json();
+      document.getElementById("visitorCount").textContent =
+        `👀 Visitors: ${data.visitors}`;
     }
 
     async function loadStories() {
@@ -124,7 +133,7 @@
     async function loadStory() {
       const story = document.getElementById("storySelect").value;
       if (!story) return;
-      current = 0; correctCount = 0; wrongCount = 0;
+      current = 0; correctCount = 0; wrongCount = 0; locked = false;
       const res = await fetch(`/api/questions/${story}`);
       const data = await res.json();
       questions = data.questions;
@@ -134,6 +143,8 @@
     function speak(text) {
       const utter = new SpeechSynthesisUtterance(text);
       utter.lang = "en-US";
+      utter.rate = 0.9;
+      utter.pitch = 1.1;
       speechSynthesis.speak(utter);
     }
 
@@ -146,8 +157,8 @@
 
     function showQuestion() {
       if (current >= questions.length) {
-        document.body.innerHTML = `
-          <div class="container text-center py-5">
+        document.getElementById("gameContainer").innerHTML = `
+          <div class="text-center py-5">
             <h2>🎉 Game Over!</h2>
             <p class="fs-4 text-success">✅ Correct: ${correctCount}</p>
             <p class="fs-4 text-danger">❌ Wrong: ${wrongCount}</p>
@@ -162,7 +173,7 @@
 
       const optionsDiv = document.getElementById("options");
       optionsDiv.innerHTML = "";
-      currentSpeakText = ""; currentAnswerIndex = -1;
+      currentSpeakText = ""; currentAnswerIndex = -1; locked = false;
 
       q.options.forEach((opt, idx) => {
         const btn = document.createElement("button");
@@ -181,6 +192,8 @@
     }
 
     function checkAnswer(selected, answer, idx, btn) {
+      if (locked) return;
+      locked = true;
       const optionButtons = document.querySelectorAll(".option-btn");
       if (selected === answer) {
         correctCount++; playCorrectSound();
@@ -193,18 +206,19 @@
         speechSynthesis.cancel();
         speak(`The correct answer is number ${currentAnswerIndex+1}. ${answer.replace(/_/g," ")}.`);
         updateScore(); current++;
-        setTimeout(showQuestion, 2000);
+        setTimeout(() => showQuestion(), 2000);
       }
     }
 
     function updateScore() {
       document.getElementById("score").innerHTML =
         `<span class="text-success">✅ ${correctCount}</span>
-         <span class="text-danger">❌ ${wrongCount}</span>`;
+         <span class="text-danger">❌ ${wrongCount}</span>
+         <span class="text-primary">📊 ${current}/${questions.length}</span>`;
     }
 
+    loadVisitors();
     loadStories();
   </script>
 </body>
 </html>
-
