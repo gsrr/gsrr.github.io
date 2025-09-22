@@ -69,9 +69,19 @@
     function playWrongSound() { synth.triggerAttackRelease("C3", "8n"); setTimeout(() => synth.triggerAttackRelease("C2", "8n"), 150); }
 
     function speak(text) {
+      speechSynthesis.cancel();
       const utter = new SpeechSynthesisUtterance(text);
       utter.lang = "en-US"; utter.rate = 0.9; utter.pitch = 1.1;
       speechSynthesis.speak(utter);
+    }
+
+    function speakAllOptions(q) {
+      speechSynthesis.cancel();
+      q.options.forEach((opt, idx) => {
+        const utter = new SpeechSynthesisUtterance(opt.replace(/_/g," "));
+        utter.lang = "en-US"; utter.rate = 0.9; utter.pitch = 1.1;
+        setTimeout(() => speechSynthesis.speak(utter), idx * 1200);
+      });
     }
 
     function getStoryResults() {
@@ -120,9 +130,17 @@
         ${isPhase2 ? `<p class="fs-4 fw-bold mb-1">${q.word.replace(/_/g," ")}</p>` : ""}
         <div class="d-flex justify-content-center align-items-center">
           <span class="me-2">✅ ${correctCount} / ❌ ${wrongCount}</span>
-          <button class="btn btn-sm btn-outline-primary" onclick="speak('${label}')">🔊</button>
+          <button class="btn btn-sm btn-outline-primary" id="speakBtn">🔊</button>
         </div>
       `;
+
+      // 綁定喇叭功能
+      const speakBtn = document.getElementById("speakBtn");
+      if (isPhase2) {
+        speakBtn.onclick = () => speak(label);
+      } else {
+        speakBtn.onclick = () => speakAllOptions(q);
+      }
     }
 
     // ---- Phase 1 ----
@@ -178,6 +196,9 @@
         optionsDiv.appendChild(btn);
         if (opt === q.answer) currentAnswerIndex = idx;
       });
+
+      // 自動播放所有選項
+      speakAllOptions(q);
     }
 
     function checkAnswerPhase1(selected, answer, idx, btn) {
@@ -227,6 +248,7 @@
         <div class="row" id="phase2Options"></div>
       `;
 
+      // 自動播放單字
       speak(q.word.replace(/_/g," "));
 
       const optionsDiv = document.getElementById("phase2Options");
@@ -260,12 +282,12 @@
 
       allCards.forEach(card => {
         const img = card.querySelector("img");
-        if (img && img.src === answer) {
+        if (img && (img.src.endsWith(answer) || answer.endsWith(img.src))) {
           correctCard = card;
         }
       });
 
-      if (selected === answer) {
+      if (selected.endsWith(answer) || answer.endsWith(selected)) {
         correctCount++; 
         playCorrectSound(); 
         btn.querySelector(".card").classList.add("correct");
