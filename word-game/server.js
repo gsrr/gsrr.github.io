@@ -22,41 +22,41 @@ if (fs.existsSync(visitorsFile)) {
     console.error("Error reading visitors.json:", err);
   }
 }
-
-// API: 計算瀏覽人數 (+1)
 app.get("/api/visit", (req, res) => {
   visitors++;
-  fs.writeFileSync(visitorsFile, JSON.stringify({ visitors }), "utf-8");
+  fs.writeFile(visitorsFile, JSON.stringify({ visitors }), "utf-8", err => {
+    if (err) console.error("Error writing visitors.json:", err);
+  });
   res.json({ visitors });
 });
-
-// API: 取得目前人數 (不+1)
 app.get("/api/visitors", (req, res) => {
   res.json({ visitors });
 });
 
-// ---- 遊戲 API ----
+// ---- 工具: 圖片轉 Base64 ----
+function imgToBase64(filePath) {
+  return sharp(filePath)
+    .resize({ width: 400, height: 400, fit: "inside", withoutEnlargement: true })
+    .webp({ quality: 80 })
+    .toBuffer()
+    .then(buf => `data:image/webp;base64,${buf.toString("base64")}`);
+}
 
-// API: 列出所有 stories
+// ---- API: stories ----
 app.get("/api/stories", (req, res) => {
   const baseDir = "./images";
-  if (!fs.existsSync(baseDir)) {
-    return res.json({ stories: [] });
-  }
+  if (!fs.existsSync(baseDir)) return res.json({ stories: [] });
   const dirs = fs.readdirSync(baseDir, { withFileTypes: true })
                 .filter(d => d.isDirectory())
                 .map(d => d.name);
   res.json({ stories: dirs });
 });
 
-// API: 取得某個 story 的題目 (同時給 phase1 + phase2)
-app.get("/api/questions/:story", (req, res) => {
+// ---- API: questions ----
+app.get("/api/questions/:story", async (req, res) => {
   const story = req.params.story;
   const dir = path.join(__dirname, "images", story);
-
-  if (!fs.existsSync(dir)) {
-    return res.status(404).json({ error: "Story not found" });
-  }
+  if (!fs.existsSync(dir)) return res.status(404).json({ error: "Story not found" });
 
   const files = fs.readdirSync(dir).filter(f => f.endsWith(".png"));
 
@@ -71,64 +71,44 @@ app.get("/api/questions/:story", (req, res) => {
   const QUESTION_LIMIT = 10;
   const shuffled = shuffle([...files]).slice(0, QUESTION_LIMIT);
 
-  const questions = shuffled.map(img => {
-    const answer = img.replace(".png", "");
-    const others = shuffle(files.filter(f => f !== img)).slice(0, 3);
-
-    // Phase1: 題目圖片 + 文字選項
-    const options1 = shuffle([answer, ...others.map(f => f.replace(".png", ""))]);
-    const q1 = { 
-      img: `/api/image/${story}/${img}`, 
-      answer, 
-      options: options1 
-    };
-
-    // Phase2: 題目文字 + 圖片選項
-    const options2 = shuffle([img, ...others]).map(f => `/api/image/${story}/${f}`);
-    const q2 = { 
-      word: answer, 
-      answer: `/api/image/${story}/${img}`, 
-      options: options2 
-    };
-
-    return { phase1: q1, phase2: q2 };
-  });
-
-  res.json({ questions });
-});
-
-// API: 動態壓縮圖片 (輸出 webp)
-app.get("/api/image/:story/:file", async (req, res) => {
-  const { story, file } = req.params;
-  const filePath = path.join(__dirname, "images", story, file);
-
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ error: "Image not found" });
-  }
-
   try {
-    res.type("image/webp");
-    sharp(filePath)
-      .resize(400, 400, { fit: "inside" })
-      .webp({ quality: 80 })
-      .pipe(res);
+    const questions = await Promise.all(
+      shuffled.map(async img => {
+        const answer = path.basename(img, ".png");
+        const others = shuffle(files.filter(f => f !== img)).slice(0, 3);
+
+        // Base64
+        const imgBase64 = await imgToBase64(path.join(dir, img));
+        const otherBase64 = await Promise.all(
+          others.map(f => imgToBase64(path.join(dir, f)))
+        );
+
+        // Phase1: 圖片題目 + 文字選項
+        const q1 = {
+          img: imgBase64,
+          answer,
+          options: shuffle([answer, ...others.map(f => path.basename(f, ".png"))])
+        };
+
+        // Phase2: 文字題目 + 圖片選項
+        const options2 = shuffle([imgBase64, ...otherBase64]);
+        const q2 = { word: answer, answer: imgBase64, options: options2 };
+
+        return { phase1: q1, phase2: q2 };
+      })
+    );
+    res.json({ questions });
   } catch (err) {
-    console.error("Image processing error:", err);
-    res.sendStatus(500);
+    console.error("Error generating questions:", err);
+    res.status(500).json({ error: "Image processing failed" });
   }
 });
 
-// ---- 頁面路由 ----
-app.get("/", (req, res) => {
-  res.sendFile(path.join(publicDir, "index.html"));
-});
+// ---- 頁面 ----
+app.get("/", (req, res) => res.sendFile(path.join(publicDir, "index.html")));
+app.get("/test.html", (req, res) => res.sendFile(path.join(publicDir, "test.html")));
 
-app.get("/test.html", (req, res) => {
-  res.sendFile(path.join(publicDir, "test.html"));
-});
-
-// ---- 啟動伺服器 ----
-const PORT = process.env.PORT || 80;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () =>
   console.log(`Server running on http://0.0.0.0:${PORT}`)
 );
