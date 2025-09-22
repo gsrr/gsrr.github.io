@@ -42,13 +42,27 @@ function imgToBase64(filePath) {
     .then(buf => `data:image/webp;base64,${buf.toString("base64")}`);
 }
 
-// ---- API: stories ----
+// ---- API: stories + 最後更新時間 ----
 app.get("/api/stories", (req, res) => {
   const baseDir = "./images";
   if (!fs.existsSync(baseDir)) return res.json({ stories: [] });
+
   const dirs = fs.readdirSync(baseDir, { withFileTypes: true })
-                .filter(d => d.isDirectory())
-                .map(d => d.name);
+    .filter(d => d.isDirectory())
+    .map(d => {
+      const dirPath = path.join(baseDir, d.name);
+      const files = fs.readdirSync(dirPath).map(f => path.join(dirPath, f));
+      let latest = 0;
+      files.forEach(f => {
+        const stat = fs.statSync(f);
+        if (stat.mtimeMs > latest) latest = stat.mtimeMs;
+      });
+      return { name: d.name, updated: latest };
+    });
+
+  // 依照更新時間排序 (最新在前)
+  dirs.sort((a, b) => b.updated - a.updated);
+
   res.json({ stories: dirs });
 });
 
