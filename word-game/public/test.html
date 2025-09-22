@@ -11,18 +11,12 @@
          background:linear-gradient(90deg,#3b82f6,#22c55e);
          -webkit-background-clip:text; -webkit-text-fill-color:transparent;
          text-shadow:2px 2px 6px rgba(0,0,0,0.1); }
-    .phase-light {
-      display: inline-block;
-      width: 20px; height: 20px;
-      border-radius: 50%;
-      margin: 0 8px;
-      border: 1px solid #ccc;
-      cursor: pointer;
-    }
-    .light-pass { background: #22c55e; }   /* 綠色 */
-    .light-fail { background: #ef4444; }   /* 紅色 */
-    .light-done { background: #facc15; }   /* 黃色 */
-    .light-default { background: #e5e7eb; }/* 白色 */
+    .phase-light { display:inline-block; width:20px; height:20px; border-radius:50%;
+      margin:0 8px; border:1px solid #ccc; cursor:pointer; }
+    .light-pass { background:#22c55e; }
+    .light-fail { background:#ef4444; }
+    .light-done { background:#facc15; }
+    .light-default { background:#e5e7eb; }
     .option-btn { width:100%; font-size:20px; font-weight:600; }
     .wrong-answer { background:#ffe6e6 !important; border-color:#ef4444 !important; }
     .correct-answer { background:#e6ffe6 !important; border-color:#22c55e !important; }
@@ -45,7 +39,6 @@
         <span id="phase1" class="phase-light" onclick="selectPhase(1)" title="Phase 1"></span>
         <span id="phase2" class="phase-light" onclick="selectPhase(2)" title="Phase 2"></span>
       </div>
-      <!-- 進度條 + 計數 + 喇叭 -->
       <div id="statusBar" class="mt-3 w-100 text-center"></div>
     </div>
 
@@ -55,7 +48,6 @@
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const story = urlParams.get("story");
-
     document.title = story ? story : "Story Test";
     document.getElementById("storyTitle").textContent = story;
 
@@ -65,258 +57,51 @@
     let currentAnswerIndex = -1, locked = false;
 
     const synth = new Tone.Synth().toDestination();
-    function playCorrectSound() { synth.triggerAttackRelease("C6", "8n"); }
-    function playWrongSound() { synth.triggerAttackRelease("C3", "8n"); setTimeout(() => synth.triggerAttackRelease("C2", "8n"), 150); }
+    function playCorrectSound(){synth.triggerAttackRelease("C6","8n");}
+    function playWrongSound(){synth.triggerAttackRelease("C3","8n");setTimeout(()=>synth.triggerAttackRelease("C2","8n"),150);}
+    function speak(text){speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); u.lang="en-US"; u.rate=0.9; u.pitch=1.1; speechSynthesis.speak(u);}
+    function speakAllOptions(q){speechSynthesis.cancel(); q.options.forEach((opt,idx)=>{const u=new SpeechSynthesisUtterance(opt.replace(/_/g," "));u.lang="en-US";u.rate=0.9;u.pitch=1.1;setTimeout(()=>speechSynthesis.speak(u),idx*1200);});}
 
-    function speak(text) {
-      speechSynthesis.cancel();
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = "en-US"; utter.rate = 0.9; utter.pitch = 1.1;
-      speechSynthesis.speak(utter);
-    }
+    function getStoryResults(){return JSON.parse(localStorage.getItem("storyPhases")||"{}");}
+    function setPhaseResult(story, phaseKey, status){const data=getStoryResults(); if(!data[story])data[story]={phase1:"notest",phase2:"notest"}; data[story][phaseKey]=status; localStorage.setItem("storyPhases",JSON.stringify(data));}
+    function exitToList(){window.location.href="index.html";}
+    function updatePhaseIndicator(){const results=getStoryResults()[story]||{phase1:"notest",phase2:"notest"};["phase1","phase2"].forEach(p=>{const el=document.getElementById(p);switch(results[p]){case"pass":el.className="phase-light light-pass";break;case"fail":el.className="phase-light light-fail";break;case"done":el.className="phase-light light-done";break;default:el.className="phase-light light-default";}});}
+    function selectPhase(p){phase=p; current=0; correctCount=0; wrongCount=0; locked=false; if(phase===1)startPhase1(); else startPhase2();}
 
-    function speakAllOptions(q) {
-      speechSynthesis.cancel();
-      q.options.forEach((opt, idx) => {
-        const utter = new SpeechSynthesisUtterance(opt.replace(/_/g," "));
-        utter.lang = "en-US"; utter.rate = 0.9; utter.pitch = 1.1;
-        setTimeout(() => speechSynthesis.speak(utter), idx * 1200);
-      });
-    }
-
-    function getStoryResults() {
-      return JSON.parse(localStorage.getItem("storyPhases") || "{}");
-    }
-    function setPhaseResult(story, phaseKey, status) {
-      const data = getStoryResults();
-      if (!data[story]) data[story] = { phase1: "notest", phase2: "notest" };
-      data[story][phaseKey] = status;
-      localStorage.setItem("storyPhases", JSON.stringify(data));
-    }
-
-    function exitToList() {
-      window.location.href = "index.html";
-    }
-
-    function updatePhaseIndicator() {
-      const results = getStoryResults()[story] || { phase1: "notest", phase2: "notest" };
-      ["phase1","phase2"].forEach(p => {
-        const el = document.getElementById(p);
-        switch(results[p]) {
-          case "pass": 
-            el.className = "phase-light light-pass"; // 綠色
-            break;
-          case "fail": 
-            el.className = "phase-light light-fail"; // 紅色
-            break;
-          case "done": 
-            el.className = "phase-light light-done"; // 黃色
-            break;
-          default: 
-            el.className = "phase-light light-default"; // 白色
-            break;
-        }
-      });
-    }
-
-    function selectPhase(p) {
-      phase = p;
-      current = 0; correctCount = 0; wrongCount = 0; locked = false;
-      if (phase === 1) startPhase1();
-      else startPhase2();
-    }
-
-    // ---- 狀態列 ----
-    function renderStatusBar(q, isPhase2=false) {
-      // ✅ Progress bar 一律綠色
-      const progressColor = "bg-success";
-      const label = isPhase2 ? q.word.replace(/_/g," ") : q.answer.replace(/_/g," ");
-      document.getElementById("statusBar").innerHTML = `
+    function renderStatusBar(q,isPhase2=false){
+      const progressColor="bg-success"; 
+      const label=isPhase2?q.word.replace(/_/g," "):q.answer.replace(/_/g," ");
+      document.getElementById("statusBar").innerHTML=`
         <div class="progress mb-2 mx-auto" style="height:20px; max-width:600px;">
           <div class="progress-bar ${progressColor}" role="progressbar" style="width:${((current+1)/questions.length)*100}%"></div>
         </div>
-        ${isPhase2 ? `<p class="fs-4 fw-bold mb-1">${q.word.replace(/_/g," ")}</p>` : ""}
+        ${isPhase2?`<p class="fs-4 fw-bold mb-1">${q.word.replace(/_/g," ")}</p>`:""}
         <div class="d-flex justify-content-center align-items-center">
           <span class="me-2">✅ ${correctCount} / ❌ ${wrongCount}</span>
           <button class="btn btn-sm btn-outline-primary" id="speakBtn">🔊</button>
-        </div>
-      `;
-
-      const speakBtn = document.getElementById("speakBtn");
-      if (isPhase2) {
-        speakBtn.onclick = () => speak(label);
-      } else {
-        speakBtn.onclick = () => speakAllOptions(q);
-      }
+        </div>`;
+      const speakBtn=document.getElementById("speakBtn");
+      if(isPhase2){speakBtn.onclick=()=>speak(label);}else{speakBtn.onclick=()=>speakAllOptions(q);}
     }
 
-    // ---- Phase 1 ----
-    async function startPhase1() {
+    async function startPhase1(){
       updatePhaseIndicator();
-      const res = await fetch(`/api/questions/${story}`);
-      const data = await res.json();
-      questions = data.questions.map(q => q.phase1);
-      renderPhase1();
+      const res=await fetch(`/api/questions/${story}`); const data=await res.json();
+      questions=data.questions.map(q=>q.phase1); renderPhase1();
     }
+    function renderPhase1(){
+      if(current>=questions.length){let result=wrongCount===0?"pass":"fail"; setPhaseResult(story,"phase1",result); updatePhaseIndicator(); document.getElementById("phaseContent").innerHTML=`<div class="text-center py-5"><h2>Phase 1 結束！</h2><p class="fs-4 text-success">✅ Correct: ${correctCount}</p><p class="fs-4 text-danger">❌ Wrong: ${wrongCount}</p><p class="mt-3 text-muted">即將進入 Phase 2...</p></div>`; document.getElementById("statusBar").innerHTML=""; setTimeout(()=>selectPhase(2),2000); return;}
+      const q=questions[current]; renderStatusBar(q,false);
+      document.getElementById("phaseContent").innerHTML=`<div class="row"><div class="col-md-6" id="options"></div><div class="col-md-6 text-center"><div class="card shadow-sm"><div class="card-body p-0"><div class="image-frame"><img id="questionImage" src="${q.img}" alt="Question"></div></div></div></div></div>`;
+      const optionsDiv=document.getElementById("options"); currentAnswerIndex=-1; locked=false; q.options.forEach((opt,idx)=>{const btn=document.createElement("button"); btn.className="btn btn-outline-success option-btn mb-3 text-start"; btn.textContent=`(${idx+1}) ${opt.replace(/_/g," ")}`; btn.onclick=()=>checkAnswerPhase1(opt,q.answer,idx,btn); optionsDiv.appendChild(btn); if(opt===q.answer)currentAnswerIndex=idx;}); speakAllOptions(q);}
+    function checkAnswerPhase1(selected,answer,idx,btn){if(locked)return; locked=true; const optionButtons=document.querySelectorAll(".option-btn"); if(selected===answer){correctCount++; playCorrectSound(); current++; renderPhase1();}else{wrongCount++; btn.classList.add("wrong-answer"); optionButtons[currentAnswerIndex].classList.add("correct-answer"); playWrongSound(); current++; setTimeout(()=>renderPhase1(),1500);}}
 
-    function renderPhase1() {
-      if (current >= questions.length) {
-        let result = wrongCount === 0 ? "pass" : "fail";
-        setPhaseResult(story, "phase1", result);
-        updatePhaseIndicator();
-        document.getElementById("phaseContent").innerHTML = `
-          <div class="text-center py-5">
-            <h2>Phase 1 結束！</h2>
-            <p class="fs-4 text-success">✅ Correct: ${correctCount}</p>
-            <p class="fs-4 text-danger">❌ Wrong: ${wrongCount}</p>
-            <p class="mt-3 text-muted">即將進入 Phase 2...</p>
-          </div>
-        `;
-        document.getElementById("statusBar").innerHTML = "";
-        setTimeout(() => selectPhase(2), 2000);
-        return;
-      }
+    async function startPhase2(){updatePhaseIndicator(); const res=await fetch(`/api/questions/${story}`); const data=await res.json(); questions=data.questions.map(q=>q.phase2); renderPhase2();}
+    function renderPhase2(){if(current>=questions.length){let result=wrongCount===0?"pass":"fail"; setPhaseResult(story,"phase2",result); updatePhaseIndicator(); document.getElementById("phaseContent").innerHTML=`<div class="text-center py-5"><h2>Phase 2 結束！</h2><p class="fs-4 text-success">✅ Correct: ${correctCount}</p><p class="fs-4 text-danger">❌ Wrong: ${wrongCount}</p><p class="mt-3 text-muted">即將返回故事列表...</p></div>`; document.getElementById("statusBar").innerHTML=""; setTimeout(()=>exitToList(),2000); return;}
+      const q=questions[current]; renderStatusBar(q,true); locked=false; document.getElementById("phaseContent").innerHTML=`<div class="row" id="phase2Options"></div>`; speak(q.word.replace(/_/g," ")); const optionsDiv=document.getElementById("phase2Options"); q.options.forEach((opt,idx)=>{const col=document.createElement("div"); col.className="col-md-3 col-6 mb-4 text-center"; const btn=document.createElement("button"); btn.className="btn p-0 border-0 bg-transparent"; btn.onclick=()=>checkAnswerPhase2(opt,q.answer,btn); btn.innerHTML=`<div class="card shadow-sm"><div class="image-frame"><img src="${opt}" alt="Option ${idx+1}"></div></div>`; col.appendChild(btn); optionsDiv.appendChild(col);});}
+    function checkAnswerPhase2(selected,answer,btn){if(locked)return; locked=true; if(selected===answer){correctCount++; playCorrectSound(); btn.querySelector(".card").classList.add("correct"); current++; setTimeout(()=>renderPhase2(),1000);}else{wrongCount++; btn.querySelector(".card").classList.add("wrong"); const allCards=document.querySelectorAll("#phase2Options .card"); allCards.forEach(card=>{const img=card.querySelector("img"); if(img&&img.src===answer)card.classList.add("correct");}); playWrongSound(); current++; setTimeout(()=>renderPhase2(),1500);}}
 
-      const q = questions[current];
-      renderStatusBar(q, false);
-
-      document.getElementById("phaseContent").innerHTML = `
-        <div class="row">
-          <div class="col-md-6" id="options"></div>
-          <div class="col-md-6 text-center">
-            <div class="card shadow-sm">
-              <div class="card-body p-0">
-                <div class="image-frame">
-                  <img id="questionImage" src="${q.img}" alt="Question">
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-
-      const optionsDiv = document.getElementById("options");
-      currentAnswerIndex = -1; locked = false;
-      q.options.forEach((opt, idx) => {
-        const btn = document.createElement("button");
-        btn.className = "btn btn-outline-success option-btn mb-3 text-start";
-        btn.textContent = `(${idx+1}) ${opt.replace(/_/g," ")}`;
-        btn.onclick = () => checkAnswerPhase1(opt, q.answer, idx, btn);
-        optionsDiv.appendChild(btn);
-        if (opt === q.answer) currentAnswerIndex = idx;
-      });
-
-      speakAllOptions(q);
-    }
-
-    function checkAnswerPhase1(selected, answer, idx, btn) {
-      if (locked) return;
-      locked = true;
-      const optionButtons = document.querySelectorAll(".option-btn");
-      if (selected === answer) {
-        correctCount++; playCorrectSound(); current++; renderPhase1();
-      } else {
-        wrongCount++;
-        btn.classList.add("wrong-answer");
-        optionButtons[currentAnswerIndex].classList.add("correct-answer");
-        playWrongSound();
-        current++; setTimeout(() => renderPhase1(), 1500);
-      }
-    }
-
-    // ---- Phase 2 ----
-    async function startPhase2() {
-      updatePhaseIndicator();
-      const res = await fetch(`/api/questions/${story}`);
-      const data = await res.json();
-      questions = data.questions.map(q => q.phase2);
-      renderPhase2();
-    }
-
-    function renderPhase2() {
-      if (current >= questions.length) {
-        let result = wrongCount === 0 ? "pass" : "fail";
-        setPhaseResult(story, "phase2", result);
-        updatePhaseIndicator();
-        document.getElementById("phaseContent").innerHTML = `
-          <div class="text-center py-5">
-            <h2>Phase 2 結束！</h2>
-            <p class="fs-4 text-success">✅ Correct: ${correctCount}</p>
-            <p class="fs-4 text-danger">❌ Wrong: ${wrongCount}</p>
-            <p class="mt-3 text-muted">即將返回故事列表...</p>
-          </div>
-        `;
-        document.getElementById("statusBar").innerHTML = "";
-        setTimeout(() => exitToList(), 2000);
-        return;
-      }
-
-      const q = questions[current];
-      renderStatusBar(q, true);
-      locked = false;
-
-      document.getElementById("phaseContent").innerHTML = `
-        <div class="row" id="phase2Options"></div>
-      `;
-
-      speak(q.word.replace(/_/g," "));
-
-      const optionsDiv = document.getElementById("phase2Options");
-      q.options.forEach((opt, idx) => {
-        const col = document.createElement("div");
-        col.className = "col-md-3 col-6 mb-4 text-center";
-
-        const btn = document.createElement("button");
-        btn.className = "btn p-0 border-0 bg-transparent";
-        btn.onclick = () => checkAnswerPhase2(opt, q.answer, btn);
-
-        btn.innerHTML = `
-          <div class="card shadow-sm">
-            <div class="image-frame">
-              <img src="${opt}" alt="Option ${idx+1}">
-            </div>
-          </div>
-        `;
-
-        col.appendChild(btn);
-        optionsDiv.appendChild(col);
-      });
-    }
-
-    function checkAnswerPhase2(selected, answer, btn) {
-      if (locked) return;
-      locked = true;
-
-      const selFile = selected.split("/").pop();
-      const ansFile = answer.split("/").pop();
-
-      const allCards = document.querySelectorAll("#phase2Options .card");
-      let correctCard = null;
-
-      allCards.forEach(card => {
-        const img = card.querySelector("img");
-        if (img) {
-          const imgFile = img.src.split("/").pop();
-          if (imgFile === ansFile) correctCard = card;
-        }
-      });
-
-      if (selFile === ansFile) {
-        correctCount++; 
-        playCorrectSound(); 
-        btn.querySelector(".card").classList.add("correct");
-        current++; setTimeout(() => renderPhase2(), 1000);
-      } else {
-        wrongCount++;
-        btn.querySelector(".card").classList.add("wrong");
-        if (correctCard) correctCard.classList.add("correct");
-        playWrongSound();
-        current++; setTimeout(() => renderPhase2(), 1500);
-      }
-    }
-
-    updatePhaseIndicator();
-    selectPhase(1);
+    updatePhaseIndicator(); selectPhase(1);
   </script>
 </body>
 </html>
