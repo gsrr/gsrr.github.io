@@ -19,15 +19,17 @@
       border: 1px solid #ccc;
       cursor: pointer;
     }
-    .light-pass { background: #22c55e; }   /* 綠 */
-    .light-fail { background: #ef4444; }   /* 紅 */
-    .light-done { background: #facc15; }   /* 黃 */
-    .light-default { background: #e5e7eb; }/* 灰 */
+    .light-pass { background: #22c55e; }
+    .light-fail { background: #ef4444; }
+    .light-done { background: #facc15; }
+    .light-default { background: #e5e7eb; }
     .option-btn { width:100%; font-size:20px; font-weight:600; }
     .wrong-answer { background:#ffe6e6 !important; border-color:#ef4444 !important; }
     .correct-answer { background:#e6ffe6 !important; border-color:#22c55e !important; }
     .image-frame { width:100%; max-height:300px; display:flex; align-items:center; justify-content:center; background:transparent; border-radius:6px; border:2px solid #dee2e6; }
     .image-frame img { max-width:100%; max-height:300px; object-fit:contain; }
+    .card.correct { border:3px solid #22c55e !important; }
+    .card.wrong { border:3px solid #ef4444 !important; }
   </style>
 </head>
 <body>
@@ -38,9 +40,13 @@
     </div>
 
     <!-- Phase 燈號 -->
-    <div class="d-flex justify-content-center mb-4" id="phaseIndicator">
-      <span id="phase1" class="phase-light" onclick="selectPhase(1)" title="Phase 1"></span>
-      <span id="phase2" class="phase-light" onclick="selectPhase(2)" title="Phase 2"></span>
+    <div class="d-flex flex-column align-items-center mb-4" id="phaseIndicator">
+      <div>
+        <span id="phase1" class="phase-light" onclick="selectPhase(1)" title="Phase 1"></span>
+        <span id="phase2" class="phase-light" onclick="selectPhase(2)" title="Phase 2"></span>
+      </div>
+      <!-- 進度條 + 計數 + 喇叭 (Phase1/Phase2 共用區域) -->
+      <div id="statusBar" class="mt-3 w-100 text-center"></div>
     </div>
 
     <div id="phaseContent"></div>
@@ -53,11 +59,10 @@
     document.title = story ? story : "Story Test";
     document.getElementById("storyTitle").textContent = story;
 
-    // ---- 狀態 ----
-    let phase = 1; // ✅ 預設 Phase 1
+    let phase = 1;
     let questions = [];
     let current = 0, correctCount = 0, wrongCount = 0;
-    let currentSpeakText = "", currentAnswerIndex = -1, locked = false;
+    let currentAnswerIndex = -1, locked = false;
 
     const synth = new Tone.Synth().toDestination();
     function playCorrectSound() { synth.triggerAttackRelease("C6", "8n"); }
@@ -69,7 +74,6 @@
       speechSynthesis.speak(utter);
     }
 
-    // ---- localStorage ----
     function getStoryResults() {
       return JSON.parse(localStorage.getItem("storyPhases") || "{}");
     }
@@ -80,13 +84,11 @@
       localStorage.setItem("storyPhases", JSON.stringify(data));
     }
 
-    // ---- Exit → In progress ----
     function exitToList() {
       if (phase) setPhaseResult(story, "phase" + phase, "done");
       window.location.href = "index.html";
     }
 
-    // ---- 更新燈號顏色 ----
     function updatePhaseIndicator() {
       const results = getStoryResults()[story] || { phase1: "notest", phase2: "notest" };
       ["phase1","phase2"].forEach(p => {
@@ -100,7 +102,6 @@
       });
     }
 
-    // ---- 選擇 Phase ----
     function selectPhase(p) {
       phase = p;
       current = 0; correctCount = 0; wrongCount = 0; locked = false;
@@ -108,12 +109,28 @@
       else startPhase2();
     }
 
+    // ---- 更新狀態列 (共用) ----
+    function renderStatusBar(q, isPhase2=false) {
+      const progressColor = isPhase2 ? "bg-warning" : "bg-success";
+      const label = isPhase2 ? q.word.replace(/_/g," ") : q.answer.replace(/_/g," ");
+      document.getElementById("statusBar").innerHTML = `
+        <div class="progress mb-2 mx-auto" style="height:20px; max-width:600px;">
+          <div class="progress-bar ${progressColor}" role="progressbar" style="width:${((current+1)/questions.length)*100}%"></div>
+        </div>
+        ${isPhase2 ? `<p class="fs-4 fw-bold mb-1">${q.word.replace(/_/g," ")}</p>` : ""}
+        <div class="d-flex justify-content-center align-items-center">
+          <span class="me-2">✅ ${correctCount} / ❌ ${wrongCount}</span>
+          <button class="btn btn-sm btn-outline-primary" onclick="speak('${label}')">🔊</button>
+        </div>
+      `;
+    }
+
     // ---- Phase 1 ----
     async function startPhase1() {
       updatePhaseIndicator();
       const res = await fetch(`/api/questions/${story}`);
       const data = await res.json();
-      questions = data.questions;
+      questions = data.questions.map(q => q.phase1);
       renderPhase1();
     }
 
@@ -129,28 +146,30 @@
             <p class="fs-4 text-danger">❌ Wrong: ${wrongCount}</p>
           </div>
         `;
+        document.getElementById("statusBar").innerHTML = "";
         return;
       }
+
       const q = questions[current];
+      renderStatusBar(q, false);
+
       document.getElementById("phaseContent").innerHTML = `
-        <div class="row justify-content-center mb-4">
-          <div class="col-md-6">
-            <div class="progress" style="height: 20px;">
-              <div class="progress-bar bg-success" role="progressbar" style="width:${((current+1)/questions.length)*100}%"></div>
-            </div>
-          </div>
-        </div>
         <div class="row">
           <div class="col-md-6" id="options"></div>
           <div class="col-md-6 text-center">
-            <div class="card shadow-sm"><div class="card-body p-0">
-              <div class="image-frame"><img id="questionImage" src="${q.img}" alt="Question"></div>
-            </div></div>
+            <div class="card shadow-sm">
+              <div class="card-body p-0">
+                <div class="image-frame">
+                  <img id="questionImage" src="${q.img}" alt="Question">
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       `;
+
       const optionsDiv = document.getElementById("options");
-      currentSpeakText = ""; currentAnswerIndex = -1; locked = false;
+      currentAnswerIndex = -1; locked = false;
       q.options.forEach((opt, idx) => {
         const btn = document.createElement("button");
         btn.className = "btn btn-outline-success option-btn mb-3 text-start";
@@ -177,31 +196,89 @@
     }
 
     // ---- Phase 2 ----
-    function startPhase2() {
+    async function startPhase2() {
       updatePhaseIndicator();
-      document.getElementById("phaseContent").innerHTML = `
-        <div class="text-center py-5">
-          <h2>Phase 2 測驗 (範例)</h2>
-          <p>這裡放第二種測試方式的內容。</p>
-          <button class="btn btn-success" onclick="finishPhase2(true)">模擬通過</button>
-          <button class="btn btn-danger ms-2" onclick="finishPhase2(false)">模擬失敗</button>
-        </div>
-      `;
+      const res = await fetch(`/api/questions/${story}`);
+      const data = await res.json();
+      questions = data.questions.map(q => q.phase2);
+      renderPhase2();
     }
 
-    function finishPhase2(pass) {
-      let result = pass ? "pass" : "fail";
-      setPhaseResult(story, "phase2", result);
-      updatePhaseIndicator();
+    function renderPhase2() {
+      if (current >= questions.length) {
+        let result = wrongCount === 0 ? "pass" : "fail";
+        setPhaseResult(story, "phase2", result);
+        updatePhaseIndicator();
+        document.getElementById("phaseContent").innerHTML = `
+          <div class="text-center py-5">
+            <h2>Phase 2 結束！</h2>
+            <p class="fs-4 text-success">✅ Correct: ${correctCount}</p>
+            <p class="fs-4 text-danger">❌ Wrong: ${wrongCount}</p>
+          </div>
+        `;
+        document.getElementById("statusBar").innerHTML = "";
+        return;
+      }
+
+      const q = questions[current];
+      renderStatusBar(q, true);
+
       document.getElementById("phaseContent").innerHTML = `
-        <div class="text-center py-5">
-          <h2>Phase 2 結束！</h2>
-          <p class="fs-4 ${pass ? "text-success" : "text-danger"}">${pass ? "✅ Passed" : "❌ Failed"}</p>
-        </div>
+        <div class="row" id="phase2Options"></div>
       `;
+
+      speak(q.word.replace(/_/g," "));
+
+      const optionsDiv = document.getElementById("phase2Options");
+      q.options.forEach((opt, idx) => {
+        const col = document.createElement("div");
+        col.className = "col-md-3 col-6 mb-4 text-center";
+
+        const btn = document.createElement("button");
+        btn.className = "btn p-0 border-0 bg-transparent";
+        btn.onclick = () => checkAnswerPhase2(opt, q.answer, btn);
+
+        btn.innerHTML = `
+          <div class="card shadow-sm">
+            <div class="image-frame">
+              <img src="${opt}" alt="Option ${idx+1}">
+            </div>
+          </div>
+        `;
+
+        col.appendChild(btn);
+        optionsDiv.appendChild(col);
+      });
     }
 
-    // ---- 初始化 (預設 Phase 1) ----
+    function checkAnswerPhase2(selected, answer, btn) {
+      if (locked) return;
+      locked = true;
+
+      const allCards = document.querySelectorAll("#phase2Options .card");
+      let correctCard = null;
+
+      allCards.forEach(card => {
+        const img = card.querySelector("img");
+        if (img && img.src === answer) {
+          correctCard = card;
+        }
+      });
+
+      if (selected === answer) {
+        correctCount++; 
+        playCorrectSound(); 
+        btn.querySelector(".card").classList.add("correct");
+        current++; setTimeout(() => renderPhase2(), 1000);
+      } else {
+        wrongCount++;
+        btn.querySelector(".card").classList.add("wrong");
+        if (correctCard) correctCard.classList.add("correct");
+        playWrongSound();
+        current++; setTimeout(() => renderPhase2(), 1500);
+      }
+    }
+
     updatePhaseIndicator();
     selectPhase(1);
   </script>

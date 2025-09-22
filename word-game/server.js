@@ -9,12 +9,10 @@ app.use(cors());
 
 // ---- 靜態檔案 ----
 const publicDir = path.join(__dirname, "public");
-app.use(express.static(publicDir)); // /public 底下的靜態檔案
+app.use(express.static(publicDir));
 
 // ---- 瀏覽人數計算 ----
 const visitorsFile = path.join(__dirname, "visitors.json");
-
-// 初始化
 let visitors = 0;
 if (fs.existsSync(visitorsFile)) {
   try {
@@ -45,14 +43,13 @@ app.get("/api/stories", (req, res) => {
   if (!fs.existsSync(baseDir)) {
     return res.json({ stories: [] });
   }
-
   const dirs = fs.readdirSync(baseDir, { withFileTypes: true })
                 .filter(d => d.isDirectory())
                 .map(d => d.name);
   res.json({ stories: dirs });
 });
 
-// API: 取得某個 story 的題目
+// API: 取得某個 story 的題目 (同時給 phase1 + phase2)
 app.get("/api/questions/:story", (req, res) => {
   const story = req.params.story;
   const dir = path.join(__dirname, "images", story);
@@ -63,7 +60,6 @@ app.get("/api/questions/:story", (req, res) => {
 
   const files = fs.readdirSync(dir).filter(f => f.endsWith(".png"));
 
-  // shuffle function
   function shuffle(array) {
     for (let i = array.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -78,8 +74,24 @@ app.get("/api/questions/:story", (req, res) => {
   const questions = shuffled.map(img => {
     const answer = img.replace(".png", "");
     const others = shuffle(files.filter(f => f !== img)).slice(0, 3);
-    const options = shuffle([answer, ...others.map(f => f.replace(".png", ""))]);
-    return { img: `/api/image/${story}/${img}`, answer, options };
+
+    // Phase1: 題目圖片 + 文字選項
+    const options1 = shuffle([answer, ...others.map(f => f.replace(".png", ""))]);
+    const q1 = { 
+      img: `/api/image/${story}/${img}`, 
+      answer, 
+      options: options1 
+    };
+
+    // Phase2: 題目文字 + 圖片選項
+    const options2 = shuffle([img, ...others]).map(f => `/api/image/${story}/${f}`);
+    const q2 = { 
+      word: answer, 
+      answer: `/api/image/${story}/${img}`, 
+      options: options2 
+    };
+
+    return { phase1: q1, phase2: q2 };
   });
 
   res.json({ questions });
@@ -107,13 +119,10 @@ app.get("/api/image/:story/:file", async (req, res) => {
 });
 
 // ---- 頁面路由 ----
-
-// 首頁 → story 列表 (index.html)
 app.get("/", (req, res) => {
   res.sendFile(path.join(publicDir, "index.html"));
 });
 
-// 單一 story 測驗頁 (test.html?story=xxx)
 app.get("/test.html", (req, res) => {
   res.sendFile(path.join(publicDir, "test.html"));
 });
