@@ -19,10 +19,10 @@
       border: 1px solid #ccc;
       cursor: pointer;
     }
-    .light-pass { background: #22c55e; }
-    .light-fail { background: #ef4444; }
-    .light-done { background: #facc15; }
-    .light-default { background: #e5e7eb; }
+    .light-pass { background: #22c55e; }   /* 綠色 */
+    .light-fail { background: #ef4444; }   /* 紅色 */
+    .light-done { background: #facc15; }   /* 黃色 */
+    .light-default { background: #e5e7eb; }/* 白色 */
     .option-btn { width:100%; font-size:20px; font-weight:600; }
     .wrong-answer { background:#ffe6e6 !important; border-color:#ef4444 !important; }
     .correct-answer { background:#e6ffe6 !important; border-color:#22c55e !important; }
@@ -95,7 +95,6 @@
     }
 
     function exitToList() {
-      if (phase) setPhaseResult(story, "phase" + phase, "done");
       window.location.href = "index.html";
     }
 
@@ -104,10 +103,18 @@
       ["phase1","phase2"].forEach(p => {
         const el = document.getElementById(p);
         switch(results[p]) {
-          case "pass": el.className = "phase-light light-pass"; break;
-          case "fail": el.className = "phase-light light-fail"; break;
-          case "done": el.className = "phase-light light-done"; break;
-          default: el.className = "phase-light light-default"; break;
+          case "pass": 
+            el.className = "phase-light light-pass"; // 綠色
+            break;
+          case "fail": 
+            el.className = "phase-light light-fail"; // 紅色
+            break;
+          case "done": 
+            el.className = "phase-light light-done"; // 黃色
+            break;
+          default: 
+            el.className = "phase-light light-default"; // 白色
+            break;
         }
       });
     }
@@ -121,7 +128,8 @@
 
     // ---- 狀態列 ----
     function renderStatusBar(q, isPhase2=false) {
-      const progressColor = isPhase2 ? "bg-warning" : "bg-success";
+      // ✅ Progress bar 一律綠色
+      const progressColor = "bg-success";
       const label = isPhase2 ? q.word.replace(/_/g," ") : q.answer.replace(/_/g," ");
       document.getElementById("statusBar").innerHTML = `
         <div class="progress mb-2 mx-auto" style="height:20px; max-width:600px;">
@@ -165,8 +173,6 @@
           </div>
         `;
         document.getElementById("statusBar").innerHTML = "";
-
-        // ✅ 自動跳到 Phase2
         setTimeout(() => selectPhase(2), 2000);
         return;
       }
@@ -200,7 +206,6 @@
         if (opt === q.answer) currentAnswerIndex = idx;
       });
 
-      // 自動播放所有選項
       speakAllOptions(q);
     }
 
@@ -242,23 +247,18 @@
           </div>
         `;
         document.getElementById("statusBar").innerHTML = "";
-
-        // ✅ 自動返回列表
         setTimeout(() => exitToList(), 2000);
         return;
       }
 
       const q = questions[current];
       renderStatusBar(q, true);
-
-      // 每題 reset
       locked = false;
 
       document.getElementById("phaseContent").innerHTML = `
         <div class="row" id="phase2Options"></div>
       `;
 
-      // 自動播放單字
       speak(q.word.replace(/_/g," "));
 
       const optionsDiv = document.getElementById("phase2Options");
