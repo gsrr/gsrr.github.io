@@ -2,223 +2,93 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>English Word Game</title>
+  <title>Story List</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Poppins', sans-serif; background:#f0f9f6; }
-    h1 { font-size:48px; font-weight:700;
+    h1 { font-size:36px; font-weight:700;
          background:linear-gradient(90deg,#3b82f6,#22c55e);
          -webkit-background-clip:text; -webkit-text-fill-color:transparent;
          text-shadow:2px 2px 6px rgba(0,0,0,0.1); }
-    .option-btn { width:100%; font-size:20px; font-weight:600; }
-    .wrong-answer { background:#ffe6e6 !important; border-color:#ef4444 !important; }
-    .correct-answer { background:#e6ffe6 !important; border-color:#22c55e !important; }
 
-    .image-frame { 
-      width:100%; 
-      max-height:300px; 
-      display:flex; 
-      align-items:center; 
-      justify-content:center; 
-      background:transparent; 
-      border-radius:6px; 
-      border:2px solid #dee2e6;
+    .story-card {
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
     }
-    .image-frame img { 
-      max-width:100%; 
-      max-height:300px; 
-      object-fit:contain; 
+    .story-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.15);
     }
 
-    @media (max-width: 768px) {
-      .col-md-6 { width:100%; }
-    }
+    /* 狀態背景 */
+    .status-default { background: #ffffff; }
+    .status-pass    { background: #d1fae5; } /* 綠色 */
+    .status-done    { background: #fef9c3; } /* 黃色 */
+    .status-fail    { background: #ffe4e6; } /* 粉紅 */
   </style>
 </head>
 <body>
-  <div id="gameContainer" class="container py-4">
-    <div class="text-center mb-4">
-      <h1>English Word Game</h1>
+  <div class="container py-4">
+    <div class="text-center mb-5">
+      <h1>📖 Story List</h1>
+      <p class="text-muted">Click a story to start the test</p>
     </div>
 
-    <div class="row justify-content-center mb-3">
-      <div class="col-md-6">
-        <select id="storySelect" class="form-select form-select-lg border-primary" onchange="loadStory()">
-          <option value="">-- Choose a story --</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="row justify-content-center mb-4">
-      <div class="col-md-6">
-        <div class="progress" style="height: 20px;">
-          <div id="progressFill" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width:0%"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col-md-6" id="options"></div>
-
-      <div class="col-md-6 text-center">
-        <div class="card shadow-sm">
-          <div class="card-body p-0">
-            <div class="image-frame">
-              <img id="questionImage" src="" alt="Question">
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 分數區 -->
-    <div class="row justify-content-center mt-4">
-      <div class="col-md-6">
-        <div class="card shadow-sm text-center">
-          <div class="card-body d-flex justify-content-center align-items-center gap-3">
-            <button class="btn btn-primary btn-lg rounded-circle" onclick="replayOptions()">🔊</button>
-            <div id="score" class="fs-4 fw-bold"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 瀏覽人數 -->
-    <div class="row justify-content-center mt-3">
-      <div class="col-md-6 text-center">
-        <p id="visitorCount" class="fw-bold text-secondary"></p>
-      </div>
-    </div>
+    <div id="storyList" class="row g-4"></div>
   </div>
 
   <script>
-    let questions = [];
-    let current = 0, correctCount = 0, wrongCount = 0;
-    let currentSpeakText = "";
-    let currentAnswerIndex = -1;
-    let locked = false;
-
-    const synth = new Tone.Synth().toDestination();
-    function playCorrectSound() { synth.triggerAttackRelease("C6", "8n"); }
-    function playWrongSound() {
-      synth.triggerAttackRelease("C3", "8n");
-      setTimeout(() => synth.triggerAttackRelease("C2", "8n"), 150);
-    }
-
-    async function loadVisitors() {
-      const res = await fetch("/api/visit"); // 每次載入頁面會 +1
-      const data = await res.json();
-      document.getElementById("visitorCount").textContent =
-        `👀 Visitors: ${data.visitors}`;
+    function getStoryResults() {
+      return JSON.parse(localStorage.getItem("storyResults") || "{}");
     }
 
     async function loadStories() {
       const res = await fetch("/api/stories");
       const data = await res.json();
-      const select = document.getElementById("storySelect");
+      const results = getStoryResults();
+      const list = document.getElementById("storyList");
+
       data.stories.forEach(story => {
-        const opt = document.createElement("option");
-        opt.value = story;
-        opt.textContent = story;
-        select.appendChild(opt);
-      });
-      if (data.stories.length > 0) {
-        select.value = data.stories[0];
-        loadStory();
-      }
-    }
+        const status = results[story] || "default";
 
-    async function loadStory() {
-      const story = document.getElementById("storySelect").value;
-      if (!story) return;
-      current = 0; correctCount = 0; wrongCount = 0; locked = false;
-      const res = await fetch(`/api/questions/${story}`);
-      const data = await res.json();
-      questions = data.questions;
-      showQuestion();
-    }
+        const col = document.createElement("div");
+        col.className = "col-md-4 col-sm-6";
 
-    function speak(text) {
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = "en-US";
-      utter.rate = 0.9;
-      utter.pitch = 1.1;
-      speechSynthesis.speak(utter);
-    }
-
-    function replayOptions() {
-      if (currentSpeakText) {
-        speechSynthesis.cancel();
-        speak(currentSpeakText);
-      }
-    }
-
-    function showQuestion() {
-      if (current >= questions.length) {
-        document.getElementById("gameContainer").innerHTML = `
-          <div class="text-center py-5">
-            <h2>🎉 Game Over!</h2>
-            <p class="fs-4 text-success">✅ Correct: ${correctCount}</p>
-            <p class="fs-4 text-danger">❌ Wrong: ${wrongCount}</p>
-            <a href="/" class="btn btn-lg btn-primary mt-3">Play Again</a>
+        col.innerHTML = `
+          <div class="card story-card status-${status} shadow-sm h-100"
+               onclick="window.location.href='test.html?story=${encodeURIComponent(story)}'">
+            <div class="card-body d-flex flex-column justify-content-center text-center">
+              <h4 class="card-title fw-bold mb-2">${story}</h4>
+              <span class="badge bg-${statusToBadge(status)}">${statusLabel(status)}</span>
+            </div>
           </div>
         `;
-        return;
-      }
-      const q = questions[current];
-      document.getElementById("questionImage").src = q.img;
-      document.getElementById("progressFill").style.width = ((current+1)/questions.length)*100 + "%";
 
-      const optionsDiv = document.getElementById("options");
-      optionsDiv.innerHTML = "";
-      currentSpeakText = ""; currentAnswerIndex = -1; locked = false;
-
-      q.options.forEach((opt, idx) => {
-        const btn = document.createElement("button");
-        btn.className = "btn btn-outline-success option-btn mb-3 text-start";
-        btn.textContent = `(${idx+1}) ${opt.replace(/_/g," ")}`;
-        btn.onclick = () => checkAnswer(opt, q.answer, idx, btn);
-        optionsDiv.appendChild(btn);
-        optionsDiv.appendChild(document.createElement("br"));
-        currentSpeakText += `${idx+1}. ${opt.replace(/_/g," ")}. `;
-        if (opt === q.answer) currentAnswerIndex = idx;
+        list.appendChild(col);
       });
-
-      updateScore();
-      speechSynthesis.cancel();
-      setTimeout(() => replayOptions(), current===0 ? 1000 : 500);
     }
 
-    function checkAnswer(selected, answer, idx, btn) {
-      if (locked) return;
-      locked = true;
-      const optionButtons = document.querySelectorAll(".option-btn");
-      if (selected === answer) {
-        correctCount++; playCorrectSound();
-        updateScore(); current++; showQuestion();
-      } else {
-        wrongCount++;
-        btn.classList.add("wrong-answer");
-        optionButtons[currentAnswerIndex].classList.add("correct-answer");
-        playWrongSound();
-        speechSynthesis.cancel();
-        speak(`The correct answer is number ${currentAnswerIndex+1}. ${answer.replace(/_/g," ")}.`);
-        updateScore(); current++;
-        setTimeout(() => showQuestion(), 2000);
+    function statusLabel(status) {
+      switch(status) {
+        case "pass": return "Passed";
+        case "done": return "In progress";
+        case "fail": return "Failed";
+        default: return "Not Tested";
       }
     }
 
-    function updateScore() {
-      document.getElementById("score").innerHTML =
-        `<span class="text-success">✅ ${correctCount}</span>
-         <span class="text-danger">❌ ${wrongCount}</span>
-         <span class="text-primary">📊 ${current}/${questions.length}</span>`;
+    function statusToBadge(status) {
+      switch(status) {
+        case "pass": return "success";
+        case "done": return "warning text-dark";
+        case "fail": return "danger";
+        default: return "secondary";
+      }
     }
 
-    loadVisitors();
     loadStories();
   </script>
 </body>
 </html>
+
