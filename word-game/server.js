@@ -42,7 +42,7 @@ function imgToBase64(filePath) {
     .then(buf => `data:image/webp;base64,${buf.toString("base64")}`);
 }
 
-// ---- API: stories + 最後更新時間 ----
+// ---- API: stories + 最後更新時間 + video.ini ----
 app.get("/api/stories", (req, res) => {
   const baseDir = "./images";
   if (!fs.existsSync(baseDir)) return res.json({ stories: [] });
@@ -57,10 +57,24 @@ app.get("/api/stories", (req, res) => {
         const stat = fs.statSync(f);
         if (stat.mtimeMs > latest) latest = stat.mtimeMs;
       });
-      return { name: d.name, updated: latest };
+
+      // 嘗試讀取 video.ini (只存 YouTube ID)
+      const videoFile = path.join(dirPath, "video.ini");
+      let video = null;
+      if (fs.existsSync(videoFile)) {
+        try {
+          const videoId = fs.readFileSync(videoFile, "utf-8").trim();
+          if (videoId) {
+            video = `https://www.youtube.com/embed/${videoId}`;
+          }
+        } catch (err) {
+          console.error("Error reading video.ini:", err);
+        }
+      }
+
+      return { name: d.name, updated: latest, video };
     });
 
-  // 依照更新時間排序 (最新在前)
   dirs.sort((a, b) => b.updated - a.updated);
 
   res.json({ stories: dirs });
