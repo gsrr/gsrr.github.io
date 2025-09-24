@@ -14,7 +14,7 @@
 
     .story-card {
       transition: transform 0.2s, box-shadow 0.2s;
-      cursor: pointer; /* 🔹 整張卡片變成手指 */
+      cursor: pointer;
     }
     .story-card:hover {
       transform: translateY(-3px);
@@ -140,7 +140,7 @@
             ${item.video ? `
               <div class="card-footer text-center" onclick="event.stopPropagation();">
                 <button class="btn btn-sm btn-outline-primary btn-video" onclick="toggleVideo('${videoId}')">🎬 Watch Video</button>
-                <div id="${videoId}" class="ratio ratio-16x9 mt-2 d-none">
+                <div id="${videoId}" class="ratio ratio-16x9 mt-2">
                   <iframe src="${item.video}" allowfullscreen></iframe>
                 </div>
               </div>
@@ -153,20 +153,14 @@
 
     function toggleVideo(id) {
       const target = document.getElementById(id);
-      const isHidden = target.classList.contains("d-none");
-
-      // 收起所有影片
-      document.querySelectorAll("[id^='video-']").forEach(el => el.classList.add("d-none"));
-
-      // 如果本來是隱藏 → 展開；如果本來是展開 → 保持隱藏
-      if (isHidden) {
-        target.classList.remove("d-none");
+      if (target) {
+        target.classList.toggle("d-none"); // 單獨切換自己
       }
     }
 
     async function loadVisitors() {
       try {
-        const res = await fetch("/api/visit"); // 每次進入首頁 +1
+        const res = await fetch("/api/visit");
         const data = await res.json();
         document.getElementById("visitorCount").textContent =
           `👥 Visitors: ${data.visitors}`;
