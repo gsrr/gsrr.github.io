@@ -122,7 +122,7 @@ app.get("/api/questions/:story", async (req, res) => {
 app.get("/", (req, res) => res.sendFile(path.join(publicDir, "index.html")));
 app.get("/test.html", (req, res) => res.sendFile(path.join(publicDir, "test.html")));
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 80;
 app.listen(PORT, "0.0.0.0", () =>
   console.log(`Server running on http://0.0.0.0:${PORT}`)
 );
