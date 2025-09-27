@@ -11,45 +11,18 @@
          background:linear-gradient(90deg,#3b82f6,#22c55e);
          -webkit-background-clip:text; -webkit-text-fill-color:transparent;
          text-shadow:0 2px 6px rgba(0,0,0,0.1); }
-
-    .story-card {
-      transition: transform 0.2s, box-shadow 0.2s;
-      cursor: pointer;
-    }
-    .story-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 6px 18px rgba(0,0,0,0.15);
-    }
-
-    /* 狀態背景顏色 */
+    .story-card { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+    .story-card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,0.15); }
     .status-default { background: #ffffff; }
     .status-pass    { background: #d1fae5; }
     .status-done    { background: #fef9c3; }
     .status-fail    { background: #ffe4e6; }
-
-    /* phase 燈號 */
-    .phase-light {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      margin: 0 4px;
-      border: 1px solid #ccc;
-    }
+    .phase-light { display: inline-block; width: 16px; height: 16px; border-radius: 50%; margin: 0 4px; border: 1px solid #ccc; }
     .light-pass { background:#22c55e; }
     .light-fail { background:#ef4444; }
     .light-done { background:#facc15; }
     .light-default { background:#e5e7eb; }
-
-    iframe {
-      border-radius: 12px;
-      margin-top: 8px;
-    }
-
-    .btn-video {
-      cursor: pointer;
-      pointer-events: auto;
-    }
+    iframe { border-radius: 12px; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -58,10 +31,7 @@
       <h1>📖 Story List</h1>
       <p class="text-muted">Click a story to start the test</p>
     </div>
-
     <div id="storyList" class="row g-4"></div>
-
-    <!-- 👥 瀏覽人數 -->
     <div class="text-center mt-5">
       <small id="visitorCount" class="text-muted">Loading visitors...</small>
     </div>
@@ -74,10 +44,14 @@
 
     function getOverallStoryStatus(story) {
       const data = getStoryPhases();
-      const s = data[story] || { phase1: "notest", phase2: "notest" };
-      if (s.phase1 === "pass" && s.phase2 === "pass") return "pass";
-      if (s.phase1 === "fail" || s.phase2 === "fail") return "fail";
-      if (s.phase1 === "done" || s.phase2 === "done") return "done";
+      const s = data[story] || { phase1: "notest", phase2: "notest", phase3: "notest" };
+
+      if (s.phase1 === "pass" && s.phase2 === "pass" && s.phase3 === "pass") return "pass";
+      if (s.phase1 === "fail" || s.phase2 === "fail" || s.phase3 === "fail") return "fail";
+      if (
+        s.phase1 === "done" || s.phase2 === "done" || s.phase3 === "done" ||
+        s.phase1 === "notest" || s.phase2 === "notest" || s.phase3 === "notest"
+      ) return "done";
       return "default";
     }
 
@@ -114,16 +88,14 @@
       const storyPhases = getStoryPhases();
       const list = document.getElementById("storyList");
 
-      data.stories.forEach((item, idx) => {
+      data.stories.forEach(item => {
         const story = item.name;
         const updated = new Date(item.updated).toLocaleString();
-        const phases = storyPhases[story] || { phase1: "notest", phase2: "notest" };
+        const phases = storyPhases[story] || { phase1: "notest", phase2: "notest", phase3: "notest" };
         const overall = getOverallStoryStatus(story);
 
         const col = document.createElement("div");
         col.className = "col-md-4 col-sm-6";
-
-        const videoId = `video-${idx}`;
 
         col.innerHTML = `
           <div class="card story-card status-${overall} shadow-sm h-100"
@@ -134,28 +106,14 @@
               <div class="mb-2">
                 ${phaseLight(phases.phase1)} <small>P1</small>
                 ${phaseLight(phases.phase2)} <small>P2</small>
+                ${phaseLight(phases.phase3)} <small>P3</small>
               </div>
               <small class="text-muted">Updated: ${updated}</small>
             </div>
-            ${item.video ? `
-              <div class="card-footer text-center" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-outline-primary btn-video" onclick="toggleVideo('${videoId}')">🎬 Watch Video</button>
-                <div id="${videoId}" class="ratio ratio-16x9 mt-2">
-                  <iframe src="${item.video}" allowfullscreen></iframe>
-                </div>
-              </div>
-            ` : ""}
           </div>
         `;
         list.appendChild(col);
       });
-    }
-
-    function toggleVideo(id) {
-      const target = document.getElementById(id);
-      if (target) {
-        target.classList.toggle("d-none"); // 單獨切換自己
-      }
     }
 
     async function loadVisitors() {
@@ -164,7 +122,7 @@
         const data = await res.json();
         document.getElementById("visitorCount").textContent =
           `👥 Visitors: ${data.visitors}`;
-      } catch (e) {
+      } catch {
         document.getElementById("visitorCount").textContent = "👥 Visitors: (error)";
       }
     }
