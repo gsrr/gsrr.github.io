@@ -1,340 +1,324 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>國樂社春季出遊 - 大板根森林烤肉溫泉之旅</title>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --forest-green: #2d6a4f;
-            --light-green: #d8f3dc;
-            --accent-orange: #f94144;
-            --text-dark: #1b4332;
-            --bg-gray: #f8f9fa;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>國樂社春季出遊｜小人國主題樂園一日遊</title>
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-            background-color: var(--bg-gray);
-            color: var(--text-dark);
-            line-height: 1.8;
-        }
+<style>
+:root{
+    --green:#2d6a4f;
+    --accent:#ff6f61;
+    --yellow:#ffd166;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+    font-family:'Noto Sans TC',sans-serif;
+    background:linear-gradient(180deg,#eaf7ff 0%,#ffffff 45%);
+    color:#333;
+    line-height:1.8;
+}
 
-        /* Hero Section */
-        .hero {
-            height: 70vh;
-            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
-                        url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
-            background-size: cover;
-            background-position: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            text-align: center;
-            padding: 20px;
-        }
+/* Hero */
+.hero{
+    height:65vh;
+    background:
+        radial-gradient(circle at 20% 30%,#fff 7%,transparent 8%),
+        radial-gradient(circle at 70% 25%,#fff 5%,transparent 6%),
+        linear-gradient(180deg,#7dd3fc 0%,#c7ebff 65%,#fff 100%);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+}
+.hero h1{
+    font-size:3rem;
+    margin-bottom:12px;
+}
+.hero p{
+    background:var(--yellow);
+    padding:10px 28px;
+    border-radius:999px;
+    font-size:1.35rem;
+    font-weight:bold;
+}
 
-        .hero h1 {
-            font-size: 3.5rem;
-            margin-bottom: 10px;
-            font-weight: 700;
-            letter-spacing: 5px;
-            text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
-        }
+/* Layout */
+.container{
+    max-width:900px;
+    margin:-60px auto 90px;
+    padding:0 20px;
+}
+.card{
+    background:#fff;
+    border-radius:28px;
+    padding:40px;
+    margin-bottom:40px;
+    box-shadow:0 18px 35px rgba(0,0,0,.08);
+}
+.section-title{
+    font-size:1.9rem;
+    color:var(--green);
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:28px;
+}
 
-        .hero p {
-            font-size: 1.5rem;
-            background: rgba(45, 106, 79, 0.8);
-            padding: 5px 20px;
-            border-radius: 50px;
-        }
+/* 圖片 */
+.park-img{
+    width:100%;
+    border-radius:22px;
+    margin:24px 0;
+    box-shadow:0 10px 25px rgba(0,0,0,.15);
+}
 
-        /* Main Container */
-        .container {
-            max-width: 900px;
-            margin: -60px auto 60px;
-            padding: 0 20px;
-        }
+/* 表格 */
+.price-table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+}
+.price-table th{
+    background:var(--green);
+    color:#fff;
+    padding:12px;
+}
+.price-table td{
+    border:1px solid #eee;
+    padding:14px;
+    text-align:center;
+}
+.price-table tr:nth-child(even){background:#fafafa;}
+.total{
+    color:var(--accent);
+    font-weight:bold;
+    font-size:1.15rem;
+}
 
-        .card {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            margin-bottom: 40px;
-        }
+/* 行程 */
+.timeline-item{
+    display:flex;
+    margin-bottom:26px;
+}
+.timeline-time{
+    min-width:150px;
+    font-weight:bold;
+    color:var(--accent);
+}
+.timeline-content{
+    padding-left:26px;
+    border-left:4px dashed var(--yellow);
+}
+.timeline-content h3{
+    font-size:1.05rem;
+}
+.timeline-content p{
+    font-size:.95rem;
+    color:#555;
+}
 
-        h2.section-title {
-            color: var(--forest-green);
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 25px;
-            font-size: 1.8rem;
-            border-bottom: 2px solid var(--light-green);
-            padding-bottom: 10px;
-        }
-
-        /* 景點介紹 */
-        .intro-text {
-            color: #444;
-            margin-bottom: 20px;
-        }
-        .link-btn {
-            display: inline-block;
-            color: var(--forest-green);
-            text-decoration: none;
-            font-weight: bold;
-            border: 1px solid var(--forest-green);
-            padding: 5px 15px;
-            border-radius: 5px;
-            transition: 0.3s;
-        }
-        .link-btn:hover { background: var(--forest-green); color: white; }
-
-        /* 費用表格 */
-        .price-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            font-size: 1.1rem;
-        }
-        .price-table th {
-            background-color: var(--forest-green);
-            color: white;
-            padding: 12px;
-            text-align: center;
-        }
-        .price-table td {
-            padding: 15px;
-            border: 1px solid #eee;
-            text-align: center;
-        }
-        .price-table tr:nth-child(even) { background-color: #fcfcfc; }
-        .total-price { font-weight: bold; color: var(--accent-orange); font-size: 1.3rem; }
-
-        /* 行程時間軸 */
-        .timeline {
-            position: relative;
-            padding: 20px 0;
-        }
-        .timeline-item {
-            display: flex;
-            margin-bottom: 30px;
-            position: relative;
-        }
-        .timeline-time {
-            min-width: 120px;
-            font-weight: bold;
-            color: var(--forest-green);
-            font-size: 1.1rem;
-        }
-        .timeline-content {
-            padding-left: 30px;
-            border-left: 2px solid var(--light-green);
-            position: relative;
-        }
-        .timeline-content::before {
-            content: '';
-            position: absolute;
-            left: -9px;
-            top: 8px;
-            width: 16px;
-            height: 16px;
-            background: var(--forest-green);
-            border-radius: 50%;
-        }
-        .timeline-content h3 { font-size: 1.2rem; margin-bottom: 5px; }
-        .timeline-content p { font-size: 0.95rem; color: #666; }
-
-        /* 詳細說明區塊 */
-        .details-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        .detail-box {
-            background: #f1f8f5;
-            padding: 20px;
-            border-radius: 15px;
-            border-left: 5px solid var(--forest-green);
-        }
-        .detail-box h4 { margin-bottom: 10px; color: var(--forest-green); }
-        .detail-box ul { list-style: none; font-size: 0.9rem; }
-
-        /* 按鈕 */
-        .cta-container { text-align: center; margin-top: 50px; }
-        .btn-join {
-            background: var(--accent-orange);
-            color: white;
-            padding: 18px 60px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-size: 1.4rem;
-            font-weight: bold;
-            box-shadow: 0 10px 20px rgba(249, 65, 68, 0.3);
-            transition: 0.3s;
-        }
-        .btn-join:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(249, 65, 68, 0.4); }
-
-        /* 手機版適配 */
-        @media (max-width: 768px) {
-            .hero h1 { font-size: 2.2rem; }
-            .details-grid { grid-template-columns: 1fr; }
-            .timeline-time { min-width: 80px; font-size: 0.9rem; }
-            .price-table { font-size: 0.9rem; }
-        }
-    </style>
+/* CTA */
+.cta{
+    text-align:center;
+    margin-top:70px;
+}
+.cta a{
+    display:inline-block;
+    background:var(--accent);
+    color:#fff;
+    padding:22px 76px;
+    font-size:1.7rem;
+    font-weight:bold;
+    border-radius:999px;
+    text-decoration:none;
+    box-shadow:0 15px 30px rgba(255,111,97,.45);
+}
+footer{
+    text-align:center;
+    margin-top:70px;
+    font-size:.85rem;
+    color:#aaa;
+}
+</style>
 </head>
+
 <body>
 
-    <header class="hero">
-        <h1>國樂社春季出遊</h1>
-        <p><i class="far fa-calendar-alt"></i> 116 / 03 / 29 (日)</p>
-    </header>
+<header class="hero">
+    <h1>國樂社春季出遊</h1>
+    <p>🎠 116 / 03 / 29（日）小人國歡樂日</p>
+</header>
 
-    <div class="container">
-        
-        <!-- 景點介紹 -->
-        <section class="card">
-            <h2 class="section-title"><i class="fas fa-tree"></i> 目的地：大板根森林溫泉酒店</h2>
-            <div class="intro-text">
-                位於三峽插角里之大豹溪畔，佔地二十公頃，原為日據時代台灣最大的製茶廠，擁有近百年歷史。目前保存有日本皇室休閒渡假行館，並擁有全國唯一的「亞熱帶雨林」景觀，其芬多精含量高達 20,000ppm，是身心舒壓的最佳去處。
-            </div>
-            <a href="https://www.thegreatroots.com/" target="_blank" class="link-btn">官方網站 <i class="fas fa-external-link-alt"></i></a>
-        </section>
+<div class="container">
 
-        <!-- 費用說明 -->
-        <section class="card">
-            <h2 class="section-title"><i class="fas fa-hand-holding-usd"></i> 報名費用</h2>
-            <div style="overflow-x: auto;">
-                <table class="price-table">
-                    <thead>
-                        <tr>
-                            <th>項目</th>
-                            <th>門票+午餐(烤肉)</th>
-                            <th>保險</th>
-                            <th>遊覽車</th>
-                            <th>總計(NT)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>成人</strong></td>
-                            <td>$475</td>
-                            <td>$40</td>
-                            <td>$350</td>
-                            <td class="total-price">$865</td>
-                        </tr>
-                        <tr>
-                            <td><strong>學生</strong></td>
-                            <td>$440</td>
-                            <td>$27</td>
-                            <td>$350</td>
-                            <td class="total-price">$817</td>
-                        </tr>
-                        <tr>
-                            <td><strong>兒童(110-140cm)</strong></td>
-                            <td>$405</td>
-                            <td>$27</td>
-                            <td>$350</td>
-                            <td class="total-price">$782</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <p style="margin-top:15px; font-size: 0.9rem; color: #666;">
-                * 烤肉以 10 人一組為單位。<br>
-                * 原則上希望大家都先以遊覽車為主, 若人數超過遊覽車再協調自行開車(可扣掉遊覽車費用, 但開車在現場另付停車費 $100)。
-            </p>
-        </section>
+<!-- 目的地 -->
+<section class="card">
+    <h2 class="section-title">🌍 小人國主題樂園</h2>
+    <p>
+        走進迷你世界、搭乘好玩的遊樂設施，
+        再加上精彩的國樂展演，
+        是一趟結合音樂與歡樂的開心旅程！
+    </p>
+    <img src="553860.jpg" class="park-img" alt="小人國主題樂園">
+</section>
 
-        <!-- 行程安排 -->
-        <section class="card">
-            <h2 class="section-title"><i class="fas fa-route"></i> 當日行程</h2>
-            <div class="timeline">
-                <div class="timeline-item">
-                    <div class="timeline-time">07:30-08:00</div>
-                    <div class="timeline-content">
-                        <h3>白雲國小集合 & 出發</h3>
-                        <p>準時集合，開啟美好的春季之旅</p>
-                    </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-time">09:00-10:00</div>
-                    <div class="timeline-content">
-                        <h3>國樂表演時間</h3>
-                        <p>在自然與樂聲中交織動人旋律</p>
-                    </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-time">10:00-11:30</div>
-                    <div class="timeline-content">
-                        <h3>雨林森呼吸</h3>
-                        <p>探索國寶級板根森林，享受 20,000ppm 芬多精</p>
-                    </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-time">11:30-14:00</div>
-                    <div class="timeline-content">
-                        <h3>戶外 BBQ 饗宴</h3>
-                        <p>大板根特選食材，與好友家人共享烤肉樂趣</p>
-                    </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-time">15:00-16:30</div>
-                    <div class="timeline-content">
-                        <h3>前往三峽老街</h3>
-                        <p>**三峽老街**位於新北市三峽區，是台灣保存最完整的歷史街區之一。街道兩旁林立著日治時期留下的紅磚巴洛克式街屋，拱廊、山牆與精緻浮雕展現濃厚的歷史風情。老街不僅保留傳統建築，也聚集了金牛角麵包、藍染工藝與在地小吃，融合人文、美食與藝術，是適合慢步欣賞、感受老城韻味的經典景點。</p>
-                    </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-time">16:30-17:30</div>
-                    <div class="timeline-content">
-                        <h3>快樂賦歸</h3>
-                        <p>帶著滿滿回憶回到溫暖的家</p>
-                    </div>
-                </div>
-            </div>
-        </section>
+<!-- 費用 -->
+<section class="card">
+    <h2 class="section-title">💰 每人費用試算（假日）</h2>
 
-        <!-- 注意事項 -->
-        <div class="details-grid">
-            <div class="detail-box">
-                <h4><i class="fas fa-bus"></i> 交通資訊</h4>
-                <ul>
-                    <li><strong>車型：</strong>43座大型冷氣遊覽車</li>
-                    <li><strong>數量：</strong>共 1 輛</li>
-                    <li><strong>費用：</strong>每趟 $12,000 (35人攤提約 $350/人)</li>
-                </ul>
-            </div>
-            <div class="detail-box">
-                <h4><i class="fas fa-shield-alt"></i> 保險說明</h4>
-                <ul>
-                    <li><strong>滿15歲：</strong>意外身故100萬/醫療10萬 ($40/人)</li>
-                    <li><strong>未滿15歲：</strong>意外身故69萬/醫療6萬 ($27/人)</li>
-                    <li>均含食物中毒險 3,000</li>
-                </ul>
-            </div>
-        </div>
+    <table class="price-table">
+        <thead>
+            <tr>
+                <th>票種</th>
+                <th>每人小計<br>(含門票＋保險＋車資)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>成童票（6歲以上）</td>
+                <td class="total">$989</td>
+            </tr>
+            <tr>
+                <td>幼童票（3–未滿6歲）</td>
+                <td class="total">$796</td>
+            </tr>
+            <tr>
+                <td>博愛票</td>
+                <td class="total">$789</td>
+            </tr>
+        </tbody>
+    </table>
 
-        <div class="cta-container">
-            <a href="#" class="btn-join">立即報名參加</a>
-            <p style="margin-top: 20px; color: #888;">誠摯歡迎您的參與！</p>
-        </div>
+    <!-- 用餐方式 -->
+    <h3 style="margin-top:36px;color:#2d6a4f;">🍱 團體用餐方式（二選一）</h3>
 
-        <footer style="text-align: center; margin-top: 80px; padding-bottom: 40px; color: #aaa; font-size: 0.8rem;">
-            &copy; 116 國樂社春季出遊籌備小組 
-        </footer>
+    <p style="margin-top:10px;color:#555;">
+        團體入園可選擇由主辦單位協助代訂便當，或自行購買園區餐券使用。
+    </p>
+
+    <h4 style="margin-top:22px;">方案一：代訂團體便當</h4>
+    <table class="price-table">
+        <thead>
+            <tr>
+                <th>品項</th>
+                <th>價格</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>雞腿便當</td><td>$130</td></tr>
+            <tr><td>排骨便當</td><td>$120</td></tr>
+            <tr><td>素食便當</td><td>$120</td></tr>
+            <tr><td>炒飯便當（含半塊排骨）</td><td>$100</td></tr>
+        </tbody>
+    </table>
+
+    <p style="margin-top:10px;font-size:.9rem;color:#666;">
+        ※ 便當需於入園前一週確認數量，確認後無法修改或取消。
+    </p>
+
+    <h4 style="margin-top:28px;">方案二：購買園區餐券</h4>
+    <table class="price-table">
+        <thead>
+            <tr>
+                <th>項目</th>
+                <th>說明</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>園區餐券</td>
+                <td>每張面額 <strong>$50</strong>，可依需求購買多張，全園區餐廳皆可使用</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p style="margin-top:10px;font-size:.9rem;color:#666;">
+        ※ 餐券可多張合併使用。<br>
+        ※ 蔣府宴餐廳不適用餐券。
+    </p>
+</section>
+
+<!-- 行程 -->
+<section class="card">
+<h2 class="section-title">🕒 當日行程安排</h2>
+
+<div class="timeline-item">
+    <div class="timeline-time">07:30 – 08:00</div>
+    <div class="timeline-content">
+        <h3>集合出發（白雲國小）</h3>
+        <p>於白雲國小門口集合，整隊後搭乘遊覽車出發</p>
     </div>
+</div>
 
+<div class="timeline-item">
+    <div class="timeline-time">09:00 – 10:00</div>
+    <div class="timeline-content">
+        <h3>園區自由參觀</h3>
+        <p>欣賞迷你世界建築並拍照留念</p>
+    </div>
+</div>
+
+<div class="timeline-item">
+    <div class="timeline-time">10:00 – 11:00</div>
+    <div class="timeline-content">
+        <h3>調音準備</h3>
+        <p>樂器調音與演出前準備</p>
+    </div>
+</div>
+
+<div class="timeline-item">
+    <div class="timeline-time">11:00 – 12:00</div>
+    <div class="timeline-content">
+        <h3>國樂展演（擎天舞台）</h3>
+        <p>於園區舞台進行國樂演出</p>
+    </div>
+</div>
+
+<div class="timeline-item">
+    <div class="timeline-time">12:00 – 13:00</div>
+    <div class="timeline-content">
+        <h3>用餐時間</h3>
+        <p>團體便當或使用園區餐券自由用餐</p>
+    </div>
+</div>
+
+<div class="timeline-item">
+    <div class="timeline-time">13:00 – 16:00</div>
+    <div class="timeline-content">
+        <h3>遊樂設施體驗時間</h3>
+        <p>自由體驗園區各項遊樂設施</p>
+    </div>
+</div>
+
+<div class="timeline-item">
+    <div class="timeline-time">16:00 – 16:30</div>
+    <div class="timeline-content">
+        <h3>集合返程</h3>
+        <p>清點人數後搭車返回</p>
+    </div>
+</div>
+
+<div class="timeline-item">
+    <div class="timeline-time">17:00 – 17:30</div>
+    <div class="timeline-content">
+        <h3>抵達溫暖的家</h3>
+        <p>平安賦歸，結束愉快的一天</p>
+    </div>
+</div>
+</section>
+
+<!-- CTA -->
+<div class="cta">
+    <a href="GOOGLE_DOC_URL_HERE" target="_blank">我要報名</a>
+</div>
+
+<footer>© 116 國樂社春季出遊籌備小組</footer>
+
+</div>
 </body>
 </html>
