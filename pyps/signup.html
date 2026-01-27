@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>活動報名表｜國樂社校外展演暨小人國參訪</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+body{
+  font-family:'Noto Sans TC',sans-serif;
+  background:#f4f7fb;
+  padding:20px;
+}
+form{
+  max-width:720px;
+  margin:auto;
+  background:#fff;
+  padding:36px;
+  border-radius:24px;
+  box-shadow:0 12px 30px rgba(0,0,0,.1);
+}
+h1{
+  text-align:center;
+  margin-bottom:28px;
+}
+.section{
+  margin-bottom:32px;
+}
+.section h2{
+  font-size:1.3rem;
+  margin-bottom:14px;
+  color:#2d6a4f;
+}
+label{
+  display:block;
+  margin:10px 0 6px;
+  font-weight:500;
+}
+input, select, textarea{
+  width:100%;
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid #ccc;
+  font-size:1rem;
+}
+.inline{
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+}
+.inline > div{
+  flex:1;
+  min-width:160px;
+}
+small{
+  color:#666;
+}
+button{
+  width:100%;
+  padding:18px;
+  font-size:1.25rem;
+  background:#ff6f61;
+  color:#fff;
+  border:none;
+  border-radius:999px;
+  cursor:pointer;
+  box-shadow:0 10px 25px rgba(255,111,97,.45);
+}
+button:disabled{
+  background:#ccc;
+  box-shadow:none;
+  cursor:not-allowed;
+}
+footer{
+  text-align:center;
+  margin-top:18px;
+  font-size:.85rem;
+  color:#888;
+}
+</style>
+</head>
+
+<body>
+
+<form id="signupForm">
+  <h1>🎠 活動報名表</h1>
+
+  <!-- 基本資料 -->
+  <div class="section">
+    <h2>👤 基本資料</h2>
+
+    <label>姓名 *</label>
+    <input type="text" name="name" required>
+
+    <label>聯絡電話 *</label>
+    <input type="tel" name="phone" required placeholder="09xxxxxxxx">
+
+    <label>Email（選填）</label>
+    <input type="email" name="email">
+  </div>
+
+  <!-- 人數 -->
+  <div class="section">
+    <h2>🎫 參加人數</h2>
+    <div class="inline">
+      <div>
+        <label>成童票（6 歲以上）</label>
+        <input type="number" name="adult" min="0" value="0">
+      </div>
+      <div>
+        <label>幼童票（3–未滿 6 歲）</label>
+        <input type="number" name="child" min="0" value="0">
+      </div>
+      <div>
+        <label>博愛票</label>
+        <input type="number" name="care" min="0" value="0">
+      </div>
+    </div>
+    <small>※ 至少需填寫 1 人</small>
+  </div>
+
+  <!-- 便當 -->
+  <div class="section">
+    <h2>🍱 便當訂購</h2>
+
+    <label>是否代訂便當</label>
+    <select name="lunch" id="lunchSelect">
+      <option value="no">不需要</option>
+      <option value="yes">需要</option>
+    </select>
+
+    <div id="bentoArea" style="display:none;margin-top:16px;">
+      <small>請填寫各類便當數量</small>
+
+      <div class="inline">
+        <div>
+          <label>雞腿便當 $130</label>
+          <input type="number" name="bento_chicken" min="0" value="0">
+        </div>
+        <div>
+          <label>排骨便當 $120</label>
+          <input type="number" name="bento_pork" min="0" value="0">
+        </div>
+      </div>
+
+      <div class="inline">
+        <div>
+          <label>素食便當 $120</label>
+          <input type="number" name="bento_veg" min="0" value="0">
+        </div>
+        <div>
+          <label>炒飯便當 $100</label>
+          <input type="number" name="bento_rice" min="0" value="0">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 備註 -->
+  <div class="section">
+    <h2>📝 備註</h2>
+    <textarea name="note" rows="4" placeholder="特殊需求、過敏、其他說明"></textarea>
+  </div>
+
+  <button type="submit" id="submitBtn">送出報名</button>
+</form>
+
+<footer>
+  ※ 送出後即代表同意主辦單位蒐集資料僅用於本次活動
+</footer>
+
+<script>
+const form = document.getElementById("signupForm");
+const lunchSelect = document.getElementById("lunchSelect");
+const bentoArea = document.getElementById("bentoArea");
+const submitBtn = document.getElementById("submitBtn");
+
+// 顯示 / 隱藏便當區
+lunchSelect.addEventListener("change", () => {
+  bentoArea.style.display = lunchSelect.value === "yes" ? "block" : "none";
+});
+
+// 表單送出
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+
+  const data = Object.fromEntries(new FormData(form).entries());
+
+  // 轉數字（對帳重要）
+  [
+    "adult","child","care",
+    "bento_chicken","bento_pork","bento_veg","bento_rice"
+  ].forEach(k => data[k] = Number(data[k] || 0));
+
+  // 至少一人
+  if (data.adult + data.child + data.care === 0) {
+    alert("請至少填寫一位參加人數");
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = "送出中…";
+
+  try {
+    const res = await fetch("http://15.168.59.231:80/api/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+
+    if (!res.ok) throw new Error();
+
+    alert("✅ 報名成功，感謝您的填寫！");
+    form.reset();
+    bentoArea.style.display = "none";
+  } catch {
+    alert("❌ 送出失敗，請稍後再試");
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "送出報名";
+  }
+});
+</script>
+
+</body>
+</html>
+
