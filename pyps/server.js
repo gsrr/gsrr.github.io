@@ -5,6 +5,9 @@ const path = require("path");
 const app = express();
 const PORT = 80;
 
+
+TICKET_CONF_PATH = "ticket.conf.json";
+
 // ====== 基本設定 ======
 
 // 前端靜態檔案根目錄（index.html / signup.html）
@@ -135,3 +138,29 @@ process.on("SIGINT", () => {
   server.close(() => process.exit(0));
 });
 
+
+/**
+ * 工具函式：讀取 ticket conf
+ * - 每次讀檔（安全、即時）
+ * - 若你之後在意效能，再加 cache
+ */
+function loadTicketConf() {
+  const raw = fs.readFileSync(TICKET_CONF_PATH, "utf8");
+  return JSON.parse(raw);
+}
+
+/**
+ * GET /api/config/ticket
+ * 回傳票價設定
+ */
+app.get("/api/config/ticket", (req, res) => {
+  try {
+    const conf = loadTicketConf();
+    res.json(conf);
+  } catch (err) {
+    console.error("load ticket conf failed:", err);
+    res.status(500).json({
+      error: "ticket config load failed"
+    });
+  }
+});
