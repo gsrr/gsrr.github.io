@@ -16,6 +16,7 @@ const WEB_ROOT = __dirname;
 // 報名資料存放位置
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "signup.json");
+const VISIT_FILE = path.join(DATA_DIR, "visit.json");
 
 // 建立 data 資料夾
 fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -54,7 +55,6 @@ app.get("/signup.html", (req, res) => {
  * 接收報名資料並存成 JSON
  */
 app.post("/api/signup", (req, res) => {
-  console.log("ssssssssssssssssss\n")
   const signup = {
     ...req.body,
     createdAt: new Date().toISOString(),
@@ -63,7 +63,13 @@ app.post("/api/signup", (req, res) => {
 
   let list = [];
   if (fs.existsSync(DATA_FILE)) {
-    list = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
+	  try {
+		  const raw = fs.readFileSync(DATA_FILE, "utf8").trim();
+		  list = raw ? JSON.parse(raw) : [];
+	  } catch (err) {
+		  console.error("signup.json parse failed, reset to []", err);
+		  list = [];
+	  }
   }
 
   list.push(signup);
@@ -106,13 +112,14 @@ app.get("/api/stats", (req, res) => {
   };
 
   list.forEach(r => {
-    stats.adult += r.adult || 0;
-    stats.child += r.child || 0;
-    stats.care += r.care || 0;
-    stats.bento_chicken += r.bento_chicken || 0;
-    stats.bento_pork += r.bento_pork || 0;
-    stats.bento_veg += r.bento_veg || 0;
-    stats.bento_rice += r.bento_rice || 0;
+    stats.adult += r.summary.adult || 0;
+    stats.child += r.summary.child || 0;
+    stats.care += r.summary.care || 0;
+	  // 便當
+    stats.bento_chicken += r.bento?.chicken || 0;
+    stats.bento_pork    += r.bento?.pork || 0;
+    stats.bento_veg     += r.bento?.veg || 0;
+    stats.bento_rice    += r.bento?.rice || 0;
   });
 
   stats.totalPeople = stats.adult + stats.child + stats.care;
@@ -164,3 +171,46 @@ app.get("/api/config/ticket", (req, res) => {
     });
   }
 });
+
+/**
+ * GET /api/visit
+ * 首頁瀏覽次數 +1
+ */
+app.get("/api/visit", (req, res) => {
+  let count = 0;
+
+  if (fs.existsSync(VISIT_FILE)) {
+    count = JSON.parse(fs.readFileSync(VISIT_FILE, "utf8")).count || 0;
+  }
+
+  count += 1;
+
+  fs.writeFileSync(VISIT_FILE, JSON.stringify({ count }, null, 2));
+  res.json({ count });
+});
+
+
+
+/**
+ * POST /api/signup/note
+ * body: { index, note }
+ */
+app.post("/api/signup/note", (req, res) => {
+  const { index, note } = req.body;
+
+  if (!fs.existsSync(DATA_FILE)) {
+    return res.status(400).json({ error: "no data" });
+  }
+
+  const list = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
+
+  if (index < 0 || index >= list.length) {
+    return res.status(400).json({ error: "invalid index" });
+  }
+
+  list[index].note = String(note || "");
+
+  fs.writeFileSync(DATA_FILE, JSON.stringify(list, null, 2));
+  res.json({ ok: true });
+});
+

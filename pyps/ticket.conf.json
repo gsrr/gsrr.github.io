@@ -3,7 +3,7 @@
   "tickets": {
     "adult": {
       "label": "成童票（6歲以上）",
-      "price": 990
+      "price": 1000
     },
     "child": {
       "label": "幼童票（3–未滿6歲）",

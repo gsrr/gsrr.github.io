@@ -144,8 +144,29 @@ footer{
     font-size:.85rem;
     color:#aaa;
 }
+.cta{
+    display:flex;
+    justify-content:center;
+    gap:24px;
+    flex-wrap:wrap;
+}
+
+.cta .secondary-btn{
+    background:#2d6a4f;
+    box-shadow:0 15px 30px rgba(45,106,79,.35);
+}
 </style>
 </head>
+
+<script>
+fetch("/api/visit")
+  .then(r => r.json())
+  .then(d => {
+    document.getElementById("visitCount").textContent = d.count;
+  })
+  .catch(()=>{});
+</script>
+
 
 <body>
 
@@ -316,7 +337,18 @@ footer{
 
 <div class="cta">
     <a href="signup.html" target="_blank" rel="noopener">我要報名</a>
+    <a href="stats.html" target="_blank" rel="noopener" class="secondary-btn">報名統計</a>
 </div>
+
+<div id="visitBox" style="
+  text-align:center;
+  margin-top:40px;
+  font-size:.9rem;
+  color:#666;
+">
+  👀 本頁已被瀏覽 <strong id="visitCount">-</strong> 次
+</div>
+
 
 <footer>© 116 國樂社春季出遊籌備小組</footer>
 

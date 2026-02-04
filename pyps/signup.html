@@ -119,6 +119,9 @@ footer{
 
   <label>Email（選填）</label>
   <input type="email" name="email">
+
+  <label>備註（選填）</label>
+  <textarea name="note" rows="3" placeholder="如：晚到、特殊需求、備註事項"></textarea>
 </div>
 
 <!-- 參加人員 -->
@@ -156,6 +159,10 @@ footer{
     <div class="summary-row"><span>成童票</span><span id="sumAdult">0</span></div>
     <div class="summary-row"><span>幼童票</span><span id="sumChild">0</span></div>
     <div class="summary-row"><span>博愛票</span><span id="sumCare">0</span></div>
+    <div class="summary-row"><span>🍗 雞腿便當</span><span id="sumChicken">0</span></div>
+    <div class="summary-row"><span>🍖 排骨便當</span><span id="sumPork">0</span></div>
+    <div class="summary-row"><span>🥬 素食便當</span><span id="sumVeg">0</span></div>
+    <div class="summary-row"><span>🍚 炒飯便當</span><span id="sumRice">0</span></div>
     <div class="total" id="totalPrice">$ 0</div>
   </div>
 </div>
@@ -175,6 +182,10 @@ const bentoArea = document.getElementById("bentoArea");
 const sumAdult = document.getElementById("sumAdult");
 const sumChild = document.getElementById("sumChild");
 const sumCare  = document.getElementById("sumCare");
+const sumChicken = document.getElementById("sumChicken");
+const sumPork    = document.getElementById("sumPork");
+const sumVeg     = document.getElementById("sumVeg");
+const sumRice    = document.getElementById("sumRice");
 const totalPriceEl = document.getElementById("totalPrice");
 
 let TICKET_CONF = null;
@@ -203,6 +214,11 @@ function recalc(){
   sumAdult.textContent = count.adult;
   sumChild.textContent = count.child;
   sumCare.textContent  = count.care;
+
+  sumChicken.textContent = form.bento_chicken.value || 0;
+  sumPork.textContent    = form.bento_pork.value || 0;
+  sumVeg.textContent     = form.bento_veg.value || 0;
+  sumRice.textContent    = form.bento_rice.value || 0;
 
   ["chicken","pork","veg","rice"].forEach(k=>{
     total += Number(form["bento_"+k].value || 0) * BENTO_PRICE[k];
@@ -236,8 +252,17 @@ addPersonBtn.onclick = ()=>{
 
 /* 便當顯示 */
 lunchSelect.onchange = ()=>{
-  bentoArea.style.display = lunchSelect.value === "yes" ? "block" : "none";
+  const need = lunchSelect.value === "yes";
+  bentoArea.style.display = need ? "block" : "none";
+
+  if (!need) {
+    ["chicken","pork","veg","rice"].forEach(k=>{
+      form["bento_"+k].value = 0;
+    });
+    recalc();
+  }
 };
+bentoArea.oninput = recalc;
 
 /* 送出表單 → POST /api/signup */
 form.addEventListener("submit", async e=>{
@@ -258,6 +283,7 @@ form.addEventListener("submit", async e=>{
     name: form.name.value.trim(),
     phone: form.phone.value.trim(),
     email: form.email.value.trim(),
+    note: form.note.value.trim(),   // ← 新增這行
     people,
     bento: {
       chicken: Number(form.bento_chicken.value||0),
