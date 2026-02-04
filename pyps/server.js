@@ -1,9 +1,17 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const https = require("https");
+
+const options = {
+  key: fs.readFileSync("/etc/letsencrypt/live/kyotozuiryu.com/privkey.pem"),
+  cert: fs.readFileSync("/etc/letsencrypt/live/kyotozuiryu.com/fullchain.pem")
+};
+
+
 
 const app = express();
-const PORT = 80;
+const PORT = 8000;
 
 
 TICKET_CONF_PATH = "ticket.conf.json";
@@ -128,9 +136,8 @@ app.get("/api/stats", (req, res) => {
 });
 
 // ====== 啟動伺服器 ======
-
-const server = app.listen(PORT, "0.0.0.0", () => {
-  console.log(`✅ Server running at http://0.0.0.0:${PORT}`);
+const server = https.createServer(options, app).listen(PORT, "0.0.0.0", () => {
+  console.log(`✅ HTTPS server running at https://0.0.0.0:${PORT}`);
 });
 
 // ====== 正常關機（很重要） ======

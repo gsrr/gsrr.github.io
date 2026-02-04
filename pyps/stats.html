@@ -127,13 +127,36 @@ async function loadList(){
         🍚${r.bento.rice||0}
       </td>
       <td class="small">${(r.createdAt||"").replace("T"," ").slice(0,16)}</td>
-      <td>
-  	<textarea
-    	style="width:100%;min-width:160px"
-    	rows="2"
-    	onchange="updateNote(${i}, this.value)"
-  	>${r.note || ""}</textarea>
-      </td>
+<td style="white-space:nowrap;">
+  <textarea
+    id="note-${i}"
+    rows="2"
+    style="
+      width:160px;
+      resize:none;
+      font-size:0.85rem;
+      vertical-align:middle;
+    "
+  >${r.note || ""}</textarea>
+
+  <button
+    onclick="saveNote(${i})"
+    title="儲存備註"
+    style="
+      margin-left:4px;
+      padding:0 6px;
+      height:22px;
+      font-size:0.8rem;
+      border:1px solid #2d6a4f;
+      border-radius:4px;
+      background:#fff;
+      color:#2d6a4f;
+      cursor:pointer;
+      vertical-align:middle;
+    "
+  >✓</button>
+</td>
+
     `;
     tbody.appendChild(tr);
   });
@@ -143,13 +166,24 @@ loadStats();
 loadList();
 
 
-function updateNote(index, note){
+function saveNote(index){
+  const textarea = document.getElementById(`note-${index}`);
+  const note = textarea.value;
+
   fetch("/api/signup/note", {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ index, note })
-  }).catch(()=>{
-    alert("備註儲存失敗");
+  })
+  .then(r => r.json())
+  .then(() => {
+    textarea.style.background = "#e6f7ef";
+    setTimeout(()=>{
+      textarea.style.background = "";
+    }, 600);
+  })
+  .catch(()=>{
+    alert("❌ 備註儲存失敗");
   });
 }
 </script>
