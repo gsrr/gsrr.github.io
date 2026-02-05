@@ -100,6 +100,37 @@ footer{
   font-size:.85rem;
   color:#888;
 }
+
+.checkbox-row{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+.checkbox-row input{
+  width: auto;
+  margin: 0;
+}
+
+.radio-group{
+  margin-top: 8px;
+}
+
+.radio-row{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  cursor: pointer;
+}
+
+.radio-row input{
+  width: auto;
+  margin: 0;
+}
+
 </style>
 </head>
 
@@ -119,6 +150,20 @@ footer{
 
   <label>Email（選填）</label>
   <input type="email" name="email">
+
+<label>交通方式 *</label>
+
+<div class="radio-group">
+  <label class="radio-row">
+    <input type="radio" name="transport" value="drive" required>
+    <span>🚗 自行開車</span>
+  </label>
+
+  <label class="radio-row">
+    <input type="radio" name="transport" value="bus">
+    <span>🚌 搭乘遊覽車 (費用會在人數確認後進行估算)</span>
+  </label>
+</div>
 
   <label>備註（選填）</label>
   <textarea name="note" rows="3" placeholder="如：晚到、特殊需求、備註事項"></textarea>
@@ -281,6 +326,7 @@ form.addEventListener("submit", async e=>{
     phone: form.phone.value.trim(),
     email: form.email.value.trim(),
     note: form.note.value.trim(),   // ← 新增這行
+    transport: form.transport.value, // ← 新增
     people,
     bento: {
       chicken: Number(form.bento_chicken.value||0),

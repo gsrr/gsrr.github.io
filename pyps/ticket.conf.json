@@ -3,11 +3,11 @@
   "tickets": {
     "adult": {
       "label": "成童票（6歲以上）",
-      "price": 1000
+      "price": 650
     },
     "child": {
       "label": "幼童票(含博愛票）",
-      "price": 800
+      "price": 450
     },
     "care": {
       "label": "博愛票",
