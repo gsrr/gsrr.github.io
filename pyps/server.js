@@ -89,13 +89,38 @@ app.post("/api/signup", (req, res) => {
 
 // ====== API：查看報名（管理用） ======
 
+function maskValue(val, visible = 0) {
+  if (!val) return val;
+  return "*".repeat(Math.max(val.length - visible, 0));
+}
+
+
 /**
  * GET /api/signup
- * 取得全部報名資料
+ * 取得全部報名資料（隱藏敏感資訊）
  */
 app.get("/api/signup", (req, res) => {
   if (!fs.existsSync(DATA_FILE)) return res.json([]);
-  res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf8")));
+
+  const list = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
+
+  const masked = list.map(item => ({
+    ...item,
+
+    // 第一層
+    phone: item.phone ? maskValue(item.phone) : item.phone,
+    email: item.email ? maskValue(item.email) : item.email,
+
+    // people 是 array，要再 map
+    people: Array.isArray(item.people)
+      ? item.people.map(p => ({
+          ...p,
+          idno: p.idno ? maskValue(p.idno) : p.idno
+        }))
+      : item.people
+  }));
+
+  res.json(masked);
 });
 
 /**

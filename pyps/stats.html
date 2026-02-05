@@ -88,6 +88,8 @@ tr:nth-child(even){
   <th>成童</th>
   <th>幼童(博愛)</th>
   <th>便當</th>
+  <th>交通方式</th>
+  <th>總價(NT$)</th>
   <th>報名時間</th>
   <th>備註</th>
 </tr>
@@ -117,13 +119,14 @@ async function loadList(){
       <td>${r.name || ""}</td>
       <td>${r.summary.adult || 0}</td>
       <td>${r.summary.child || 0}</td>
-      <td>${r.summary.care || 0}</td>
       <td class="small">
         🍗${r.bento.chicken||0}
         🍖${r.bento.pork||0}
         🥬${r.bento.veg||0}
         🍚${r.bento.rice||0}
       </td>
+      <td>${r.transport || ""}</td>
+      <td>${r.total || 0}</td>
       <td class="small">${(r.createdAt||"").replace("T"," ").slice(0,16)}</td>
 <td style="white-space:nowrap;">
   <textarea
