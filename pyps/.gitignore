@@ -1,0 +1,37 @@
+# =====================
+# Environment variables
+# =====================
+.env
+
+# =====================
+# Dependencies
+# =====================
+node_modules/
+
+# =====================
+# Runtime / logs
+# =====================
+*.log
+nohup.out
+
+# =====================
+# Data files (runtime)
+# =====================
+data/meta.json
+
+# signup.json 看你要不要進版控
+# 如果是正式報名資料，通常不進 git
+data/signup.json
+
+# =====================
+# OS / Editor
+# =====================
+.DS_Store
+Thumbs.db
+
+# =====================
+# IDE
+# =====================
+.vscode/
+.idea/
+
