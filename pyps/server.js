@@ -13,6 +13,7 @@ const options = {
 const app = express();
 const PORT = 8000;
 
+require("dotenv").config();
 
 TICKET_CONF_PATH = "ticket.conf.json";
 
@@ -25,12 +26,88 @@ const WEB_ROOT = __dirname;
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "signup.json");
 const VISIT_FILE = path.join(DATA_DIR, "visit.json");
+const META_FILE = path.join(DATA_DIR, "meta.json");
+
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
 
 // 建立 data 資料夾
 fs.mkdirSync(DATA_DIR, { recursive: true });
 
 // 解析 JSON
 app.use(express.json());
+
+/* =========================
+ * Admin 驗證 middleware
+ * ========================= */
+function requireAdmin(req, res, next) {
+  const token = req.headers["x-admin-token"];
+
+  if (!token || token !== ADMIN_TOKEN) {
+    return res.status(403).json({ error: "forbidden" });
+  }
+  next();
+}
+
+/* =========================
+ * 工具：讀檔
+ * ========================= */
+function loadJson(file, def) {
+  if (!fs.existsSync(file)) return def;
+  return JSON.parse(fs.readFileSync(file, "utf8"));
+}
+
+function loadMeta() {
+  if (!fs.existsSync(META_FILE)) return {};
+  return JSON.parse(fs.readFileSync(META_FILE, "utf8"));
+}
+
+function saveMeta(meta) {
+  fs.writeFileSync(META_FILE, JSON.stringify(meta, null, 2));
+}
+
+/*
+* =========================
+ * 管理者 API（可寫）
+ * ========================= */
+
+app.post("/api/admin/meta", requireAdmin, (req, res) => {
+	console.log(req.body);
+  const { id, paid, note } = req.body;
+
+  if (!id) {
+    return res.status(400).json({ error: "missing id" });
+  }
+
+  const meta = loadMeta();
+
+  meta[id] = {
+    ...(meta[id] || {}),
+    paid: !!paid,
+    note: note || "",
+    updatedAt: new Date().toISOString()
+  };
+
+  saveMeta(meta);
+
+  res.json({ ok: true });
+});
+
+
+
+/**
+ * 取得完整資料（含 meta）
+ */
+app.get("/api/admin/signup", requireAdmin, (req, res) => {
+  const list = loadJson(DATA_FILE, []);
+  const meta = loadJson(META_FILE, {});
+
+  const result = list.map(item => ({
+    ...item,
+    meta: meta[item.createdAt] || { paid: false, note: "" }
+  }));
+
+  res.json(result);
+});
 
 // CORS（目前全開，活動型網站夠用）
 app.use((req, res, next) => {
