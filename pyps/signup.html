@@ -209,6 +209,7 @@ footer{
     <div class="summary-row"><span>🍖 排骨便當</span><span id="sumPork">0</span></div>
     <div class="summary-row"><span>🥬 素食便當</span><span id="sumVeg">0</span></div>
     <div class="summary-row"><span>🍚 炒飯便當</span><span id="sumRice">0</span></div>
+    <div class="summary-row"><span>🚌 遊覽車費用</span><span id="sumBus">—</span></div>
     <div class="total" id="totalPrice">$ 0</div>
   </div>
 </div>
@@ -229,6 +230,7 @@ const sumAdult = document.getElementById("sumAdult");
 const sumChild = document.getElementById("sumChild");
 const sumFemale = document.getElementById("sumFemale");
 const sumHorseFree = document.getElementById("sumHorseFree");
+const sumBus = document.getElementById("sumBus");
 const sumChicken = document.getElementById("sumChicken");
 const sumPork    = document.getElementById("sumPork");
 const sumVeg     = document.getElementById("sumVeg");
@@ -275,9 +277,13 @@ function recalc(){
   // 遊覽車：選 bus 時每人加 $350
   const BUS_PRICE = 350;
   const transportVal = form.transport?.value;
+  const totalPeople = count.adult + count.child + count.female + count.horse_free;
   if (transportVal === "bus") {
-    const totalPeople = count.adult + count.child + count.female + count.horse_free;
-    total += totalPeople * BUS_PRICE;
+    const busCost = totalPeople * BUS_PRICE;
+    total += busCost;
+    sumBus.textContent = `${totalPeople} 人 × $350 = $${busCost}`;
+  } else {
+    sumBus.textContent = "自行開車（不計）";
   }
 
   totalPriceEl.textContent = "$ " + total;
