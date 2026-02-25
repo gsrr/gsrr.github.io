@@ -214,7 +214,8 @@ app.get("/api/stats", (req, res) => {
   let stats = {
     adult: 0,
     child: 0,
-    care: 0,
+    female: 0,
+    horse_free: 0,
     bento_chicken: 0,
     bento_pork: 0,
     bento_veg: 0,
@@ -224,7 +225,8 @@ app.get("/api/stats", (req, res) => {
   list.forEach(r => {
     stats.adult += r.summary.adult || 0;
     stats.child += r.summary.child || 0;
-    stats.care += r.summary.care || 0;
+    stats.female += r.summary.female || 0;
+    stats.horse_free += r.summary.horse_free || 0;
 	  // 便當
     stats.bento_chicken += r.bento?.chicken || 0;
     stats.bento_pork    += r.bento?.pork || 0;
@@ -232,7 +234,7 @@ app.get("/api/stats", (req, res) => {
     stats.bento_rice    += r.bento?.rice || 0;
   });
 
-  stats.totalPeople = stats.adult + stats.child + stats.care;
+  stats.totalPeople = stats.adult + stats.child + stats.female + stats.horse_free;
 
   res.json(stats);
 });

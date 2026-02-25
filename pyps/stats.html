@@ -69,6 +69,8 @@ tr:nth-child(even){
   <div class="box">總人數<br><strong id="totalPeople">-</strong></div>
   <div class="box">成童<br><strong id="adult">-</strong></div>
   <div class="box">幼童(博愛)<br><strong id="child">-</strong></div>
+  <div class="box">女生特惠<br><strong id="female">-</strong></div>
+  <div class="box">馬年/馬字(免費)<br><strong id="horse_free">-</strong></div>
 </div>
 
 <div class="summary">
@@ -87,6 +89,8 @@ tr:nth-child(even){
   <th>姓名</th>
   <th>成童</th>
   <th>幼童(博愛)</th>
+  <th>女生特惠</th>
+  <th>馬年/馬字</th>
   <th>便當</th>
   <th>交通方式</th>
   <th>總價(NT$)</th>
@@ -119,6 +123,8 @@ async function loadList(){
       <td>${r.name || ""}</td>
       <td>${r.summary.adult || 0}</td>
       <td>${r.summary.child || 0}</td>
+      <td>${r.summary.female || 0}</td>
+      <td>${r.summary.horse_free || 0}</td>
       <td class="small">
         🍗${r.bento.chicken||0}
         🍖${r.bento.pork||0}

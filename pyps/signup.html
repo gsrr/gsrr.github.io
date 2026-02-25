@@ -203,6 +203,8 @@ footer{
   <div class="summary">
     <div class="summary-row"><span>成童票</span><span id="sumAdult">0</span></div>
     <div class="summary-row"><span>幼童票(博愛票)</span><span id="sumChild">0</span></div>
+    <div class="summary-row"><span>女生特惠票</span><span id="sumFemale">0</span></div>
+    <div class="summary-row"><span>馬年/姓名含馬（免費）</span><span id="sumHorseFree">0</span></div>
     <div class="summary-row"><span>🍗 雞腿便當</span><span id="sumChicken">0</span></div>
     <div class="summary-row"><span>🍖 排骨便當</span><span id="sumPork">0</span></div>
     <div class="summary-row"><span>🥬 素食便當</span><span id="sumVeg">0</span></div>
@@ -225,7 +227,8 @@ const bentoArea = document.getElementById("bentoArea");
 
 const sumAdult = document.getElementById("sumAdult");
 const sumChild = document.getElementById("sumChild");
-const sumCare  = document.getElementById("sumCare");
+const sumFemale = document.getElementById("sumFemale");
+const sumHorseFree = document.getElementById("sumHorseFree");
 const sumChicken = document.getElementById("sumChicken");
 const sumPork    = document.getElementById("sumPork");
 const sumVeg     = document.getElementById("sumVeg");
@@ -246,7 +249,7 @@ async function loadTicketConfig(){
 /* 計算人數與金額（前端） */
 function recalc(){
   const people = [...document.querySelectorAll(".person-card")];
-  let count = { adult:0, child:0 };
+  let count = { adult:0, child:0, female:0, horse_free:0 };
   let total = 0;
 
   people.forEach(p=>{
@@ -257,6 +260,8 @@ function recalc(){
 
   sumAdult.textContent = count.adult;
   sumChild.textContent = count.child;
+  sumFemale.textContent = count.female;
+  sumHorseFree.textContent = count.horse_free;
 
   sumChicken.textContent = form.bento_chicken.value || 0;
   sumPork.textContent    = form.bento_pork.value || 0;
@@ -281,8 +286,10 @@ addPersonBtn.onclick = ()=>{
     <input required>
     <label>身分別 *</label>
     <select>
-      <option value="adult">成童</option>
-      <option value="child">幼童(博愛)</option>
+      <option value="adult">成童（$730，含門票＋保險）</option>
+      <option value="child">幼童/博愛（$520，含門票＋保險）</option>
+      <option value="female">女生特惠（$428，含保險）</option>
+      <option value="horse_free">馬年/姓名含馬（$40，含保險）</option>
     </select>
     <button type="button" class="remove">移除此參加者</button>
   `;
@@ -336,7 +343,9 @@ form.addEventListener("submit", async e=>{
     },
     summary: {
       adult: Number(sumAdult.textContent),
-      child: Number(sumChild.textContent)
+      child: Number(sumChild.textContent),
+      female: Number(sumFemale.textContent),
+      horse_free: Number(sumHorseFree.textContent)
     },
     total: Number(totalPriceEl.textContent.replace(/[^\d]/g,""))
   };

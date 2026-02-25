@@ -2,17 +2,26 @@
   "currency": "TWD",
   "tickets": {
     "adult": {
-      "label": "成童票（6歲以上）",
-      "price": 650
+      "label": "成童票（含門票＋保險）",
+      "price": 730
     },
     "child": {
-      "label": "幼童票(含博愛票）",
-      "price": 450
+      "label": "幼童票（含門票＋保險）",
+      "price": 520
     },
-    "care": {
-      "label": "博愛票",
-      "price": 790
+    "female": {
+      "label": "女生特惠票（含保險）",
+      "price": 428
+    },
+    "horse_free": {
+      "label": "馬年／姓名含馬（含保險）",
+      "price": 40
     }
-  }
+  },
+  "bus": {
+    "label": "遊覽車（初估）",
+    "price": 350
+  },
+  "note": "若團體人數達20人，門票可再享團體優惠；詳細價格會在人數確認後再彙整計算。"
 }
 
