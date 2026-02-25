@@ -153,7 +153,7 @@ footer{
 
 <label>交通方式 *</label>
 
-<div class="radio-group">
+<div class="radio-group" onchange="recalc()">
   <label class="radio-row">
     <input type="radio" name="transport" value="drive" required>
     <span>🚗 自行開車</span>
@@ -161,7 +161,7 @@ footer{
 
   <label class="radio-row">
     <input type="radio" name="transport" value="bus">
-    <span>🚌 搭乘遊覽車 (費用會在人數確認後進行估算)</span>
+    <span>🚌 搭乘遊覽車（初估每人 $350）</span>
   </label>
 </div>
 
@@ -271,6 +271,14 @@ function recalc(){
   ["chicken","pork","veg","rice"].forEach(k=>{
     total += Number(form["bento_"+k].value || 0) * BENTO_PRICE[k];
   });
+
+  // 遊覽車：選 bus 時每人加 $350
+  const BUS_PRICE = 350;
+  const transportVal = form.transport?.value;
+  if (transportVal === "bus") {
+    const totalPeople = count.adult + count.child + count.female + count.horse_free;
+    total += totalPeople * BUS_PRICE;
+  }
 
   totalPriceEl.textContent = "$ " + total;
 }
