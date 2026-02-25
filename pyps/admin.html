@@ -160,7 +160,7 @@ function createRow(item) {
   originalMap[item.createdAt] = original;
 
   const peopleHtml = (item.people || [])
-    .map(p => `${p.name}（${p.type} / ${p.idno}）`)
+    .map(p => `${p.name}（${p.type} / ${p.idno} / ${p.birthday || "—"}）`)
     .join("<br>");
 
   const bentoHtml = Object.entries(item.bento || {})

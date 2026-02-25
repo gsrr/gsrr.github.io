@@ -298,6 +298,8 @@ addPersonBtn.onclick = ()=>{
     <input required>
     <label>身分證字號（保險用） *</label>
     <input required>
+    <label>出生年月日（保險用） *</label>
+    <input type="date" required>
     <label>身分別 *</label>
     <select>
       <option value="adult">成童（$730，含門票＋保險）</option>
@@ -334,6 +336,7 @@ form.addEventListener("submit", async e=>{
   const people = [...document.querySelectorAll(".person-card")].map(p=>({
     name: p.querySelector("input:nth-of-type(1)").value.trim(),
     idno: p.querySelector("input:nth-of-type(2)").value.trim(),
+    birthday: p.querySelector("input[type=date]").value,
     type: p.querySelector("select").value
   }));
 
