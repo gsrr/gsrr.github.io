@@ -219,14 +219,29 @@ app.get("/api/stats", (req, res) => {
     bento_chicken: 0,
     bento_pork: 0,
     bento_veg: 0,
-    bento_rice: 0
+    bento_rice: 0,
+    drivePeople: 0,
+    busPeople: 0
   };
 
   list.forEach(r => {
-    stats.adult += r.summary.adult || 0;
-    stats.child += r.summary.child || 0;
-    stats.female += r.summary.female || 0;
-    stats.horse_free += r.summary.horse_free || 0;
+    const adult = r.summary?.adult || 0;
+    const child = r.summary?.child || 0;
+    const female = r.summary?.female || 0;
+    const horseFree = r.summary?.horse_free || 0;
+
+    stats.adult += adult;
+    stats.child += child;
+    stats.female += female;
+    stats.horse_free += horseFree;
+
+    const peopleCount = adult + child + female + horseFree;
+    if (r.transport === "bus") {
+      stats.busPeople += peopleCount;
+    } else if (r.transport === "drive") {
+      stats.drivePeople += peopleCount;
+    }
+
 	  // 便當
     stats.bento_chicken += r.bento?.chicken || 0;
     stats.bento_pork    += r.bento?.pork || 0;
