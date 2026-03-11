@@ -45,11 +45,10 @@ def main() -> None:
             writer.writerows(rows)
         print(f"已輸出 {len(rows)} 筆資料到 {args.output}")
     else:
-        buf = io.StringIO()
-        writer = csv.writer(buf)
-        writer.writerow(fields)
-        writer.writerows(rows)
-        print(buf.getvalue(), end="")
+        # Tab 分隔，可直接複製貼上到 Google 試算表
+        print("\t".join(fields))
+        for row in rows:
+            print("\t".join(row))
 
 
 if __name__ == "__main__":
