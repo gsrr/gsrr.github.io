@@ -28,15 +28,14 @@ def main() -> None:
     raw = args.signup.read_text(encoding="utf-8").strip()
     signups = json.loads(raw) if raw else []
 
-    fields = ["姓名", "身分證字號", "出生年月日"]
+    fields = ["姓名", "成員", "價格"]
     rows = []
     for record in signups:
-        for person in record.get("people", []):
-            rows.append([
-                person.get("name", ""),
-                person.get("idno", ""),
-                person.get("birthday", ""),
-            ])
+        name = record.get("name", "")
+        people = record.get("people", [])
+        members = ", ".join(p.get("name", "") for p in people)
+        total = record.get("total", 0)
+        rows.append([name, members, str(total)])
 
     if args.output:
         with open(args.output, "w", encoding="utf-8-sig", newline="") as f:
