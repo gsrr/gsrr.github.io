@@ -214,7 +214,7 @@
       </div>
 
       <div class="toolbar">
-        <div class="score">答對：<span id="correctCount">0</span> / 10</div>
+        <div class="score">答對：<span id="correctCount">0</span> / <span id="questionCount">10</span></div>
         <div class="score">分數：<span id="scoreValue">0</span></div>
         <div class="score">時間：<span id="timer">0</span> 秒</div>
         <button id="resetBtn">重新出題</button>
@@ -235,6 +235,7 @@
     const scoreValueEl = document.getElementById('scoreValue');
     const resetBtn = document.getElementById('resetBtn');
     const timerEl = document.getElementById('timer');
+    const questionCountEl = document.getElementById('questionCount');
 
     let questions = [];
     let totalScore = 0;
@@ -273,9 +274,11 @@
       return '=';
     }
 
+    const QUESTION_COUNT = 10;
+
     function buildQuestions() {
       const list = [];
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < QUESTION_COUNT; i++) {
         let left;
         let right;
         let answer;
@@ -516,14 +519,15 @@
       stopTimer();
       stopQuestionTimer();
       activeQuestionIndex = null;
-      questions = buildQuestions()();
+      questions = buildQuestions();
       totalScore = 0;
       render();
       startTimer();
     }
 
     resetBtn.addEventListener('click', resetQuiz);
-    resetQuiz();
+    questionCountEl.textContent = String(QUESTION_COUNT);
+    window.addEventListener('load', resetQuiz);
   </script>
 </body>
 </html>
