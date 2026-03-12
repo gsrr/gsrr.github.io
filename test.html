@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>分數比大小練習</title>
+  <style>
+    :root {
+      --bg: #f6f9ff;
+      --card: #ffffff;
+      --text: #1f2a44;
+      --ok: #1f9d55;
+      --bad: #d64545;
+      --line: #dbe4f0;
+      --btn: #3b82f6;
+      --btn-hover: #2563eb;
+      --hint: #64748b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+      background: linear-gradient(180deg, #eef5ff 0%, #f9fbff 100%);
+      color: var(--text);
+    }
+
+    .wrap {
+      max-width: 920px;
+      margin: 32px auto;
+      padding: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(30, 64, 175, 0.08);
+      border: 1px solid #edf2ff;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+      text-align: center;
+    }
+
+    .sub {
+      text-align: center;
+      color: #5b6b88;
+      margin-bottom: 24px;
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .score {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-size: 15px;
+      cursor: pointer;
+      background: var(--btn);
+      color: white;
+      transition: 0.2s ease;
+    }
+
+    button:hover {
+      background: var(--btn-hover);
+      transform: translateY(-1px);
+    }
+
+    .quiz-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px 16px;
+      background: #fcfdff;
+    }
+
+    .question {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .num {
+      min-width: 36px;
+    }
+
+    .fraction {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 56px;
+      line-height: 1.1;
+      font-size: 24px;
+    }
+
+    .fraction .top {
+      border-bottom: 2px solid #334155;
+      padding: 0 8px 3px;
+      min-width: 44px;
+      text-align: center;
+    }
+
+    .fraction .bottom {
+      padding: 3px 8px 0;
+      min-width: 44px;
+      text-align: center;
+    }
+
+    .symbol-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .symbol-btn {
+      min-width: 56px;
+      font-size: 22px;
+      font-weight: 800;
+      background: #e8f0ff;
+      color: #1e3a8a;
+      border: 2px solid #bfd0ea;
+    }
+
+    .symbol-btn.active {
+      background: #2563eb;
+      color: white;
+      border-color: #2563eb;
+    }
+
+    .status {
+      width: 48px;
+      text-align: center;
+      font-size: 32px;
+      font-weight: 900;
+      user-select: none;
+    }
+
+    .meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+      color: var(--hint);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .q-timer {
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #eef4ff;
+      border: 1px solid #d8e5ff;
+    }
+
+    .status.ok { color: var(--ok); }
+    .status.bad { color: var(--bad); }
+
+    .hint {
+      margin-top: 18px;
+      color: var(--hint);
+      font-size: 14px;
+      text-align: center;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 700px) {
+      h1 { font-size: 26px; }
+      .question { font-size: 20px; }
+      .fraction { font-size: 20px; min-width: 48px; }
+      .item { grid-template-columns: 1fr; }
+      .status { width: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>分數比大小練習</h1>
+      <div class="sub">
+        比較兩個分數的大小，點選 <strong>&lt;</strong>、<strong>=</strong> 或 <strong>&gt;</strong>。<br>
+        答對會出現 ✓ 和音效，答錯會出現 ✗。
+      </div>
+
+      <div class="toolbar">
+        <div class="score">答對：<span id="correctCount">0</span> / 10</div>
+        <div class="score">分數：<span id="scoreValue">0</span></div>
+        <div class="score">時間：<span id="timer">0</span> 秒</div>
+        <button id="resetBtn">重新出題</button>
+      </div>
+
+      <div id="quizList" class="quiz-list"></div>
+
+      <div class="hint">
+        題目會自動產生真分數。每題只要點一個符號就會立刻判斷。<br>
+        上方是總計時，下面每一題也會顯示自己的碼表解答時間。
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const quizList = document.getElementById('quizList');
+    const correctCountEl = document.getElementById('correctCount');
+    const scoreValueEl = document.getElementById('scoreValue');
+    const resetBtn = document.getElementById('resetBtn');
+    const timerEl = document.getElementById('timer');
+
+    let questions = [];
+    let totalScore = 0;
+    let timer = 0;
+    let timerInterval = null;
+    let activeQuestionIndex = null;
+    let questionTimerInterval = null;
+
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function gcd(a, b) {
+      while (b !== 0) {
+        [a, b] = [b, a % b];
+      }
+      return a;
+    }
+
+    function simplify(n, d) {
+      const g = gcd(n, d);
+      return { n: n / g, d: d / g };
+    }
+
+    function generateFraction() {
+      const denominator = randomInt(2, 12);
+      const numerator = randomInt(1, denominator - 1);
+      return simplify(numerator, denominator);
+    }
+
+    function compareFractions(a, b) {
+      const left = a.n * b.d;
+      const right = b.n * a.d;
+      if (left < right) return '<';
+      if (left > right) return '>';
+      return '=';
+    }
+
+    function buildQuestions() {
+      const list = [];
+      for (let i = 0; i < 10; i++) {
+        let left;
+        let right;
+        let answer;
+
+        do {
+          left = generateFraction();
+          right = generateFraction();
+          answer = compareFractions(left, right);
+        } while (left.n === right.n && left.d === right.d);
+
+        list.push({
+          id: i + 1,
+          left,
+          right,
+          answer,
+          state: 'empty',
+          selected: '',
+          elapsed: 0,
+          timerStarted: false,
+          timerStopped: false
+        });
+      }
+      return list;
+    }
+
+    function playTone(type) {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+
+      const ctx = new AudioContextClass();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      if (type === 'ok') {
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.12);
+      } else {
+        osc.frequency.setValueAtTime(300, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(180, ctx.currentTime + 0.18);
+      }
+
+      gain.gain.setValueAtTime(0.001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.22);
+      osc.onended = () => ctx.close();
+    }
+
+    function updateScore() {
+      const correct = questions.filter(q => q.state === 'ok').length;
+      correctCountEl.textContent = correct;
+      scoreValueEl.textContent = totalScore;
+    }
+
+    function formatSeconds(sec) {
+      const minutes = String(Math.floor(sec / 60)).padStart(2, '0');
+      const seconds = String(sec % 60).padStart(2, '0');
+      return `${minutes}:${seconds}`;
+    }
+
+    function refreshQuestionTimers() {
+      questions.forEach((q, index) => {
+        const el = document.getElementById(`qtimer-${index}`);
+        if (el) el.textContent = `本題時間：${formatSeconds(q.elapsed)}`;
+      });
+    }
+
+    function stopQuestionTimer() {
+      if (questionTimerInterval) {
+        clearInterval(questionTimerInterval);
+        questionTimerInterval = null;
+      }
+    }
+
+    function startQuestionTimer(index) {
+      if (activeQuestionIndex === index && questionTimerInterval) return;
+      stopQuestionTimer();
+      activeQuestionIndex = index;
+      const q = questions[index];
+      if (!q || q.timerStopped) return;
+      q.timerStarted = true;
+      refreshQuestionTimers();
+      questionTimerInterval = setInterval(() => {
+        const current = questions[activeQuestionIndex];
+        if (!current || current.timerStopped) {
+          stopQuestionTimer();
+          return;
+        }
+        current.elapsed += 1;
+        refreshQuestionTimers();
+      }, 1000);
+    }
+
+    function finalizeQuestionTimer(index) {
+      const q = questions[index];
+      if (!q || q.timerStopped) return;
+      q.timerStarted = true;
+      q.timerStopped = true;
+      if (activeQuestionIndex === index) {
+        stopQuestionTimer();
+        activeQuestionIndex = null;
+      }
+      refreshQuestionTimers();
+    }
+
+    function judgeAnswer(index, choice, statusEl, buttons) {
+      startQuestionTimer(index);
+      const q = questions[index];
+      const prevState = q.state;
+      q.selected = choice;
+
+      buttons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.symbol === choice);
+      });
+
+      if (choice === q.answer) {
+        if (q.state !== 'ok') playTone('ok');
+        q.state = 'ok';
+        statusEl.textContent = '✓';
+        statusEl.className = 'status ok';
+      } else {
+        if (q.state !== 'bad') playTone('bad');
+        q.state = 'bad';
+        statusEl.textContent = '✗';
+        statusEl.className = 'status bad';
+      }
+
+      if (prevState !== 'ok' && q.state === 'ok') totalScore += 10;
+      if (prevState === 'ok' && q.state !== 'ok') totalScore -= 10;
+
+      finalizeQuestionTimer(index);
+      updateScore();
+
+      const finished = questions.every(q => q.state !== 'empty');
+      if (finished) {
+        stopTimer();
+        stopQuestionTimer();
+      }
+    }
+
+    function fractionHTML(frac) {
+      return `
+        <span class="fraction">
+          <span class="top">${frac.n}</span>
+          <span class="bottom">${frac.d}</span>
+        </span>
+      `;
+    }
+
+    function render() {
+      quizList.innerHTML = '';
+
+      questions.forEach((q, index) => {
+        const item = document.createElement('div');
+        item.className = 'item';
+
+        const leftWrap = document.createElement('div');
+
+        const question = document.createElement('div');
+        question.className = 'question';
+
+        const number = document.createElement('span');
+        number.className = 'num';
+        number.textContent = `${q.id}.`;
+
+        const left = document.createElement('span');
+        left.innerHTML = fractionHTML(q.left);
+
+        const symbolGroup = document.createElement('div');
+        symbolGroup.className = 'symbol-group';
+
+        const symbols = ['<', '=', '>'];
+        const buttons = symbols.map(symbol => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'symbol-btn';
+          btn.dataset.symbol = symbol;
+          btn.textContent = symbol;
+          return btn;
+        });
+
+        const right = document.createElement('span');
+        right.innerHTML = fractionHTML(q.right);
+
+        const status = document.createElement('div');
+        status.className = 'status';
+
+        buttons.forEach(btn => {
+          btn.addEventListener('click', () => judgeAnswer(index, btn.dataset.symbol, status, buttons));
+          symbolGroup.appendChild(btn);
+        });
+
+        question.appendChild(number);
+        question.appendChild(left);
+        question.appendChild(symbolGroup);
+        question.appendChild(right);
+
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+
+        const qTimer = document.createElement('div');
+        qTimer.className = 'q-timer';
+        qTimer.id = `qtimer-${index}`;
+        qTimer.textContent = `本題時間：${formatSeconds(q.elapsed)}`;
+
+        meta.appendChild(qTimer);
+        leftWrap.appendChild(question);
+        leftWrap.appendChild(meta);
+
+        item.appendChild(leftWrap);
+        item.appendChild(status);
+        quizList.appendChild(item);
+      });
+
+      updateScore();
+    }
+
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timer = 0;
+      timerEl.textContent = timer;
+      timerInterval = setInterval(() => {
+        timer++;
+        timerEl.textContent = timer;
+      }, 1000);
+    }
+
+    function stopTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+    }
+
+    function resetQuiz() {
+      stopTimer();
+      stopQuestionTimer();
+      activeQuestionIndex = null;
+      questions = buildQuestions()();
+      totalScore = 0;
+      render();
+      startTimer();
+    }
+
+    resetBtn.addEventListener('click', resetQuiz);
+    resetQuiz();
+  </script>
+</body>
+</html>
