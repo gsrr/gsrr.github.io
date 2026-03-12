@@ -195,6 +195,22 @@
       line-height: 1.7;
     }
 
+    .result {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid #c9dcff;
+      background: #f1f6ff;
+      font-size: 16px;
+      font-weight: 700;
+      text-align: center;
+      display: none;
+    }
+
+    .result.show {
+      display: block;
+    }
+
     @media (max-width: 700px) {
       h1 { font-size: 26px; }
       .question { font-size: 20px; }
@@ -226,6 +242,8 @@
         題目會自動產生真分數。每題只要點一個符號就會立刻判斷。<br>
         上方是總計時，下面每一題也會顯示自己的碼表解答時間。
       </div>
+
+      <div id="resultBox" class="result" aria-live="polite"></div>
     </div>
   </div>
 
@@ -236,6 +254,9 @@
     const resetBtn = document.getElementById('resetBtn');
     const timerEl = document.getElementById('timer');
     const questionCountEl = document.getElementById('questionCount');
+
+    const resultBoxEl = document.getElementById('resultBox');
+
 
     let questions = [];
     let totalScore = 0;
@@ -421,7 +442,16 @@
       if (finished) {
         stopTimer();
         stopQuestionTimer();
+        showFinalResult();
       }
+    }
+
+
+    function showFinalResult() {
+      const correct = questions.filter(q => q.state === 'ok').length;
+      const wrong = questions.filter(q => q.state === 'bad').length;
+      resultBoxEl.textContent = `作答完成！答對 ${correct} 題，答錯 ${wrong} 題，共花費 ${timer} 秒。`;
+      resultBoxEl.classList.add('show');
     }
 
     function fractionHTML(frac) {
@@ -521,6 +551,8 @@
       activeQuestionIndex = null;
       questions = buildQuestions();
       totalScore = 0;
+      resultBoxEl.classList.remove('show');
+      resultBoxEl.textContent = '';
       render();
       startTimer();
     }
