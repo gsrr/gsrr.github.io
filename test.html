@@ -195,6 +195,69 @@
       line-height: 1.7;
     }
 
+    .result {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid #c9dcff;
+      background: #f1f6ff;
+      font-size: 16px;
+      font-weight: 700;
+      text-align: center;
+      display: none;
+    }
+
+    .result.show {
+      display: block;
+    }
+
+    .section-divider {
+      margin: 26px 0 18px;
+      border: 0;
+      border-top: 1px dashed #c9d9f2;
+    }
+
+    .add-card {
+      border: 1px solid #dbe4f0;
+      border-radius: 16px;
+      padding: 16px;
+      background: #fcfdff;
+    }
+
+    .add-title {
+      margin: 0 0 8px;
+      font-size: 22px;
+    }
+
+    .add-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 24px;
+      font-weight: 700;
+      margin: 10px 0;
+    }
+
+    .add-input {
+      width: 100px;
+      border: 2px solid #bfd0ea;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .add-feedback {
+      min-height: 28px;
+      margin-top: 10px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .add-feedback.ok { color: var(--ok); }
+    .add-feedback.bad { color: var(--bad); }
+
     @media (max-width: 700px) {
       h1 { font-size: 26px; }
       .question { font-size: 20px; }
@@ -214,7 +277,7 @@
       </div>
 
       <div class="toolbar">
-        <div class="score">答對：<span id="correctCount">0</span> / 10</div>
+        <div class="score">答對：<span id="correctCount">0</span> / <span id="questionCount">10</span></div>
         <div class="score">分數：<span id="scoreValue">0</span></div>
         <div class="score">時間：<span id="timer">0</span> 秒</div>
         <button id="resetBtn">重新出題</button>
@@ -226,6 +289,26 @@
         題目會自動產生真分數。每題只要點一個符號就會立刻判斷。<br>
         上方是總計時，下面每一題也會顯示自己的碼表解答時間。
       </div>
+
+      <div id="resultBox" class="result" aria-live="polite"></div>
+
+      <hr class="section-divider">
+
+      <div class="add-card">
+        <h2 class="add-title">加法練習（1~10）</h2>
+        <div>系統會隨機出兩個 1~10 的整數，請算出加總。</div>
+        <div class="add-row">
+          <span id="addA">1</span>
+          <span>+</span>
+          <span id="addB">1</span>
+          <span>=</span>
+          <input id="addAnswer" class="add-input" type="number" inputmode="numeric" />
+          <button id="addCheckBtn" type="button">檢查答案</button>
+          <button id="addNextBtn" type="button">下一題</button>
+        </div>
+        <div id="addFeedback" class="add-feedback" aria-live="polite"></div>
+      </div>
+
     </div>
   </div>
 
@@ -235,6 +318,14 @@
     const scoreValueEl = document.getElementById('scoreValue');
     const resetBtn = document.getElementById('resetBtn');
     const timerEl = document.getElementById('timer');
+    const questionCountEl = document.getElementById('questionCount');
+    const resultBoxEl = document.getElementById('resultBox');
+    const addAEl = document.getElementById('addA');
+    const addBEl = document.getElementById('addB');
+    const addAnswerEl = document.getElementById('addAnswer');
+    const addCheckBtn = document.getElementById('addCheckBtn');
+    const addNextBtn = document.getElementById('addNextBtn');
+    const addFeedbackEl = document.getElementById('addFeedback');
 
     let questions = [];
     let totalScore = 0;
@@ -242,6 +333,9 @@
     let timerInterval = null;
     let activeQuestionIndex = null;
     let questionTimerInterval = null;
+
+    let addA = 1;
+    let addB = 1;
 
     function randomInt(min, max) {
       return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -273,9 +367,11 @@
       return '=';
     }
 
+    const QUESTION_COUNT = 10;
+
     function buildQuestions() {
       const list = [];
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < QUESTION_COUNT; i++) {
         let left;
         let right;
         let answer;
@@ -418,7 +514,16 @@
       if (finished) {
         stopTimer();
         stopQuestionTimer();
+        showFinalResult();
       }
+    }
+
+
+    function showFinalResult() {
+      const correct = questions.filter(q => q.state === 'ok').length;
+      const wrong = questions.filter(q => q.state === 'bad').length;
+      resultBoxEl.textContent = `作答完成！答對 ${correct} 題，答錯 ${wrong} 題，共花費 ${timer} 秒。`;
+      resultBoxEl.classList.add('show');
     }
 
     function fractionHTML(frac) {
@@ -512,18 +617,61 @@
       if (timerInterval) clearInterval(timerInterval);
     }
 
+
+    function generateAddQuestion() {
+      addA = randomInt(1, 10);
+      addB = randomInt(1, 10);
+      addAEl.textContent = String(addA);
+      addBEl.textContent = String(addB);
+      addAnswerEl.value = '';
+      addFeedbackEl.textContent = '';
+      addFeedbackEl.className = 'add-feedback';
+      addAnswerEl.focus();
+    }
+
+    function checkAddAnswer() {
+      const value = Number(addAnswerEl.value);
+      if (!Number.isInteger(value)) {
+        addFeedbackEl.textContent = '請先輸入整數答案。';
+        addFeedbackEl.className = 'add-feedback bad';
+        return;
+      }
+      const correct = addA + addB;
+      if (value === correct) {
+        addFeedbackEl.textContent = `答對了！${addA} + ${addB} = ${correct}`;
+        addFeedbackEl.className = 'add-feedback ok';
+        playTone('ok');
+      } else {
+        addFeedbackEl.textContent = `答錯了，再試一次。正確答案是 ${correct}`;
+        addFeedbackEl.className = 'add-feedback bad';
+        playTone('bad');
+      }
+    }
+
     function resetQuiz() {
       stopTimer();
       stopQuestionTimer();
       activeQuestionIndex = null;
-      questions = buildQuestions()();
+      questions = buildQuestions();
       totalScore = 0;
+      resultBoxEl.classList.remove('show');
+      resultBoxEl.textContent = '';
       render();
       startTimer();
     }
 
     resetBtn.addEventListener('click', resetQuiz);
-    resetQuiz();
+    addCheckBtn.addEventListener('click', checkAddAnswer);
+    addNextBtn.addEventListener('click', generateAddQuestion);
+    addAnswerEl.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') checkAddAnswer();
+    });
+
+    questionCountEl.textContent = String(QUESTION_COUNT);
+    window.addEventListener('load', () => {
+      resetQuiz();
+      generateAddQuestion();
+    });
   </script>
 </body>
 </html>
