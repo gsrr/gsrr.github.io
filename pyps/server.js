@@ -27,6 +27,7 @@ const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "signup.json");
 const VISIT_FILE = path.join(DATA_DIR, "visit.json");
 const META_FILE = path.join(DATA_DIR, "meta.json");
+const INSTRUMENTS_FILE = path.join(DATA_DIR, "instruments.json");
 
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
 
@@ -321,6 +322,37 @@ app.get("/api/visit", (req, res) => {
  * POST /api/signup/note
  * body: { index, note }
  */
+/**
+ * GET /api/instruments
+ * 取得樂器清單
+ */
+app.get("/api/instruments", (req, res) => {
+  const defaultData = [
+    { order: 1, name: "揚琴＋架 ×2", person: "" },
+    { order: 2, name: "打擊桌（小鐵琴、鈴鼓、三角鐵）", person: "" },
+    { order: 3, name: "木箱鼓", person: "" },
+    { order: 4, name: "花盆鼓 ×5", person: "" },
+    { order: 5, name: "排鼓", person: "" },
+    { order: 6, name: "吊鈸", person: "" },
+    { order: 7, name: "椅子 ×14、譜架 ×16（黃區）", person: "" },
+    { order: 8, name: "中音笙", person: "" }
+  ];
+  res.json(loadJson(INSTRUMENTS_FILE, defaultData));
+});
+
+/**
+ * POST /api/instruments
+ * 儲存樂器清單
+ */
+app.post("/api/instruments", (req, res) => {
+  const rows = req.body;
+  if (!Array.isArray(rows)) {
+    return res.status(400).json({ error: "expected array" });
+  }
+  fs.writeFileSync(INSTRUMENTS_FILE, JSON.stringify(rows, null, 2));
+  res.json({ ok: true });
+});
+
 app.post("/api/signup/note", (req, res) => {
   const { index, note } = req.body;
 
