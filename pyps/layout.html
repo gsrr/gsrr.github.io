@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>現場樂器配置圖</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root{
+    --green:#2d6a4f;
+    --accent:#ff6f61;
+    --yellow:#ffd166;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+    font-family:'Noto Sans TC',sans-serif;
+    background:linear-gradient(180deg,#eaf7ff 0%,#ffffff 45%);
+    color:#333;
+    line-height:1.8;
+}
+
+.hero{
+    padding:50px 20px 30px;
+    background:linear-gradient(180deg,#7dd3fc 0%,#c7ebff 65%,#fff 100%);
+    text-align:center;
+}
+.hero h1{
+    font-size:2.4rem;
+    margin-bottom:8px;
+}
+.hero p{
+    font-size:1.1rem;
+    color:#555;
+}
+
+.container{
+    max-width:900px;
+    margin:30px auto 90px;
+    padding:0 20px;
+}
+.card{
+    background:#fff;
+    border-radius:28px;
+    padding:40px;
+    margin-bottom:40px;
+    box-shadow:0 18px 35px rgba(0,0,0,.08);
+}
+.section-title{
+    font-size:1.9rem;
+    color:var(--green);
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:28px;
+}
+.layout-img{
+    width:100%;
+    border-radius:16px;
+    margin:16px 0;
+    box-shadow:0 10px 25px rgba(0,0,0,.15);
+}
+
+.price-table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+}
+.price-table th{
+    background:var(--green);
+    color:#fff;
+    padding:12px;
+}
+.price-table td{
+    border:1px solid #eee;
+    padding:14px;
+    text-align:center;
+}
+.price-table tr:nth-child(even){background:#fafafa;}
+
+.back-link{
+    display:inline-block;
+    margin-top:30px;
+    background:var(--green);
+    color:#fff;
+    padding:14px 40px;
+    font-size:1.1rem;
+    font-weight:bold;
+    border-radius:999px;
+    text-decoration:none;
+    box-shadow:0 10px 25px rgba(45,106,79,.35);
+}
+.back-link:hover{
+    opacity:.9;
+}
+footer{
+    text-align:center;
+    margin-top:70px;
+    font-size:.85rem;
+    color:#aaa;
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+    <h1>現場樂器配置圖</h1>
+    <p>國樂社校外展演 — 舞台配置與樂器搬運流程</p>
+</header>
+
+<div class="container">
+
+<section class="card">
+    <h2 class="section-title">🎵 舞台配置圖</h2>
+    <img src="layout.jpg" class="layout-img" alt="舞台樂器配置圖">
+</section>
+
+<section class="card">
+    <h2 class="section-title">🥁 樂器搬運清單</h2>
+    <img src="instruments.jpg" class="layout-img" alt="樂器搬運清單">
+
+    <table class="price-table">
+        <thead>
+            <tr>
+                <th>上場順序</th>
+                <th>樂器 / 任務</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>1</td><td>揚琴＋架 ×2</td></tr>
+            <tr><td>2</td><td>打擊桌（小鐵琴、鈴鼓、三角鐵）</td></tr>
+            <tr><td>3</td><td>木箱鼓</td></tr>
+            <tr><td>4</td><td>花盆鼓</td></tr>
+            <tr><td>5</td><td>排鼓</td></tr>
+            <tr><td>6</td><td>吊鈸</td></tr>
+            <tr><td>7</td><td>椅子 ×14、譜架 ×16（黃區）</td></tr>
+            <tr><td>8</td><td>中音笙</td></tr>
+        </tbody>
+    </table>
+
+    <p style="margin-top:16px;font-size:.95rem;color:#d9534f;font-weight:bold;">
+        ※ 除協助定位之家長外，其餘家長放好樂器就下台。
+    </p>
+</section>
+
+<div style="text-align:center;">
+    <a href="index.html" class="back-link">← 返回活動首頁</a>
+</div>
+
+<footer>© 116 國樂社春季出遊籌備小組</footer>
+
+</div>
+</body>
+</html>
