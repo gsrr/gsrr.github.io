@@ -3,7 +3,7 @@
   "tickets": {
     "adult": {
       "label": "成童票（含門票＋保險）",
-      "price": 730
+      "price": 590
     },
     "child": {
       "label": "幼童票（含門票＋保險）",
