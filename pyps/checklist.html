@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>報名結果檢核表</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+    --green:#2d6a4f;
+    --accent:#ff6f61;
+    --yellow:#ffd166;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+    font-family:'Noto Sans TC',sans-serif;
+    background:linear-gradient(180deg,#eaf7ff 0%,#ffffff 45%);
+    color:#333;
+    line-height:1.8;
+    padding:30px;
+}
+h1{ text-align:center; margin-bottom:30px; }
+
+.tabs{
+    display:flex;
+    justify-content:center;
+    gap:12px;
+    margin-bottom:30px;
+    flex-wrap:wrap;
+}
+.tab-btn{
+    padding:12px 24px;
+    font-size:1rem;
+    font-weight:bold;
+    border:2px solid var(--green);
+    border-radius:999px;
+    background:#fff;
+    color:var(--green);
+    cursor:pointer;
+}
+.tab-btn.active{
+    background:var(--green);
+    color:#fff;
+}
+
+.tab-content{ display:none; }
+.tab-content.active{ display:block; }
+
+.card{
+    background:#fff;
+    border-radius:20px;
+    padding:30px;
+    margin-bottom:30px;
+    box-shadow:0 12px 30px rgba(0,0,0,.08);
+    max-width:900px;
+    margin-left:auto;
+    margin-right:auto;
+}
+.card h2{
+    font-size:1.5rem;
+    color:var(--green);
+    margin-bottom:6px;
+}
+.card h3{
+    font-size:1.15rem;
+    color:#555;
+    margin:20px 0 10px;
+}
+.card .count{
+    font-size:.95rem;
+    color:#888;
+    margin-bottom:16px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+th{
+    background:var(--green);
+    color:#fff;
+    padding:10px 12px;
+    text-align:center;
+}
+td{
+    padding:10px 12px;
+    border-bottom:1px solid #eee;
+    text-align:center;
+}
+tr:nth-child(even){ background:#fafafa; }
+tr.checked td{ color:#aaa; text-decoration:line-through; }
+tr.checked td:first-child{ text-decoration:none; color:var(--green); }
+
+input[type="checkbox"]{
+    width:20px;
+    height:20px;
+    cursor:pointer;
+}
+
+.progress-bar{
+    height:8px;
+    background:#eee;
+    border-radius:4px;
+    margin-bottom:20px;
+    overflow:hidden;
+}
+.progress-fill{
+    height:100%;
+    background:var(--green);
+    border-radius:4px;
+    transition:width .3s;
+}
+
+.summary-row{
+    font-size:.85rem;
+    color:#666;
+}
+
+.direction-label{
+    display:inline-block;
+    padding:4px 16px;
+    border-radius:999px;
+    font-size:.9rem;
+    font-weight:bold;
+    color:#fff;
+    margin-bottom:8px;
+}
+.direction-label.go{ background:#3498db; }
+.direction-label.back{ background:#e67e22; }
+
+.back-link{
+    display:inline-block;
+    margin-top:30px;
+    background:var(--green);
+    color:#fff;
+    padding:14px 40px;
+    font-size:1.1rem;
+    font-weight:bold;
+    border-radius:999px;
+    text-decoration:none;
+    box-shadow:0 10px 25px rgba(45,106,79,.35);
+}
+.back-link:hover{ opacity:.9; }
+</style>
+</head>
+<body>
+
+<h1>📋 報名結果檢核表</h1>
+
+<div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('bus')">🚌 遊覽車人員</button>
+    <button class="tab-btn" onclick="switchTab('drive')">🚗 自行開車人員</button>
+    <button class="tab-btn" onclick="switchTab('bento')">🍱 便當對應人員</button>
+    <button class="tab-btn" onclick="switchTab('instr')">🎵 樂器檢核</button>
+</div>
+
+<!-- 遊覽車：去程＋回程 -->
+<div id="tab-bus" class="tab-content active">
+    <div class="card">
+        <h2>🚌 遊覽車人員檢核</h2>
+
+        <h3><span class="direction-label go">去程</span></h3>
+        <div class="count" id="bus_go-count"></div>
+        <div class="progress-bar"><div class="progress-fill" id="bus_go-progress"></div></div>
+        <table>
+            <thead><tr><th>✓</th><th>#</th><th>報名人</th><th>乘客姓名</th><th>票種</th><th>備註</th></tr></thead>
+            <tbody id="bus_go-body"></tbody>
+        </table>
+
+        <h3 style="margin-top:40px;"><span class="direction-label back">回程</span></h3>
+        <div class="count" id="bus_back-count"></div>
+        <div class="progress-bar"><div class="progress-fill" id="bus_back-progress"></div></div>
+        <table>
+            <thead><tr><th>✓</th><th>#</th><th>報名人</th><th>乘客姓名</th><th>票種</th><th>備註</th></tr></thead>
+            <tbody id="bus_back-body"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 自行開車 -->
+<div id="tab-drive" class="tab-content">
+    <div class="card">
+        <h2>🚗 自行開車人員檢核</h2>
+        <div class="count" id="drive-count"></div>
+        <div class="progress-bar"><div class="progress-fill" id="drive-progress"></div></div>
+        <table>
+            <thead><tr><th>✓</th><th>#</th><th>報名人</th><th>乘客姓名</th><th>票種</th><th>備註</th></tr></thead>
+            <tbody id="drive-body"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 便當 -->
+<div id="tab-bento" class="tab-content">
+    <div class="card">
+        <h2>🍱 便當對應人員檢核</h2>
+        <div class="count" id="bento-count"></div>
+        <div class="progress-bar"><div class="progress-fill" id="bento-progress"></div></div>
+        <table>
+            <thead><tr><th>✓</th><th>#</th><th>報名人</th><th>🍗雞腿</th><th>🍖排骨</th><th>🥬素食</th><th>🍚炒飯</th><th>便當小計</th><th>備註</th></tr></thead>
+            <tbody id="bento-body"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 樂器檢核：去程＋回程 -->
+<div id="tab-instr" class="tab-content">
+    <div class="card">
+        <h2>🎵 樂器檢核</h2>
+
+        <h3><span class="direction-label go">去程（上車裝載）</span></h3>
+        <div class="count" id="instr_go-count"></div>
+        <div class="progress-bar"><div class="progress-fill" id="instr_go-progress"></div></div>
+        <table>
+            <thead><tr><th>✓</th><th>順序</th><th>樂器 / 任務</th><th>負責人員</th></tr></thead>
+            <tbody id="instr_go-body"></tbody>
+        </table>
+
+        <h3 style="margin-top:40px;"><span class="direction-label back">回程（收拾確認）</span></h3>
+        <div class="count" id="instr_back-count"></div>
+        <div class="progress-bar"><div class="progress-fill" id="instr_back-progress"></div></div>
+        <table>
+            <thead><tr><th>✓</th><th>順序</th><th>樂器 / 任務</th><th>負責人員</th></tr></thead>
+            <tbody id="instr_back-body"></tbody>
+        </table>
+    </div>
+</div>
+
+<div style="text-align:center;">
+    <a href="index.html" class="back-link">← 返回活動首頁</a>
+</div>
+
+<script>
+const TICKET_LABELS = {
+  adult: "成童",
+  child: "幼童(博愛)",
+  female: "女生特惠",
+  horse_free: "馬年/馬字/免票"
+};
+
+let signupData = [];
+let instrumentsData = [];
+let checkState = {};
+
+function loadCheckState() {
+  try {
+    checkState = JSON.parse(localStorage.getItem("checklist_state") || "{}");
+  } catch(e) { checkState = {}; }
+}
+
+function saveCheckState() {
+  localStorage.setItem("checklist_state", JSON.stringify(checkState));
+}
+
+function toggle(key, idx) {
+  if (!checkState[key]) checkState[key] = {};
+  checkState[key][idx] = !checkState[key][idx];
+  saveCheckState();
+  render();
+}
+
+function isChecked(key, idx) {
+  return !!(checkState[key] && checkState[key][idx]);
+}
+
+function updateProgress(key, total) {
+  let checked = 0;
+  if (checkState[key]) {
+    for (const k in checkState[key]) {
+      if (checkState[key][k]) checked++;
+    }
+  }
+  const pct = total ? Math.round(checked / total * 100) : 0;
+  document.getElementById(`${key}-progress`).style.width = pct + "%";
+  document.getElementById(`${key}-count`).textContent = `已確認 ${checked} / ${total} (${pct}%)`;
+}
+
+function switchTab(name) {
+  document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
+  document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
+  document.getElementById("tab-" + name).classList.add("active");
+  document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add("active");
+}
+
+function render() {
+  renderTransport("bus_go", "bus");
+  renderTransport("bus_back", "bus");
+  renderTransport("drive", "drive");
+  renderBento();
+  renderInstruments("instr_go");
+  renderInstruments("instr_back");
+}
+
+function renderTransport(key, transportType) {
+  const tbody = document.getElementById(`${key}-body`);
+  tbody.innerHTML = "";
+  let idx = 0;
+
+  signupData.forEach(r => {
+    if (r.transport !== transportType) return;
+    const people = r.people || [];
+    people.forEach(p => {
+      const checked = isChecked(key, idx);
+      const tr = document.createElement("tr");
+      if (checked) tr.classList.add("checked");
+      tr.innerHTML = `
+        <td><input type="checkbox" ${checked ? "checked" : ""} onchange="toggle('${key}', ${idx})"></td>
+        <td>${idx + 1}</td>
+        <td>${r.name || ""}</td>
+        <td>${p.name || ""}</td>
+        <td>${TICKET_LABELS[p.type] || p.type || ""}</td>
+        <td class="summary-row">${r.note || ""}</td>
+      `;
+      tbody.appendChild(tr);
+      idx++;
+    });
+  });
+
+  updateProgress(key, idx);
+}
+
+function renderBento() {
+  const tbody = document.getElementById("bento-body");
+  tbody.innerHTML = "";
+  let idx = 0;
+
+  signupData.forEach(r => {
+    const b = r.bento || {};
+    const total = (b.chicken || 0) + (b.pork || 0) + (b.veg || 0) + (b.rice || 0);
+    if (total === 0) return;
+
+    const checked = isChecked("bento", idx);
+    const tr = document.createElement("tr");
+    if (checked) tr.classList.add("checked");
+    tr.innerHTML = `
+      <td><input type="checkbox" ${checked ? "checked" : ""} onchange="toggle('bento', ${idx})"></td>
+      <td>${idx + 1}</td>
+      <td>${r.name || ""}</td>
+      <td>${b.chicken || 0}</td>
+      <td>${b.pork || 0}</td>
+      <td>${b.veg || 0}</td>
+      <td>${b.rice || 0}</td>
+      <td><strong>${total}</strong></td>
+      <td class="summary-row">${r.note || ""}</td>
+    `;
+    tbody.appendChild(tr);
+    idx++;
+  });
+
+  updateProgress("bento", idx);
+}
+
+function renderInstruments(key) {
+  const tbody = document.getElementById(`${key}-body`);
+  tbody.innerHTML = "";
+
+  instrumentsData.forEach((item, idx) => {
+    const checked = isChecked(key, idx);
+    const tr = document.createElement("tr");
+    if (checked) tr.classList.add("checked");
+    tr.innerHTML = `
+      <td><input type="checkbox" ${checked ? "checked" : ""} onchange="toggle('${key}', ${idx})"></td>
+      <td>${item.order}</td>
+      <td>${item.name}</td>
+      <td>${item.person || ""}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  updateProgress(key, instrumentsData.length);
+}
+
+async function init() {
+  loadCheckState();
+  try {
+    signupData = await fetch("/api/signup").then(r => r.json());
+  } catch(e) {
+    console.error("signup load failed", e);
+    signupData = [];
+  }
+  try {
+    instrumentsData = await fetch("/api/instruments").then(r => r.json());
+  } catch(e) {
+    console.error("instruments load failed", e);
+    instrumentsData = [];
+  }
+  render();
+}
+
+init();
+</script>
+
+</body>
+</html>
