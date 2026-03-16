@@ -28,6 +28,7 @@ const DATA_FILE = path.join(DATA_DIR, "signup.json");
 const VISIT_FILE = path.join(DATA_DIR, "visit.json");
 const META_FILE = path.join(DATA_DIR, "meta.json");
 const INSTRUMENTS_FILE = path.join(DATA_DIR, "instruments.json");
+const CHECKLIST_FILE = path.join(DATA_DIR, "checklist.json");
 
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
 
@@ -350,6 +351,23 @@ app.post("/api/instruments", (req, res) => {
     return res.status(400).json({ error: "expected array" });
   }
   fs.writeFileSync(INSTRUMENTS_FILE, JSON.stringify(rows, null, 2));
+  res.json({ ok: true });
+});
+
+/**
+ * GET /api/checklist
+ * 取得檢核表狀態
+ */
+app.get("/api/checklist", (req, res) => {
+  res.json(loadJson(CHECKLIST_FILE, {}));
+});
+
+/**
+ * POST /api/checklist
+ * 儲存檢核表狀態
+ */
+app.post("/api/checklist", (req, res) => {
+  fs.writeFileSync(CHECKLIST_FILE, JSON.stringify(req.body, null, 2));
   res.json({ ok: true });
 });
 

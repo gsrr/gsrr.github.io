@@ -90,8 +90,8 @@ td{
     text-align:center;
 }
 tr:nth-child(even){ background:#fafafa; }
-tr.checked td{ color:#aaa; text-decoration:line-through; }
-tr.checked td:first-child{ text-decoration:none; color:var(--green); }
+tr.checked td{ background:var(--green); color:#fff; }
+tr.checked td:first-child{ color:#fff; }
 
 input[type="checkbox"]{
     width:20px;
@@ -244,14 +244,18 @@ let signupData = [];
 let instrumentsData = [];
 let checkState = {};
 
-function loadCheckState() {
+async function loadCheckState() {
   try {
-    checkState = JSON.parse(localStorage.getItem("checklist_state") || "{}");
+    checkState = await fetch("/api/checklist").then(r => r.json());
   } catch(e) { checkState = {}; }
 }
 
 function saveCheckState() {
-  localStorage.setItem("checklist_state", JSON.stringify(checkState));
+  fetch("/api/checklist", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(checkState)
+  }).catch(e => console.error("save checklist failed", e));
 }
 
 function toggle(key, idx) {
@@ -373,7 +377,7 @@ function renderInstruments(key) {
 }
 
 async function init() {
-  loadCheckState();
+  await loadCheckState();
   try {
     signupData = await fetch("/api/signup").then(r => r.json());
   } catch(e) {
