@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>樂器清單</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+    --green:#2d6a4f;
+    --accent:#ff6f61;
+    --yellow:#ffd166;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+    font-family:'Noto Sans TC',sans-serif;
+    background:linear-gradient(180deg,#eaf7ff 0%,#ffffff 45%);
+    color:#333;
+    line-height:1.8;
+}
+
+.hero{
+    padding:50px 20px 30px;
+    background:linear-gradient(180deg,#7dd3fc 0%,#c7ebff 65%,#fff 100%);
+    text-align:center;
+}
+.hero h1{
+    font-size:2.4rem;
+    margin-bottom:8px;
+}
+.hero p{
+    font-size:1.1rem;
+    color:#555;
+}
+
+.container{
+    max-width:900px;
+    margin:30px auto 90px;
+    padding:0 20px;
+}
+.card{
+    background:#fff;
+    border-radius:28px;
+    padding:40px;
+    margin-bottom:40px;
+    box-shadow:0 18px 35px rgba(0,0,0,.08);
+}
+.section-title{
+    font-size:1.9rem;
+    color:var(--green);
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:28px;
+}
+
+table.editable{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+}
+table.editable th{
+    background:var(--green);
+    color:#fff;
+    padding:12px;
+}
+table.editable td{
+    border:1px solid #ddd;
+    padding:14px;
+    text-align:center;
+}
+table.editable tr:nth-child(even){background:#fafafa;}
+table.editable td[contenteditable]:focus{
+    outline:2px solid var(--yellow);
+    background:#fffde7;
+}
+
+.note{
+    margin-top:16px;
+    font-size:.95rem;
+    color:#d9534f;
+    font-weight:bold;
+}
+.hint{
+    margin-top:12px;
+    font-size:.85rem;
+    color:#999;
+}
+
+.back-link{
+    display:inline-block;
+    margin-top:30px;
+    background:var(--green);
+    color:#fff;
+    padding:14px 40px;
+    font-size:1.1rem;
+    font-weight:bold;
+    border-radius:999px;
+    text-decoration:none;
+    box-shadow:0 10px 25px rgba(45,106,79,.35);
+}
+.back-link:hover{ opacity:.9; }
+
+footer{
+    text-align:center;
+    margin-top:70px;
+    font-size:.85rem;
+    color:#aaa;
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+    <h1>樂器清單</h1>
+    <p>樂器搬運順序與負責人員</p>
+</header>
+
+<div class="container">
+
+<section class="card">
+    <h2 class="section-title">🥁 樂器搬運清單</h2>
+
+    <table class="editable">
+        <thead>
+            <tr>
+                <th>上場順序</th>
+                <th>樂器 / 任務</th>
+                <th>負責人員</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td contenteditable="true">揚琴＋架 ×2</td>
+                <td contenteditable="true"></td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td contenteditable="true">打擊桌（小鐵琴、鈴鼓、三角鐵）</td>
+                <td contenteditable="true"></td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td contenteditable="true">木箱鼓</td>
+                <td contenteditable="true"></td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td contenteditable="true">花盆鼓</td>
+                <td contenteditable="true"></td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td contenteditable="true">排鼓</td>
+                <td contenteditable="true"></td>
+            </tr>
+            <tr>
+                <td>6</td>
+                <td contenteditable="true">吊鈸</td>
+                <td contenteditable="true"></td>
+            </tr>
+            <tr>
+                <td>7</td>
+                <td contenteditable="true">椅子 ×14、譜架 ×16（黃區）</td>
+                <td contenteditable="true"></td>
+            </tr>
+            <tr>
+                <td>8</td>
+                <td contenteditable="true">中音笙</td>
+                <td contenteditable="true"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p class="note">※ 除協助定位之家長外，其餘家長放好樂器就下台。</p>
+    <p class="hint">點擊表格欄位即可直接編輯內容。</p>
+</section>
+
+<div style="text-align:center;">
+    <a href="index.html" class="back-link">← 返回活動首頁</a>
+</div>
+
+<footer>© 116 國樂社春季出遊籌備小組</footer>
+
+</div>
+</body>
+</html>
