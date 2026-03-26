@@ -177,6 +177,30 @@ fetch("/api/visit")
 
 <div class="container">
 
+<!-- 當日工作流程（最醒目） -->
+<section class="card" style="text-align:center;padding:30px 40px;">
+    <a href="workflow.html" target="_blank" rel="noopener" style="
+        display:block;
+        background:linear-gradient(135deg,#8e44ad,#c0392b);
+        color:#fff;
+        padding:28px 50px;
+        font-size:1.8rem;
+        font-weight:bold;
+        border-radius:999px;
+        text-decoration:none;
+        box-shadow:0 15px 30px rgba(142,68,173,.45);
+        animation: pulse 2s infinite;
+    ">📝 當日工作流程（必看）</a>
+</section>
+
+<style>
+@keyframes pulse {
+    0%   { box-shadow:0 15px 30px rgba(142,68,173,.45); }
+    50%  { box-shadow:0 15px 40px rgba(142,68,173,.7); }
+    100% { box-shadow:0 15px 30px rgba(142,68,173,.45); }
+}
+</style>
+
 <!-- 快速連結 -->
 <section class="card" style="text-align:center;display:flex;justify-content:center;gap:20px;flex-wrap:wrap;">
     <a href="layout.html" target="_blank" rel="noopener" style="
@@ -212,17 +236,6 @@ fetch("/api/visit")
         text-decoration:none;
         box-shadow:0 12px 25px rgba(230,126,34,.35);
     ">📋 報名結果檢核表</a>
-    <a href="workflow.html" target="_blank" rel="noopener" style="
-        display:inline-block;
-        background:#8e44ad;
-        color:#fff;
-        padding:18px 50px;
-        font-size:1.4rem;
-        font-weight:bold;
-        border-radius:999px;
-        text-decoration:none;
-        box-shadow:0 12px 25px rgba(142,68,173,.35);
-    ">📝 當日工作流程</a>
 </section>
 
 <!-- 團長的話 -->
