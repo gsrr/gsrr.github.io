@@ -436,6 +436,9 @@ async function init() {
     instrumentsData = [];
   }
   render();
+
+  const urlTab = new URLSearchParams(window.location.search).get("tab");
+  if (urlTab) switchTab(urlTab);
 }
 
 init();
