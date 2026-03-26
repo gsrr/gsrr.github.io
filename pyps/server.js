@@ -332,10 +332,10 @@ app.get("/api/instruments", (req, res) => {
     { order: 1, name: "揚琴＋架 ×2", person: "" },
     { order: 2, name: "打擊桌（小鐵琴、鈴鼓、三角鐵）", person: "" },
     { order: 3, name: "木箱鼓", person: "" },
-    { order: 4, name: "花盆鼓 ×5", person: "" },
-    { order: 5, name: "排鼓", person: "" },
+    { order: 4, name: "花盆鼓 ×1", person: "" },
+    { order: 5, name: "排鼓 ×5", person: "" },
     { order: 6, name: "吊鈸", person: "" },
-    { order: 7, name: "椅子 ×14、譜架 ×16（黃區）", person: "" },
+    { order: 7, name: "譜架 ×16（黃區）", person: "" },
     { order: 8, name: "中音笙", person: "" }
   ];
   res.json(loadJson(INSTRUMENTS_FILE, defaultData));

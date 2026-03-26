@@ -92,6 +92,9 @@ td{
 tr:nth-child(even){ background:#fafafa; }
 tr.checked td{ background:var(--green); color:#fff; }
 tr.checked td:first-child{ color:#fff; }
+tr.adult-row td{ background:#fff3e0; }
+tr.adult-row td:nth-child(5){ color:#e65100; font-weight:bold; }
+tr.checked.adult-row td{ background:#1b5e20; color:#fff; }
 
 input[type="checkbox"]{
     width:20px;
@@ -316,8 +319,10 @@ function renderTransport(key, transportType) {
     const people = r.people || [];
     people.forEach(p => {
       const checked = isChecked(key, idx);
+      const isAdult = p.type === "adult";
       const tr = document.createElement("tr");
       if (checked) tr.classList.add("checked");
+      if (isAdult) tr.classList.add("adult-row");
       tr.innerHTML = `
         <td><input type="checkbox" ${checked ? "checked" : ""} onchange="toggle('${key}', ${idx})"></td>
         <td>${idx + 1}</td>
