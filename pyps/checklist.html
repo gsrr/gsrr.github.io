@@ -196,6 +196,15 @@ input[type="checkbox"]{
 <div id="tab-bento" class="tab-content">
     <div class="card">
         <h2>🍱 便當對應人員檢核</h2>
+
+        <!-- 便當統計摘要 -->
+        <div id="bento-summary" style="
+            display:flex;
+            gap:12px;
+            flex-wrap:wrap;
+            margin-bottom:20px;
+        "></div>
+
         <div class="count" id="bento-count"></div>
         <div class="progress-bar"><div class="progress-fill" id="bento-progress"></div></div>
         <table>
@@ -330,10 +339,17 @@ function renderBento() {
   tbody.innerHTML = "";
   let idx = 0;
 
+  let sumChicken = 0, sumPork = 0, sumVeg = 0, sumRice = 0;
+
   signupData.forEach(r => {
     const b = r.bento || {};
     const total = (b.chicken || 0) + (b.pork || 0) + (b.veg || 0) + (b.rice || 0);
     if (total === 0) return;
+
+    sumChicken += b.chicken || 0;
+    sumPork += b.pork || 0;
+    sumVeg += b.veg || 0;
+    sumRice += b.rice || 0;
 
     const checked = isChecked("bento", idx);
     const tr = document.createElement("tr");
@@ -352,6 +368,30 @@ function renderBento() {
     tbody.appendChild(tr);
     idx++;
   });
+
+  const grandTotal = sumChicken + sumPork + sumVeg + sumRice;
+  const summaryEl = document.getElementById("bento-summary");
+  const items = [
+    { label: "🍗 雞腿", count: sumChicken, color: "#e67e22" },
+    { label: "🍖 排骨", count: sumPork, color: "#d35400" },
+    { label: "🥬 素食", count: sumVeg, color: "#27ae60" },
+    { label: "🍚 炒飯", count: sumRice, color: "#f39c12" },
+    { label: "📦 合計", count: grandTotal, color: "#2d6a4f" }
+  ];
+  summaryEl.innerHTML = items.map(it => `
+    <div style="
+      background:${it.color};
+      color:#fff;
+      padding:12px 20px;
+      border-radius:14px;
+      text-align:center;
+      min-width:100px;
+      box-shadow:0 4px 12px rgba(0,0,0,.12);
+    ">
+      <div style="font-size:.9rem;">${it.label}</div>
+      <div style="font-size:1.6rem;font-weight:bold;">${it.count}</div>
+    </div>
+  `).join("");
 
   updateProgress("bento", idx);
 }

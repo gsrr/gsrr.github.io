@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>當日工作流程</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+    --green:#2d6a4f;
+    --accent:#ff6f61;
+    --yellow:#ffd166;
+    --blue:#3498db;
+    --orange:#e67e22;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+    font-family:'Noto Sans TC',sans-serif;
+    background:linear-gradient(180deg,#eaf7ff 0%,#ffffff 45%);
+    color:#333;
+    line-height:1.8;
+    padding:30px;
+}
+h1{ text-align:center; margin-bottom:30px; }
+
+.card{
+    background:#fff;
+    border-radius:20px;
+    padding:30px;
+    margin-bottom:30px;
+    box-shadow:0 12px 30px rgba(0,0,0,.08);
+    max-width:900px;
+    margin-left:auto;
+    margin-right:auto;
+}
+
+.section{
+    margin-bottom:28px;
+    padding-bottom:24px;
+    border-bottom:2px dashed #eee;
+}
+.section:last-child{
+    border-bottom:none;
+    margin-bottom:0;
+    padding-bottom:0;
+}
+
+.section h2{
+    font-size:1.3rem;
+    color:var(--green);
+    margin-bottom:12px;
+}
+
+.section p,
+.section li{
+    font-size:1rem;
+    color:#444;
+    margin-bottom:4px;
+}
+
+.section ul{
+    list-style:none;
+    padding-left:0;
+}
+
+.section ul li::before{
+    content:"";
+    margin-right:6px;
+}
+
+.time-badge{
+    display:inline-block;
+    background:var(--accent);
+    color:#fff;
+    padding:4px 16px;
+    border-radius:999px;
+    font-size:.9rem;
+    font-weight:bold;
+    margin-bottom:8px;
+}
+
+.role-badge{
+    display:inline-block;
+    background:var(--blue);
+    color:#fff;
+    padding:3px 12px;
+    border-radius:999px;
+    font-size:.85rem;
+    font-weight:bold;
+    margin-right:6px;
+}
+
+.warning{
+    background:#fff3cd;
+    border-left:4px solid #ffc107;
+    padding:12px 16px;
+    border-radius:8px;
+    margin-top:12px;
+    font-size:.95rem;
+}
+
+a.link-btn{
+    display:inline-block;
+    background:var(--green);
+    color:#fff;
+    padding:10px 24px;
+    font-size:.95rem;
+    font-weight:bold;
+    border-radius:999px;
+    text-decoration:none;
+    margin-top:8px;
+    box-shadow:0 6px 15px rgba(45,106,79,.25);
+}
+a.link-btn:hover{ opacity:.9; }
+
+.back-link{
+    display:inline-block;
+    margin-top:30px;
+    background:var(--green);
+    color:#fff;
+    padding:14px 40px;
+    font-size:1.1rem;
+    font-weight:bold;
+    border-radius:999px;
+    text-decoration:none;
+    box-shadow:0 10px 25px rgba(45,106,79,.35);
+}
+.back-link:hover{ opacity:.9; }
+</style>
+</head>
+<body>
+
+<h1>📝 當日工作流程</h1>
+
+<div class="card">
+
+    <!-- 集合 -->
+    <div class="section">
+        <h2>🎼 小人國國樂社活動</h2>
+        <span class="time-badge">07:45</span> 集合搬樂器（全體家長）<br>
+        <span class="time-badge">08:15</span> 出發<br>
+        <span class="time-badge">09:15</span> 抵達（Coco 聯繫小人國對應窗口）
+    </div>
+
+    <!-- 樂器運送 -->
+    <div class="section">
+        <h2>🚗 樂器運送</h2>
+        <p><span class="role-badge">運送</span>團長、佳欣、家安爸爸 → 側門</p>
+        <p><span class="role-badge">園內接應</span>恩慈爸、彩榛爸、元嘉爸、丞璿媽</p>
+        <br>
+        <h2>👨‍👩‍👧‍👦 其他人員</h2>
+        <p>抵達後先自由活動（11:30 集合用餐）</p>
+    </div>
+
+    <!-- 用餐與準備 -->
+    <div class="section">
+        <span class="time-badge">11:30</span>
+        <h2 style="display:inline;">🍱 集合用餐、調音準備</h2>
+        <br><br>
+        <span class="time-badge">12:00</span>
+        <h2 style="display:inline;">🎻 上台準備</h2>
+        <br><br>
+        <p><strong>👉 上下台協助：</strong>Coco、恩慈爸、彩榛爸、元嘉爸、丞璿媽、家安爸爸</p>
+        <p><strong>👉 舞台配置：</strong>
+            <a class="link-btn" href="layout.html" target="_blank" rel="noopener">查看配置圖</a>
+        </p>
+    </div>
+
+    <!-- 表演 -->
+    <div class="section">
+        <span class="time-badge">12:20</span>
+        <h2 style="display:inline;">🎵 表演</h2>
+        <br><br>
+        <span class="time-badge">13:00</span>
+        <h2 style="display:inline;">🧹 撤場</h2>
+        <p style="margin-top:8px;">含搬運樂器回遊覽車</p>
+        <p><span class="role-badge">運送</span>團長、佳欣、家安爸爸協助運送</p>
+    </div>
+
+    <!-- 樂器確認 -->
+    <div class="section">
+        <h2>🎻 樂器確認（3次）</h2>
+        <p>
+            <strong>👉 清單：</strong>
+            <a class="link-btn" href="instruments.html" target="_blank" rel="noopener">樂器清單</a>
+        </p>
+        <p style="margin-top:8px;">
+            <strong>👉 檢核（人數＋樂器）：</strong>
+            <a class="link-btn" href="checklist.html" target="_blank" rel="noopener">檢核表</a>
+        </p>
+        <div class="warning">
+            ⚠️ 樂器流程：側門 → 準備室 → 舞台 → 側門 → 遊覽車
+        </div>
+    </div>
+
+    <!-- 回程 -->
+    <div class="section">
+        <span class="time-badge">16:30</span> 集合回程<br>
+        <span class="time-badge">17:30</span> 抵達白雲國小（全體家長協助搬運樂器回國樂教室）
+    </div>
+
+    <!-- 分工 -->
+    <div class="section">
+        <h2>👥 分工</h2>
+        <ul>
+            <li><span class="role-badge">現場聯繫</span>Coco</li>
+            <li><span class="role-badge">樂器</span>Jerry（家安爸爸）/ Rachel（丞璿媽媽）</li>
+            <li><span class="role-badge">點名</span>dudu（彩榛媽媽）</li>
+        </ul>
+        <br>
+        <h2>📌 點名規則</h2>
+        <p>去程：遊覽車＋自駕都需確認</p>
+        <p>回程：僅確認遊覽車人數</p>
+    </div>
+
+</div>
+
+<div style="text-align:center;">
+    <a href="index.html" class="back-link">← 返回活動首頁</a>
+</div>
+
+</body>
+</html>
