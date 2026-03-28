@@ -96,6 +96,24 @@ tr.adult-row td{ background:#fff3e0; }
 tr.adult-row td:nth-child(5){ color:#e65100; font-weight:bold; }
 tr.checked.adult-row td{ background:#1b5e20; color:#fff; }
 
+tr.absent td{ background:#e0e0e0; color:#999; text-decoration:line-through; }
+tr.absent.checked td{ background:#bdbdbd; color:#888; text-decoration:line-through; }
+
+.absent-btn{
+    padding:2px 10px;
+    font-size:.8rem;
+    border:1px solid #aaa;
+    border-radius:999px;
+    background:#fff;
+    color:#666;
+    cursor:pointer;
+}
+.absent-btn.active{
+    background:#e53935;
+    color:#fff;
+    border-color:#e53935;
+}
+
 input[type="checkbox"]{
     width:20px;
     height:20px;
@@ -168,7 +186,7 @@ input[type="checkbox"]{
         <div class="count" id="bus_go-count"></div>
         <div class="progress-bar"><div class="progress-fill" id="bus_go-progress"></div></div>
         <table>
-            <thead><tr><th>✓</th><th>#</th><th>報名人</th><th>乘客姓名</th><th>票種</th><th>備註</th></tr></thead>
+            <thead><tr><th>✓</th><th>#</th><th>報名人</th><th>乘客姓名</th><th>票種</th><th>備註</th><th>缺席</th></tr></thead>
             <tbody id="bus_go-body"></tbody>
         </table>
 
@@ -176,7 +194,7 @@ input[type="checkbox"]{
         <div class="count" id="bus_back-count"></div>
         <div class="progress-bar"><div class="progress-fill" id="bus_back-progress"></div></div>
         <table>
-            <thead><tr><th>✓</th><th>#</th><th>報名人</th><th>乘客姓名</th><th>票種</th><th>備註</th></tr></thead>
+            <thead><tr><th>✓</th><th>#</th><th>報名人</th><th>乘客姓名</th><th>票種</th><th>備註</th><th>缺席</th></tr></thead>
             <tbody id="bus_back-body"></tbody>
         </table>
     </div>
@@ -189,7 +207,7 @@ input[type="checkbox"]{
         <div class="count" id="drive-count"></div>
         <div class="progress-bar"><div class="progress-fill" id="drive-progress"></div></div>
         <table>
-            <thead><tr><th>✓</th><th>#</th><th>報名人</th><th>乘客姓名</th><th>票種</th><th>備註</th></tr></thead>
+            <thead><tr><th>✓</th><th>#</th><th>報名人</th><th>乘客姓名</th><th>票種</th><th>備註</th><th>缺席</th></tr></thead>
             <tbody id="drive-body"></tbody>
         </table>
     </div>
@@ -211,7 +229,7 @@ input[type="checkbox"]{
         <div class="count" id="bento-count"></div>
         <div class="progress-bar"><div class="progress-fill" id="bento-progress"></div></div>
         <table>
-            <thead><tr><th>✓</th><th>#</th><th>報名人</th><th>🍗雞腿</th><th>🍖排骨</th><th>🥬素食</th><th>🍚炒飯</th><th>便當小計</th><th>備註</th></tr></thead>
+            <thead><tr><th>✓</th><th>#</th><th>報名人</th><th>🍗雞腿</th><th>🍖排骨</th><th>🥬素食</th><th>🍚炒飯</th><th>便當小計</th><th>備註</th><th>缺席</th></tr></thead>
             <tbody id="bento-body"></tbody>
         </table>
     </div>
@@ -277,8 +295,21 @@ function toggle(key, idx) {
   render();
 }
 
+function toggleAbsent(key, idx) {
+  const absentKey = "absent_" + key;
+  if (!checkState[absentKey]) checkState[absentKey] = {};
+  checkState[absentKey][idx] = !checkState[absentKey][idx];
+  saveCheckState();
+  render();
+}
+
 function isChecked(key, idx) {
   return !!(checkState[key] && checkState[key][idx]);
+}
+
+function isAbsent(key, idx) {
+  const absentKey = "absent_" + key;
+  return !!(checkState[absentKey] && checkState[absentKey][idx]);
 }
 
 function updateProgress(key, total) {
@@ -319,9 +350,11 @@ function renderTransport(key, transportType) {
     const people = r.people || [];
     people.forEach(p => {
       const checked = isChecked(key, idx);
+      const absent = isAbsent(key, idx);
       const isAdult = p.type === "adult";
       const tr = document.createElement("tr");
-      if (checked) tr.classList.add("checked");
+      if (absent) tr.classList.add("absent");
+      else if (checked) tr.classList.add("checked");
       if (isAdult) tr.classList.add("adult-row");
       tr.innerHTML = `
         <td><input type="checkbox" ${checked ? "checked" : ""} onchange="toggle('${key}', ${idx})"></td>
@@ -330,6 +363,7 @@ function renderTransport(key, transportType) {
         <td>${p.name || ""}</td>
         <td>${TICKET_LABELS[p.type] || p.type || ""}</td>
         <td class="summary-row">${r.note || ""}</td>
+        <td><button class="absent-btn ${absent ? "active" : ""}" onclick="toggleAbsent('${key}', ${idx})">缺席</button></td>
       `;
       tbody.appendChild(tr);
       idx++;
@@ -357,8 +391,10 @@ function renderBento() {
     sumRice += b.rice || 0;
 
     const checked = isChecked("bento", idx);
+    const absent = isAbsent("bento", idx);
     const tr = document.createElement("tr");
-    if (checked) tr.classList.add("checked");
+    if (absent) tr.classList.add("absent");
+    else if (checked) tr.classList.add("checked");
     tr.innerHTML = `
       <td><input type="checkbox" ${checked ? "checked" : ""} onchange="toggle('bento', ${idx})"></td>
       <td>${idx + 1}</td>
@@ -369,6 +405,7 @@ function renderBento() {
       <td>${b.rice || 0}</td>
       <td><strong>${total}</strong></td>
       <td class="summary-row">${r.note || ""}</td>
+      <td><button class="absent-btn ${absent ? "active" : ""}" onclick="toggleAbsent('bento', ${idx})">缺席</button></td>
     `;
     tbody.appendChild(tr);
     idx++;
