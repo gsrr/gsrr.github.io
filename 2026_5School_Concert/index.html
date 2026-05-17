@@ -114,6 +114,181 @@ td{
     margin-top:40px;
 }
 
+/* Group quick-jump buttons */
+.jump-bar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:8px;
+}
+
+.group-btn{
+    display:inline-block;
+    padding:12px 18px;
+    background:#2563eb;
+    color:white;
+    text-decoration:none;
+    border-radius:10px;
+    font-size:17px;
+    font-weight:bold;
+    transition:0.2s;
+}
+
+.group-btn:hover{
+    background:#1d4ed8;
+}
+
+.group-btn.changwu{ background:#2563eb; }
+.group-btn.zhaodai{ background:#db2777; }
+.group-btn.zhixu{ background:#16a34a; }
+.group-btn.paizhao{ background:#9333ea; }
+.group-btn.zhuangfa{ background:#ea580c; }
+
+/* Group task cards */
+.group-card{
+    border-top:6px solid #2563eb;
+}
+
+.group-card.zhaodai{ border-top-color:#db2777; }
+.group-card.zhixu{ border-top-color:#16a34a; }
+.group-card.paizhao{ border-top-color:#9333ea; }
+.group-card.zhuangfa{ border-top-color:#ea580c; }
+
+.group-members{
+    font-size:16px;
+    color:#444;
+    margin-bottom:14px;
+    padding:10px 12px;
+    background:#f5f7fb;
+    border-radius:8px;
+    line-height:1.7;
+}
+
+.task-row{
+    padding:10px 14px;
+    margin-bottom:8px;
+    background:#f9fafb;
+    border-left:5px solid #2563eb;
+    border-radius:6px;
+    line-height:1.7;
+    font-size:16px;
+}
+
+.group-card.zhaodai .task-row{ border-left-color:#db2777; }
+.group-card.zhixu .task-row{ border-left-color:#16a34a; }
+.group-card.paizhao .task-row{ border-left-color:#9333ea; }
+.group-card.zhuangfa .task-row{ border-left-color:#ea580c; }
+
+.task-row .time{
+    display:inline-block;
+    min-width:74px;
+    font-weight:bold;
+    color:#1d4ed8;
+    margin-right:6px;
+}
+
+.group-card.zhaodai .task-row .time{ color:#db2777; }
+.group-card.zhixu .task-row .time{ color:#15803d; }
+.group-card.paizhao .task-row .time{ color:#7e22ce; }
+.group-card.zhuangfa .task-row .time{ color:#c2410c; }
+
+.special-note{
+    margin-top:14px;
+    padding:12px 14px;
+    background:#fff3cd;
+    border-left:5px solid #f59e0b;
+    border-radius:6px;
+    font-size:16px;
+    line-height:1.7;
+}
+
+/* Name finder buttons */
+.name-section{
+    margin-bottom:18px;
+}
+
+.name-section:last-child{
+    margin-bottom:0;
+}
+
+.name-section-label{
+    display:inline-block;
+    font-size:18px;
+    font-weight:bold;
+    color:#2563eb;
+    margin-bottom:8px;
+}
+
+.name-section.zhaodai .name-section-label{ color:#db2777; }
+.name-section.zhixu .name-section-label{ color:#15803d; }
+.name-section.paizhao .name-section-label{ color:#7e22ce; }
+.name-section.zhuangfa .name-section-label{ color:#c2410c; }
+
+.name-bar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+}
+
+.name-btn{
+    display:inline-block;
+    padding:10px 14px;
+    background:#e0e7ff;
+    color:#1d4ed8;
+    border:2px solid #2563eb;
+    border-radius:10px;
+    text-decoration:none;
+    font-size:16px;
+    font-weight:bold;
+    transition:0.2s;
+}
+
+.name-btn:hover{
+    background:#c7d2fe;
+}
+
+.name-section.zhaodai .name-btn{ background:#fce7f3; color:#9d174d; border-color:#db2777; }
+.name-section.zhaodai .name-btn:hover{ background:#fbcfe8; }
+.name-section.zhixu .name-btn{ background:#dcfce7; color:#15803d; border-color:#16a34a; }
+.name-section.zhixu .name-btn:hover{ background:#bbf7d0; }
+.name-section.paizhao .name-btn{ background:#f3e8ff; color:#7e22ce; border-color:#9333ea; }
+.name-section.paizhao .name-btn:hover{ background:#e9d5ff; }
+.name-section.zhuangfa .name-btn{ background:#ffedd5; color:#c2410c; border-color:#ea580c; }
+.name-section.zhuangfa .name-btn:hover{ background:#fed7aa; }
+
+/* Collapsible group card summary */
+.group-summary{
+    font-size:26px;
+    font-weight:bold;
+    color:#2563eb;
+    cursor:pointer;
+    padding:6px 0;
+    list-style:none;
+    user-select:none;
+}
+
+.group-summary::-webkit-details-marker{ display:none; }
+
+.group-summary::after{
+    content:" ▼";
+    font-size:18px;
+    color:#999;
+    margin-left:6px;
+}
+
+.group-card details[open] .group-summary::after{
+    content:" ▲";
+}
+
+.group-card.zhaodai .group-summary{ color:#db2777; }
+.group-card.zhixu .group-summary{ color:#15803d; }
+.group-card.paizhao .group-summary{ color:#7e22ce; }
+.group-card.zhuangfa .group-summary{ color:#c2410c; }
+
+.group-card details > *:not(summary){
+    margin-top:14px;
+}
+
 @media (max-width: 600px){
 
     body{
@@ -150,6 +325,38 @@ td{
     .link-button{
         font-size:16px;
         padding:12px 18px;
+    }
+
+    .group-btn{
+        font-size:15px;
+        padding:10px 14px;
+    }
+
+    .name-btn{
+        font-size:15px;
+        padding:9px 12px;
+    }
+
+    .name-section-label{
+        font-size:16px;
+    }
+
+    .group-summary{
+        font-size:20px;
+    }
+
+    .group-members,
+    .task-row,
+    .special-note{
+        font-size:15px;
+    }
+
+    .task-row{
+        padding:9px 12px;
+    }
+
+    .task-row .time{
+        min-width:60px;
     }
 
     /* Responsive tables: row → stacked card */
@@ -245,122 +452,190 @@ td{
         </div>
 
         1.
-        <span class="important">
-            白雲國小支援家長屬於「汐中端場務組」
-        </span><br>
+        屬於「<span class="important">汐中端場務組</span>」<br>
 
         2.
-        請於
-        <span class="important">5/23（六）08:00</span>
-        到
+        <span class="important">08:00</span> 到
         <span class="important">汐止國中</span>
-        協助樂器下樓與上車（
-        <a href="instrument_list.png" target="_blank" style="color:#1d4ed8; font-weight:bold; text-decoration:underline;">樂器清單</a>
-        ）。<br>
+        搬樂器上車（<a href="instrument_list.png" target="_blank" style="color:#1d4ed8; font-weight:bold; text-decoration:underline;">樂器清單</a>）<br>
 
         3.
-        請於
-        <span class="important">08:50</span>
-        前將
+        <span class="important">08:50</span> 前送
         <span class="important">關東旗、揚琴布、中音笙</span>
-        搬到汐止國小（<b>家安爸爸</b>）。<br>
+        到汐小（<b>家安爸爸</b>）<br>
 
         4.
-        到達汐止國小後請協助確認：
+        到汐小後確認
         <span class="important">排鼓、鈴鼓、三角鐵</span>
-        擺放位置。<br>
+        位置；阿美族舞曲彩排
+        <span class="important">10:00</span>、演出
+        <span class="important">14:30</span>（<a href="amizu_stage.html" style="color:#1d4ed8; font-weight:bold; text-decoration:underline;">場佈圖</a>）<br>
 
         5.
-        <a href="amizu_stage.html" style="color:#1d4ed8; font-weight:bold; text-decoration:underline;">阿美族舞曲</a>
-        彩排時間：
-        <span class="important">10:00~10:10</span><br>
+        場務佈置
+        <a href="combined_group_1.html" style="color:#1d4ed8; font-weight:bold; text-decoration:underline;">聯合一團座位</a>
+        ：換場 <span class="important">10:50</span>、中場休息 <span class="important">15:10</span>（含安可曲）<br>
 
         6.
-        換場（
-        <span class="important">10:50~11:10</span>
-        ）時，場務組需協助佈置：
-        <a href="combined_group_1.html" style="color:#1d4ed8; font-weight:bold; text-decoration:underline;">聯合一團座位</a>
-        （下半場彩排用）。<br>
-
-        7.
-        <a href="amizu_stage.html" style="color:#1d4ed8; font-weight:bold; text-decoration:underline;">阿美族舞曲</a>
-        正式演出時間：
-        <span class="important">14:30~14:40</span><br>
-
-        8.
-        中場休息（
-        <span class="important">15:10~15:25</span>
-        ）時，場務組需協助佈置：
-        <a href="combined_group_1.html" style="color:#1d4ed8; font-weight:bold; text-decoration:underline;">聯合一團座位</a>
-        與安可曲座位。<br>
-
-        9.
-        演出結束後需協助：
-        <span class="important">搬下樂器與椅子。</span>
+        演出結束後協助
+        <span class="important">搬下樂器與椅子</span>
 
     </div>
 
     <div class="card">
 
         <div class="section-title">
-            白雲國小支援家長分組
+            找到你的名字 → 看你的任務
         </div>
 
-        <table class="grouping-table">
+        <div class="name-section">
+            <span class="name-section-label">🛠 場務組</span>
+            <div class="name-bar">
+                <a href="#group-changwu" class="name-btn">恩慈爸爸</a>
+                <a href="#group-changwu" class="name-btn">彩榛爸爸</a>
+                <a href="#group-changwu" class="name-btn">彩榛媽媽</a>
+                <a href="#group-changwu" class="name-btn">坤坤爸爸</a>
+                <a href="#group-changwu" class="name-btn">丞璿媽媽</a>
+                <a href="#group-changwu" class="name-btn">家安爸爸 ⚠️</a>
+            </div>
+        </div>
 
-            <tr>
-                <th style="width:120px;">組別</th>
-                <th style="width:80px;">人數</th>
-                <th>工作內容</th>
-                <th>家長</th>
-            </tr>
+        <div class="name-section zhaodai">
+            <span class="name-section-label">🎀 招待組</span>
+            <div class="name-bar">
+                <a href="#group-zhaodai" class="name-btn">知穎媽媽（會長）</a>
+                <a href="#group-zhaodai" class="name-btn">家安媽媽（兼拍照）</a>
+            </div>
+        </div>
 
-            <tr>
-                <td><b>場務組</b></td>
-                <td>6</td>
-                <td>搬運樂器、舞台佈置（layout）、曲間位置移動</td>
-                <td>
-                    恩慈爸爸、彩榛爸爸、彩榛媽媽、坤坤爸爸、丞璿媽媽、家安爸爸
-                </td>
-            </tr>
+        <div class="name-section zhixu">
+            <span class="name-section-label">📋 秩序組</span>
+            <div class="name-bar">
+                <a href="#group-zhixu" class="name-btn">宣菱媽媽</a>
+                <a href="#group-zhixu" class="name-btn">若曦媽媽</a>
+            </div>
+        </div>
 
-            <tr>
-                <td><b>招待組</b></td>
-                <td>2</td>
-                <td>貴賓席接待、動線安排</td>
-                <td>
-                    <b>知穎媽媽（會長）</b>、家安媽媽
-                </td>
-            </tr>
+        <div class="name-section paizhao">
+            <span class="name-section-label">📷 拍照組</span>
+            <div class="name-bar">
+                <a href="#group-paizhao" class="name-btn">家安媽媽</a>
+            </div>
+        </div>
 
-            <tr>
-                <td><b>秩序組</b></td>
-                <td>2</td>
-                <td>學生點名、聯繫未到同學、帶學生前往休息區</td>
-                <td>
-                    宣菱媽媽、若曦媽媽
-                </td>
-            </tr>
+        <div class="name-section zhuangfa">
+            <span class="name-section-label">💄 妝髮整理組</span>
+            <div class="name-bar">
+                <a href="#group-zhuangfa" class="name-btn">昀桐筠琋媽媽</a>
+            </div>
+        </div>
 
-            <tr>
-                <td><b>拍照組</b></td>
-                <td>1</td>
-                <td>彩排與正式演出側拍特寫（可兼招待組）</td>
-                <td>
-                    家安媽媽（兼招待組）
-                </td>
-            </tr>
+    </div>
 
-            <tr>
-                <td><b>妝髮整理組</b></td>
-                <td>1</td>
-                <td>演出前協助學生妝髮整理</td>
-                <td>
-                    昀桐筠琋媽媽
-                </td>
-            </tr>
+    <div class="card group-card" id="group-changwu">
 
-        </table>
+        <details>
+
+        <summary class="group-summary">🛠 場務組（6 人）</summary>
+
+        <div class="group-members">
+            <b>成員：</b>恩慈爸爸、彩榛爸爸、彩榛媽媽、坤坤爸爸、丞璿媽媽、家安爸爸
+        </div>
+
+        <div class="task-row"><span class="time">08:00</span> 汐止國中搬樂器上車（汐中端）</div>
+        <div class="task-row"><span class="time">08:20</span> 教研室樂器至演藝廳（汐小端）</div>
+        <div class="task-row"><span class="time">09:00</span> 樂器上台擺設（<a href="amizu_stage.html" style="color:#1d4ed8; font-weight:bold;">確認阿美族舞曲：排鼓、鈴鼓、三角鐵位置</a>）</div>
+        <div class="task-row"><span class="time">09:30</span> 上半場彩排：曲間位置移動</div>
+        <div class="task-row" style="background:#fef9c3; border-left-color:#eab308;"><span class="time" style="color:#a16207;">10:00</span> <b><a href="amizu_stage.html" style="color:#a16207;">阿美族舞曲彩排（白雲）</a></b>：<span class="important">曲間位置移動</span></div>
+        <div class="task-row"><span class="time">10:50</span> 換場：佈置 <a href="combined_group_1.html" style="color:#1d4ed8; font-weight:bold;">聯合一團座位</a>（下半場彩排用）</div>
+        <div class="task-row"><span class="time">11:10</span> 下半場彩排：各節目檢場定位</div>
+        <div class="task-row"><span class="time">14:15</span> 上半場演出：曲間位置移動</div>
+        <div class="task-row" style="background:#fef9c3; border-left-color:#eab308;"><span class="time" style="color:#a16207;">14:30</span> <b><a href="amizu_stage.html" style="color:#a16207;">阿美族舞曲正式演出（白雲）</a></b>：<span class="important">曲間位置移動</span></div>
+        <div class="task-row"><span class="time">15:10</span> 中場：佈置 <a href="combined_group_1.html" style="color:#1d4ed8; font-weight:bold;">聯合一團座位</a> + 安可曲座位</div>
+        <div class="task-row"><span class="time">15:20</span> 確認樂器車到達時間</div>
+        <div class="task-row"><span class="time">15:25</span> 下半場演出：曲間位置移動</div>
+        <div class="task-row"><span class="time">16:00</span> 場地復原、樂器回汐止國中</div>
+
+        <div class="special-note">
+            ⚠️ <b>家安爸爸特別任務</b>：08:50 前將 <span class="important">關東旗、揚琴布、中音笙</span> 搬到汐止國小
+        </div>
+
+        </details>
+
+    </div>
+
+    <div class="card group-card zhaodai" id="group-zhaodai">
+
+        <details>
+
+        <summary class="group-summary">🎀 招待組（2 人）</summary>
+
+        <div class="group-members">
+            <b>成員：</b><b>知穎媽媽（會長）</b>、家安媽媽
+        </div>
+
+        <div class="task-row"><span class="time">09:00</span> 佈置貴賓席</div>
+        <div class="task-row"><span class="time">09:30</span> 上半場彩排：動線安排</div>
+        <div class="task-row"><span class="time">11:10</span> 觀眾區動線作業完成</div>
+        <div class="task-row"><span class="time">14:15</span> 上半場演出：帶位、引導遲到觀眾</div>
+        <div class="task-row"><span class="time">15:25</span> 下半場演出：帶位</div>
+
+        </details>
+
+    </div>
+
+    <div class="card group-card zhixu" id="group-zhixu">
+
+        <details>
+
+        <summary class="group-summary">📋 秩序組（2 人）</summary>
+
+        <div class="group-members">
+            <b>成員：</b>宣菱媽媽、若曦媽媽
+        </div>
+
+        <div class="task-row"><span class="time">08:50</span> 點名、聯繫未到同學</div>
+        <div class="task-row"><span class="time">09:00</span> 帶學生前往休息區</div>
+        <div class="task-row"><span class="time">11:10</span> 下半場彩排：依節目時間帶隊至舞台</div>
+        <div class="task-row"><span class="time">11:30</span> 確認餐點</div>
+        <div class="task-row"><span class="time">12:10</span> 用餐管理</div>
+
+        </details>
+
+    </div>
+
+    <div class="card group-card paizhao" id="group-paizhao">
+
+        <details>
+
+        <summary class="group-summary">📷 拍照組（1 人）</summary>
+
+        <div class="group-members">
+            <b>成員：</b>家安媽媽（兼招待組）
+        </div>
+
+        <div class="task-row"><span class="time">09:30</span> 上半場彩排：側拍特寫</div>
+        <div class="task-row"><span class="time">11:10</span> 下半場彩排完拍 <b>團照</b></div>
+        <div class="task-row"><span class="time">14:15</span> 上半場演出：側拍</div>
+        <div class="task-row"><span class="time">15:25</span> 下半場演出：側拍</div>
+
+        </details>
+
+    </div>
+
+    <div class="card group-card zhuangfa" id="group-zhuangfa">
+
+        <details>
+
+        <summary class="group-summary">💄 妝髮整理組（1 人）</summary>
+
+        <div class="group-members">
+            <b>成員：</b>昀桐筠琋媽媽
+        </div>
+
+        <div class="task-row"><span class="time">12:10</span> 用餐時段協助學生妝髮整理（至 13:30 前台就緒）</div>
+
+        </details>
 
     </div>
 
@@ -384,7 +659,12 @@ td{
                 <td>10</td>
                 <td>11</td>
                 <td>
-                    恩慈爸爸、彩榛爸爸、彩榛媽媽、坤坤爸爸、丞璿媽媽、家安爸爸、<b>知穎媽媽（會長，不用便當）</b>、家安媽媽、宣菱媽媽、若曦媽媽、昀桐筠琋媽媽
+                    <details>
+                        <summary style="cursor:pointer; color:#1d4ed8;">展開 11 位名單</summary>
+                        <div style="margin-top:6px;">
+                            恩慈爸爸、彩榛爸爸、彩榛媽媽、坤坤爸爸、丞璿媽媽、家安爸爸、<b>知穎媽媽（會長，不用便當）</b>、家安媽媽、宣菱媽媽、若曦媽媽、昀桐筠琋媽媽
+                        </div>
+                    </details>
                 </td>
             </tr>
 
@@ -393,7 +673,12 @@ td{
                 <td>21</td>
                 <td>21</td>
                 <td>
-                    元嘉、胤嘉、宣菱、品希、育嫻、容安、䭲霖、昀桐、若亘、乙榛、芷齊、珉睿、彩榛、若曦、恩慈、丞璿、知穎、筠琋、唐坤、昕林、家安
+                    <details>
+                        <summary style="cursor:pointer; color:#1d4ed8;">展開 21 位名單</summary>
+                        <div style="margin-top:6px;">
+                            元嘉、胤嘉、宣菱、品希、育嫻、容安、䭲霖、昀桐、若亘、乙榛、芷齊、珉睿、彩榛、若曦、恩慈、丞璿、知穎、筠琋、唐坤、昕林、家安
+                        </div>
+                    </details>
                 </td>
             </tr>
 
@@ -653,6 +938,23 @@ td{
     </div>
 
 </div>
+
+<script>
+function openTargetGroup(){
+    if(!location.hash) return;
+    var target = document.querySelector(location.hash);
+    if(!target) return;
+    var details = target.querySelector('details');
+    if(details && !details.open){
+        details.open = true;
+    }
+    setTimeout(function(){
+        target.scrollIntoView({behavior:'smooth', block:'start'});
+    }, 50);
+}
+window.addEventListener('load', openTargetGroup);
+window.addEventListener('hashchange', openTargetGroup);
+</script>
 
 </body>
 </html>
