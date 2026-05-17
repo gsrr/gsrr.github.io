@@ -114,6 +114,115 @@ td{
     margin-top:40px;
 }
 
+@media (max-width: 600px){
+
+    body{
+        padding:10px;
+    }
+
+    .title{
+        font-size:24px;
+        margin-bottom:6px;
+    }
+
+    .subtitle{
+        font-size:15px;
+        margin-bottom:18px;
+    }
+
+    .card{
+        padding:14px;
+        border-radius:12px;
+        margin-bottom:16px;
+    }
+
+    .section-title{
+        font-size:22px;
+        margin-bottom:12px;
+    }
+
+    .notice{
+        padding:14px;
+        font-size:16px;
+        line-height:1.8;
+    }
+
+    .link-button{
+        font-size:16px;
+        padding:12px 18px;
+    }
+
+    /* Responsive tables: row → stacked card */
+    table{
+        font-size:14px;
+    }
+
+    table thead,
+    table tr:first-child{
+        display:none;
+    }
+
+    table,
+    table tbody,
+    table tr,
+    table td{
+        display:block;
+        width:100%;
+        box-sizing:border-box;
+    }
+
+    table tr{
+        margin-bottom:14px;
+        border:1px solid #ccc;
+        border-radius:10px;
+        overflow:hidden;
+        background:#fafbff;
+    }
+
+    table td{
+        border:none;
+        border-bottom:1px solid #e5e7eb;
+        padding:10px 12px;
+    }
+
+    table tr td:last-child{
+        border-bottom:none;
+    }
+
+    table td:before{
+        display:block;
+        font-weight:bold;
+        color:#2563eb;
+        font-size:13px;
+        margin-bottom:4px;
+    }
+
+    /* Schedule table: 時間 / 流程 / 地點 / 工作人員 / 演出同學 */
+    .schedule-table td:nth-of-type(1):before{ content:"時間"; }
+    .schedule-table td:nth-of-type(2):before{ content:"流程"; }
+    .schedule-table td:nth-of-type(3):before{ content:"地點"; }
+    .schedule-table td:nth-of-type(4):before{ content:"工作人員"; }
+    .schedule-table td:nth-of-type(5):before{ content:"演出同學"; }
+
+    /* Grouping table: 組別 / 人數 / 工作內容 / 家長 */
+    .grouping-table td:nth-of-type(1):before{ content:"組別"; }
+    .grouping-table td:nth-of-type(2):before{ content:"人數"; }
+    .grouping-table td:nth-of-type(3):before{ content:"工作內容"; }
+    .grouping-table td:nth-of-type(4):before{ content:"家長"; }
+
+    /* Meal table: 類別 / 便當 / 飲料 / 名單 */
+    .meal-table td:nth-of-type(1):before{ content:"類別"; }
+    .meal-table td:nth-of-type(2):before{ content:"便當"; }
+    .meal-table td:nth-of-type(3):before{ content:"飲料"; }
+    .meal-table td:nth-of-type(4):before{ content:"名單"; }
+
+    /* Hide empty cells on mobile to avoid blank "演出同學" labels */
+    table td:empty{
+        display:none;
+    }
+
+}
+
 </style>
 </head>
 
@@ -197,7 +306,7 @@ td{
             白雲國小支援家長分組
         </div>
 
-        <table>
+        <table class="grouping-table">
 
             <tr>
                 <th style="width:120px;">組別</th>
@@ -252,7 +361,7 @@ td{
             便當與飲料統計
         </div>
 
-        <table>
+        <table class="meal-table">
 
             <tr>
                 <th style="width:140px;">類別</th>
@@ -313,7 +422,7 @@ td{
             活動流程表
         </div>
 
-        <table>
+        <table class="schedule-table">
 
             <tr>
                 <th>時間</th>
