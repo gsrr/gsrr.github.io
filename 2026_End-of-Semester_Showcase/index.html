@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>115.6.6 期末成果發表會表演活動通知</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --primary-soft: #eaf1ff;
+      --border: #e5e7eb;
+      --accent: #f59e0b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+    }
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 40px 20px 64px;
+    }
+    header {
+      background: linear-gradient(135deg, #1d4ed8, #60a5fa);
+      color: white;
+      border-radius: 24px;
+      padding: 36px 32px;
+      box-shadow: 0 16px 36px rgba(37, 99, 235, 0.22);
+      margin-bottom: 28px;
+    }
+    header h1 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 5vw, 44px);
+      line-height: 1.2;
+      letter-spacing: .02em;
+    }
+    header p { margin: 0; opacity: .92; font-size: 18px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 20px;
+    }
+    .card {
+      grid-column: span 12;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    }
+    .half { grid-column: span 6; }
+    h2 {
+      margin: 0 0 16px;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    h2::before {
+      content: "";
+      width: 10px;
+      height: 26px;
+      border-radius: 999px;
+      background: var(--primary);
+      display: inline-block;
+    }
+    .info-list, .simple-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .info-list li {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 12px;
+      padding: 11px 0;
+      border-bottom: 1px dashed var(--border);
+    }
+    .info-list li:last-child { border-bottom: 0; }
+    .label { color: var(--muted); font-weight: 600; }
+    .value { font-weight: 650; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+    }
+    th, td {
+      text-align: left;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th {
+      background: var(--primary-soft);
+      color: #1e3a8a;
+      font-weight: 800;
+    }
+    tr:last-child td { border-bottom: 0; }
+    .columns {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .box {
+      background: #f9fafb;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+    }
+    .box h3 { margin: 0 0 10px; font-size: 18px; }
+    .simple-list li {
+      padding: 6px 0;
+      border-bottom: 1px dashed #e5e7eb;
+    }
+    .simple-list li:last-child { border-bottom: 0; }
+    .programs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+    }
+    .program-card {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      background: #fff;
+    }
+    .program-card h3 { margin: 0 0 8px; color: var(--primary); }
+    .note {
+      border-left: 5px solid var(--accent);
+      background: #fffbeb;
+      padding: 16px 18px;
+      border-radius: 12px;
+      margin-top: 8px;
+    }
+    footer {
+      color: var(--muted);
+      text-align: center;
+      margin-top: 28px;
+      font-size: 14px;
+    }
+    @media (max-width: 760px) {
+      .half { grid-column: span 12; }
+      .columns { grid-template-columns: 1fr; }
+      .info-list li { grid-template-columns: 1fr; gap: 2px; }
+      header, .card { padding: 22px; }
+      th, td { padding: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>115.6.6 期末成果發表會表演活動通知</h1>
+      <p>Chinese Orchestra End-of-Semester Performance Showcase</p>
+    </header>
+
+    <section class="grid">
+      <article class="card half">
+        <h2>活動資訊</h2>
+        <ul class="info-list">
+          <li><span class="label">活動名稱</span><span class="value">115.6.6 期末成果發表會表演</span></li>
+          <li><span class="label">集合時間</span><span class="value">6/6（六）上午 8:00</span></li>
+          <li><span class="label">集合地點</span><span class="value">國樂教室</span></li>
+          <li><span class="label">參與對象</span><span class="value">A、B、C 團同學</span></li>
+          <li><span class="label">活動地點</span><span class="value">白雲國小禮堂</span></li>
+        </ul>
+      </article>
+
+      <article class="card half">
+        <h2>服裝與攜帶物品</h2>
+        <ul class="info-list">
+          <li><span class="label">表演服裝</span><span class="value">黃色團 T、黑長褲、深色鞋</span></li>
+          <li><span class="label">攜帶物品</span><span class="value">個人樂器</span></li>
+        </ul>
+        <div class="note">提醒：請全體國樂團同學準時於 8:00 到國樂教室集合。</div>
+      </article>
+
+      <article class="card">
+        <h2>活動流程</h2>
+        <table>
+          <thead>
+            <tr><th>時間</th><th>活動</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>08:00–08:40</td><td>集合調音、器材搬運</td></tr>
+            <tr><td>08:40–10:20</td><td>彩排試音</td></tr>
+            <tr><td>10:20–10:30</td><td>迎賓</td></tr>
+            <tr><td>10:30–10:40</td><td>來賓致詞</td></tr>
+            <tr><td>10:40–11:50</td><td>正式表演</td></tr>
+            <tr><td>11:50–12:30</td><td>送舊及茶會</td></tr>
+            <tr><td>12:30–13:00</td><td>場復、活動結束</td></tr>
+          </tbody>
+        </table>
+      </article>
+
+      <article class="card">
+        <h2>樂器與設備清單</h2>
+        <div class="columns">
+          <div class="box">
+            <h3>打擊樂器</h3>
+            <ul class="simple-list">
+              <li>揚琴＋架 × 3</li>
+              <li>吊鈸 × 1</li>
+              <li>排鼓 × 5</li>
+              <li>木箱鼓 × 1</li>
+              <li>小軍鼓 × 1</li>
+              <li>花盆鼓 × 1</li>
+              <li>木魚 × 1</li>
+              <li>三角鐵 × 1</li>
+              <li>小鈸 × 1</li>
+              <li>鈴鼓 × 1</li>
+            </ul>
+          </div>
+          <div class="box">
+            <h3>其他設備</h3>
+            <ul class="simple-list">
+              <li>木琴 × 1</li>
+              <li>鐵琴 × 1</li>
+              <li>打擊桌 × 1</li>
+              <li>譜架 × 21</li>
+              <li>長桌 × 2</li>
+              <li>椅子（學生及觀眾）約 100 張</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>演出曲目與隊形</h2>
+        <div class="programs">
+          <div class="program-card">
+            <h3>全團</h3>
+            <ol>
+              <li>小星星</li>
+              <li>歡樂頌</li>
+              <li>歡樂的夜晚</li>
+            </ol>
+          </div>
+          <div class="program-card">
+            <h3>分組演出</h3>
+            <ol start="4">
+              <li>揚打組</li>
+              <li>二胡組</li>
+              <li>大提琴組</li>
+              <li>笙組</li>
+              <li>笛子組</li>
+              <li>柳阮、琵琶組</li>
+              <li>琵琶獨奏</li>
+            </ol>
+          </div>
+          <div class="program-card">
+            <h3>A 團</h3>
+            <ol start="11">
+              <li>Golden + Soda Pop</li>
+              <li>金蛇狂舞</li>
+            </ol>
+          </div>
+          <div class="program-card">
+            <h3>A + B 團</h3>
+            <ol start="13">
+              <li>雨夜花</li>
+              <li>駿馬奔馳</li>
+            </ol>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>重要提醒</h2>
+        <ul>
+          <li>家長協助搬運樂器後，除協助定位之家長外，其餘家長需下台。</li>
+          <li>8:00 前準時到國樂教室集合。</li>
+          <li>表演結束後，個人樂器及譜架需收回國樂教室。</li>
+          <li>場復時間為 12:30–13:00，請協助恢復場地。</li>
+        </ul>
+      </article>
+    </section>
+
+    <footer>整理自活動通知與樂器清單及位置圖</footer>
+  </main>
+</body>
+</html>
