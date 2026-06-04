@@ -148,6 +148,51 @@
       margin-top: 28px;
       font-size: 14px;
     }
+
+    a.map-link {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 700;
+      border-bottom: 1px solid rgba(37, 99, 235, .35);
+    }
+    a.map-link:hover { border-bottom-color: var(--primary); }
+    .map-gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+    .map-card {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      background: #fff;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .map-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.10);
+    }
+    .map-card img {
+      width: 100%;
+      height: 180px;
+      object-fit: contain;
+      background: #f9fafb;
+      display: block;
+      border-bottom: 1px solid var(--border);
+    }
+    .map-card span {
+      display: block;
+      padding: 12px 14px;
+      font-weight: 750;
+    }
+    .source-link {
+      margin-top: 14px;
+      display: inline-block;
+    }
     @media (max-width: 760px) {
       .half { grid-column: span 12; }
       .columns { grid-template-columns: 1fr; }
@@ -205,6 +250,7 @@
 
       <article class="card">
         <h2>樂器與設備清單</h2>
+        <a class="map-link" href="assets/position-maps/instrument-list.png" target="_blank" rel="noopener">查看 PDF 擷取圖：樂器清單</a>
         <div class="columns">
           <div class="box">
             <h3>打擊樂器</h3>
@@ -241,38 +287,90 @@
           <div class="program-card">
             <h3>全團</h3>
             <ol>
-              <li>小星星</li>
-              <li>歡樂頌</li>
-              <li>歡樂的夜晚</li>
+              <li><a class="map-link" href="#map-program-01-03">小星星</a></li>
+              <li><a class="map-link" href="#map-program-01-03">歡樂頌</a></li>
+              <li><a class="map-link" href="#map-program-01-03">歡樂的夜晚</a></li>
             </ol>
           </div>
           <div class="program-card">
             <h3>分組演出</h3>
             <ol start="4">
-              <li>揚打組</li>
-              <li>二胡組</li>
-              <li>大提琴組</li>
-              <li>笙組</li>
-              <li>笛子組</li>
-              <li>柳阮、琵琶組</li>
-              <li>琵琶獨奏</li>
+              <li><a class="map-link" href="#map-program-04">揚打組</a></li>
+              <li><a class="map-link" href="#map-program-05">二胡組</a></li>
+              <li><a class="map-link" href="#map-program-06">大提琴組</a></li>
+              <li><a class="map-link" href="#map-program-07">笙組</a></li>
+              <li><a class="map-link" href="#map-program-08">笛子組</a></li>
+              <li><a class="map-link" href="#map-program-09">柳阮、琵琶組</a></li>
+              <li><a class="map-link" href="#map-program-10">琵琶獨奏</a></li>
             </ol>
           </div>
           <div class="program-card">
             <h3>A 團</h3>
             <ol start="11">
-              <li>Golden + Soda Pop</li>
-              <li>金蛇狂舞</li>
+              <li><a class="map-link" href="#map-program-11-12">Golden + Soda Pop</a></li>
+              <li><a class="map-link" href="#map-program-11-12">金蛇狂舞</a></li>
             </ol>
           </div>
           <div class="program-card">
             <h3>A + B 團</h3>
             <ol start="13">
-              <li>雨夜花</li>
-              <li>駿馬奔馳</li>
+              <li><a class="map-link" href="#map-program-13-14">雨夜花</a></li>
+              <li><a class="map-link" href="#map-program-13-14">駿馬奔馳</a></li>
             </ol>
           </div>
         </div>
+      </article>
+
+      <article class="card">
+        <h2>PDF 圖檔快速連結</h2>
+        <p>以下為 PDF 各頁擷取出的圖檔。上方曲目名稱已連到對應的隊形圖；點擊縮圖可開啟原圖。</p>
+        <div class="map-gallery">
+          <a class="map-card" id="map-instrument-list" href="assets/position-maps/instrument-list.png" target="_blank" rel="noopener">
+            <img src="assets/position-maps/instrument-list.png" alt="樂器清單圖檔">
+            <span>樂器清單</span>
+          </a>
+          <a class="map-card" id="map-program-01-03" href="assets/position-maps/program-01-03-full-ensemble.png" target="_blank" rel="noopener">
+            <img src="assets/position-maps/program-01-03-full-ensemble.png" alt="No.1 至 No.3 全團隊形圖">
+            <span>No.1-3 全團：小星星、歡樂頌、歡樂的夜晚</span>
+          </a>
+          <a class="map-card" id="map-program-04" href="assets/position-maps/program-04-yangqin-percussion.png" target="_blank" rel="noopener">
+            <img src="assets/position-maps/program-04-yangqin-percussion.png" alt="No.4 揚打組隊形圖">
+            <span>No.4 揚打組</span>
+          </a>
+          <a class="map-card" id="map-program-05" href="assets/position-maps/program-05-erhu.png" target="_blank" rel="noopener">
+            <img src="assets/position-maps/program-05-erhu.png" alt="No.5 二胡組隊形圖">
+            <span>No.5 二胡組</span>
+          </a>
+          <a class="map-card" id="map-program-06" href="assets/position-maps/program-06-cello.png" target="_blank" rel="noopener">
+            <img src="assets/position-maps/program-06-cello.png" alt="No.6 大提琴組隊形圖">
+            <span>No.6 大提琴組</span>
+          </a>
+          <a class="map-card" id="map-program-07" href="assets/position-maps/program-07-sheng.png" target="_blank" rel="noopener">
+            <img src="assets/position-maps/program-07-sheng.png" alt="No.7 笙組隊形圖">
+            <span>No.7 笙組</span>
+          </a>
+          <a class="map-card" id="map-program-08" href="assets/position-maps/program-08-dizi.png" target="_blank" rel="noopener">
+            <img src="assets/position-maps/program-08-dizi.png" alt="No.8 笛子組隊形圖">
+            <span>No.8 笛子組</span>
+          </a>
+          <a class="map-card" id="map-program-09" href="assets/position-maps/program-09-liuqin-pipa.png" target="_blank" rel="noopener">
+            <img src="assets/position-maps/program-09-liuqin-pipa.png" alt="No.9 柳阮、琵琶組隊形圖">
+            <span>No.9 柳阮、琵琶組</span>
+          </a>
+          <a class="map-card" id="map-program-10" href="assets/position-maps/program-10-pipa-solo.png" target="_blank" rel="noopener">
+            <img src="assets/position-maps/program-10-pipa-solo.png" alt="No.10 琵琶獨奏隊形圖">
+            <span>No.10 琵琶獨奏</span>
+          </a>
+          <a class="map-card" id="map-program-11-12" href="assets/position-maps/program-11-12-a-group.png" target="_blank" rel="noopener">
+            <img src="assets/position-maps/program-11-12-a-group.png" alt="No.11 至 No.12 A 團隊形圖">
+            <span>No.11-12 A 團：Golden + Soda Pop、金蛇狂舞</span>
+          </a>
+          <a class="map-card" id="map-program-13-14" href="assets/position-maps/program-13-14-ab-group.png" target="_blank" rel="noopener">
+            <img src="assets/position-maps/program-13-14-ab-group.png" alt="No.13 至 No.14 A+B 團隊形圖">
+            <span>No.13-14 A+B 團：雨夜花、駿馬奔馳</span>
+          </a>
+        </div>
+        <a class="map-link source-link" href="115.06.06期末成果發表樂器清單及位置圖.pdf" target="_blank" rel="noopener">開啟原始 PDF</a>
       </article>
 
       <article class="card">
