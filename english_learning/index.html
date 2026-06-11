@@ -3,6 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+  // 在 LINE 內建瀏覽器中，強制改用手機外部瀏覽器開啟（朗讀/錄音才能正常）
+  (function () {
+    var ua = navigator.userAgent || "";
+    if (/Line\//i.test(ua) && location.href.indexOf("openExternalBrowser=1") === -1) {
+      var glue = location.search ? "&" : "?";
+      location.replace(location.protocol + "//" + location.host + location.pathname +
+                       location.search + glue + "openExternalBrowser=1" + location.hash);
+    }
+  })();
+</script>
 <title>English Reading — Sight Words</title>
 <style>
   * { box-sizing: border-box; }
