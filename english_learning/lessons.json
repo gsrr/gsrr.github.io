@@ -1,0 +1,59 @@
+{
+  "speakers": { "Tom": "male", "Anna": "female" },
+  "levels": [
+    {
+      "id": "Pre-A1",
+      "name": "Pre-A1",
+      "articles": [
+        {
+          "id": "001",
+          "title": "001 · How Are You?",
+          "file": "Pre-A1/001",
+          "scene": "park-ball",
+          "quiz3": [
+            { "q": "Tom is talking to Anna.", "answer": "Yes" },
+            { "q": "Anna is sad.", "answer": "No" },
+            { "q": "Tom is fine.", "answer": "Yes" },
+            { "q": "They want to play.", "answer": "Yes" },
+            { "q": "They will play in the park.", "answer": "Yes" }
+          ],
+          "quiz4": [
+            { "q": "Anna is fine.", "answer": "No" },
+            { "q": "Tom wants to sleep.", "answer": "No" },
+            { "q": "They will play at home.", "answer": "No" },
+            { "q": "Anna says yes.", "answer": "Yes" },
+            { "q": "Tom and Anna are friends.", "answer": "Yes" }
+          ]
+        },
+        {
+          "id": "002",
+          "title": "002 · Run and Jump",
+          "file": "Pre-A1/002",
+          "scene": "run-jump",
+          "quiz3": [
+            { "q": "Tom can run.", "answer": "Yes" },
+            { "q": "Anna can jump.", "answer": "Yes" },
+            { "q": "The tree is big.", "answer": "Yes" },
+            { "q": "Tom can run fast.", "answer": "Yes" }
+          ],
+          "quiz4": [
+            { "q": "The tree is little.", "answer": "No" },
+            { "q": "Tom can not run.", "answer": "No" },
+            { "q": "Anna can jump up and down.", "answer": "Yes" },
+            { "q": "They like to play.", "answer": "Yes" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "A1",
+      "name": "A1",
+      "articles": []
+    },
+    {
+      "id": "A2",
+      "name": "A2",
+      "articles": []
+    }
+  ]
+}
