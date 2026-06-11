@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>English Reading — Sight Words</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", "Microsoft JhengHei", system-ui, sans-serif;
+    margin: 0;
+    background: linear-gradient(135deg, #e0f2fe 0%, #fce7f3 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.10);
+    max-width: 680px;
+    width: 100%;
+    padding: 28px;
+  }
+  h1 { margin: 0 0 4px; font-size: 24px; color: #1e293b; }
+  .subtitle { color: #64748b; margin: 0 0 14px; font-size: 14px; }
+
+  /* 動畫場景 */
+  .scene { width: 100%; border-radius: 16px; overflow: hidden; margin-bottom: 18px;
+           box-shadow: inset 0 0 0 1px rgba(0,0,0,.04); }
+  .scene svg { width: 100%; height: auto; display: block; }
+  @keyframes bob   { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  @keyframes cloud { from { transform: translateX(-90px); } to { transform: translateX(380px); } }
+  @keyframes spin  { to { transform: rotate(360deg); } }
+  @keyframes sway  { 0%,100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+  @keyframes ballx { 0%,100% { transform: translateX(0); } 50% { transform: translateX(104px); } }
+  @keyframes bally { 0%,50%,100% { transform: translateY(0); } 25%,75% { transform: translateY(-42px); } }
+  @keyframes ballspin { to { transform: rotate(360deg); } }
+  @keyframes talkA { 0%,38% { opacity: 1; } 46%,100% { opacity: 0; } }
+  @keyframes talkB { 0%,46% { opacity: 0; } 54%,92% { opacity: 1; } 100% { opacity: 0; } }
+  .bob-a  { animation: bob 1.6s ease-in-out infinite; }
+  .bob-b  { animation: bob 1.6s ease-in-out infinite .8s; }
+  .cloud1 { animation: cloud 16s linear infinite; }
+  .cloud2 { animation: cloud 24s linear infinite; }
+  .rays   { transform-box: fill-box; transform-origin: center; animation: spin 20s linear infinite; }
+  .tree   { transform-box: fill-box; transform-origin: bottom center; animation: sway 4s ease-in-out infinite; }
+  .ball-x { animation: ballx 3s ease-in-out infinite; }
+  .ball-y { animation: bally 3s ease-in-out infinite; }
+  .ball-spin { transform-box: fill-box; transform-origin: center; animation: ballspin 1.2s linear infinite; }
+  .talkA  { animation: talkA 4s ease-in-out infinite; }
+  .talkB  { animation: talkB 4s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) {
+    .scene * { animation: none !important; }
+  }
+
+  /* 關卡切換 */
+  .levels { display: flex; gap: 10px; margin-bottom: 22px; }
+  .levelTab {
+    flex: 1;
+    border: 2px solid #e2e8f0;
+    background: #f8fafc;
+    border-radius: 14px;
+    padding: 14px;
+    cursor: pointer;
+    text-align: center;
+    transition: all .2s;
+  }
+  .levelTab .lvl { font-weight: 700; font-size: 16px; color: #334155; }
+  .levelTab .desc { font-size: 13px; color: #64748b; margin-top: 2px; }
+  .levelTab.active { border-color: #2563eb; background: #eff6ff; box-shadow: 0 4px 14px rgba(37,99,235,.15); }
+  .levelTab.active .lvl { color: #2563eb; }
+
+  button {
+    border: none;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform .08s, box-shadow .2s, opacity .2s;
+  }
+  button:active { transform: scale(0.96); }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 20px; }
+  #playBtn   { background: #2563eb; color: #fff; }
+  #pauseBtn  { background: #f59e0b; color: #fff; }
+  #stopBtn   { background: #ef4444; color: #fff; }
+  .speed { display: flex; align-items: center; gap: 8px; margin-left: auto; color: #475569; font-size: 14px; }
+  .speed input { width: 110px; }
+
+  .legend { display: flex; gap: 16px; font-size: 13px; color: #64748b; margin-bottom: 14px; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .legend .b::before { background: #2563eb; }
+  .legend .g::before { background: #db2777; }
+
+  /* 對話 */
+  .dialogue { display: flex; flex-direction: column; gap: 10px; }
+  .line { display: flex; gap: 10px; padding: 12px 14px; border-radius: 14px; line-height: 1.4; transition: background .2s, transform .2s; }
+  .line .who { font-weight: 700; min-width: 52px; }
+  .line.tom  { background: #eff6ff; }
+  .line.anna { background: #fdf2f8; align-self: flex-end; flex-direction: row-reverse; text-align: right; }
+  .line.tom  .who { color: #2563eb; }
+  .line.anna .who { color: #db2777; }
+  .line.active { background: #fef9c3; transform: scale(1.02); box-shadow: 0 4px 14px rgba(0,0,0,0.08); }
+
+  /* Level 2 跟讀 */
+  .shadow-progress { text-align: center; color: #64748b; font-size: 14px; margin-bottom: 10px; }
+  .shadow-bubble {
+    border-radius: 18px; padding: 26px 22px; text-align: center;
+    font-size: 26px; font-weight: 600; line-height: 1.4; margin-bottom: 6px;
+    min-height: 120px; display: flex; flex-direction: column; justify-content: center;
+  }
+  .shadow-bubble.tom  { background: #eff6ff; }
+  .shadow-bubble.anna { background: #fdf2f8; }
+  .shadow-who { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+  .shadow-bubble.tom  .shadow-who { color: #2563eb; }
+  .shadow-bubble.anna .shadow-who { color: #db2777; }
+
+  .shadow-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 18px 0; }
+  #listenBtn { background: #2563eb; color: #fff; }
+  #recBtn    { background: #ef4444; color: #fff; }
+  #recBtn.recording { background: #b91c1c; animation: pulse 1s infinite; }
+  #myPlayBtn { background: #16a34a; color: #fff; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,.5);} 50% { box-shadow: 0 0 0 10px rgba(239,68,68,0);} }
+
+  .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+  .nav button { background: #e2e8f0; color: #334155; }
+  .status { text-align: center; min-height: 22px; color: #64748b; font-size: 14px; margin-top: 6px; }
+
+  /* Level 3 問答 */
+  .quiz-intro { color: #64748b; font-size: 14px; margin-bottom: 16px; text-align: center; }
+  .quiz-list { display: flex; flex-direction: column; gap: 14px; }
+  .quiz-item {
+    border: 2px solid #e2e8f0; border-radius: 16px; padding: 16px 18px;
+    transition: border-color .2s, background .2s;
+  }
+  .quiz-q { font-size: 18px; font-weight: 600; color: #1e293b; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .speak-q {
+    flex-shrink: 0; border: none; background: #eff6ff; color: #2563eb;
+    border-radius: 50%; width: 34px; height: 34px; padding: 0; font-size: 17px;
+    cursor: pointer; line-height: 1; transition: background .15s, transform .08s;
+  }
+  .speak-q:hover { background: #dbeafe; }
+  .speak-q:active { transform: scale(0.9); }
+  .quiz-q .qtext { flex: 1; }
+  .quiz-opts { display: flex; gap: 10px; }
+  .opt {
+    flex: 1; border: 2px solid #cbd5e1; background: #fff; color: #334155;
+    border-radius: 12px; padding: 10px; font-size: 16px; font-weight: 700; cursor: pointer;
+    transition: all .15s;
+  }
+  .opt:hover:not(:disabled) { border-color: #94a3b8; }
+  .opt.correct  { background: #dcfce7; border-color: #16a34a; color: #15803d; }
+  .opt.wrong    { background: #fee2e2; border-color: #dc2626; color: #b91c1c; }
+  .quiz-mark { margin-left: 8px; font-size: 18px; }
+  .quiz-item.answered { border-color: #e2e8f0; }
+
+  .quiz-footer { margin-top: 20px; text-align: center; }
+  #scoreBox {
+    font-size: 20px; font-weight: 700; color: #2563eb; margin-bottom: 12px; min-height: 26px;
+  }
+  #resetQuiz, #resetQuiz4 { background: #2563eb; color: #fff; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>🗣️ English Reading</h1>
+    <p class="subtitle">Tom 用男聲，Anna 用女聲。</p>
+
+    <!-- ===== 動畫場景：Tom & Anna 在公園玩球 ===== -->
+    <div class="scene">
+      <svg viewBox="0 0 360 170" xmlns="http://www.w3.org/2000/svg" role="img"
+           aria-label="Tom and Anna playing with a ball in the park">
+        <defs>
+          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#bae6fd"/>
+            <stop offset="1" stop-color="#e0f2fe"/>
+          </linearGradient>
+        </defs>
+
+        <!-- 天空 + 草地 -->
+        <rect x="0" y="0" width="360" height="170" fill="url(#sky)"/>
+        <rect x="0" y="128" width="360" height="42" fill="#86efac"/>
+        <rect x="0" y="128" width="360" height="6" fill="#4ade80"/>
+
+        <!-- 太陽 -->
+        <g transform="translate(312,30)">
+          <g class="rays">
+            <g stroke="#fbbf24" stroke-width="3" stroke-linecap="round">
+              <line x1="0" y1="-26" x2="0" y2="-20"/>
+              <line x1="0" y1="26" x2="0" y2="20"/>
+              <line x1="-26" y1="0" x2="-20" y2="0"/>
+              <line x1="26" y1="0" x2="20" y2="0"/>
+              <line x1="-18" y1="-18" x2="-14" y2="-14"/>
+              <line x1="18" y1="18" x2="14" y2="14"/>
+              <line x1="-18" y1="18" x2="-14" y2="14"/>
+              <line x1="18" y1="-18" x2="14" y2="-14"/>
+            </g>
+          </g>
+          <circle r="15" fill="#fde047"/>
+        </g>
+
+        <!-- 雲 -->
+        <g class="cloud1" fill="#ffffff" opacity="0.9">
+          <ellipse cx="40" cy="34" rx="20" ry="12"/>
+          <ellipse cx="58" cy="34" rx="16" ry="10"/>
+          <ellipse cx="26" cy="38" rx="14" ry="9"/>
+        </g>
+        <g class="cloud2" fill="#ffffff" opacity="0.8">
+          <ellipse cx="150" cy="58" rx="16" ry="9"/>
+          <ellipse cx="164" cy="58" rx="12" ry="8"/>
+        </g>
+
+        <!-- 小樹 -->
+        <g class="tree">
+          <rect x="22" y="96" width="8" height="34" rx="3" fill="#92400e"/>
+          <circle cx="26" cy="86" r="20" fill="#22c55e"/>
+          <circle cx="13" cy="94" r="13" fill="#16a34a"/>
+          <circle cx="39" cy="94" r="13" fill="#16a34a"/>
+        </g>
+
+        <!-- Tom（男生，藍色，左邊） -->
+        <g transform="translate(78,52)">
+          <g class="bob-a">
+            <!-- 對話泡泡 -->
+            <g class="talkA">
+              <rect x="22" y="-26" width="40" height="22" rx="11" fill="#fff" stroke="#2563eb" stroke-width="1.5"/>
+              <path d="M30,-6 L34,2 L40,-6 Z" fill="#fff" stroke="#2563eb" stroke-width="1.5"/>
+              <text x="42" y="-11" font-size="11" font-weight="700" fill="#2563eb" text-anchor="middle">Hi!</text>
+            </g>
+            <!-- 腿 -->
+            <rect x="10" y="60" width="7" height="18" rx="3" fill="#1e3a8a"/>
+            <rect x="23" y="60" width="7" height="18" rx="3" fill="#1e3a8a"/>
+            <!-- 身體 -->
+            <rect x="4" y="38" width="32" height="26" rx="10" fill="#2563eb"/>
+            <!-- 手臂 -->
+            <rect x="-2" y="40" width="8" height="20" rx="4" fill="#2563eb" transform="rotate(18 2 42)"/>
+            <rect x="34" y="40" width="8" height="20" rx="4" fill="#2563eb" transform="rotate(-18 38 42)"/>
+            <!-- 頭 -->
+            <circle cx="20" cy="20" r="16" fill="#ffe0bd"/>
+            <path d="M4,18 A16,16 0 0 1 36,18 Z" fill="#6b4423"/>
+            <circle cx="14" cy="22" r="2" fill="#333"/>
+            <circle cx="26" cy="22" r="2" fill="#333"/>
+            <path d="M13,28 Q20,33 27,28" stroke="#a1452a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+          </g>
+        </g>
+
+        <!-- Anna（女生，粉色，右邊） -->
+        <g transform="translate(238,52)">
+          <g class="bob-b">
+            <!-- 對話泡泡 -->
+            <g class="talkB">
+              <rect x="-2" y="-26" width="44" height="22" rx="11" fill="#fff" stroke="#db2777" stroke-width="1.5"/>
+              <path d="M30,-6 L26,2 L20,-6 Z" fill="#fff" stroke="#db2777" stroke-width="1.5"/>
+              <text x="20" y="-11" font-size="11" font-weight="700" fill="#db2777" text-anchor="middle">Yes!</text>
+            </g>
+            <!-- 腿 -->
+            <rect x="10" y="62" width="7" height="16" rx="3" fill="#9d174d"/>
+            <rect x="23" y="62" width="7" height="16" rx="3" fill="#9d174d"/>
+            <!-- 洋裝 -->
+            <path d="M20,38 L4,66 L36,66 Z" fill="#db2777"/>
+            <!-- 手臂 -->
+            <rect x="-1" y="40" width="8" height="20" rx="4" fill="#db2777" transform="rotate(18 3 42)"/>
+            <rect x="33" y="40" width="8" height="20" rx="4" fill="#db2777" transform="rotate(-18 37 42)"/>
+            <!-- 辮子 -->
+            <circle cx="3" cy="24" r="7" fill="#6b4423"/>
+            <circle cx="37" cy="24" r="7" fill="#6b4423"/>
+            <!-- 頭 -->
+            <circle cx="20" cy="20" r="16" fill="#ffe0bd"/>
+            <path d="M4,18 A16,16 0 0 1 36,18 Z" fill="#6b4423"/>
+            <!-- 蝴蝶結 -->
+            <circle cx="20" cy="6" r="3.5" fill="#f472b6"/>
+            <circle cx="14" cy="22" r="2" fill="#333"/>
+            <circle cx="26" cy="22" r="2" fill="#333"/>
+            <path d="M13,28 Q20,33 27,28" stroke="#a1452a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+          </g>
+        </g>
+
+        <!-- 球：在兩人之間彈來彈去 -->
+        <g transform="translate(120,118)">
+          <g class="ball-x">
+            <g class="ball-y">
+              <g class="ball-spin">
+                <circle r="10" fill="#f97316"/>
+                <path d="M-10,0 A10,10 0 0 1 10,0" stroke="#fff" stroke-width="1.5" fill="none"/>
+                <line x1="0" y1="-10" x2="0" y2="10" stroke="#fff" stroke-width="1.5"/>
+              </g>
+            </g>
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <div class="levels">
+      <div class="levelTab active" data-level="1">
+        <div class="lvl">Level 1</div>
+        <div class="desc">先聽一次 👂</div>
+      </div>
+      <div class="levelTab" data-level="2">
+        <div class="lvl">Level 2</div>
+        <div class="desc">跟讀模式 🎤</div>
+      </div>
+      <div class="levelTab" data-level="3">
+        <div class="lvl">Level 3</div>
+        <div class="desc">問答測驗 ✅</div>
+      </div>
+      <div class="levelTab" data-level="4">
+        <div class="lvl">Level 4</div>
+        <div class="desc">故意混淆 🤔</div>
+      </div>
+    </div>
+
+    <!-- ===== Level 1：聽 ===== -->
+    <div id="level1">
+      <div class="legend">
+        <span class="b">Tom（男生 / Male）</span>
+        <span class="g">Anna（女生 / Female）</span>
+      </div>
+      <div class="controls">
+        <button id="playBtn">▶ 朗讀</button>
+        <button id="pauseBtn" disabled>⏸ 暫停</button>
+        <button id="stopBtn" disabled>⏹ 停止</button>
+        <label class="speed">
+          速度
+          <input id="rate" type="range" min="0.5" max="1.3" step="0.1" value="0.9">
+          <span id="rateVal">0.9x</span>
+        </label>
+      </div>
+      <div class="dialogue" id="dialogue"></div>
+    </div>
+
+    <!-- ===== Level 2：跟讀 ===== -->
+    <div id="level2" class="hidden">
+      <div class="shadow-progress" id="shadowProgress"></div>
+      <div class="shadow-bubble" id="shadowBubble">
+        <div class="shadow-who" id="shadowWho"></div>
+        <div id="shadowText"></div>
+      </div>
+      <div class="shadow-actions">
+        <button id="listenBtn">🔊 聽老師念</button>
+        <button id="recBtn">🎤 開始錄音</button>
+        <button id="myPlayBtn" disabled>▶ 播放我的錄音</button>
+      </div>
+      <div class="status" id="status">準備好了就點「聽老師念」吧！</div>
+      <div class="nav">
+        <button id="prevBtn">⬅ 上一句</button>
+        <button id="nextBtn">下一句 ➡</button>
+      </div>
+    </div>
+
+    <!-- ===== Level 3：問答測驗 ===== -->
+    <div id="level3" class="hidden">
+      <p class="quiz-intro">讀完對話後，回答下面的問題吧！點 <b>Yes</b> 或 <b>No</b>。</p>
+      <div class="quiz-list" id="quizList"></div>
+      <div class="quiz-footer">
+        <div id="scoreBox"></div>
+        <button id="resetQuiz">🔄 重新作答</button>
+      </div>
+    </div>
+
+    <!-- ===== Level 4：故意混淆 ===== -->
+    <div id="level4" class="hidden">
+      <p class="quiz-intro">小心！這些句子有點容易搞混 🤔 仔細想想對話內容，點 <b>Yes</b> 或 <b>No</b>。</p>
+      <div class="quiz-list" id="quizList4"></div>
+      <div class="quiz-footer">
+        <div id="scoreBox4"></div>
+        <button id="resetQuiz4" class="resetQuiz">🔄 重新作答</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // 對話文章：speaker + 性別 + 句子
+  const script = [
+    { who: "Tom",  gender: "male",   text: "Hi, Anna. How are you?" },
+    { who: "Anna", gender: "female", text: "I am good. How are you?" },
+    { who: "Tom",  gender: "male",   text: "I am fine. Do you want to play?" },
+    { who: "Anna", gender: "female", text: "Yes, I do. Where can we play?" },
+    { who: "Tom",  gender: "male",   text: "We can play in the park." },
+    { who: "Anna", gender: "female", text: "That is a good idea." },
+    { who: "Tom",  gender: "male",   text: "Can you bring your ball?" },
+    { who: "Anna", gender: "female", text: "Yes, I can bring it." },
+    { who: "Tom",  gender: "male",   text: "Great! Let us go now." },
+    { who: "Anna", gender: "female", text: "Okay! I am ready." },
+  ];
+
+  /* ---------- 語音 (TTS) ---------- */
+  const synth = window.speechSynthesis;
+  let voices = [], maleVoice = null, femaleVoice = null;
+
+  function pickVoices() {
+    voices = synth.getVoices();
+    const en = voices.filter(v => /en/i.test(v.lang));
+    const pool = en.length ? en : voices;
+    const femaleHints = /(female|woman|zira|samantha|susan|victoria|karen|moira|tessa|fiona|hazel|catherine|google us english|aria|jenny|michelle)/i;
+    const maleHints   = /(male|man|david|mark|george|daniel|alex|fred|guy|ryan|eric|james)/i;
+    femaleVoice = pool.find(v => femaleHints.test(v.name)) || pool[0] || null;
+    maleVoice   = pool.find(v => maleHints.test(v.name) && v !== femaleVoice)
+               || pool.find(v => v !== femaleVoice) || pool[0] || null;
+  }
+  pickVoices();
+  if (typeof synth.onvoiceschanged !== "undefined") synth.onvoiceschanged = pickVoices;
+
+  function makeUtter(line, rate) {
+    const u = new SpeechSynthesisUtterance(line.text);
+    u.rate = rate;
+    u.lang = "en-US";
+    const v = line.gender === "male" ? maleVoice : femaleVoice;
+    if (v) u.voice = v;
+    u.pitch = line.gender === "male" ? 0.85 : 1.25;
+    return u;
+  }
+
+  /* ---------- 關卡切換 ---------- */
+  const tabs = document.querySelectorAll(".levelTab");
+  const level1El = document.getElementById("level1");
+  const level2El = document.getElementById("level2");
+  const level3El = document.getElementById("level3");
+  const level4El = document.getElementById("level4");
+
+  tabs.forEach(tab => tab.addEventListener("click", () => {
+    tabs.forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    const lv = tab.dataset.level;
+    // 切換時停止所有聲音 / 錄音
+    synth.cancel();
+    stopListenL1();
+    stopRecordingIfAny();
+    level1El.classList.add("hidden");
+    level2El.classList.add("hidden");
+    level3El.classList.add("hidden");
+    level4El.classList.add("hidden");
+    if (lv === "1") { level1El.classList.remove("hidden"); }
+    else if (lv === "2") { level2El.classList.remove("hidden"); renderShadow(); }
+    else if (lv === "3") { level3El.classList.remove("hidden"); }
+    else { level4El.classList.remove("hidden"); }
+  }));
+
+  /* ================= Level 1：聽 ================= */
+  const dialogueEl = document.getElementById("dialogue");
+  const playBtn  = document.getElementById("playBtn");
+  const pauseBtn = document.getElementById("pauseBtn");
+  const stopBtn  = document.getElementById("stopBtn");
+  const rateEl   = document.getElementById("rate");
+  const rateVal  = document.getElementById("rateVal");
+  let isPlaying = false;
+
+  const lineEls = script.map(l => {
+    const div = document.createElement("div");
+    div.className = "line " + l.who.toLowerCase();
+    div.innerHTML = `<span class="who">${l.who}</span><span class="say">${l.text}</span>`;
+    dialogueEl.appendChild(div);
+    return div;
+  });
+
+  rateEl.addEventListener("input", () => rateVal.textContent = rateEl.value + "x");
+
+  function highlight(i) {
+    lineEls.forEach((el, idx) => el.classList.toggle("active", idx === i));
+    if (lineEls[i]) lineEls[i].scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  function speakLine(i) {
+    if (i >= script.length) { finishL1(); return; }
+    highlight(i);
+    const u = makeUtter(script[i], parseFloat(rateEl.value));
+    u.onend = () => { if (isPlaying) speakLine(i + 1); };
+    synth.speak(u);
+  }
+  function startL1() {
+    if (!("speechSynthesis" in window)) { alert("你的瀏覽器不支援語音朗讀，請用 Chrome / Edge / Safari。"); return; }
+    synth.cancel();
+    isPlaying = true;
+    playBtn.disabled = true; pauseBtn.disabled = false; stopBtn.disabled = false;
+    pauseBtn.textContent = "⏸ 暫停";
+    speakLine(0);
+  }
+  function finishL1() {
+    isPlaying = false;
+    playBtn.disabled = false; pauseBtn.disabled = true; stopBtn.disabled = true;
+    lineEls.forEach(el => el.classList.remove("active"));
+  }
+  function stopListenL1() { synth.cancel(); finishL1(); }
+
+  playBtn.addEventListener("click", startL1);
+  pauseBtn.addEventListener("click", () => {
+    if (synth.paused) { synth.resume(); pauseBtn.textContent = "⏸ 暫停"; }
+    else { synth.pause(); pauseBtn.textContent = "▶ 繼續"; }
+  });
+  stopBtn.addEventListener("click", stopListenL1);
+
+  /* ================= Level 2：跟讀 + 錄音 ================= */
+  const shadowProgress = document.getElementById("shadowProgress");
+  const shadowBubble   = document.getElementById("shadowBubble");
+  const shadowWho      = document.getElementById("shadowWho");
+  const shadowText     = document.getElementById("shadowText");
+  const listenBtn      = document.getElementById("listenBtn");
+  const recBtn         = document.getElementById("recBtn");
+  const myPlayBtn      = document.getElementById("myPlayBtn");
+  const statusEl       = document.getElementById("status");
+  const prevBtn        = document.getElementById("prevBtn");
+  const nextBtn        = document.getElementById("nextBtn");
+
+  let idx = 0;
+  let mediaRecorder = null;
+  let chunks = [];
+  let recordings = {};   // { 句子index: audio URL }
+  let isRecording = false;
+
+  function renderShadow() {
+    const line = script[idx];
+    shadowProgress.textContent = `第 ${idx + 1} 句 / 共 ${script.length} 句`;
+    shadowBubble.className = "shadow-bubble " + line.who.toLowerCase();
+    shadowWho.textContent = line.who + (line.gender === "male" ? "（男生）" : "（女生）");
+    shadowText.textContent = line.text;
+    prevBtn.disabled = idx === 0;
+    nextBtn.disabled = idx === script.length - 1;
+    // 這句是否已有錄音
+    myPlayBtn.disabled = !recordings[idx];
+    statusEl.textContent = recordings[idx] ? "已有錄音，可以播放比對 👍" : "點「聽老師念」聽範本，再「開始錄音」跟著念。";
+    recBtn.classList.remove("recording");
+    recBtn.textContent = "🎤 開始錄音";
+  }
+
+  listenBtn.addEventListener("click", () => {
+    synth.cancel();
+    synth.speak(makeUtter(script[idx], 0.9));
+  });
+
+  /* 錄音 */
+  recBtn.addEventListener("click", async () => {
+    if (isRecording) { stopRecording(); return; }
+    if (!navigator.mediaDevices || !window.MediaRecorder) {
+      alert("你的瀏覽器不支援錄音功能，請用較新的 Chrome / Edge / Safari。"); return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      chunks = [];
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: mediaRecorder.mimeType || "audio/webm" });
+        if (recordings[idx]) URL.revokeObjectURL(recordings[idx]);
+        recordings[idx] = URL.createObjectURL(blob);
+        myPlayBtn.disabled = false;
+        statusEl.textContent = "錄好了！點「播放我的錄音」聽聽看 🎧";
+        // 關閉麥克風
+        stream.getTracks().forEach(t => t.stop());
+      };
+      mediaRecorder.start();
+      isRecording = true;
+      recBtn.classList.add("recording");
+      recBtn.textContent = "⏹ 停止錄音";
+      statusEl.textContent = "錄音中… 請大聲念出來！🎙️";
+    } catch (err) {
+      statusEl.textContent = "⚠️ 無法使用麥克風，請允許麥克風權限後再試。";
+      console.error(err);
+    }
+  });
+
+  function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state === "recording") mediaRecorder.stop();
+    isRecording = false;
+    recBtn.classList.remove("recording");
+    recBtn.textContent = "🎤 開始錄音";
+  }
+  function stopRecordingIfAny() { if (isRecording) stopRecording(); }
+
+  /* 播放自己的錄音 */
+  let myAudio = null;
+  myPlayBtn.addEventListener("click", () => {
+    if (!recordings[idx]) return;
+    if (myAudio) { myAudio.pause(); }
+    myAudio = new Audio(recordings[idx]);
+    myAudio.play();
+    statusEl.textContent = "正在播放你的錄音 🔊";
+    myAudio.onended = () => statusEl.textContent = "再聽一次老師念，跟自己比比看吧！";
+  });
+
+  /* 上一句 / 下一句 */
+  prevBtn.addEventListener("click", () => { if (idx > 0) { stopRecordingIfAny(); synth.cancel(); idx--; renderShadow(); } });
+  nextBtn.addEventListener("click", () => { if (idx < script.length - 1) { stopRecordingIfAny(); synth.cancel(); idx++; renderShadow(); } });
+
+  /* ================= 問答測驗（Level 3 / 4 共用） ================= */
+
+  // 洗牌（Fisher–Yates）
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  // 答對音效（用 Web Audio 產生「叮咚」，不需外部檔案）
+  let audioCtx = null;
+  function playDing() {
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      const now = audioCtx.currentTime;
+      const notes = [784, 1047];   // G5 -> C6 上行兩個音，像「叮咚」
+      notes.forEach((freq, k) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        const t0 = now + k * 0.12;
+        gain.gain.setValueAtTime(0.0001, t0);
+        gain.gain.exponentialRampToValueAtTime(0.25, t0 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.35);
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start(t0);
+        osc.stop(t0 + 0.4);
+      });
+    } catch (e) { /* 靜默失敗 */ }
+  }
+
+  // 朗讀題目
+  function speakQuestion(text) {
+    if (!("speechSynthesis" in window)) return;
+    synth.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US"; u.rate = 0.85;
+    if (femaleVoice) u.voice = femaleVoice;
+    synth.speak(u);
+  }
+
+  // 測驗工廠：傳入題庫與 DOM 元素，建立一個獨立的測驗
+  function createQuiz(data, listEl, scoreEl, resetEl, markPrefix) {
+    let answered = {};
+    let shuffled = [];
+
+    function build() {
+      listEl.innerHTML = "";
+      answered = {};
+      scoreEl.textContent = "";
+      shuffled = shuffle(data);   // 每次重新洗牌
+      shuffled.forEach((item, qi) => {
+        const wrap = document.createElement("div");
+        wrap.className = "quiz-item";
+        const q = document.createElement("div");
+        q.className = "quiz-q";
+        q.innerHTML = `<button class="speak-q" title="朗讀題目">🔊</button>` +
+                      `<span class="qtext">${qi + 1}. ${item.q}</span>` +
+                      `<span class="quiz-mark" id="${markPrefix}-${qi}"></span>`;
+        q.querySelector(".speak-q").addEventListener("click", () => speakQuestion(item.q));
+        wrap.appendChild(q);
+
+        const opts = document.createElement("div");
+        opts.className = "quiz-opts";
+        ["Yes", "No"].forEach(choice => {
+          const btn = document.createElement("button");
+          btn.className = "opt";
+          btn.textContent = choice;
+          btn.addEventListener("click", () => answer(qi, choice, btn, opts));
+          opts.appendChild(btn);
+        });
+        wrap.appendChild(opts);
+        listEl.appendChild(wrap);
+      });
+    }
+
+    function answer(qi, choice, btn, opts) {
+      if (answered[qi]) return;            // 每題只能答一次
+      answered[qi] = true;
+      const correct = shuffled[qi].answer;
+      const mark = document.getElementById(markPrefix + "-" + qi);
+      opts.querySelectorAll(".opt").forEach(b => {
+        b.disabled = true;
+        if (b.textContent === correct) b.classList.add("correct");
+      });
+      if (choice === correct) {
+        mark.textContent = " ✅";
+        playDing();                        // 答對音效
+      } else {
+        btn.classList.add("wrong");
+        mark.textContent = " ❌";
+      }
+      updateScore();
+    }
+
+    function updateScore() {
+      const done = Object.keys(answered).length;
+      if (done < data.length) {
+        scoreEl.textContent = `已答 ${done} / ${data.length} 題`;
+        return;
+      }
+      let right = 0;
+      shuffled.forEach((item, qi) => {
+        const mark = document.getElementById(markPrefix + "-" + qi);
+        if (mark.textContent.includes("✅")) right++;
+      });
+      let emoji = right === data.length ? "🏆 全對！太棒了！"
+                : right >= data.length - 1 ? "👍 很厲害！"
+                : "💪 再聽一次對話試試看！";
+      scoreEl.textContent = `得分：${right} / ${data.length}　${emoji}`;
+    }
+
+    resetEl.addEventListener("click", build);
+    build();
+  }
+
+  // Level 3：基本問答
+  const quizData3 = [
+    { q: "Tom is talking to Anna.",     answer: "Yes" },
+    { q: "Anna is sad.",                answer: "No"  },
+    { q: "Tom is fine.",                answer: "Yes" },
+    { q: "They want to play.",          answer: "Yes" },
+    { q: "They will play in the park.", answer: "Yes" },
+  ];
+  createQuiz(quizData3,
+    document.getElementById("quizList"),
+    document.getElementById("scoreBox"),
+    document.getElementById("resetQuiz"), "mark3");
+
+  // Level 4：故意混淆
+  const quizData4 = [
+    { q: "Anna is fine.",              answer: "No"  },
+    { q: "Tom wants to sleep.",        answer: "No"  },
+    { q: "They will play at home.",    answer: "No"  },
+    { q: "Anna says yes.",             answer: "Yes" },
+    { q: "Tom and Anna are friends.",  answer: "Yes" },
+  ];
+  createQuiz(quizData4,
+    document.getElementById("quizList4"),
+    document.getElementById("scoreBox4"),
+    document.getElementById("resetQuiz4"), "mark4");
+</script>
+</body>
+</html>
