@@ -35,7 +35,7 @@
   @keyframes spin  { to { transform: rotate(360deg); } }
   @keyframes sway  { 0%,100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
   @keyframes ballx { 0%,100% { transform: translateX(0); } 50% { transform: translateX(104px); } }
-  @keyframes bally { 0%,50%,100% { transform: translateY(0); } 25%,75% { transform: translateY(-42px); } }
+  @keyframes bally { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-42px); } }
   @keyframes ballspin { to { transform: rotate(360deg); } }
   @keyframes talkA { 0%,38% { opacity: 1; } 46%,100% { opacity: 0; } }
   @keyframes talkB { 0%,46% { opacity: 0; } 54%,92% { opacity: 1; } 100% { opacity: 0; } }
@@ -46,7 +46,7 @@
   .rays   { transform-box: fill-box; transform-origin: center; animation: spin 20s linear infinite; }
   .tree   { transform-box: fill-box; transform-origin: bottom center; animation: sway 4s ease-in-out infinite; }
   .ball-x { animation: ballx 3s ease-in-out infinite; }
-  .ball-y { animation: bally 3s ease-in-out infinite; }
+  .ball-y { animation: bally 1.5s ease-in-out infinite; }
   .ball-spin { transform-box: fill-box; transform-origin: center; animation: ballspin 1.2s linear infinite; }
   .talkA  { animation: talkA 4s ease-in-out infinite; }
   .talkB  { animation: talkB 4s ease-in-out infinite; }
@@ -171,8 +171,8 @@
     <h1>🗣️ English Reading</h1>
     <p class="subtitle">Tom 用男聲，Anna 用女聲。</p>
 
-    <!-- ===== 動畫場景：Tom & Anna 在公園玩球 ===== -->
-    <div class="scene">
+    <!-- ===== 動畫場景：Tom & Anna 在公園玩球（只在 Level 1 顯示） ===== -->
+    <div class="scene" id="scene">
       <svg viewBox="0 0 360 170" xmlns="http://www.w3.org/2000/svg" role="img"
            aria-label="Tom and Anna playing with a ball in the park">
         <defs>
@@ -223,67 +223,131 @@
           <circle cx="39" cy="94" r="13" fill="#16a34a"/>
         </g>
 
-        <!-- Tom（男生，藍色，左邊） -->
-        <g transform="translate(78,52)">
+        <!-- Tom（男生，左邊） -->
+        <g transform="translate(78,50)">
           <g class="bob-a">
-            <!-- 對話泡泡 -->
+            <!-- 對話泡泡 Hi! -->
             <g class="talkA">
-              <rect x="22" y="-26" width="40" height="22" rx="11" fill="#fff" stroke="#2563eb" stroke-width="1.5"/>
-              <path d="M30,-6 L34,2 L40,-6 Z" fill="#fff" stroke="#2563eb" stroke-width="1.5"/>
-              <text x="42" y="-11" font-size="11" font-weight="700" fill="#2563eb" text-anchor="middle">Hi!</text>
+              <path d="M34,-3 L30,5 L42,-2 Z" fill="#fff" stroke="#2563eb" stroke-width="1.5"/>
+              <rect x="26" y="-24" width="40" height="22" rx="11" fill="#fff" stroke="#2563eb" stroke-width="1.5"/>
+              <text x="46" y="-9" font-size="11" font-weight="700" fill="#2563eb" text-anchor="middle">Hi!</text>
             </g>
+            <!-- 影子 -->
+            <ellipse cx="20" cy="80" rx="15" ry="3" fill="#000" opacity="0.10"/>
             <!-- 腿 -->
-            <rect x="10" y="60" width="7" height="18" rx="3" fill="#1e3a8a"/>
-            <rect x="23" y="60" width="7" height="18" rx="3" fill="#1e3a8a"/>
-            <!-- 身體 -->
-            <rect x="4" y="38" width="32" height="26" rx="10" fill="#2563eb"/>
+            <rect x="13" y="60" width="6" height="14" rx="3" fill="#ffe0bd"/>
+            <rect x="21" y="60" width="6" height="14" rx="3" fill="#ffe0bd"/>
+            <!-- 鞋子 -->
+            <rect x="10" y="73" width="11" height="6" rx="3" fill="#ef4444"/>
+            <rect x="19" y="73" width="11" height="6" rx="3" fill="#ef4444"/>
+            <!-- 短褲 -->
+            <rect x="9" y="50" width="22" height="12" rx="4" fill="#1e3a8a"/>
+            <rect x="19.3" y="52" width="1.4" height="9" fill="#172554"/>
+            <!-- 上衣 -->
+            <rect x="7" y="28" width="26" height="24" rx="9" fill="#2563eb"/>
+            <rect x="7" y="39" width="26" height="3.5" fill="#fff" opacity="0.7"/>
             <!-- 手臂 -->
-            <rect x="-2" y="40" width="8" height="20" rx="4" fill="#2563eb" transform="rotate(18 2 42)"/>
-            <rect x="34" y="40" width="8" height="20" rx="4" fill="#2563eb" transform="rotate(-18 38 42)"/>
-            <!-- 頭 -->
-            <circle cx="20" cy="20" r="16" fill="#ffe0bd"/>
-            <path d="M4,18 A16,16 0 0 1 36,18 Z" fill="#6b4423"/>
-            <circle cx="14" cy="22" r="2" fill="#333"/>
-            <circle cx="26" cy="22" r="2" fill="#333"/>
-            <path d="M13,28 Q20,33 27,28" stroke="#a1452a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+            <rect x="2" y="29" width="8" height="11" rx="4" fill="#2563eb"/>
+            <rect x="1.5" y="37" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(8 4 42)"/>
+            <circle cx="4" cy="49" r="3.3" fill="#ffe0bd"/>
+            <rect x="30" y="29" width="8" height="11" rx="4" fill="#2563eb"/>
+            <rect x="32.5" y="37" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(-8 36 42)"/>
+            <circle cx="36" cy="49" r="3.3" fill="#ffe0bd"/>
+            <!-- 脖子 -->
+            <rect x="16.5" y="24" width="7" height="6" fill="#ffe0bd"/>
+            <!-- 頭髮（後）+ 臉 -->
+            <circle cx="20" cy="13" r="13" fill="#5b3a1f"/>
+            <circle cx="20" cy="15" r="12" fill="#ffe0bd"/>
+            <ellipse cx="7.7" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
+            <ellipse cx="32.3" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
+            <!-- 瀏海 -->
+            <path d="M8,12 Q20,2 32,12 Q20,8 8,12 Z" fill="#5b3a1f"/>
+            <!-- 腮紅 -->
+            <circle cx="11" cy="19" r="2.5" fill="#fca5a5" opacity="0.55"/>
+            <circle cx="29" cy="19" r="2.5" fill="#fca5a5" opacity="0.55"/>
+            <!-- 眉毛 -->
+            <path d="M11.5,11 q2,-1.2 4,0" stroke="#5b3a1f" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+            <path d="M24.5,11 q2,-1.2 4,0" stroke="#5b3a1f" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+            <!-- 眼睛 -->
+            <ellipse cx="14" cy="15" rx="2.2" ry="2.8" fill="#fff"/>
+            <circle cx="14.4" cy="15.4" r="1.4" fill="#3b2415"/>
+            <ellipse cx="26" cy="15" rx="2.2" ry="2.8" fill="#fff"/>
+            <circle cx="25.6" cy="15.4" r="1.4" fill="#3b2415"/>
+            <!-- 鼻子 -->
+            <path d="M20,15.5 q1.5,2.2 -0.6,3.2" stroke="#e0a878" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+            <!-- 嘴巴 -->
+            <path d="M15,21 Q20,25 25,21" stroke="#b5503a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
           </g>
         </g>
 
-        <!-- Anna（女生，粉色，右邊） -->
-        <g transform="translate(238,52)">
+        <!-- Anna（女生，右邊） -->
+        <g transform="translate(238,50)">
           <g class="bob-b">
-            <!-- 對話泡泡 -->
+            <!-- 對話泡泡 Yes! -->
             <g class="talkB">
-              <rect x="-2" y="-26" width="44" height="22" rx="11" fill="#fff" stroke="#db2777" stroke-width="1.5"/>
-              <path d="M30,-6 L26,2 L20,-6 Z" fill="#fff" stroke="#db2777" stroke-width="1.5"/>
-              <text x="20" y="-11" font-size="11" font-weight="700" fill="#db2777" text-anchor="middle">Yes!</text>
+              <path d="M6,-3 L10,5 L-2,-2 Z" fill="#fff" stroke="#db2777" stroke-width="1.5"/>
+              <rect x="-26" y="-24" width="42" height="22" rx="11" fill="#fff" stroke="#db2777" stroke-width="1.5"/>
+              <text x="-5" y="-9" font-size="11" font-weight="700" fill="#db2777" text-anchor="middle">Yes!</text>
             </g>
+            <!-- 影子 -->
+            <ellipse cx="20" cy="80" rx="15" ry="3" fill="#000" opacity="0.10"/>
+            <!-- 長髮（後） -->
+            <path d="M4,16 Q1,44 7,58 L33,58 Q39,44 36,16 Z" fill="#6b4423"/>
             <!-- 腿 -->
-            <rect x="10" y="62" width="7" height="16" rx="3" fill="#9d174d"/>
-            <rect x="23" y="62" width="7" height="16" rx="3" fill="#9d174d"/>
+            <rect x="13" y="58" width="6" height="14" rx="3" fill="#ffe0bd"/>
+            <rect x="21" y="58" width="6" height="14" rx="3" fill="#ffe0bd"/>
+            <!-- 鞋子 -->
+            <rect x="10" y="72" width="11" height="6" rx="3" fill="#be185d"/>
+            <rect x="19" y="72" width="11" height="6" rx="3" fill="#be185d"/>
             <!-- 洋裝 -->
-            <path d="M20,38 L4,66 L36,66 Z" fill="#db2777"/>
+            <path d="M9,30 Q5,48 2,60 L38,60 Q35,48 31,30 Z" fill="#db2777"/>
+            <rect x="9" y="30" width="22" height="7" rx="3" fill="#be185d" opacity="0.45"/>
             <!-- 手臂 -->
-            <rect x="-1" y="40" width="8" height="20" rx="4" fill="#db2777" transform="rotate(18 3 42)"/>
-            <rect x="33" y="40" width="8" height="20" rx="4" fill="#db2777" transform="rotate(-18 37 42)"/>
-            <!-- 辮子 -->
-            <circle cx="3" cy="24" r="7" fill="#6b4423"/>
-            <circle cx="37" cy="24" r="7" fill="#6b4423"/>
-            <!-- 頭 -->
-            <circle cx="20" cy="20" r="16" fill="#ffe0bd"/>
-            <path d="M4,18 A16,16 0 0 1 36,18 Z" fill="#6b4423"/>
+            <rect x="2" y="31" width="8" height="10" rx="4" fill="#db2777"/>
+            <rect x="1.5" y="38" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(8 4 43)"/>
+            <circle cx="4" cy="50" r="3.3" fill="#ffe0bd"/>
+            <rect x="30" y="31" width="8" height="10" rx="4" fill="#db2777"/>
+            <rect x="32.5" y="38" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(-8 36 43)"/>
+            <circle cx="36" cy="50" r="3.3" fill="#ffe0bd"/>
+            <!-- 脖子 -->
+            <rect x="16.5" y="24" width="7" height="6" fill="#ffe0bd"/>
+            <!-- 辮子（前） -->
+            <ellipse cx="4" cy="27" rx="5" ry="10" fill="#6b4423"/>
+            <ellipse cx="36" cy="27" rx="5" ry="10" fill="#6b4423"/>
+            <circle cx="5" cy="18" r="2" fill="#f472b6"/>
+            <circle cx="35" cy="18" r="2" fill="#f472b6"/>
+            <!-- 頭髮（後）+ 臉 -->
+            <circle cx="20" cy="13" r="13" fill="#6b4423"/>
+            <circle cx="20" cy="15" r="12" fill="#ffe0bd"/>
+            <ellipse cx="7.7" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
+            <ellipse cx="32.3" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
+            <!-- 瀏海 -->
+            <path d="M7,12 Q20,1 33,12 Q20,7 7,12 Z" fill="#6b4423"/>
             <!-- 蝴蝶結 -->
-            <circle cx="20" cy="6" r="3.5" fill="#f472b6"/>
-            <circle cx="14" cy="22" r="2" fill="#333"/>
-            <circle cx="26" cy="22" r="2" fill="#333"/>
-            <path d="M13,28 Q20,33 27,28" stroke="#a1452a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+            <path d="M20,5 L13,2 L13,8 Z" fill="#f472b6"/>
+            <path d="M20,5 L27,2 L27,8 Z" fill="#f472b6"/>
+            <circle cx="20" cy="5" r="2.2" fill="#ec4899"/>
+            <!-- 腮紅 -->
+            <circle cx="11" cy="19" r="2.5" fill="#fca5a5" opacity="0.6"/>
+            <circle cx="29" cy="19" r="2.5" fill="#fca5a5" opacity="0.6"/>
+            <!-- 眼睛 + 睫毛 -->
+            <ellipse cx="14" cy="15" rx="2.2" ry="2.9" fill="#fff"/>
+            <circle cx="14.4" cy="15.4" r="1.5" fill="#3b2415"/>
+            <ellipse cx="26" cy="15" rx="2.2" ry="2.9" fill="#fff"/>
+            <circle cx="25.6" cy="15.4" r="1.5" fill="#3b2415"/>
+            <path d="M11.5,12.5 q2,-1 4,-0.3" stroke="#3b2415" stroke-width="1" fill="none" stroke-linecap="round"/>
+            <path d="M24.5,12.2 q2,-0.7 4,0.3" stroke="#3b2415" stroke-width="1" fill="none" stroke-linecap="round"/>
+            <!-- 鼻子 -->
+            <path d="M20,15.5 q1.5,2.2 -0.6,3.2" stroke="#e0a878" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+            <!-- 嘴巴 -->
+            <path d="M15,21 Q20,25 25,21" stroke="#b5503a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
           </g>
         </g>
 
         <!-- 球：在兩人之間彈來彈去 -->
         <g transform="translate(120,118)">
           <g class="ball-x">
-            <g class="ball-y">
+            <g class="ball-y" id="ballY">
               <g class="ball-spin">
                 <circle r="10" fill="#f97316"/>
                 <path d="M-10,0 A10,10 0 0 1 10,0" stroke="#fff" stroke-width="1.5" fill="none"/>
@@ -421,6 +485,7 @@
   const level2El = document.getElementById("level2");
   const level3El = document.getElementById("level3");
   const level4El = document.getElementById("level4");
+  const sceneEl = document.getElementById("scene");
 
   tabs.forEach(tab => tab.addEventListener("click", () => {
     tabs.forEach(t => t.classList.remove("active"));
@@ -434,6 +499,9 @@
     level2El.classList.add("hidden");
     level3El.classList.add("hidden");
     level4El.classList.add("hidden");
+    // 動畫場景只在 Level 1 顯示
+    sceneEl.classList.toggle("hidden", lv !== "1");
+    if (audioCtx) { try { audioCtx.resume(); } catch (e) {} }
     if (lv === "1") { level1El.classList.remove("hidden"); }
     else if (lv === "2") { level2El.classList.remove("hidden"); renderShadow(); }
     else if (lv === "3") { level3El.classList.remove("hidden"); }
@@ -619,6 +687,36 @@
       });
     } catch (e) { /* 靜默失敗 */ }
   }
+
+  // 球落地的彈跳音效（短促的「碰」）
+  function playBounce() {
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") return;   // 等使用者互動後才會發聲
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.exponentialRampToValueAtTime(120, now + 0.12);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.13, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.2);
+    } catch (e) { /* 靜默失敗 */ }
+  }
+
+  // 球每次落地（彈跳動畫每一輪結束 = 落到對方手上）就播放音效
+  const ballYEl = document.getElementById("ballY");
+  if (ballYEl) ballYEl.addEventListener("animationiteration", (e) => {
+    if (e.animationName === "bally") playBounce();
+  });
+  // 第一次互動後啟用音訊（瀏覽器需使用者手勢才能播放聲音）
+  document.addEventListener("pointerdown", () => {
+    try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); audioCtx.resume(); } catch (e) {}
+  }, { once: true });
 
   // 朗讀題目
   function speakQuestion(text) {
