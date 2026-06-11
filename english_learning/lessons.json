@@ -23,6 +23,13 @@
             { "q": "They will play at home.", "answer": "No" },
             { "q": "Anna says yes.", "answer": "Yes" },
             { "q": "Tom and Anna are friends.", "answer": "Yes" }
+          ],
+          "vocab": [
+            { "word": "Tom", "pic": "👦" },
+            { "word": "Anna", "pic": "👧" },
+            { "word": "ball", "pic": "⚽" },
+            { "word": "park", "pic": "🏞️" },
+            { "word": "play", "pic": "🛝" }
           ]
         },
         {
@@ -41,6 +48,15 @@
             { "q": "Tom can not run.", "answer": "No" },
             { "q": "Anna can jump up and down.", "answer": "Yes" },
             { "q": "They like to play.", "answer": "Yes" }
+          ],
+          "vocab": [
+            { "word": "Tom", "pic": "👦" },
+            { "word": "Anna", "pic": "👧" },
+            { "word": "ball", "pic": "⚽" },
+            { "word": "tree", "pic": "🌳" },
+            { "word": "run", "pic": "🏃" },
+            { "word": "jump", "pic": "🦘" },
+            { "word": "look", "pic": "👀" }
           ]
         }
       ]
@@ -48,7 +64,46 @@
     {
       "id": "A1",
       "name": "A1",
-      "articles": []
+      "articles": [
+        {
+          "id": "001",
+          "title": "001 · Yesterday at the Park",
+          "file": "A1/001",
+          "scene": "rainy-park",
+          "quiz3": [
+            { "q": "Anna went to the park.", "answer": "Yes" },
+            { "q": "Anna played with her ball.", "answer": "Yes" },
+            { "q": "Anna climbed the tree.", "answer": "No" },
+            { "q": "Tom watched TV at home.", "answer": "Yes" },
+            { "q": "It rained at the park.", "answer": "Yes" }
+          ],
+          "quiz4": [
+            { "q": "Anna went to the park with Tom.", "answer": "No" },
+            { "q": "Anna didn't climb the tree because it was too high.", "answer": "Yes" },
+            { "q": "It was sunny at the park.", "answer": "No" },
+            { "q": "Tom played football at home.", "answer": "No" },
+            { "q": "Tom went home.", "answer": "Yes" }
+          ],
+          "vocab": [
+            { "word": "Tom", "pic": "👦" },
+            { "word": "Anna", "pic": "👧" },
+            { "word": "mom", "pic": "👩" },
+            { "word": "ball", "pic": "⚽" },
+            { "word": "tree", "pic": "🌳" },
+            { "word": "park", "pic": "🏞️" },
+            { "word": "rain", "pic": "🌧️" },
+            { "word": "TV", "pic": "📺" },
+            { "word": "home", "pic": "🏠" },
+            { "word": "run", "pic": "🏃" }
+          ],
+          "reorder": [
+            ["I", "went", "to", "the", "park"],
+            ["I", "played", "with", "my", "ball"],
+            ["Did", "you", "climb", "the", "big", "tree"],
+            ["I", "went", "home", "and", "watched", "TV"]
+          ]
+        }
+      ]
     },
     {
       "id": "A2",

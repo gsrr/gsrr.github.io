@@ -53,6 +53,8 @@
   .bob-b  { animation: bob 1.6s ease-in-out infinite .8s; }
   .jump-a { animation: jump 1.1s ease-in-out infinite; }
   .jump-b { animation: jump 1.1s ease-in-out infinite .35s; }
+  @keyframes rainfall { from { transform: translateY(0); } to { transform: translateY(16px); } }
+  .rainfall { animation: rainfall .5s linear infinite; }
   .cloud1 { animation: cloud 16s linear infinite; }
   .cloud2 { animation: cloud 24s linear infinite; }
   .rays   { transform-box: fill-box; transform-origin: center; animation: spin 20s linear infinite; }
@@ -67,9 +69,9 @@
   }
 
   /* 關卡切換 */
-  .levels { display: flex; gap: 10px; margin-bottom: 22px; }
+  .levels { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
   .levelTab {
-    flex: 1;
+    flex: 1 1 92px;
     border: 2px solid #e2e8f0;
     background: #f8fafc;
     border-radius: 14px;
@@ -173,7 +175,54 @@
   #scoreBox {
     font-size: 20px; font-weight: 700; color: #2563eb; margin-bottom: 12px; min-height: 26px;
   }
-  #resetQuiz, #resetQuiz4 { background: #2563eb; color: #fff; }
+  #resetQuiz, #resetQuiz4, #resetMatch { background: #2563eb; color: #fff; }
+
+  /* Level 5 單字配圖 */
+  .match-intro { color: #64748b; font-size: 14px; margin-bottom: 16px; text-align: center; }
+  .match-wrap { display: flex; gap: 16px; align-items: flex-start; }
+  .match-col { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+  .mword {
+    display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+    border: 2px solid #e2e8f0; border-radius: 12px; background: #f8fafc;
+    font-size: 18px; font-weight: 600; color: #1e293b; transition: all .15s;
+  }
+  .mword .num {
+    width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+    background: #e2e8f0; color: #475569; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .mword .wword { flex: 1; }
+  .mword.current { border-color: #2563eb; background: #eff6ff; }
+  .mword.current .num { background: #2563eb; color: #fff; }
+  .mword.done { border-color: #16a34a; background: #dcfce7; color: #15803d; }
+  .mpic {
+    font-size: 36px; padding: 8px; border: 2px solid #cbd5e1; border-radius: 14px;
+    background: #fff; cursor: pointer; line-height: 1.1; min-height: 56px;
+  }
+  .mpic:hover:not(:disabled) { border-color: #94a3b8; }
+  .mpic.done { border-color: #16a34a; background: #dcfce7; opacity: .55; cursor: default; }
+  .mpic.shake { border-color: #dc2626; animation: shake .4s; }
+  @keyframes shake { 0%,100% { transform: translateX(0);} 25% { transform: translateX(-6px);} 75% { transform: translateX(6px);} }
+  #matchStatus { font-size: 18px; font-weight: 700; color: #2563eb; min-height: 26px; margin-bottom: 12px; }
+
+  /* Level 6 重組句子 */
+  .reorder-progress { text-align: center; color: #64748b; font-size: 14px; margin-bottom: 10px; }
+  .reorder-answer {
+    min-height: 54px; border: 2px dashed #cbd5e1; border-radius: 14px; padding: 10px;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; background: #f8fafc;
+  }
+  .reorder-answer.correct { border-style: solid; border-color: #16a34a; background: #dcfce7; }
+  .reorder-pool { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; min-height: 44px; margin-bottom: 8px; }
+  .chip {
+    border: 2px solid #cbd5e1; background: #fff; color: #1e293b; border-radius: 10px;
+    padding: 8px 14px; font-size: 17px; font-weight: 600; cursor: pointer; transition: all .12s;
+  }
+  .chip:hover { border-color: #94a3b8; }
+  .chip:active { transform: scale(0.94); }
+  .reorder-answer .chip { background: #eff6ff; border-color: #bfdbfe; }
+  #roStatus { text-align: center; font-size: 18px; font-weight: 700; color: #2563eb; min-height: 26px; margin: 6px 0 10px; }
+  #roClear { background: #e2e8f0; color: #334155; }
+  #roNext { background: #2563eb; color: #fff; }
 
   .hidden { display: none !important; }
 </style>
@@ -543,6 +592,149 @@
       </svg>
     </div>
 
+    <!-- 場景 C：下雨的公園（對應 A1/001 rainy-park） -->
+    <div class="scene hidden" data-scene="rainy-park">
+      <svg viewBox="0 0 360 170" xmlns="http://www.w3.org/2000/svg" role="img"
+           aria-label="Tom and Anna at the park when it started to rain">
+        <defs>
+          <linearGradient id="sky3" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#94a3b8"/>
+            <stop offset="1" stop-color="#cbd5e1"/>
+          </linearGradient>
+        </defs>
+
+        <!-- 陰天 + 草地 -->
+        <rect x="0" y="0" width="360" height="170" fill="url(#sky3)"/>
+        <rect x="0" y="128" width="360" height="42" fill="#86efac"/>
+        <rect x="0" y="128" width="360" height="6" fill="#4ade80"/>
+
+        <!-- 水窪 -->
+        <ellipse cx="70" cy="150" rx="26" ry="5" fill="#7dd3fc" opacity="0.6"/>
+        <ellipse cx="292" cy="152" rx="30" ry="5" fill="#7dd3fc" opacity="0.6"/>
+
+        <!-- 大樹（右側） -->
+        <g class="tree">
+          <rect x="312" y="88" width="11" height="42" rx="4" fill="#92400e"/>
+          <circle cx="317" cy="74" r="25" fill="#15803d"/>
+          <circle cx="298" cy="86" r="16" fill="#166534"/>
+          <circle cx="336" cy="86" r="15" fill="#166534"/>
+        </g>
+
+        <!-- 烏雲 -->
+        <g fill="#64748b" opacity="0.9">
+          <ellipse cx="72" cy="28" rx="26" ry="14"/>
+          <ellipse cx="98" cy="31" rx="20" ry="12"/>
+          <ellipse cx="50" cy="33" rx="16" ry="10"/>
+        </g>
+        <g fill="#475569" opacity="0.85">
+          <ellipse cx="250" cy="24" rx="28" ry="14"/>
+          <ellipse cx="278" cy="28" rx="20" ry="12"/>
+          <ellipse cx="224" cy="28" rx="16" ry="10"/>
+        </g>
+
+        <!-- 雨 -->
+        <g class="rainfall" stroke="#bfdbfe" stroke-width="2" stroke-linecap="round" opacity="0.8">
+          <line x1="60" y1="44" x2="57" y2="51"/><line x1="60" y1="60" x2="57" y2="67"/><line x1="60" y1="76" x2="57" y2="83"/><line x1="60" y1="92" x2="57" y2="99"/><line x1="60" y1="108" x2="57" y2="115"/>
+          <line x1="108" y1="44" x2="105" y2="51"/><line x1="108" y1="60" x2="105" y2="67"/><line x1="108" y1="76" x2="105" y2="83"/><line x1="108" y1="92" x2="105" y2="99"/><line x1="108" y1="108" x2="105" y2="115"/>
+          <line x1="156" y1="44" x2="153" y2="51"/><line x1="156" y1="60" x2="153" y2="67"/><line x1="156" y1="76" x2="153" y2="83"/><line x1="156" y1="92" x2="153" y2="99"/><line x1="156" y1="108" x2="153" y2="115"/>
+          <line x1="204" y1="44" x2="201" y2="51"/><line x1="204" y1="60" x2="201" y2="67"/><line x1="204" y1="76" x2="201" y2="83"/><line x1="204" y1="92" x2="201" y2="99"/><line x1="204" y1="108" x2="201" y2="115"/>
+          <line x1="252" y1="44" x2="249" y2="51"/><line x1="252" y1="60" x2="249" y2="67"/><line x1="252" y1="76" x2="249" y2="83"/><line x1="252" y1="92" x2="249" y2="99"/><line x1="252" y1="108" x2="249" y2="115"/>
+          <line x1="300" y1="44" x2="297" y2="51"/><line x1="300" y1="60" x2="297" y2="67"/><line x1="300" y1="76" x2="297" y2="83"/><line x1="300" y1="92" x2="297" y2="99"/><line x1="300" y1="108" x2="297" y2="115"/>
+        </g>
+
+        <!-- Tom（左） -->
+        <g transform="translate(112,50)">
+          <g class="bob-a">
+            <ellipse cx="20" cy="80" rx="15" ry="3" fill="#000" opacity="0.10"/>
+            <rect x="13" y="60" width="6" height="14" rx="3" fill="#ffe0bd"/>
+            <rect x="21" y="60" width="6" height="14" rx="3" fill="#ffe0bd"/>
+            <rect x="10" y="73" width="11" height="6" rx="3" fill="#ef4444"/>
+            <rect x="19" y="73" width="11" height="6" rx="3" fill="#ef4444"/>
+            <rect x="9" y="50" width="22" height="12" rx="4" fill="#1e3a8a"/>
+            <rect x="19.3" y="52" width="1.4" height="9" fill="#172554"/>
+            <rect x="7" y="28" width="26" height="24" rx="9" fill="#2563eb"/>
+            <rect x="7" y="39" width="26" height="3.5" fill="#fff" opacity="0.7"/>
+            <rect x="2" y="29" width="8" height="11" rx="4" fill="#2563eb"/>
+            <rect x="1.5" y="37" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(8 4 42)"/>
+            <circle cx="4" cy="49" r="3.3" fill="#ffe0bd"/>
+            <rect x="30" y="29" width="8" height="11" rx="4" fill="#2563eb"/>
+            <rect x="32.5" y="37" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(-8 36 42)"/>
+            <circle cx="36" cy="49" r="3.3" fill="#ffe0bd"/>
+            <rect x="16.5" y="24" width="7" height="6" fill="#ffe0bd"/>
+            <circle cx="20" cy="13" r="13" fill="#5b3a1f"/>
+            <circle cx="20" cy="15" r="12" fill="#ffe0bd"/>
+            <ellipse cx="7.7" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
+            <ellipse cx="32.3" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
+            <path d="M8,12 Q20,2 32,12 Q20,8 8,12 Z" fill="#5b3a1f"/>
+            <circle cx="11" cy="19" r="2.5" fill="#fca5a5" opacity="0.55"/>
+            <circle cx="29" cy="19" r="2.5" fill="#fca5a5" opacity="0.55"/>
+            <path d="M11.5,11 q2,-1.2 4,0" stroke="#5b3a1f" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+            <path d="M24.5,11 q2,-1.2 4,0" stroke="#5b3a1f" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+            <ellipse cx="14" cy="15" rx="2.2" ry="2.8" fill="#fff"/>
+            <circle cx="14.4" cy="15.4" r="1.4" fill="#3b2415"/>
+            <ellipse cx="26" cy="15" rx="2.2" ry="2.8" fill="#fff"/>
+            <circle cx="25.6" cy="15.4" r="1.4" fill="#3b2415"/>
+            <path d="M20,15.5 q1.5,2.2 -0.6,3.2" stroke="#e0a878" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+            <path d="M15,22 Q20,25 25,22" stroke="#b5503a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+          </g>
+        </g>
+
+        <!-- Anna（右） -->
+        <g transform="translate(196,50)">
+          <g class="bob-b">
+            <ellipse cx="20" cy="80" rx="15" ry="3" fill="#000" opacity="0.10"/>
+            <path d="M4,16 Q1,44 7,58 L33,58 Q39,44 36,16 Z" fill="#6b4423"/>
+            <rect x="13" y="58" width="6" height="14" rx="3" fill="#ffe0bd"/>
+            <rect x="21" y="58" width="6" height="14" rx="3" fill="#ffe0bd"/>
+            <rect x="10" y="72" width="11" height="6" rx="3" fill="#be185d"/>
+            <rect x="19" y="72" width="11" height="6" rx="3" fill="#be185d"/>
+            <path d="M9,30 Q5,48 2,60 L38,60 Q35,48 31,30 Z" fill="#db2777"/>
+            <rect x="9" y="30" width="22" height="7" rx="3" fill="#be185d" opacity="0.45"/>
+            <rect x="2" y="31" width="8" height="10" rx="4" fill="#db2777"/>
+            <rect x="1.5" y="38" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(8 4 43)"/>
+            <circle cx="4" cy="50" r="3.3" fill="#ffe0bd"/>
+            <rect x="30" y="31" width="8" height="10" rx="4" fill="#db2777"/>
+            <rect x="32.5" y="38" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(-8 36 43)"/>
+            <circle cx="36" cy="50" r="3.3" fill="#ffe0bd"/>
+            <rect x="16.5" y="24" width="7" height="6" fill="#ffe0bd"/>
+            <ellipse cx="4" cy="27" rx="5" ry="10" fill="#6b4423"/>
+            <ellipse cx="36" cy="27" rx="5" ry="10" fill="#6b4423"/>
+            <circle cx="5" cy="18" r="2" fill="#f472b6"/>
+            <circle cx="35" cy="18" r="2" fill="#f472b6"/>
+            <circle cx="20" cy="13" r="13" fill="#6b4423"/>
+            <circle cx="20" cy="15" r="12" fill="#ffe0bd"/>
+            <ellipse cx="7.7" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
+            <ellipse cx="32.3" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
+            <path d="M7,12 Q20,1 33,12 Q20,7 7,12 Z" fill="#6b4423"/>
+            <path d="M20,5 L13,2 L13,8 Z" fill="#f472b6"/>
+            <path d="M20,5 L27,2 L27,8 Z" fill="#f472b6"/>
+            <circle cx="20" cy="5" r="2.2" fill="#ec4899"/>
+            <circle cx="11" cy="19" r="2.5" fill="#fca5a5" opacity="0.6"/>
+            <circle cx="29" cy="19" r="2.5" fill="#fca5a5" opacity="0.6"/>
+            <ellipse cx="14" cy="15" rx="2.2" ry="2.9" fill="#fff"/>
+            <circle cx="14.4" cy="15.4" r="1.5" fill="#3b2415"/>
+            <ellipse cx="26" cy="15" rx="2.2" ry="2.9" fill="#fff"/>
+            <circle cx="25.6" cy="15.4" r="1.5" fill="#3b2415"/>
+            <path d="M11.5,12.5 q2,-1 4,-0.3" stroke="#3b2415" stroke-width="1" fill="none" stroke-linecap="round"/>
+            <path d="M24.5,12.2 q2,-0.7 4,0.3" stroke="#3b2415" stroke-width="1" fill="none" stroke-linecap="round"/>
+            <path d="M20,15.5 q1.5,2.2 -0.6,3.2" stroke="#e0a878" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+            <path d="M15,22 Q20,25 25,22" stroke="#b5503a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+          </g>
+        </g>
+
+        <!-- 雨傘（蓋在兩人頭上） -->
+        <g>
+          <path d="M116,40 Q174,2 232,40 Z" fill="#ef4444"/>
+          <path d="M116,40 Q145,28 174,40 Q203,28 232,40" fill="none" stroke="#b91c1c" stroke-width="1.3"/>
+          <line x1="174" y1="6" x2="118" y2="40" stroke="#b91c1c" stroke-width="1"/>
+          <line x1="174" y1="6" x2="230" y2="40" stroke="#b91c1c" stroke-width="1"/>
+          <line x1="174" y1="6" x2="174" y2="40" stroke="#b91c1c" stroke-width="1"/>
+          <circle cx="174" cy="5" r="2.2" fill="#b91c1c"/>
+          <path d="M174,40 L174,74 Q174,82 166,82 Q160,82 160,77" fill="none" stroke="#7c3a12" stroke-width="3" stroke-linecap="round"/>
+        </g>
+      </svg>
+    </div>
+
     <div class="levels">
       <div class="levelTab active" data-level="1">
         <div class="lvl">Level 1</div>
@@ -559,6 +751,14 @@
       <div class="levelTab" data-level="4">
         <div class="lvl">Level 4</div>
         <div class="desc">故意混淆 🤔</div>
+      </div>
+      <div class="levelTab" data-level="5">
+        <div class="lvl">Level 5</div>
+        <div class="desc">單字配圖 🖼️</div>
+      </div>
+      <div class="levelTab hidden" data-level="6">
+        <div class="lvl">Level 6</div>
+        <div class="desc">重組句子 🧩</div>
       </div>
     </div>
 
@@ -619,6 +819,32 @@
         <button id="resetQuiz4" class="resetQuiz">🔄 重新作答</button>
       </div>
     </div>
+
+    <!-- ===== Level 5：單字配圖 ===== -->
+    <div id="level5" class="hidden">
+      <p class="match-intro">照左邊<b>單字的順序（1 → 5）</b>，在右邊點出對應的圖片 🖼️</p>
+      <div class="match-wrap">
+        <div class="match-col" id="matchWords"></div>
+        <div class="match-col" id="matchPics"></div>
+      </div>
+      <div class="quiz-footer">
+        <div id="matchStatus"></div>
+        <button id="resetMatch">🔄 重新出題</button>
+      </div>
+    </div>
+
+    <!-- ===== Level 6：重組句子 ===== -->
+    <div id="level6" class="hidden">
+      <p class="match-intro">把打散的單字排成正確的句子！點<b>下方</b>單字加到<b>上方</b>，點上方可收回。</p>
+      <div class="reorder-progress" id="roProgress"></div>
+      <div class="reorder-answer" id="roAnswer"></div>
+      <div class="reorder-pool" id="roPool"></div>
+      <div id="roStatus"></div>
+      <div class="nav">
+        <button id="roClear">↩ 清除</button>
+        <button id="roNext">下一句 ➡</button>
+      </div>
+    </div>
   </div>
 
 <script>
@@ -658,6 +884,8 @@
   const level2El = document.getElementById("level2");
   const level3El = document.getElementById("level3");
   const level4El = document.getElementById("level4");
+  const level5El = document.getElementById("level5");
+  const level6El = document.getElementById("level6");
 
   // 動畫場景：依文章切換，且只在 Level 1 顯示
   let currentScene = "park-ball";
@@ -682,6 +910,8 @@
     level2El.classList.add("hidden");
     level3El.classList.add("hidden");
     level4El.classList.add("hidden");
+    level5El.classList.add("hidden");
+    level6El.classList.add("hidden");
     // 動畫場景只在 Level 1 顯示（依文章換場景）
     onLevel1 = (lv === "1");
     updateScene();
@@ -689,7 +919,9 @@
     if (lv === "1") { level1El.classList.remove("hidden"); }
     else if (lv === "2") { level2El.classList.remove("hidden"); renderShadow(); }
     else if (lv === "3") { level3El.classList.remove("hidden"); }
-    else { level4El.classList.remove("hidden"); }
+    else if (lv === "4") { level4El.classList.remove("hidden"); }
+    else if (lv === "5") { level5El.classList.remove("hidden"); }
+    else { level6El.classList.remove("hidden"); }
   }));
 
   /* ================= Level 1：聽 ================= */
@@ -976,6 +1208,175 @@
     document.getElementById("scoreBox4"),
     document.getElementById("resetQuiz4"), "mark4");
 
+  /* ================= Level 5：單字配圖 ================= */
+  function makeMatch(wordsEl, picsEl, statusEl, resetEl) {
+    let vocab = [], seq = [], expected = 0;
+
+    function build() {
+      expected = 0;
+      wordsEl.innerHTML = "";
+      picsEl.innerHTML = "";
+      if (!vocab.length) { statusEl.textContent = "（這篇暫時沒有單字配圖）"; return; }
+      const n = Math.min(5, vocab.length);
+      seq = shuffle(vocab).slice(0, n);   // 依對話內容隨機抽 n 個單字
+
+      // 左欄：單字依序（1 → n）
+      seq.forEach((item, i) => {
+        const w = document.createElement("div");
+        w.className = "mword" + (i === 0 ? " current" : "");
+        w.id = "mword-" + i;
+        w.innerHTML = `<span class="num">${i + 1}</span>` +
+                      `<span class="wword">${item.word}</span>` +
+                      `<span id="wmark-${i}"></span>`;
+        wordsEl.appendChild(w);
+      });
+
+      // 右欄：圖片打散
+      shuffle(seq).forEach(item => {
+        const b = document.createElement("button");
+        b.className = "mpic";
+        b.type = "button";
+        b.textContent = item.pic;
+        b.addEventListener("click", () => clickPic(item.word, b));
+        picsEl.appendChild(b);
+      });
+
+      updateStatus();
+    }
+
+    function clickPic(word, btn) {
+      if (btn.disabled || expected >= seq.length) return;
+      if (word === seq[expected].word) {
+        btn.classList.add("done");
+        btn.disabled = true;
+        const w = document.getElementById("mword-" + expected);
+        w.classList.remove("current");
+        w.classList.add("done");
+        document.getElementById("wmark-" + expected).textContent = " ✓";
+        expected++;
+        if (expected < seq.length) {
+          document.getElementById("mword-" + expected).classList.add("current");
+          updateStatus();
+        } else {
+          statusEl.textContent = "🏆 全部配對完成！太棒了！";
+          playDing();
+        }
+      } else {
+        btn.classList.add("shake");
+        setTimeout(() => btn.classList.remove("shake"), 400);
+        statusEl.textContent = `再看看左邊第 ${expected + 1} 個單字喔！`;
+      }
+    }
+
+    function updateStatus() {
+      statusEl.textContent = `配對中… ${expected} / ${seq.length}`;
+    }
+
+    resetEl.addEventListener("click", build);
+    return { setData(v) { vocab = v || []; build(); } };
+  }
+
+  const matchCtl = makeMatch(
+    document.getElementById("matchWords"),
+    document.getElementById("matchPics"),
+    document.getElementById("matchStatus"),
+    document.getElementById("resetMatch"));
+
+  /* ================= Level 6：重組句子 ================= */
+  function makeReorder(progressEl, answerEl, poolEl, statusEl, clearEl, nextEl) {
+    let sentences = [], idx = 0;
+    let tokens = [], pool = [], placed = [], solved = false;
+
+    function startSentence() {
+      solved = false;
+      tokens = sentences[idx].map((w, i) => ({ id: i, word: w }));
+      placed = [];
+      // 打散，且盡量不要剛好是原順序
+      do { pool = shuffle(tokens.map(t => t.id)); }
+      while (tokens.length > 1 && pool.every((id, i) => id === i));
+      statusEl.textContent = "";
+      render();
+    }
+
+    function chip(id, onClick) {
+      const c = document.createElement("button");
+      c.className = "chip";
+      c.type = "button";
+      c.textContent = tokens[id].word;
+      if (onClick) c.addEventListener("click", () => onClick(id));
+      return c;
+    }
+
+    function render() {
+      progressEl.textContent = `第 ${idx + 1} / 共 ${sentences.length} 句`;
+      answerEl.className = "reorder-answer" + (solved ? " correct" : "");
+      answerEl.innerHTML = "";
+      placed.forEach(id => answerEl.appendChild(chip(id, solved ? null : unplace)));
+      poolEl.innerHTML = "";
+      pool.forEach(id => poolEl.appendChild(chip(id, place)));
+    }
+
+    function place(id) {
+      if (solved) return;
+      pool = pool.filter(x => x !== id);
+      placed.push(id);
+      render();
+      if (placed.length === tokens.length) check();
+    }
+    function unplace(id) {
+      if (solved) return;
+      placed = placed.filter(x => x !== id);
+      pool.push(id);
+      statusEl.textContent = "";
+      render();
+    }
+    function check() {
+      if (placed.every((id, i) => id === i)) {
+        solved = true;
+        statusEl.textContent = "✅ 正確！";
+        playDing();
+        render();
+      } else {
+        statusEl.textContent = "再排排看 🤔（點上方單字可收回）";
+      }
+    }
+
+    clearEl.addEventListener("click", () => {
+      if (solved || !tokens.length) return;
+      placed = [];
+      pool = shuffle(tokens.map(t => t.id));
+      statusEl.textContent = "";
+      render();
+    });
+    nextEl.addEventListener("click", () => {
+      if (!sentences.length) return;
+      idx = (idx + 1) % sentences.length;
+      startSentence();
+    });
+
+    return {
+      setData(s) {
+        sentences = (s || []).filter(x => x && x.length);
+        idx = 0;
+        if (sentences.length) { startSentence(); }
+        else {
+          progressEl.textContent = "";
+          answerEl.innerHTML = "";
+          poolEl.innerHTML = "";
+          statusEl.textContent = "（這課沒有重組句子）";
+        }
+      }
+    };
+  }
+
+  const reorderCtl = makeReorder(
+    document.getElementById("roProgress"),
+    document.getElementById("roAnswer"),
+    document.getElementById("roPool"),
+    document.getElementById("roStatus"),
+    document.getElementById("roClear"),
+    document.getElementById("roNext"));
+
   /* ================= 課程載入（讀取 lessons.json 與文章檔） ================= */
   const levelSelect   = document.getElementById("levelSelect");
   const articleSelect = document.getElementById("articleSelect");
@@ -1021,6 +1422,16 @@
     updateScene();
     quiz3Ctl.setData(article.quiz3);
     quiz4Ctl.setData(article.quiz4);
+    matchCtl.setData(article.vocab);
+
+    // Level 6（重組句子）只在文章有 reorder 資料時顯示分頁
+    reorderCtl.setData(article.reorder);
+    const tab6 = document.querySelector('.levelTab[data-level="6"]');
+    const hasReorder = !!(article.reorder && article.reorder.length);
+    tab6.classList.toggle("hidden", !hasReorder);
+    if (!hasReorder && tab6.classList.contains("active")) {
+      document.querySelector('.levelTab[data-level="1"]').click();
+    }
   }
 
   function populateArticles(levelIdx) {
