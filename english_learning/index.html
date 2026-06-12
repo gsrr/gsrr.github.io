@@ -988,16 +988,54 @@
 
   function pickVoices() {
     voices = synth.getVoices();
-    const en = voices.filter(v => /en/i.test(v.lang));
+    const en = voices.filter(v => /^en[-_]?/i.test(v.lang));
     const pool = en.length ? en : voices;
-    const femaleHints = /(female|woman|zira|samantha|susan|victoria|karen|moira|tessa|fiona|hazel|catherine|google us english|aria|jenny|michelle)/i;
-    const maleHints   = /(male|man|david|mark|george|daniel|alex|fred|guy|ryan|eric|james)/i;
-    femaleVoice = pool.find(v => femaleHints.test(v.name)) || pool[0] || null;
-    maleVoice   = pool.find(v => maleHints.test(v.name) && v !== femaleVoice)
-               || pool.find(v => v !== femaleVoice) || pool[0] || null;
+
+    // 自然/神經語音關鍵字（這些通常最接近真人）
+    const natural = /natural|neural|online|enhanced|premium|siri|google|wavenet/i;
+    const femaleHints = /(female|woman|zira|samantha|susan|victoria|karen|moira|tessa|fiona|hazel|catherine|aria|jenny|michelle|sonia|natasha|clara|ava|allison|nova|emma)/i;
+    const maleHints   = /(\bmale\b|\bman\b|david|mark|george|daniel|alex|fred|guy|ryan|eric|james|christopher|brandon|davis|aaron|arthur|william)/i;
+
+    function score(v) {
+      let s = 0;
+      if (natural.test(v.name)) s += 4;                 // 自然語音最優先
+      if (/en[-_]US/i.test(v.lang)) s += 2;
+      else if (/en[-_]GB/i.test(v.lang)) s += 1;
+      if (v.localService === false) s += 1;             // 線上語音通常較自然
+      return s;
+    }
+    const byScore = (a, b) => score(b) - score(a);
+    const sortedPool = pool.slice().sort(byScore);
+
+    const females = pool.filter(v => femaleHints.test(v.name)).sort(byScore);
+    const males   = pool.filter(v => maleHints.test(v.name)).sort(byScore);
+
+    femaleVoice = females[0] || sortedPool[0] || null;
+    maleVoice   = males.find(v => v !== femaleVoice)
+               || sortedPool.find(v => v !== femaleVoice)
+               || femaleVoice || null;
   }
   pickVoices();
   if (typeof synth.onvoiceschanged !== "undefined") synth.onvoiceschanged = pickVoices;
+
+  /* ---------- 預生成的真人語音 mp3（有就用，沒有退回內建語音） ---------- */
+  let audioMap = {};
+  let currentClip = null;
+  fetch("audio/index.json").then(r => r.ok ? r.json() : {}).then(m => { audioMap = m || {}; }).catch(() => {});
+  function clipFile(text, gender) { return audioMap[(gender || "female") + "|" + text]; }
+  function stopAudio() { if (currentClip) { try { currentClip.pause(); } catch (e) {} currentClip = null; } }
+  function playClip(text, gender, rate, onend) {
+    const f = clipFile(text, gender);
+    if (!f) return false;
+    stopAudio();
+    try {
+      currentClip = new Audio("audio/" + f);
+      if (rate) currentClip.playbackRate = rate;
+      if (onend) currentClip.onended = onend;
+      currentClip.play();
+      return true;
+    } catch (e) { currentClip = null; return false; }
+  }
 
   function makeUtter(line, rate) {
     const u = new SpeechSynthesisUtterance(line.text);
@@ -1005,7 +1043,10 @@
     u.lang = "en-US";
     const v = line.gender === "male" ? maleVoice : femaleVoice;
     if (v) u.voice = v;
-    u.pitch = line.gender === "male" ? 0.85 : 1.25;
+    // 男女若已是不同語音就幾乎不動音高；相同時才靠音高區分，避免破壞自然度
+    const sameVoice = maleVoice === femaleVoice;
+    if (sameVoice) u.pitch = line.gender === "male" ? 0.85 : 1.25;
+    else u.pitch = line.gender === "male" ? 0.95 : 1.08;
     return u;
   }
 
@@ -1157,13 +1198,18 @@
     if (i >= script.length) { markLevelDone(1); finishL1(); return; }
     highlight(i);
     showBubble(script[i]);
-    const u = makeUtter(script[i], parseFloat(rateEl.value));
-    u.onend = () => { if (isPlaying) speakLine(i + 1); };
+    const line = script[i];
+    const onend = () => { if (isPlaying) speakLine(i + 1); };
+    if (playClip(line.text, line.gender, parseFloat(rateEl.value), onend)) return;   // 有 mp3 就播
+    const u = makeUtter(line, parseFloat(rateEl.value));
+    u.onend = onend;
     synth.speak(u);
   }
   function startL1() {
-    if (!("speechSynthesis" in window)) { alert("你的瀏覽器不支援語音朗讀，請用 Chrome / Edge / Safari。"); return; }
-    synth.cancel();
+    if (!("speechSynthesis" in window) && !Object.keys(audioMap).length) {
+      alert("你的瀏覽器不支援語音朗讀，請用 Chrome / Edge / Safari。"); return;
+    }
+    synth.cancel(); stopAudio();
     isPlaying = true;
     playBtn.disabled = true; pauseBtn.disabled = false; stopBtn.disabled = false;
     pauseBtn.textContent = "⏸ Pause";
@@ -1177,11 +1223,14 @@
     sceneStage.classList.remove("reading");
     hideBubble();
   }
-  function stopListenL1() { synth.cancel(); finishL1(); }
+  function stopListenL1() { synth.cancel(); stopAudio(); finishL1(); }
 
   playBtn.addEventListener("click", startL1);
   pauseBtn.addEventListener("click", () => {
-    if (synth.paused) { synth.resume(); pauseBtn.textContent = "⏸ Pause"; }
+    if (currentClip) {
+      if (currentClip.paused) { currentClip.play(); pauseBtn.textContent = "⏸ Pause"; }
+      else { currentClip.pause(); pauseBtn.textContent = "▶ Resume"; }
+    } else if (synth.paused) { synth.resume(); pauseBtn.textContent = "⏸ Pause"; }
     else { synth.pause(); pauseBtn.textContent = "▶ Resume"; }
   });
   stopBtn.addEventListener("click", stopListenL1);
@@ -1221,8 +1270,11 @@
   }
 
   listenBtn.addEventListener("click", () => {
-    synth.cancel();
-    synth.speak(makeUtter(script[idx], 0.9));
+    const line = script[idx];
+    synth.cancel(); stopAudio();
+    if (playClip(line.text, line.gender)) return;
+    const u = makeUtter(line, 0.9);
+    if (u) synth.speak(u);
   });
 
   /* 錄音 */
@@ -1732,7 +1784,10 @@
       const playBtn = document.createElement("button");
       playBtn.className = "dict-play";
       playBtn.textContent = "🔊 Listen";
-      playBtn.addEventListener("click", () => speakQuestion(sentence));
+      playBtn.addEventListener("click", () => {
+        synth.cancel();
+        if (!playClip(sentence, "female")) speakQuestion(sentence);
+      });
       playRow.appendChild(playBtn);
       card.appendChild(playRow);
 
@@ -1759,7 +1814,8 @@
 
       boxEl.appendChild(card);
       input.focus();
-      speakQuestion(sentence);   // 進入時自動念一次
+      synth.cancel();
+      if (!playClip(sentence, "female")) speakQuestion(sentence);   // 進入時自動念一次
     }
 
     function check(input, fb) {
