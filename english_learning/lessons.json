@@ -86,6 +86,47 @@
             { "text": "Run to the big ___.", "answer": "tree", "wrong": ["run", "fast"] },
             { "text": "I can jump up and ___.", "answer": "down", "wrong": ["ball", "tree"] }
           ]
+        },
+        {
+          "id": "003",
+          "title": "003 · Snack Time",
+          "file": "Pre-A1/003",
+          "scene": "snack",
+          "quiz3": [
+            { "q": "Tom is hungry.", "answer": "Yes" },
+            { "q": "Anna has an apple.", "answer": "Yes" },
+            { "q": "Anna has milk.", "answer": "Yes" },
+            { "q": "Tom does not like apples.", "answer": "No" },
+            { "q": "Anna is happy.", "answer": "Yes" }
+          ],
+          "quiz4": [
+            { "q": "Tom has the food.", "answer": "No" },
+            { "q": "Anna gives Tom an apple.", "answer": "Yes" },
+            { "q": "Tom drinks water.", "answer": "No" },
+            { "q": "They eat and drink.", "answer": "Yes" },
+            { "q": "Tom is sad.", "answer": "No" }
+          ],
+          "vocab": [
+            { "word": "Tom", "pic": "👦" },
+            { "word": "Anna", "pic": "👧" },
+            { "word": "apple", "pic": "🍎" },
+            { "word": "milk", "pic": "🥛" },
+            { "word": "eat", "pic": "🍽️" }
+          ],
+          "wh": [
+            { "q": "Who is hungry?", "a": "Tom is hungry.", "wrong": ["Anna is hungry.", "Mom is hungry."] },
+            { "q": "What does Anna have?", "a": "She has an apple.", "wrong": ["She has a ball.", "She has a book."] },
+            { "q": "What does Tom like?", "a": "He likes apples.", "wrong": ["He likes books.", "He likes cars."] },
+            { "q": "What do they drink?", "a": "They drink milk.", "wrong": ["They drink water.", "They drink juice."] },
+            { "q": "How is Anna?", "a": "She is happy.", "wrong": ["She is sad.", "She is angry."] }
+          ],
+          "clozeType": "recognition",
+          "cloze": [
+            { "text": "I have an ___.", "answer": "apple", "wrong": ["eat", "happy"] },
+            { "text": "Can I have some ___?", "answer": "milk", "wrong": ["good", "hungry"] },
+            { "text": "I like ___.", "answer": "apples", "wrong": ["happy", "drink"] },
+            { "text": "Let us eat and ___.", "answer": "drink", "wrong": ["apple", "milk"] }
+          ]
         }
       ]
     },
@@ -150,13 +191,124 @@
             { "text": "It started to ___.", "answer": "rain", "wrong": ["snow", "hail"] },
             { "text": "I went home and watched ___.", "answer": "TV", "wrong": ["movies", "games"] }
           ]
+        },
+        {
+          "id": "002",
+          "title": "002 · My Weekend",
+          "file": "A1/002",
+          "scene": "zoo",
+          "quiz3": [
+            { "q": "Anna went to the zoo.", "answer": "Yes" },
+            { "q": "Anna saw lions.", "answer": "Yes" },
+            { "q": "Tom went to the zoo.", "answer": "No" },
+            { "q": "It was rainy at Tom's home.", "answer": "Yes" },
+            { "q": "Tom read books at home.", "answer": "Yes" }
+          ],
+          "quiz4": [
+            { "q": "Anna stayed home.", "answer": "No" },
+            { "q": "The monkeys were funny.", "answer": "Yes" },
+            { "q": "Tom saw the elephants.", "answer": "No" },
+            { "q": "Anna went with Tom.", "answer": "No" },
+            { "q": "The elephants were big.", "answer": "Yes" }
+          ],
+          "vocab": [
+            { "word": "Tom", "pic": "👦" },
+            { "word": "Anna", "pic": "👧" },
+            { "word": "zoo", "pic": "🦁" },
+            { "word": "monkey", "pic": "🐒" },
+            { "word": "elephant", "pic": "🐘" },
+            { "word": "book", "pic": "📚" },
+            { "word": "game", "pic": "🎮" }
+          ],
+          "wh": [
+            { "q": "Where did Anna go?", "a": "She went to the zoo.", "wrong": ["She went to school.", "She went to the park."] },
+            { "q": "Who did Anna go with?", "a": "She went with her family.", "wrong": ["She went with Tom.", "She went with her friends."] },
+            { "q": "What animals did Anna see?", "a": "She saw lions and monkeys.", "wrong": ["She saw dogs and cats.", "She saw birds and fish."] },
+            { "q": "Why did Tom stay home?", "a": "Because it was rainy.", "wrong": ["Because he was sick.", "Because he was tired."] },
+            { "q": "What did Tom do at home?", "a": "He read books and played games.", "wrong": ["He watched TV.", "He cleaned his room."] }
+          ],
+          "clozeType": "category",
+          "cloze": [
+            { "text": "I went to the ___ with my family.", "answer": "zoo", "wrong": ["park", "beach"] },
+            { "text": "I saw lions and ___.", "answer": "monkeys", "wrong": ["tigers", "bears"] },
+            { "text": "I stayed home because it was ___.", "answer": "rainy", "wrong": ["sunny", "windy"] },
+            { "text": "I read books and played ___.", "answer": "games", "wrong": ["cards", "music"] }
+          ],
+          "reorder": [
+            ["I", "went", "to", "the", "zoo"],
+            ["I", "saw", "lions", "and", "monkeys"],
+            ["The", "monkeys", "were", "funny"],
+            ["I", "read", "books", "and", "played", "games"]
+          ],
+          "dictation": [
+            "I went to the zoo with my family.",
+            "I saw lions and monkeys.",
+            "I stayed home because it was rainy.",
+            "I read books and played games."
+          ]
         }
       ]
     },
     {
       "id": "A2",
       "name": "A2",
-      "articles": []
+      "articles": [
+        {
+          "id": "001",
+          "title": "001 · Summer Plans",
+          "file": "A2/001",
+          "scene": "summer",
+          "quiz3": [
+            { "q": "Anna will visit her grandparents.", "answer": "Yes" },
+            { "q": "Anna will stay for two weeks.", "answer": "Yes" },
+            { "q": "Tom is going to a summer camp.", "answer": "Yes" },
+            { "q": "Tom will help on a farm.", "answer": "No" },
+            { "q": "Tom will go hiking and swimming.", "answer": "Yes" }
+          ],
+          "quiz4": [
+            { "q": "Anna is going to a summer camp.", "answer": "No" },
+            { "q": "Tom wants to make new friends.", "answer": "Yes" },
+            { "q": "Anna will help her grandpa.", "answer": "Yes" },
+            { "q": "Anna will stay for two months.", "answer": "No" },
+            { "q": "Tom will visit his grandparents.", "answer": "No" }
+          ],
+          "vocab": [
+            { "word": "Tom", "pic": "👦" },
+            { "word": "Anna", "pic": "👧" },
+            { "word": "grandpa", "pic": "👴" },
+            { "word": "farm", "pic": "🚜" },
+            { "word": "camp", "pic": "⛺" },
+            { "word": "hiking", "pic": "🥾" },
+            { "word": "swimming", "pic": "🏊" }
+          ],
+          "wh": [
+            { "q": "What is Anna going to do this summer?", "a": "She is going to visit her grandparents.", "wrong": ["She is going to a summer camp.", "She is going to stay home."] },
+            { "q": "How long will Anna stay?", "a": "She will stay for two weeks.", "wrong": ["She will stay for two days.", "She will stay for a month."] },
+            { "q": "Why is Tom going to a summer camp?", "a": "Because he wants to make new friends.", "wrong": ["Because he likes farms.", "Because his mom told him."] },
+            { "q": "What will Tom do at camp?", "a": "He will go hiking and swimming.", "wrong": ["He will help on a farm.", "He will visit his grandparents."] },
+            { "q": "Who will help on the farm?", "a": "Anna will help on the farm.", "wrong": ["Tom will help on the farm.", "Grandpa will do it alone."] }
+          ],
+          "clozeType": "context",
+          "cloze": [
+            { "text": "I'm going to visit my grandparents in the ___.", "answer": "countryside", "wrong": ["city", "school"] },
+            { "text": "I'll help my grandpa on the ___.", "answer": "farm", "wrong": ["boat", "street"] },
+            { "text": "I'm going to a summer ___.", "answer": "camp", "wrong": ["party", "class"] },
+            { "text": "We'll go hiking and ___ every day.", "answer": "swimming", "wrong": ["shopping", "sleeping"] }
+          ],
+          "reorder": [
+            ["I", "am", "going", "to", "visit", "my", "grandparents"],
+            ["I", "will", "help", "my", "grandpa", "on", "the", "farm"],
+            ["We", "will", "go", "hiking", "and", "swimming"],
+            ["I", "want", "to", "make", "new", "friends"]
+          ],
+          "dictation": [
+            "I am going to visit my grandparents.",
+            "I will help my grandpa on the farm.",
+            "We will go hiking and swimming every day.",
+            "I want to make new friends."
+          ]
+        }
+      ]
     }
   ]
 }
