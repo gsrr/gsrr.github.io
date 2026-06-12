@@ -1,0 +1,13 @@
+services:
+  english-learning:
+    build: .
+    image: english-learning:latest
+    container_name: english-learning
+    ports:
+      - "8000:80"          # 主機 8000 -> 容器 80
+    volumes:
+      - visits-data:/data  # 訪客計數保存於此，重啟不歸零
+    restart: unless-stopped
+
+volumes:
+  visits-data:

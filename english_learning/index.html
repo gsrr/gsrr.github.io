@@ -259,6 +259,9 @@
   .cloze-blank.filled { border-bottom-color: #16a34a; color: #15803d; }
   .cloze-badge { display: inline-block; background: #e0e7ff; color: #3730a3; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 700; margin-left: 4px; }
 
+  /* 訪客人數 */
+  .visitor { text-align: center; color: #94a3b8; font-size: 12px; margin-top: 18px; }
+
   .quiz-footer { margin-top: 20px; text-align: center; }
   #scoreBox {
     font-size: 20px; font-weight: 700; color: #2563eb; margin-bottom: 12px; min-height: 26px;
@@ -972,6 +975,7 @@
       <div id="clozeBox"></div>
     </div>
     </div><!-- /#screenLearn -->
+    <div id="visitorBox" class="visitor"></div>
   </div>
 
 <script>
@@ -2131,6 +2135,13 @@
   }
 
   initLessons();
+
+  // 訪客計數：每次載入 +1（需後端 /api；GitHub Pages / file:// 沒有後端時自動略過）
+  const visitorBox = document.getElementById("visitorBox");
+  fetch("/api/visit", { method: "POST" })
+    .then(r => r.json())
+    .then(d => { visitorBox.textContent = "👀 訪客人數：" + d.count; })
+    .catch(() => {});
 </script>
 </body>
 </html>
