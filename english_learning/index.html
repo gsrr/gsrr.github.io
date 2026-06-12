@@ -4,6 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script>
+  // 手機看得到的 JS 錯誤列（in-app 瀏覽器沒有 console，方便除錯）
+  window.addEventListener("error", function (e) {
+    var b = document.getElementById("__err");
+    if (!b) {
+      b = document.createElement("div");
+      b.id = "__err";
+      b.style.cssText = "position:fixed;left:0;right:0;bottom:0;max-height:45%;overflow:auto;" +
+        "background:#b91c1c;color:#fff;font:12px/1.4 monospace;padding:8px;z-index:99999;white-space:pre-wrap";
+      (document.body || document.documentElement).appendChild(b);
+    }
+    b.textContent += "JS error: " + (e.message || (e.error && e.error.message) || e.type) +
+      " @ " + ((e.filename || "").split("/").pop()) + ":" + (e.lineno || "?") + "\n";
+  });
+
   // 在 LINE 內建瀏覽器中，強制改用手機外部瀏覽器開啟（朗讀/錄音才能正常）
   (function () {
     var ua = navigator.userAgent || "";
@@ -1149,7 +1163,12 @@
   let script = [];
 
   /* ---------- 語音 (TTS) ---------- */
-  const synth = window.speechSynthesis;
+  // 有些 App 內建瀏覽器沒有 speechSynthesis；用空殼避免整段程式中斷
+  const synth = window.speechSynthesis || {
+    getVoices: function () { return []; },
+    speak: function () {}, cancel: function () {}, pause: function () {}, resume: function () {},
+    paused: false, onvoiceschanged: null
+  };
   let voices = [], maleVoice = null, femaleVoice = null;
 
   function pickVoices() {
@@ -1204,6 +1223,7 @@
   }
 
   function makeUtter(line, rate) {
+    if (typeof SpeechSynthesisUtterance === "undefined") return null;
     const u = new SpeechSynthesisUtterance(line.text);
     u.rate = rate;
     u.lang = "en-US";
@@ -1409,6 +1429,7 @@
     const onend = () => { if (isPlaying) speakLine(i + 1); };
     if (playClip(line.text, line.gender, parseFloat(rateEl.value), onend)) return;   // 有 mp3 就播
     const u = makeUtter(line, parseFloat(rateEl.value));
+    if (!u) { finishL1(); return; }
     u.onend = onend;
     synth.speak(u);
   }
