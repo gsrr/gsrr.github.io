@@ -1508,8 +1508,13 @@
   /* 錄音 */
   recBtn.addEventListener("click", async () => {
     if (isRecording) { stopRecording(); return; }
+    if (/FBAN|FBAV|FB_IAB|Instagram/i.test(navigator.userAgent || "")) {
+      statusEl.textContent = "🎤 Recording needs an external browser. Tap the ⋯ menu (top-right) → Open in external browser (Chrome / Safari).";
+      return;
+    }
     if (!navigator.mediaDevices || !window.MediaRecorder) {
-      alert("Your browser does not support recording. Please use a recent Chrome / Edge / Safari."); return;
+      statusEl.textContent = "⚠️ Your browser does not support recording. Please use a recent Chrome / Edge / Safari.";
+      return;
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
