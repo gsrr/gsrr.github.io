@@ -1377,26 +1377,37 @@
   }, { once: true });
 
   // 朗讀題目
-  function speakQuestion(text) {
-    if (!("speechSynthesis" in window)) return;
-    synth.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-US"; u.rate = 0.85;
-    if (femaleVoice) u.voice = femaleVoice;
-    synth.speak(u);
+  // 依序朗讀：每段優先用 mp3，沒有就退回內建語音，並自動接續播下一段
+  function speakSeq(items) {
+    synth.cancel(); stopAudio();
+    let k = 0;
+    function next() {
+      if (k >= items.length) return;
+      const it = items[k++];
+      const f = clipFile(it.text, it.gender);
+      if (f) {
+        stopAudio();
+        try {
+          currentClip = new Audio("audio/" + f);
+          currentClip.onended = next;
+          currentClip.play();
+          return;
+        } catch (e) {}
+      }
+      if (typeof SpeechSynthesisUtterance !== "undefined") {
+        const u = new SpeechSynthesisUtterance(it.text);
+        u.lang = "en-US"; u.rate = 0.85;
+        const v = it.gender === "male" ? maleVoice : femaleVoice;
+        if (v) u.voice = v;
+        u.onend = next;
+        synth.speak(u);
+      } else { next(); }
+    }
+    next();
   }
-
-  // 依序朗讀多句（例如：題目 → 1. 選項 → 2. 選項 → 3. 選項）
-  function speakSequence(texts) {
-    if (typeof SpeechSynthesisUtterance === "undefined") return;
-    synth.cancel();
-    texts.forEach(t => {
-      const u = new SpeechSynthesisUtterance(t);
-      u.lang = "en-US"; u.rate = 0.85;
-      if (femaleVoice) u.voice = femaleVoice;
-      synth.speak(u);
-    });
-  }
+  // 題目/選項/填空等的朗讀（預設女聲）— 呼叫端不用改
+  function speakQuestion(text) { speakSeq([{ text: text, gender: "female" }]); }
+  function speakSequence(texts) { speakSeq(texts.map(t => ({ text: t, gender: "female" }))); }
 
   // 測驗控制器：一次只顯示一題，答完按「下一題」，最後算總分
   function makeQuiz(listEl, scoreEl, resetEl, level) {

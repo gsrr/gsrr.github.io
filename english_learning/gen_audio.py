@@ -60,8 +60,24 @@ def collect_pairs():
                     pairs += parse_dialogue(f.read(), speakers)
             except FileNotFoundError:
                 print("略過（找不到檔案）:", a["file"])
+            # Level 8 聽寫
             for s in a.get("dictation", []):
                 pairs.append(("female", s))
+            # Level 3/4 測驗題目
+            for it in a.get("quiz3", []) + a.get("quiz4", []):
+                pairs.append(("female", it["q"]))
+            # Level 7 WH：題目、答案、以及「N. 選項」編號朗讀
+            for it in a.get("wh", []):
+                opts = [it["a"]] + it.get("wrong", [])
+                pairs.append(("female", it["q"]))
+                pairs.append(("female", it["a"]))
+                for n in range(1, len(opts) + 1):
+                    for opt in opts:
+                        pairs.append(("female", "%d. %s" % (n, opt)))
+            # Level 9 填空：空格唸成 blank 的版本，以及填好答案的完整句
+            for it in a.get("cloze", []):
+                pairs.append(("female", it["text"].replace("___", "blank", 1)))
+                pairs.append(("female", it["text"].replace("___", it["answer"], 1)))
     # 去重、保留順序
     seen, uniq = set(), []
     for g, t in pairs:
