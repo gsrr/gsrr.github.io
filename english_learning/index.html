@@ -46,6 +46,28 @@
   }
   .picker select:focus { outline: none; border-color: #2563eb; }
 
+  /* 三步流程：選等級 / 選課程 / 學習 */
+  .screen-intro { text-align: center; color: #64748b; margin: 0 0 16px; font-size: 15px; }
+  .name-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+  .name-row label { font-size: 13px; font-weight: 700; color: #475569; }
+  .name-row input { font-size: 16px; padding: 11px 14px; border: 2px solid #e2e8f0; border-radius: 12px; font-family: inherit; }
+  .name-row input:focus { outline: none; border-color: #2563eb; }
+  .new-row { display: flex; gap: 8px; }
+  .new-row input { flex: 1; }
+  .pick-grid { display: flex; flex-direction: column; gap: 12px; }
+  .pick-card {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 18px; border: 2px solid #e2e8f0; background: #f8fafc;
+    border-radius: 16px; cursor: pointer; transition: all .2s; width: 100%;
+  }
+  .pick-card:hover:not(:disabled) { border-color: #2563eb; background: #eff6ff; transform: translateY(-1px); }
+  .pick-card:disabled { opacity: .5; cursor: not-allowed; }
+  .pick-title { font-size: 18px; font-weight: 700; color: #1e293b; }
+  .pick-sub { font-size: 13px; color: #64748b; }
+  .learn-top { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .back-btn { background: #e2e8f0; color: #334155; padding: 8px 14px; font-size: 14px; }
+  .learn-title { font-weight: 700; color: #2563eb; font-size: 15px; }
+
   /* 動畫場景 */
   .scene { width: 100%; border-radius: 16px; overflow: hidden; margin-bottom: 18px;
            box-shadow: inset 0 0 0 1px rgba(0,0,0,.04); }
@@ -98,21 +120,29 @@
   }
 
   /* 關卡切換 */
-  .levels { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
-  .levelTab {
-    flex: 1 1 92px;
-    border: 2px solid #e2e8f0;
-    background: #f8fafc;
-    border-radius: 14px;
-    padding: 14px;
-    cursor: pointer;
-    text-align: center;
-    transition: all .2s;
+  .levels {
+    display: flex; flex-wrap: nowrap; gap: 8px; margin-bottom: 6px;
+    overflow-x: auto; padding-bottom: 6px; -webkit-overflow-scrolling: touch;
   }
-  .levelTab .lvl { font-weight: 700; font-size: 16px; color: #334155; }
-  .levelTab .desc { font-size: 13px; color: #64748b; margin-top: 2px; }
+  .levels::-webkit-scrollbar { height: 6px; }
+  .levels::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  .levelTab {
+    flex: 0 0 auto; display: flex; align-items: center; gap: 5px;
+    border: 2px solid #e2e8f0; background: #f8fafc; border-radius: 999px;
+    padding: 8px 13px; cursor: pointer; transition: all .2s;
+  }
+  .levelTab .lvl { font-weight: 700; font-size: 15px; color: #334155; }
+  .levelTab .emoji { font-size: 16px; line-height: 1; }
   .levelTab.active { border-color: #2563eb; background: #eff6ff; box-shadow: 0 4px 14px rgba(37,99,235,.15); }
   .levelTab.active .lvl { color: #2563eb; }
+  .level-name { text-align: center; font-size: 14px; font-weight: 700; color: #2563eb; margin-bottom: 18px; min-height: 20px; }
+
+  /* 整課進度條 */
+  .progress-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .progress-track { flex: 1; height: 12px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+  .progress-fill { height: 100%; width: 0; background: linear-gradient(90deg, #22c55e, #16a34a); border-radius: 999px; transition: width .4s ease; }
+  .progress-text { font-size: 13px; font-weight: 700; color: #16a34a; white-space: nowrap; }
+  .levelTab.done::after { content: "✓"; color: #16a34a; font-weight: 700; font-size: 13px; }
 
   button {
     border: none;
@@ -289,15 +319,44 @@
   <div class="card">
     <h1>🗣️ English Reading</h1>
 
-    <!-- ===== 課程選擇：等級 + 文章 ===== -->
-    <div class="picker">
-      <label>Level
-        <select id="levelSelect"></select>
-      </label>
-      <label>Lesson
-        <select id="articleSelect"></select>
-      </label>
+    <!-- 畫面 0：選使用者 -->
+    <div id="screenProfile">
+      <p class="screen-intro">你是誰？ Who are you? 👋</p>
+      <div id="profileGrid" class="pick-grid"></div>
+      <div id="newProfileForm" class="name-row hidden">
+        <label for="userName">新名字 (English name)</label>
+        <div class="new-row">
+          <input id="userName" type="text" placeholder="e.g. Amy" autocomplete="off" maxlength="20">
+          <button id="newProfileGo" class="dict-play">Go</button>
+        </div>
+      </div>
     </div>
+
+    <!-- 畫面 1：選等級 -->
+    <div id="screenLevel" class="hidden">
+      <div class="learn-top">
+        <button class="back-btn" id="backToProfile">← 換人</button>
+        <span class="learn-title" id="greetTitle"></span>
+      </div>
+      <p class="screen-intro">選擇程度開始學習 📚</p>
+      <div id="levelGrid" class="pick-grid"></div>
+    </div>
+
+    <!-- 畫面 2：選課程 -->
+    <div id="screenArticle" class="hidden">
+      <div class="learn-top">
+        <button class="back-btn" id="backToLevels">← 等級</button>
+        <span class="learn-title" id="articleScreenTitle"></span>
+      </div>
+      <div id="articleGrid" class="pick-grid"></div>
+    </div>
+
+    <!-- 畫面 3：學習 -->
+    <div id="screenLearn" class="hidden">
+      <div class="learn-top">
+        <button class="back-btn" id="backToList">← 課程</button>
+        <span class="learn-title" id="learnTitle"></span>
+      </div>
 
     <!-- ===== 動畫場景（只在 Level 1 顯示，依文章切換） ===== -->
     <div id="sceneStage">
@@ -796,44 +855,23 @@
     </div>
     </div><!-- /#sceneStage -->
 
-    <div class="levels">
-      <div class="levelTab active" data-level="1">
-        <div class="lvl">Level 1</div>
-        <div class="desc">Listen 👂</div>
-      </div>
-      <div class="levelTab" data-level="2">
-        <div class="lvl">Level 2</div>
-        <div class="desc">Read Along 🎤</div>
-      </div>
-      <div class="levelTab" data-level="3">
-        <div class="lvl">Level 3</div>
-        <div class="desc">Quiz ✅</div>
-      </div>
-      <div class="levelTab" data-level="4">
-        <div class="lvl">Level 4</div>
-        <div class="desc">Tricky Quiz 🤔</div>
-      </div>
-      <div class="levelTab" data-level="5">
-        <div class="lvl">Level 5</div>
-        <div class="desc">Match 🖼️</div>
-      </div>
-      <div class="levelTab hidden" data-level="6">
-        <div class="lvl">Level 6</div>
-        <div class="desc">Reorder 🧩</div>
-      </div>
-      <div class="levelTab hidden" data-level="7">
-        <div class="lvl">Level 7</div>
-        <div class="desc">WH Questions ❓</div>
-      </div>
-      <div class="levelTab hidden" data-level="8">
-        <div class="lvl">Level 8</div>
-        <div class="desc">Dictation ✍️</div>
-      </div>
-      <div class="levelTab hidden" data-level="9">
-        <div class="lvl">Level 9</div>
-        <div class="desc">Fill Blank 📝</div>
-      </div>
+    <div class="progress-wrap">
+      <div class="progress-track"><div class="progress-fill" id="progFill"></div></div>
+      <span class="progress-text" id="progText">0/0 關</span>
     </div>
+
+    <div class="levels">
+      <div class="levelTab active" data-level="1" data-name="Level 1 · Listen 👂"><span class="lvl">1</span><span class="emoji">👂</span></div>
+      <div class="levelTab" data-level="2" data-name="Level 2 · Read Along 🎤"><span class="lvl">2</span><span class="emoji">🎤</span></div>
+      <div class="levelTab" data-level="3" data-name="Level 3 · Quiz ✅"><span class="lvl">3</span><span class="emoji">✅</span></div>
+      <div class="levelTab" data-level="4" data-name="Level 4 · Tricky Quiz 🤔"><span class="lvl">4</span><span class="emoji">🤔</span></div>
+      <div class="levelTab" data-level="5" data-name="Level 5 · Match 🖼️"><span class="lvl">5</span><span class="emoji">🖼️</span></div>
+      <div class="levelTab hidden" data-level="6" data-name="Level 6 · Reorder 🧩"><span class="lvl">6</span><span class="emoji">🧩</span></div>
+      <div class="levelTab hidden" data-level="7" data-name="Level 7 · WH Questions ❓"><span class="lvl">7</span><span class="emoji">❓</span></div>
+      <div class="levelTab hidden" data-level="8" data-name="Level 8 · Dictation ✍️"><span class="lvl">8</span><span class="emoji">✍️</span></div>
+      <div class="levelTab hidden" data-level="9" data-name="Level 9 · Fill Blank 📝"><span class="lvl">9</span><span class="emoji">📝</span></div>
+    </div>
+    <div class="level-name" id="levelName"></div>
 
     <!-- ===== Level 1：聽 ===== -->
     <div id="level1">
@@ -933,6 +971,7 @@
       <p class="match-intro">讀句子，從選項中選出正確的單字填進空格 📝 <span id="clozeTypeBadge" class="cloze-badge"></span></p>
       <div id="clozeBox"></div>
     </div>
+    </div><!-- /#screenLearn -->
   </div>
 
 <script>
@@ -968,6 +1007,7 @@
 
   /* ---------- 關卡切換 ---------- */
   const tabs = document.querySelectorAll(".levelTab");
+  const levelNameEl = document.getElementById("levelName");
   const level1El = document.getElementById("level1");
   const level2El = document.getElementById("level2");
   const level3El = document.getElementById("level3");
@@ -992,6 +1032,7 @@
   tabs.forEach(tab => tab.addEventListener("click", () => {
     tabs.forEach(t => t.classList.remove("active"));
     tab.classList.add("active");
+    levelNameEl.textContent = tab.dataset.name || "";
     const lv = tab.dataset.level;
     // 切換時停止所有聲音 / 錄音
     synth.cancel();
@@ -1020,6 +1061,47 @@
     else if (lv === "8") { level8El.classList.remove("hidden"); }
     else { level9El.classList.remove("hidden"); }
   }));
+
+  // 初始顯示目前關卡名稱
+  const activeTab = document.querySelector(".levelTab.active");
+  if (activeTab) levelNameEl.textContent = activeTab.dataset.name || "";
+
+  /* ---------- 整課進度條（關卡完成度） ---------- */
+  const progFill = document.getElementById("progFill");
+  const progText = document.getElementById("progText");
+  let currentArticleKey = "";
+
+  function updateProgress() {
+    const visible = Array.from(tabs).filter(t => !t.classList.contains("hidden"));
+    const total = visible.length;
+    const done = visible.filter(t => t.classList.contains("done")).length;
+    progFill.style.width = total ? (done / total * 100) + "%" : "0%";
+    progText.textContent = done + "/" + total + " 關";
+  }
+  function persistProgress() {
+    try {
+      const done = Array.from(tabs).filter(t => t.classList.contains("done")).map(t => t.dataset.level);
+      localStorage.setItem(progKey(currentArticleKey), JSON.stringify(done));
+    } catch (e) {}
+  }
+  function markLevelDone(level) {
+    const tab = document.querySelector('.levelTab[data-level="' + level + '"]');
+    if (tab && !tab.classList.contains("done")) {
+      tab.classList.add("done");
+      persistProgress();
+      updateProgress();
+    }
+  }
+  function restoreProgress() {
+    tabs.forEach(t => t.classList.remove("done"));
+    let saved = [];
+    try { saved = JSON.parse(localStorage.getItem(progKey(currentArticleKey)) || "[]"); } catch (e) {}
+    saved.forEach(l => {
+      const t = document.querySelector('.levelTab[data-level="' + l + '"]');
+      if (t) t.classList.add("done");
+    });
+    updateProgress();
+  }
 
   /* ================= Level 1：聽 ================= */
   const dialogueEl = document.getElementById("dialogue");
@@ -1068,7 +1150,7 @@
     if (lineEls[i]) lineEls[i].scrollIntoView({ behavior: "smooth", block: "center" });
   }
   function speakLine(i) {
-    if (i >= script.length) { finishL1(); return; }
+    if (i >= script.length) { markLevelDone(1); finishL1(); return; }
     highlight(i);
     showBubble(script[i]);
     const u = makeUtter(script[i], parseFloat(rateEl.value));
@@ -1155,6 +1237,7 @@
         if (recordings[idx]) URL.revokeObjectURL(recordings[idx]);
         recordings[idx] = URL.createObjectURL(blob);
         myPlayBtn.disabled = false;
+        markLevelDone(2);
         // 關閉麥克風
         stream.getTracks().forEach(t => t.stop());
         // 錄完自動播放
@@ -1260,7 +1343,7 @@
   }
 
   // 測驗控制器：一次只顯示一題，答完按「下一題」，最後算總分
-  function makeQuiz(listEl, scoreEl, resetEl) {
+  function makeQuiz(listEl, scoreEl, resetEl, level) {
     let data = [], shuffled = [], idx = 0, correct = 0, answered = false, timer = null;
 
     function build() {
@@ -1344,6 +1427,7 @@
                   : correct >= m - 1 ? "👍 很厲害！"
                   : "💪 再聽一次對話試試看！";
       scoreEl.textContent = `得分：${correct} / ${m}　${emoji}`;
+      markLevelDone(level);
     }
 
     resetEl.addEventListener("click", build);
@@ -1353,11 +1437,11 @@
   const quiz3Ctl = makeQuiz(
     document.getElementById("quizList"),
     document.getElementById("scoreBox"),
-    document.getElementById("resetQuiz"));
+    document.getElementById("resetQuiz"), 3);
   const quiz4Ctl = makeQuiz(
     document.getElementById("quizList4"),
     document.getElementById("scoreBox4"),
-    document.getElementById("resetQuiz4"));
+    document.getElementById("resetQuiz4"), 4);
 
   /* ================= Level 5：單字配圖 ================= */
   function makeMatch(wordsEl, picsEl, statusEl, resetEl) {
@@ -1411,6 +1495,7 @@
         } else {
           statusEl.textContent = "🏆 全部配對完成！太棒了！";
           playDing();
+          markLevelDone(5);
         }
       } else {
         btn.classList.add("shake");
@@ -1493,6 +1578,7 @@
           timer = setTimeout(function () { idx++; startSentence(); }, 1100);   // 答對自動換下一句
         } else {
           statusEl.textContent = "🎉 全部完成！太棒了！";
+          markLevelDone(6);
         }
       } else {
         statusEl.textContent = "再排排看 🤔（點上方單字可收回）";
@@ -1600,6 +1686,7 @@
                   : "💪 再聽一次對話試試看！";
       boxEl.innerHTML = '<div class="quiz-progress" style="font-size:18px;font-weight:700;color:#2563eb">得分：' +
                         correct + ' / ' + m + '　' + emoji + '</div>';
+      markLevelDone(7);
     }
 
     return { setData(d) { items = d || []; build(); } };
@@ -1700,6 +1787,7 @@
                   : "💪 多聽幾次再試試看！";
       boxEl.innerHTML = '<div class="quiz-progress" style="font-size:18px;font-weight:700;color:#2563eb">得分：' +
                         correct + ' / ' + m + '　' + emoji + '</div>';
+      markLevelDone(8);
     }
 
     return { setData(d) { items = d || []; build(); } };
@@ -1787,6 +1875,7 @@
                   : "💪 再讀一次試試看！";
       boxEl.innerHTML = '<div class="quiz-progress" style="font-size:18px;font-weight:700;color:#2563eb">得分：' +
                         correct + ' / ' + m + '　' + emoji + '</div>';
+      markLevelDone(9);
     }
 
     return { setData(d) { items = d || []; build(); } };
@@ -1795,9 +1884,75 @@
   const clozeCtl = makeCloze(document.getElementById("clozeBox"));
 
   /* ================= 課程載入（讀取 lessons.json 與文章檔） ================= */
-  const levelSelect   = document.getElementById("levelSelect");
-  const articleSelect = document.getElementById("articleSelect");
-  let manifest = null;
+  const screenProfile = document.getElementById("screenProfile");
+  const screenLevel   = document.getElementById("screenLevel");
+  const screenArticle = document.getElementById("screenArticle");
+  const screenLearn   = document.getElementById("screenLearn");
+  const profileGrid   = document.getElementById("profileGrid");
+  const newProfileForm = document.getElementById("newProfileForm");
+  const userNameInput = document.getElementById("userName");
+  const newProfileGo  = document.getElementById("newProfileGo");
+  const greetTitle    = document.getElementById("greetTitle");
+  const levelGrid     = document.getElementById("levelGrid");
+  const articleGrid   = document.getElementById("articleGrid");
+  const articleScreenTitle = document.getElementById("articleScreenTitle");
+  const learnTitle    = document.getElementById("learnTitle");
+  let manifest = null, selLevelIdx = 0;
+
+  // 使用者名字（當作進度的 key）
+  let userName = "";
+  try { userName = (localStorage.getItem("userName") || "").trim(); } catch (e) {}
+  function progKey(file) { return "prog:" + (userName || "guest") + ":" + file; }
+  function updateGreeting() { greetTitle.textContent = userName ? ("Hi, " + userName + " 👋") : ""; }
+
+  function loadProfiles() { try { return JSON.parse(localStorage.getItem("profiles") || "[]"); } catch (e) { return []; } }
+  function saveProfiles(list) { try { localStorage.setItem("profiles", JSON.stringify(list)); } catch (e) {} }
+  if (userName) { const l = loadProfiles(); if (!l.includes(userName)) { l.push(userName); saveProfiles(l); } }
+
+  // 畫面 0：選使用者
+  function renderProfiles() {
+    profileGrid.innerHTML = "";
+    newProfileForm.classList.add("hidden");
+    loadProfiles().forEach(name => {
+      const btn = document.createElement("button");
+      btn.className = "pick-card";
+      btn.innerHTML = '<span class="pick-title">👤 ' + name + '</span>';
+      btn.addEventListener("click", () => selectProfile(name));
+      profileGrid.appendChild(btn);
+    });
+    const add = document.createElement("button");
+    add.className = "pick-card";
+    add.innerHTML = '<span class="pick-title">➕ New</span><span class="pick-sub">新增使用者</span>';
+    add.addEventListener("click", () => {
+      newProfileForm.classList.remove("hidden");
+      userNameInput.value = "";
+      userNameInput.focus();
+    });
+    profileGrid.appendChild(add);
+  }
+
+  function selectProfile(name) {
+    userName = name;
+    try { localStorage.setItem("userName", userName); } catch (e) {}
+    updateGreeting();
+    renderLevelGrid();
+    showScreen(screenLevel);
+  }
+
+  function addProfile() {
+    const name = userNameInput.value.trim();
+    if (!name) { userNameInput.focus(); return; }
+    const list = loadProfiles();
+    if (!list.includes(name)) { list.push(name); saveProfiles(list); }
+    selectProfile(name);
+  }
+  newProfileGo.addEventListener("click", addProfile);
+  userNameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") addProfile(); });
+
+  function showScreen(el) {
+    [screenProfile, screenLevel, screenArticle, screenLearn].forEach(s => s.classList.add("hidden"));
+    el.classList.remove("hidden");
+  }
 
   // 把 "Tom: Hi, Anna." 這種純文字解析成 { who, gender, text }
   function parseDialogue(text) {
@@ -1829,6 +1984,7 @@
       showLoadError();
       return;
     }
+    currentArticleKey = article.file;
     stopListenL1();
     stopRecordingIfAny();
     idx = 0;
@@ -1883,30 +2039,79 @@
     };
     const badge = document.getElementById("clozeTypeBadge");
     badge.textContent = article.clozeType ? (clozeTypeLabel[article.clozeType] || article.clozeType) : "";
+
+    // 還原這篇文章已完成的關卡並更新進度條
+    restoreProgress();
   }
 
-  function populateArticles(levelIdx) {
-    const lv = manifest.levels[levelIdx];
-    articleSelect.innerHTML = "";
-    if (!lv.articles.length) {
-      const o = document.createElement("option");
-      o.textContent = "（尚無課程）";
-      o.disabled = true;
-      articleSelect.appendChild(o);
-      script = [];
-      renderDialogue();
-      quiz3Ctl.setData([]);
-      quiz4Ctl.setData([]);
-      return;
-    }
-    lv.articles.forEach((a, i) => {
-      const o = document.createElement("option");
-      o.value = i;
-      o.textContent = a.title || a.id;
-      articleSelect.appendChild(o);
-    });
-    loadArticle(lv.articles[0]);
+  // 計算一篇文章共有幾關、已完成幾關（給課程卡片顯示）
+  function articleTotal(a) {
+    let t = 5;
+    if (a.reorder && a.reorder.length) t++;
+    if (a.wh && a.wh.length) t++;
+    if (a.dictation && a.dictation.length) t++;
+    if (a.cloze && a.cloze.length) t++;
+    return t;
   }
+  function articleDone(a) {
+    try { return JSON.parse(localStorage.getItem(progKey(a.file)) || "[]").length; }
+    catch (e) { return 0; }
+  }
+
+  // 畫面 1：等級卡片
+  function renderLevelGrid() {
+    levelGrid.innerHTML = "";
+    manifest.levels.forEach((lv, i) => {
+      const btn = document.createElement("button");
+      btn.className = "pick-card";
+      const n = lv.articles.length;
+      btn.innerHTML = '<span class="pick-title">' + (lv.name || lv.id) + '</span>' +
+                      '<span class="pick-sub">' + (n ? n + ' 課' : '即將推出') + '</span>';
+      if (!n) btn.disabled = true;
+      else btn.addEventListener("click", () => selectLevel(i));
+      levelGrid.appendChild(btn);
+    });
+  }
+
+  // 畫面 2：課程卡片
+  function selectLevel(i) {
+    selLevelIdx = i;
+    const lv = manifest.levels[i];
+    articleScreenTitle.textContent = (lv.name || lv.id) + " · 選擇課程";
+    articleGrid.innerHTML = "";
+    lv.articles.forEach(a => {
+      const btn = document.createElement("button");
+      btn.className = "pick-card";
+      const total = articleTotal(a), done = Math.min(articleDone(a), total);
+      btn.innerHTML = '<span class="pick-title">' + (a.title || a.id) + '</span>' +
+                      '<span class="pick-sub">完成 ' + done + '/' + total + ' 關</span>';
+      btn.addEventListener("click", () => selectArticle(a));
+      articleGrid.appendChild(btn);
+    });
+    showScreen(screenArticle);
+  }
+
+  // 畫面 3：載入並開始學習
+  async function selectArticle(a) {
+    await loadArticle(a);
+    learnTitle.textContent = (manifest.levels[selLevelIdx].name || "") + " · " + (a.title || a.id);
+    document.querySelector('.levelTab[data-level="1"]').click();   // 每次從第 1 關開始
+    showScreen(screenLearn);
+  }
+
+  document.getElementById("backToProfile").addEventListener("click", () => {
+    renderProfiles();
+    showScreen(screenProfile);
+  });
+  document.getElementById("backToLevels").addEventListener("click", () => {
+    synth.cancel(); stopListenL1(); stopRecordingIfAny();
+    renderLevelGrid();
+    showScreen(screenLevel);
+  });
+  document.getElementById("backToList").addEventListener("click", () => {
+    synth.cancel(); stopListenL1(); stopRecordingIfAny();
+    selectLevel(selLevelIdx);   // 回課程列表（順便刷新完成度）
+  });
 
   async function initLessons() {
     try {
@@ -1914,20 +2119,15 @@
       if (!res.ok) throw new Error("HTTP " + res.status);
       manifest = await res.json();
     } catch (e) {
-      showLoadError();
+      profileGrid.innerHTML =
+        '<div style="padding:16px;color:#b91c1c;background:#fee2e2;border-radius:12px;line-height:1.7">' +
+        '⚠️ <b>無法載入課程。</b><br>用 <code>file://</code> 直接開會被瀏覽器擋住；' +
+        '請用本機伺服器（<code>python -m http.server</code>）或 GitHub Pages 開啟。</div>';
+      showScreen(screenProfile);
       return;
     }
-    levelSelect.innerHTML = "";
-    manifest.levels.forEach((lv, i) => {
-      const o = document.createElement("option");
-      o.value = i;
-      o.textContent = lv.name || lv.id;
-      levelSelect.appendChild(o);
-    });
-    levelSelect.addEventListener("change", () => populateArticles(+levelSelect.value));
-    articleSelect.addEventListener("change", () =>
-      loadArticle(manifest.levels[+levelSelect.value].articles[+articleSelect.value]));
-    populateArticles(0);
+    renderProfiles();
+    showScreen(screenProfile);
   }
 
   initLessons();
