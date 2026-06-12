@@ -4,9 +4,10 @@ services:
     image: english-learning:latest
     container_name: english-learning
     ports:
-      - "8000:80"          # 主機 8000 -> 容器 80
+      - "8000:443"         # 主機 8000 -> 容器 443 (HTTPS)
     volumes:
-      - visits-data:/data  # 訪客計數保存於此，重啟不歸零
+      - visits-data:/data                       # 訪客計數保存於此，重啟不歸零
+      - /etc/letsencrypt:/etc/letsencrypt:ro     # 掛載主機的 Let's Encrypt 憑證（唯讀）
     restart: unless-stopped
 
 volumes:

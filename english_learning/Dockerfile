@@ -6,12 +6,14 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends nginx python3 \
     && rm -rf /var/lib/apt/lists/*
 
-# nginx 設定（內嵌）：提供靜態網站，/api 轉給本機 python 計數程式
+# nginx 設定（內嵌）：只提供 HTTPS(443)，使用掛載的 Let's Encrypt 憑證
 RUN rm -f /etc/nginx/sites-enabled/default
 RUN cat > /etc/nginx/conf.d/app.conf <<'EOF'
 server {
-    listen 80;
-    server_name _;
+    listen 443 ssl;
+    server_name kyotozuiryu.com;
+    ssl_certificate     /etc/letsencrypt/live/kyotozuiryu.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/kyotozuiryu.com/privkey.pem;
     root /var/www/html;
     index index.html;
     location /api/ { proxy_pass http://127.0.0.1:5000; }
@@ -23,6 +25,6 @@ EOF
 COPY server.py /app/server.py
 COPY . /var/www/html/
 
-EXPOSE 80
+EXPOSE 443
 # 背景跑計數程式，前景跑 nginx
 CMD ["sh", "-c", "python3 /app/server.py & nginx -g 'daemon off;'"]
