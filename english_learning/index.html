@@ -66,6 +66,24 @@
   .jump-b { animation: jump 1.1s ease-in-out infinite .35s; }
   @keyframes rainfall { from { transform: translateY(0); } to { transform: translateY(16px); } }
   .rainfall { animation: rainfall .5s linear infinite; }
+
+  /* 動畫上的朗讀對話泡泡 */
+  #sceneStage { position: relative; }
+  .scene-bubble {
+    position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+    max-width: 86%; background: #fff; border: 2px solid #2563eb; border-radius: 14px;
+    padding: 7px 14px; font-size: clamp(13px, 3.4vw, 18px); font-weight: 600;
+    color: #1e293b; text-align: center; line-height: 1.35; z-index: 2;
+    box-shadow: 0 4px 12px rgba(0,0,0,.15);
+  }
+  .scene-bubble.female { border-color: #db2777; }
+  .scene-bubble::before, .scene-bubble::after {
+    content: ""; position: absolute; left: 50%; transform: translateX(-50%); border: solid transparent;
+  }
+  .scene-bubble::before { bottom: -10px; border-width: 9px; border-top-color: #2563eb; }
+  .scene-bubble::after  { bottom: -7px;  border-width: 7px; border-top-color: #fff; }
+  .scene-bubble.female::before { border-top-color: #db2777; }
+  #sceneStage.reading .talkA, #sceneStage.reading .talkB { display: none; }
   .cloud1 { animation: cloud 16s linear infinite; }
   .cloud2 { animation: cloud 24s linear infinite; }
   .rays   { transform-box: fill-box; transform-origin: center; animation: spin 20s linear infinite; }
@@ -112,6 +130,7 @@
   #playBtn   { background: #2563eb; color: #fff; }
   #pauseBtn  { background: #f59e0b; color: #fff; }
   #stopBtn   { background: #ef4444; color: #fff; }
+  #toggleText { background: #e2e8f0; color: #334155; }
   .speed { display: flex; align-items: center; gap: 8px; margin-left: auto; color: #475569; font-size: 14px; }
   .speed input { width: 110px; }
 
@@ -181,6 +200,34 @@
   .opt.wrong    { background: #fee2e2; border-color: #dc2626; color: #b91c1c; }
   .quiz-mark { margin-left: 8px; font-size: 18px; }
   .quiz-item.answered { border-color: #e2e8f0; }
+  .quiz-progress { text-align: center; color: #64748b; font-size: 14px; margin-bottom: 12px; }
+  .quiz-next-wrap { text-align: center; margin-top: 16px; }
+  .quiz-next { background: #2563eb; color: #fff; }
+  .quiz-next:disabled { opacity: .4; }
+
+  /* Level 7 WH 選擇題：選項直排、整句左對齊 */
+  .quiz-opts.vert { flex-direction: column; }
+  .quiz-opts.vert .opt { flex: none; text-align: left; }
+
+  /* Level 8 聽寫 */
+  .dict-playrow { text-align: center; margin-bottom: 14px; }
+  .dict-play { background: #2563eb; color: #fff; }
+  .dict-input {
+    width: 100%; font-size: 17px; padding: 12px 14px; border: 2px solid #cbd5e1;
+    border-radius: 12px; margin-bottom: 4px; font-family: inherit;
+  }
+  .dict-input:focus { outline: none; border-color: #2563eb; }
+  .dict-feedback { text-align: center; margin-top: 12px; font-size: 17px; font-weight: 600; min-height: 24px; }
+  .dict-ok { color: #15803d; }
+  .dict-bad { color: #b91c1c; }
+  .dict-answer { margin-top: 6px; color: #15803d; background: #dcfce7; border-radius: 10px; padding: 8px 12px; display: inline-block; font-weight: 700; }
+
+  /* Level 9 單字填空 */
+  .cloze-sentence { font-size: 20px; font-weight: 600; color: #1e293b; line-height: 1.7; text-align: center; margin-bottom: 18px; }
+  .cloze-sentence .speak-q { vertical-align: middle; margin-right: 6px; }
+  .cloze-blank { display: inline-block; min-width: 56px; border-bottom: 3px solid #94a3b8; text-align: center; color: #2563eb; font-weight: 700; margin: 0 2px; }
+  .cloze-blank.filled { border-bottom-color: #16a34a; color: #15803d; }
+  .cloze-badge { display: inline-block; background: #e0e7ff; color: #3730a3; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 700; margin-left: 4px; }
 
   .quiz-footer { margin-top: 20px; text-align: center; }
   #scoreBox {
@@ -241,19 +288,21 @@
 <body>
   <div class="card">
     <h1>🗣️ English Reading</h1>
-    <p class="subtitle">Tom 用男聲，Anna 用女聲。</p>
 
     <!-- ===== 課程選擇：等級 + 文章 ===== -->
     <div class="picker">
-      <label>等級 (Level)
+      <label>Level
         <select id="levelSelect"></select>
       </label>
-      <label>課程 (Lesson)
+      <label>Lesson
         <select id="articleSelect"></select>
       </label>
     </div>
 
     <!-- ===== 動畫場景（只在 Level 1 顯示，依文章切換） ===== -->
+    <div id="sceneStage">
+    <!-- 朗讀時顯示目前句子的對話泡泡 -->
+    <div id="sceneBubble" class="scene-bubble hidden"></div>
     <!-- 場景 A：公園邀約 + 玩球（對應 001 park-ball） -->
     <div class="scene" id="scene" data-scene="park-ball">
       <svg viewBox="0 0 360 170" xmlns="http://www.w3.org/2000/svg" role="img"
@@ -745,51 +794,65 @@
         </g>
       </svg>
     </div>
+    </div><!-- /#sceneStage -->
 
     <div class="levels">
       <div class="levelTab active" data-level="1">
         <div class="lvl">Level 1</div>
-        <div class="desc">先聽一次 👂</div>
+        <div class="desc">Listen 👂</div>
       </div>
       <div class="levelTab" data-level="2">
         <div class="lvl">Level 2</div>
-        <div class="desc">跟讀模式 🎤</div>
+        <div class="desc">Read Along 🎤</div>
       </div>
       <div class="levelTab" data-level="3">
         <div class="lvl">Level 3</div>
-        <div class="desc">問答測驗 ✅</div>
+        <div class="desc">Quiz ✅</div>
       </div>
       <div class="levelTab" data-level="4">
         <div class="lvl">Level 4</div>
-        <div class="desc">故意混淆 🤔</div>
+        <div class="desc">Tricky Quiz 🤔</div>
       </div>
       <div class="levelTab" data-level="5">
         <div class="lvl">Level 5</div>
-        <div class="desc">單字配圖 🖼️</div>
+        <div class="desc">Match 🖼️</div>
       </div>
       <div class="levelTab hidden" data-level="6">
         <div class="lvl">Level 6</div>
-        <div class="desc">重組句子 🧩</div>
+        <div class="desc">Reorder 🧩</div>
+      </div>
+      <div class="levelTab hidden" data-level="7">
+        <div class="lvl">Level 7</div>
+        <div class="desc">WH Questions ❓</div>
+      </div>
+      <div class="levelTab hidden" data-level="8">
+        <div class="lvl">Level 8</div>
+        <div class="desc">Dictation ✍️</div>
+      </div>
+      <div class="levelTab hidden" data-level="9">
+        <div class="lvl">Level 9</div>
+        <div class="desc">Fill Blank 📝</div>
       </div>
     </div>
 
     <!-- ===== Level 1：聽 ===== -->
     <div id="level1">
       <div class="legend">
-        <span class="b">Tom（男生 / Male）</span>
-        <span class="g">Anna（女生 / Female）</span>
+        <span class="b">Tom (Male)</span>
+        <span class="g">Anna (Female)</span>
       </div>
       <div class="controls">
-        <button id="playBtn">▶ 朗讀</button>
-        <button id="pauseBtn" disabled>⏸ 暫停</button>
-        <button id="stopBtn" disabled>⏹ 停止</button>
+        <button id="playBtn">▶ Read</button>
+        <button id="pauseBtn" disabled>⏸ Pause</button>
+        <button id="stopBtn" disabled>⏹ Stop</button>
+        <button id="toggleText">📖 Show Text</button>
         <label class="speed">
-          速度
+          Speed
           <input id="rate" type="range" min="0.5" max="1.3" step="0.1" value="0.9">
           <span id="rateVal">0.9x</span>
         </label>
       </div>
-      <div class="dialogue" id="dialogue"></div>
+      <div class="dialogue hidden" id="dialogue"></div>
     </div>
 
     <!-- ===== Level 2：跟讀 ===== -->
@@ -800,14 +863,14 @@
         <div id="shadowText"></div>
       </div>
       <div class="shadow-actions">
-        <button id="listenBtn">🔊 聽老師念</button>
-        <button id="recBtn">🎤 開始錄音</button>
-        <button id="myPlayBtn" disabled>▶ 播放我的錄音</button>
+        <button id="listenBtn">🔊 Listen</button>
+        <button id="recBtn">🎤 Record</button>
+        <button id="myPlayBtn" disabled>▶ Play</button>
       </div>
       <div class="status" id="status">準備好了就點「聽老師念」吧！</div>
       <div class="nav">
-        <button id="prevBtn">⬅ 上一句</button>
-        <button id="nextBtn">下一句 ➡</button>
+        <button id="prevBtn">⬅ Prev</button>
+        <button id="nextBtn">Next ➡</button>
       </div>
     </div>
 
@@ -817,7 +880,7 @@
       <div class="quiz-list" id="quizList"></div>
       <div class="quiz-footer">
         <div id="scoreBox"></div>
-        <button id="resetQuiz">🔄 重新作答</button>
+        <button id="resetQuiz">🔄 Try Again</button>
       </div>
     </div>
 
@@ -827,7 +890,7 @@
       <div class="quiz-list" id="quizList4"></div>
       <div class="quiz-footer">
         <div id="scoreBox4"></div>
-        <button id="resetQuiz4" class="resetQuiz">🔄 重新作答</button>
+        <button id="resetQuiz4" class="resetQuiz">🔄 Try Again</button>
       </div>
     </div>
 
@@ -840,7 +903,7 @@
       </div>
       <div class="quiz-footer">
         <div id="matchStatus"></div>
-        <button id="resetMatch">🔄 重新出題</button>
+        <button id="resetMatch">🔄 Try Again</button>
       </div>
     </div>
 
@@ -851,10 +914,24 @@
       <div class="reorder-answer" id="roAnswer"></div>
       <div class="reorder-pool" id="roPool"></div>
       <div id="roStatus"></div>
-      <div class="nav">
-        <button id="roClear">↩ 清除</button>
-        <button id="roNext">下一句 ➡</button>
-      </div>
+    </div>
+
+    <!-- ===== Level 7：WH 問題（理解內容） ===== -->
+    <div id="level7" class="hidden">
+      <p class="match-intro">看 WH 問題，從 3 個選項中選出正確的<b>完整句子</b>答案 ❓</p>
+      <div id="whBox"></div>
+    </div>
+
+    <!-- ===== Level 8：聽寫 ===== -->
+    <div id="level8" class="hidden">
+      <p class="match-intro">點 🔊 聽句子，把聽到的<b>整句</b>打出來，再按 Check ✍️</p>
+      <div id="dictBox"></div>
+    </div>
+
+    <!-- ===== Level 9：單字填空（有選項） ===== -->
+    <div id="level9" class="hidden">
+      <p class="match-intro">讀句子，從選項中選出正確的單字填進空格 📝 <span id="clozeTypeBadge" class="cloze-badge"></span></p>
+      <div id="clozeBox"></div>
     </div>
   </div>
 
@@ -897,6 +974,9 @@
   const level4El = document.getElementById("level4");
   const level5El = document.getElementById("level5");
   const level6El = document.getElementById("level6");
+  const level7El = document.getElementById("level7");
+  const level8El = document.getElementById("level8");
+  const level9El = document.getElementById("level9");
 
   // 動畫場景：依文章切換，且只在 Level 1 顯示
   let currentScene = "park-ball";
@@ -923,6 +1003,9 @@
     level4El.classList.add("hidden");
     level5El.classList.add("hidden");
     level6El.classList.add("hidden");
+    level7El.classList.add("hidden");
+    level8El.classList.add("hidden");
+    level9El.classList.add("hidden");
     // 動畫場景只在 Level 1 顯示（依文章換場景）
     onLevel1 = (lv === "1");
     updateScene();
@@ -932,7 +1015,10 @@
     else if (lv === "3") { level3El.classList.remove("hidden"); }
     else if (lv === "4") { level4El.classList.remove("hidden"); }
     else if (lv === "5") { level5El.classList.remove("hidden"); }
-    else { level6El.classList.remove("hidden"); }
+    else if (lv === "6") { level6El.classList.remove("hidden"); }
+    else if (lv === "7") { level7El.classList.remove("hidden"); }
+    else if (lv === "8") { level8El.classList.remove("hidden"); }
+    else { level9El.classList.remove("hidden"); }
   }));
 
   /* ================= Level 1：聽 ================= */
@@ -942,7 +1028,26 @@
   const stopBtn  = document.getElementById("stopBtn");
   const rateEl   = document.getElementById("rate");
   const rateVal  = document.getElementById("rateVal");
+  const toggleTextBtn = document.getElementById("toggleText");
+  const sceneStage = document.getElementById("sceneStage");
+  const sceneBubble = document.getElementById("sceneBubble");
   let isPlaying = false;
+
+  // 顯示/隱藏對話文字清單
+  toggleTextBtn.addEventListener("click", () => {
+    const nowHidden = dialogueEl.classList.toggle("hidden");
+    toggleTextBtn.textContent = nowHidden ? "📖 Show Text" : "📖 Hide Text";
+  });
+
+  // 朗讀時把目前句子顯示在動畫的對話泡泡
+  function showBubble(line) {
+    sceneBubble.textContent = line.text;
+    sceneBubble.className = "scene-bubble " + line.gender;
+  }
+  function hideBubble() {
+    sceneBubble.classList.add("hidden");
+    sceneBubble.textContent = "";
+  }
 
   let lineEls = [];
   function renderDialogue() {
@@ -965,6 +1070,7 @@
   function speakLine(i) {
     if (i >= script.length) { finishL1(); return; }
     highlight(i);
+    showBubble(script[i]);
     const u = makeUtter(script[i], parseFloat(rateEl.value));
     u.onend = () => { if (isPlaying) speakLine(i + 1); };
     synth.speak(u);
@@ -974,20 +1080,23 @@
     synth.cancel();
     isPlaying = true;
     playBtn.disabled = true; pauseBtn.disabled = false; stopBtn.disabled = false;
-    pauseBtn.textContent = "⏸ 暫停";
+    pauseBtn.textContent = "⏸ Pause";
+    sceneStage.classList.add("reading");   // 朗讀時隱藏裝飾小泡泡
     speakLine(0);
   }
   function finishL1() {
     isPlaying = false;
     playBtn.disabled = false; pauseBtn.disabled = true; stopBtn.disabled = true;
     lineEls.forEach(el => el.classList.remove("active"));
+    sceneStage.classList.remove("reading");
+    hideBubble();
   }
   function stopListenL1() { synth.cancel(); finishL1(); }
 
   playBtn.addEventListener("click", startL1);
   pauseBtn.addEventListener("click", () => {
-    if (synth.paused) { synth.resume(); pauseBtn.textContent = "⏸ 暫停"; }
-    else { synth.pause(); pauseBtn.textContent = "▶ 繼續"; }
+    if (synth.paused) { synth.resume(); pauseBtn.textContent = "⏸ Pause"; }
+    else { synth.pause(); pauseBtn.textContent = "▶ Resume"; }
   });
   stopBtn.addEventListener("click", stopListenL1);
 
@@ -1022,7 +1131,7 @@
     myPlayBtn.disabled = !recordings[idx];
     statusEl.textContent = recordings[idx] ? "已有錄音，可以播放比對 👍" : "點「聽老師念」聽範本，再「開始錄音」跟著念。";
     recBtn.classList.remove("recording");
-    recBtn.textContent = "🎤 開始錄音";
+    recBtn.textContent = "🎤 Record";
   }
 
   listenBtn.addEventListener("click", () => {
@@ -1046,14 +1155,15 @@
         if (recordings[idx]) URL.revokeObjectURL(recordings[idx]);
         recordings[idx] = URL.createObjectURL(blob);
         myPlayBtn.disabled = false;
-        statusEl.textContent = "錄好了！點「播放我的錄音」聽聽看 🎧";
         // 關閉麥克風
         stream.getTracks().forEach(t => t.stop());
+        // 錄完自動播放
+        playMyRecording();
       };
       mediaRecorder.start();
       isRecording = true;
       recBtn.classList.add("recording");
-      recBtn.textContent = "⏹ 停止錄音";
+      recBtn.textContent = "⏹ Stop";
       statusEl.textContent = "錄音中… 請大聲念出來！🎙️";
     } catch (err) {
       statusEl.textContent = "⚠️ 無法使用麥克風，請允許麥克風權限後再試。";
@@ -1065,20 +1175,21 @@
     if (mediaRecorder && mediaRecorder.state === "recording") mediaRecorder.stop();
     isRecording = false;
     recBtn.classList.remove("recording");
-    recBtn.textContent = "🎤 開始錄音";
+    recBtn.textContent = "🎤 Record";
   }
   function stopRecordingIfAny() { if (isRecording) stopRecording(); }
 
-  /* 播放自己的錄音 */
+  /* 播放自己的錄音（錄完會自動呼叫，也可手動點播放鈕） */
   let myAudio = null;
-  myPlayBtn.addEventListener("click", () => {
+  function playMyRecording() {
     if (!recordings[idx]) return;
     if (myAudio) { myAudio.pause(); }
     myAudio = new Audio(recordings[idx]);
     myAudio.play();
     statusEl.textContent = "正在播放你的錄音 🔊";
     myAudio.onended = () => statusEl.textContent = "再聽一次老師念，跟自己比比看吧！";
-  });
+  }
+  myPlayBtn.addEventListener("click", playMyRecording);
 
   /* 上一句 / 下一句 */
   prevBtn.addEventListener("click", () => { if (idx > 0) { stopRecordingIfAny(); synth.cancel(); idx--; renderShadow(); } });
@@ -1136,74 +1247,103 @@
     synth.speak(u);
   }
 
-  // 測驗控制器：可重複載入不同題庫（setData 換題目）
-  function makeQuiz(listEl, scoreEl, resetEl, markPrefix) {
-    let data = [], answered = {}, shuffled = [];
+  // 依序朗讀多句（例如：題目 → 1. 選項 → 2. 選項 → 3. 選項）
+  function speakSequence(texts) {
+    if (typeof SpeechSynthesisUtterance === "undefined") return;
+    synth.cancel();
+    texts.forEach(t => {
+      const u = new SpeechSynthesisUtterance(t);
+      u.lang = "en-US"; u.rate = 0.85;
+      if (femaleVoice) u.voice = femaleVoice;
+      synth.speak(u);
+    });
+  }
+
+  // 測驗控制器：一次只顯示一題，答完按「下一題」，最後算總分
+  function makeQuiz(listEl, scoreEl, resetEl) {
+    let data = [], shuffled = [], idx = 0, correct = 0, answered = false, timer = null;
 
     function build() {
-      listEl.innerHTML = "";
-      answered = {};
-      scoreEl.textContent = "";
+      clearTimeout(timer);
       shuffled = shuffle(data);   // 每次重新洗牌
-      shuffled.forEach((item, qi) => {
-        const wrap = document.createElement("div");
-        wrap.className = "quiz-item";
-        const q = document.createElement("div");
-        q.className = "quiz-q";
-        q.innerHTML = `<button class="speak-q" title="朗讀題目">🔊</button>` +
-                      `<span class="qtext">${qi + 1}. ${item.q}</span>` +
-                      `<span class="quiz-mark" id="${markPrefix}-${qi}"></span>`;
-        q.querySelector(".speak-q").addEventListener("click", () => speakQuestion(item.q));
-        wrap.appendChild(q);
-
-        const opts = document.createElement("div");
-        opts.className = "quiz-opts";
-        ["Yes", "No"].forEach(choice => {
-          const btn = document.createElement("button");
-          btn.className = "opt";
-          btn.textContent = choice;
-          btn.addEventListener("click", () => answer(qi, choice, btn, opts));
-          opts.appendChild(btn);
-        });
-        wrap.appendChild(opts);
-        listEl.appendChild(wrap);
-      });
+      idx = 0; correct = 0;
+      renderQuestion();
     }
 
-    function answer(qi, choice, btn, opts) {
-      if (answered[qi]) return;            // 每題只能答一次
-      answered[qi] = true;
-      const correct = shuffled[qi].answer;
-      const mark = document.getElementById(markPrefix + "-" + qi);
+    function renderQuestion() {
+      answered = false;
+      listEl.innerHTML = "";
+      scoreEl.textContent = "";
+      if (!shuffled.length) return;
+      const item = shuffled[idx];
+
+      const wrap = document.createElement("div");
+      wrap.className = "quiz-item";
+
+      const prog = document.createElement("div");
+      prog.className = "quiz-progress";
+      prog.textContent = `第 ${idx + 1} / 共 ${shuffled.length} 題`;
+      wrap.appendChild(prog);
+
+      const mark = document.createElement("span");
+      mark.className = "quiz-mark";
+      const q = document.createElement("div");
+      q.className = "quiz-q";
+      const sp = document.createElement("button");
+      sp.className = "speak-q"; sp.title = "朗讀題目"; sp.textContent = "🔊";
+      sp.addEventListener("click", () => speakQuestion(item.q));
+      const qt = document.createElement("span");
+      qt.className = "qtext"; qt.textContent = item.q;
+      q.appendChild(sp); q.appendChild(qt); q.appendChild(mark);
+      wrap.appendChild(q);
+
+      const opts = document.createElement("div");
+      opts.className = "quiz-opts";
+      ["Yes", "No"].forEach(choice => {
+        const btn = document.createElement("button");
+        btn.className = "opt";
+        btn.textContent = choice;
+        btn.addEventListener("click", () => answer(choice, btn, opts, mark));
+        opts.appendChild(btn);
+      });
+      wrap.appendChild(opts);
+      listEl.appendChild(wrap);
+    }
+
+    function answer(choice, btn, opts, mark) {
+      if (answered) return;                // 每題只能答一次
+      answered = true;
+      const right = shuffled[idx].answer;
       opts.querySelectorAll(".opt").forEach(b => {
         b.disabled = true;
-        if (b.textContent === correct) b.classList.add("correct");
+        if (b.textContent === right) b.classList.add("correct");
       });
-      if (choice === correct) {
+      if (choice === right) {
         mark.textContent = " ✅";
+        correct++;
         playDing();                        // 答對音效
       } else {
         btn.classList.add("wrong");
         mark.textContent = " ❌";
       }
-      updateScore();
+      // 答完自動跳下一題（答錯停久一點看正確答案）
+      clearTimeout(timer);
+      timer = setTimeout(goNext, choice === right ? 900 : 1500);
     }
 
-    function updateScore() {
-      const done = Object.keys(answered).length;
-      if (done < data.length) {
-        scoreEl.textContent = done ? `已答 ${done} / ${data.length} 題` : "";
-        return;
-      }
-      let right = 0;
-      shuffled.forEach((item, qi) => {
-        const mark = document.getElementById(markPrefix + "-" + qi);
-        if (mark && mark.textContent.includes("✅")) right++;
-      });
-      let emoji = right === data.length ? "🏆 全對！太棒了！"
-                : right >= data.length - 1 ? "👍 很厲害！"
-                : "💪 再聽一次對話試試看！";
-      scoreEl.textContent = `得分：${right} / ${data.length}　${emoji}`;
+    function goNext() {
+      if (!answered) return;
+      if (idx < shuffled.length - 1) { idx++; renderQuestion(); }
+      else showResult();
+    }
+
+    function showResult() {
+      listEl.innerHTML = "";
+      const m = shuffled.length;
+      const emoji = correct === m ? "🏆 全對！太棒了！"
+                  : correct >= m - 1 ? "👍 很厲害！"
+                  : "💪 再聽一次對話試試看！";
+      scoreEl.textContent = `得分：${correct} / ${m}　${emoji}`;
     }
 
     resetEl.addEventListener("click", build);
@@ -1213,11 +1353,11 @@
   const quiz3Ctl = makeQuiz(
     document.getElementById("quizList"),
     document.getElementById("scoreBox"),
-    document.getElementById("resetQuiz"), "mark3");
+    document.getElementById("resetQuiz"));
   const quiz4Ctl = makeQuiz(
     document.getElementById("quizList4"),
     document.getElementById("scoreBox4"),
-    document.getElementById("resetQuiz4"), "mark4");
+    document.getElementById("resetQuiz4"));
 
   /* ================= Level 5：單字配圖 ================= */
   function makeMatch(wordsEl, picsEl, statusEl, resetEl) {
@@ -1294,11 +1434,12 @@
     document.getElementById("resetMatch"));
 
   /* ================= Level 6：重組句子 ================= */
-  function makeReorder(progressEl, answerEl, poolEl, statusEl, clearEl, nextEl) {
+  function makeReorder(progressEl, answerEl, poolEl, statusEl) {
     let sentences = [], idx = 0;
-    let tokens = [], pool = [], placed = [], solved = false;
+    let tokens = [], pool = [], placed = [], solved = false, timer = null;
 
     function startSentence() {
+      clearTimeout(timer);
       solved = false;
       tokens = sentences[idx].map((w, i) => ({ id: i, word: w }));
       placed = [];
@@ -1344,26 +1485,19 @@
     function check() {
       if (placed.every((id, i) => id === i)) {
         solved = true;
-        statusEl.textContent = "✅ 正確！";
         playDing();
         render();
+        if (idx < sentences.length - 1) {
+          statusEl.textContent = "✅ 正確！";
+          clearTimeout(timer);
+          timer = setTimeout(function () { idx++; startSentence(); }, 1100);   // 答對自動換下一句
+        } else {
+          statusEl.textContent = "🎉 全部完成！太棒了！";
+        }
       } else {
         statusEl.textContent = "再排排看 🤔（點上方單字可收回）";
       }
     }
-
-    clearEl.addEventListener("click", () => {
-      if (solved || !tokens.length) return;
-      placed = [];
-      pool = shuffle(tokens.map(t => t.id));
-      statusEl.textContent = "";
-      render();
-    });
-    nextEl.addEventListener("click", () => {
-      if (!sentences.length) return;
-      idx = (idx + 1) % sentences.length;
-      startSentence();
-    });
 
     return {
       setData(s) {
@@ -1384,9 +1518,281 @@
     document.getElementById("roProgress"),
     document.getElementById("roAnswer"),
     document.getElementById("roPool"),
-    document.getElementById("roStatus"),
-    document.getElementById("roClear"),
-    document.getElementById("roNext"));
+    document.getElementById("roStatus"));
+
+  /* ================= Level 7：WH 問題（三選一） ================= */
+  function makeWh(boxEl) {
+    let items = [], shuffled = [], idx = 0, correct = 0, answered = false, timer = null;
+
+    function build() {
+      clearTimeout(timer);
+      shuffled = shuffle(items);
+      idx = 0; correct = 0;
+      render();
+    }
+
+    function render() {
+      answered = false;
+      boxEl.innerHTML = "";
+      if (!shuffled.length) return;
+      const it = shuffled[idx];
+      const choices = shuffle([it.a].concat(it.wrong || []));
+
+      const card = document.createElement("div");
+      card.className = "quiz-item";
+
+      const prog = document.createElement("div");
+      prog.className = "quiz-progress";
+      prog.textContent = `第 ${idx + 1} / 共 ${shuffled.length} 題`;
+      card.appendChild(prog);
+
+      const mark = document.createElement("span"); mark.className = "quiz-mark";
+      const q = document.createElement("div"); q.className = "quiz-q";
+      const sp = document.createElement("button");
+      sp.className = "speak-q"; sp.title = "朗讀題目與選項"; sp.textContent = "🔊";
+      sp.addEventListener("click", () => {
+        const seq = [it.q];
+        choices.forEach((c, i) => seq.push((i + 1) + ". " + c));
+        speakSequence(seq);   // 先念題目，再念 1. 2. 3. 選項
+      });
+      const qt = document.createElement("span"); qt.className = "qtext"; qt.textContent = it.q;
+      q.appendChild(sp); q.appendChild(qt); q.appendChild(mark);
+      card.appendChild(q);
+
+      const opts = document.createElement("div");
+      opts.className = "quiz-opts vert";
+      choices.forEach((choice, i) => {
+        const btn = document.createElement("button");
+        btn.className = "opt";
+        btn.dataset.val = choice;
+        btn.textContent = (i + 1) + ". " + choice;
+        btn.addEventListener("click", () => answer(choice, btn, opts, mark, it));
+        opts.appendChild(btn);
+      });
+      card.appendChild(opts);
+
+      boxEl.appendChild(card);
+    }
+
+    function answer(choice, btn, opts, mark, it) {
+      if (answered) return;
+      answered = true;
+      opts.querySelectorAll(".opt").forEach(b => {
+        b.disabled = true;
+        if (b.dataset.val === it.a) b.classList.add("correct");
+      });
+      if (choice === it.a) { mark.textContent = " ✅"; correct++; playDing(); }
+      else { btn.classList.add("wrong"); mark.textContent = " ❌"; }
+      speakQuestion(it.a);   // 朗讀正確的完整句答案
+      clearTimeout(timer);
+      timer = setTimeout(goNext, choice === it.a ? 1400 : 2000);
+    }
+
+    function goNext() {
+      if (idx < shuffled.length - 1) { idx++; render(); }
+      else showResult();
+    }
+
+    function showResult() {
+      const m = shuffled.length;
+      const emoji = correct === m ? "🏆 全對！太棒了！"
+                  : correct >= m - 1 ? "👍 很厲害！"
+                  : "💪 再聽一次對話試試看！";
+      boxEl.innerHTML = '<div class="quiz-progress" style="font-size:18px;font-weight:700;color:#2563eb">得分：' +
+                        correct + ' / ' + m + '　' + emoji + '</div>';
+    }
+
+    return { setData(d) { items = d || []; build(); } };
+  }
+
+  const whCtl = makeWh(document.getElementById("whBox"));
+
+  /* ================= Level 8：聽寫 ================= */
+  function makeDictation(boxEl) {
+    let items = [], shuffled = [], idx = 0, correct = 0, answered = false, timer = null;
+
+    function norm(s) {
+      return (s || "").toLowerCase().replace(/[.,!?;:'"]/g, "").replace(/\s+/g, " ").trim();
+    }
+
+    function build() {
+      clearTimeout(timer);
+      shuffled = shuffle(items);
+      idx = 0; correct = 0;
+      render();
+    }
+
+    function render() {
+      answered = false;
+      boxEl.innerHTML = "";
+      if (!shuffled.length) return;
+      const sentence = shuffled[idx];
+
+      const card = document.createElement("div");
+      card.className = "quiz-item";
+
+      const prog = document.createElement("div");
+      prog.className = "quiz-progress";
+      prog.textContent = `第 ${idx + 1} / 共 ${shuffled.length} 句`;
+      card.appendChild(prog);
+
+      const playRow = document.createElement("div");
+      playRow.className = "dict-playrow";
+      const playBtn = document.createElement("button");
+      playBtn.className = "dict-play";
+      playBtn.textContent = "🔊 Listen";
+      playBtn.addEventListener("click", () => speakQuestion(sentence));
+      playRow.appendChild(playBtn);
+      card.appendChild(playRow);
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "dict-input";
+      input.placeholder = "打出你聽到的句子…";
+      input.autocomplete = "off"; input.autocapitalize = "off"; input.spellcheck = false;
+      card.appendChild(input);
+
+      const fb = document.createElement("div");
+      fb.className = "dict-feedback";
+
+      const wrapBtn = document.createElement("div");
+      wrapBtn.className = "quiz-next-wrap";
+      const checkBtn = document.createElement("button");
+      checkBtn.className = "quiz-next"; checkBtn.textContent = "✓ Check";
+      checkBtn.addEventListener("click", () => check(input, fb));
+      wrapBtn.appendChild(checkBtn);
+      card.appendChild(wrapBtn);
+      card.appendChild(fb);
+
+      input.addEventListener("keydown", (e) => { if (e.key === "Enter") check(input, fb); });
+
+      boxEl.appendChild(card);
+      input.focus();
+      speakQuestion(sentence);   // 進入時自動念一次
+    }
+
+    function check(input, fb) {
+      if (answered) return;
+      const sentence = shuffled[idx];
+      const ok = norm(input.value) === norm(sentence);
+      answered = true;
+      input.disabled = true;
+      if (ok) {
+        fb.innerHTML = '<span class="dict-ok">✅ 正確！</span>';
+        correct++; playDing();
+      } else {
+        fb.innerHTML = '<span class="dict-bad">❌ 正確答案：</span><div class="dict-answer"></div>';
+        fb.querySelector(".dict-answer").textContent = sentence;
+      }
+      clearTimeout(timer);
+      timer = setTimeout(goNext, ok ? 1300 : 3000);
+    }
+
+    function goNext() {
+      if (idx < shuffled.length - 1) { idx++; render(); }
+      else showResult();
+    }
+
+    function showResult() {
+      const m = shuffled.length;
+      const emoji = correct === m ? "🏆 全對！太棒了！"
+                  : correct >= m - 1 ? "👍 很厲害！"
+                  : "💪 多聽幾次再試試看！";
+      boxEl.innerHTML = '<div class="quiz-progress" style="font-size:18px;font-weight:700;color:#2563eb">得分：' +
+                        correct + ' / ' + m + '　' + emoji + '</div>';
+    }
+
+    return { setData(d) { items = d || []; build(); } };
+  }
+
+  const dictCtl = makeDictation(document.getElementById("dictBox"));
+
+  /* ================= Level 9：單字填空（有選項） ================= */
+  function makeCloze(boxEl) {
+    let items = [], shuffled = [], idx = 0, correct = 0, answered = false, timer = null;
+
+    function build() {
+      clearTimeout(timer);
+      shuffled = shuffle(items);
+      idx = 0; correct = 0;
+      render();
+    }
+
+    function render() {
+      answered = false;
+      boxEl.innerHTML = "";
+      if (!shuffled.length) return;
+      const it = shuffled[idx];
+      const choices = shuffle([it.answer].concat(it.wrong || []));
+
+      const card = document.createElement("div");
+      card.className = "quiz-item";
+
+      const prog = document.createElement("div");
+      prog.className = "quiz-progress";
+      prog.textContent = `第 ${idx + 1} / 共 ${shuffled.length} 題`;
+      card.appendChild(prog);
+
+      const parts = it.text.split("___");
+      const sent = document.createElement("div");
+      sent.className = "cloze-sentence";
+      const sp = document.createElement("button");
+      sp.className = "speak-q"; sp.title = "朗讀句子"; sp.textContent = "🔊";
+      sp.addEventListener("click", () => speakQuestion(it.text.replace("___", "blank")));
+      const before = document.createElement("span"); before.textContent = parts[0] || "";
+      const blank = document.createElement("span"); blank.className = "cloze-blank"; blank.textContent = "____";
+      const after = document.createElement("span"); after.textContent = parts[1] || "";
+      sent.appendChild(sp); sent.appendChild(before); sent.appendChild(blank); sent.appendChild(after);
+      card.appendChild(sent);
+
+      const opts = document.createElement("div");
+      opts.className = "quiz-opts";
+      choices.forEach(choice => {
+        const btn = document.createElement("button");
+        btn.className = "opt";
+        btn.textContent = choice;
+        btn.addEventListener("click", () => answer(choice, btn, opts, blank, it));
+        opts.appendChild(btn);
+      });
+      card.appendChild(opts);
+
+      boxEl.appendChild(card);
+    }
+
+    function answer(choice, btn, opts, blank, it) {
+      if (answered) return;
+      answered = true;
+      opts.querySelectorAll(".opt").forEach(b => {
+        b.disabled = true;
+        if (b.textContent === it.answer) b.classList.add("correct");
+      });
+      blank.textContent = it.answer;
+      blank.classList.add("filled");
+      if (choice === it.answer) { correct++; playDing(); }
+      else { btn.classList.add("wrong"); }
+      speakQuestion(it.text.replace("___", it.answer));   // 念出完整句子
+      clearTimeout(timer);
+      timer = setTimeout(goNext, choice === it.answer ? 1300 : 1900);
+    }
+
+    function goNext() {
+      if (idx < shuffled.length - 1) { idx++; render(); }
+      else showResult();
+    }
+
+    function showResult() {
+      const m = shuffled.length;
+      const emoji = correct === m ? "🏆 全對！太棒了！"
+                  : correct >= m - 1 ? "👍 很厲害！"
+                  : "💪 再讀一次試試看！";
+      boxEl.innerHTML = '<div class="quiz-progress" style="font-size:18px;font-weight:700;color:#2563eb">得分：' +
+                        correct + ' / ' + m + '　' + emoji + '</div>';
+    }
+
+    return { setData(d) { items = d || []; build(); } };
+  }
+
+  const clozeCtl = makeCloze(document.getElementById("clozeBox"));
 
   /* ================= 課程載入（讀取 lessons.json 與文章檔） ================= */
   const levelSelect   = document.getElementById("levelSelect");
@@ -1443,6 +1849,40 @@
     if (!hasReorder && tab6.classList.contains("active")) {
       document.querySelector('.levelTab[data-level="1"]').click();
     }
+
+    // Level 7（WH 問題）只在文章有 wh 資料時顯示分頁
+    whCtl.setData(article.wh);
+    const tab7 = document.querySelector('.levelTab[data-level="7"]');
+    const hasWh = !!(article.wh && article.wh.length);
+    tab7.classList.toggle("hidden", !hasWh);
+    if (!hasWh && tab7.classList.contains("active")) {
+      document.querySelector('.levelTab[data-level="1"]').click();
+    }
+
+    // Level 8（聽寫，A1 以上）只在文章有 dictation 資料時顯示分頁
+    dictCtl.setData(article.dictation);
+    const tab8 = document.querySelector('.levelTab[data-level="8"]');
+    const hasDict = !!(article.dictation && article.dictation.length);
+    tab8.classList.toggle("hidden", !hasDict);
+    if (!hasDict && tab8.classList.contains("active")) {
+      document.querySelector('.levelTab[data-level="1"]').click();
+    }
+
+    // Level 9（單字填空）只在文章有 cloze 資料時顯示分頁
+    clozeCtl.setData(article.cloze);
+    const tab9 = document.querySelector('.levelTab[data-level="9"]');
+    const hasCloze = !!(article.cloze && article.cloze.length);
+    tab9.classList.toggle("hidden", !hasCloze);
+    if (!hasCloze && tab9.classList.contains("active")) {
+      document.querySelector('.levelTab[data-level="1"]').click();
+    }
+    // 顯示填空題的難度類型標籤
+    const clozeTypeLabel = {
+      recognition: "單字認識", category: "同類詞選擇", synonym: "近義詞干擾",
+      pos: "詞性判斷", context: "情境填空"
+    };
+    const badge = document.getElementById("clozeTypeBadge");
+    badge.textContent = article.clozeType ? (clozeTypeLabel[article.clozeType] || article.clozeType) : "";
   }
 
   function populateArticles(levelIdx) {
