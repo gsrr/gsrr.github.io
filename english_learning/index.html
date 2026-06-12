@@ -144,6 +144,10 @@
   .progress-text { font-size: 13px; font-weight: 700; color: #16a34a; white-space: nowrap; }
   .levelTab.done::after { content: "✓"; color: #16a34a; font-weight: 700; font-size: 13px; }
 
+  /* 完成後出現的「下一關」按鈕 */
+  .nextlevel-wrap { text-align: center; margin-top: 22px; }
+  #nextLevelBtn { background: #16a34a; color: #fff; font-size: 17px; padding: 12px 26px; }
+
   button {
     border: none;
     border-radius: 12px;
@@ -1134,6 +1138,8 @@
       <p class="match-intro">讀句子，從選項中選出正確的單字填進空格 📝 <span id="clozeTypeBadge" class="cloze-badge"></span></p>
       <div id="clozeBox"></div>
     </div>
+
+    <div class="nextlevel-wrap"><button id="nextLevelBtn" class="hidden">下一關 ➡</button></div>
     </div><!-- /#screenLearn -->
     <div id="visitorBox" class="visitor"></div>
   </div>
@@ -1212,6 +1218,15 @@
 
   /* ---------- 關卡切換 ---------- */
   const tabs = document.querySelectorAll(".levelTab");
+  const levelsBar = document.querySelector(".levels");
+  // 把目前關卡的膠囊捲到可見（置中），不用手動滑
+  function scrollTabIntoView(tab) {
+    if (!levelsBar || !tab) return;
+    const bar = levelsBar.getBoundingClientRect();
+    const t = tab.getBoundingClientRect();
+    const delta = (t.left + t.width / 2) - (bar.left + bar.width / 2);
+    levelsBar.scrollBy({ left: delta, behavior: "smooth" });
+  }
   const levelNameEl = document.getElementById("levelName");
   const level1El = document.getElementById("level1");
   const level2El = document.getElementById("level2");
@@ -1222,6 +1237,7 @@
   const level7El = document.getElementById("level7");
   const level8El = document.getElementById("level8");
   const level9El = document.getElementById("level9");
+  const nextLevelBtn = document.getElementById("nextLevelBtn");
 
   // 動畫場景：依文章切換，且只在 Level 1 顯示
   let currentScene = "park-ball";
@@ -1237,6 +1253,7 @@
   tabs.forEach(tab => tab.addEventListener("click", () => {
     tabs.forEach(t => t.classList.remove("active"));
     tab.classList.add("active");
+    scrollTabIntoView(tab);
     levelNameEl.textContent = tab.dataset.name || "";
     const lv = tab.dataset.level;
     // 切換時停止所有聲音 / 錄音
@@ -1252,6 +1269,7 @@
     level7El.classList.add("hidden");
     level8El.classList.add("hidden");
     level9El.classList.add("hidden");
+    nextLevelBtn.classList.add("hidden");   // 換關卡時收起「下一關」
     // 動畫場景只在 Level 1 顯示（依文章換場景）
     onLevel1 = (lv === "1");
     updateScene();
@@ -1296,7 +1314,36 @@
       persistProgress();
       updateProgress();
     }
+    // 完成目前這關 -> 顯示「下一關」按鈕
+    const active = document.querySelector(".levelTab.active");
+    if (active && active.dataset.level === String(level)) showNextLevel();
   }
+  function showNextLevel() {
+    const active = document.querySelector(".levelTab.active");
+    if (!active) return;
+    const visible = Array.from(tabs).filter(t => !t.classList.contains("hidden"));
+    const i = visible.indexOf(active);
+    if (i >= 0 && i < visible.length - 1) {
+      nextLevelBtn.textContent = "下一關 ➡";
+      nextLevelBtn.dataset.mode = "next";
+    } else {
+      nextLevelBtn.textContent = "🎉 回課程列表";
+      nextLevelBtn.dataset.mode = "back";
+    }
+    nextLevelBtn.classList.remove("hidden");
+  }
+  nextLevelBtn.addEventListener("click", () => {
+    nextLevelBtn.classList.add("hidden");
+    if (nextLevelBtn.dataset.mode === "back") {
+      synth.cancel(); stopListenL1(); stopRecordingIfAny();
+      selectLevel(selLevelIdx);   // 回課程列表
+      return;
+    }
+    const active = document.querySelector(".levelTab.active");
+    const visible = Array.from(tabs).filter(t => !t.classList.contains("hidden"));
+    const i = visible.indexOf(active);
+    if (i >= 0 && i < visible.length - 1) visible[i + 1].click();
+  });
   function restoreProgress() {
     tabs.forEach(t => t.classList.remove("done"));
     let saved = [];
