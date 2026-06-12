@@ -328,10 +328,10 @@
 
     <!-- 畫面 0：選使用者 -->
     <div id="screenProfile">
-      <p class="screen-intro">你是誰？ Who are you? 👋</p>
+      <p class="screen-intro">Who are you? 👋</p>
       <div id="profileGrid" class="pick-grid"></div>
       <div id="newProfileForm" class="name-row hidden">
-        <label for="userName">新名字 (English name)</label>
+        <label for="userName">Your name</label>
         <div class="new-row">
           <input id="userName" type="text" placeholder="e.g. Amy" autocomplete="off" maxlength="20">
           <button id="newProfileGo" class="dict-play">Go</button>
@@ -342,17 +342,17 @@
     <!-- 畫面 1：選等級 -->
     <div id="screenLevel" class="hidden">
       <div class="learn-top">
-        <button class="back-btn" id="backToProfile">← 換人</button>
+        <button class="back-btn" id="backToProfile">← Switch user</button>
         <span class="learn-title" id="greetTitle"></span>
       </div>
-      <p class="screen-intro">選擇程度開始學習 📚</p>
+      <p class="screen-intro">Choose a level to start 📚</p>
       <div id="levelGrid" class="pick-grid"></div>
     </div>
 
     <!-- 畫面 2：選課程 -->
     <div id="screenArticle" class="hidden">
       <div class="learn-top">
-        <button class="back-btn" id="backToLevels">← 等級</button>
+        <button class="back-btn" id="backToLevels">← Levels</button>
         <span class="learn-title" id="articleScreenTitle"></span>
       </div>
       <div id="articleGrid" class="pick-grid"></div>
@@ -361,7 +361,7 @@
     <!-- 畫面 3：學習 -->
     <div id="screenLearn" class="hidden">
       <div class="learn-top">
-        <button class="back-btn" id="backToList">← 課程</button>
+        <button class="back-btn" id="backToList">← Lessons</button>
         <span class="learn-title" id="learnTitle"></span>
       </div>
 
@@ -1024,7 +1024,7 @@
 
     <div class="progress-wrap">
       <div class="progress-track"><div class="progress-fill" id="progFill"></div></div>
-      <span class="progress-text" id="progText">0/0 關</span>
+      <span class="progress-text" id="progText">0/0</span>
     </div>
 
     <div class="levels">
@@ -1072,7 +1072,7 @@
         <button id="recBtn">🎤 Record</button>
         <button id="myPlayBtn" disabled>▶ Play</button>
       </div>
-      <div class="status" id="status">準備好了就點「聽老師念」吧！</div>
+      <div class="status" id="status">Tap "Listen" to hear it, then record.</div>
       <div class="nav">
         <button id="prevBtn">⬅ Prev</button>
         <button id="nextBtn">Next ➡</button>
@@ -1081,7 +1081,7 @@
 
     <!-- ===== Level 3：問答測驗 ===== -->
     <div id="level3" class="hidden">
-      <p class="quiz-intro">讀完對話後，回答下面的問題吧！點 <b>Yes</b> 或 <b>No</b>。</p>
+      <p class="quiz-intro">Read the dialogue, then answer. Tap <b>Yes</b> or <b>No</b>.</p>
       <div class="quiz-list" id="quizList"></div>
       <div class="quiz-footer">
         <div id="scoreBox"></div>
@@ -1091,7 +1091,7 @@
 
     <!-- ===== Level 4：故意混淆 ===== -->
     <div id="level4" class="hidden">
-      <p class="quiz-intro">小心！這些句子有點容易搞混 🤔 仔細想想對話內容，點 <b>Yes</b> 或 <b>No</b>。</p>
+      <p class="quiz-intro">Careful — these are tricky 🤔 Think about the dialogue, then tap <b>Yes</b> or <b>No</b>.</p>
       <div class="quiz-list" id="quizList4"></div>
       <div class="quiz-footer">
         <div id="scoreBox4"></div>
@@ -1101,7 +1101,7 @@
 
     <!-- ===== Level 5：單字配圖 ===== -->
     <div id="level5" class="hidden">
-      <p class="match-intro">照左邊<b>單字的順序（1 → 5）</b>，在右邊點出對應的圖片 🖼️</p>
+      <p class="match-intro">Tap the pictures on the right in the <b>order of the words (1 → 5)</b> 🖼️</p>
       <div class="match-wrap">
         <div class="match-col" id="matchWords"></div>
         <div class="match-col" id="matchPics"></div>
@@ -1114,7 +1114,7 @@
 
     <!-- ===== Level 6：重組句子 ===== -->
     <div id="level6" class="hidden">
-      <p class="match-intro">把打散的單字排成正確的句子！點<b>下方</b>單字加到<b>上方</b>，點上方可收回。</p>
+      <p class="match-intro">Put the words in the right order! Tap a word <b>below</b> to add it <b>above</b>; tap above to remove.</p>
       <div class="reorder-progress" id="roProgress"></div>
       <div class="reorder-answer" id="roAnswer"></div>
       <div class="reorder-pool" id="roPool"></div>
@@ -1123,23 +1123,23 @@
 
     <!-- ===== Level 7：WH 問題（理解內容） ===== -->
     <div id="level7" class="hidden">
-      <p class="match-intro">看 WH 問題，從 3 個選項中選出正確的<b>完整句子</b>答案 ❓</p>
+      <p class="match-intro">Read the WH question and choose the correct <b>full-sentence</b> answer ❓</p>
       <div id="whBox"></div>
     </div>
 
     <!-- ===== Level 8：聽寫 ===== -->
     <div id="level8" class="hidden">
-      <p class="match-intro">點 🔊 聽句子，把聽到的<b>整句</b>打出來，再按 Check ✍️</p>
+      <p class="match-intro">Tap 🔊, type the <b>whole sentence</b> you hear, then press Check ✍️</p>
       <div id="dictBox"></div>
     </div>
 
     <!-- ===== Level 9：單字填空（有選項） ===== -->
     <div id="level9" class="hidden">
-      <p class="match-intro">讀句子，從選項中選出正確的單字填進空格 📝 <span id="clozeTypeBadge" class="cloze-badge"></span></p>
+      <p class="match-intro">Read the sentence and choose the right word for the blank 📝 <span id="clozeTypeBadge" class="cloze-badge"></span></p>
       <div id="clozeBox"></div>
     </div>
 
-    <div class="nextlevel-wrap"><button id="nextLevelBtn" class="hidden">下一關 ➡</button></div>
+    <div class="nextlevel-wrap"><button id="nextLevelBtn" class="hidden">Next ➡</button></div>
     </div><!-- /#screenLearn -->
     <div id="visitorBox" class="visitor"></div>
   </div>
@@ -1299,7 +1299,7 @@
     const total = visible.length;
     const done = visible.filter(t => t.classList.contains("done")).length;
     progFill.style.width = total ? (done / total * 100) + "%" : "0%";
-    progText.textContent = done + "/" + total + " 關";
+    progText.textContent = done + "/" + total;
   }
   function persistProgress() {
     try {
@@ -1324,10 +1324,10 @@
     const visible = Array.from(tabs).filter(t => !t.classList.contains("hidden"));
     const i = visible.indexOf(active);
     if (i >= 0 && i < visible.length - 1) {
-      nextLevelBtn.textContent = "下一關 ➡";
+      nextLevelBtn.textContent = "Next ➡";
       nextLevelBtn.dataset.mode = "next";
     } else {
-      nextLevelBtn.textContent = "🎉 回課程列表";
+      nextLevelBtn.textContent = "🎉 Back to Lessons";
       nextLevelBtn.dataset.mode = "back";
     }
     nextLevelBtn.classList.remove("hidden");
@@ -1414,7 +1414,7 @@
   }
   function startL1() {
     if (!("speechSynthesis" in window) && !Object.keys(audioMap).length) {
-      alert("你的瀏覽器不支援語音朗讀，請用 Chrome / Edge / Safari。"); return;
+      alert("Your browser does not support speech. Please use Chrome / Edge / Safari."); return;
     }
     synth.cancel(); stopAudio();
     isPlaying = true;
@@ -1463,15 +1463,15 @@
   function renderShadow() {
     if (!script.length) return;
     const line = script[idx];
-    shadowProgress.textContent = `第 ${idx + 1} 句 / 共 ${script.length} 句`;
+    shadowProgress.textContent = `Sentence ${idx + 1} / ${script.length}`;
     shadowBubble.className = "shadow-bubble " + line.gender;
-    shadowWho.textContent = line.who + (line.gender === "male" ? "（男生）" : "（女生）");
+    shadowWho.textContent = line.who + (line.gender === "male" ? " (boy)" : " (girl)");
     shadowText.textContent = line.text;
     prevBtn.disabled = idx === 0;
     nextBtn.disabled = idx === script.length - 1;
     // 這句是否已有錄音
     myPlayBtn.disabled = !recordings[idx];
-    statusEl.textContent = recordings[idx] ? "已有錄音，可以播放比對 👍" : "點「聽老師念」聽範本，再「開始錄音」跟著念。";
+    statusEl.textContent = recordings[idx] ? "You have a recording — play it to compare 👍" : "Tap \"Listen\" for the model, then \"Record\" to read along.";
     recBtn.classList.remove("recording");
     recBtn.textContent = "🎤 Record";
   }
@@ -1488,7 +1488,7 @@
   recBtn.addEventListener("click", async () => {
     if (isRecording) { stopRecording(); return; }
     if (!navigator.mediaDevices || !window.MediaRecorder) {
-      alert("你的瀏覽器不支援錄音功能，請用較新的 Chrome / Edge / Safari。"); return;
+      alert("Your browser does not support recording. Please use a recent Chrome / Edge / Safari."); return;
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -1510,9 +1510,9 @@
       isRecording = true;
       recBtn.classList.add("recording");
       recBtn.textContent = "⏹ Stop";
-      statusEl.textContent = "錄音中… 請大聲念出來！🎙️";
+      statusEl.textContent = "Recording… speak loudly! 🎙️";
     } catch (err) {
-      statusEl.textContent = "⚠️ 無法使用麥克風，請允許麥克風權限後再試。";
+      statusEl.textContent = "⚠️ Cannot use the microphone. Please allow mic permission and try again.";
       console.error(err);
     }
   });
@@ -1532,8 +1532,8 @@
     if (myAudio) { myAudio.pause(); }
     myAudio = new Audio(recordings[idx]);
     myAudio.play();
-    statusEl.textContent = "正在播放你的錄音 🔊";
-    myAudio.onended = () => statusEl.textContent = "再聽一次老師念，跟自己比比看吧！";
+    statusEl.textContent = "Playing your recording 🔊";
+    myAudio.onended = () => statusEl.textContent = "Listen to the model again and compare!";
   }
   myPlayBtn.addEventListener("click", playMyRecording);
 
@@ -1639,7 +1639,7 @@
 
       const prog = document.createElement("div");
       prog.className = "quiz-progress";
-      prog.textContent = `第 ${idx + 1} / 共 ${shuffled.length} 題`;
+      prog.textContent = `Question ${idx + 1} / ${shuffled.length}`;
       wrap.appendChild(prog);
 
       const mark = document.createElement("span");
@@ -1647,7 +1647,7 @@
       const q = document.createElement("div");
       q.className = "quiz-q";
       const sp = document.createElement("button");
-      sp.className = "speak-q"; sp.title = "朗讀題目"; sp.textContent = "🔊";
+      sp.className = "speak-q"; sp.title = "Read aloud"; sp.textContent = "🔊";
       sp.addEventListener("click", () => speakQuestion(item.q));
       const qt = document.createElement("span");
       qt.className = "qtext"; qt.textContent = item.q;
@@ -1697,10 +1697,10 @@
     function showResult() {
       listEl.innerHTML = "";
       const m = shuffled.length;
-      const emoji = correct === m ? "🏆 全對！太棒了！"
-                  : correct >= m - 1 ? "👍 很厲害！"
-                  : "💪 再聽一次對話試試看！";
-      scoreEl.textContent = `得分：${correct} / ${m}　${emoji}`;
+      const emoji = correct === m ? "🏆 All correct! Amazing!"
+                  : correct >= m - 1 ? "👍 Well done!"
+                  : "💪 Listen again and try!";
+      scoreEl.textContent = `Score: ${correct} / ${m}  ${emoji}`;
       markLevelDone(level);
     }
 
@@ -1725,7 +1725,7 @@
       expected = 0;
       wordsEl.innerHTML = "";
       picsEl.innerHTML = "";
-      if (!vocab.length) { statusEl.textContent = "（這篇暫時沒有單字配圖）"; return; }
+      if (!vocab.length) { statusEl.textContent = "(No word-picture set for this lesson.)"; return; }
       const n = Math.min(5, vocab.length);
       seq = shuffle(vocab).slice(0, n);   // 依對話內容隨機抽 n 個單字
 
@@ -1767,19 +1767,19 @@
           document.getElementById("mword-" + expected).classList.add("current");
           updateStatus();
         } else {
-          statusEl.textContent = "🏆 全部配對完成！太棒了！";
+          statusEl.textContent = "🏆 All matched! Great job!";
           playDing();
           markLevelDone(5);
         }
       } else {
         btn.classList.add("shake");
         setTimeout(() => btn.classList.remove("shake"), 400);
-        statusEl.textContent = `再看看左邊第 ${expected + 1} 個單字喔！`;
+        statusEl.textContent = `Look at word #${expected + 1} on the left!`;
       }
     }
 
     function updateStatus() {
-      statusEl.textContent = `配對中… ${expected} / ${seq.length}`;
+      statusEl.textContent = `Matched ${expected} / ${seq.length}`;
     }
 
     resetEl.addEventListener("click", build);
@@ -1819,7 +1819,7 @@
     }
 
     function render() {
-      progressEl.textContent = `第 ${idx + 1} / 共 ${sentences.length} 句`;
+      progressEl.textContent = `Sentence ${idx + 1} / ${sentences.length}`;
       answerEl.className = "reorder-answer" + (solved ? " correct" : "");
       answerEl.innerHTML = "";
       placed.forEach(id => answerEl.appendChild(chip(id, solved ? null : unplace)));
@@ -1847,15 +1847,15 @@
         playDing();
         render();
         if (idx < sentences.length - 1) {
-          statusEl.textContent = "✅ 正確！";
+          statusEl.textContent = "✅ Correct!";
           clearTimeout(timer);
           timer = setTimeout(function () { idx++; startSentence(); }, 1100);   // 答對自動換下一句
         } else {
-          statusEl.textContent = "🎉 全部完成！太棒了！";
+          statusEl.textContent = "🎉 All done! Great job!";
           markLevelDone(6);
         }
       } else {
-        statusEl.textContent = "再排排看 🤔（點上方單字可收回）";
+        statusEl.textContent = "Try again 🤔 (tap a word above to remove)";
       }
     }
 
@@ -1868,7 +1868,7 @@
           progressEl.textContent = "";
           answerEl.innerHTML = "";
           poolEl.innerHTML = "";
-          statusEl.textContent = "（這課沒有重組句子）";
+          statusEl.textContent = "(No reorder sentences in this lesson.)";
         }
       }
     };
@@ -1903,13 +1903,13 @@
 
       const prog = document.createElement("div");
       prog.className = "quiz-progress";
-      prog.textContent = `第 ${idx + 1} / 共 ${shuffled.length} 題`;
+      prog.textContent = `Question ${idx + 1} / ${shuffled.length}`;
       card.appendChild(prog);
 
       const mark = document.createElement("span"); mark.className = "quiz-mark";
       const q = document.createElement("div"); q.className = "quiz-q";
       const sp = document.createElement("button");
-      sp.className = "speak-q"; sp.title = "朗讀題目與選項"; sp.textContent = "🔊";
+      sp.className = "speak-q"; sp.title = "Read question & options"; sp.textContent = "🔊";
       sp.addEventListener("click", () => {
         const seq = [it.q];
         choices.forEach((c, i) => seq.push((i + 1) + ". " + c));
@@ -1955,11 +1955,11 @@
 
     function showResult() {
       const m = shuffled.length;
-      const emoji = correct === m ? "🏆 全對！太棒了！"
-                  : correct >= m - 1 ? "👍 很厲害！"
-                  : "💪 再聽一次對話試試看！";
-      boxEl.innerHTML = '<div class="quiz-progress" style="font-size:18px;font-weight:700;color:#2563eb">得分：' +
-                        correct + ' / ' + m + '　' + emoji + '</div>';
+      const emoji = correct === m ? "🏆 All correct! Amazing!"
+                  : correct >= m - 1 ? "👍 Well done!"
+                  : "💪 Listen again and try!";
+      boxEl.innerHTML = '<div class="quiz-progress" style="font-size:18px;font-weight:700;color:#2563eb">Score: ' +
+                        correct + ' / ' + m + '  ' + emoji + '</div>';
       markLevelDone(7);
     }
 
@@ -1994,7 +1994,7 @@
 
       const prog = document.createElement("div");
       prog.className = "quiz-progress";
-      prog.textContent = `第 ${idx + 1} / 共 ${shuffled.length} 句`;
+      prog.textContent = `Sentence ${idx + 1} / ${shuffled.length}`;
       card.appendChild(prog);
 
       const playRow = document.createElement("div");
@@ -2012,7 +2012,7 @@
       const input = document.createElement("input");
       input.type = "text";
       input.className = "dict-input";
-      input.placeholder = "打出你聽到的句子…";
+      input.placeholder = "Type the sentence you hear…";
       input.autocomplete = "off"; input.autocapitalize = "off"; input.spellcheck = false;
       card.appendChild(input);
 
@@ -2043,10 +2043,10 @@
       answered = true;
       input.disabled = true;
       if (ok) {
-        fb.innerHTML = '<span class="dict-ok">✅ 正確！</span>';
+        fb.innerHTML = '<span class="dict-ok">✅ Correct!</span>';
         correct++; playDing();
       } else {
-        fb.innerHTML = '<span class="dict-bad">❌ 正確答案：</span><div class="dict-answer"></div>';
+        fb.innerHTML = '<span class="dict-bad">❌ Correct answer:</span><div class="dict-answer"></div>';
         fb.querySelector(".dict-answer").textContent = sentence;
       }
       clearTimeout(timer);
@@ -2060,11 +2060,11 @@
 
     function showResult() {
       const m = shuffled.length;
-      const emoji = correct === m ? "🏆 全對！太棒了！"
-                  : correct >= m - 1 ? "👍 很厲害！"
-                  : "💪 多聽幾次再試試看！";
-      boxEl.innerHTML = '<div class="quiz-progress" style="font-size:18px;font-weight:700;color:#2563eb">得分：' +
-                        correct + ' / ' + m + '　' + emoji + '</div>';
+      const emoji = correct === m ? "🏆 All correct! Amazing!"
+                  : correct >= m - 1 ? "👍 Well done!"
+                  : "💪 Listen a few more times!";
+      boxEl.innerHTML = '<div class="quiz-progress" style="font-size:18px;font-weight:700;color:#2563eb">Score: ' +
+                        correct + ' / ' + m + '  ' + emoji + '</div>';
       markLevelDone(8);
     }
 
@@ -2096,14 +2096,14 @@
 
       const prog = document.createElement("div");
       prog.className = "quiz-progress";
-      prog.textContent = `第 ${idx + 1} / 共 ${shuffled.length} 題`;
+      prog.textContent = `Question ${idx + 1} / ${shuffled.length}`;
       card.appendChild(prog);
 
       const parts = it.text.split("___");
       const sent = document.createElement("div");
       sent.className = "cloze-sentence";
       const sp = document.createElement("button");
-      sp.className = "speak-q"; sp.title = "朗讀句子"; sp.textContent = "🔊";
+      sp.className = "speak-q"; sp.title = "Read aloud"; sp.textContent = "🔊";
       sp.addEventListener("click", () => speakQuestion(it.text.replace("___", "blank")));
       const before = document.createElement("span"); before.textContent = parts[0] || "";
       const blank = document.createElement("span"); blank.className = "cloze-blank"; blank.textContent = "____";
@@ -2148,11 +2148,11 @@
 
     function showResult() {
       const m = shuffled.length;
-      const emoji = correct === m ? "🏆 全對！太棒了！"
-                  : correct >= m - 1 ? "👍 很厲害！"
-                  : "💪 再讀一次試試看！";
-      boxEl.innerHTML = '<div class="quiz-progress" style="font-size:18px;font-weight:700;color:#2563eb">得分：' +
-                        correct + ' / ' + m + '　' + emoji + '</div>';
+      const emoji = correct === m ? "🏆 All correct! Amazing!"
+                  : correct >= m - 1 ? "👍 Well done!"
+                  : "💪 Read again and try!";
+      boxEl.innerHTML = '<div class="quiz-progress" style="font-size:18px;font-weight:700;color:#2563eb">Score: ' +
+                        correct + ' / ' + m + '  ' + emoji + '</div>';
       markLevelDone(9);
     }
 
@@ -2200,7 +2200,7 @@
     });
     const add = document.createElement("button");
     add.className = "pick-card";
-    add.innerHTML = '<span class="pick-title">➕ New</span><span class="pick-sub">新增使用者</span>';
+    add.innerHTML = '<span class="pick-title">➕ New</span><span class="pick-sub">Add a user</span>';
     add.addEventListener("click", () => {
       newProfileForm.classList.remove("hidden");
       userNameInput.value = "";
@@ -2246,11 +2246,11 @@
   function showLoadError() {
     dialogueEl.innerHTML =
       '<div style="padding:16px;color:#b91c1c;background:#fee2e2;border-radius:12px;line-height:1.7">' +
-      '⚠️ <b>無法載入課程檔案。</b><br>' +
-      '如果你是用 <code>file://</code>（雙擊檔案）打開，瀏覽器會基於安全限制擋住讀取本機檔案。<br>' +
-      '請改用本機伺服器，例如在這個資料夾執行：<br>' +
-      '<code>python -m http.server 8000</code><br>再開啟 <code>http://localhost:8000/</code>，' +
-      '或直接使用 GitHub Pages 上的網址。</div>';
+      '⚠️ <b>Could not load the lessons.</b><br>' +
+      'Opening with <code>file://</code> (double-click) is blocked by the browser.<br>' +
+      'Run a local server in this folder:<br>' +
+      '<code>python -m http.server 8000</code><br>then open <code>http://localhost:8000/</code>, ' +
+      'or use the GitHub Pages URL.</div>';
   }
 
   async function loadArticle(article) {
@@ -2312,8 +2312,8 @@
     }
     // 顯示填空題的難度類型標籤
     const clozeTypeLabel = {
-      recognition: "單字認識", category: "同類詞選擇", synonym: "近義詞干擾",
-      pos: "詞性判斷", context: "情境填空"
+      recognition: "Word recognition", category: "Same-category", synonym: "Synonyms",
+      pos: "Part of speech", context: "Context"
     };
     const badge = document.getElementById("clozeTypeBadge");
     badge.textContent = article.clozeType ? (clozeTypeLabel[article.clozeType] || article.clozeType) : "";
@@ -2344,7 +2344,7 @@
       btn.className = "pick-card";
       const n = lv.articles.length;
       btn.innerHTML = '<span class="pick-title">' + (lv.name || lv.id) + '</span>' +
-                      '<span class="pick-sub">' + (n ? n + ' 課' : '即將推出') + '</span>';
+                      '<span class="pick-sub">' + (n ? n + ' lessons' : 'Coming soon') + '</span>';
       if (!n) btn.disabled = true;
       else btn.addEventListener("click", () => selectLevel(i));
       levelGrid.appendChild(btn);
@@ -2355,14 +2355,14 @@
   function selectLevel(i) {
     selLevelIdx = i;
     const lv = manifest.levels[i];
-    articleScreenTitle.textContent = (lv.name || lv.id) + " · 選擇課程";
+    articleScreenTitle.textContent = (lv.name || lv.id) + " · Choose a lesson";
     articleGrid.innerHTML = "";
     lv.articles.forEach(a => {
       const btn = document.createElement("button");
       btn.className = "pick-card";
       const total = articleTotal(a), done = Math.min(articleDone(a), total);
       btn.innerHTML = '<span class="pick-title">' + (a.title || a.id) + '</span>' +
-                      '<span class="pick-sub">完成 ' + done + '/' + total + ' 關</span>';
+                      '<span class="pick-sub">' + done + '/' + total + ' done</span>';
       btn.addEventListener("click", () => selectArticle(a));
       articleGrid.appendChild(btn);
     });
@@ -2399,8 +2399,8 @@
     } catch (e) {
       profileGrid.innerHTML =
         '<div style="padding:16px;color:#b91c1c;background:#fee2e2;border-radius:12px;line-height:1.7">' +
-        '⚠️ <b>無法載入課程。</b><br>用 <code>file://</code> 直接開會被瀏覽器擋住；' +
-        '請用本機伺服器（<code>python -m http.server</code>）或 GitHub Pages 開啟。</div>';
+        '⚠️ <b>Could not load the lessons.</b><br>Opening with <code>file://</code> is blocked; ' +
+        'use a local server (<code>python -m http.server</code>) or GitHub Pages.</div>';
       showScreen(screenProfile);
       return;
     }
@@ -2414,7 +2414,7 @@
   const visitorBox = document.getElementById("visitorBox");
   fetch("/api/visit", { method: "POST" })
     .then(r => r.json())
-    .then(d => { visitorBox.textContent = "👀 訪客人數：" + d.count; })
+    .then(d => { visitorBox.textContent = "👀 Visitors: " + d.count; })
     .catch(() => {});
 </script>
 </body>
