@@ -70,6 +70,7 @@
   .new-row input { flex: 1; }
   .pick-grid { display: flex; flex-direction: column; gap: 12px; }
   .pick-card {
+    position: relative;
     display: flex; flex-direction: column; align-items: center; gap: 3px;
     padding: 18px; border: 2px solid #e2e8f0; background: #f8fafc;
     border-radius: 16px; cursor: pointer; transition: all .2s; width: 100%;
@@ -78,6 +79,29 @@
   .pick-card:disabled { opacity: .5; cursor: not-allowed; }
   .pick-title { font-size: 18px; font-weight: 700; color: #1e293b; }
   .pick-sub { font-size: 13px; color: #64748b; }
+  /* 課程卡片右上角的紅綠燈：通過綠、失敗紅、未完成白 */
+  .light-dot {
+    position: absolute; top: 12px; right: 12px;
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid rgba(0,0,0,.12);
+  }
+  .light-green { background: #22c55e; box-shadow: 0 0 7px #22c55e; }
+  .light-red   { background: #ef4444; box-shadow: 0 0 7px #ef4444; }
+  .light-white { background: #f1f5f9; }
+  /* 每課各關狀態：綠=達 80、紅=未達 80、灰=未完成 */
+  .lvl-dots { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+  .lvl-dot {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    border: 1.5px solid #cbd5e1; background: #fff; color: #94a3b8;
+  }
+  .lvl-dot.done { background: #22c55e; border-color: #22c55e; color: #fff; }
+  .lvl-dot.fail { background: #ef4444; border-color: #ef4444; color: #fff; }
+  /* 上鎖的課程卡片 */
+  .pick-card.locked { background: #f1f5f9; border-color: #e2e8f0; cursor: not-allowed; }
+  .pick-card.locked .pick-title { color: #94a3b8; }
+  .lock-big { font-size: 40px; line-height: 1; filter: grayscale(.2); }
   .learn-top { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
   .back-btn { background: #e2e8f0; color: #334155; padding: 8px 14px; font-size: 14px; }
   .learn-title { font-weight: 700; color: #2563eb; font-size: 15px; }
@@ -162,6 +186,25 @@
   .nextlevel-wrap { text-align: center; margin-top: 22px; }
   #nextLevelBtn { background: #16a34a; color: #fff; font-size: 17px; padding: 12px 26px; }
 
+  /* 整課總結卡片 */
+  .lesson-summary {
+    margin-top: 24px; padding: 20px; border-radius: 16px;
+    background: #f0f9ff; border: 2px solid #bae6fd; text-align: center;
+  }
+  .lesson-summary .sum-title { font-size: 22px; font-weight: 800; color: #0369a1; }
+  .lesson-summary .sum-stars { font-size: 30px; margin: 6px 0 14px; letter-spacing: 2px; }
+  .lesson-summary .sum-rows { max-width: 360px; margin: 0 auto; }
+  .lesson-summary .sum-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 7px 4px; border-bottom: 1px dashed #cbd5e1; font-size: 15px;
+  }
+  .lesson-summary .sum-row .sum-name { color: #334155; text-align: left; }
+  .lesson-summary .sum-row .sum-val  { font-weight: 700; color: #2563eb; white-space: nowrap; }
+  .lesson-summary .sum-total {
+    margin-top: 16px; font-size: 20px; font-weight: 800; color: #16a34a;
+  }
+  .lesson-summary .sum-pct { font-size: 15px; color: #64748b; font-weight: 600; }
+
   button {
     border: none;
     border-radius: 12px;
@@ -210,6 +253,16 @@
   .shadow-bubble.male   .shadow-who { color: #2563eb; }
   .shadow-bubble.female .shadow-who { color: #db2777; }
 
+  .shadow-nav-wrap { display: flex; align-items: center; gap: 8px; }
+  .shadow-nav-wrap .shadow-bubble { flex: 1; }
+  .shadow-arrow {
+    flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%;
+    background: #e2e8f0; color: #334155; font-size: 24px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    border: none; cursor: pointer; transition: all .2s; padding: 0;
+  }
+  .shadow-arrow:hover:not(:disabled) { background: #cbd5e1; }
+  .shadow-arrow:disabled { opacity: .25; cursor: not-allowed; }
   .shadow-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 18px 0; }
   #listenBtn { background: #2563eb; color: #fff; }
   #recBtn    { background: #ef4444; color: #fff; }
@@ -217,8 +270,12 @@
   #myPlayBtn { background: #16a34a; color: #fff; }
   @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,.5);} 50% { box-shadow: 0 0 0 10px rgba(239,68,68,0);} }
 
-  .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
-  .nav button { background: #e2e8f0; color: #334155; }
+  .shadow-finish { text-align: center; margin-top: 18px; }
+  .shadow-finish p { font-size: 18px; font-weight: 700; color: #1e293b; margin: 0 0 14px; }
+  .shadow-finish-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .shadow-finish-btns button { font-size: 16px; padding: 10px 22px; }
+  #shadowRetry { background: #e2e8f0; color: #334155; }
+  #shadowNextLevel { background: #16a34a; color: #fff; }
   .status { text-align: center; min-height: 22px; color: #64748b; font-size: 14px; margin-top: 6px; }
 
   /* Level 3 問答 */
@@ -284,7 +341,8 @@
   #scoreBox {
     font-size: 20px; font-weight: 700; color: #2563eb; margin-bottom: 12px; min-height: 26px;
   }
-  #resetQuiz, #resetQuiz4, #resetMatch { background: #2563eb; color: #fff; }
+  #resetQuiz, #resetQuiz4, #resetMatch, #resetWh { background: #2563eb; color: #fff; }
+  #resetWh { display: block; margin: 18px auto 0; }
 
   /* Level 5 單字配圖 */
   .match-intro { color: #64748b; font-size: 14px; margin-bottom: 16px; text-align: center; }
@@ -1077,9 +1135,13 @@
     <!-- ===== Level 2：跟讀 ===== -->
     <div id="level2" class="hidden">
       <div class="shadow-progress" id="shadowProgress"></div>
-      <div class="shadow-bubble" id="shadowBubble">
-        <div class="shadow-who" id="shadowWho"></div>
-        <div id="shadowText"></div>
+      <div class="shadow-nav-wrap">
+        <button class="shadow-arrow" id="prevBtn">&#8249;</button>
+        <div class="shadow-bubble" id="shadowBubble">
+          <div class="shadow-who" id="shadowWho"></div>
+          <div id="shadowText"></div>
+        </div>
+        <button class="shadow-arrow" id="nextBtn">&#8250;</button>
       </div>
       <div class="shadow-actions">
         <button id="listenBtn">🔊 Listen</button>
@@ -1087,9 +1149,13 @@
         <button id="myPlayBtn" disabled>▶ Play</button>
       </div>
       <div class="status" id="status">Tap "Listen" to hear it, then record.</div>
-      <div class="nav">
-        <button id="prevBtn">⬅ Prev</button>
-        <button id="nextBtn">Next ➡</button>
+      <!-- 全部句子結束後的選擇 -->
+      <div id="shadowFinish" class="shadow-finish hidden">
+        <p>🎉 You read all the sentences!</p>
+        <div class="shadow-finish-btns">
+          <button id="shadowRetry">🔄 Try Again</button>
+          <button id="shadowNextLevel">Next Level ➡</button>
+        </div>
       </div>
     </div>
 
@@ -1153,7 +1219,14 @@
       <div id="clozeBox"></div>
     </div>
 
+    <div id="lessonSummary" class="lesson-summary hidden"></div>
+
     <div class="nextlevel-wrap"><button id="nextLevelBtn" class="hidden">Next ➡</button></div>
+
+    <!-- Level 1 完成後顯示的「開始測驗」按鈕 -->
+    <div class="nextlevel-wrap" id="startTestWrap" style="display:none">
+      <button id="startTestBtn" style="background:#2563eb;color:#fff;font-size:17px;padding:12px 26px">Start Test ✏️</button>
+    </div>
     </div><!-- /#screenLearn -->
     <div id="visitorBox" class="visitor"></div>
   </div>
@@ -1290,6 +1363,7 @@
     level8El.classList.add("hidden");
     level9El.classList.add("hidden");
     nextLevelBtn.classList.add("hidden");   // 換關卡時收起「下一關」
+    hideLessonSummary();                     // 換關卡時收起整課總分
     // 動畫場景只在 Level 1 顯示（依文章換場景）
     onLevel1 = (lv === "1");
     updateScene();
@@ -1309,13 +1383,57 @@
   const activeTab = document.querySelector(".levelTab.active");
   if (activeTab) levelNameEl.textContent = activeTab.dataset.name || "";
 
+  /* ---------- Listen 模式：Level 1 獨立展示，測驗另外進入 ---------- */
+  let listenMode = true;   // 進入文章時預設為 listen 模式
+  const startTestWrap = document.getElementById("startTestWrap");
+  const startTestBtn  = document.getElementById("startTestBtn");
+
+  function enterListenMode() {
+    listenMode = true;
+    // 隱藏 tab 列、進度條、level 名稱
+    levelsBar.style.display = "none";
+    levelNameEl.style.display = "none";
+    document.querySelector(".progress-wrap").style.display = "none";
+    nextLevelBtn.classList.add("hidden");
+    hideLessonSummary();
+    // 確保 Level 1 tab 可見（從測驗模式回來時它被隱藏了）
+    document.querySelector('.levelTab[data-level="1"]').classList.remove("hidden");
+    // 顯示 Level 1、隱藏其他
+    [level2El, level3El, level4El, level5El, level6El, level7El, level8El, level9El].forEach(el => el.classList.add("hidden"));
+    level1El.classList.remove("hidden");
+    onLevel1 = true;
+    updateScene();
+    // 如果 Level 1 已經完成過，直接顯示「開始測驗」按鈕
+    const tab1 = document.querySelector('.levelTab[data-level="1"]');
+    startTestWrap.style.display = tab1.classList.contains("done") ? "" : "none";
+  }
+
+  function enterTestMode() {
+    listenMode = false;
+    // 顯示 tab 列、進度條、level 名稱
+    levelsBar.style.display = "";
+    levelNameEl.style.display = "";
+    document.querySelector(".progress-wrap").style.display = "";
+    startTestWrap.style.display = "none";
+    // 隱藏 Level 1 tab，從 Level 2 開始
+    const tab1 = document.querySelector('.levelTab[data-level="1"]');
+    tab1.classList.add("hidden");
+    // 點擊第一個可見的 tab（通常是 Level 2）
+    const firstVisible = Array.from(tabs).find(t => !t.classList.contains("hidden"));
+    if (firstVisible) firstVisible.click();
+    updateProgress();
+  }
+
+  startTestBtn.addEventListener("click", enterTestMode);
+
   /* ---------- 整課進度條（關卡完成度） ---------- */
   const progFill = document.getElementById("progFill");
   const progText = document.getElementById("progText");
   let currentArticleKey = "";
 
   function updateProgress() {
-    const visible = Array.from(tabs).filter(t => !t.classList.contains("hidden"));
+    // 測驗模式下進度條只算 Level 2+ 的關卡
+    const visible = Array.from(tabs).filter(t => !t.classList.contains("hidden") && t.dataset.level !== "1");
     const total = visible.length;
     const done = visible.filter(t => t.classList.contains("done")).length;
     progFill.style.width = total ? (done / total * 100) + "%" : "0%";
@@ -1327,12 +1445,83 @@
       localStorage.setItem(progKey(currentArticleKey), JSON.stringify(done));
     } catch (e) {}
   }
+  /* ---------- 各關得分（用來算整課總分） ---------- */
+  const PASS_MARK = 80;    // 平均達 80 分以上算通過（綠燈）
+  let lessonScores = {};   // { "3": {correct, total}, ... }
+  function scoreKey(file) { return "score:" + (userName || "guest") + ":" + file; }
+  function recordScore(level, correct, total) {
+    lessonScores[String(level)] = { correct: correct, total: total };
+    try { localStorage.setItem(scoreKey(currentArticleKey), JSON.stringify(lessonScores)); } catch (e) {}
+  }
+  // 取得某關的顯示名稱（給課程卡片的小圓點 tooltip 用）
+  function levelName(l) {
+    const t = document.querySelector('.levelTab[data-level="' + l + '"]');
+    return (t && t.dataset.name) ? t.dataset.name : ("Level " + l);
+  }
+  // 這篇文章「會計分」的關卡（Level 1 聽力不計；2/3/4/5 必有，6/7/8/9 視資料而定）
+  function scoredLevelsFor(a) {
+    const lv = ["2", "3", "4", "5"];
+    if (a.reorder && a.reorder.length)   lv.push("6");
+    if (a.wh && a.wh.length)             lv.push("7");
+    if (a.dictation && a.dictation.length) lv.push("8");
+    if (a.cloze && a.cloze.length)       lv.push("9");
+    return lv;
+  }
+  // 計算一課的狀態：所有計分關卡都有分數才算數，平均達 PASS_MARK 即通過
+  function lessonStatus(a) {
+    const need = scoredLevelsFor(a);
+    let scores = {};
+    try { scores = JSON.parse(localStorage.getItem(scoreKey(a.file)) || "{}"); } catch (e) {}
+    const allScored = need.every(l => scores[l] && scores[l].total);
+    let avg = null, passed = false;
+    if (allScored) {
+      avg = Math.round(need.reduce((sum, l) => sum + scores[l].correct / scores[l].total * 100, 0) / need.length);
+      passed = avg >= PASS_MARK;
+    }
+    return { need: need, scores: scores, allScored: allScored, avg: avg, passed: passed };
+  }
+  const summaryEl = document.getElementById("lessonSummary");
+  function renderLessonSummary() {
+    // 測驗模式下只看 Level 2+ 的關卡（依分頁順序）
+    const visible = Array.from(tabs).filter(t => !t.classList.contains("hidden") && t.dataset.level !== "1");
+    let rows = "", pcts = [];
+    visible.forEach(t => {
+      const lv = t.dataset.level;
+      const name = t.dataset.name || ("Level " + lv);
+      const s = lessonScores[lv];
+      // 每關各 100 分（依答對比例換算），平均只算這課實際的計分關卡
+      let valHtml = "✓";
+      if (s && s.total) {
+        const p = Math.round(s.correct / s.total * 100);
+        pcts.push(p);
+        valHtml = p + " / 100 <span class=\"sum-pct\">(" + s.correct + "/" + s.total + ")</span>";
+      }
+      rows += '<div class="sum-row"><span class="sum-name">' + name +
+              '</span><span class="sum-val">' + valHtml + '</span></div>';
+    });
+    const avg = pcts.length ? Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length) : 0;
+    const passed = avg >= PASS_MARK;
+    summaryEl.innerHTML =
+      '<div class="sum-title">🎉 Lesson Complete!</div>' +
+      '<div class="sum-stars">' + (passed ? "🟢 Passed!" : "🔴 Keep trying!") + '</div>' +
+      '<div class="sum-rows">' + rows + '</div>' +
+      '<div class="sum-total">Total: ' + avg + ' / 100' +
+      ' <span class="sum-pct">(need ' + PASS_MARK + ' to pass)</span></div>';
+    summaryEl.classList.remove("hidden");
+  }
+  function hideLessonSummary() { summaryEl.classList.add("hidden"); }
+
   function markLevelDone(level) {
     const tab = document.querySelector('.levelTab[data-level="' + level + '"]');
     if (tab && !tab.classList.contains("done")) {
       tab.classList.add("done");
       persistProgress();
       updateProgress();
+    }
+    // Level 1 完成且處於 listen 模式 -> 顯示「開始測驗」按鈕
+    if (String(level) === "1" && listenMode) {
+      startTestWrap.style.display = "";
+      return;
     }
     // 完成目前這關 -> 顯示「下一關」按鈕
     const active = document.querySelector(".levelTab.active");
@@ -1346,9 +1535,11 @@
     if (i >= 0 && i < visible.length - 1) {
       nextLevelBtn.textContent = "Next ➡";
       nextLevelBtn.dataset.mode = "next";
+      hideLessonSummary();
     } else {
       nextLevelBtn.textContent = "🎉 Back to Lessons";
       nextLevelBtn.dataset.mode = "back";
+      renderLessonSummary();   // 最後一關完成 -> 顯示整課總分
     }
     nextLevelBtn.classList.remove("hidden");
   }
@@ -1366,6 +1557,8 @@
   });
   function restoreProgress() {
     tabs.forEach(t => t.classList.remove("done"));
+    hideLessonSummary();
+    try { lessonScores = JSON.parse(localStorage.getItem(scoreKey(currentArticleKey)) || "{}"); } catch (e) { lessonScores = {}; }
     let saved = [];
     try { saved = JSON.parse(localStorage.getItem(progKey(currentArticleKey)) || "[]"); } catch (e) {}
     saved.forEach(l => {
@@ -1474,6 +1667,11 @@
   const statusEl       = document.getElementById("status");
   const prevBtn        = document.getElementById("prevBtn");
   const nextBtn        = document.getElementById("nextBtn");
+  const shadowFinish   = document.getElementById("shadowFinish");
+  const shadowRetry    = document.getElementById("shadowRetry");
+  const shadowNextLevel = document.getElementById("shadowNextLevel");
+  const shadowNavWrap  = document.querySelector(".shadow-nav-wrap");
+  const shadowActions  = document.querySelector(".shadow-actions");
 
   let idx = 0;
   let mediaRecorder = null;
@@ -1481,15 +1679,29 @@
   let recordings = {};   // { 句子index: audio URL }
   let isRecording = false;
 
+  function showShadowFinish() {
+    shadowNavWrap.classList.add("hidden");
+    shadowActions.classList.add("hidden");
+    statusEl.classList.add("hidden");
+    shadowFinish.classList.remove("hidden");
+  }
+  function hideShadowFinish() {
+    shadowNavWrap.classList.remove("hidden");
+    shadowActions.classList.remove("hidden");
+    statusEl.classList.remove("hidden");
+    shadowFinish.classList.add("hidden");
+  }
+
   function renderShadow() {
     if (!script.length) return;
+    hideShadowFinish();
     const line = script[idx];
     shadowProgress.textContent = `Sentence ${idx + 1} / ${script.length}`;
     shadowBubble.className = "shadow-bubble " + line.gender;
     shadowWho.textContent = line.who + (line.gender === "male" ? " (boy)" : " (girl)");
     shadowText.textContent = line.text;
     prevBtn.disabled = idx === 0;
-    nextBtn.disabled = idx === script.length - 1;
+    nextBtn.disabled = false;
     // 這句是否已有錄音
     myPlayBtn.disabled = !recordings[idx];
     statusEl.textContent = recordings[idx] ? "You have a recording — play it to compare 👍" : "Tap \"Listen\" for the model, then \"Record\" to read along.";
@@ -1526,7 +1738,6 @@
         if (recordings[idx]) URL.revokeObjectURL(recordings[idx]);
         recordings[idx] = URL.createObjectURL(blob);
         myPlayBtn.disabled = false;
-        markLevelDone(2);
         // 關閉麥克風
         stream.getTracks().forEach(t => t.stop());
         // 錄完自動播放
@@ -1563,9 +1774,37 @@
   }
   myPlayBtn.addEventListener("click", playMyRecording);
 
-  /* 上一句 / 下一句 */
+  /* 上一句 / 下一句（< > 箭頭） */
   prevBtn.addEventListener("click", () => { if (idx > 0) { stopRecordingIfAny(); synth.cancel(); idx--; renderShadow(); } });
-  nextBtn.addEventListener("click", () => { if (idx < script.length - 1) { stopRecordingIfAny(); synth.cancel(); idx++; renderShadow(); } });
+  nextBtn.addEventListener("click", () => {
+    stopRecordingIfAny(); synth.cancel();
+    if (idx < script.length - 1) { idx++; renderShadow(); }
+    else {
+      // 最後一句按 > -> 標記完成並顯示完成選擇
+      const tab = document.querySelector('.levelTab[data-level="2"]');
+      if (tab && !tab.classList.contains("done")) {
+        tab.classList.add("done");
+        persistProgress();
+        updateProgress();
+      }
+      recordScore(2, script.length, script.length);   // 口說完成 = 滿分
+      showShadowFinish();
+    }
+  });
+
+  /* 重來 */
+  shadowRetry.addEventListener("click", () => {
+    idx = 0; recordings = {};
+    renderShadow();
+  });
+
+  /* 下一個 level */
+  shadowNextLevel.addEventListener("click", () => {
+    const visible = Array.from(tabs).filter(t => !t.classList.contains("hidden"));
+    const active = document.querySelector(".levelTab.active");
+    const i = visible.indexOf(active);
+    if (i >= 0 && i < visible.length - 1) visible[i + 1].click();
+  });
 
   /* ================= 問答測驗（Level 3 / 4 共用） ================= */
 
@@ -1657,6 +1896,7 @@
       answered = false;
       listEl.innerHTML = "";
       scoreEl.textContent = "";
+      resetEl.classList.add("hidden");
       if (!shuffled.length) return;
       const item = shuffled[idx];
 
@@ -1727,6 +1967,8 @@
                   : correct >= m - 1 ? "👍 Well done!"
                   : "💪 Listen again and try!";
       scoreEl.textContent = `Score: ${correct} / ${m}  ${emoji}`;
+      resetEl.classList.remove("hidden");
+      recordScore(level, correct, m);
       markLevelDone(level);
     }
 
@@ -1747,10 +1989,14 @@
   function makeMatch(wordsEl, picsEl, statusEl, resetEl) {
     let vocab = [], seq = [], expected = 0;
 
+    const matchWrap = wordsEl.parentElement;
     function build() {
       expected = 0;
       wordsEl.innerHTML = "";
       picsEl.innerHTML = "";
+      matchWrap.classList.remove("hidden");
+      resetEl.classList.add("hidden");
+      statusEl.textContent = "";
       if (!vocab.length) { statusEl.textContent = "(No word-picture set for this lesson.)"; return; }
       const n = Math.min(5, vocab.length);
       seq = shuffle(vocab).slice(0, n);   // 依對話內容隨機抽 n 個單字
@@ -1793,8 +2039,11 @@
           document.getElementById("mword-" + expected).classList.add("current");
           updateStatus();
         } else {
+          matchWrap.classList.add("hidden");
           statusEl.textContent = "🏆 All matched! Great job!";
+          resetEl.classList.remove("hidden");
           playDing();
+          recordScore(5, seq.length, seq.length);   // 配圖完成 = 滿分
           markLevelDone(5);
         }
       } else {
@@ -1878,6 +2127,7 @@
           timer = setTimeout(function () { idx++; startSentence(); }, 1100);   // 答對自動換下一句
         } else {
           statusEl.textContent = "🎉 All done! Great job!";
+          recordScore(6, sentences.length, sentences.length);   // 重組完成 = 滿分
           markLevelDone(6);
         }
       } else {
@@ -1986,6 +2236,12 @@
                   : "💪 Listen again and try!";
       boxEl.innerHTML = '<div class="quiz-progress" style="font-size:18px;font-weight:700;color:#2563eb">Score: ' +
                         correct + ' / ' + m + '  ' + emoji + '</div>';
+      const retry = document.createElement("button");
+      retry.id = "resetWh";
+      retry.textContent = "🔄 Try Again";
+      retry.addEventListener("click", build);
+      boxEl.appendChild(retry);
+      recordScore(7, correct, m);
       markLevelDone(7);
     }
 
@@ -2091,6 +2347,7 @@
                   : "💪 Listen a few more times!";
       boxEl.innerHTML = '<div class="quiz-progress" style="font-size:18px;font-weight:700;color:#2563eb">Score: ' +
                         correct + ' / ' + m + '  ' + emoji + '</div>';
+      recordScore(8, correct, m);
       markLevelDone(8);
     }
 
@@ -2179,6 +2436,7 @@
                   : "💪 Read again and try!";
       boxEl.innerHTML = '<div class="quiz-progress" style="font-size:18px;font-weight:700;color:#2563eb">Score: ' +
                         correct + ' / ' + m + '  ' + emoji + '</div>';
+      recordScore(9, correct, m);
       markLevelDone(9);
     }
 
@@ -2383,14 +2641,51 @@
     const lv = manifest.levels[i];
     articleScreenTitle.textContent = (lv.name || lv.id) + " · Choose a lesson";
     articleGrid.innerHTML = "";
+    let prevPassed = true;   // 第一課永遠解鎖；之後要上一課通過才解鎖
     lv.articles.forEach(a => {
       const btn = document.createElement("button");
       btn.className = "pick-card";
+      const st = lessonStatus(a);
+
+      // 上一課沒過關 -> 鎖住，顯示大鎖、不可點選
+      if (!prevPassed) {
+        btn.classList.add("locked");
+        btn.disabled = true;
+        btn.innerHTML = '<span class="lock-big">🔒</span>' +
+                        '<span class="pick-title">' + (a.title || a.id) + '</span>' +
+                        '<span class="pick-sub">Pass the previous lesson to unlock</span>';
+        articleGrid.appendChild(btn);
+        prevPassed = false;   // 一旦上鎖，後面全部跟著鎖（不能跳關）
+        return;
+      }
+
       const total = articleTotal(a), done = Math.min(articleDone(a), total);
-      btn.innerHTML = '<span class="pick-title">' + (a.title || a.id) + '</span>' +
-                      '<span class="pick-sub">' + done + '/' + total + ' done</span>';
+      // 紅綠燈：要「所有計分關卡都有分數紀錄」才亮燈；達 80 綠、未達紅；否則白
+      let light = "white", sub = done + '/' + total + ' done';
+      if (st.allScored) {
+        light = st.passed ? "green" : "red";
+        sub = 'Score ' + st.avg + '/100';
+      }
+      // 每關完成狀態（Level 1 看聽力完成紀錄，計分關卡看有沒有分數）
+      let prog = [];
+      try { prog = (JSON.parse(localStorage.getItem(progKey(a.file)) || "[]") || []).map(String); } catch (e) {}
+      const dots = ["1"].concat(st.need).map(l => {
+        let cls = "";   // 灰=未完成
+        if (l === "1") {
+          if (prog.indexOf("1") >= 0) cls = " done";   // Level 1 聽力無分數，完成即綠
+        } else if (st.scores[l] && st.scores[l].total) {
+          const p = Math.round(st.scores[l].correct / st.scores[l].total * 100);
+          cls = p >= PASS_MARK ? " done" : " fail";     // 該關達 80 綠、未達紅
+        }
+        return '<span class="lvl-dot' + cls + '" title="' + levelName(l) + '">' + l + '</span>';
+      }).join("");
+      btn.innerHTML = '<span class="light-dot light-' + light + '"></span>' +
+                      '<span class="pick-title">' + (a.title || a.id) + '</span>' +
+                      '<span class="pick-sub">' + sub + '</span>' +
+                      '<span class="lvl-dots">' + dots + '</span>';
       btn.addEventListener("click", () => selectArticle(a));
       articleGrid.appendChild(btn);
+      prevPassed = st.passed;
     });
     showScreen(screenArticle);
   }
@@ -2399,7 +2694,7 @@
   async function selectArticle(a) {
     await loadArticle(a);
     learnTitle.textContent = (manifest.levels[selLevelIdx].name || "") + " · " + (a.title || a.id);
-    document.querySelector('.levelTab[data-level="1"]').click();   // 每次從第 1 關開始
+    enterListenMode();   // 進入文章時先顯示 Level 1（聽力），不直接進測驗
     showScreen(screenLearn);
   }
 
