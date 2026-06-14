@@ -4,6 +4,9 @@
     {
       "id": "Pre-A1",
       "name": "Pre-A1",
+      "icon": "🌱",
+      "stars": 1,
+      "desc": "Absolute beginner. First words, simple greetings, and easy present-tense sentences.",
       "articles": [
         {
           "id": "001",
@@ -133,6 +136,9 @@
     {
       "id": "A1",
       "name": "A1",
+      "icon": "🌿",
+      "stars": 2,
+      "desc": "Beginner. Short stories about daily life, using simple past tense (went, played).",
       "articles": [
         {
           "id": "001",
@@ -252,6 +258,9 @@
     {
       "id": "A2",
       "name": "A2",
+      "icon": "🌳",
+      "stars": 3,
+      "desc": "Elementary. Talk about plans and reasons, using future forms and \"because\".",
       "articles": [
         {
           "id": "001",
