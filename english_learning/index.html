@@ -305,6 +305,12 @@
   #recBtn    { background: #ef4444; color: #fff; }
   #recBtn.recording { background: #b91c1c; animation: pulse 1s infinite; }
   #myPlayBtn { background: #16a34a; color: #fff; }
+  #checkBtn  { background: #0d9488; color: #fff; }
+  .pron-result { text-align: center; margin-top: 10px; font-size: 18px; }
+  .pron-result .pron-score { font-size: 22px; font-weight: 800; color: #0f766e; }
+  .pron-result .pron-sentence { margin-top: 6px; line-height: 1.5; }
+  .pron-result .pw-ok  { color: #15803d; font-weight: 700; }
+  .pron-result .pw-bad { color: #b91c1c; text-decoration: underline wavy #ef4444; }
   @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,.5);} 50% { box-shadow: 0 0 0 10px rgba(239,68,68,0);} }
 
   .shadow-finish { text-align: center; margin-top: 18px; }
@@ -1318,6 +1324,7 @@
         <button id="myPlayBtn" disabled>▶ Play</button>
       </div>
       <div class="status" id="status">Tap "Listen" to hear it, then record.</div>
+      <div id="pronResult" class="pron-result hidden"></div>
       <!-- 全部句子結束後的選擇 -->
       <div id="shadowFinish" class="shadow-finish hidden">
         <p>🎉 You read all the sentences!</p>
@@ -1930,12 +1937,14 @@
   const shadowNextLevel = document.getElementById("shadowNextLevel");
   const shadowNavWrap  = document.querySelector(".shadow-nav-wrap");
   const shadowActions  = document.querySelector(".shadow-actions");
+  const pronResult     = document.getElementById("pronResult");
 
   let idx = 0;
   let mediaRecorder = null;
   let chunks = [];
   let recordings = {};   // { 句子index: audio URL }
   let isRecording = false;
+  let pronRec = null;    // 發音辨識（與錄音同時進行）
 
   function showShadowFinish() {
     shadowNavWrap.classList.add("hidden");
@@ -1953,6 +1962,7 @@
   function renderShadow() {
     if (!script.length) return;
     hideShadowFinish();
+    if (pronResult) pronResult.classList.add("hidden");
     const line = script[idx];
     shadowProgress.textContent = `Sentence ${idx + 1} / ${script.length}`;
     shadowBubble.className = "shadow-bubble " + line.gender;
@@ -1962,7 +1972,7 @@
     nextBtn.disabled = false;
     // 這句是否已有錄音
     myPlayBtn.disabled = !recordings[idx];
-    statusEl.textContent = recordings[idx] ? "You have a recording — play it to compare 👍" : "Tap \"Listen\" for the model, then \"Record\" to read along.";
+    statusEl.textContent = "Listen 🔊, then Record 🎤 — you'll hear yourself and get a score.";
     recBtn.classList.remove("recording");
     recBtn.textContent = "🎤 Record";
   }
@@ -1979,12 +1989,27 @@
   recBtn.addEventListener("click", async () => {
     if (isRecording) { stopRecording(); return; }
     if (/FBAN|FBAV|FB_IAB|Instagram/i.test(navigator.userAgent || "")) {
-      statusEl.textContent = "🎤 Recording needs an external browser. Tap the ⋯ menu (top-right) → Open in external browser (Chrome / Safari).";
-      return;
+      statusEl.textContent = "🎤 Recording needs an external browser (⋯ menu → Open in external browser)."; return;
     }
     if (!navigator.mediaDevices || !window.MediaRecorder) {
-      statusEl.textContent = "⚠️ Your browser does not support recording. Please use a recent Chrome / Edge / Safari.";
-      return;
+      statusEl.textContent = "⚠️ Your browser does not support recording. Use a recent Chrome / Edge / Safari."; return;
+    }
+    pronResult.classList.add("hidden");
+    const target = script[idx].text;
+    let scored = false;
+    // 發音辨識（與錄音同時跑，錄完自動出分數）
+    if (SR) {
+      try {
+        pronRec = new SR();
+        pronRec.lang = "en-US"; pronRec.interimResults = false; pronRec.maxAlternatives = 1;
+        pronRec.onresult = (e) => { scored = true; showPron(target, e.results[0][0].transcript); };
+        pronRec.onerror = (ev) => {
+          if (!scored) {
+            pronResult.innerHTML = '<div style="font-size:13px;color:#94a3b8">🎯 No score (' + (ev.error || "error") + '). Needs internet + mic in Chrome/Edge.</div>';
+            pronResult.classList.remove("hidden");
+          }
+        };
+      } catch (e) { pronRec = null; }
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -1996,24 +2021,24 @@
         if (recordings[idx]) URL.revokeObjectURL(recordings[idx]);
         recordings[idx] = URL.createObjectURL(blob);
         myPlayBtn.disabled = false;
-        // 關閉麥克風
         stream.getTracks().forEach(t => t.stop());
-        // 錄完自動播放
-        playMyRecording();
+        if (pronRec) { try { pronRec.stop(); } catch (e) {} }
+        playMyRecording();   // 錄完自動播放，聽自己
       };
       mediaRecorder.start();
+      if (pronRec) { try { pronRec.start(); } catch (e) {} }
       isRecording = true;
       recBtn.classList.add("recording");
       recBtn.textContent = "⏹ Stop";
       statusEl.textContent = "Recording… speak loudly! 🎙️";
     } catch (err) {
       statusEl.textContent = "⚠️ Cannot use the microphone. Please allow mic permission and try again.";
-      console.error(err);
     }
   });
 
   function stopRecording() {
     if (mediaRecorder && mediaRecorder.state === "recording") mediaRecorder.stop();
+    if (pronRec) { try { pronRec.stop(); } catch (e) {} }
     isRecording = false;
     recBtn.classList.remove("recording");
     recBtn.textContent = "🎤 Record";
@@ -2063,6 +2088,29 @@
     const i = visible.indexOf(active);
     if (i >= 0 && i < visible.length - 1) visible[i + 1].click();
   });
+
+  /* 🎯 發音檢查（免費 Web Speech：辨識 → 比對字詞命中率） */
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  function showPron(target, said) {
+    const sCount = {};
+    (said || "").toLowerCase().replace(/[^a-z' ]/g, " ").split(/\s+/).filter(Boolean)
+      .forEach(w => { sCount[w] = (sCount[w] || 0) + 1; });
+    let total = 0, matched = 0;
+    const html = target.split(/\s+/).map(tok => {
+      const w = tok.toLowerCase().replace(/[^a-z']/g, "");
+      if (!w) return tok;
+      total++;
+      if (sCount[w] > 0) { sCount[w]--; matched++; return '<span class="pw-ok">' + tok + '</span>'; }
+      return '<span class="pw-bad">' + tok + '</span>';
+    }).join(" ");
+    const pct = total ? Math.round(matched / total * 100) : 0;
+    const face = pct >= 80 ? "🌟" : pct >= 50 ? "🙂" : "💪";
+    pronResult.innerHTML = '<div class="pron-score">' + face + ' ' + pct + '%</div>' +
+      '<div class="pron-sentence">' + html + '</div>' +
+      '<div style="font-size:12px;color:#94a3b8;margin-top:4px">Heard: ' + (said ? said : "—") + '</div>';
+    pronResult.classList.remove("hidden");
+    statusEl.textContent = pct >= 80 ? "Great pronunciation! 🌟" : "Good try — read the red words again.";
+  }
 
   /* ================= 問答測驗（Level 3 / 4 共用） ================= */
 
