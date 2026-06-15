@@ -79,6 +79,10 @@
   .name-row input:focus { outline: none; border-color: #2563eb; }
   .new-row { display: flex; gap: 8px; }
   .new-row input { flex: 1; }
+  .avatar-pick { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 6px; }
+  .avatar-opt { font-size: 28px; width: 48px; height: 48px; padding: 0; line-height: 1;
+    border: 2px solid #e2e8f0; background: #f8fafc; border-radius: 12px; cursor: pointer; }
+  .avatar-opt.sel { border-color: #2563eb; background: #eff6ff; }
   .pick-grid { display: flex; flex-direction: column; gap: 12px; }
   .pick-card {
     position: relative;
@@ -214,9 +218,10 @@
   .progress-text { font-size: 13px; font-weight: 700; color: #16a34a; white-space: nowrap; }
   .levelTab.done::after { content: "✓"; color: #16a34a; font-weight: 700; font-size: 13px; }
 
-  /* 完成後出現的「下一關」按鈕 */
+  /* 完成後的「Try Again / Next Level」區塊（與 Level 2 一致） */
   .nextlevel-wrap { text-align: center; margin-top: 22px; }
-  #nextLevelBtn { background: #16a34a; color: #fff; font-size: 17px; padding: 12px 26px; }
+  #nextLevelBtn { background: #16a34a; color: #fff; }
+  #finishRetry { background: #e2e8f0; color: #334155; }
 
   /* 整課總結卡片 */
   .lesson-summary {
@@ -373,8 +378,8 @@
   #scoreBox {
     font-size: 20px; font-weight: 700; color: #2563eb; margin-bottom: 12px; min-height: 26px;
   }
-  #resetQuiz, #resetQuiz4, #resetMatch, #resetWh { background: #2563eb; color: #fff; }
-  #resetWh { display: block; margin: 18px auto 0; }
+  /* 舊的單獨「Try Again」鈕改由統一的完成區塊取代 */
+  #resetQuiz, #resetQuiz4, #resetMatch, #resetWh { display: none; }
 
   /* Level 5 單字配圖 */
   .match-intro { color: #64748b; font-size: 14px; margin-bottom: 16px; text-align: center; }
@@ -449,6 +454,45 @@
   .lesson-row .dot.fail { background: #ef4444; }
   .lesson-row .sc { margin-left: auto; color: #94a3b8; }
 
+  /* RPG 角色養成 + Boss 戰 */
+  .hero-card { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; justify-content: center;
+    background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 14px; padding: 12px; margin-bottom: 14px; font-weight: 700; color: #3730a3; }
+  .hero-card .hero-unspent { background: #16a34a; color: #fff; border-radius: 999px; padding: 2px 10px; font-size: 12px; }
+  .battle-arena { display: flex; align-items: flex-end; justify-content: space-around; gap: 10px; margin: 6px 0 14px; }
+  .fighter { flex: 1; text-align: center; position: relative; }
+  .fighter-emoji { font-size: 54px; line-height: 1; display: inline-block; }
+  @keyframes hitShake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+  @keyframes lungeR { 0%,100%{transform:translateX(0)} 45%{transform:translateX(26px) scale(1.08)} }
+  @keyframes lungeL { 0%,100%{transform:translateX(0)} 45%{transform:translateX(-26px) scale(1.08)} }
+  @keyframes floatUp { 0%{opacity:0;transform:translate(-50%,0) scale(.8)} 20%{opacity:1} 100%{opacity:0;transform:translate(-50%,-46px) scale(1.1)} }
+  @keyframes defeatFx { to { opacity:.15; transform: rotate(25deg) translateY(10px); } }
+  .fighter-emoji.hit { animation: hitShake .4s; filter: drop-shadow(0 0 6px #ef4444); }
+  .fighter-emoji.lunge-r { animation: lungeR .35s ease-out; }
+  .fighter-emoji.lunge-l { animation: lungeL .35s ease-out; }
+  .fighter-emoji.defeated { animation: defeatFx .6s ease-out forwards; }
+  .dmg-float { position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+    font-weight: 800; font-size: 22px; pointer-events: none; animation: floatUp .85s ease-out forwards;
+    text-shadow: 0 1px 2px rgba(0,0,0,.25); }
+  .dmg-float.toboss { color: #f97316; }
+  .dmg-float.tohero { color: #ef4444; }
+  .dmg-float.crit { color: #f59e0b; font-size: 30px; }
+  .fighter-name { font-size: 13px; font-weight: 700; color: #475569; margin-top: 4px; }
+  .vs { font-weight: 800; color: #94a3b8; }
+  .hp-bar { height: 12px; background: #e2e8f0; border-radius: 999px; overflow: hidden; margin-top: 6px; }
+  .hp-fill { display: block; height: 100%; border-radius: 999px; transition: width .3s; }
+  .hp-fill.hero { background: #22c55e; }
+  .hp-fill.boss { background: #ef4444; }
+  .battle-stats { text-align: center; font-weight: 700; color: #334155; margin-bottom: 8px; }
+  .battle-log { text-align: center; min-height: 22px; font-weight: 700; color: #2563eb; margin-bottom: 10px; }
+  .battle-q { text-align: center; font-size: 18px; font-weight: 600; color: #1e293b; margin-bottom: 12px; }
+  .battle-msg { text-align: center; font-size: 20px; font-weight: 800; color: #16a34a; margin-bottom: 14px; }
+  .alloc { text-align: center; margin-bottom: 8px; color: #334155; }
+  .alloc-rows { max-width: 300px; margin: 0 auto 14px; }
+  .alloc-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px dashed #cbd5e1; font-weight: 700; color: #334155; }
+  .alloc-row .alloc-val { margin-left: auto; color: #2563eb; }
+  .alloc-plus { flex: 0 0 auto; width: 44px; padding: 6px 0; }
+  .battle-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
   .hidden { display: none !important; }
 </style>
 </head>
@@ -464,6 +508,8 @@
       <p class="screen-intro">Who are you? 👋</p>
       <div id="profileGrid" class="pick-grid"></div>
       <div id="newProfileForm" class="name-row hidden">
+        <label>Choose your character</label>
+        <div class="avatar-pick" id="avatarPick"></div>
         <label for="userName">Your name</label>
         <div class="new-row">
           <input id="userName" type="text" placeholder="e.g. Amy" autocomplete="off" maxlength="20">
@@ -1344,13 +1390,42 @@
 
     <div id="lessonSummary" class="lesson-summary hidden"></div>
 
-    <div class="nextlevel-wrap"><button id="nextLevelBtn" class="hidden">Next ➡</button></div>
+    <div class="shadow-finish hidden" id="levelFinish">
+      <div class="shadow-finish-btns">
+        <button id="finishRetry">🔄 Try Again</button>
+        <button id="nextLevelBtn">Next Level ➡</button>
+      </div>
+    </div>
 
     <!-- Level 1 完成後顯示的「開始測驗」按鈕 -->
     <div class="nextlevel-wrap" id="startTestWrap" style="display:none">
       <button id="startTestBtn" style="background:#2563eb;color:#fff;font-size:17px;padding:12px 26px">Start Test ✏️</button>
     </div>
     </div><!-- /#screenLearn -->
+
+    <!-- 畫面 4：Boss 戰 -->
+    <div id="screenBattle" class="hidden">
+      <div class="learn-top"><span class="learn-title">⚔️ Boss Battle</span></div>
+      <div class="battle-arena">
+        <div class="fighter">
+          <div class="fighter-emoji" id="heroEmoji">🦸</div>
+          <div class="hp-bar"><span id="heroHpFill" class="hp-fill hero"></span></div>
+          <div class="fighter-name">You</div>
+        </div>
+        <div class="vs">VS</div>
+        <div class="fighter">
+          <div class="fighter-emoji" id="bossEmoji">👾</div>
+          <div class="hp-bar"><span id="bossHpFill" class="hp-fill boss"></span></div>
+          <div class="fighter-name">Boss</div>
+        </div>
+      </div>
+      <div id="battleStats" class="battle-stats"></div>
+      <div id="battleLog" class="battle-log"></div>
+      <div id="battleQ" class="battle-q"></div>
+      <div id="battleOpts" class="quiz-opts vert"></div>
+      <div id="battleResult" class="hidden"></div>
+    </div>
+
     <div id="visitorBox" class="visitor"></div>
   </div>
 
@@ -1454,6 +1529,16 @@
   const level8El = document.getElementById("level8");
   const level9El = document.getElementById("level9");
   const nextLevelBtn = document.getElementById("nextLevelBtn");
+  const levelFinish = document.getElementById("levelFinish");
+  const finishRetry = document.getElementById("finishRetry");
+  // 「Try Again」：重玩目前這一關（依關卡呼叫對應控制器的 restart）
+  finishRetry.addEventListener("click", () => {
+    levelFinish.classList.add("hidden");
+    const active = document.querySelector(".levelTab.active");
+    const lv = active ? active.dataset.level : null;
+    const map = { "3": quiz3Ctl, "4": quiz4Ctl, "5": matchCtl, "6": reorderCtl, "7": whCtl, "8": dictCtl, "9": clozeCtl };
+    if (map[lv] && map[lv].restart) map[lv].restart();
+  });
 
   // 動畫場景：依文章切換，且只在 Level 1 顯示
   let currentScene = "park-ball";
@@ -1485,7 +1570,7 @@
     level7El.classList.add("hidden");
     level8El.classList.add("hidden");
     level9El.classList.add("hidden");
-    nextLevelBtn.classList.add("hidden");   // 換關卡時收起「下一關」
+    levelFinish.classList.add("hidden");   // 換關卡時收起「下一關」
     hideLessonSummary();                     // 換關卡時收起整課總分
     // 動畫場景只在 Level 1 顯示（依文章換場景）
     onLevel1 = (lv === "1");
@@ -1517,7 +1602,7 @@
     levelsBar.style.display = "none";
     levelNameEl.style.display = "none";
     document.querySelector(".progress-wrap").style.display = "none";
-    nextLevelBtn.classList.add("hidden");
+    levelFinish.classList.add("hidden");
     hideLessonSummary();
     // 確保 Level 1 tab 可見（從測驗模式回來時它被隱藏了）
     document.querySelector('.levelTab[data-level="1"]').classList.remove("hidden");
@@ -1553,6 +1638,7 @@
   const progFill = document.getElementById("progFill");
   const progText = document.getElementById("progText");
   let currentArticleKey = "";
+  let currentArticle = null;
 
   function updateProgress() {
     // 測驗模式下進度條只算 Level 2+ 的關卡
@@ -1660,14 +1746,19 @@
       nextLevelBtn.dataset.mode = "next";
       hideLessonSummary();
     } else {
-      nextLevelBtn.textContent = "🎉 Back to Lessons";
-      nextLevelBtn.dataset.mode = "back";
+      nextLevelBtn.textContent = "⚔️ Fight the Boss!";
+      nextLevelBtn.dataset.mode = "boss";
       renderLessonSummary();   // 最後一關完成 -> 顯示整課總分
     }
-    nextLevelBtn.classList.remove("hidden");
+    levelFinish.classList.remove("hidden");
   }
   nextLevelBtn.addEventListener("click", () => {
-    nextLevelBtn.classList.add("hidden");
+    levelFinish.classList.add("hidden");
+    if (nextLevelBtn.dataset.mode === "boss") {
+      synth.cancel(); stopListenL1(); stopRecordingIfAny();
+      openBattle();
+      return;
+    }
     if (nextLevelBtn.dataset.mode === "back") {
       synth.cancel(); stopListenL1(); stopRecordingIfAny();
       selectLevel(selLevelIdx);   // 回課程列表
@@ -2109,7 +2200,7 @@
     }
 
     resetEl.addEventListener("click", build);
-    return { setData(newData) { data = newData || []; build(); } };
+    return { setData(newData) { data = newData || []; build(); }, restart: build };
   }
 
   const quiz3Ctl = makeQuiz(
@@ -2194,7 +2285,7 @@
     }
 
     resetEl.addEventListener("click", build);
-    return { setData(v) { vocab = v || []; build(); } };
+    return { setData(v) { vocab = v || []; build(); }, restart: build };
   }
 
   const matchCtl = makeMatch(
@@ -2282,7 +2373,8 @@
           poolEl.innerHTML = "";
           statusEl.textContent = "(No reorder sentences in this lesson.)";
         }
-      }
+      },
+      restart() { idx = 0; if (sentences.length) startSentence(); }
     };
   }
 
@@ -2381,7 +2473,7 @@
       markLevelDone(7);
     }
 
-    return { setData(d) { items = d || []; build(); } };
+    return { setData(d) { items = d || []; build(); }, restart: build };
   }
 
   const whCtl = makeWh(document.getElementById("whBox"));
@@ -2487,7 +2579,7 @@
       markLevelDone(8);
     }
 
-    return { setData(d) { items = d || []; build(); } };
+    return { setData(d) { items = d || []; build(); }, restart: build };
   }
 
   const dictCtl = makeDictation(document.getElementById("dictBox"));
@@ -2576,7 +2668,7 @@
       markLevelDone(9);
     }
 
-    return { setData(d) { items = d || []; build(); } };
+    return { setData(d) { items = d || []; build(); }, restart: build };
   }
 
   const clozeCtl = makeCloze(document.getElementById("clozeBox"));
@@ -2587,6 +2679,7 @@
   const screenProfileStats = document.getElementById("screenProfileStats");
   const screenArticle = document.getElementById("screenArticle");
   const screenLearn   = document.getElementById("screenLearn");
+  const screenBattle  = document.getElementById("screenBattle");
   const statsBody     = document.getElementById("statsBody");
   const profileGrid   = document.getElementById("profileGrid");
   const newProfileForm = document.getElementById("newProfileForm");
@@ -2618,11 +2711,37 @@
 
   function updateGreeting() {
     greetTitle.textContent = userName ? ("Hi, " + userName + " 👋") : "";
-    userChip.textContent = "👤 " + (userName || "") + (adminMode ? " 🔓" : "");
+    userChip.textContent = (userName ? avatarOf(userName) : "👤") + " " + (userName || "") + (adminMode ? " 🔓" : "");
   }
 
   function loadProfiles() { try { return JSON.parse(localStorage.getItem("profiles") || "[]"); } catch (e) { return []; } }
   function saveProfiles(list) { try { localStorage.setItem("profiles", JSON.stringify(list)); } catch (e) {} }
+
+  // 英雄造型（每位使用者一個 emoji，當頭像 + RPG 英雄）
+  const AVATARS = ["🦸", "🦸‍♀️", "🧙", "🧙‍♀️", "🥷", "🧚", "🧝", "🤴", "👸", "🤖", "🐱", "🐶", "🦊", "🦁", "👦", "👧"];
+  // 壞人（Boss）名冊：依等級星級分級，每場隨機一隻
+  const VILLAINS = {
+    1: ["👾", "👻", "🦇", "🐍", "🦠", "🦞"],
+    2: ["👹", "👺", "🧟", "🦂", "🕷️", "🦹"],
+    3: ["🐉", "💀", "🦖", "🤖", "🦹‍♀️", "👿"]
+  };
+  let selectedAvatar = AVATARS[0];
+  function avatarKey(name) { return "avatar:" + name; }
+  function avatarOf(name) { try { return localStorage.getItem(avatarKey(name)) || "👦"; } catch (e) { return "👦"; } }
+  function setAvatar(name, emo) { try { localStorage.setItem(avatarKey(name), emo); } catch (e) {} }
+  function renderAvatarPicker() {
+    const wrap = document.getElementById("avatarPick");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    AVATARS.forEach(a => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "avatar-opt" + (a === selectedAvatar ? " sel" : "");
+      b.textContent = a;
+      b.addEventListener("click", () => { selectedAvatar = a; renderAvatarPicker(); });
+      wrap.appendChild(b);
+    });
+  }
   if (userName) { const l = loadProfiles(); if (!l.includes(userName)) { l.push(userName); saveProfiles(l); } }
 
   // 畫面 0：選使用者
@@ -2634,7 +2753,7 @@
       item.className = "profile-item";
       const btn = document.createElement("button");
       btn.className = "pick-card";
-      btn.innerHTML = '<span class="pick-title">👤 ' + name + '</span>';
+      btn.innerHTML = '<span class="pick-icon">' + avatarOf(name) + '</span><span class="pick-title">' + name + '</span>';
       btn.addEventListener("click", () => selectProfile(name));
       const del = document.createElement("button");
       del.className = "profile-del";
@@ -2652,6 +2771,8 @@
     add.addEventListener("click", () => {
       newProfileForm.classList.remove("hidden");
       userNameInput.value = "";
+      selectedAvatar = AVATARS[0];
+      renderAvatarPicker();
       userNameInput.focus();
     });
     profileGrid.appendChild(add);
@@ -2677,6 +2798,7 @@
     }
     const list = loadProfiles();
     if (!list.includes(name)) { list.push(name); saveProfiles(list); }
+    setAvatar(name, selectedAvatar);
     selectProfile(name);
   }
 
@@ -2706,7 +2828,7 @@
   userNameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") addProfile(); });
 
   function showScreen(el) {
-    [screenProfile, screenLevel, screenProfileStats, screenArticle, screenLearn].forEach(s => s.classList.add("hidden"));
+    [screenProfile, screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle].forEach(s => s.classList.add("hidden"));
     el.classList.remove("hidden");
     // 右上角區（使用者鈕 + 匯出）：選好使用者後，除了「選使用者」頁以外都顯示
     topRight.classList.toggle("hidden", !(userName && el !== screenProfile));
@@ -2743,6 +2865,7 @@
       return;
     }
     currentArticleKey = article.file;
+    currentArticle = article;
     stopListenL1();
     stopRecordingIfAny();
     idx = 0;
@@ -2915,9 +3038,13 @@
         return head + rows;
       }).join("");
 
+    const h = loadHero();
+    const heroHtml = '<div class="hero-card">' + avatarOf(userName) + ' <span>LV.' + heroLevel(h) + '</span>' +
+      '<span>⚔️ ' + h.atk + '</span><span>🛡️ ' + h.def + '</span><span>🍀 ' + h.luck + '</span>' +
+      (h.unspent ? '<span class="hero-unspent">' + h.unspent + ' pts to spend</span>' : '') + '</div>';
     statsBody.innerHTML =
       '<p class="screen-intro">' + (userName ? 'Hi, ' + userName + ' 👋' : '') + '</p>' +
-      statCards + badgeHtml + levelHtml;
+      heroHtml + statCards + badgeHtml + levelHtml;
   }
 
   function openProfileStats() {
@@ -2929,6 +3056,169 @@
     renderLevelGrid();
     showScreen(screenLevel);
   });
+
+  /* ================= RPG：角色養成 + Boss 戰 ================= */
+  function heroKey() { return "hero:" + (userName || "guest"); }
+  function loadHero() {
+    let h = { atk: 1, def: 1, luck: 1, unspent: 0 };
+    try { Object.assign(h, JSON.parse(localStorage.getItem(heroKey()) || "{}")); } catch (e) {}
+    return h;
+  }
+  function saveHero(h) { try { localStorage.setItem(heroKey(), JSON.stringify(h)); } catch (e) {} }
+  function heroMaxHP(h) { return 20 + h.def * 5; }
+  function heroLevel(h) { return 1 + Math.floor((h.atk + h.def + h.luck - 3) / 3); }
+  function starsFromAvg(a) { return a >= 100 ? 3 : a >= 90 ? 2 : a >= 80 ? 1 : 0; }
+
+  // 從這課的題目組出戰鬥複習題（選擇題）
+  function buildBattleQuestions(a) {
+    const qs = [];
+    (a.quiz3 || []).concat(a.quiz4 || []).forEach(it =>
+      qs.push({ q: it.q, opts: ["Yes", "No"], correct: it.answer }));
+    (a.wh || []).forEach(it =>
+      qs.push({ q: it.q, opts: shuffle([it.a].concat(it.wrong || [])), correct: it.a }));
+    (a.cloze || []).forEach(it =>
+      qs.push({ q: it.text.replace("___", "_____"), opts: shuffle([it.answer].concat(it.wrong || [])), correct: it.answer }));
+    return shuffle(qs);
+  }
+
+  let battle = null;
+  const bossEmojiEl = document.getElementById("bossEmoji");
+  const heroEmojiEl = document.getElementById("heroEmoji");
+  // 戰鬥動畫小工具
+  function fxHit(el) { el.classList.remove("hit"); void el.offsetWidth; el.classList.add("hit"); setTimeout(() => el.classList.remove("hit"), 430); }
+  function fxLunge(el, dir) { const c = dir === "r" ? "lunge-r" : "lunge-l"; el.classList.remove(c); void el.offsetWidth; el.classList.add(c); setTimeout(() => el.classList.remove(c), 370); }
+  function fxDmg(emojiEl, amount, kind) {
+    const f = emojiEl.closest(".fighter"); if (!f) return;
+    const d = document.createElement("div");
+    d.className = "dmg-float " + kind;
+    d.textContent = "-" + amount;
+    f.appendChild(d);
+    setTimeout(() => d.remove(), 880);
+  }
+  function openBattle() {
+    if (!currentArticle) { selectLevel(selLevelIdx); return; }
+    const lvStars = (manifest.levels[selLevelIdx] && manifest.levels[selLevelIdx].stars) || 1;
+    const hero = loadHero();
+    battle = {
+      hero: hero,
+      heroMax: heroMaxHP(hero), heroHP: heroMaxHP(hero),
+      bossMax: 18 * lvStars, bossHP: 18 * lvStars, bossAtk: 2 + lvStars,
+      pool: buildBattleQuestions(currentArticle), qi: 0, over: false
+    };
+    if (!battle.pool.length) { selectLevel(selLevelIdx); return; }
+    const villainTier = VILLAINS[lvStars] || VILLAINS[1];
+    bossEmojiEl.textContent = villainTier[Math.floor(Math.random() * villainTier.length)];
+    heroEmojiEl.textContent = avatarOf(userName);
+    bossEmojiEl.classList.remove("defeated"); heroEmojiEl.classList.remove("defeated");
+    const r = document.getElementById("battleResult");
+    r.classList.add("hidden"); r.innerHTML = "";
+    document.getElementById("battleLog").textContent = "";
+    renderBattleHUD();
+    nextBattleQ();
+    showScreen(screenBattle);
+  }
+  function renderBattleHUD() {
+    const h = battle.hero;
+    document.getElementById("battleStats").textContent =
+      "LV." + heroLevel(h) + "   ⚔️ " + h.atk + "   🛡️ " + h.def + "   🍀 " + h.luck;
+    document.getElementById("heroHpFill").style.width = Math.max(0, battle.heroHP / battle.heroMax * 100) + "%";
+    document.getElementById("bossHpFill").style.width = Math.max(0, battle.bossHP / battle.bossMax * 100) + "%";
+  }
+  function nextBattleQ() {
+    if (battle.over) return;
+    const q = battle.pool[battle.qi % battle.pool.length]; battle.qi++;
+    document.getElementById("battleQ").textContent = q.q;
+    const opts = document.getElementById("battleOpts");
+    opts.innerHTML = "";
+    q.opts.forEach(o => {
+      const b = document.createElement("button");
+      b.className = "opt"; b.textContent = o;
+      b.addEventListener("click", () => answerBattle(q, o, b, opts));
+      opts.appendChild(b);
+    });
+  }
+  function answerBattle(q, choice, btn, opts) {
+    if (battle.over) return;
+    opts.querySelectorAll(".opt").forEach(b => {
+      b.disabled = true;
+      if (b.textContent === q.correct) b.classList.add("correct");
+    });
+    const h = battle.hero;
+    let log;
+    if (choice === q.correct) {
+      let dmg = 5 + h.atk * 2;
+      const crit = Math.random() < h.luck * 0.04;
+      if (crit) dmg *= 2;
+      battle.bossHP -= dmg;
+      fxLunge(heroEmojiEl, "r"); fxHit(bossEmojiEl); fxDmg(bossEmojiEl, dmg, crit ? "toboss crit" : "toboss");
+      log = "✅ You hit " + dmg + (crit ? " 🍀 CRIT!" : "") + "!";
+    } else {
+      btn.classList.add("wrong");
+      const dmg = Math.max(1, battle.bossAtk - h.def);
+      battle.heroHP -= dmg;
+      fxLunge(bossEmojiEl, "l"); fxHit(heroEmojiEl); fxDmg(heroEmojiEl, dmg, "tohero");
+      log = "❌ Boss hits you " + dmg + "!";
+    }
+    document.getElementById("battleLog").textContent = log;
+    renderBattleHUD();
+    if (battle.bossHP <= 0) { battle.over = true; setTimeout(battleWin, 800); }
+    else if (battle.heroHP <= 0) { battle.over = true; setTimeout(battleLose, 800); }
+    else setTimeout(nextBattleQ, 850);
+  }
+  function battleWin() {
+    bossEmojiEl.classList.add("defeated");
+    const avg = lessonStatus(currentArticle).avg || 0;
+    const pts = 3 + starsFromAvg(avg);
+    const h = loadHero(); h.unspent += pts; saveHero(h); battle.hero = h;
+    document.getElementById("battleQ").textContent = "";
+    document.getElementById("battleOpts").innerHTML = "";
+    document.getElementById("battleLog").textContent = "";
+    renderAllocation("🏆 You defeated the boss!  +" + pts + " points!");
+  }
+  function battleLose() {
+    heroEmojiEl.classList.add("defeated");
+    document.getElementById("battleQ").textContent = "";
+    document.getElementById("battleOpts").innerHTML = "";
+    const r = document.getElementById("battleResult");
+    r.classList.remove("hidden");
+    r.innerHTML = '<div class="battle-msg" style="color:#b91c1c">💀 You were defeated! Try again.</div>' +
+      '<div class="battle-btns"><button id="battleRetry" class="dict-play">Try again</button>' +
+      '<button id="battleLeave" class="back-btn">Back to Lessons</button></div>';
+    document.getElementById("battleRetry").addEventListener("click", openBattle);
+    document.getElementById("battleLeave").addEventListener("click", leaveBattle);
+  }
+  function renderAllocation(msg) {
+    const r = document.getElementById("battleResult");
+    r.classList.remove("hidden");
+    function row(stat, label, val) {
+      return '<div class="alloc-row"><span>' + label + '</span><span class="alloc-val">' + val +
+        '</span><button class="alloc-plus opt" data-stat="' + stat + '">＋</button></div>';
+    }
+    function draw() {
+      const h = battle.hero;
+      r.innerHTML = '<div class="battle-msg">' + msg + '</div>' +
+        '<div class="alloc">Points to spend: <b>' + h.unspent + '</b></div>' +
+        '<div class="alloc-rows">' +
+          row("atk", "⚔️ Attack", h.atk) +
+          row("def", "🛡️ Defense", h.def) +
+          row("luck", "🍀 Luck", h.luck) +
+        '</div>' +
+        '<div class="battle-btns"><button id="battleDone" class="back-btn">Back to Lessons</button></div>';
+      r.querySelectorAll(".alloc-plus").forEach(b => b.addEventListener("click", () => {
+        if (battle.hero.unspent <= 0) return;
+        battle.hero[b.dataset.stat]++;
+        battle.hero.unspent--;
+        saveHero(battle.hero);
+        battle.heroMax = heroMaxHP(battle.hero);
+        renderBattleHUD();
+        draw();
+      }));
+      r.querySelector("#battleDone").addEventListener("click", leaveBattle);
+      renderBattleHUD();
+    }
+    draw();
+  }
+  function leaveBattle() { selectLevel(selLevelIdx); }
 
   // 畫面 2：課程卡片
   function selectLevel(i) {
