@@ -2090,16 +2090,38 @@
 
   /* 🎯 發音檢查（免費 Web Speech：辨識 → 比對字詞命中率） */
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  // 縮寫對照表：把 I'm / don't 等展開成完整形式，發音比對時 I'm 與 I am 視為相同
+  const CONTRACTIONS = {
+    "i'm": "i am", "you're": "you are", "we're": "we are", "they're": "they are",
+    "he's": "he is", "she's": "she is", "it's": "it is", "that's": "that is",
+    "what's": "what is", "here's": "here is", "there's": "there is", "who's": "who is",
+    "let's": "let us",
+    "i've": "i have", "you've": "you have", "we've": "we have", "they've": "they have",
+    "i'll": "i will", "you'll": "you will", "we'll": "we will", "they'll": "they will",
+    "he'll": "he will", "she'll": "she will", "it'll": "it will",
+    "i'd": "i would", "you'd": "you would", "we'd": "we would", "they'd": "they would",
+    "he'd": "he would", "she'd": "she would",
+    "won't": "will not", "can't": "can not", "cannot": "can not", "don't": "do not",
+    "doesn't": "does not", "didn't": "did not", "isn't": "is not", "aren't": "are not",
+    "wasn't": "was not", "weren't": "were not", "haven't": "have not", "hasn't": "has not",
+    "hadn't": "had not", "wouldn't": "would not", "shouldn't": "should not",
+    "couldn't": "could not", "mustn't": "must not", "ain't": "is not"
+  };
+  // 文字 -> 標準化單字陣列（小寫、統一引號、展開縮寫）
+  function pronWords(s) {
+    return (s || "").toLowerCase().replace(/[’ʼ]/g, "'")
+      .replace(/[^a-z' ]/g, " ").split(/\s+/).filter(Boolean)
+      .reduce((out, w) => out.concat((CONTRACTIONS[w] || w).split(" ")), []);
+  }
   function showPron(target, said) {
     const sCount = {};
-    (said || "").toLowerCase().replace(/[^a-z' ]/g, " ").split(/\s+/).filter(Boolean)
-      .forEach(w => { sCount[w] = (sCount[w] || 0) + 1; });
+    pronWords(said).forEach(w => { sCount[w] = (sCount[w] || 0) + 1; });
     let total = 0, matched = 0;
     const html = target.split(/\s+/).map(tok => {
-      const w = tok.toLowerCase().replace(/[^a-z']/g, "");
-      if (!w) return tok;
+      const subs = pronWords(tok);   // I'm -> [i, am]，與 I am 一致
+      if (!subs.length) return tok;
       total++;
-      if (sCount[w] > 0) { sCount[w]--; matched++; return '<span class="pw-ok">' + tok + '</span>'; }
+      if (subs.every(x => sCount[x] > 0)) { subs.forEach(x => sCount[x]--); matched++; return '<span class="pw-ok">' + tok + '</span>'; }
       return '<span class="pw-bad">' + tok + '</span>';
     }).join(" ");
     const pct = total ? Math.round(matched / total * 100) : 0;
