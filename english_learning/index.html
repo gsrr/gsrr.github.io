@@ -2310,6 +2310,7 @@
       });
       wrap.appendChild(opts);
       listEl.appendChild(wrap);
+      speakQuestion(item.q);   // 每題開始先自動念一次
     }
 
     function answer(choice, btn, opts, mark) {
@@ -2588,6 +2589,9 @@
       card.appendChild(opts);
 
       boxEl.appendChild(card);
+      const seq = [it.q];                               // 每題開始先自動念一次：題目＋1.2.3.選項
+      choices.forEach((c, i) => seq.push((i + 1) + ". " + c));
+      speakSequence(seq);
     }
 
     function answer(choice, btn, opts, mark, it) {
@@ -2786,6 +2790,7 @@
       card.appendChild(opts);
 
       boxEl.appendChild(card);
+      speakQuestion(it.text.replace("___", "blank"));   // 每題開始先自動念一次
     }
 
     function answer(choice, btn, opts, blank, it) {
