@@ -1996,21 +1996,6 @@
     }
     pronResult.classList.add("hidden");
     const target = script[idx].text;
-    let scored = false;
-    // 發音辨識（與錄音同時跑，錄完自動出分數）
-    if (SR) {
-      try {
-        pronRec = new SR();
-        pronRec.lang = "en-US"; pronRec.interimResults = false; pronRec.maxAlternatives = 1;
-        pronRec.onresult = (e) => { scored = true; showPron(target, e.results[0][0].transcript); };
-        pronRec.onerror = (ev) => {
-          if (!scored) {
-            pronResult.innerHTML = '<div style="font-size:13px;color:#94a3b8">🎯 No score (' + (ev.error || "error") + '). Needs internet + mic in Chrome/Edge.</div>';
-            pronResult.classList.remove("hidden");
-          }
-        };
-      } catch (e) { pronRec = null; }
-    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       chunks = [];
@@ -2022,11 +2007,10 @@
         recordings[idx] = URL.createObjectURL(blob);
         myPlayBtn.disabled = false;
         stream.getTracks().forEach(t => t.stop());
-        if (pronRec) { try { pronRec.stop(); } catch (e) {} }
-        playMyRecording();   // 錄完自動播放，聽自己
+        playMyRecording();                 // 聽自己
+        scorePronunciation(target, blob);   // 上傳音檔 → 後端 Whisper → 發音分數
       };
       mediaRecorder.start();
-      if (pronRec) { try { pronRec.start(); } catch (e) {} }
       isRecording = true;
       recBtn.classList.add("recording");
       recBtn.textContent = "⏹ Stop";
@@ -2035,6 +2019,21 @@
       statusEl.textContent = "⚠️ Cannot use the microphone. Please allow mic permission and try again.";
     }
   });
+  // 把錄好的音檔送到後端 Whisper，轉文字後比對目標句算發音分數
+  function scorePronunciation(target, blob) {
+    pronResult.innerHTML = '<div style="font-size:13px;color:#94a3b8">🎯 Scoring…</div>';
+    pronResult.classList.remove("hidden");
+    fetch("/api/stt?text=" + encodeURIComponent(target), { method: "POST", body: blob })
+      .then(r => r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)))
+      .then(d => {
+        if (d && typeof d.transcript === "string") showPron(target, d.transcript);
+        else throw new Error((d && d.error) || "no transcript");
+      })
+      .catch(() => {
+        pronResult.innerHTML = '<div style="font-size:13px;color:#94a3b8">🎯 Pronunciation score needs the server (Docker build). Not available on GitHub Pages / local file.</div>';
+        pronResult.classList.remove("hidden");
+      });
+  }
 
   function stopRecording() {
     if (mediaRecorder && mediaRecorder.state === "recording") mediaRecorder.stop();

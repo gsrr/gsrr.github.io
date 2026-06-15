@@ -3,8 +3,12 @@ FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends nginx python3 \
+    && apt-get install -y --no-install-recommends nginx python3 python3-pip ffmpeg \
     && rm -rf /var/lib/apt/lists/*
+
+# 發音評分用：faster-whisper（開源、免費、CPU 可跑）。建置時先下載模型，執行時免連網。
+RUN pip3 install --break-system-packages --no-cache-dir faster-whisper
+RUN python3 -c "from faster_whisper import WhisperModel; WhisperModel('base.en')"
 
 # nginx 設定（內嵌）：只提供 HTTPS(443)，使用掛載的 Let's Encrypt 憑證
 RUN rm -f /etc/nginx/sites-enabled/default
