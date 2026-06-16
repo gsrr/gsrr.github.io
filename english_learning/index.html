@@ -2290,7 +2290,7 @@
       return;
     }
     currentArticleKey = article.file;
-    currentArticle = article;
+    currentArticle = Object.assign({}, article, content);
     stopListenL1();
     stopRecordingIfAny();
     idx = 0;
