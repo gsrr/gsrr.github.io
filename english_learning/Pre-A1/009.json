@@ -1,0 +1,153 @@
+{
+  "quiz3": [
+    {
+      "q": "They are at the beach.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The sea is big.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Mia has a shell.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Ben can swim.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The beach is fun.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "The sea is little.",
+      "answer": "No"
+    },
+    {
+      "q": "Ben has the shell.",
+      "answer": "No"
+    },
+    {
+      "q": "They play in the snow.",
+      "answer": "No"
+    },
+    {
+      "q": "Ben can swim.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They are at the beach.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Mia",
+      "pic": "👧"
+    },
+    {
+      "word": "Ben",
+      "pic": "👦"
+    },
+    {
+      "word": "sea",
+      "pic": "🌊"
+    },
+    {
+      "word": "sand",
+      "pic": "🏖️"
+    },
+    {
+      "word": "shell",
+      "pic": "🐚"
+    },
+    {
+      "word": "boat",
+      "pic": "⛵"
+    },
+    {
+      "word": "swim",
+      "pic": "🏊"
+    }
+  ],
+  "wh": [
+    {
+      "q": "Where are they?",
+      "a": "They are at the beach.",
+      "wrong": [
+        "They are at home.",
+        "They are at school."
+      ]
+    },
+    {
+      "q": "What color is the sea?",
+      "a": "The sea is blue.",
+      "wrong": [
+        "The sea is red.",
+        "The sea is green."
+      ]
+    },
+    {
+      "q": "What does Mia have?",
+      "a": "She has a shell.",
+      "wrong": [
+        "She has a ball.",
+        "She has a book."
+      ]
+    },
+    {
+      "q": "Can Ben swim?",
+      "a": "Yes, he can swim.",
+      "wrong": [
+        "No, he can not.",
+        "He can run."
+      ]
+    },
+    {
+      "q": "What can Mia see?",
+      "a": "She can see a boat.",
+      "wrong": [
+        "She can see a car.",
+        "She can see a bird."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "Look at the ___!",
+      "answer": "sea",
+      "wrong": [
+        "big",
+        "blue"
+      ]
+    },
+    {
+      "text": "Let us play in the ___.",
+      "answer": "sand",
+      "wrong": [
+        "swim",
+        "sea"
+      ]
+    },
+    {
+      "text": "I have a little ___.",
+      "answer": "shell",
+      "wrong": [
+        "swim",
+        "big"
+      ]
+    },
+    {
+      "text": "I can ___.",
+      "answer": "swim",
+      "wrong": [
+        "sea",
+        "sand"
+      ]
+    }
+  ]
+}

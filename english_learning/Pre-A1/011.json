@@ -1,0 +1,149 @@
+{
+  "quiz3": [
+    {
+      "q": "It is raining.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Tom has an umbrella.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna has boots.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna likes rainy days.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna is wet.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "The sky is blue.",
+      "answer": "No"
+    },
+    {
+      "q": "Anna has an umbrella.",
+      "answer": "No"
+    },
+    {
+      "q": "It is a sunny day.",
+      "answer": "No"
+    },
+    {
+      "q": "They jump in the water.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna likes rainy days.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Tom",
+      "pic": "👦"
+    },
+    {
+      "word": "Anna",
+      "pic": "👧"
+    },
+    {
+      "word": "rain",
+      "pic": "🌧️"
+    },
+    {
+      "word": "umbrella",
+      "pic": "☔"
+    },
+    {
+      "word": "boots",
+      "pic": "🥾"
+    },
+    {
+      "word": "jump",
+      "pic": "🦘"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What is the weather?",
+      "a": "It is raining.",
+      "wrong": [
+        "It is sunny.",
+        "It is snowing."
+      ]
+    },
+    {
+      "q": "What color is the sky?",
+      "a": "The sky is grey.",
+      "wrong": [
+        "The sky is blue.",
+        "The sky is red."
+      ]
+    },
+    {
+      "q": "What does Tom have?",
+      "a": "He has an umbrella.",
+      "wrong": [
+        "He has a ball.",
+        "He has a book."
+      ]
+    },
+    {
+      "q": "What does Anna have?",
+      "a": "She has boots.",
+      "wrong": [
+        "She has a hat.",
+        "She has a bag."
+      ]
+    },
+    {
+      "q": "What do they do?",
+      "a": "They jump in the water.",
+      "wrong": [
+        "They sit at home.",
+        "They climb a tree."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "Look! It is ___.",
+      "answer": "raining",
+      "wrong": [
+        "wet",
+        "grey"
+      ]
+    },
+    {
+      "text": "I have my ___.",
+      "answer": "umbrella",
+      "wrong": [
+        "rain",
+        "wet"
+      ]
+    },
+    {
+      "text": "I have my ___, too.",
+      "answer": "boots",
+      "wrong": [
+        "jump",
+        "wet"
+      ]
+    },
+    {
+      "text": "I like ___ days.",
+      "answer": "rainy",
+      "wrong": [
+        "boots",
+        "water"
+      ]
+    }
+  ]
+}

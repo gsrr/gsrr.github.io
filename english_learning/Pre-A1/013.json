@@ -1,0 +1,149 @@
+{
+  "quiz3": [
+    {
+      "q": "Leo has a garden.",
+      "answer": "Yes"
+    },
+    {
+      "q": "There are many flowers.",
+      "answer": "Yes"
+    },
+    {
+      "q": "A bee is on the flower.",
+      "answer": "Yes"
+    },
+    {
+      "q": "There is a green tree.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Mia likes the garden.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Mia has a garden.",
+      "answer": "No"
+    },
+    {
+      "q": "The bee is big.",
+      "answer": "No"
+    },
+    {
+      "q": "The flower is red.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Birds live in the tree.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The garden is ugly.",
+      "answer": "No"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Leo",
+      "pic": "👦"
+    },
+    {
+      "word": "Mia",
+      "pic": "👧"
+    },
+    {
+      "word": "flower",
+      "pic": "🌷"
+    },
+    {
+      "word": "bee",
+      "pic": "🐝"
+    },
+    {
+      "word": "tree",
+      "pic": "🌳"
+    },
+    {
+      "word": "bird",
+      "pic": "🐦"
+    }
+  ],
+  "wh": [
+    {
+      "q": "Who has a garden?",
+      "a": "Leo has a garden.",
+      "wrong": [
+        "Mia has a garden.",
+        "Dad has a garden."
+      ]
+    },
+    {
+      "q": "What color is the flower?",
+      "a": "The flower is red.",
+      "wrong": [
+        "The flower is blue.",
+        "The flower is black."
+      ]
+    },
+    {
+      "q": "What is on the flower?",
+      "a": "A bee is on the flower.",
+      "wrong": [
+        "A cat is on the flower.",
+        "A car is on the flower."
+      ]
+    },
+    {
+      "q": "Where do birds live?",
+      "a": "Birds live in the tree.",
+      "wrong": [
+        "Birds live in the sea.",
+        "Birds live in the box."
+      ]
+    },
+    {
+      "q": "How is the garden?",
+      "a": "The garden is pretty.",
+      "wrong": [
+        "The garden is ugly.",
+        "The garden is wet."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "I see many ___.",
+      "answer": "flowers",
+      "wrong": [
+        "red",
+        "pretty"
+      ]
+    },
+    {
+      "text": "This flower is ___.",
+      "answer": "red",
+      "wrong": [
+        "bee",
+        "tree"
+      ]
+    },
+    {
+      "text": "A ___ is on the flower.",
+      "answer": "bee",
+      "wrong": [
+        "red",
+        "pretty"
+      ]
+    },
+    {
+      "text": "I can see a green ___.",
+      "answer": "tree",
+      "wrong": [
+        "bee",
+        "red"
+      ]
+    }
+  ]
+}

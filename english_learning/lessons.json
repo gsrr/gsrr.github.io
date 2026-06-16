@@ -3,7 +3,13 @@
     "Tom": "male",
     "Anna": "female",
     "Trump": "male",
-    "Reporter": "female"
+    "Reporter": "female",
+    "Ben": "male",
+    "Lily": "female",
+    "Sam": "male",
+    "Mia": "female",
+    "Leo": "male",
+    "Emma": "female"
   },
   "levels": [
     {
@@ -63,6 +69,156 @@
           "title": "004 · My Cat",
           "file": "Pre-A1/004",
           "scene": "pet-cat",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7,
+            9
+          ]
+        },
+        {
+          "id": "005",
+          "title": "005 · My Dog",
+          "file": "Pre-A1/005",
+          "scene": "dog-park",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7,
+            9
+          ]
+        },
+        {
+          "id": "006",
+          "title": "006 · Balloons",
+          "file": "Pre-A1/006",
+          "scene": "balloons",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7,
+            9
+          ]
+        },
+        {
+          "id": "007",
+          "title": "007 · My Family",
+          "file": "Pre-A1/007",
+          "scene": "family",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7,
+            9
+          ]
+        },
+        {
+          "id": "008",
+          "title": "008 · Breakfast Time",
+          "file": "Pre-A1/008",
+          "scene": "breakfast",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7,
+            9
+          ]
+        },
+        {
+          "id": "009",
+          "title": "009 · At the Beach",
+          "file": "Pre-A1/009",
+          "scene": "beach",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7,
+            9
+          ]
+        },
+        {
+          "id": "010",
+          "title": "010 · My Toys",
+          "file": "Pre-A1/010",
+          "scene": "toys",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7,
+            9
+          ]
+        },
+        {
+          "id": "011",
+          "title": "011 · Rainy Day",
+          "file": "Pre-A1/011",
+          "scene": "rainy-day",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7,
+            9
+          ]
+        },
+        {
+          "id": "012",
+          "title": "012 · Happy Birthday",
+          "file": "Pre-A1/012",
+          "scene": "birthday",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7,
+            9
+          ]
+        },
+        {
+          "id": "013",
+          "title": "013 · In the Garden",
+          "file": "Pre-A1/013",
+          "scene": "garden",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7,
+            9
+          ]
+        },
+        {
+          "id": "014",
+          "title": "014 · Bedtime",
+          "file": "Pre-A1/014",
+          "scene": "bedtime",
           "levels": [
             1,
             2,

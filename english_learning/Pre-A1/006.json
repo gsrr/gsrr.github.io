@@ -1,0 +1,149 @@
+{
+  "quiz3": [
+    {
+      "q": "Sam has balloons.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Sam has three balloons.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Mia likes the red balloon.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The green balloon is big.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Balloons are fun.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Mia has the balloons.",
+      "answer": "No"
+    },
+    {
+      "q": "Sam has two balloons.",
+      "answer": "No"
+    },
+    {
+      "q": "Sam likes the blue balloon.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The green balloon is little.",
+      "answer": "No"
+    },
+    {
+      "q": "Mia likes the red balloon.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Sam",
+      "pic": "👦"
+    },
+    {
+      "word": "Mia",
+      "pic": "👧"
+    },
+    {
+      "word": "balloon",
+      "pic": "🎈"
+    },
+    {
+      "word": "red",
+      "pic": "🔴"
+    },
+    {
+      "word": "blue",
+      "pic": "🔵"
+    },
+    {
+      "word": "green",
+      "pic": "🟢"
+    }
+  ],
+  "wh": [
+    {
+      "q": "Who has balloons?",
+      "a": "Sam has balloons.",
+      "wrong": [
+        "Mia has balloons.",
+        "Dad has balloons."
+      ]
+    },
+    {
+      "q": "How many balloons?",
+      "a": "He has three balloons.",
+      "wrong": [
+        "He has two balloons.",
+        "He has five balloons."
+      ]
+    },
+    {
+      "q": "What color does Mia like?",
+      "a": "She likes red.",
+      "wrong": [
+        "She likes black.",
+        "She likes white."
+      ]
+    },
+    {
+      "q": "What color does Sam like?",
+      "a": "He likes blue.",
+      "wrong": [
+        "He likes green.",
+        "He likes pink."
+      ]
+    },
+    {
+      "q": "What is big?",
+      "a": "The green balloon is big.",
+      "wrong": [
+        "The red balloon is big.",
+        "The blue balloon is big."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "I have three ___.",
+      "answer": "balloons",
+      "wrong": [
+        "red",
+        "fun"
+      ]
+    },
+    {
+      "text": "I like the ___ balloon.",
+      "answer": "red",
+      "wrong": [
+        "have",
+        "big"
+      ]
+    },
+    {
+      "text": "The green balloon is ___.",
+      "answer": "big",
+      "wrong": [
+        "red",
+        "balloon"
+      ]
+    },
+    {
+      "text": "Balloons are ___.",
+      "answer": "fun",
+      "wrong": [
+        "red",
+        "three"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "quiz3": [
+    {
+      "q": "Tom has a family.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Tom has a baby sister.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The baby is small.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna has a big brother.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna has a cat.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Anna has a baby sister.",
+      "answer": "No"
+    },
+    {
+      "q": "The baby is big.",
+      "answer": "No"
+    },
+    {
+      "q": "Tom has a big brother.",
+      "answer": "No"
+    },
+    {
+      "q": "Anna has a cat.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Tom loves his family.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Tom",
+      "pic": "👦"
+    },
+    {
+      "word": "Anna",
+      "pic": "👧"
+    },
+    {
+      "word": "mom",
+      "pic": "👩"
+    },
+    {
+      "word": "dad",
+      "pic": "👨"
+    },
+    {
+      "word": "baby",
+      "pic": "👶"
+    },
+    {
+      "word": "cat",
+      "pic": "🐈"
+    }
+  ],
+  "wh": [
+    {
+      "q": "Who is in Tom's family?",
+      "a": "His mom and dad.",
+      "wrong": [
+        "His teacher.",
+        "His friends."
+      ]
+    },
+    {
+      "q": "Is the baby big or small?",
+      "a": "The baby is small.",
+      "wrong": [
+        "The baby is big.",
+        "The baby is tall."
+      ]
+    },
+    {
+      "q": "Who has a big brother?",
+      "a": "Anna has a big brother.",
+      "wrong": [
+        "Tom has a big brother.",
+        "Mom has a big brother."
+      ]
+    },
+    {
+      "q": "What pet does Anna have?",
+      "a": "She has a cat.",
+      "wrong": [
+        "She has a dog.",
+        "She has a fish."
+      ]
+    },
+    {
+      "q": "Who loves his family?",
+      "a": "Tom loves his family.",
+      "wrong": [
+        "Anna loves the cat.",
+        "Dad loves the baby."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "This is my mom and my ___.",
+      "answer": "dad",
+      "wrong": [
+        "small",
+        "love"
+      ]
+    },
+    {
+      "text": "The baby is ___.",
+      "answer": "small",
+      "wrong": [
+        "mom",
+        "cat"
+      ]
+    },
+    {
+      "text": "I have a ___ sister.",
+      "answer": "baby",
+      "wrong": [
+        "love",
+        "cat"
+      ]
+    },
+    {
+      "text": "I love my ___.",
+      "answer": "family",
+      "wrong": [
+        "small",
+        "baby"
+      ]
+    }
+  ]
+}

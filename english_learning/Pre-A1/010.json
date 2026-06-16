@@ -1,0 +1,149 @@
+{
+  "quiz3": [
+    {
+      "q": "Sam has many toys.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Sam has a red car.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Sam has a robot.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Lily has a doll.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Toys are fun.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Lily has many toys.",
+      "answer": "No"
+    },
+    {
+      "q": "Sam's car is blue.",
+      "answer": "No"
+    },
+    {
+      "q": "Lily has a doll.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They will play together.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Sam has a robot.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Sam",
+      "pic": "👦"
+    },
+    {
+      "word": "Lily",
+      "pic": "👧"
+    },
+    {
+      "word": "car",
+      "pic": "🚗"
+    },
+    {
+      "word": "robot",
+      "pic": "🤖"
+    },
+    {
+      "word": "doll",
+      "pic": "🪆"
+    },
+    {
+      "word": "toy",
+      "pic": "🧸"
+    }
+  ],
+  "wh": [
+    {
+      "q": "Who has many toys?",
+      "a": "Sam has many toys.",
+      "wrong": [
+        "Lily has many toys.",
+        "Mom has many toys."
+      ]
+    },
+    {
+      "q": "What color is the car?",
+      "a": "The car is red.",
+      "wrong": [
+        "The car is blue.",
+        "The car is green."
+      ]
+    },
+    {
+      "q": "What does Lily have?",
+      "a": "She has a doll.",
+      "wrong": [
+        "She has a car.",
+        "She has a robot."
+      ]
+    },
+    {
+      "q": "What do they want to do?",
+      "a": "They want to play together.",
+      "wrong": [
+        "They want to sleep.",
+        "They want to eat."
+      ]
+    },
+    {
+      "q": "What is fun?",
+      "a": "Toys are fun.",
+      "wrong": [
+        "School is fun.",
+        "Beds are fun."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "Look at my ___!",
+      "answer": "toys",
+      "wrong": [
+        "red",
+        "fun"
+      ]
+    },
+    {
+      "text": "This is my red ___.",
+      "answer": "car",
+      "wrong": [
+        "play",
+        "fun"
+      ]
+    },
+    {
+      "text": "I have a ___ at home.",
+      "answer": "doll",
+      "wrong": [
+        "play",
+        "fun"
+      ]
+    },
+    {
+      "text": "Toys are ___.",
+      "answer": "fun",
+      "wrong": [
+        "car",
+        "toy"
+      ]
+    }
+  ]
+}

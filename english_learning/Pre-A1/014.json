@@ -1,0 +1,149 @@
+{
+  "quiz3": [
+    {
+      "q": "It is night.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The moon is big.",
+      "answer": "Yes"
+    },
+    {
+      "q": "There are many stars.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna is sleepy.",
+      "answer": "Yes"
+    },
+    {
+      "q": "It is time for bed.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "It is morning.",
+      "answer": "No"
+    },
+    {
+      "q": "The moon is little.",
+      "answer": "No"
+    },
+    {
+      "q": "Anna is sleepy.",
+      "answer": "Yes"
+    },
+    {
+      "q": "There are many stars.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Ben is hungry.",
+      "answer": "No"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Ben",
+      "pic": "👦"
+    },
+    {
+      "word": "Anna",
+      "pic": "👧"
+    },
+    {
+      "word": "moon",
+      "pic": "🌙"
+    },
+    {
+      "word": "star",
+      "pic": "⭐"
+    },
+    {
+      "word": "bed",
+      "pic": "🛏️"
+    },
+    {
+      "word": "night",
+      "pic": "🌃"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What time is it?",
+      "a": "It is night.",
+      "wrong": [
+        "It is morning.",
+        "It is noon."
+      ]
+    },
+    {
+      "q": "What can Anna see?",
+      "a": "She can see many stars.",
+      "wrong": [
+        "She can see the sun.",
+        "She can see a boat."
+      ]
+    },
+    {
+      "q": "What color is the moon?",
+      "a": "The moon is white.",
+      "wrong": [
+        "The moon is red.",
+        "The moon is green."
+      ]
+    },
+    {
+      "q": "How does Anna feel?",
+      "a": "She is sleepy.",
+      "wrong": [
+        "She is hungry.",
+        "She is happy."
+      ]
+    },
+    {
+      "q": "What is it time for?",
+      "a": "It is time for bed.",
+      "wrong": [
+        "It is time to play.",
+        "It is time to eat."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "Look at the ___.",
+      "answer": "moon",
+      "wrong": [
+        "night",
+        "sleepy"
+      ]
+    },
+    {
+      "text": "I can see many ___.",
+      "answer": "stars",
+      "wrong": [
+        "big",
+        "night"
+      ]
+    },
+    {
+      "text": "I am ___ now.",
+      "answer": "sleepy",
+      "wrong": [
+        "moon",
+        "star"
+      ]
+    },
+    {
+      "text": "It is time for ___.",
+      "answer": "bed",
+      "wrong": [
+        "moon",
+        "night"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "quiz3": [
+    {
+      "q": "Ben has a dog.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The dog's name is Max.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Max can run fast.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Max likes the ball.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Lily wants a dog.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Lily has a dog.",
+      "answer": "No"
+    },
+    {
+      "q": "Max is small.",
+      "answer": "No"
+    },
+    {
+      "q": "Max can run fast.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Ben does not like Max.",
+      "answer": "No"
+    },
+    {
+      "q": "Max is a good dog.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Ben",
+      "pic": "👦"
+    },
+    {
+      "word": "Lily",
+      "pic": "👧"
+    },
+    {
+      "word": "dog",
+      "pic": "🐕"
+    },
+    {
+      "word": "ball",
+      "pic": "⚽"
+    },
+    {
+      "word": "run",
+      "pic": "🏃"
+    },
+    {
+      "word": "friend",
+      "pic": "🤝"
+    }
+  ],
+  "wh": [
+    {
+      "q": "Who has a dog?",
+      "a": "Ben has a dog.",
+      "wrong": [
+        "Lily has a dog.",
+        "Mom has a dog."
+      ]
+    },
+    {
+      "q": "What is the dog's name?",
+      "a": "Its name is Max.",
+      "wrong": [
+        "Its name is Coco.",
+        "Its name is Milo."
+      ]
+    },
+    {
+      "q": "What can Max do?",
+      "a": "He can run fast.",
+      "wrong": [
+        "He can swim fast.",
+        "He can fly."
+      ]
+    },
+    {
+      "q": "What does Max like?",
+      "a": "Max likes the ball.",
+      "wrong": [
+        "Max likes the book.",
+        "Max likes the car."
+      ]
+    },
+    {
+      "q": "Who wants a dog?",
+      "a": "Lily wants a dog.",
+      "wrong": [
+        "Ben wants a dog.",
+        "Dad wants a dog."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "Look! I have a ___.",
+      "answer": "dog",
+      "wrong": [
+        "run",
+        "fast"
+      ]
+    },
+    {
+      "text": "Its ___ is Max.",
+      "answer": "name",
+      "wrong": [
+        "play",
+        "big"
+      ]
+    },
+    {
+      "text": "Max can run ___.",
+      "answer": "fast",
+      "wrong": [
+        "dog",
+        "ball"
+      ]
+    },
+    {
+      "text": "Max likes the ___.",
+      "answer": "ball",
+      "wrong": [
+        "run",
+        "fast"
+      ]
+    }
+  ]
+}

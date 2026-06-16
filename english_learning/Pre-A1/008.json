@@ -1,0 +1,149 @@
+{
+  "quiz3": [
+    {
+      "q": "Emma is hungry.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Emma eats eggs and bread.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Leo drinks milk.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Emma likes eggs.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Leo is happy.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Leo is hungry.",
+      "answer": "No"
+    },
+    {
+      "q": "Emma eats cake.",
+      "answer": "No"
+    },
+    {
+      "q": "Leo drinks water.",
+      "answer": "No"
+    },
+    {
+      "q": "Emma likes eggs.",
+      "answer": "Yes"
+    },
+    {
+      "q": "It is breakfast time.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Emma",
+      "pic": "👧"
+    },
+    {
+      "word": "Leo",
+      "pic": "👦"
+    },
+    {
+      "word": "egg",
+      "pic": "🍳"
+    },
+    {
+      "word": "bread",
+      "pic": "🍞"
+    },
+    {
+      "word": "milk",
+      "pic": "🥛"
+    },
+    {
+      "word": "eat",
+      "pic": "🍽️"
+    }
+  ],
+  "wh": [
+    {
+      "q": "Who is hungry?",
+      "a": "Emma is hungry.",
+      "wrong": [
+        "Leo is hungry.",
+        "Dad is hungry."
+      ]
+    },
+    {
+      "q": "What does Emma eat?",
+      "a": "She eats eggs and bread.",
+      "wrong": [
+        "She eats rice.",
+        "She eats cake."
+      ]
+    },
+    {
+      "q": "What does Leo drink?",
+      "a": "He drinks milk.",
+      "wrong": [
+        "He drinks juice.",
+        "He drinks tea."
+      ]
+    },
+    {
+      "q": "Does Emma like eggs?",
+      "a": "Yes, she likes eggs.",
+      "wrong": [
+        "No, she does not.",
+        "She likes cake."
+      ]
+    },
+    {
+      "q": "When is it?",
+      "a": "It is breakfast time.",
+      "wrong": [
+        "It is night.",
+        "It is bedtime."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "I eat eggs and ___.",
+      "answer": "bread",
+      "wrong": [
+        "eat",
+        "good"
+      ]
+    },
+    {
+      "text": "I drink ___ every day.",
+      "answer": "milk",
+      "wrong": [
+        "eat",
+        "hungry"
+      ]
+    },
+    {
+      "text": "Do you like ___?",
+      "answer": "eggs",
+      "wrong": [
+        "good",
+        "hungry"
+      ]
+    },
+    {
+      "text": "Let us eat ___.",
+      "answer": "breakfast",
+      "wrong": [
+        "milk",
+        "egg"
+      ]
+    }
+  ]
+}

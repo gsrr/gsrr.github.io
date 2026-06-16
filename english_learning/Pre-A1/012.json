@@ -1,0 +1,149 @@
+{
+  "quiz3": [
+    {
+      "q": "It is Emma's birthday.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The cake is big.",
+      "answer": "Yes"
+    },
+    {
+      "q": "There are six candles.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Lily has a gift.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Emma is happy.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "It is Lily's birthday.",
+      "answer": "No"
+    },
+    {
+      "q": "The cake is little.",
+      "answer": "No"
+    },
+    {
+      "q": "Lily has a gift for Emma.",
+      "answer": "Yes"
+    },
+    {
+      "q": "There are two candles.",
+      "answer": "No"
+    },
+    {
+      "q": "Emma is sad.",
+      "answer": "No"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Lily",
+      "pic": "👧"
+    },
+    {
+      "word": "Emma",
+      "pic": "👧"
+    },
+    {
+      "word": "cake",
+      "pic": "🎂"
+    },
+    {
+      "word": "candle",
+      "pic": "🕯️"
+    },
+    {
+      "word": "gift",
+      "pic": "🎁"
+    },
+    {
+      "word": "balloon",
+      "pic": "🎈"
+    }
+  ],
+  "wh": [
+    {
+      "q": "Whose birthday is it?",
+      "a": "It is Emma's birthday.",
+      "wrong": [
+        "It is Lily's birthday.",
+        "It is Tom's birthday."
+      ]
+    },
+    {
+      "q": "How big is the cake?",
+      "a": "The cake is big.",
+      "wrong": [
+        "The cake is little.",
+        "The cake is old."
+      ]
+    },
+    {
+      "q": "How many candles?",
+      "a": "There are six candles.",
+      "wrong": [
+        "There are two candles.",
+        "There are ten candles."
+      ]
+    },
+    {
+      "q": "What does Lily have?",
+      "a": "She has a gift.",
+      "wrong": [
+        "She has a ball.",
+        "She has a book."
+      ]
+    },
+    {
+      "q": "How does Emma feel?",
+      "a": "She is happy.",
+      "wrong": [
+        "She is sad.",
+        "She is angry."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "Look at the big ___.",
+      "answer": "cake",
+      "wrong": [
+        "happy",
+        "sing"
+      ]
+    },
+    {
+      "text": "I see six ___.",
+      "answer": "candles",
+      "wrong": [
+        "big",
+        "happy"
+      ]
+    },
+    {
+      "text": "I have a ___ for you.",
+      "answer": "gift",
+      "wrong": [
+        "sing",
+        "happy"
+      ]
+    },
+    {
+      "text": "I am so ___.",
+      "answer": "happy",
+      "wrong": [
+        "cake",
+        "gift"
+      ]
+    }
+  ]
+}
