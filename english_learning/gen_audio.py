@@ -66,14 +66,21 @@ def collect_pairs():
                     pairs += parse_dialogue(f.read(), speakers)
             except FileNotFoundError:
                 print("略過（找不到檔案）:", a["file"])
+            # 各關卡內容獨立成檔：<file>.json（quiz/wh/cloze/dictation）
+            content = {}
+            try:
+                with open(path + ".json", encoding="utf-8") as f:
+                    content = json.load(f)
+            except FileNotFoundError:
+                print("略過（找不到內容）:", a["file"] + ".json")
             # Level 8 聽寫
-            for s in a.get("dictation", []):
+            for s in content.get("dictation", []):
                 pairs.append(("female", s, None))
             # Level 3/4 測驗題目
-            for it in a.get("quiz3", []) + a.get("quiz4", []):
+            for it in content.get("quiz3", []) + content.get("quiz4", []):
                 pairs.append(("female", it["q"], None))
             # Level 7 WH：題目、答案、以及「N. 選項」編號朗讀
-            for it in a.get("wh", []):
+            for it in content.get("wh", []):
                 opts = [it["a"]] + it.get("wrong", [])
                 pairs.append(("female", it["q"], None))
                 pairs.append(("female", it["a"], None))
@@ -81,7 +88,7 @@ def collect_pairs():
                     for opt in opts:
                         pairs.append(("female", "%d. %s" % (n, opt), None))
             # Level 9 填空：空格唸成 blank 的版本，以及填好答案的完整句
-            for it in a.get("cloze", []):
+            for it in content.get("cloze", []):
                 pairs.append(("female", it["text"].replace("___", "blank", 1), None))
                 pairs.append(("female", it["text"].replace("___", it["answer"], 1), None))
     # 去重、保留順序（以 性別|句子 為鍵，沿用第一次出現的角色）
