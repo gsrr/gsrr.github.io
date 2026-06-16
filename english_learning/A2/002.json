@@ -1,0 +1,192 @@
+{
+  "quiz3": [
+    {
+      "q": "There is a kind of ceasefire in the Middle East.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The fighting has stopped completely.",
+      "answer": "No"
+    },
+    {
+      "q": "They are still shooting a little.",
+      "answer": "Yes"
+    },
+    {
+      "q": "A ceasefire means full peace.",
+      "answer": "No"
+    },
+    {
+      "q": "A truce can still have some fighting.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Trump says the ceasefire stops everything.",
+      "answer": "No"
+    },
+    {
+      "q": "\"Moderate\" here means less shooting, not zero.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The reporter is talking to the President.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Trump says there is no ceasefire.",
+      "answer": "No"
+    },
+    {
+      "q": "A truce always stops all the fighting.",
+      "answer": "No"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "reporter",
+      "pic": "🎤"
+    },
+    {
+      "word": "president",
+      "pic": "👔"
+    },
+    {
+      "word": "ceasefire",
+      "pic": "🕊️"
+    },
+    {
+      "word": "shooting",
+      "pic": "🔫"
+    },
+    {
+      "word": "peace",
+      "pic": "☮️"
+    },
+    {
+      "word": "truce",
+      "pic": "🤝"
+    },
+    {
+      "word": "fighting",
+      "pic": "💥"
+    }
+  ],
+  "wh": [
+    {
+      "q": "Who is the reporter talking to?",
+      "a": "She is talking to the President.",
+      "wrong": [
+        "She is talking to a teacher.",
+        "She is talking to a soldier."
+      ]
+    },
+    {
+      "q": "Is there a ceasefire now?",
+      "a": "Yes, there is a kind of ceasefire.",
+      "wrong": [
+        "No, there is none.",
+        "Yes, and there is full peace."
+      ]
+    },
+    {
+      "q": "Has the fighting stopped completely?",
+      "a": "No, they are still shooting a little.",
+      "wrong": [
+        "Yes, it has fully stopped.",
+        "Yes, there is full peace now."
+      ]
+    },
+    {
+      "q": "What does \"moderate\" mean here?",
+      "a": "It means less shooting, but not zero.",
+      "wrong": [
+        "It means no shooting at all.",
+        "It means more shooting than before."
+      ]
+    },
+    {
+      "q": "Does a truce stop everything?",
+      "a": "No, it does not always stop everything.",
+      "wrong": [
+        "Yes, it stops everything.",
+        "Yes, it brings full peace."
+      ]
+    }
+  ],
+  "clozeType": "context",
+  "cloze": [
+    {
+      "text": "There is a kind of ___ in the Middle East.",
+      "answer": "ceasefire",
+      "wrong": [
+        "party",
+        "holiday"
+      ]
+    },
+    {
+      "text": "The fighting has not ___ completely.",
+      "answer": "stopped",
+      "wrong": [
+        "started",
+        "opened"
+      ]
+    },
+    {
+      "text": "They are shooting in a more ___ way.",
+      "answer": "moderate",
+      "wrong": [
+        "angry",
+        "happy"
+      ]
+    },
+    {
+      "text": "A ___ does not always stop everything.",
+      "answer": "truce",
+      "wrong": [
+        "game",
+        "song"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "There",
+      "is",
+      "a",
+      "kind",
+      "of",
+      "ceasefire"
+    ],
+    [
+      "The",
+      "fighting",
+      "has",
+      "not",
+      "stopped"
+    ],
+    [
+      "They",
+      "are",
+      "still",
+      "shooting",
+      "a",
+      "little"
+    ],
+    [
+      "A",
+      "truce",
+      "does",
+      "not",
+      "stop",
+      "everything"
+    ]
+  ],
+  "dictation": [
+    "There is a kind of ceasefire.",
+    "The fighting has not stopped completely.",
+    "They are shooting in a more moderate way.",
+    "A truce does not always stop everything."
+  ]
+}

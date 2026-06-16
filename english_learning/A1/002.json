@@ -1,0 +1,189 @@
+{
+  "quiz3": [
+    {
+      "q": "Anna went to the zoo.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna saw lions.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Tom went to the zoo.",
+      "answer": "No"
+    },
+    {
+      "q": "It was rainy at Tom's home.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Tom read books at home.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Anna stayed home.",
+      "answer": "No"
+    },
+    {
+      "q": "The monkeys were funny.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Tom saw the elephants.",
+      "answer": "No"
+    },
+    {
+      "q": "Anna went with Tom.",
+      "answer": "No"
+    },
+    {
+      "q": "The elephants were big.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Tom",
+      "pic": "👦"
+    },
+    {
+      "word": "Anna",
+      "pic": "👧"
+    },
+    {
+      "word": "zoo",
+      "pic": "🦁"
+    },
+    {
+      "word": "monkey",
+      "pic": "🐒"
+    },
+    {
+      "word": "elephant",
+      "pic": "🐘"
+    },
+    {
+      "word": "book",
+      "pic": "📚"
+    },
+    {
+      "word": "game",
+      "pic": "🎮"
+    }
+  ],
+  "wh": [
+    {
+      "q": "Where did Anna go?",
+      "a": "She went to the zoo.",
+      "wrong": [
+        "She went to school.",
+        "She went to the park."
+      ]
+    },
+    {
+      "q": "Who did Anna go with?",
+      "a": "She went with her family.",
+      "wrong": [
+        "She went with Tom.",
+        "She went with her friends."
+      ]
+    },
+    {
+      "q": "What animals did Anna see?",
+      "a": "She saw lions and monkeys.",
+      "wrong": [
+        "She saw dogs and cats.",
+        "She saw birds and fish."
+      ]
+    },
+    {
+      "q": "Why did Tom stay home?",
+      "a": "Because it was rainy.",
+      "wrong": [
+        "Because he was sick.",
+        "Because he was tired."
+      ]
+    },
+    {
+      "q": "What did Tom do at home?",
+      "a": "He read books and played games.",
+      "wrong": [
+        "He watched TV.",
+        "He cleaned his room."
+      ]
+    }
+  ],
+  "clozeType": "category",
+  "cloze": [
+    {
+      "text": "I went to the ___ with my family.",
+      "answer": "zoo",
+      "wrong": [
+        "park",
+        "beach"
+      ]
+    },
+    {
+      "text": "I saw lions and ___.",
+      "answer": "monkeys",
+      "wrong": [
+        "tigers",
+        "bears"
+      ]
+    },
+    {
+      "text": "I stayed home because it was ___.",
+      "answer": "rainy",
+      "wrong": [
+        "sunny",
+        "windy"
+      ]
+    },
+    {
+      "text": "I read books and played ___.",
+      "answer": "games",
+      "wrong": [
+        "cards",
+        "music"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "I",
+      "went",
+      "to",
+      "the",
+      "zoo"
+    ],
+    [
+      "I",
+      "saw",
+      "lions",
+      "and",
+      "monkeys"
+    ],
+    [
+      "The",
+      "monkeys",
+      "were",
+      "funny"
+    ],
+    [
+      "I",
+      "read",
+      "books",
+      "and",
+      "played",
+      "games"
+    ]
+  ],
+  "dictation": [
+    "I went to the zoo with my family.",
+    "I saw lions and monkeys.",
+    "I stayed home because it was rainy.",
+    "I read books and played games."
+  ]
+}

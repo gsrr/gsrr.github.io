@@ -565,764 +565,7 @@
     <!-- 朗讀時顯示目前句子的對話泡泡 -->
     <div id="sceneBubble" class="scene-bubble hidden"></div>
     <!-- 場景 A：公園邀約 + 玩球（對應 001 park-ball） -->
-    <div class="scene" id="scene" data-scene="park-ball">
-      <svg viewBox="0 0 360 170" xmlns="http://www.w3.org/2000/svg" role="img"
-           aria-label="Tom and Anna playing with a ball in the park">
-        <defs>
-          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#bae6fd"/>
-            <stop offset="1" stop-color="#e0f2fe"/>
-          </linearGradient>
-        </defs>
-
-        <!-- 天空 + 草地 -->
-        <rect x="0" y="0" width="360" height="170" fill="url(#sky)"/>
-        <rect x="0" y="128" width="360" height="42" fill="#86efac"/>
-        <rect x="0" y="128" width="360" height="6" fill="#4ade80"/>
-
-        <!-- 太陽 -->
-        <g transform="translate(312,30)">
-          <g class="rays">
-            <g stroke="#fbbf24" stroke-width="3" stroke-linecap="round">
-              <line x1="0" y1="-26" x2="0" y2="-20"/>
-              <line x1="0" y1="26" x2="0" y2="20"/>
-              <line x1="-26" y1="0" x2="-20" y2="0"/>
-              <line x1="26" y1="0" x2="20" y2="0"/>
-              <line x1="-18" y1="-18" x2="-14" y2="-14"/>
-              <line x1="18" y1="18" x2="14" y2="14"/>
-              <line x1="-18" y1="18" x2="-14" y2="14"/>
-              <line x1="18" y1="-18" x2="14" y2="-14"/>
-            </g>
-          </g>
-          <circle r="15" fill="#fde047"/>
-        </g>
-
-        <!-- 雲 -->
-        <g class="cloud1" fill="#ffffff" opacity="0.9">
-          <ellipse cx="40" cy="34" rx="20" ry="12"/>
-          <ellipse cx="58" cy="34" rx="16" ry="10"/>
-          <ellipse cx="26" cy="38" rx="14" ry="9"/>
-        </g>
-        <g class="cloud2" fill="#ffffff" opacity="0.8">
-          <ellipse cx="150" cy="58" rx="16" ry="9"/>
-          <ellipse cx="164" cy="58" rx="12" ry="8"/>
-        </g>
-
-        <!-- 小樹 -->
-        <g class="tree">
-          <rect x="22" y="96" width="8" height="34" rx="3" fill="#92400e"/>
-          <circle cx="26" cy="86" r="20" fill="#22c55e"/>
-          <circle cx="13" cy="94" r="13" fill="#16a34a"/>
-          <circle cx="39" cy="94" r="13" fill="#16a34a"/>
-        </g>
-
-        <!-- Tom（男生，左邊） -->
-        <g transform="translate(78,50)">
-          <g class="bob-a">
-            <!-- 對話泡泡 Hi! -->
-            <g class="talkA">
-              <path d="M34,-3 L30,5 L42,-2 Z" fill="#fff" stroke="#2563eb" stroke-width="1.5"/>
-              <rect x="26" y="-24" width="40" height="22" rx="11" fill="#fff" stroke="#2563eb" stroke-width="1.5"/>
-              <text x="46" y="-9" font-size="11" font-weight="700" fill="#2563eb" text-anchor="middle">Hi!</text>
-            </g>
-            <!-- 影子 -->
-            <ellipse cx="20" cy="80" rx="15" ry="3" fill="#000" opacity="0.10"/>
-            <!-- 腿 -->
-            <rect x="13" y="60" width="6" height="14" rx="3" fill="#ffe0bd"/>
-            <rect x="21" y="60" width="6" height="14" rx="3" fill="#ffe0bd"/>
-            <!-- 鞋子 -->
-            <rect x="10" y="73" width="11" height="6" rx="3" fill="#ef4444"/>
-            <rect x="19" y="73" width="11" height="6" rx="3" fill="#ef4444"/>
-            <!-- 短褲 -->
-            <rect x="9" y="50" width="22" height="12" rx="4" fill="#1e3a8a"/>
-            <rect x="19.3" y="52" width="1.4" height="9" fill="#172554"/>
-            <!-- 上衣 -->
-            <rect x="7" y="28" width="26" height="24" rx="9" fill="#2563eb"/>
-            <rect x="7" y="39" width="26" height="3.5" fill="#fff" opacity="0.7"/>
-            <!-- 手臂 -->
-            <rect x="2" y="29" width="8" height="11" rx="4" fill="#2563eb"/>
-            <rect x="1.5" y="37" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(8 4 42)"/>
-            <circle cx="4" cy="49" r="3.3" fill="#ffe0bd"/>
-            <rect x="30" y="29" width="8" height="11" rx="4" fill="#2563eb"/>
-            <rect x="32.5" y="37" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(-8 36 42)"/>
-            <circle cx="36" cy="49" r="3.3" fill="#ffe0bd"/>
-            <!-- 脖子 -->
-            <rect x="16.5" y="24" width="7" height="6" fill="#ffe0bd"/>
-            <!-- 頭髮（後）+ 臉 -->
-            <circle cx="20" cy="13" r="13" fill="#5b3a1f"/>
-            <circle cx="20" cy="15" r="12" fill="#ffe0bd"/>
-            <ellipse cx="7.7" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
-            <ellipse cx="32.3" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
-            <!-- 瀏海 -->
-            <path d="M8,12 Q20,2 32,12 Q20,8 8,12 Z" fill="#5b3a1f"/>
-            <!-- 腮紅 -->
-            <circle cx="11" cy="19" r="2.5" fill="#fca5a5" opacity="0.55"/>
-            <circle cx="29" cy="19" r="2.5" fill="#fca5a5" opacity="0.55"/>
-            <!-- 眉毛 -->
-            <path d="M11.5,11 q2,-1.2 4,0" stroke="#5b3a1f" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-            <path d="M24.5,11 q2,-1.2 4,0" stroke="#5b3a1f" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-            <!-- 眼睛 -->
-            <ellipse cx="14" cy="15" rx="2.2" ry="2.8" fill="#fff"/>
-            <circle cx="14.4" cy="15.4" r="1.4" fill="#3b2415"/>
-            <ellipse cx="26" cy="15" rx="2.2" ry="2.8" fill="#fff"/>
-            <circle cx="25.6" cy="15.4" r="1.4" fill="#3b2415"/>
-            <!-- 鼻子 -->
-            <path d="M20,15.5 q1.5,2.2 -0.6,3.2" stroke="#e0a878" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-            <!-- 嘴巴 -->
-            <path d="M15,21 Q20,25 25,21" stroke="#b5503a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-          </g>
-        </g>
-
-        <!-- Anna（女生，右邊） -->
-        <g transform="translate(238,50)">
-          <g class="bob-b">
-            <!-- 對話泡泡 Yes! -->
-            <g class="talkB">
-              <path d="M6,-3 L10,5 L-2,-2 Z" fill="#fff" stroke="#db2777" stroke-width="1.5"/>
-              <rect x="-26" y="-24" width="42" height="22" rx="11" fill="#fff" stroke="#db2777" stroke-width="1.5"/>
-              <text x="-5" y="-9" font-size="11" font-weight="700" fill="#db2777" text-anchor="middle">Yes!</text>
-            </g>
-            <!-- 影子 -->
-            <ellipse cx="20" cy="80" rx="15" ry="3" fill="#000" opacity="0.10"/>
-            <!-- 長髮（後） -->
-            <path d="M4,16 Q1,44 7,58 L33,58 Q39,44 36,16 Z" fill="#6b4423"/>
-            <!-- 腿 -->
-            <rect x="13" y="58" width="6" height="14" rx="3" fill="#ffe0bd"/>
-            <rect x="21" y="58" width="6" height="14" rx="3" fill="#ffe0bd"/>
-            <!-- 鞋子 -->
-            <rect x="10" y="72" width="11" height="6" rx="3" fill="#be185d"/>
-            <rect x="19" y="72" width="11" height="6" rx="3" fill="#be185d"/>
-            <!-- 洋裝 -->
-            <path d="M9,30 Q5,48 2,60 L38,60 Q35,48 31,30 Z" fill="#db2777"/>
-            <rect x="9" y="30" width="22" height="7" rx="3" fill="#be185d" opacity="0.45"/>
-            <!-- 手臂 -->
-            <rect x="2" y="31" width="8" height="10" rx="4" fill="#db2777"/>
-            <rect x="1.5" y="38" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(8 4 43)"/>
-            <circle cx="4" cy="50" r="3.3" fill="#ffe0bd"/>
-            <rect x="30" y="31" width="8" height="10" rx="4" fill="#db2777"/>
-            <rect x="32.5" y="38" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(-8 36 43)"/>
-            <circle cx="36" cy="50" r="3.3" fill="#ffe0bd"/>
-            <!-- 脖子 -->
-            <rect x="16.5" y="24" width="7" height="6" fill="#ffe0bd"/>
-            <!-- 辮子（前） -->
-            <ellipse cx="4" cy="27" rx="5" ry="10" fill="#6b4423"/>
-            <ellipse cx="36" cy="27" rx="5" ry="10" fill="#6b4423"/>
-            <circle cx="5" cy="18" r="2" fill="#f472b6"/>
-            <circle cx="35" cy="18" r="2" fill="#f472b6"/>
-            <!-- 頭髮（後）+ 臉 -->
-            <circle cx="20" cy="13" r="13" fill="#6b4423"/>
-            <circle cx="20" cy="15" r="12" fill="#ffe0bd"/>
-            <ellipse cx="7.7" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
-            <ellipse cx="32.3" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
-            <!-- 瀏海 -->
-            <path d="M7,12 Q20,1 33,12 Q20,7 7,12 Z" fill="#6b4423"/>
-            <!-- 蝴蝶結 -->
-            <path d="M20,5 L13,2 L13,8 Z" fill="#f472b6"/>
-            <path d="M20,5 L27,2 L27,8 Z" fill="#f472b6"/>
-            <circle cx="20" cy="5" r="2.2" fill="#ec4899"/>
-            <!-- 腮紅 -->
-            <circle cx="11" cy="19" r="2.5" fill="#fca5a5" opacity="0.6"/>
-            <circle cx="29" cy="19" r="2.5" fill="#fca5a5" opacity="0.6"/>
-            <!-- 眼睛 + 睫毛 -->
-            <ellipse cx="14" cy="15" rx="2.2" ry="2.9" fill="#fff"/>
-            <circle cx="14.4" cy="15.4" r="1.5" fill="#3b2415"/>
-            <ellipse cx="26" cy="15" rx="2.2" ry="2.9" fill="#fff"/>
-            <circle cx="25.6" cy="15.4" r="1.5" fill="#3b2415"/>
-            <path d="M11.5,12.5 q2,-1 4,-0.3" stroke="#3b2415" stroke-width="1" fill="none" stroke-linecap="round"/>
-            <path d="M24.5,12.2 q2,-0.7 4,0.3" stroke="#3b2415" stroke-width="1" fill="none" stroke-linecap="round"/>
-            <!-- 鼻子 -->
-            <path d="M20,15.5 q1.5,2.2 -0.6,3.2" stroke="#e0a878" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-            <!-- 嘴巴 -->
-            <path d="M15,21 Q20,25 25,21" stroke="#b5503a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-          </g>
-        </g>
-
-        <!-- 球：在兩人之間彈來彈去 -->
-        <g transform="translate(120,118)">
-          <g class="ball-x">
-            <g class="ball-y" id="ballY">
-              <g class="ball-spin">
-                <circle r="10" fill="#f97316"/>
-                <path d="M-10,0 A10,10 0 0 1 10,0" stroke="#fff" stroke-width="1.5" fill="none"/>
-                <line x1="0" y1="-10" x2="0" y2="10" stroke="#fff" stroke-width="1.5"/>
-              </g>
-            </g>
-          </g>
-        </g>
-      </svg>
-    </div>
-
-    <!-- 場景 B：跑步 + 跳躍（對應 002 run-jump） -->
-    <div class="scene hidden" data-scene="run-jump">
-      <svg viewBox="0 0 360 170" xmlns="http://www.w3.org/2000/svg" role="img"
-           aria-label="Tom and Anna running and jumping by a big tree">
-        <defs>
-          <linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#bae6fd"/>
-            <stop offset="1" stop-color="#e0f2fe"/>
-          </linearGradient>
-        </defs>
-
-        <!-- 天空 + 草地 -->
-        <rect x="0" y="0" width="360" height="170" fill="url(#sky2)"/>
-        <rect x="0" y="128" width="360" height="42" fill="#86efac"/>
-        <rect x="0" y="128" width="360" height="6" fill="#4ade80"/>
-
-        <!-- 太陽 -->
-        <g transform="translate(312,30)">
-          <g class="rays">
-            <g stroke="#fbbf24" stroke-width="3" stroke-linecap="round">
-              <line x1="0" y1="-26" x2="0" y2="-20"/>
-              <line x1="0" y1="26" x2="0" y2="20"/>
-              <line x1="-26" y1="0" x2="-20" y2="0"/>
-              <line x1="26" y1="0" x2="20" y2="0"/>
-              <line x1="-18" y1="-18" x2="-14" y2="-14"/>
-              <line x1="18" y1="18" x2="14" y2="14"/>
-              <line x1="-18" y1="18" x2="-14" y2="14"/>
-              <line x1="18" y1="-18" x2="14" y2="-14"/>
-            </g>
-          </g>
-          <circle r="15" fill="#fde047"/>
-        </g>
-
-        <!-- 雲 -->
-        <g class="cloud1" fill="#ffffff" opacity="0.9">
-          <ellipse cx="40" cy="34" rx="20" ry="12"/>
-          <ellipse cx="58" cy="34" rx="16" ry="10"/>
-          <ellipse cx="26" cy="38" rx="14" ry="9"/>
-        </g>
-        <g class="cloud2" fill="#ffffff" opacity="0.8">
-          <ellipse cx="150" cy="58" rx="16" ry="9"/>
-          <ellipse cx="164" cy="58" rx="12" ry="8"/>
-        </g>
-
-        <!-- 大樹（002 要跑去的目標，畫大一點） -->
-        <g class="tree">
-          <rect x="40" y="86" width="11" height="44" rx="4" fill="#92400e"/>
-          <circle cx="45" cy="72" r="26" fill="#22c55e"/>
-          <circle cx="26" cy="84" r="17" fill="#16a34a"/>
-          <circle cx="64" cy="84" r="17" fill="#16a34a"/>
-        </g>
-
-        <!-- 球：靜靜放在草地上（Here is the ball） -->
-        <g transform="translate(96,121)">
-          <ellipse cx="0" cy="11" rx="11" ry="3" fill="#000" opacity="0.12"/>
-          <circle r="10" fill="#f97316"/>
-          <path d="M-10,0 A10,10 0 0 1 10,0" stroke="#fff" stroke-width="1.5" fill="none"/>
-          <line x1="0" y1="-10" x2="0" y2="10" stroke="#fff" stroke-width="1.5"/>
-        </g>
-
-        <!-- Tom（男生，跳躍） -->
-        <g transform="translate(150,50)">
-          <g class="jump-a" id="jumpLand">
-            <!-- 對話泡泡 Jump! -->
-            <g class="talkA">
-              <path d="M34,-3 L30,5 L42,-2 Z" fill="#fff" stroke="#2563eb" stroke-width="1.5"/>
-              <rect x="24" y="-24" width="50" height="22" rx="11" fill="#fff" stroke="#2563eb" stroke-width="1.5"/>
-              <text x="49" y="-9" font-size="11" font-weight="700" fill="#2563eb" text-anchor="middle">Jump!</text>
-            </g>
-            <!-- 腿（跳起，微張） -->
-            <rect x="12" y="60" width="6" height="14" rx="3" fill="#ffe0bd" transform="rotate(-8 15 60)"/>
-            <rect x="22" y="60" width="6" height="14" rx="3" fill="#ffe0bd" transform="rotate(8 25 60)"/>
-            <rect x="8" y="73" width="11" height="6" rx="3" fill="#ef4444" transform="rotate(-8 13 76)"/>
-            <rect x="21" y="73" width="11" height="6" rx="3" fill="#ef4444" transform="rotate(8 27 76)"/>
-            <!-- 短褲 -->
-            <rect x="9" y="50" width="22" height="12" rx="4" fill="#1e3a8a"/>
-            <rect x="19.3" y="52" width="1.4" height="9" fill="#172554"/>
-            <!-- 上衣 -->
-            <rect x="7" y="28" width="26" height="24" rx="9" fill="#2563eb"/>
-            <rect x="7" y="39" width="26" height="3.5" fill="#fff" opacity="0.7"/>
-            <!-- 手臂（舉高歡呼） -->
-            <rect x="2" y="22" width="7" height="13" rx="3.5" fill="#2563eb" transform="rotate(-28 5 30)"/>
-            <circle cx="0" cy="20" r="3.3" fill="#ffe0bd"/>
-            <rect x="31" y="22" width="7" height="13" rx="3.5" fill="#2563eb" transform="rotate(28 35 30)"/>
-            <circle cx="40" cy="20" r="3.3" fill="#ffe0bd"/>
-            <!-- 脖子 -->
-            <rect x="16.5" y="24" width="7" height="6" fill="#ffe0bd"/>
-            <!-- 頭髮 + 臉 -->
-            <circle cx="20" cy="13" r="13" fill="#5b3a1f"/>
-            <circle cx="20" cy="15" r="12" fill="#ffe0bd"/>
-            <ellipse cx="7.7" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
-            <ellipse cx="32.3" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
-            <path d="M8,12 Q20,2 32,12 Q20,8 8,12 Z" fill="#5b3a1f"/>
-            <circle cx="11" cy="19" r="2.5" fill="#fca5a5" opacity="0.55"/>
-            <circle cx="29" cy="19" r="2.5" fill="#fca5a5" opacity="0.55"/>
-            <path d="M11.5,11 q2,-1.2 4,0" stroke="#5b3a1f" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-            <path d="M24.5,11 q2,-1.2 4,0" stroke="#5b3a1f" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-            <ellipse cx="14" cy="15" rx="2.2" ry="2.8" fill="#fff"/>
-            <circle cx="14.4" cy="15.4" r="1.4" fill="#3b2415"/>
-            <ellipse cx="26" cy="15" rx="2.2" ry="2.8" fill="#fff"/>
-            <circle cx="25.6" cy="15.4" r="1.4" fill="#3b2415"/>
-            <path d="M20,15.5 q1.5,2.2 -0.6,3.2" stroke="#e0a878" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-            <path d="M14,21 Q20,26 26,21" stroke="#b5503a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-          </g>
-        </g>
-
-        <!-- Anna（女生，跳躍） -->
-        <g transform="translate(232,50)">
-          <g class="jump-b">
-            <!-- 對話泡泡 Run! -->
-            <g class="talkB">
-              <path d="M6,-3 L10,5 L-2,-2 Z" fill="#fff" stroke="#db2777" stroke-width="1.5"/>
-              <rect x="-26" y="-24" width="44" height="22" rx="11" fill="#fff" stroke="#db2777" stroke-width="1.5"/>
-              <text x="-4" y="-9" font-size="11" font-weight="700" fill="#db2777" text-anchor="middle">Run!</text>
-            </g>
-            <!-- 長髮（後） -->
-            <path d="M4,16 Q1,44 7,58 L33,58 Q39,44 36,16 Z" fill="#6b4423"/>
-            <!-- 腿（跳起，微張） -->
-            <rect x="12" y="58" width="6" height="14" rx="3" fill="#ffe0bd" transform="rotate(-8 15 58)"/>
-            <rect x="22" y="58" width="6" height="14" rx="3" fill="#ffe0bd" transform="rotate(8 25 58)"/>
-            <rect x="8" y="71" width="11" height="6" rx="3" fill="#be185d" transform="rotate(-8 13 74)"/>
-            <rect x="21" y="71" width="11" height="6" rx="3" fill="#be185d" transform="rotate(8 27 74)"/>
-            <!-- 洋裝 -->
-            <path d="M9,30 Q5,48 2,60 L38,60 Q35,48 31,30 Z" fill="#db2777"/>
-            <rect x="9" y="30" width="22" height="7" rx="3" fill="#be185d" opacity="0.45"/>
-            <!-- 手臂（舉高歡呼） -->
-            <rect x="2" y="24" width="7" height="13" rx="3.5" fill="#db2777" transform="rotate(-28 5 32)"/>
-            <circle cx="0" cy="22" r="3.3" fill="#ffe0bd"/>
-            <rect x="31" y="24" width="7" height="13" rx="3.5" fill="#db2777" transform="rotate(28 35 32)"/>
-            <circle cx="40" cy="22" r="3.3" fill="#ffe0bd"/>
-            <!-- 脖子 -->
-            <rect x="16.5" y="24" width="7" height="6" fill="#ffe0bd"/>
-            <!-- 辮子（前） -->
-            <ellipse cx="4" cy="27" rx="5" ry="10" fill="#6b4423"/>
-            <ellipse cx="36" cy="27" rx="5" ry="10" fill="#6b4423"/>
-            <circle cx="5" cy="18" r="2" fill="#f472b6"/>
-            <circle cx="35" cy="18" r="2" fill="#f472b6"/>
-            <!-- 頭髮 + 臉 -->
-            <circle cx="20" cy="13" r="13" fill="#6b4423"/>
-            <circle cx="20" cy="15" r="12" fill="#ffe0bd"/>
-            <ellipse cx="7.7" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
-            <ellipse cx="32.3" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
-            <path d="M7,12 Q20,1 33,12 Q20,7 7,12 Z" fill="#6b4423"/>
-            <path d="M20,5 L13,2 L13,8 Z" fill="#f472b6"/>
-            <path d="M20,5 L27,2 L27,8 Z" fill="#f472b6"/>
-            <circle cx="20" cy="5" r="2.2" fill="#ec4899"/>
-            <circle cx="11" cy="19" r="2.5" fill="#fca5a5" opacity="0.6"/>
-            <circle cx="29" cy="19" r="2.5" fill="#fca5a5" opacity="0.6"/>
-            <ellipse cx="14" cy="15" rx="2.2" ry="2.9" fill="#fff"/>
-            <circle cx="14.4" cy="15.4" r="1.5" fill="#3b2415"/>
-            <ellipse cx="26" cy="15" rx="2.2" ry="2.9" fill="#fff"/>
-            <circle cx="25.6" cy="15.4" r="1.5" fill="#3b2415"/>
-            <path d="M11.5,12.5 q2,-1 4,-0.3" stroke="#3b2415" stroke-width="1" fill="none" stroke-linecap="round"/>
-            <path d="M24.5,12.2 q2,-0.7 4,0.3" stroke="#3b2415" stroke-width="1" fill="none" stroke-linecap="round"/>
-            <path d="M20,15.5 q1.5,2.2 -0.6,3.2" stroke="#e0a878" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-            <path d="M14,21 Q20,26 26,21" stroke="#b5503a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-          </g>
-        </g>
-      </svg>
-    </div>
-
-    <!-- 場景 C：下雨的公園（對應 A1/001 rainy-park） -->
-    <div class="scene hidden" data-scene="rainy-park">
-      <svg viewBox="0 0 360 170" xmlns="http://www.w3.org/2000/svg" role="img"
-           aria-label="Tom and Anna at the park when it started to rain">
-        <defs>
-          <linearGradient id="sky3" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#94a3b8"/>
-            <stop offset="1" stop-color="#cbd5e1"/>
-          </linearGradient>
-        </defs>
-
-        <!-- 陰天 + 草地 -->
-        <rect x="0" y="0" width="360" height="170" fill="url(#sky3)"/>
-        <rect x="0" y="128" width="360" height="42" fill="#86efac"/>
-        <rect x="0" y="128" width="360" height="6" fill="#4ade80"/>
-
-        <!-- 水窪 -->
-        <ellipse cx="70" cy="150" rx="26" ry="5" fill="#7dd3fc" opacity="0.6"/>
-        <ellipse cx="292" cy="152" rx="30" ry="5" fill="#7dd3fc" opacity="0.6"/>
-
-        <!-- 大樹（右側） -->
-        <g class="tree">
-          <rect x="312" y="88" width="11" height="42" rx="4" fill="#92400e"/>
-          <circle cx="317" cy="74" r="25" fill="#15803d"/>
-          <circle cx="298" cy="86" r="16" fill="#166534"/>
-          <circle cx="336" cy="86" r="15" fill="#166534"/>
-        </g>
-
-        <!-- 烏雲 -->
-        <g fill="#64748b" opacity="0.9">
-          <ellipse cx="72" cy="28" rx="26" ry="14"/>
-          <ellipse cx="98" cy="31" rx="20" ry="12"/>
-          <ellipse cx="50" cy="33" rx="16" ry="10"/>
-        </g>
-        <g fill="#475569" opacity="0.85">
-          <ellipse cx="250" cy="24" rx="28" ry="14"/>
-          <ellipse cx="278" cy="28" rx="20" ry="12"/>
-          <ellipse cx="224" cy="28" rx="16" ry="10"/>
-        </g>
-
-        <!-- 雨 -->
-        <g class="rainfall" stroke="#bfdbfe" stroke-width="2" stroke-linecap="round" opacity="0.8">
-          <line x1="60" y1="44" x2="57" y2="51"/><line x1="60" y1="60" x2="57" y2="67"/><line x1="60" y1="76" x2="57" y2="83"/><line x1="60" y1="92" x2="57" y2="99"/><line x1="60" y1="108" x2="57" y2="115"/>
-          <line x1="108" y1="44" x2="105" y2="51"/><line x1="108" y1="60" x2="105" y2="67"/><line x1="108" y1="76" x2="105" y2="83"/><line x1="108" y1="92" x2="105" y2="99"/><line x1="108" y1="108" x2="105" y2="115"/>
-          <line x1="156" y1="44" x2="153" y2="51"/><line x1="156" y1="60" x2="153" y2="67"/><line x1="156" y1="76" x2="153" y2="83"/><line x1="156" y1="92" x2="153" y2="99"/><line x1="156" y1="108" x2="153" y2="115"/>
-          <line x1="204" y1="44" x2="201" y2="51"/><line x1="204" y1="60" x2="201" y2="67"/><line x1="204" y1="76" x2="201" y2="83"/><line x1="204" y1="92" x2="201" y2="99"/><line x1="204" y1="108" x2="201" y2="115"/>
-          <line x1="252" y1="44" x2="249" y2="51"/><line x1="252" y1="60" x2="249" y2="67"/><line x1="252" y1="76" x2="249" y2="83"/><line x1="252" y1="92" x2="249" y2="99"/><line x1="252" y1="108" x2="249" y2="115"/>
-          <line x1="300" y1="44" x2="297" y2="51"/><line x1="300" y1="60" x2="297" y2="67"/><line x1="300" y1="76" x2="297" y2="83"/><line x1="300" y1="92" x2="297" y2="99"/><line x1="300" y1="108" x2="297" y2="115"/>
-        </g>
-
-        <!-- Tom（左） -->
-        <g transform="translate(112,50)">
-          <g class="bob-a">
-            <ellipse cx="20" cy="80" rx="15" ry="3" fill="#000" opacity="0.10"/>
-            <rect x="13" y="60" width="6" height="14" rx="3" fill="#ffe0bd"/>
-            <rect x="21" y="60" width="6" height="14" rx="3" fill="#ffe0bd"/>
-            <rect x="10" y="73" width="11" height="6" rx="3" fill="#ef4444"/>
-            <rect x="19" y="73" width="11" height="6" rx="3" fill="#ef4444"/>
-            <rect x="9" y="50" width="22" height="12" rx="4" fill="#1e3a8a"/>
-            <rect x="19.3" y="52" width="1.4" height="9" fill="#172554"/>
-            <rect x="7" y="28" width="26" height="24" rx="9" fill="#2563eb"/>
-            <rect x="7" y="39" width="26" height="3.5" fill="#fff" opacity="0.7"/>
-            <rect x="2" y="29" width="8" height="11" rx="4" fill="#2563eb"/>
-            <rect x="1.5" y="37" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(8 4 42)"/>
-            <circle cx="4" cy="49" r="3.3" fill="#ffe0bd"/>
-            <rect x="30" y="29" width="8" height="11" rx="4" fill="#2563eb"/>
-            <rect x="32.5" y="37" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(-8 36 42)"/>
-            <circle cx="36" cy="49" r="3.3" fill="#ffe0bd"/>
-            <rect x="16.5" y="24" width="7" height="6" fill="#ffe0bd"/>
-            <circle cx="20" cy="13" r="13" fill="#5b3a1f"/>
-            <circle cx="20" cy="15" r="12" fill="#ffe0bd"/>
-            <ellipse cx="7.7" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
-            <ellipse cx="32.3" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
-            <path d="M8,12 Q20,2 32,12 Q20,8 8,12 Z" fill="#5b3a1f"/>
-            <circle cx="11" cy="19" r="2.5" fill="#fca5a5" opacity="0.55"/>
-            <circle cx="29" cy="19" r="2.5" fill="#fca5a5" opacity="0.55"/>
-            <path d="M11.5,11 q2,-1.2 4,0" stroke="#5b3a1f" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-            <path d="M24.5,11 q2,-1.2 4,0" stroke="#5b3a1f" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-            <ellipse cx="14" cy="15" rx="2.2" ry="2.8" fill="#fff"/>
-            <circle cx="14.4" cy="15.4" r="1.4" fill="#3b2415"/>
-            <ellipse cx="26" cy="15" rx="2.2" ry="2.8" fill="#fff"/>
-            <circle cx="25.6" cy="15.4" r="1.4" fill="#3b2415"/>
-            <path d="M20,15.5 q1.5,2.2 -0.6,3.2" stroke="#e0a878" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-            <path d="M15,22 Q20,25 25,22" stroke="#b5503a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-          </g>
-        </g>
-
-        <!-- Anna（右） -->
-        <g transform="translate(196,50)">
-          <g class="bob-b">
-            <ellipse cx="20" cy="80" rx="15" ry="3" fill="#000" opacity="0.10"/>
-            <path d="M4,16 Q1,44 7,58 L33,58 Q39,44 36,16 Z" fill="#6b4423"/>
-            <rect x="13" y="58" width="6" height="14" rx="3" fill="#ffe0bd"/>
-            <rect x="21" y="58" width="6" height="14" rx="3" fill="#ffe0bd"/>
-            <rect x="10" y="72" width="11" height="6" rx="3" fill="#be185d"/>
-            <rect x="19" y="72" width="11" height="6" rx="3" fill="#be185d"/>
-            <path d="M9,30 Q5,48 2,60 L38,60 Q35,48 31,30 Z" fill="#db2777"/>
-            <rect x="9" y="30" width="22" height="7" rx="3" fill="#be185d" opacity="0.45"/>
-            <rect x="2" y="31" width="8" height="10" rx="4" fill="#db2777"/>
-            <rect x="1.5" y="38" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(8 4 43)"/>
-            <circle cx="4" cy="50" r="3.3" fill="#ffe0bd"/>
-            <rect x="30" y="31" width="8" height="10" rx="4" fill="#db2777"/>
-            <rect x="32.5" y="38" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(-8 36 43)"/>
-            <circle cx="36" cy="50" r="3.3" fill="#ffe0bd"/>
-            <rect x="16.5" y="24" width="7" height="6" fill="#ffe0bd"/>
-            <ellipse cx="4" cy="27" rx="5" ry="10" fill="#6b4423"/>
-            <ellipse cx="36" cy="27" rx="5" ry="10" fill="#6b4423"/>
-            <circle cx="5" cy="18" r="2" fill="#f472b6"/>
-            <circle cx="35" cy="18" r="2" fill="#f472b6"/>
-            <circle cx="20" cy="13" r="13" fill="#6b4423"/>
-            <circle cx="20" cy="15" r="12" fill="#ffe0bd"/>
-            <ellipse cx="7.7" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
-            <ellipse cx="32.3" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
-            <path d="M7,12 Q20,1 33,12 Q20,7 7,12 Z" fill="#6b4423"/>
-            <path d="M20,5 L13,2 L13,8 Z" fill="#f472b6"/>
-            <path d="M20,5 L27,2 L27,8 Z" fill="#f472b6"/>
-            <circle cx="20" cy="5" r="2.2" fill="#ec4899"/>
-            <circle cx="11" cy="19" r="2.5" fill="#fca5a5" opacity="0.6"/>
-            <circle cx="29" cy="19" r="2.5" fill="#fca5a5" opacity="0.6"/>
-            <ellipse cx="14" cy="15" rx="2.2" ry="2.9" fill="#fff"/>
-            <circle cx="14.4" cy="15.4" r="1.5" fill="#3b2415"/>
-            <ellipse cx="26" cy="15" rx="2.2" ry="2.9" fill="#fff"/>
-            <circle cx="25.6" cy="15.4" r="1.5" fill="#3b2415"/>
-            <path d="M11.5,12.5 q2,-1 4,-0.3" stroke="#3b2415" stroke-width="1" fill="none" stroke-linecap="round"/>
-            <path d="M24.5,12.2 q2,-0.7 4,0.3" stroke="#3b2415" stroke-width="1" fill="none" stroke-linecap="round"/>
-            <path d="M20,15.5 q1.5,2.2 -0.6,3.2" stroke="#e0a878" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-            <path d="M15,22 Q20,25 25,22" stroke="#b5503a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-          </g>
-        </g>
-
-        <!-- 雨傘（蓋在兩人頭上） -->
-        <g>
-          <path d="M116,40 Q174,2 232,40 Z" fill="#ef4444"/>
-          <path d="M116,40 Q145,28 174,40 Q203,28 232,40" fill="none" stroke="#b91c1c" stroke-width="1.3"/>
-          <line x1="174" y1="6" x2="118" y2="40" stroke="#b91c1c" stroke-width="1"/>
-          <line x1="174" y1="6" x2="230" y2="40" stroke="#b91c1c" stroke-width="1"/>
-          <line x1="174" y1="6" x2="174" y2="40" stroke="#b91c1c" stroke-width="1"/>
-          <circle cx="174" cy="5" r="2.2" fill="#b91c1c"/>
-          <path d="M174,40 L174,74 Q174,82 166,82 Q160,82 160,77" fill="none" stroke="#7c3a12" stroke-width="3" stroke-linecap="round"/>
-        </g>
-      </svg>
-    </div>
-
-    <!-- 場景 D：點心時間（對應 Pre-A1/003 snack） -->
-    <div class="scene hidden" data-scene="snack">
-      <svg viewBox="0 0 360 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tom and Anna having a snack">
-        <defs><linearGradient id="sky-snack" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bae6fd"/><stop offset="1" stop-color="#e0f2fe"/></linearGradient></defs>
-        <rect x="0" y="0" width="360" height="170" fill="url(#sky-snack)"/>
-        <rect x="0" y="128" width="360" height="42" fill="#86efac"/>
-        <rect x="0" y="128" width="360" height="6" fill="#4ade80"/>
-        <g transform="translate(312,30)"><g class="rays"><g stroke="#fbbf24" stroke-width="3" stroke-linecap="round"><line x1="0" y1="-26" x2="0" y2="-20"/><line x1="0" y1="26" x2="0" y2="20"/><line x1="-26" y1="0" x2="-20" y2="0"/><line x1="26" y1="0" x2="20" y2="0"/><line x1="-18" y1="-18" x2="-14" y2="-14"/><line x1="18" y1="18" x2="14" y2="14"/><line x1="-18" y1="18" x2="-14" y2="14"/><line x1="18" y1="-18" x2="14" y2="-14"/></g></g><circle r="15" fill="#fde047"/></g>
-        <rect x="118" y="138" width="124" height="22" rx="6" fill="#f87171"/>
-        <circle cx="140" cy="149" r="3" fill="#fff" opacity="0.8"/><circle cx="178" cy="149" r="3" fill="#fff" opacity="0.8"/><circle cx="216" cy="149" r="3" fill="#fff" opacity="0.8"/>
-        <text x="160" y="135" font-size="24" text-anchor="middle">🍎</text>
-        <text x="200" y="134" font-size="22" text-anchor="middle">🥛</text>
-        <g transform="translate(60,55)"><g class="bob-a">
-          <g class="talkA"><path d="M34,-3 L30,5 L42,-2 Z" fill="#fff" stroke="#2563eb" stroke-width="1.5"/><rect x="26" y="-24" width="44" height="22" rx="11" fill="#fff" stroke="#2563eb" stroke-width="1.5"/><text x="48" y="-9" font-size="11" font-weight="700" fill="#2563eb" text-anchor="middle">Yum!</text></g>
-          <ellipse cx="20" cy="80" rx="15" ry="3" fill="#000" opacity="0.10"/>
-          <rect x="13" y="60" width="6" height="14" rx="3" fill="#ffe0bd"/><rect x="21" y="60" width="6" height="14" rx="3" fill="#ffe0bd"/>
-          <rect x="10" y="73" width="11" height="6" rx="3" fill="#ef4444"/><rect x="19" y="73" width="11" height="6" rx="3" fill="#ef4444"/>
-          <rect x="9" y="50" width="22" height="12" rx="4" fill="#1e3a8a"/><rect x="19.3" y="52" width="1.4" height="9" fill="#172554"/>
-          <rect x="7" y="28" width="26" height="24" rx="9" fill="#2563eb"/><rect x="7" y="39" width="26" height="3.5" fill="#fff" opacity="0.7"/>
-          <rect x="2" y="29" width="8" height="11" rx="4" fill="#2563eb"/><rect x="1.5" y="37" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(8 4 42)"/><circle cx="4" cy="49" r="3.3" fill="#ffe0bd"/>
-          <rect x="30" y="29" width="8" height="11" rx="4" fill="#2563eb"/><rect x="32.5" y="37" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(-8 36 42)"/><circle cx="36" cy="49" r="3.3" fill="#ffe0bd"/>
-          <rect x="16.5" y="24" width="7" height="6" fill="#ffe0bd"/>
-          <circle cx="20" cy="13" r="13" fill="#5b3a1f"/><circle cx="20" cy="15" r="12" fill="#ffe0bd"/>
-          <ellipse cx="7.7" cy="15" rx="2" ry="3" fill="#ffe0bd"/><ellipse cx="32.3" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
-          <path d="M8,12 Q20,2 32,12 Q20,8 8,12 Z" fill="#5b3a1f"/>
-          <circle cx="11" cy="19" r="2.5" fill="#fca5a5" opacity="0.55"/><circle cx="29" cy="19" r="2.5" fill="#fca5a5" opacity="0.55"/>
-          <ellipse cx="14" cy="15" rx="2.2" ry="2.8" fill="#fff"/><circle cx="14.4" cy="15.4" r="1.4" fill="#3b2415"/>
-          <ellipse cx="26" cy="15" rx="2.2" ry="2.8" fill="#fff"/><circle cx="25.6" cy="15.4" r="1.4" fill="#3b2415"/>
-          <path d="M15,21 Q20,25 25,21" stroke="#b5503a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-        </g></g>
-        <g transform="translate(258,55)"><g class="bob-b">
-          <g class="talkB"><path d="M6,-3 L10,5 L-2,-2 Z" fill="#fff" stroke="#db2777" stroke-width="1.5"/><rect x="-30" y="-24" width="48" height="22" rx="11" fill="#fff" stroke="#db2777" stroke-width="1.5"/><text x="-6" y="-9" font-size="11" font-weight="700" fill="#db2777" text-anchor="middle">Apple!</text></g>
-          <ellipse cx="20" cy="80" rx="15" ry="3" fill="#000" opacity="0.10"/>
-          <path d="M4,16 Q1,44 7,58 L33,58 Q39,44 36,16 Z" fill="#6b4423"/>
-          <rect x="13" y="58" width="6" height="14" rx="3" fill="#ffe0bd"/><rect x="21" y="58" width="6" height="14" rx="3" fill="#ffe0bd"/>
-          <rect x="10" y="72" width="11" height="6" rx="3" fill="#be185d"/><rect x="19" y="72" width="11" height="6" rx="3" fill="#be185d"/>
-          <path d="M9,30 Q5,48 2,60 L38,60 Q35,48 31,30 Z" fill="#db2777"/><rect x="9" y="30" width="22" height="7" rx="3" fill="#be185d" opacity="0.45"/>
-          <rect x="2" y="31" width="8" height="10" rx="4" fill="#db2777"/><rect x="1.5" y="38" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(8 4 43)"/><circle cx="4" cy="50" r="3.3" fill="#ffe0bd"/>
-          <rect x="30" y="31" width="8" height="10" rx="4" fill="#db2777"/><rect x="32.5" y="38" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(-8 36 43)"/><circle cx="36" cy="50" r="3.3" fill="#ffe0bd"/>
-          <rect x="16.5" y="24" width="7" height="6" fill="#ffe0bd"/>
-          <ellipse cx="4" cy="27" rx="5" ry="10" fill="#6b4423"/><ellipse cx="36" cy="27" rx="5" ry="10" fill="#6b4423"/>
-          <circle cx="5" cy="18" r="2" fill="#f472b6"/><circle cx="35" cy="18" r="2" fill="#f472b6"/>
-          <circle cx="20" cy="13" r="13" fill="#6b4423"/><circle cx="20" cy="15" r="12" fill="#ffe0bd"/>
-          <ellipse cx="7.7" cy="15" rx="2" ry="3" fill="#ffe0bd"/><ellipse cx="32.3" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
-          <path d="M7,12 Q20,1 33,12 Q20,7 7,12 Z" fill="#6b4423"/>
-          <path d="M20,5 L13,2 L13,8 Z" fill="#f472b6"/><path d="M20,5 L27,2 L27,8 Z" fill="#f472b6"/><circle cx="20" cy="5" r="2.2" fill="#ec4899"/>
-          <circle cx="11" cy="19" r="2.5" fill="#fca5a5" opacity="0.6"/><circle cx="29" cy="19" r="2.5" fill="#fca5a5" opacity="0.6"/>
-          <ellipse cx="14" cy="15" rx="2.2" ry="2.9" fill="#fff"/><circle cx="14.4" cy="15.4" r="1.5" fill="#3b2415"/>
-          <ellipse cx="26" cy="15" rx="2.2" ry="2.9" fill="#fff"/><circle cx="25.6" cy="15.4" r="1.5" fill="#3b2415"/>
-          <path d="M15,21 Q20,25 25,21" stroke="#b5503a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-        </g></g>
-      </svg>
-    </div>
-
-    <!-- 場景 E：動物園（對應 A1/002 zoo） -->
-    <div class="scene hidden" data-scene="zoo">
-      <svg viewBox="0 0 360 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tom and Anna at the zoo">
-        <defs><linearGradient id="sky-zoo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bae6fd"/><stop offset="1" stop-color="#e0f2fe"/></linearGradient></defs>
-        <rect x="0" y="0" width="360" height="170" fill="url(#sky-zoo)"/>
-        <rect x="0" y="128" width="360" height="42" fill="#86efac"/>
-        <rect x="0" y="128" width="360" height="6" fill="#4ade80"/>
-        <g class="cloud1" fill="#ffffff" opacity="0.9"><ellipse cx="60" cy="30" rx="20" ry="12"/><ellipse cx="78" cy="32" rx="15" ry="9"/></g>
-        <text x="34" y="132" font-size="30" text-anchor="middle">🦁</text>
-        <text x="328" y="134" font-size="32" text-anchor="middle">🐘</text>
-        <g transform="translate(168,118)"><g class="jump-a"><text x="0" y="0" font-size="26" text-anchor="middle">🐒</text></g></g>
-        <g transform="translate(96,55)"><g class="bob-a">
-          <g class="talkA"><path d="M34,-3 L30,5 L42,-2 Z" fill="#fff" stroke="#2563eb" stroke-width="1.5"/><rect x="26" y="-24" width="44" height="22" rx="11" fill="#fff" stroke="#2563eb" stroke-width="1.5"/><text x="48" y="-9" font-size="11" font-weight="700" fill="#2563eb" text-anchor="middle">Wow!</text></g>
-          <ellipse cx="20" cy="80" rx="15" ry="3" fill="#000" opacity="0.10"/>
-          <rect x="13" y="60" width="6" height="14" rx="3" fill="#ffe0bd"/><rect x="21" y="60" width="6" height="14" rx="3" fill="#ffe0bd"/>
-          <rect x="10" y="73" width="11" height="6" rx="3" fill="#ef4444"/><rect x="19" y="73" width="11" height="6" rx="3" fill="#ef4444"/>
-          <rect x="9" y="50" width="22" height="12" rx="4" fill="#1e3a8a"/><rect x="19.3" y="52" width="1.4" height="9" fill="#172554"/>
-          <rect x="7" y="28" width="26" height="24" rx="9" fill="#2563eb"/><rect x="7" y="39" width="26" height="3.5" fill="#fff" opacity="0.7"/>
-          <rect x="2" y="29" width="8" height="11" rx="4" fill="#2563eb"/><rect x="1.5" y="37" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(8 4 42)"/><circle cx="4" cy="49" r="3.3" fill="#ffe0bd"/>
-          <rect x="30" y="29" width="8" height="11" rx="4" fill="#2563eb"/><rect x="32.5" y="37" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(-8 36 42)"/><circle cx="36" cy="49" r="3.3" fill="#ffe0bd"/>
-          <rect x="16.5" y="24" width="7" height="6" fill="#ffe0bd"/>
-          <circle cx="20" cy="13" r="13" fill="#5b3a1f"/><circle cx="20" cy="15" r="12" fill="#ffe0bd"/>
-          <ellipse cx="7.7" cy="15" rx="2" ry="3" fill="#ffe0bd"/><ellipse cx="32.3" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
-          <path d="M8,12 Q20,2 32,12 Q20,8 8,12 Z" fill="#5b3a1f"/>
-          <circle cx="11" cy="19" r="2.5" fill="#fca5a5" opacity="0.55"/><circle cx="29" cy="19" r="2.5" fill="#fca5a5" opacity="0.55"/>
-          <ellipse cx="14" cy="15" rx="2.2" ry="2.8" fill="#fff"/><circle cx="14.4" cy="15.4" r="1.4" fill="#3b2415"/>
-          <ellipse cx="26" cy="15" rx="2.2" ry="2.8" fill="#fff"/><circle cx="25.6" cy="15.4" r="1.4" fill="#3b2415"/>
-          <path d="M15,21 Q20,25 25,21" stroke="#b5503a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-        </g></g>
-        <g transform="translate(208,55)"><g class="bob-b">
-          <g class="talkB"><path d="M6,-3 L10,5 L-2,-2 Z" fill="#fff" stroke="#db2777" stroke-width="1.5"/><rect x="-46" y="-24" width="62" height="22" rx="11" fill="#fff" stroke="#db2777" stroke-width="1.5"/><text x="-15" y="-9" font-size="11" font-weight="700" fill="#db2777" text-anchor="middle">Monkeys!</text></g>
-          <ellipse cx="20" cy="80" rx="15" ry="3" fill="#000" opacity="0.10"/>
-          <path d="M4,16 Q1,44 7,58 L33,58 Q39,44 36,16 Z" fill="#6b4423"/>
-          <rect x="13" y="58" width="6" height="14" rx="3" fill="#ffe0bd"/><rect x="21" y="58" width="6" height="14" rx="3" fill="#ffe0bd"/>
-          <rect x="10" y="72" width="11" height="6" rx="3" fill="#be185d"/><rect x="19" y="72" width="11" height="6" rx="3" fill="#be185d"/>
-          <path d="M9,30 Q5,48 2,60 L38,60 Q35,48 31,30 Z" fill="#db2777"/><rect x="9" y="30" width="22" height="7" rx="3" fill="#be185d" opacity="0.45"/>
-          <rect x="2" y="31" width="8" height="10" rx="4" fill="#db2777"/><rect x="1.5" y="38" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(8 4 43)"/><circle cx="4" cy="50" r="3.3" fill="#ffe0bd"/>
-          <rect x="30" y="31" width="8" height="10" rx="4" fill="#db2777"/><rect x="32.5" y="38" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(-8 36 43)"/><circle cx="36" cy="50" r="3.3" fill="#ffe0bd"/>
-          <rect x="16.5" y="24" width="7" height="6" fill="#ffe0bd"/>
-          <ellipse cx="4" cy="27" rx="5" ry="10" fill="#6b4423"/><ellipse cx="36" cy="27" rx="5" ry="10" fill="#6b4423"/>
-          <circle cx="5" cy="18" r="2" fill="#f472b6"/><circle cx="35" cy="18" r="2" fill="#f472b6"/>
-          <circle cx="20" cy="13" r="13" fill="#6b4423"/><circle cx="20" cy="15" r="12" fill="#ffe0bd"/>
-          <ellipse cx="7.7" cy="15" rx="2" ry="3" fill="#ffe0bd"/><ellipse cx="32.3" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
-          <path d="M7,12 Q20,1 33,12 Q20,7 7,12 Z" fill="#6b4423"/>
-          <path d="M20,5 L13,2 L13,8 Z" fill="#f472b6"/><path d="M20,5 L27,2 L27,8 Z" fill="#f472b6"/><circle cx="20" cy="5" r="2.2" fill="#ec4899"/>
-          <circle cx="11" cy="19" r="2.5" fill="#fca5a5" opacity="0.6"/><circle cx="29" cy="19" r="2.5" fill="#fca5a5" opacity="0.6"/>
-          <ellipse cx="14" cy="15" rx="2.2" ry="2.9" fill="#fff"/><circle cx="14.4" cy="15.4" r="1.5" fill="#3b2415"/>
-          <ellipse cx="26" cy="15" rx="2.2" ry="2.9" fill="#fff"/><circle cx="25.6" cy="15.4" r="1.5" fill="#3b2415"/>
-          <path d="M15,21 Q20,25 25,21" stroke="#b5503a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-        </g></g>
-      </svg>
-    </div>
-
-    <!-- 場景 F：暑假計畫（對應 A2/001 summer） -->
-    <div class="scene hidden" data-scene="summer">
-      <svg viewBox="0 0 360 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tom and Anna talking about summer plans">
-        <defs><linearGradient id="sky-summer" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7dd3fc"/><stop offset="1" stop-color="#e0f2fe"/></linearGradient></defs>
-        <rect x="0" y="0" width="360" height="170" fill="url(#sky-summer)"/>
-        <rect x="0" y="128" width="360" height="42" fill="#86efac"/>
-        <rect x="0" y="128" width="360" height="6" fill="#4ade80"/>
-        <g transform="translate(312,30)"><g class="rays"><g stroke="#fbbf24" stroke-width="3" stroke-linecap="round"><line x1="0" y1="-26" x2="0" y2="-20"/><line x1="0" y1="26" x2="0" y2="20"/><line x1="-26" y1="0" x2="-20" y2="0"/><line x1="26" y1="0" x2="20" y2="0"/><line x1="-18" y1="-18" x2="-14" y2="-14"/><line x1="18" y1="18" x2="14" y2="14"/><line x1="-18" y1="18" x2="-14" y2="14"/><line x1="18" y1="-18" x2="14" y2="-14"/></g></g><circle r="15" fill="#fde047"/></g>
-        <g class="cloud2" fill="#ffffff" opacity="0.85"><ellipse cx="120" cy="40" rx="18" ry="10"/><ellipse cx="136" cy="42" rx="13" ry="8"/></g>
-        <text x="36" y="128" font-size="36" text-anchor="middle">🌲</text>
-        <text x="312" y="130" font-size="34" text-anchor="middle">⛺</text>
-        <g transform="translate(110,55)"><g class="bob-a">
-          <g class="talkA"><path d="M34,-3 L30,5 L42,-2 Z" fill="#fff" stroke="#2563eb" stroke-width="1.5"/><rect x="26" y="-24" width="56" height="22" rx="11" fill="#fff" stroke="#2563eb" stroke-width="1.5"/><text x="54" y="-9" font-size="11" font-weight="700" fill="#2563eb" text-anchor="middle">Summer!</text></g>
-          <ellipse cx="20" cy="80" rx="15" ry="3" fill="#000" opacity="0.10"/>
-          <rect x="13" y="60" width="6" height="14" rx="3" fill="#ffe0bd"/><rect x="21" y="60" width="6" height="14" rx="3" fill="#ffe0bd"/>
-          <rect x="10" y="73" width="11" height="6" rx="3" fill="#ef4444"/><rect x="19" y="73" width="11" height="6" rx="3" fill="#ef4444"/>
-          <rect x="9" y="50" width="22" height="12" rx="4" fill="#1e3a8a"/><rect x="19.3" y="52" width="1.4" height="9" fill="#172554"/>
-          <rect x="7" y="28" width="26" height="24" rx="9" fill="#2563eb"/><rect x="7" y="39" width="26" height="3.5" fill="#fff" opacity="0.7"/>
-          <rect x="2" y="29" width="8" height="11" rx="4" fill="#2563eb"/><rect x="1.5" y="37" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(8 4 42)"/><circle cx="4" cy="49" r="3.3" fill="#ffe0bd"/>
-          <rect x="30" y="29" width="8" height="11" rx="4" fill="#2563eb"/><rect x="32.5" y="37" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(-8 36 42)"/><circle cx="36" cy="49" r="3.3" fill="#ffe0bd"/>
-          <rect x="16.5" y="24" width="7" height="6" fill="#ffe0bd"/>
-          <circle cx="20" cy="13" r="13" fill="#5b3a1f"/><circle cx="20" cy="15" r="12" fill="#ffe0bd"/>
-          <ellipse cx="7.7" cy="15" rx="2" ry="3" fill="#ffe0bd"/><ellipse cx="32.3" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
-          <path d="M8,12 Q20,2 32,12 Q20,8 8,12 Z" fill="#5b3a1f"/>
-          <circle cx="11" cy="19" r="2.5" fill="#fca5a5" opacity="0.55"/><circle cx="29" cy="19" r="2.5" fill="#fca5a5" opacity="0.55"/>
-          <ellipse cx="14" cy="15" rx="2.2" ry="2.8" fill="#fff"/><circle cx="14.4" cy="15.4" r="1.4" fill="#3b2415"/>
-          <ellipse cx="26" cy="15" rx="2.2" ry="2.8" fill="#fff"/><circle cx="25.6" cy="15.4" r="1.4" fill="#3b2415"/>
-          <path d="M15,21 Q20,25 25,21" stroke="#b5503a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-        </g></g>
-        <g transform="translate(208,55)"><g class="bob-b">
-          <g class="talkB"><path d="M6,-3 L10,5 L-2,-2 Z" fill="#fff" stroke="#db2777" stroke-width="1.5"/><rect x="-34" y="-24" width="50" height="22" rx="11" fill="#fff" stroke="#db2777" stroke-width="1.5"/><text x="-9" y="-9" font-size="11" font-weight="700" fill="#db2777" text-anchor="middle">Camp!</text></g>
-          <ellipse cx="20" cy="80" rx="15" ry="3" fill="#000" opacity="0.10"/>
-          <path d="M4,16 Q1,44 7,58 L33,58 Q39,44 36,16 Z" fill="#6b4423"/>
-          <rect x="13" y="58" width="6" height="14" rx="3" fill="#ffe0bd"/><rect x="21" y="58" width="6" height="14" rx="3" fill="#ffe0bd"/>
-          <rect x="10" y="72" width="11" height="6" rx="3" fill="#be185d"/><rect x="19" y="72" width="11" height="6" rx="3" fill="#be185d"/>
-          <path d="M9,30 Q5,48 2,60 L38,60 Q35,48 31,30 Z" fill="#db2777"/><rect x="9" y="30" width="22" height="7" rx="3" fill="#be185d" opacity="0.45"/>
-          <rect x="2" y="31" width="8" height="10" rx="4" fill="#db2777"/><rect x="1.5" y="38" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(8 4 43)"/><circle cx="4" cy="50" r="3.3" fill="#ffe0bd"/>
-          <rect x="30" y="31" width="8" height="10" rx="4" fill="#db2777"/><rect x="32.5" y="38" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(-8 36 43)"/><circle cx="36" cy="50" r="3.3" fill="#ffe0bd"/>
-          <rect x="16.5" y="24" width="7" height="6" fill="#ffe0bd"/>
-          <ellipse cx="4" cy="27" rx="5" ry="10" fill="#6b4423"/><ellipse cx="36" cy="27" rx="5" ry="10" fill="#6b4423"/>
-          <circle cx="5" cy="18" r="2" fill="#f472b6"/><circle cx="35" cy="18" r="2" fill="#f472b6"/>
-          <circle cx="20" cy="13" r="13" fill="#6b4423"/><circle cx="20" cy="15" r="12" fill="#ffe0bd"/>
-          <ellipse cx="7.7" cy="15" rx="2" ry="3" fill="#ffe0bd"/><ellipse cx="32.3" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
-          <path d="M7,12 Q20,1 33,12 Q20,7 7,12 Z" fill="#6b4423"/>
-          <path d="M20,5 L13,2 L13,8 Z" fill="#f472b6"/><path d="M20,5 L27,2 L27,8 Z" fill="#f472b6"/><circle cx="20" cy="5" r="2.2" fill="#ec4899"/>
-          <circle cx="11" cy="19" r="2.5" fill="#fca5a5" opacity="0.6"/><circle cx="29" cy="19" r="2.5" fill="#fca5a5" opacity="0.6"/>
-          <ellipse cx="14" cy="15" rx="2.2" ry="2.9" fill="#fff"/><circle cx="14.4" cy="15.4" r="1.5" fill="#3b2415"/>
-          <ellipse cx="26" cy="15" rx="2.2" ry="2.9" fill="#fff"/><circle cx="25.6" cy="15.4" r="1.5" fill="#3b2415"/>
-          <path d="M15,21 Q20,25 25,21" stroke="#b5503a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-        </g></g>
-      </svg>
-    </div>
-    <!-- 場景 G：停火記者會（對應 A2/002 peace-talk） -->
-    <div class="scene hidden" data-scene="peace-talk">
-      <svg viewBox="0 0 360 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A reporter asking the President about the ceasefire">
-        <defs><linearGradient id="sky-peace" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfdbfe"/><stop offset="1" stop-color="#eff6ff"/></linearGradient></defs>
-        <rect x="0" y="0" width="360" height="170" fill="url(#sky-peace)"/>
-        <rect x="0" y="132" width="360" height="38" fill="#e2e8f0"/>
-        <rect x="0" y="132" width="360" height="5" fill="#cbd5e1"/>
-        <g class="cloud1" fill="#ffffff" opacity="0.9"><ellipse cx="60" cy="34" rx="16" ry="9"/><ellipse cx="74" cy="36" rx="11" ry="7"/></g>
-        <!-- 和平鴿飛過天空 -->
-        <g class="cloud2"><text x="0" y="30" font-size="22">🕊️</text></g>
-        <!-- 記者（女，左）拿著麥克風 -->
-        <g transform="translate(86,55)"><g class="bob-a">
-          <g class="talkA"><path d="M34,-3 L30,5 L42,-2 Z" fill="#fff" stroke="#db2777" stroke-width="1.5"/><rect x="22" y="-25" width="66" height="22" rx="11" fill="#fff" stroke="#db2777" stroke-width="1.5"/><text x="55" y="-10" font-size="10.5" font-weight="700" fill="#db2777" text-anchor="middle">Ceasefire?</text></g>
-          <ellipse cx="20" cy="80" rx="15" ry="3" fill="#000" opacity="0.10"/>
-          <path d="M4,16 Q1,44 7,58 L33,58 Q39,44 36,16 Z" fill="#6b4423"/>
-          <rect x="13" y="58" width="6" height="14" rx="3" fill="#ffe0bd"/><rect x="21" y="58" width="6" height="14" rx="3" fill="#ffe0bd"/>
-          <rect x="10" y="72" width="11" height="6" rx="3" fill="#be185d"/><rect x="19" y="72" width="11" height="6" rx="3" fill="#be185d"/>
-          <path d="M9,30 Q5,48 2,60 L38,60 Q35,48 31,30 Z" fill="#db2777"/><rect x="9" y="30" width="22" height="7" rx="3" fill="#be185d" opacity="0.45"/>
-          <rect x="2" y="31" width="8" height="10" rx="4" fill="#db2777"/><rect x="1.5" y="38" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(8 4 43)"/><circle cx="4" cy="50" r="3.3" fill="#ffe0bd"/>
-          <rect x="30" y="31" width="8" height="10" rx="4" fill="#db2777"/><rect x="32.5" y="38" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(-8 36 43)"/><circle cx="36" cy="50" r="3.3" fill="#ffe0bd"/>
-          <rect x="16.5" y="24" width="7" height="6" fill="#ffe0bd"/>
-          <circle cx="20" cy="13" r="13" fill="#6b4423"/><circle cx="20" cy="15" r="12" fill="#ffe0bd"/>
-          <ellipse cx="7.7" cy="15" rx="2" ry="3" fill="#ffe0bd"/><ellipse cx="32.3" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
-          <path d="M7,12 Q20,1 33,12 Q20,7 7,12 Z" fill="#6b4423"/>
-          <circle cx="11" cy="19" r="2.5" fill="#fca5a5" opacity="0.6"/><circle cx="29" cy="19" r="2.5" fill="#fca5a5" opacity="0.6"/>
-          <ellipse cx="14" cy="15" rx="2.2" ry="2.9" fill="#fff"/><circle cx="14.4" cy="15.4" r="1.5" fill="#3b2415"/>
-          <ellipse cx="26" cy="15" rx="2.2" ry="2.9" fill="#fff"/><circle cx="25.6" cy="15.4" r="1.5" fill="#3b2415"/>
-          <path d="M15,21 Q20,25 25,21" stroke="#b5503a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-          <!-- 麥克風 -->
-          <rect x="33.5" y="40" width="2.2" height="12" rx="1.1" fill="#334155"/><circle cx="34.6" cy="39" r="3.8" fill="#64748b"/><circle cx="34.6" cy="39" r="2" fill="#94a3b8"/>
-        </g></g>
-        <!-- 總統（男，右，深藍西裝＋紅領帶）站在講台後 -->
-        <g transform="translate(214,55)"><g class="bob-b">
-          <g class="talkB"><path d="M6,-3 L10,5 L-2,-2 Z" fill="#fff" stroke="#2563eb" stroke-width="1.5"/><rect x="-30" y="-25" width="48" height="22" rx="11" fill="#fff" stroke="#2563eb" stroke-width="1.5"/><text x="-6" y="-10" font-size="11" font-weight="700" fill="#2563eb" text-anchor="middle">Peace!</text></g>
-          <ellipse cx="20" cy="80" rx="15" ry="3" fill="#000" opacity="0.10"/>
-          <rect x="13" y="60" width="6" height="14" rx="3" fill="#1f2937"/><rect x="21" y="60" width="6" height="14" rx="3" fill="#1f2937"/>
-          <rect x="10" y="73" width="11" height="6" rx="3" fill="#111827"/><rect x="19" y="73" width="11" height="6" rx="3" fill="#111827"/>
-          <rect x="9" y="50" width="22" height="12" rx="4" fill="#1e3a8a"/>
-          <rect x="7" y="28" width="26" height="24" rx="9" fill="#1e3a8a"/>
-          <path d="M16,28 L20,33 L24,28 Z" fill="#fff"/><path d="M20,30 L17.5,42 L20,46 L22.5,42 Z" fill="#dc2626"/>
-          <rect x="2" y="29" width="8" height="11" rx="4" fill="#1e3a8a"/><rect x="1.5" y="37" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(8 4 42)"/><circle cx="4" cy="49" r="3.3" fill="#ffe0bd"/>
-          <rect x="30" y="29" width="8" height="11" rx="4" fill="#1e3a8a"/><rect x="32.5" y="37" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(-8 36 42)"/><circle cx="36" cy="49" r="3.3" fill="#ffe0bd"/>
-          <rect x="16.5" y="24" width="7" height="6" fill="#ffe0bd"/>
-          <circle cx="20" cy="13" r="13" fill="#e8c878"/><circle cx="20" cy="15" r="12" fill="#ffe0bd"/>
-          <ellipse cx="7.7" cy="15" rx="2" ry="3" fill="#ffe0bd"/><ellipse cx="32.3" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
-          <path d="M7,11 Q14,4 22,7 Q28,4 33,11 Q26,8 20,8 Q13,8 7,11 Z" fill="#e8c878"/>
-          <circle cx="11" cy="19" r="2.5" fill="#fca5a5" opacity="0.5"/><circle cx="29" cy="19" r="2.5" fill="#fca5a5" opacity="0.5"/>
-          <ellipse cx="14" cy="15" rx="2.2" ry="2.8" fill="#fff"/><circle cx="14.4" cy="15.4" r="1.4" fill="#3b2415"/>
-          <ellipse cx="26" cy="15" rx="2.2" ry="2.8" fill="#fff"/><circle cx="25.6" cy="15.4" r="1.4" fill="#3b2415"/>
-          <path d="M15,21 Q20,25 25,21" stroke="#b5503a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-          <!-- 講台＋麥克風 -->
-          <path d="M3,58 L37,58 L34,84 L6,84 Z" fill="#1d4ed8"/><rect x="1" y="55" width="38" height="5.5" rx="2" fill="#2563eb"/>
-          <rect x="18.6" y="45" width="2" height="13" fill="#334155"/><circle cx="19.6" cy="44" r="3.2" fill="#64748b"/>
-        </g></g>
-      </svg>
-    </div>
-
-    <!-- 場景 H：我的貓（對應 Pre-A1/004 pet-cat） -->
-    <div class="scene hidden" data-scene="pet-cat">
-      <svg viewBox="0 0 360 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tom shows Anna his cat Coco">
-        <defs><linearGradient id="sky-cat" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bae6fd"/><stop offset="1" stop-color="#e0f2fe"/></linearGradient></defs>
-        <rect x="0" y="0" width="360" height="170" fill="url(#sky-cat)"/>
-        <rect x="0" y="128" width="360" height="42" fill="#86efac"/>
-        <rect x="0" y="128" width="360" height="6" fill="#4ade80"/>
-        <g transform="translate(312,30)"><g class="rays"><g stroke="#fbbf24" stroke-width="3" stroke-linecap="round"><line x1="0" y1="-26" x2="0" y2="-20"/><line x1="0" y1="26" x2="0" y2="20"/><line x1="-26" y1="0" x2="-20" y2="0"/><line x1="26" y1="0" x2="20" y2="0"/><line x1="-18" y1="-18" x2="-14" y2="-14"/><line x1="18" y1="18" x2="14" y2="14"/><line x1="-18" y1="18" x2="-14" y2="14"/><line x1="18" y1="-18" x2="14" y2="-14"/></g></g><circle r="15" fill="#fde047"/></g>
-        <g class="cloud1" fill="#ffffff" opacity="0.9"><ellipse cx="64" cy="32" rx="18" ry="10"/><ellipse cx="80" cy="34" rx="13" ry="8"/></g>
-        <g transform="translate(168,116)"><g class="jump-a"><text x="0" y="0" font-size="30" text-anchor="middle">🐈</text></g></g>
-        <g transform="translate(60,55)"><g class="bob-a">
-          <g class="talkA"><path d="M34,-3 L30,5 L42,-2 Z" fill="#fff" stroke="#2563eb" stroke-width="1.5"/><rect x="26" y="-24" width="44" height="22" rx="11" fill="#fff" stroke="#2563eb" stroke-width="1.5"/><text x="48" y="-9" font-size="11" font-weight="700" fill="#2563eb" text-anchor="middle">Cat!</text></g>
-          <ellipse cx="20" cy="80" rx="15" ry="3" fill="#000" opacity="0.10"/>
-          <rect x="13" y="60" width="6" height="14" rx="3" fill="#ffe0bd"/><rect x="21" y="60" width="6" height="14" rx="3" fill="#ffe0bd"/>
-          <rect x="10" y="73" width="11" height="6" rx="3" fill="#ef4444"/><rect x="19" y="73" width="11" height="6" rx="3" fill="#ef4444"/>
-          <rect x="9" y="50" width="22" height="12" rx="4" fill="#1e3a8a"/><rect x="19.3" y="52" width="1.4" height="9" fill="#172554"/>
-          <rect x="7" y="28" width="26" height="24" rx="9" fill="#2563eb"/><rect x="7" y="39" width="26" height="3.5" fill="#fff" opacity="0.7"/>
-          <rect x="2" y="29" width="8" height="11" rx="4" fill="#2563eb"/><rect x="1.5" y="37" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(8 4 42)"/><circle cx="4" cy="49" r="3.3" fill="#ffe0bd"/>
-          <rect x="30" y="29" width="8" height="11" rx="4" fill="#2563eb"/><rect x="32.5" y="37" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(-8 36 42)"/><circle cx="36" cy="49" r="3.3" fill="#ffe0bd"/>
-          <rect x="16.5" y="24" width="7" height="6" fill="#ffe0bd"/>
-          <circle cx="20" cy="13" r="13" fill="#5b3a1f"/><circle cx="20" cy="15" r="12" fill="#ffe0bd"/>
-          <ellipse cx="7.7" cy="15" rx="2" ry="3" fill="#ffe0bd"/><ellipse cx="32.3" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
-          <path d="M8,12 Q20,2 32,12 Q20,8 8,12 Z" fill="#5b3a1f"/>
-          <circle cx="11" cy="19" r="2.5" fill="#fca5a5" opacity="0.55"/><circle cx="29" cy="19" r="2.5" fill="#fca5a5" opacity="0.55"/>
-          <ellipse cx="14" cy="15" rx="2.2" ry="2.8" fill="#fff"/><circle cx="14.4" cy="15.4" r="1.4" fill="#3b2415"/>
-          <ellipse cx="26" cy="15" rx="2.2" ry="2.8" fill="#fff"/><circle cx="25.6" cy="15.4" r="1.4" fill="#3b2415"/>
-          <path d="M15,21 Q20,25 25,21" stroke="#b5503a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-        </g></g>
-        <g transform="translate(258,55)"><g class="bob-b">
-          <g class="talkB"><path d="M6,-3 L10,5 L-2,-2 Z" fill="#fff" stroke="#db2777" stroke-width="1.5"/><rect x="-34" y="-24" width="50" height="22" rx="11" fill="#fff" stroke="#db2777" stroke-width="1.5"/><text x="-9" y="-9" font-size="11" font-weight="700" fill="#db2777" text-anchor="middle">Cute!</text></g>
-          <ellipse cx="20" cy="80" rx="15" ry="3" fill="#000" opacity="0.10"/>
-          <path d="M4,16 Q1,44 7,58 L33,58 Q39,44 36,16 Z" fill="#6b4423"/>
-          <rect x="13" y="58" width="6" height="14" rx="3" fill="#ffe0bd"/><rect x="21" y="58" width="6" height="14" rx="3" fill="#ffe0bd"/>
-          <rect x="10" y="72" width="11" height="6" rx="3" fill="#be185d"/><rect x="19" y="72" width="11" height="6" rx="3" fill="#be185d"/>
-          <path d="M9,30 Q5,48 2,60 L38,60 Q35,48 31,30 Z" fill="#db2777"/><rect x="9" y="30" width="22" height="7" rx="3" fill="#be185d" opacity="0.45"/>
-          <rect x="2" y="31" width="8" height="10" rx="4" fill="#db2777"/><rect x="1.5" y="38" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(8 4 43)"/><circle cx="4" cy="50" r="3.3" fill="#ffe0bd"/>
-          <rect x="30" y="31" width="8" height="10" rx="4" fill="#db2777"/><rect x="32.5" y="38" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(-8 36 43)"/><circle cx="36" cy="50" r="3.3" fill="#ffe0bd"/>
-          <rect x="16.5" y="24" width="7" height="6" fill="#ffe0bd"/>
-          <ellipse cx="4" cy="27" rx="5" ry="10" fill="#6b4423"/><ellipse cx="36" cy="27" rx="5" ry="10" fill="#6b4423"/>
-          <circle cx="5" cy="18" r="2" fill="#f472b6"/><circle cx="35" cy="18" r="2" fill="#f472b6"/>
-          <circle cx="20" cy="13" r="13" fill="#6b4423"/><circle cx="20" cy="15" r="12" fill="#ffe0bd"/>
-          <ellipse cx="7.7" cy="15" rx="2" ry="3" fill="#ffe0bd"/><ellipse cx="32.3" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
-          <path d="M7,12 Q20,1 33,12 Q20,7 7,12 Z" fill="#6b4423"/>
-          <path d="M20,5 L13,2 L13,8 Z" fill="#f472b6"/><path d="M20,5 L27,2 L27,8 Z" fill="#f472b6"/><circle cx="20" cy="5" r="2.2" fill="#ec4899"/>
-          <circle cx="11" cy="19" r="2.5" fill="#fca5a5" opacity="0.6"/><circle cx="29" cy="19" r="2.5" fill="#fca5a5" opacity="0.6"/>
-          <ellipse cx="14" cy="15" rx="2.2" ry="2.9" fill="#fff"/><circle cx="14.4" cy="15.4" r="1.5" fill="#3b2415"/>
-          <ellipse cx="26" cy="15" rx="2.2" ry="2.9" fill="#fff"/><circle cx="25.6" cy="15.4" r="1.5" fill="#3b2415"/>
-          <path d="M15,21 Q20,25 25,21" stroke="#b5503a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-        </g></g>
-      </svg>
-    </div>
+    <div class="scene hidden" id="scene"></div>
     </div><!-- /#sceneStage -->
 
     <div class="progress-wrap">
@@ -1632,15 +875,33 @@
     if (map[lv] && map[lv].restart) map[lv].restart();
   });
 
-  // 動畫場景：依文章切換，且只在 Level 1 顯示
+  // 動畫場景：每篇文章對應 scenes/<scene>.svg，依文章切換，且只在 Level 1 顯示
   let currentScene = "park-ball";
   let onLevel1 = true;
-  function updateScene() {
-    document.querySelectorAll(".scene").forEach(s => s.classList.add("hidden"));
-    if (onLevel1) {
-      const el = document.querySelector('.scene[data-scene="' + currentScene + '"]');
-      if (el) el.classList.remove("hidden");
+  const sceneEl = document.getElementById("scene");
+  const sceneCache = {};
+  function loadScene(name) {
+    if (sceneEl.dataset.loaded === name) return;          // 已經是這張了
+    if (sceneCache[name] !== undefined) {
+      sceneEl.innerHTML = sceneCache[name];
+      sceneEl.dataset.loaded = name;
+      return;
     }
+    fetch("scenes/" + name + ".svg")
+      .then(r => r.ok ? r.text() : Promise.reject())
+      .then(svg => {
+        sceneCache[name] = svg;
+        if (currentScene === name && onLevel1) {          // 期間沒切走才注入
+          sceneEl.innerHTML = svg;
+          sceneEl.dataset.loaded = name;
+        }
+      })
+      .catch(() => { sceneEl.innerHTML = ""; delete sceneEl.dataset.loaded; });
+  }
+  function updateScene() {
+    if (!onLevel1) { sceneEl.classList.add("hidden"); return; }
+    sceneEl.classList.remove("hidden");
+    loadScene(currentScene);
   }
 
   tabs.forEach(tab => tab.addEventListener("click", () => {
@@ -1761,6 +1022,8 @@
   }
   // 這篇文章「會計分」的關卡（Level 1 聽力不計；2/3/4/5 必有，6/7/8/9 視資料而定）
   function scoredLevelsFor(a) {
+    // manifest 帶 levels（含 1 聽，不計分）；計分關卡為 2 以上
+    if (a.levels && a.levels.length) return a.levels.filter(l => l >= 2).map(String);
     const lv = ["2", "3", "4", "5"];
     if (a.reorder && a.reorder.length)   lv.push("6");
     if (a.wh && a.wh.length)             lv.push("7");
@@ -3014,10 +2277,14 @@
   }
 
   async function loadArticle(article) {
+    let content = {};
     try {
       const res = await fetch(article.file, { cache: "no-cache" });
       if (!res.ok) throw new Error("HTTP " + res.status);
       script = parseDialogue(await res.text());
+      // 每篇文章的關卡內容獨立成檔：<file>.json（quiz/vocab/wh/cloze…）
+      const cres = await fetch(article.file + ".json", { cache: "no-cache" });
+      if (cres.ok) content = await cres.json();
     } catch (e) {
       showLoadError();
       return;
@@ -3032,41 +2299,41 @@
     renderShadow();
     currentScene = article.scene || "park-ball";
     updateScene();
-    quiz3Ctl.setData(article.quiz3);
-    quiz4Ctl.setData(article.quiz4);
-    matchCtl.setData(article.vocab);
+    quiz3Ctl.setData(content.quiz3);
+    quiz4Ctl.setData(content.quiz4);
+    matchCtl.setData(content.vocab);
 
     // Level 6（重組句子）只在文章有 reorder 資料時顯示分頁
-    reorderCtl.setData(article.reorder);
+    reorderCtl.setData(content.reorder);
     const tab6 = document.querySelector('.levelTab[data-level="6"]');
-    const hasReorder = !!(article.reorder && article.reorder.length);
+    const hasReorder = !!(content.reorder && content.reorder.length);
     tab6.classList.toggle("hidden", !hasReorder);
     if (!hasReorder && tab6.classList.contains("active")) {
       document.querySelector('.levelTab[data-level="1"]').click();
     }
 
     // Level 7（WH 問題）只在文章有 wh 資料時顯示分頁
-    whCtl.setData(article.wh);
+    whCtl.setData(content.wh);
     const tab7 = document.querySelector('.levelTab[data-level="7"]');
-    const hasWh = !!(article.wh && article.wh.length);
+    const hasWh = !!(content.wh && content.wh.length);
     tab7.classList.toggle("hidden", !hasWh);
     if (!hasWh && tab7.classList.contains("active")) {
       document.querySelector('.levelTab[data-level="1"]').click();
     }
 
     // Level 8（聽寫，A1 以上）只在文章有 dictation 資料時顯示分頁
-    dictCtl.setData(article.dictation);
+    dictCtl.setData(content.dictation);
     const tab8 = document.querySelector('.levelTab[data-level="8"]');
-    const hasDict = !!(article.dictation && article.dictation.length);
+    const hasDict = !!(content.dictation && content.dictation.length);
     tab8.classList.toggle("hidden", !hasDict);
     if (!hasDict && tab8.classList.contains("active")) {
       document.querySelector('.levelTab[data-level="1"]').click();
     }
 
     // Level 9（單字填空）只在文章有 cloze 資料時顯示分頁
-    clozeCtl.setData(article.cloze);
+    clozeCtl.setData(content.cloze);
     const tab9 = document.querySelector('.levelTab[data-level="9"]');
-    const hasCloze = !!(article.cloze && article.cloze.length);
+    const hasCloze = !!(content.cloze && content.cloze.length);
     tab9.classList.toggle("hidden", !hasCloze);
     if (!hasCloze && tab9.classList.contains("active")) {
       document.querySelector('.levelTab[data-level="1"]').click();
@@ -3077,7 +2344,7 @@
       pos: "Part of speech", context: "Context"
     };
     const badge = document.getElementById("clozeTypeBadge");
-    badge.textContent = article.clozeType ? (clozeTypeLabel[article.clozeType] || article.clozeType) : "";
+    badge.textContent = content.clozeType ? (clozeTypeLabel[content.clozeType] || content.clozeType) : "";
 
     // 還原這篇文章已完成的關卡並更新進度條
     restoreProgress();
@@ -3085,6 +2352,7 @@
 
   // 計算一篇文章共有幾關、已完成幾關（給課程卡片顯示）
   function articleTotal(a) {
+    if (a.levels && a.levels.length) return a.levels.filter(l => l >= 2).length;
     let t = 5;
     if (a.reorder && a.reorder.length) t++;
     if (a.wh && a.wh.length) t++;

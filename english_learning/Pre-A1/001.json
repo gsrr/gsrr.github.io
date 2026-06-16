@@ -1,0 +1,145 @@
+{
+  "quiz3": [
+    {
+      "q": "Tom is talking to Anna.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna is sad.",
+      "answer": "No"
+    },
+    {
+      "q": "Tom is fine.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They want to play.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They will play in the park.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Anna is fine.",
+      "answer": "No"
+    },
+    {
+      "q": "Tom wants to sleep.",
+      "answer": "No"
+    },
+    {
+      "q": "They will play at home.",
+      "answer": "No"
+    },
+    {
+      "q": "Anna says yes.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Tom and Anna are friends.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Tom",
+      "pic": "👦"
+    },
+    {
+      "word": "Anna",
+      "pic": "👧"
+    },
+    {
+      "word": "ball",
+      "pic": "⚽"
+    },
+    {
+      "word": "park",
+      "pic": "🏞️"
+    },
+    {
+      "word": "play",
+      "pic": "🛝"
+    }
+  ],
+  "wh": [
+    {
+      "q": "Who are talking?",
+      "a": "Tom and Anna.",
+      "wrong": [
+        "Mom and Dad.",
+        "Anna and her dog."
+      ]
+    },
+    {
+      "q": "Where do they want to play?",
+      "a": "They want to play in the park.",
+      "wrong": [
+        "They want to play at home.",
+        "They want to play at school."
+      ]
+    },
+    {
+      "q": "What will Anna bring?",
+      "a": "She will bring her ball.",
+      "wrong": [
+        "She will bring her book.",
+        "She will bring her dog."
+      ]
+    },
+    {
+      "q": "How is Anna?",
+      "a": "She is good.",
+      "wrong": [
+        "She is sad.",
+        "She is tired."
+      ]
+    },
+    {
+      "q": "When will they go?",
+      "a": "They will go now.",
+      "wrong": [
+        "They will go tomorrow.",
+        "They will go later."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "We can play in the ___.",
+      "answer": "park",
+      "wrong": [
+        "good",
+        "ready"
+      ]
+    },
+    {
+      "text": "Can you bring your ___?",
+      "answer": "ball",
+      "wrong": [
+        "fine",
+        "now"
+      ]
+    },
+    {
+      "text": "Do you want to ___?",
+      "answer": "play",
+      "wrong": [
+        "park",
+        "ball"
+      ]
+    },
+    {
+      "text": "Okay! I am ___.",
+      "answer": "ready",
+      "wrong": [
+        "play",
+        "park"
+      ]
+    }
+  ]
+}

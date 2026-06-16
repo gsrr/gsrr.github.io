@@ -1,0 +1,145 @@
+{
+  "quiz3": [
+    {
+      "q": "Tom has a cat.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The cat's name is Coco.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Coco is black and white.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna can pet the cat.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna likes cats.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Anna has the cat.",
+      "answer": "No"
+    },
+    {
+      "q": "The cat is red.",
+      "answer": "No"
+    },
+    {
+      "q": "The cat is soft.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Coco does not like to play.",
+      "answer": "No"
+    },
+    {
+      "q": "Coco likes Anna.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Tom",
+      "pic": "👦"
+    },
+    {
+      "word": "Anna",
+      "pic": "👧"
+    },
+    {
+      "word": "cat",
+      "pic": "🐈"
+    },
+    {
+      "word": "pet",
+      "pic": "🤚"
+    },
+    {
+      "word": "play",
+      "pic": "🧶"
+    }
+  ],
+  "wh": [
+    {
+      "q": "Who has a cat?",
+      "a": "Tom has a cat.",
+      "wrong": [
+        "Anna has a cat.",
+        "Mom has a cat."
+      ]
+    },
+    {
+      "q": "What is the cat's name?",
+      "a": "Its name is Coco.",
+      "wrong": [
+        "Its name is Milo.",
+        "Its name is Bella."
+      ]
+    },
+    {
+      "q": "What color is the cat?",
+      "a": "It is black and white.",
+      "wrong": [
+        "It is brown.",
+        "It is orange."
+      ]
+    },
+    {
+      "q": "How does the cat feel?",
+      "a": "The cat is soft.",
+      "wrong": [
+        "The cat is wet.",
+        "The cat is cold."
+      ]
+    },
+    {
+      "q": "What does Coco like to do?",
+      "a": "Coco likes to play.",
+      "wrong": [
+        "Coco likes to sleep.",
+        "Coco likes to swim."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "Look! I have a ___.",
+      "answer": "cat",
+      "wrong": [
+        "cute",
+        "soft"
+      ]
+    },
+    {
+      "text": "Its ___ is Coco.",
+      "answer": "name",
+      "wrong": [
+        "play",
+        "like"
+      ]
+    },
+    {
+      "text": "Can I ___ the cat?",
+      "answer": "pet",
+      "wrong": [
+        "name",
+        "soft"
+      ]
+    },
+    {
+      "text": "The cat is ___.",
+      "answer": "soft",
+      "wrong": [
+        "pet",
+        "play"
+      ]
+    }
+  ]
+}

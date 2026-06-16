@@ -1,0 +1,145 @@
+{
+  "quiz3": [
+    {
+      "q": "Tom is hungry.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna has an apple.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna has milk.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Tom does not like apples.",
+      "answer": "No"
+    },
+    {
+      "q": "Anna is happy.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Tom has the food.",
+      "answer": "No"
+    },
+    {
+      "q": "Anna gives Tom an apple.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Tom drinks water.",
+      "answer": "No"
+    },
+    {
+      "q": "They eat and drink.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Tom is sad.",
+      "answer": "No"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Tom",
+      "pic": "👦"
+    },
+    {
+      "word": "Anna",
+      "pic": "👧"
+    },
+    {
+      "word": "apple",
+      "pic": "🍎"
+    },
+    {
+      "word": "milk",
+      "pic": "🥛"
+    },
+    {
+      "word": "eat",
+      "pic": "🍽️"
+    }
+  ],
+  "wh": [
+    {
+      "q": "Who is hungry?",
+      "a": "Tom is hungry.",
+      "wrong": [
+        "Anna is hungry.",
+        "Mom is hungry."
+      ]
+    },
+    {
+      "q": "What does Anna have?",
+      "a": "She has an apple.",
+      "wrong": [
+        "She has a ball.",
+        "She has a book."
+      ]
+    },
+    {
+      "q": "What does Tom like?",
+      "a": "He likes apples.",
+      "wrong": [
+        "He likes books.",
+        "He likes cars."
+      ]
+    },
+    {
+      "q": "What do they drink?",
+      "a": "They drink milk.",
+      "wrong": [
+        "They drink water.",
+        "They drink juice."
+      ]
+    },
+    {
+      "q": "How is Anna?",
+      "a": "She is happy.",
+      "wrong": [
+        "She is sad.",
+        "She is angry."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "I have an ___.",
+      "answer": "apple",
+      "wrong": [
+        "eat",
+        "happy"
+      ]
+    },
+    {
+      "text": "Can I have some ___?",
+      "answer": "milk",
+      "wrong": [
+        "good",
+        "hungry"
+      ]
+    },
+    {
+      "text": "I like ___.",
+      "answer": "apples",
+      "wrong": [
+        "happy",
+        "drink"
+      ]
+    },
+    {
+      "text": "Let us eat and ___.",
+      "answer": "drink",
+      "wrong": [
+        "apple",
+        "milk"
+      ]
+    }
+  ]
+}

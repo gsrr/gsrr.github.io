@@ -1,0 +1,145 @@
+{
+  "quiz3": [
+    {
+      "q": "Tom can run.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna can jump.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The tree is big.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Tom can run fast.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "The tree is little.",
+      "answer": "No"
+    },
+    {
+      "q": "Tom can not run.",
+      "answer": "No"
+    },
+    {
+      "q": "Anna can jump up and down.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They like to play.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Tom",
+      "pic": "👦"
+    },
+    {
+      "word": "Anna",
+      "pic": "👧"
+    },
+    {
+      "word": "ball",
+      "pic": "⚽"
+    },
+    {
+      "word": "tree",
+      "pic": "🌳"
+    },
+    {
+      "word": "run",
+      "pic": "🏃"
+    },
+    {
+      "word": "jump",
+      "pic": "🦘"
+    },
+    {
+      "word": "look",
+      "pic": "👀"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What can Tom do?",
+      "a": "He can run fast.",
+      "wrong": [
+        "He can swim fast.",
+        "He can sing well."
+      ]
+    },
+    {
+      "q": "Where does Tom run?",
+      "a": "He runs to the big tree.",
+      "wrong": [
+        "He runs to the house.",
+        "He runs to the river."
+      ]
+    },
+    {
+      "q": "What can Anna do?",
+      "a": "She can jump up and down.",
+      "wrong": [
+        "She can climb the tree.",
+        "She can run very fast."
+      ]
+    },
+    {
+      "q": "Who is fast?",
+      "a": "Tom is fast.",
+      "wrong": [
+        "Anna is fast.",
+        "Mom is fast."
+      ]
+    },
+    {
+      "q": "What do Tom and Anna do?",
+      "a": "They run and jump.",
+      "wrong": [
+        "They sing and dance.",
+        "They read and write."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "Here is the ___.",
+      "answer": "ball",
+      "wrong": [
+        "run",
+        "fast"
+      ]
+    },
+    {
+      "text": "I can ___ fast.",
+      "answer": "run",
+      "wrong": [
+        "ball",
+        "tree"
+      ]
+    },
+    {
+      "text": "Run to the big ___.",
+      "answer": "tree",
+      "wrong": [
+        "run",
+        "fast"
+      ]
+    },
+    {
+      "text": "I can jump up and ___.",
+      "answer": "down",
+      "wrong": [
+        "ball",
+        "tree"
+      ]
+    }
+  ]
+}

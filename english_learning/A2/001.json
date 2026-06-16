@@ -1,0 +1,196 @@
+{
+  "quiz3": [
+    {
+      "q": "Anna will visit her grandparents.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna will stay for two weeks.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Tom is going to a summer camp.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Tom will help on a farm.",
+      "answer": "No"
+    },
+    {
+      "q": "Tom will go hiking and swimming.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Anna is going to a summer camp.",
+      "answer": "No"
+    },
+    {
+      "q": "Tom wants to make new friends.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna will help her grandpa.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna will stay for two months.",
+      "answer": "No"
+    },
+    {
+      "q": "Tom will visit his grandparents.",
+      "answer": "No"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Tom",
+      "pic": "👦"
+    },
+    {
+      "word": "Anna",
+      "pic": "👧"
+    },
+    {
+      "word": "grandpa",
+      "pic": "👴"
+    },
+    {
+      "word": "farm",
+      "pic": "🚜"
+    },
+    {
+      "word": "camp",
+      "pic": "⛺"
+    },
+    {
+      "word": "hiking",
+      "pic": "🥾"
+    },
+    {
+      "word": "swimming",
+      "pic": "🏊"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What is Anna going to do this summer?",
+      "a": "She is going to visit her grandparents.",
+      "wrong": [
+        "She is going to a summer camp.",
+        "She is going to stay home."
+      ]
+    },
+    {
+      "q": "How long will Anna stay?",
+      "a": "She will stay for two weeks.",
+      "wrong": [
+        "She will stay for two days.",
+        "She will stay for a month."
+      ]
+    },
+    {
+      "q": "Why is Tom going to a summer camp?",
+      "a": "Because he wants to make new friends.",
+      "wrong": [
+        "Because he likes farms.",
+        "Because his mom told him."
+      ]
+    },
+    {
+      "q": "What will Tom do at camp?",
+      "a": "He will go hiking and swimming.",
+      "wrong": [
+        "He will help on a farm.",
+        "He will visit his grandparents."
+      ]
+    },
+    {
+      "q": "Who will help on the farm?",
+      "a": "Anna will help on the farm.",
+      "wrong": [
+        "Tom will help on the farm.",
+        "Grandpa will do it alone."
+      ]
+    }
+  ],
+  "clozeType": "context",
+  "cloze": [
+    {
+      "text": "I'm going to visit my grandparents in the ___.",
+      "answer": "countryside",
+      "wrong": [
+        "city",
+        "school"
+      ]
+    },
+    {
+      "text": "I'll help my grandpa on the ___.",
+      "answer": "farm",
+      "wrong": [
+        "boat",
+        "street"
+      ]
+    },
+    {
+      "text": "I'm going to a summer ___.",
+      "answer": "camp",
+      "wrong": [
+        "party",
+        "class"
+      ]
+    },
+    {
+      "text": "We'll go hiking and ___ every day.",
+      "answer": "swimming",
+      "wrong": [
+        "shopping",
+        "sleeping"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "I",
+      "am",
+      "going",
+      "to",
+      "visit",
+      "my",
+      "grandparents"
+    ],
+    [
+      "I",
+      "will",
+      "help",
+      "my",
+      "grandpa",
+      "on",
+      "the",
+      "farm"
+    ],
+    [
+      "We",
+      "will",
+      "go",
+      "hiking",
+      "and",
+      "swimming"
+    ],
+    [
+      "I",
+      "want",
+      "to",
+      "make",
+      "new",
+      "friends"
+    ]
+  ],
+  "dictation": [
+    "I am going to visit my grandparents.",
+    "I will help my grandpa on the farm.",
+    "We will go hiking and swimming every day.",
+    "I want to make new friends."
+  ]
+}

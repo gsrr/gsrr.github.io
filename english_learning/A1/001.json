@@ -1,0 +1,203 @@
+{
+  "quiz3": [
+    {
+      "q": "Anna went to the park.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna played with her ball.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna climbed the tree.",
+      "answer": "No"
+    },
+    {
+      "q": "Tom watched TV at home.",
+      "answer": "Yes"
+    },
+    {
+      "q": "It rained at the park.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Anna went to the park with Tom.",
+      "answer": "No"
+    },
+    {
+      "q": "Anna didn't climb the tree because it was too high.",
+      "answer": "Yes"
+    },
+    {
+      "q": "It was sunny at the park.",
+      "answer": "No"
+    },
+    {
+      "q": "Tom played football at home.",
+      "answer": "No"
+    },
+    {
+      "q": "Tom went home.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Tom",
+      "pic": "👦"
+    },
+    {
+      "word": "Anna",
+      "pic": "👧"
+    },
+    {
+      "word": "mom",
+      "pic": "👩"
+    },
+    {
+      "word": "ball",
+      "pic": "⚽"
+    },
+    {
+      "word": "tree",
+      "pic": "🌳"
+    },
+    {
+      "word": "park",
+      "pic": "🏞️"
+    },
+    {
+      "word": "rain",
+      "pic": "🌧️"
+    },
+    {
+      "word": "TV",
+      "pic": "📺"
+    },
+    {
+      "word": "home",
+      "pic": "🏠"
+    },
+    {
+      "word": "run",
+      "pic": "🏃"
+    }
+  ],
+  "wh": [
+    {
+      "q": "Where did Anna go yesterday?",
+      "a": "She went to the park.",
+      "wrong": [
+        "She went to school.",
+        "She went to the zoo."
+      ]
+    },
+    {
+      "q": "Who did Anna go with?",
+      "a": "She went with her mom.",
+      "wrong": [
+        "She went with Tom.",
+        "She went with her dad."
+      ]
+    },
+    {
+      "q": "What did Anna play with?",
+      "a": "She played with her ball.",
+      "wrong": [
+        "She played with her doll.",
+        "She played with her dog."
+      ]
+    },
+    {
+      "q": "Why didn't Anna climb the tree?",
+      "a": "Because it was too high.",
+      "wrong": [
+        "Because it was too wet.",
+        "Because she was tired."
+      ]
+    },
+    {
+      "q": "What did Tom do at home?",
+      "a": "He watched TV.",
+      "wrong": [
+        "He read a book.",
+        "He played games."
+      ]
+    }
+  ],
+  "clozeType": "category",
+  "cloze": [
+    {
+      "text": "I went to the ___ with my mom.",
+      "answer": "park",
+      "wrong": [
+        "shop",
+        "zoo"
+      ]
+    },
+    {
+      "text": "I played with my ___.",
+      "answer": "ball",
+      "wrong": [
+        "doll",
+        "book"
+      ]
+    },
+    {
+      "text": "It started to ___.",
+      "answer": "rain",
+      "wrong": [
+        "snow",
+        "hail"
+      ]
+    },
+    {
+      "text": "I went home and watched ___.",
+      "answer": "TV",
+      "wrong": [
+        "movies",
+        "games"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "I",
+      "went",
+      "to",
+      "the",
+      "park"
+    ],
+    [
+      "I",
+      "played",
+      "with",
+      "my",
+      "ball"
+    ],
+    [
+      "Did",
+      "you",
+      "climb",
+      "the",
+      "big",
+      "tree"
+    ],
+    [
+      "I",
+      "went",
+      "home",
+      "and",
+      "watched",
+      "TV"
+    ]
+  ],
+  "dictation": [
+    "I went to the park with my mom.",
+    "I played with my ball.",
+    "It started to rain.",
+    "I went home and watched TV."
+  ]
+}
