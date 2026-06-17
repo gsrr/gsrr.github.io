@@ -535,7 +535,7 @@
         <span class="learn-title" id="greetTitle"></span>
       </div>
       <p class="screen-intro">Choose a level to start 📚</p>
-      <div style="text-align:center;margin-bottom:14px"><button id="openArenaBtn" style="background:#7c3aed;color:#fff">⚔️ Arena (PvP)</button></div>
+      <div style="text-align:center;margin-bottom:14px"><button id="openArenaBtn" style="background:#7c3aed;color:#fff">🏆 Arena Tournament</button></div>
       <div id="levelGrid" class="pick-grid"></div>
     </div>
 
@@ -740,14 +740,11 @@
         <span class="learn-title">⚔️ Arena</span>
       </div>
       <div id="arenaSetup">
-        <p class="screen-intro">Pick two players to battle! 🥊</p>
-        <div class="picker">
-          <label>Player 1 <select id="arenaP1"></select></label>
-          <label>Player 2 <select id="arenaP2"></select></label>
-        </div>
-        <div style="text-align:center;margin-top:10px"><button id="arenaFight" class="dict-play">Fight! ⚔️</button></div>
+        <p class="screen-intro">🏆 Single-elimination tournament — every player and every monster fights until one champion remains!</p>
+        <div style="text-align:center;margin-top:10px"><button id="arenaFight" class="dict-play">Start Tournament 🏆</button></div>
       </div>
       <div id="arenaBattle" class="hidden">
+        <div id="arenaStatus" class="battle-stats"></div>
         <div class="battle-arena">
           <div class="fighter">
             <div class="fighter-emoji" id="arenaE1"></div>
@@ -762,6 +759,7 @@
           </div>
         </div>
         <div id="arenaLog" class="battle-log"></div>
+        <div style="text-align:center;margin:8px 0"><button id="arenaSkip" class="back-btn">⏭ Skip to result</button></div>
         <div id="arenaResult" class="hidden"></div>
       </div>
     </div>
@@ -2662,48 +2660,71 @@
     return h;
   }
   let arena = null;
-  function renderArenaSetup() {
+  function renderArenaIntro() {
     document.getElementById("arenaBattle").classList.add("hidden");
     document.getElementById("arenaSetup").classList.remove("hidden");
-    const profiles = loadProfiles();
-    const s1 = document.getElementById("arenaP1"), s2 = document.getElementById("arenaP2");
-    if (profiles.length < 2) {
-      s1.innerHTML = s2.innerHTML = "";
-      document.querySelector("#arenaSetup .screen-intro").textContent = "Create at least 2 users to use the Arena. 🥊";
-      document.getElementById("arenaFight").style.display = "none";
-      return;
-    }
-    document.querySelector("#arenaSetup .screen-intro").textContent = "Pick two players to battle! 🥊";
-    document.getElementById("arenaFight").style.display = "";
-    const opts = profiles.map(n => '<option value="' + n + '">' + avatarOf(n) + ' ' + n + '</option>').join("");
-    s1.innerHTML = opts; s2.innerHTML = opts;
-    s1.selectedIndex = 0; s2.selectedIndex = 1;
+    document.getElementById("arenaResult").classList.add("hidden");
+    document.getElementById("arenaResult").innerHTML = "";
   }
+  // 參賽者：所有玩家英雄 + 所有怪物（怪物數值依星級 tier 給）
+  function arenaCompetitors() {
+    const list = [];
+    loadProfiles().forEach(n => list.push({ name: n, av: avatarOf(n), hero: loadHeroFor(n), kind: "player" }));
+    Object.keys(VILLAINS).forEach(tier => {
+      const t = parseInt(tier, 10);
+      VILLAINS[tier].forEach(emo =>
+        list.push({ name: "Lv" + t + " Foe", av: emo, hero: { atk: t * 2, def: t, luck: t, unspent: 0 }, kind: "monster" }));
+    });
+    return shuffle(list);
+  }
+  function arenaDmg(at, df) { let d = Math.max(1, (5 + at.atk * 2) - df.def); if (Math.random() < at.luck * 0.04) d *= 2; return d; }
+  function arenaFighter(comp) { const max = heroMaxHP(comp.hero); return { name: comp.name, av: comp.av, hero: comp.hero, max: max, hp: max, ref: comp }; }
+  function arenaAlive() { return arena.queue.length + arena.winners.length + (arena.f1 ? 1 : 0) + (arena.f2 ? 1 : 0); }
   function arenaHud() {
     document.getElementById("arenaHp1").style.width = Math.max(0, arena.f1.hp / arena.f1.max * 100) + "%";
     document.getElementById("arenaHp2").style.width = Math.max(0, arena.f2.hp / arena.f2.max * 100) + "%";
   }
-  function startArena(n1, n2) {
-    const mk = (n) => { const hero = loadHeroFor(n); const max = heroMaxHP(hero); return { name: n, av: avatarOf(n), hero: hero, max: max, hp: max }; };
-    arena = { f1: mk(n1), f2: mk(n2), turn: Math.random() < 0.5 ? 0 : 1, over: false };
+  function arenaStatus() {
+    document.getElementById("arenaStatus").textContent =
+      "🏆 Round " + arena.round + " / " + arena.rounds + "   ·   " + arenaAlive() + " left";
+  }
+  function startTournament() {
+    const comp = arenaCompetitors();
+    arena = { queue: comp, winners: [], round: 1, rounds: Math.max(1, Math.ceil(Math.log2(comp.length))),
+              f1: null, f2: null, turn: 0, over: false };
     document.getElementById("arenaSetup").classList.add("hidden");
     document.getElementById("arenaResult").classList.add("hidden");
     document.getElementById("arenaResult").innerHTML = "";
     document.getElementById("arenaBattle").classList.remove("hidden");
+    nextArenaMatch();
+  }
+  function nextArenaMatch() {
+    if (!arena || arena.over) return;
+    if (arena.queue.length === 0) {                 // 本輪結束 → 下一輪
+      if (arena.winners.length === 1) return arenaChampion(arena.winners[0]);
+      arena.queue = arena.winners; arena.winners = []; arena.round++;
+    }
+    if (arena.queue.length === 1) {                 // 落單 → 輪空晉級
+      arena.winners.push(arena.queue.shift());
+      return nextArenaMatch();
+    }
+    arena.f1 = arenaFighter(arena.queue.shift());
+    arena.f2 = arenaFighter(arena.queue.shift());
+    arena.turn = Math.random() < 0.5 ? 0 : 1;
     const e1 = document.getElementById("arenaE1"), e2 = document.getElementById("arenaE2");
     e1.textContent = arena.f1.av; e2.textContent = arena.f2.av;
     e1.classList.remove("defeated"); e2.classList.remove("defeated");
     document.getElementById("arenaN1").textContent = arena.f1.name + " (LV." + heroLevel(arena.f1.hero) + ")";
     document.getElementById("arenaN2").textContent = arena.f2.name + " (LV." + heroLevel(arena.f2.hero) + ")";
+    arenaStatus();
     arenaHud();
-    document.getElementById("arenaLog").textContent = "Fight!";
-    setTimeout(arenaStep, 900);
+    document.getElementById("arenaLog").textContent = arena.f1.name + "  VS  " + arena.f2.name;
+    setTimeout(arenaStep, 800);
   }
   function arenaStep() {
-    if (!arena || arena.over) return;
+    if (!arena || arena.over || !arena.f1) return;
     const p1turn = arena.turn % 2 === 0;
-    const atkF = p1turn ? arena.f1 : arena.f2;
-    const defF = p1turn ? arena.f2 : arena.f1;
+    const atkF = p1turn ? arena.f1 : arena.f2, defF = p1turn ? arena.f2 : arena.f1;
     const atkEl = document.getElementById(p1turn ? "arenaE1" : "arenaE2");
     const defEl = document.getElementById(p1turn ? "arenaE2" : "arenaE1");
     let dmg = Math.max(1, (5 + atkF.hero.atk * 2) - defF.hero.def);
@@ -2714,26 +2735,53 @@
     document.getElementById("arenaLog").textContent = atkF.name + " hits " + defF.name + "  −" + dmg + (crit ? " 🍀 CRIT!" : "");
     arenaHud();
     arena.turn++;
-    if (defF.hp <= 0) { arena.over = true; defEl.classList.add("defeated"); setTimeout(() => arenaEnd(atkF.name), 850); return; }
-    setTimeout(arenaStep, 1000);
+    if (defF.hp <= 0) {
+      defEl.classList.add("defeated");
+      arena.winners.push(atkF.ref);
+      arena.f1 = arena.f2 = null;
+      setTimeout(nextArenaMatch, 900);
+      return;
+    }
+    setTimeout(arenaStep, 650);
   }
-  function arenaEnd(winner) {
+  // 把目前進行中與剩下所有對戰瞬間算完，直接出冠軍
+  function skipArena() {
+    if (!arena || arena.over) return;
+    const fight = (A, B, turn) => {
+      let g = 0;
+      while (A.hp > 0 && B.hp > 0 && g++ < 2000) {
+        if (turn % 2 === 0) B.hp -= arenaDmg(A.hero, B.hero); else A.hp -= arenaDmg(B.hero, A.hero);
+        turn++;
+      }
+      return (A.hp > 0 ? A : B).ref;
+    };
+    if (arena.f1 && arena.f2) { arena.winners.push(fight(arena.f1, arena.f2, arena.turn || 0)); arena.f1 = arena.f2 = null; }
+    let guard = 0;
+    while (guard++ < 5000) {
+      if (arena.queue.length === 0) {
+        if (arena.winners.length === 1) return arenaChampion(arena.winners[0]);
+        arena.queue = arena.winners; arena.winners = []; arena.round++;
+      }
+      if (arena.queue.length === 1) { arena.winners.push(arena.queue.shift()); continue; }
+      arena.winners.push(fight(arenaFighter(arena.queue.shift()), arenaFighter(arena.queue.shift()), Math.random() < 0.5 ? 0 : 1));
+    }
+  }
+  function arenaChampion(comp) {
+    arena.over = true;
+    document.getElementById("arenaLog").textContent = "";
+    document.getElementById("arenaStatus").textContent = "";
     const r = document.getElementById("arenaResult");
     r.classList.remove("hidden");
-    r.innerHTML = '<div class="battle-msg">🏆 ' + winner + ' wins!</div>' +
-      '<div class="battle-btns"><button id="arenaRematch" class="dict-play">Rematch</button>' +
+    r.innerHTML = '<div class="battle-msg">🏆 Champion: ' + comp.av + ' ' + comp.name + '!</div>' +
+      '<div class="battle-btns"><button id="arenaRematch" class="dict-play">New Tournament 🏆</button>' +
       '<button id="arenaBack" class="back-btn">Back</button></div>';
-    document.getElementById("arenaRematch").addEventListener("click", renderArenaSetup);
+    document.getElementById("arenaRematch").addEventListener("click", startTournament);
     document.getElementById("arenaBack").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
   }
-  document.getElementById("openArenaBtn").addEventListener("click", () => { renderArenaSetup(); showScreen(screenArena); });
+  document.getElementById("openArenaBtn").addEventListener("click", () => { renderArenaIntro(); showScreen(screenArena); });
   document.getElementById("backFromArena").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
-  document.getElementById("arenaFight").addEventListener("click", () => {
-    const n1 = document.getElementById("arenaP1").value, n2 = document.getElementById("arenaP2").value;
-    if (!n1 || !n2) return;
-    if (n1 === n2) { alert("Pick two different players."); return; }
-    startArena(n1, n2);
-  });
+  document.getElementById("arenaFight").addEventListener("click", startTournament);
+  document.getElementById("arenaSkip").addEventListener("click", skipArena);
 
   // 畫面 2：課程卡片
   function selectLevel(i) {
