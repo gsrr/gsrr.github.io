@@ -325,6 +325,7 @@
   .bkt-cell.win { background: #bbf7d0; border-color: #22c55e; font-weight: 700; }
   .bkt-cell.lose { opacity: 0.45; }
   .bkt-match.cur .bkt-cell { outline: 2px solid #f59e0b; }
+  .alloc-row small { display: block; font-size: 11px; font-weight: 400; color: #94a3b8; }
   .attack-btn { font-size: 20px; font-weight: 800; padding: 14px 30px; background: #ef4444; color: #fff; border-radius: 14px; }
   .attack-btn:active { transform: scale(0.95); }
   .attack-btn:disabled { opacity: 0.5; }
@@ -2524,6 +2525,9 @@
   function heroMaxHP(h) { return 20 + h.def * 5; }
   function heroLevel(h) { return 1 + Math.floor((h.atk + h.def + h.luck - 3) / 3); }
   function starsFromAvg(a) { return a >= 100 ? 3 : a >= 90 ? 2 : a >= 80 ? 1 : 0; }
+  // 🍀 LUCK 的兩個作用：爆擊（×2 傷害）與閃避（完全免傷）
+  function critChance(luck) { return Math.min(0.6, (luck || 0) * 0.05); }
+  function dodgeChance(luck) { return Math.min(0.5, (luck || 0) * 0.04); }
 
   let battle = null;
   const bossEmojiEl = document.getElementById("bossEmoji");
@@ -2588,7 +2592,7 @@
     const h = battle.hero;
     // 傷害：基礎 + 攻擊力 + 一點隨機；幸運提高爆擊機率
     let dmg = 4 + h.atk * 2 + Math.floor(Math.random() * 4);
-    const crit = Math.random() < Math.min(0.6, h.luck * 0.05);
+    const crit = Math.random() < critChance(h.luck);
     if (crit) dmg *= 2;
     battle.bossHP -= dmg;
     fxLunge(heroEmojiEl, "r"); fxHit(bossEmojiEl); fxDmg(bossEmojiEl, dmg, crit ? "toboss crit" : "toboss");
@@ -2599,12 +2603,18 @@
   }
   function bossAttack() {
     if (!battle || battle.over) return;
-    const dmg = Math.max(1, battle.bossAtk - battle.hero.def);
-    battle.heroHP -= dmg;
-    fxLunge(bossEmojiEl, "l"); fxHit(heroEmojiEl); fxDmg(heroEmojiEl, dmg, "tohero");
-    document.getElementById("battleLog").textContent = "👊 Boss attacks!  −" + dmg;
-    renderBattleHUD();
-    if (battle.heroHP <= 0) { battle.over = true; setTimeout(battleLose, 750); return; }
+    // 🍀 閃避：靠運氣完全閃過 Boss 的攻擊
+    if (Math.random() < dodgeChance(battle.hero.luck)) {
+      fxLunge(bossEmojiEl, "l");
+      document.getElementById("battleLog").textContent = "💨 You dodged the attack! 🍀";
+    } else {
+      const dmg = Math.max(1, battle.bossAtk - battle.hero.def);
+      battle.heroHP -= dmg;
+      fxLunge(bossEmojiEl, "l"); fxHit(heroEmojiEl); fxDmg(heroEmojiEl, dmg, "tohero");
+      document.getElementById("battleLog").textContent = "👊 Boss attacks!  −" + dmg;
+      renderBattleHUD();
+      if (battle.heroHP <= 0) { battle.over = true; setTimeout(battleLose, 750); return; }
+    }
     battle.busy = false;
     setAttackEnabled(true);
   }
@@ -2642,9 +2652,9 @@
       r.innerHTML = '<div class="battle-msg">' + msg + '</div>' +
         '<div class="alloc">Points to spend: <b>' + h.unspent + '</b></div>' +
         '<div class="alloc-rows">' +
-          row("atk", "⚔️ Attack", h.atk) +
-          row("def", "🛡️ Defense", h.def) +
-          row("luck", "🍀 Luck", h.luck) +
+          row("atk", "⚔️ Attack <small>more damage</small>", h.atk) +
+          row("def", "🛡️ Defense <small>more HP & less damage</small>", h.def) +
+          row("luck", "🍀 Luck <small>crit ×2 & dodge</small>", h.luck) +
         '</div>' +
         '<div class="battle-btns"><button id="battleDone" class="back-btn">Back to Lessons</button></div>';
       r.querySelectorAll(".alloc-plus").forEach(b => b.addEventListener("click", () => {
@@ -2676,24 +2686,32 @@
     document.getElementById("arenaResult").classList.add("hidden");
     document.getElementById("arenaResult").innerHTML = "";
   }
-  // 參賽者：所有玩家英雄 + 所有怪物（怪物數值依星級 tier 給）
+  // 參賽者：最多 10 名。先放所有玩家，不足再隨機補怪物（怪物數值依星級 tier 給）
   function arenaCompetitors() {
-    const list = [];
-    loadProfiles().forEach(n => list.push({ name: n, av: avatarOf(n), hero: loadHeroFor(n), kind: "player" }));
+    const CAP = 10;
+    const players = shuffle(loadProfiles().map(n => ({ name: n, av: avatarOf(n), hero: loadHeroFor(n), kind: "player" })));
+    const monsters = [];
     Object.keys(VILLAINS).forEach(tier => {
       const t = parseInt(tier, 10);
       VILLAINS[tier].forEach(emo =>
-        list.push({ name: "Lv" + t + " Foe", av: emo, hero: { atk: t * 2, def: t, luck: t, unspent: 0 }, kind: "monster" }));
+        monsters.push({ name: "Lv" + t + " Foe", av: emo, hero: { atk: t * 2, def: t, luck: t, unspent: 0 }, kind: "monster" }));
     });
+    const list = players.slice(0, CAP);
+    const mons = shuffle(monsters);
+    for (let i = 0; i < mons.length && list.length < CAP; i++) list.push(mons[i]);
     return shuffle(list);
   }
-  function arenaDmg(at, df) { let d = Math.max(1, (5 + at.atk * 2) - df.def); if (Math.random() < at.luck * 0.04) d *= 2; return d; }
   function arenaFighter(comp) { const max = heroMaxHP(comp.hero); return { name: comp.name, av: comp.av, hero: comp.hero, max: max, hp: max, ref: comp }; }
-  // 純模擬一場（給怪物對怪物 / Skip 用），回傳勝方 comp
+  // 純模擬一場（給怪物對怪物 / Skip 用），回傳勝方 comp。含爆擊與閃避
   function arenaSim(a, b) {
     let ah = heroMaxHP(a.hero), bh = heroMaxHP(b.hero), t = Math.random() < 0.5 ? 0 : 1, g = 0;
     while (ah > 0 && bh > 0 && g++ < 3000) {
-      if (t % 2 === 0) bh -= arenaDmg(a.hero, b.hero); else ah -= arenaDmg(b.hero, a.hero);
+      const at = (t % 2 === 0) ? a : b, df = (t % 2 === 0) ? b : a;
+      if (Math.random() >= dodgeChance(df.hero.luck)) {        // 沒被閃避才造成傷害
+        let d = Math.max(1, (5 + at.hero.atk * 2) - df.hero.def);
+        if (Math.random() < critChance(at.hero.luck)) d *= 2;
+        if (t % 2 === 0) bh -= d; else ah -= d;
+      }
       t++;
     }
     return ah > 0 ? a : b;
@@ -2781,8 +2799,15 @@
     const atkF = p1turn ? am.f1 : am.f2, defF = p1turn ? am.f2 : am.f1;
     const atkEl = document.getElementById(p1turn ? "arenaE1" : "arenaE2");
     const defEl = document.getElementById(p1turn ? "arenaE2" : "arenaE1");
+    if (Math.random() < dodgeChance(defF.hero.luck)) {          // 🍀 閃避：完全免傷
+      fxLunge(atkEl, p1turn ? "r" : "l");
+      document.getElementById("arenaLog").textContent = defF.name + " dodged! 💨🍀";
+      am.turn++;
+      setTimeout(arenaStep, 600);
+      return;
+    }
     let dmg = Math.max(1, (5 + atkF.hero.atk * 2) - defF.hero.def);
-    const crit = Math.random() < atkF.hero.luck * 0.04;
+    const crit = Math.random() < critChance(atkF.hero.luck);
     if (crit) dmg *= 2;
     defF.hp -= dmg;
     fxLunge(atkEl, p1turn ? "r" : "l"); fxHit(defEl); fxDmg(defEl, dmg, crit ? "toboss crit" : "tohero");
