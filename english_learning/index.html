@@ -79,6 +79,7 @@
   .name-row input:focus { outline: none; border-color: #2563eb; }
   .new-row { display: flex; gap: 8px; }
   .new-row input { flex: 1; }
+  .avatar-label { display: block; text-align: center; font-size: 13px; color: #64748b; margin: 8px 0 4px; }
   .avatar-pick { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 6px; }
   .avatar-opt { font-size: 28px; width: 48px; height: 48px; padding: 0; line-height: 1;
     border: 2px solid #e2e8f0; background: #f8fafc; border-radius: 12px; cursor: pointer; }
@@ -537,6 +538,7 @@
     <h1>🗣️ English Reading</h1>
     <div id="topRight" class="top-right hidden">
       <button id="userChip" class="user-chip" type="button" title="My Progress"></button>
+      <button id="logoutChip" class="user-chip" type="button" title="Log out">🚪</button>
     </div>
 
     <!-- 畫面 0：選身分（老師 / 學生）— 一進來先選 -->
@@ -576,6 +578,8 @@
       </div>
       <div id="sAcctLogin">
         <p class="screen-intro">Save your progress so it follows you to any device. ☁️</p>
+        <label class="avatar-label">Pick your character (for a new account) 🦸</label>
+        <div class="avatar-pick" id="sAvatarPick"></div>
         <div class="acct-form">
           <input id="sUser" type="text" placeholder="Username" autocomplete="username" maxlength="40">
           <input id="sPass" type="password" placeholder="Password" autocomplete="current-password" maxlength="60">
@@ -589,13 +593,11 @@
       <div id="sAcctPanel" class="hidden">
         <div class="acct-top"><span id="sWho"></span>
           <button id="sLogoutBtn" class="back-btn">Log out</button></div>
-        <p class="screen-intro">Your progress saves to the cloud automatically. ✓</p>
+        <p class="screen-intro">☁️ Your progress saves automatically.</p>
         <div class="acct-btns">
           <button id="sStartBtn" class="dict-play">▶ Start learning</button>
           <button id="sJoinBtn" class="back-btn">🧒 Join a Class</button>
-          <button id="sSaveBtn" class="back-btn">⬆ Save now</button>
         </div>
-        <div id="sMsg2" class="acct-msg"></div>
       </div>
     </div>
 
@@ -2297,16 +2299,16 @@
   function avatarOf(name) { try { return localStorage.getItem(avatarKey(name)) || "👦"; } catch (e) { return "👦"; } }
   function setAvatar(name, emo) { try { localStorage.setItem(avatarKey(name), emo); } catch (e) {} }
   function renderAvatarPicker() {
-    const wrap = document.getElementById("avatarPick");
-    if (!wrap) return;
-    wrap.innerHTML = "";
-    AVATARS.forEach(a => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "avatar-opt" + (a === selectedAvatar ? " sel" : "");
-      b.textContent = a;
-      b.addEventListener("click", () => { selectedAvatar = a; renderAvatarPicker(); });
-      wrap.appendChild(b);
+    document.querySelectorAll(".avatar-pick").forEach(wrap => {
+      wrap.innerHTML = "";
+      AVATARS.forEach(a => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "avatar-opt" + (a === selectedAvatar ? " sel" : "");
+        b.textContent = a;
+        b.addEventListener("click", () => { selectedAvatar = a; renderAvatarPicker(); });
+        wrap.appendChild(b);
+      });
     });
   }
   if (userName) { const l = loadProfiles(); if (!l.includes(userName)) { l.push(userName); saveProfiles(l); } }
@@ -3258,12 +3260,12 @@
     document.getElementById("sAcctLogin").classList.remove("hidden");
     document.getElementById("sAcctPanel").classList.add("hidden");
     document.getElementById("sMsg").textContent = "";
+    renderAvatarPicker();
   }
   function sShowPanel() {
     document.getElementById("sAcctLogin").classList.add("hidden");
     document.getElementById("sAcctPanel").classList.remove("hidden");
     document.getElementById("sWho").textContent = "🧒 " + (localStorage.getItem("sacct:user") || "");
-    document.getElementById("sMsg2").textContent = "";
   }
   function sAuth(path) {
     const user = (document.getElementById("sUser").value || "").trim();
@@ -3308,15 +3310,12 @@
   document.getElementById("backFromSAcct").addEventListener("click", () => { renderProfiles(); showScreen(screenProfile); });
   document.getElementById("sLoginBtn").addEventListener("click", () => sAuth("login"));
   document.getElementById("sRegisterBtn").addEventListener("click", () => sAuth("register"));
-  document.getElementById("sSaveBtn").addEventListener("click", () => {
-    document.getElementById("sMsg2").textContent = "Saving…";
-    studentSave(j => { document.getElementById("sMsg2").textContent = (j && j.ok) ? "Saved ✓" : "Save failed"; });
-  });
   document.getElementById("sStartBtn").addEventListener("click", () => {
     const u = localStorage.getItem("sacct:user") || ""; if (u) selectProfile(u);
   });
   document.getElementById("sJoinBtn").addEventListener("click", openStudent);
   document.getElementById("sLogoutBtn").addEventListener("click", sLogout);
+  document.getElementById("logoutChip").addEventListener("click", () => { showScreen(screenStudentAcct); sLogout(); });
 
   async function initLessons() {
     try {
