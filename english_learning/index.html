@@ -593,6 +593,8 @@
       <div id="sAcctPanel" class="hidden">
         <div class="acct-top"><span id="sWho"></span></div>
         <p class="screen-intro">☁️ Your progress saves automatically.</p>
+        <label class="avatar-label">Change your character 🦸</label>
+        <div class="avatar-pick avatar-pick-panel" id="sAvatarPickPanel"></div>
         <div class="acct-btns">
           <button id="sStartBtn" class="dict-play">▶ Start learning</button>
           <button id="sJoinBtn" class="back-btn">🧒 Join a Class</button>
@@ -2298,7 +2300,7 @@
   function avatarOf(name) { try { return localStorage.getItem(avatarKey(name)) || "👦"; } catch (e) { return "👦"; } }
   function setAvatar(name, emo) { try { localStorage.setItem(avatarKey(name), emo); } catch (e) {} }
   function renderAvatarPicker() {
-    document.querySelectorAll(".avatar-pick").forEach(wrap => {
+    document.querySelectorAll(".avatar-pick:not(.avatar-pick-panel)").forEach(wrap => {
       wrap.innerHTML = "";
       AVATARS.forEach(a => {
         const b = document.createElement("button");
@@ -3265,6 +3267,29 @@
     document.getElementById("sAcctLogin").classList.add("hidden");
     document.getElementById("sAcctPanel").classList.remove("hidden");
     document.getElementById("sWho").textContent = "🧒 " + (localStorage.getItem("sacct:user") || "");
+    renderPanelAvatar();
+  }
+  // 登入後在帳號頁換頭像：立即套用、更新右上角、並自動上雲
+  function renderPanelAvatar() {
+    const wrap = document.getElementById("sAvatarPickPanel");
+    if (!wrap) return;
+    const cur = userName ? avatarOf(userName) : selectedAvatar;
+    wrap.innerHTML = "";
+    AVATARS.forEach(a => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "avatar-opt" + (a === cur ? " sel" : "");
+      b.textContent = a;
+      b.addEventListener("click", () => {
+        if (!userName) return;
+        setAvatar(userName, a);
+        selectedAvatar = a;
+        updateGreeting();
+        scheduleStudentSave();
+        renderPanelAvatar();
+      });
+      wrap.appendChild(b);
+    });
   }
   function sAuth(path) {
     const user = (document.getElementById("sUser").value || "").trim();
