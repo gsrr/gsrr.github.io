@@ -1,0 +1,189 @@
+{
+  "quiz3": [
+    {
+      "q": "Anna baked a cake.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They made a strawberry cake.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They mixed flour, eggs, and sugar.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They put it in the oven.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The cake was sweet.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Anna baked bread.",
+      "answer": "No"
+    },
+    {
+      "q": "They made a chocolate cake.",
+      "answer": "No"
+    },
+    {
+      "q": "They cooked it on the stove.",
+      "answer": "No"
+    },
+    {
+      "q": "The cake was sweet and soft.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna baked with her sister.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Anna",
+      "pic": "👧"
+    },
+    {
+      "word": "Lily",
+      "pic": "👧"
+    },
+    {
+      "word": "cake",
+      "pic": "🍰"
+    },
+    {
+      "word": "egg",
+      "pic": "🥚"
+    },
+    {
+      "word": "sugar",
+      "pic": "🍬"
+    },
+    {
+      "word": "oven",
+      "pic": "🔥"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What did Anna bake?",
+      "a": "A cake.",
+      "wrong": [
+        "Cookies.",
+        "Bread."
+      ]
+    },
+    {
+      "q": "What kind of cake?",
+      "a": "Strawberry.",
+      "wrong": [
+        "Chocolate.",
+        "Lemon."
+      ]
+    },
+    {
+      "q": "What did they mix?",
+      "a": "Flour, eggs, and sugar.",
+      "wrong": [
+        "Rice and beans.",
+        "Milk and salt."
+      ]
+    },
+    {
+      "q": "Where did they put the cake?",
+      "a": "In the oven.",
+      "wrong": [
+        "In the fridge.",
+        "On the table."
+      ]
+    },
+    {
+      "q": "How did the cake taste?",
+      "a": "Sweet and soft.",
+      "wrong": [
+        "Sour.",
+        "Salty."
+      ]
+    }
+  ],
+  "clozeType": "category",
+  "cloze": [
+    {
+      "text": "We made a strawberry ___.",
+      "answer": "cake",
+      "wrong": [
+        "pie",
+        "muffin"
+      ]
+    },
+    {
+      "text": "We mixed flour, eggs, and ___.",
+      "answer": "sugar",
+      "wrong": [
+        "salt",
+        "butter"
+      ]
+    },
+    {
+      "text": "We put it in the ___.",
+      "answer": "oven",
+      "wrong": [
+        "fridge",
+        "microwave"
+      ]
+    },
+    {
+      "text": "It was sweet and ___.",
+      "answer": "soft",
+      "wrong": [
+        "warm",
+        "fresh"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "I",
+      "baked",
+      "a",
+      "cake",
+      "with",
+      "my",
+      "sister"
+    ],
+    [
+      "We",
+      "mixed",
+      "flour",
+      "eggs",
+      "and",
+      "sugar"
+    ],
+    [
+      "We",
+      "put",
+      "it",
+      "in",
+      "the",
+      "oven"
+    ],
+    [
+      "It",
+      "was",
+      "sweet",
+      "and",
+      "soft"
+    ]
+  ],
+  "dictation": [
+    "Yesterday I baked a cake with my sister.",
+    "We mixed flour, eggs, and sugar.",
+    "We put it in the oven for an hour.",
+    "It was sweet and soft."
+  ]
+}

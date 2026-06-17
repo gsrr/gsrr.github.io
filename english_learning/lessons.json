@@ -271,6 +271,176 @@
             8,
             9
           ]
+        },
+        {
+          "id": "003",
+          "title": "003 · The Lost Cat",
+          "file": "A1/003",
+          "scene": "lost-cat",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "id": "004",
+          "title": "004 · My Birthday Party",
+          "file": "A1/004",
+          "scene": "bday-party",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "id": "005",
+          "title": "005 · A Day at the Farm",
+          "file": "A1/005",
+          "scene": "farm",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "id": "006",
+          "title": "006 · The Snowman",
+          "file": "A1/006",
+          "scene": "snowman",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "id": "007",
+          "title": "007 · Shopping with Mom",
+          "file": "A1/007",
+          "scene": "shopping",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "id": "008",
+          "title": "008 · The Soccer Game",
+          "file": "A1/008",
+          "scene": "soccer-game",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "id": "009",
+          "title": "009 · At the Library",
+          "file": "A1/009",
+          "scene": "library",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "id": "010",
+          "title": "010 · Baking a Cake",
+          "file": "A1/010",
+          "scene": "baking",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "id": "011",
+          "title": "011 · Camping Night",
+          "file": "A1/011",
+          "scene": "camping",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "id": "012",
+          "title": "012 · The Sandcastle",
+          "file": "A1/012",
+          "scene": "sandcastle",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
         }
       ]
     },
@@ -473,6 +643,100 @@
           "title": "012 · The Football Match",
           "file": "A2/012",
           "scene": "football-match",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        }
+      ]
+    },
+    {
+      "id": "B1",
+      "name": "B1",
+      "icon": "🌲",
+      "stars": 4,
+      "desc": "Intermediate. Give opinions and reasons, use present perfect and conditionals (if ... will).",
+      "articles": [
+        {
+          "id": "001",
+          "title": "001 · A New Hobby",
+          "file": "B1/001",
+          "scene": "new-hobby",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "id": "002",
+          "title": "002 · Planning a Trip",
+          "file": "B1/002",
+          "scene": "plan-trip",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "id": "003",
+          "title": "003 · My Favorite Book",
+          "file": "B1/003",
+          "scene": "fav-book",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "id": "004",
+          "title": "004 · Helping the Environment",
+          "file": "B1/004",
+          "scene": "environment",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "id": "005",
+          "title": "005 · A Difficult Decision",
+          "file": "B1/005",
+          "scene": "decision",
           "levels": [
             1,
             2,

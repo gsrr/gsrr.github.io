@@ -1,0 +1,184 @@
+{
+  "quiz3": [
+    {
+      "q": "They played a soccer game.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Sam's team won.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The score was three to two.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Sam scored two goals.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The other team was strong.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "They played a basketball game.",
+      "answer": "No"
+    },
+    {
+      "q": "Sam's team lost.",
+      "answer": "No"
+    },
+    {
+      "q": "Sam scored five goals.",
+      "answer": "No"
+    },
+    {
+      "q": "Sam scored two goals.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Sam's friend scored the last goal.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Sam",
+      "pic": "👦"
+    },
+    {
+      "word": "Leo",
+      "pic": "👦"
+    },
+    {
+      "word": "soccer",
+      "pic": "⚽"
+    },
+    {
+      "word": "goal",
+      "pic": "🥅"
+    },
+    {
+      "word": "trophy",
+      "pic": "🏆"
+    },
+    {
+      "word": "team",
+      "pic": "👥"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What game did they play?",
+      "a": "Soccer.",
+      "wrong": [
+        "Basketball.",
+        "Tennis."
+      ]
+    },
+    {
+      "q": "Did Sam's team win?",
+      "a": "Yes, they won.",
+      "wrong": [
+        "No, they lost.",
+        "It was a tie."
+      ]
+    },
+    {
+      "q": "What was the score?",
+      "a": "Three to two.",
+      "wrong": [
+        "Five to one.",
+        "Two to two."
+      ]
+    },
+    {
+      "q": "How many goals did Sam score?",
+      "a": "Two goals.",
+      "wrong": [
+        "Three goals.",
+        "No goals."
+      ]
+    },
+    {
+      "q": "How was the other team?",
+      "a": "Strong.",
+      "wrong": [
+        "Weak.",
+        "Lazy."
+      ]
+    }
+  ],
+  "clozeType": "category",
+  "cloze": [
+    {
+      "text": "We played a ___ game.",
+      "answer": "soccer",
+      "wrong": [
+        "tennis",
+        "baseball"
+      ]
+    },
+    {
+      "text": "We ___ three to two.",
+      "answer": "won",
+      "wrong": [
+        "lost",
+        "tied"
+      ]
+    },
+    {
+      "text": "I scored two ___.",
+      "answer": "goals",
+      "wrong": [
+        "points",
+        "runs"
+      ]
+    },
+    {
+      "text": "The other ___ was strong.",
+      "answer": "team",
+      "wrong": [
+        "player",
+        "coach"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "We",
+      "played",
+      "a",
+      "soccer",
+      "game"
+    ],
+    [
+      "We",
+      "won",
+      "three",
+      "to",
+      "two"
+    ],
+    [
+      "I",
+      "scored",
+      "two",
+      "goals"
+    ],
+    [
+      "The",
+      "other",
+      "team",
+      "was",
+      "strong"
+    ]
+  ],
+  "dictation": [
+    "We played a soccer game yesterday.",
+    "We won three to two.",
+    "I scored two goals.",
+    "The other team was strong."
+  ]
+}

@@ -1,0 +1,192 @@
+{
+  "quiz3": [
+    {
+      "q": "Leo has a difficult decision.",
+      "answer": "Yes"
+    },
+    {
+      "q": "He can join the music club or the soccer team.",
+      "answer": "Yes"
+    },
+    {
+      "q": "He loves music.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Mia thinks he should choose what he enjoys most.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Leo will choose the music club first.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Leo has an easy decision.",
+      "answer": "No"
+    },
+    {
+      "q": "He can join both clubs.",
+      "answer": "No"
+    },
+    {
+      "q": "Leo hates music.",
+      "answer": "No"
+    },
+    {
+      "q": "Soccer keeps Leo healthy.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Leo will try soccer next year.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Leo",
+      "pic": "👦"
+    },
+    {
+      "word": "Mia",
+      "pic": "👧"
+    },
+    {
+      "word": "music",
+      "pic": "🎵"
+    },
+    {
+      "word": "soccer",
+      "pic": "⚽"
+    },
+    {
+      "word": "plan",
+      "pic": "📋"
+    },
+    {
+      "word": "choice",
+      "pic": "🤔"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What does Leo have to make?",
+      "a": "A difficult decision.",
+      "wrong": [
+        "A new friend.",
+        "A cake."
+      ]
+    },
+    {
+      "q": "What are his two choices?",
+      "a": "The music club or the soccer team.",
+      "wrong": [
+        "Math or science.",
+        "A cat or a dog."
+      ]
+    },
+    {
+      "q": "Why does he like soccer?",
+      "a": "It keeps him healthy.",
+      "wrong": [
+        "It is easy.",
+        "His friends play."
+      ]
+    },
+    {
+      "q": "What does Mia suggest?",
+      "a": "Choose what he enjoys most.",
+      "wrong": [
+        "Join both.",
+        "Quit everything."
+      ]
+    },
+    {
+      "q": "What will Leo choose first?",
+      "a": "The music club.",
+      "wrong": [
+        "The soccer team.",
+        "Nothing."
+      ]
+    }
+  ],
+  "clozeType": "context",
+  "cloze": [
+    {
+      "text": "I have a difficult ___ to make.",
+      "answer": "decision",
+      "wrong": [
+        "breakfast",
+        "window"
+      ]
+    },
+    {
+      "text": "I love music, but soccer keeps me ___.",
+      "answer": "healthy",
+      "wrong": [
+        "yellow",
+        "loud"
+      ]
+    },
+    {
+      "text": "You should choose the one you ___ most.",
+      "answer": "enjoy",
+      "wrong": [
+        "sleep",
+        "forget"
+      ]
+    },
+    {
+      "text": "That sounds like a smart ___.",
+      "answer": "plan",
+      "wrong": [
+        "weather",
+        "color"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "I",
+      "have",
+      "a",
+      "difficult",
+      "decision",
+      "to",
+      "make"
+    ],
+    [
+      "Which",
+      "one",
+      "do",
+      "you",
+      "like",
+      "more"
+    ],
+    [
+      "You",
+      "should",
+      "choose",
+      "the",
+      "one",
+      "you",
+      "enjoy"
+    ],
+    [
+      "I",
+      "will",
+      "choose",
+      "the",
+      "music",
+      "club",
+      "first"
+    ]
+  ],
+  "dictation": [
+    "I have a difficult decision to make.",
+    "I love music, but soccer keeps me healthy.",
+    "You should choose the one you enjoy most.",
+    "I will choose the music club first."
+  ]
+}

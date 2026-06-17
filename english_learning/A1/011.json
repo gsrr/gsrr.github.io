@@ -1,0 +1,188 @@
+{
+  "quiz3": [
+    {
+      "q": "They went camping last summer.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They slept in a tent.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They made a campfire.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They cooked food and sang songs.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The sky was full of stars.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "They went camping last winter.",
+      "answer": "No"
+    },
+    {
+      "q": "They slept in a hotel.",
+      "answer": "No"
+    },
+    {
+      "q": "They watched TV at night.",
+      "answer": "No"
+    },
+    {
+      "q": "They made a campfire.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They saw many stars.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Leo",
+      "pic": "👦"
+    },
+    {
+      "word": "Mia",
+      "pic": "👧"
+    },
+    {
+      "word": "tent",
+      "pic": "⛺"
+    },
+    {
+      "word": "campfire",
+      "pic": "🔥"
+    },
+    {
+      "word": "star",
+      "pic": "⭐"
+    },
+    {
+      "word": "song",
+      "pic": "🎵"
+    }
+  ],
+  "wh": [
+    {
+      "q": "When did they go camping?",
+      "a": "Last summer.",
+      "wrong": [
+        "Last winter.",
+        "Yesterday."
+      ]
+    },
+    {
+      "q": "Where did they sleep?",
+      "a": "In a tent.",
+      "wrong": [
+        "In a house.",
+        "In a car."
+      ]
+    },
+    {
+      "q": "What did they make?",
+      "a": "A campfire.",
+      "wrong": [
+        "A snowman.",
+        "A sandcastle."
+      ]
+    },
+    {
+      "q": "What did they do at the campfire?",
+      "a": "Cooked food and sang songs.",
+      "wrong": [
+        "Watched TV.",
+        "Did homework."
+      ]
+    },
+    {
+      "q": "What did they see in the sky?",
+      "a": "Many stars.",
+      "wrong": [
+        "The sun.",
+        "Airplanes."
+      ]
+    }
+  ],
+  "clozeType": "category",
+  "cloze": [
+    {
+      "text": "We slept in a big ___.",
+      "answer": "tent",
+      "wrong": [
+        "cabin",
+        "hut"
+      ]
+    },
+    {
+      "text": "We made a ___.",
+      "answer": "campfire",
+      "wrong": [
+        "picnic",
+        "sandcastle"
+      ]
+    },
+    {
+      "text": "We cooked food and sang ___.",
+      "answer": "songs",
+      "wrong": [
+        "poems",
+        "stories"
+      ]
+    },
+    {
+      "text": "The sky was full of ___.",
+      "answer": "stars",
+      "wrong": [
+        "clouds",
+        "birds"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "Last",
+      "summer",
+      "we",
+      "went",
+      "camping"
+    ],
+    [
+      "We",
+      "slept",
+      "in",
+      "a",
+      "big",
+      "tent"
+    ],
+    [
+      "We",
+      "cooked",
+      "food",
+      "and",
+      "sang",
+      "songs"
+    ],
+    [
+      "The",
+      "sky",
+      "was",
+      "full",
+      "of",
+      "stars"
+    ]
+  ],
+  "dictation": [
+    "Last summer we went camping.",
+    "We slept in a big tent.",
+    "We cooked food and sang songs.",
+    "The sky was full of stars."
+  ]
+}

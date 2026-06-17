@@ -1,0 +1,185 @@
+{
+  "quiz3": [
+    {
+      "q": "Mia went shopping with her mom.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They bought new shoes.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They bought fruit and bread.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They went to the supermarket.",
+      "answer": "Yes"
+    },
+    {
+      "q": "There were many people.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Mia went shopping with her dad.",
+      "answer": "No"
+    },
+    {
+      "q": "They bought a new TV.",
+      "answer": "No"
+    },
+    {
+      "q": "The shop was empty.",
+      "answer": "No"
+    },
+    {
+      "q": "They bought new shoes.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They went to the supermarket.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Mia",
+      "pic": "👧"
+    },
+    {
+      "word": "Ben",
+      "pic": "👦"
+    },
+    {
+      "word": "shoes",
+      "pic": "👟"
+    },
+    {
+      "word": "fruit",
+      "pic": "🍎"
+    },
+    {
+      "word": "bread",
+      "pic": "🍞"
+    },
+    {
+      "word": "supermarket",
+      "pic": "🏬"
+    }
+  ],
+  "wh": [
+    {
+      "q": "Who did Mia go with?",
+      "a": "Her mom.",
+      "wrong": [
+        "Her dad.",
+        "Her friend."
+      ]
+    },
+    {
+      "q": "What did they buy first?",
+      "a": "New shoes.",
+      "wrong": [
+        "A new bag.",
+        "A toy."
+      ]
+    },
+    {
+      "q": "What food did they buy?",
+      "a": "Fruit and bread.",
+      "wrong": [
+        "Candy and soda.",
+        "Meat and rice."
+      ]
+    },
+    {
+      "q": "Where did they go?",
+      "a": "The supermarket.",
+      "wrong": [
+        "The library.",
+        "The park."
+      ]
+    },
+    {
+      "q": "How was the supermarket?",
+      "a": "Crowded.",
+      "wrong": [
+        "Empty.",
+        "Closed."
+      ]
+    }
+  ],
+  "clozeType": "category",
+  "cloze": [
+    {
+      "text": "We bought some new ___.",
+      "answer": "shoes",
+      "wrong": [
+        "socks",
+        "hats"
+      ]
+    },
+    {
+      "text": "We bought fruit and ___.",
+      "answer": "bread",
+      "wrong": [
+        "rice",
+        "milk"
+      ]
+    },
+    {
+      "text": "We went to the big ___.",
+      "answer": "supermarket",
+      "wrong": [
+        "library",
+        "museum"
+      ]
+    },
+    {
+      "text": "There were many ___.",
+      "answer": "people",
+      "wrong": [
+        "children",
+        "workers"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "I",
+      "went",
+      "shopping",
+      "with",
+      "my",
+      "mom"
+    ],
+    [
+      "We",
+      "bought",
+      "some",
+      "new",
+      "shoes"
+    ],
+    [
+      "We",
+      "went",
+      "to",
+      "the",
+      "supermarket"
+    ],
+    [
+      "There",
+      "were",
+      "many",
+      "people"
+    ]
+  ],
+  "dictation": [
+    "I went shopping with my mom.",
+    "We bought some new shoes.",
+    "We went to the big supermarket.",
+    "There were many people."
+  ]
+}

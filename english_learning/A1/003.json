@@ -1,0 +1,185 @@
+{
+  "quiz3": [
+    {
+      "q": "Anna lost her cat.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The cat ran out of the house.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna looked everywhere.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna found the cat under a tree.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The cat was okay.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Tom lost his cat.",
+      "answer": "No"
+    },
+    {
+      "q": "The cat ran into the house.",
+      "answer": "No"
+    },
+    {
+      "q": "Anna found the cat on the roof.",
+      "answer": "No"
+    },
+    {
+      "q": "The cat was hungry.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna found her cat.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Anna",
+      "pic": "👧"
+    },
+    {
+      "word": "Tom",
+      "pic": "👦"
+    },
+    {
+      "word": "cat",
+      "pic": "🐈"
+    },
+    {
+      "word": "house",
+      "pic": "🏠"
+    },
+    {
+      "word": "tree",
+      "pic": "🌳"
+    },
+    {
+      "word": "look",
+      "pic": "👀"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What did Anna lose?",
+      "a": "She lost her cat.",
+      "wrong": [
+        "She lost her dog.",
+        "She lost her bag."
+      ]
+    },
+    {
+      "q": "What did the cat do?",
+      "a": "It ran out of the house.",
+      "wrong": [
+        "It slept all day.",
+        "It ate the food."
+      ]
+    },
+    {
+      "q": "Where did Anna find the cat?",
+      "a": "Under a tree.",
+      "wrong": [
+        "On the bed.",
+        "In the car."
+      ]
+    },
+    {
+      "q": "How was the cat?",
+      "a": "It was hungry but happy.",
+      "wrong": [
+        "It was sick.",
+        "It was angry."
+      ]
+    },
+    {
+      "q": "When did Anna lose the cat?",
+      "a": "Yesterday.",
+      "wrong": [
+        "Today.",
+        "Last year."
+      ]
+    }
+  ],
+  "clozeType": "category",
+  "cloze": [
+    {
+      "text": "I lost my ___ yesterday.",
+      "answer": "cat",
+      "wrong": [
+        "dog",
+        "bird"
+      ]
+    },
+    {
+      "text": "She ran out of the ___.",
+      "answer": "house",
+      "wrong": [
+        "school",
+        "shop"
+      ]
+    },
+    {
+      "text": "I looked ___.",
+      "answer": "everywhere",
+      "wrong": [
+        "here",
+        "there"
+      ]
+    },
+    {
+      "text": "I found her under a ___.",
+      "answer": "tree",
+      "wrong": [
+        "bush",
+        "flower"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "I",
+      "lost",
+      "my",
+      "cat",
+      "yesterday"
+    ],
+    [
+      "She",
+      "ran",
+      "out",
+      "of",
+      "the",
+      "house"
+    ],
+    [
+      "I",
+      "looked",
+      "everywhere"
+    ],
+    [
+      "I",
+      "found",
+      "her",
+      "under",
+      "a",
+      "tree"
+    ]
+  ],
+  "dictation": [
+    "I lost my cat yesterday.",
+    "She ran out of the house.",
+    "I looked everywhere.",
+    "I found her under a tree."
+  ]
+}

@@ -1,0 +1,184 @@
+{
+  "quiz3": [
+    {
+      "q": "Tom went to a farm.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Tom saw cows, pigs, and chickens.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Tom fed the chickens.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The cows ate grass.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Tom rode a horse.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Anna went to a farm.",
+      "answer": "No"
+    },
+    {
+      "q": "Tom saw lions and tigers.",
+      "answer": "No"
+    },
+    {
+      "q": "Tom fed the cows.",
+      "answer": "No"
+    },
+    {
+      "q": "Tom rode a brown horse.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Tom saw farm animals.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Tom",
+      "pic": "👦"
+    },
+    {
+      "word": "Anna",
+      "pic": "👧"
+    },
+    {
+      "word": "cow",
+      "pic": "🐄"
+    },
+    {
+      "word": "pig",
+      "pic": "🐷"
+    },
+    {
+      "word": "chicken",
+      "pic": "🐔"
+    },
+    {
+      "word": "horse",
+      "pic": "🐴"
+    }
+  ],
+  "wh": [
+    {
+      "q": "Where did Tom go?",
+      "a": "He went to a farm.",
+      "wrong": [
+        "He went to a zoo.",
+        "He went to school."
+      ]
+    },
+    {
+      "q": "What did Tom see?",
+      "a": "Cows, pigs, and chickens.",
+      "wrong": [
+        "Lions and bears.",
+        "Fish and birds."
+      ]
+    },
+    {
+      "q": "What did Tom feed?",
+      "a": "He fed the chickens.",
+      "wrong": [
+        "He fed the lions.",
+        "He fed the cats."
+      ]
+    },
+    {
+      "q": "What did the cows do?",
+      "a": "They ate grass.",
+      "wrong": [
+        "They slept.",
+        "They ran away."
+      ]
+    },
+    {
+      "q": "What did Tom ride?",
+      "a": "A brown horse.",
+      "wrong": [
+        "A white horse.",
+        "A bike."
+      ]
+    }
+  ],
+  "clozeType": "category",
+  "cloze": [
+    {
+      "text": "I saw cows, pigs, and ___.",
+      "answer": "chickens",
+      "wrong": [
+        "ducks",
+        "sheep"
+      ]
+    },
+    {
+      "text": "I fed the ___.",
+      "answer": "chickens",
+      "wrong": [
+        "goats",
+        "rabbits"
+      ]
+    },
+    {
+      "text": "They ate ___ all day.",
+      "answer": "grass",
+      "wrong": [
+        "hay",
+        "corn"
+      ]
+    },
+    {
+      "text": "I rode a brown ___.",
+      "answer": "horse",
+      "wrong": [
+        "pony",
+        "donkey"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "I",
+      "went",
+      "to",
+      "a",
+      "farm"
+    ],
+    [
+      "I",
+      "saw",
+      "cows",
+      "and",
+      "pigs"
+    ],
+    [
+      "I",
+      "fed",
+      "the",
+      "chickens"
+    ],
+    [
+      "I",
+      "rode",
+      "a",
+      "brown",
+      "horse"
+    ]
+  ],
+  "dictation": [
+    "I went to a farm last weekend.",
+    "I saw cows, pigs, and chickens.",
+    "I fed the chickens.",
+    "I rode a brown horse."
+  ]
+}

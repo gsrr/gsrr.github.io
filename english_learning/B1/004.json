@@ -1,0 +1,189 @@
+{
+  "quiz3": [
+    {
+      "q": "The town has a pollution problem.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The river is dirty.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They could pick up trash every weekend.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They could also plant trees.",
+      "answer": "Yes"
+    },
+    {
+      "q": "If everyone helps, they can make a difference.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "The town has no problems.",
+      "answer": "No"
+    },
+    {
+      "q": "The river is clean.",
+      "answer": "No"
+    },
+    {
+      "q": "They want fewer people to help.",
+      "answer": "No"
+    },
+    {
+      "q": "They could plant trees.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They will start on Saturday.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Emma",
+      "pic": "👧"
+    },
+    {
+      "word": "Ben",
+      "pic": "👦"
+    },
+    {
+      "word": "river",
+      "pic": "🏞️"
+    },
+    {
+      "word": "trash",
+      "pic": "🗑️"
+    },
+    {
+      "word": "tree",
+      "pic": "🌳"
+    },
+    {
+      "word": "Earth",
+      "pic": "🌍"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What problem does the town have?",
+      "a": "Pollution.",
+      "wrong": [
+        "Too much rain.",
+        "No schools."
+      ]
+    },
+    {
+      "q": "How is the river now?",
+      "a": "Very dirty.",
+      "wrong": [
+        "Very clean.",
+        "Frozen."
+      ]
+    },
+    {
+      "q": "What could they do every weekend?",
+      "a": "Pick up trash.",
+      "wrong": [
+        "Watch TV.",
+        "Go shopping."
+      ]
+    },
+    {
+      "q": "What else could they do?",
+      "a": "Plant trees.",
+      "wrong": [
+        "Cut trees.",
+        "Build roads."
+      ]
+    },
+    {
+      "q": "When will they start?",
+      "a": "This Saturday.",
+      "wrong": [
+        "Next year.",
+        "Never."
+      ]
+    }
+  ],
+  "clozeType": "context",
+  "cloze": [
+    {
+      "text": "Our town has a pollution ___.",
+      "answer": "problem",
+      "wrong": [
+        "breakfast",
+        "color"
+      ]
+    },
+    {
+      "text": "We could pick up ___ every weekend.",
+      "answer": "trash",
+      "wrong": [
+        "music",
+        "weather"
+      ]
+    },
+    {
+      "text": "We could also plant ___.",
+      "answer": "trees",
+      "wrong": [
+        "mornings",
+        "stories"
+      ]
+    },
+    {
+      "text": "If everyone helps, we can make a ___.",
+      "answer": "difference",
+      "wrong": [
+        "sandwich",
+        "pencil"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "We",
+      "should",
+      "do",
+      "something",
+      "to",
+      "help"
+    ],
+    [
+      "We",
+      "could",
+      "pick",
+      "up",
+      "trash"
+    ],
+    [
+      "We",
+      "could",
+      "also",
+      "plant",
+      "trees"
+    ],
+    [
+      "If",
+      "everyone",
+      "helps",
+      "we",
+      "can",
+      "make",
+      "a",
+      "difference"
+    ]
+  ],
+  "dictation": [
+    "Our town has a pollution problem.",
+    "We should do something to help.",
+    "We could plant trees.",
+    "If everyone helps, we can make a difference."
+  ]
+}

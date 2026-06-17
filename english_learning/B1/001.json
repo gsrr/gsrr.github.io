@@ -1,0 +1,187 @@
+{
+  "quiz3": [
+    {
+      "q": "Mia has started a new hobby.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Mia has started playing the guitar.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Mia has played for three months.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Mia practices every day.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Leo might learn the drums.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Mia has started playing the piano.",
+      "answer": "No"
+    },
+    {
+      "q": "Mia has played for three years.",
+      "answer": "No"
+    },
+    {
+      "q": "Mia never practices.",
+      "answer": "No"
+    },
+    {
+      "q": "Leo thinks music is a great hobby.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Mia plays the guitar.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Mia",
+      "pic": "👧"
+    },
+    {
+      "word": "Leo",
+      "pic": "👦"
+    },
+    {
+      "word": "guitar",
+      "pic": "🎸"
+    },
+    {
+      "word": "music",
+      "pic": "🎵"
+    },
+    {
+      "word": "drums",
+      "pic": "🥁"
+    },
+    {
+      "word": "hobby",
+      "pic": "🎨"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What new hobby has Mia started?",
+      "a": "Playing the guitar.",
+      "wrong": [
+        "Playing football.",
+        "Painting."
+      ]
+    },
+    {
+      "q": "How long has Mia played?",
+      "a": "For three months.",
+      "wrong": [
+        "For three years.",
+        "For one week."
+      ]
+    },
+    {
+      "q": "How often does Mia practice?",
+      "a": "Every day.",
+      "wrong": [
+        "Once a month.",
+        "Never."
+      ]
+    },
+    {
+      "q": "What does Leo think about music?",
+      "a": "He thinks it is a great hobby.",
+      "wrong": [
+        "He thinks it is boring.",
+        "He thinks it is hard."
+      ]
+    },
+    {
+      "q": "What might Leo learn?",
+      "a": "He might learn the drums.",
+      "wrong": [
+        "He might learn the piano.",
+        "He might learn to cook."
+      ]
+    }
+  ],
+  "clozeType": "context",
+  "cloze": [
+    {
+      "text": "I have started playing the ___.",
+      "answer": "guitar",
+      "wrong": [
+        "winter",
+        "corner"
+      ]
+    },
+    {
+      "text": "I have played for three ___.",
+      "answer": "months",
+      "wrong": [
+        "pencils",
+        "colors"
+      ]
+    },
+    {
+      "text": "I ___ every day.",
+      "answer": "practice",
+      "wrong": [
+        "sleep",
+        "forget"
+      ]
+    },
+    {
+      "text": "Music is a great ___.",
+      "answer": "hobby",
+      "wrong": [
+        "weather",
+        "dinner"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "I",
+      "have",
+      "started",
+      "a",
+      "new",
+      "hobby"
+    ],
+    [
+      "How",
+      "long",
+      "have",
+      "you",
+      "played"
+    ],
+    [
+      "I",
+      "have",
+      "played",
+      "for",
+      "three",
+      "months"
+    ],
+    [
+      "You",
+      "should",
+      "try",
+      "it",
+      "too"
+    ]
+  ],
+  "dictation": [
+    "I have started a new hobby.",
+    "I have started playing the guitar.",
+    "I have played for three months.",
+    "I practice every day."
+  ]
+}

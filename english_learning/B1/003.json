@@ -1,0 +1,188 @@
+{
+  "quiz3": [
+    {
+      "q": "The book is about a boy and a magic world.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Lily thinks it is the best book she has read.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Lily likes it because the story is exciting.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The ending is sad.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Sam will try the book.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "The book is about a girl and a robot.",
+      "answer": "No"
+    },
+    {
+      "q": "Lily thinks it is boring.",
+      "answer": "No"
+    },
+    {
+      "q": "The ending is happy.",
+      "answer": "No"
+    },
+    {
+      "q": "Sam prefers funny stories.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Sam will borrow the book.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Lily",
+      "pic": "👧"
+    },
+    {
+      "word": "Sam",
+      "pic": "👦"
+    },
+    {
+      "word": "book",
+      "pic": "📕"
+    },
+    {
+      "word": "story",
+      "pic": "📖"
+    },
+    {
+      "word": "magic",
+      "pic": "🔮"
+    },
+    {
+      "word": "dragon",
+      "pic": "🐉"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What is the book about?",
+      "a": "A boy who discovers a magic world.",
+      "wrong": [
+        "A girl and her dog.",
+        "A famous chef."
+      ]
+    },
+    {
+      "q": "What does Lily think of it?",
+      "a": "It is the best book she has ever read.",
+      "wrong": [
+        "It is boring.",
+        "It is too long."
+      ]
+    },
+    {
+      "q": "Why does Lily like it?",
+      "a": "Because the story is exciting.",
+      "wrong": [
+        "Because it is short.",
+        "Because it has pictures."
+      ]
+    },
+    {
+      "q": "How is the ending?",
+      "a": "Sad.",
+      "wrong": [
+        "Happy.",
+        "Funny."
+      ]
+    },
+    {
+      "q": "What kind of stories does Sam prefer?",
+      "a": "Funny stories.",
+      "wrong": [
+        "Sad stories.",
+        "Scary stories."
+      ]
+    }
+  ],
+  "clozeType": "context",
+  "cloze": [
+    {
+      "text": "It's about a boy who discovers a magic ___.",
+      "answer": "world",
+      "wrong": [
+        "lunch",
+        "corner"
+      ]
+    },
+    {
+      "text": "I think it's the best book I have ever ___.",
+      "answer": "read",
+      "wrong": [
+        "slept",
+        "eaten"
+      ]
+    },
+    {
+      "text": "The story is exciting, although the ending is ___.",
+      "answer": "sad",
+      "wrong": [
+        "yellow",
+        "loud"
+      ]
+    },
+    {
+      "text": "I prefer funny ___.",
+      "answer": "stories",
+      "wrong": [
+        "weathers",
+        "windows"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "Have",
+      "you",
+      "read",
+      "this",
+      "book"
+    ],
+    [
+      "It",
+      "is",
+      "about",
+      "a",
+      "magic",
+      "world"
+    ],
+    [
+      "It",
+      "is",
+      "the",
+      "best",
+      "book",
+      "I",
+      "have",
+      "read"
+    ],
+    [
+      "I",
+      "prefer",
+      "funny",
+      "stories"
+    ]
+  ],
+  "dictation": [
+    "Have you read this book?",
+    "It is about a boy who discovers a magic world.",
+    "I think it is the best book I have ever read.",
+    "I prefer funny stories."
+  ]
+}

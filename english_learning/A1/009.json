@@ -1,0 +1,184 @@
+{
+  "quiz3": [
+    {
+      "q": "Emma went to the library.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Emma read a book about space.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Emma borrowed three books.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The library was quiet.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Emma's favorite book was about planets.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Emma went to the library before school.",
+      "answer": "No"
+    },
+    {
+      "q": "Emma read a book about animals.",
+      "answer": "No"
+    },
+    {
+      "q": "Emma borrowed ten books.",
+      "answer": "No"
+    },
+    {
+      "q": "The library was quiet.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Emma borrowed three books.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Emma",
+      "pic": "👧"
+    },
+    {
+      "word": "Tom",
+      "pic": "👦"
+    },
+    {
+      "word": "library",
+      "pic": "📚"
+    },
+    {
+      "word": "book",
+      "pic": "📖"
+    },
+    {
+      "word": "space",
+      "pic": "🪐"
+    },
+    {
+      "word": "star",
+      "pic": "⭐"
+    }
+  ],
+  "wh": [
+    {
+      "q": "Where did Emma go?",
+      "a": "To the library.",
+      "wrong": [
+        "To the park.",
+        "To the shop."
+      ]
+    },
+    {
+      "q": "What did she read about?",
+      "a": "Space.",
+      "wrong": [
+        "Animals.",
+        "Sports."
+      ]
+    },
+    {
+      "q": "How many books did she borrow?",
+      "a": "Three.",
+      "wrong": [
+        "One.",
+        "Ten."
+      ]
+    },
+    {
+      "q": "How was the library?",
+      "a": "Quiet.",
+      "wrong": [
+        "Noisy.",
+        "Crowded."
+      ]
+    },
+    {
+      "q": "What was her favorite book about?",
+      "a": "Planets and stars.",
+      "wrong": [
+        "Cars.",
+        "Cooking."
+      ]
+    }
+  ],
+  "clozeType": "category",
+  "cloze": [
+    {
+      "text": "I went to the ___.",
+      "answer": "library",
+      "wrong": [
+        "museum",
+        "theater"
+      ]
+    },
+    {
+      "text": "I read a ___ about space.",
+      "answer": "book",
+      "wrong": [
+        "magazine",
+        "comic"
+      ]
+    },
+    {
+      "text": "I borrowed three ___.",
+      "answer": "books",
+      "wrong": [
+        "movies",
+        "games"
+      ]
+    },
+    {
+      "text": "Everyone was very ___.",
+      "answer": "quiet",
+      "wrong": [
+        "calm",
+        "still"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "I",
+      "went",
+      "to",
+      "the",
+      "library"
+    ],
+    [
+      "I",
+      "read",
+      "a",
+      "book",
+      "about",
+      "space"
+    ],
+    [
+      "I",
+      "borrowed",
+      "three",
+      "books"
+    ],
+    [
+      "Everyone",
+      "was",
+      "very",
+      "quiet"
+    ]
+  ],
+  "dictation": [
+    "I went to the library after school.",
+    "I read a book about space.",
+    "I borrowed three books.",
+    "Everyone was very quiet."
+  ]
+}

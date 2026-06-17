@@ -1,0 +1,191 @@
+{
+  "quiz3": [
+    {
+      "q": "They will go to the mountains if the weather is nice.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They should bring water, snacks, and a map.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They can take the morning train if they leave early.",
+      "answer": "Yes"
+    },
+    {
+      "q": "If it rains, they will visit a museum.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They should plan carefully.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "They will go to the beach.",
+      "answer": "No"
+    },
+    {
+      "q": "They should bring nothing.",
+      "answer": "No"
+    },
+    {
+      "q": "If it rains, they will stay in the mountains.",
+      "answer": "No"
+    },
+    {
+      "q": "They will take the train if they leave early.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Tom thinks the trip will be exciting.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Tom",
+      "pic": "👦"
+    },
+    {
+      "word": "Anna",
+      "pic": "👧"
+    },
+    {
+      "word": "mountain",
+      "pic": "⛰️"
+    },
+    {
+      "word": "map",
+      "pic": "🗺️"
+    },
+    {
+      "word": "train",
+      "pic": "🚆"
+    },
+    {
+      "word": "museum",
+      "pic": "🏛️"
+    }
+  ],
+  "wh": [
+    {
+      "q": "Where will they go if the weather is nice?",
+      "a": "To the mountains.",
+      "wrong": [
+        "To the beach.",
+        "To the city."
+      ]
+    },
+    {
+      "q": "What should they bring?",
+      "a": "Water, snacks, and a map.",
+      "wrong": [
+        "Only money.",
+        "A tent and a boat."
+      ]
+    },
+    {
+      "q": "How will they get there?",
+      "a": "By the morning train.",
+      "wrong": [
+        "By plane.",
+        "By boat."
+      ]
+    },
+    {
+      "q": "What will they do if it rains?",
+      "a": "Visit a museum.",
+      "wrong": [
+        "Go swimming.",
+        "Stay home and sleep."
+      ]
+    },
+    {
+      "q": "How should they plan?",
+      "a": "Carefully.",
+      "wrong": [
+        "Quickly.",
+        "Never."
+      ]
+    }
+  ],
+  "clozeType": "context",
+  "cloze": [
+    {
+      "text": "If the weather is nice, we will go to the ___.",
+      "answer": "mountains",
+      "wrong": [
+        "mornings",
+        "colors"
+      ]
+    },
+    {
+      "text": "We should bring water, snacks, and a ___.",
+      "answer": "map",
+      "wrong": [
+        "winter",
+        "reason"
+      ]
+    },
+    {
+      "text": "We can take the morning ___.",
+      "answer": "train",
+      "wrong": [
+        "lunch",
+        "story"
+      ]
+    },
+    {
+      "text": "If it rains, we will visit a ___.",
+      "answer": "museum",
+      "wrong": [
+        "quickly",
+        "happy"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "If",
+      "the",
+      "weather",
+      "is",
+      "nice",
+      "we",
+      "will",
+      "go"
+    ],
+    [
+      "We",
+      "should",
+      "bring",
+      "water",
+      "and",
+      "snacks"
+    ],
+    [
+      "If",
+      "it",
+      "rains",
+      "we",
+      "will",
+      "visit",
+      "a",
+      "museum"
+    ],
+    [
+      "We",
+      "should",
+      "plan",
+      "carefully"
+    ]
+  ],
+  "dictation": [
+    "If the weather is nice, we will go to the mountains.",
+    "We should bring water, snacks, and a map.",
+    "If it rains, we will visit a museum.",
+    "We should plan carefully."
+  ]
+}

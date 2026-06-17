@@ -1,0 +1,186 @@
+{
+  "quiz3": [
+    {
+      "q": "It snowed last night.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They made a snowman.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They used a carrot for the nose.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They used rocks for the eyes.",
+      "answer": "Yes"
+    },
+    {
+      "q": "It was cold outside.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "It rained last night.",
+      "answer": "No"
+    },
+    {
+      "q": "They made a sandcastle.",
+      "answer": "No"
+    },
+    {
+      "q": "They used a banana for the nose.",
+      "answer": "No"
+    },
+    {
+      "q": "It was cold outside.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They had fun.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Lily",
+      "pic": "👧"
+    },
+    {
+      "word": "Sam",
+      "pic": "👦"
+    },
+    {
+      "word": "snow",
+      "pic": "❄️"
+    },
+    {
+      "word": "snowman",
+      "pic": "⛄"
+    },
+    {
+      "word": "carrot",
+      "pic": "🥕"
+    },
+    {
+      "word": "cocoa",
+      "pic": "☕"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What did they make?",
+      "a": "A snowman.",
+      "wrong": [
+        "A sandcastle.",
+        "A cake."
+      ]
+    },
+    {
+      "q": "What did they use for the nose?",
+      "a": "A carrot.",
+      "wrong": [
+        "A banana.",
+        "A stick."
+      ]
+    },
+    {
+      "q": "What did they use for the eyes?",
+      "a": "Two rocks.",
+      "wrong": [
+        "Two buttons.",
+        "Two coins."
+      ]
+    },
+    {
+      "q": "How was the weather?",
+      "a": "It was cold.",
+      "wrong": [
+        "It was hot.",
+        "It was rainy."
+      ]
+    },
+    {
+      "q": "What will they drink?",
+      "a": "Hot cocoa.",
+      "wrong": [
+        "Cold juice.",
+        "Water."
+      ]
+    }
+  ],
+  "clozeType": "category",
+  "cloze": [
+    {
+      "text": "Let's make a ___.",
+      "answer": "snowman",
+      "wrong": [
+        "sandcastle",
+        "campfire"
+      ]
+    },
+    {
+      "text": "We used a ___ for the nose.",
+      "answer": "carrot",
+      "wrong": [
+        "potato",
+        "onion"
+      ]
+    },
+    {
+      "text": "And two ___ for the eyes.",
+      "answer": "rocks",
+      "wrong": [
+        "buttons",
+        "coins"
+      ]
+    },
+    {
+      "text": "Let's drink some hot ___.",
+      "answer": "cocoa",
+      "wrong": [
+        "tea",
+        "milk"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "It",
+      "snowed",
+      "last",
+      "night"
+    ],
+    [
+      "Let",
+      "us",
+      "make",
+      "a",
+      "snowman"
+    ],
+    [
+      "We",
+      "used",
+      "a",
+      "carrot",
+      "for",
+      "the",
+      "nose"
+    ],
+    [
+      "It",
+      "was",
+      "so",
+      "cold",
+      "outside"
+    ]
+  ],
+  "dictation": [
+    "It snowed last night.",
+    "Let us make a snowman.",
+    "We used a carrot for the nose.",
+    "It was so cold outside."
+  ]
+}

@@ -1,0 +1,188 @@
+{
+  "quiz3": [
+    {
+      "q": "Ben had a birthday party.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Many friends came.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They played games and ate pizza.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Ben had a chocolate cake.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Ben got a new bike.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Lily had a birthday party.",
+      "answer": "No"
+    },
+    {
+      "q": "They ate soup.",
+      "answer": "No"
+    },
+    {
+      "q": "The cake was vanilla.",
+      "answer": "No"
+    },
+    {
+      "q": "Ben got a new bike.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The party was fun.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Ben",
+      "pic": "👦"
+    },
+    {
+      "word": "Lily",
+      "pic": "👧"
+    },
+    {
+      "word": "cake",
+      "pic": "🎂"
+    },
+    {
+      "word": "pizza",
+      "pic": "🍕"
+    },
+    {
+      "word": "bike",
+      "pic": "🚲"
+    },
+    {
+      "word": "books",
+      "pic": "📚"
+    }
+  ],
+  "wh": [
+    {
+      "q": "Whose birthday was it?",
+      "a": "It was Ben's birthday.",
+      "wrong": [
+        "It was Lily's birthday.",
+        "It was Tom's birthday."
+      ]
+    },
+    {
+      "q": "What did they eat?",
+      "a": "They ate pizza.",
+      "wrong": [
+        "They ate rice.",
+        "They ate soup."
+      ]
+    },
+    {
+      "q": "What kind of cake?",
+      "a": "A chocolate cake.",
+      "wrong": [
+        "A vanilla cake.",
+        "A cheese cake."
+      ]
+    },
+    {
+      "q": "What did Ben get?",
+      "a": "A new bike and books.",
+      "wrong": [
+        "A new phone.",
+        "A dog."
+      ]
+    },
+    {
+      "q": "When was the party?",
+      "a": "Yesterday.",
+      "wrong": [
+        "Tomorrow.",
+        "Last year."
+      ]
+    }
+  ],
+  "clozeType": "category",
+  "cloze": [
+    {
+      "text": "We played games and ate ___.",
+      "answer": "pizza",
+      "wrong": [
+        "pasta",
+        "bread"
+      ]
+    },
+    {
+      "text": "I had a big chocolate ___.",
+      "answer": "cake",
+      "wrong": [
+        "pie",
+        "cookie"
+      ]
+    },
+    {
+      "text": "I got a new ___.",
+      "answer": "bike",
+      "wrong": [
+        "car",
+        "scooter"
+      ]
+    },
+    {
+      "text": "Many ___ came.",
+      "answer": "friends",
+      "wrong": [
+        "teachers",
+        "neighbors"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "I",
+      "had",
+      "my",
+      "birthday",
+      "party",
+      "yesterday"
+    ],
+    [
+      "We",
+      "played",
+      "games",
+      "and",
+      "ate",
+      "pizza"
+    ],
+    [
+      "I",
+      "had",
+      "a",
+      "big",
+      "chocolate",
+      "cake"
+    ],
+    [
+      "I",
+      "got",
+      "a",
+      "new",
+      "bike"
+    ]
+  ],
+  "dictation": [
+    "I had my birthday party yesterday.",
+    "We played games and ate pizza.",
+    "I had a big chocolate cake.",
+    "I got a new bike and some books."
+  ]
+}

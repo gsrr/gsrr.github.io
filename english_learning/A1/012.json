@@ -1,0 +1,186 @@
+{
+  "quiz3": [
+    {
+      "q": "They went to the beach on Sunday.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They built a sandcastle.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The castle was tall.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They collected many shells.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The waves broke the castle.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "They went to the beach on Monday.",
+      "answer": "No"
+    },
+    {
+      "q": "They built a snowman.",
+      "answer": "No"
+    },
+    {
+      "q": "They found no shells.",
+      "answer": "No"
+    },
+    {
+      "q": "They built a sandcastle.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They built another castle.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Ben",
+      "pic": "👦"
+    },
+    {
+      "word": "Emma",
+      "pic": "👧"
+    },
+    {
+      "word": "beach",
+      "pic": "🏖️"
+    },
+    {
+      "word": "sandcastle",
+      "pic": "🏰"
+    },
+    {
+      "word": "shell",
+      "pic": "🐚"
+    },
+    {
+      "word": "wave",
+      "pic": "🌊"
+    }
+  ],
+  "wh": [
+    {
+      "q": "When did they go to the beach?",
+      "a": "On Sunday.",
+      "wrong": [
+        "On Monday.",
+        "In winter."
+      ]
+    },
+    {
+      "q": "What did they build?",
+      "a": "A sandcastle.",
+      "wrong": [
+        "A snowman.",
+        "A treehouse."
+      ]
+    },
+    {
+      "q": "How big was the castle?",
+      "a": "Taller than his brother.",
+      "wrong": [
+        "Very small.",
+        "As big as a house."
+      ]
+    },
+    {
+      "q": "What did they collect?",
+      "a": "Shells.",
+      "wrong": [
+        "Rocks.",
+        "Coins."
+      ]
+    },
+    {
+      "q": "What broke the castle?",
+      "a": "The waves.",
+      "wrong": [
+        "The wind.",
+        "A dog."
+      ]
+    }
+  ],
+  "clozeType": "category",
+  "cloze": [
+    {
+      "text": "We built a big ___.",
+      "answer": "sandcastle",
+      "wrong": [
+        "snowman",
+        "treehouse"
+      ]
+    },
+    {
+      "text": "We swam in the ___.",
+      "answer": "sea",
+      "wrong": [
+        "pool",
+        "river"
+      ]
+    },
+    {
+      "text": "We collected many ___.",
+      "answer": "shells",
+      "wrong": [
+        "stones",
+        "leaves"
+      ]
+    },
+    {
+      "text": "The ___ broke our castle.",
+      "answer": "waves",
+      "wrong": [
+        "wind",
+        "rain"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "We",
+      "went",
+      "to",
+      "the",
+      "beach",
+      "on",
+      "Sunday"
+    ],
+    [
+      "We",
+      "built",
+      "a",
+      "big",
+      "sandcastle"
+    ],
+    [
+      "We",
+      "collected",
+      "many",
+      "shells"
+    ],
+    [
+      "The",
+      "waves",
+      "broke",
+      "our",
+      "castle"
+    ]
+  ],
+  "dictation": [
+    "We went to the beach on Sunday.",
+    "We built a big sandcastle.",
+    "We collected many shells.",
+    "The waves broke our castle."
+  ]
+}
