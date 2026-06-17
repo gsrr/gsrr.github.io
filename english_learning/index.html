@@ -563,7 +563,35 @@
         </div>
       </div>
       <div style="text-align:center;margin-top:14px">
+        <button id="openSAcctBtn" class="back-btn">☁️ Save my progress</button>
         <button id="openStudentBtn" class="back-btn">🧒 Join a Class</button>
+      </div>
+    </div>
+
+    <!-- 畫面 0a2：學生個人帳號（跨裝置存檔） -->
+    <div id="screenStudentAcct" class="hidden">
+      <div class="learn-top">
+        <button class="back-btn" id="backFromSAcct">← Back</button>
+        <span class="learn-title">☁️ My Account</span>
+      </div>
+      <div id="sAcctLogin">
+        <p class="screen-intro">Save your progress so it follows you to any device. ☁️</p>
+        <div class="acct-form">
+          <input id="sUser" type="text" placeholder="Username" autocomplete="username" maxlength="40">
+          <input id="sPass" type="password" placeholder="Password" autocomplete="current-password" maxlength="60">
+        </div>
+        <div class="acct-btns">
+          <button id="sLoginBtn" class="dict-play">Log in</button>
+          <button id="sRegisterBtn" class="back-btn">Create account</button>
+        </div>
+        <div id="sMsg" class="acct-msg"></div>
+      </div>
+      <div id="sAcctPanel" class="hidden">
+        <div class="acct-top"><span id="sWho"></span>
+          <button id="sLogoutBtn" class="back-btn">Log out</button></div>
+        <p class="screen-intro">Your progress saves to the cloud automatically. ✓</p>
+        <div class="acct-btns"><button id="sSaveBtn" class="dict-play">⬆ Save now</button></div>
+        <div id="sMsg2" class="acct-msg"></div>
       </div>
     </div>
 
@@ -1096,6 +1124,7 @@
       const done = Array.from(tabs).filter(t => t.classList.contains("done")).map(t => t.dataset.level);
       localStorage.setItem(progKey(currentArticleKey), JSON.stringify(done));
     } catch (e) {}
+    scheduleStudentSave();   // 學生若已登入 -> 進度自動上雲
   }
   /* ---------- 各關得分（用來算整課總分） ---------- */
   const PASS_MARK = 80;    // 平均達 80 分以上算通過（綠燈）
@@ -1104,6 +1133,7 @@
   function recordScore(level, correct, total) {
     lessonScores[String(level)] = { correct: correct, total: total };
     try { localStorage.setItem(scoreKey(currentArticleKey), JSON.stringify(lessonScores)); } catch (e) {}
+    scheduleStudentSave();   // 學生若已登入 -> 分數自動上雲
   }
   // 取得某關的顯示名稱（給課程卡片的小圓點 tooltip 用）
   function levelName(l) {
@@ -2361,7 +2391,7 @@
   userNameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") addProfile(); });
 
   function showScreen(el) {
-    [screenRole, screenProfile, screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena, screenStudent, screenTeacher].forEach(s => s.classList.add("hidden"));
+    [screenRole, screenProfile, screenStudentAcct, screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena, screenStudent, screenTeacher].forEach(s => s.classList.add("hidden"));
     el.classList.remove("hidden");
     // 右上角區（使用者鈕 + 匯出）：只在學生 app 內的畫面顯示
     topRight.classList.toggle("hidden", !(userName && [screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena].indexOf(el) !== -1));
@@ -3198,6 +3228,83 @@
   document.getElementById("acctSyncBtn").addEventListener("click", () => syncNow(loadDashboard));
   document.getElementById("acctRefreshBtn").addEventListener("click", loadDashboard);
   document.getElementById("acctLogoutBtn").addEventListener("click", acctLogout);
+
+  /* ===== 學生個人帳號：跨裝置雲端存檔（與班級碼分開） ===== */
+  const screenStudentAcct = document.getElementById("screenStudentAcct");
+  function sToken() { try { return localStorage.getItem("sacct:token") || ""; } catch (e) { return ""; } }
+  // 整台裝置的學習快照（所有 profile + 目前使用者名）
+  function fullLocalSnapshot() {
+    return { profiles: loadProfiles(), userName: userName, students: collectLocalState() };
+  }
+  // 把雲端快照寫回本機 localStorage（換裝置登入時還原）
+  function restoreSnapshot(blob) {
+    if (!blob || typeof blob !== "object") return;
+    try {
+      if (Array.isArray(blob.profiles)) localStorage.setItem("profiles", JSON.stringify(blob.profiles));
+      const sts = blob.students || {};
+      Object.keys(sts).forEach(name => {
+        const st = sts[name] || {};
+        if (st.avatar) localStorage.setItem("avatar:" + name, st.avatar);
+        if (st.hero) localStorage.setItem("hero:" + name, JSON.stringify(st.hero));
+        const sc = st.scores || {}; Object.keys(sc).forEach(f => localStorage.setItem("score:" + name + ":" + f, JSON.stringify(sc[f])));
+        const pr = st.progress || {}; Object.keys(pr).forEach(f => localStorage.setItem("prog:" + name + ":" + f, JSON.stringify(pr[f])));
+      });
+      if (blob.userName) { userName = blob.userName; localStorage.setItem("userName", blob.userName); }
+    } catch (e) {}
+  }
+  function openStudentAcct() { showScreen(screenStudentAcct); if (sToken()) sShowPanel(); else sShowLogin(); }
+  function sShowLogin() {
+    document.getElementById("sAcctLogin").classList.remove("hidden");
+    document.getElementById("sAcctPanel").classList.add("hidden");
+    document.getElementById("sMsg").textContent = "";
+  }
+  function sShowPanel() {
+    document.getElementById("sAcctLogin").classList.add("hidden");
+    document.getElementById("sAcctPanel").classList.remove("hidden");
+    document.getElementById("sWho").textContent = "🧒 " + (localStorage.getItem("sacct:user") || "");
+    document.getElementById("sMsg2").textContent = "";
+  }
+  function sAuth(path) {
+    const user = (document.getElementById("sUser").value || "").trim();
+    const pass = document.getElementById("sPass").value || "";
+    const msg = document.getElementById("sMsg");
+    if (!user || !pass) { msg.textContent = "Enter a username and password."; return; }
+    msg.textContent = "…";
+    fetch("/api/student/" + path, { method: "POST", body: JSON.stringify({ user: user, pass: pass }) })
+      .then(r => r.json().then(j => ({ ok: r.ok, j: j })))
+      .then(o => {
+        if (!o.ok || !o.j.token) { msg.textContent = o.j.error || "Failed."; return; }
+        try { localStorage.setItem("sacct:token", o.j.token); localStorage.setItem("sacct:user", user); } catch (e) {}
+        if (path === "login" && o.j.data) restoreSnapshot(o.j.data);  // 還原雲端進度
+        renderProfiles();
+        sShowPanel();
+      })
+      .catch(() => { msg.textContent = "Server not available (needs the server)."; });
+  }
+  function studentSave(cb) {
+    const token = sToken(); if (!token) { if (cb) cb(); return; }
+    fetch("/api/student/save?token=" + encodeURIComponent(token), { method: "POST", body: JSON.stringify({ data: fullLocalSnapshot() }) })
+      .then(r => r.json()).then(j => { if (cb) cb(j); }).catch(() => { if (cb) cb(); });
+  }
+  let _sSaveTimer = null;
+  function scheduleStudentSave() {
+    if (!sToken()) return;
+    clearTimeout(_sSaveTimer);
+    _sSaveTimer = setTimeout(function () { studentSave(); }, 1500);   // 防抖，避免每次答題都打 API
+  }
+  function sLogout() {
+    try { localStorage.removeItem("sacct:token"); localStorage.removeItem("sacct:user"); } catch (e) {}
+    sShowLogin();
+  }
+  document.getElementById("openSAcctBtn").addEventListener("click", openStudentAcct);
+  document.getElementById("backFromSAcct").addEventListener("click", () => { renderProfiles(); showScreen(screenProfile); });
+  document.getElementById("sLoginBtn").addEventListener("click", () => sAuth("login"));
+  document.getElementById("sRegisterBtn").addEventListener("click", () => sAuth("register"));
+  document.getElementById("sSaveBtn").addEventListener("click", () => {
+    document.getElementById("sMsg2").textContent = "Saving…";
+    studentSave(j => { document.getElementById("sMsg2").textContent = (j && j.ok) ? "Saved ✓" : "Save failed"; });
+  });
+  document.getElementById("sLogoutBtn").addEventListener("click", sLogout);
 
   async function initLessons() {
     try {
