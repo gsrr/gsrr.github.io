@@ -1,0 +1,191 @@
+{
+  "quiz3": [
+    {
+      "q": "They will go on a school trip.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They will go to the science museum.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They will go by bus.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They will see robots and dinosaurs.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Tom will bring a sandwich.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "They will go to the zoo.",
+      "answer": "No"
+    },
+    {
+      "q": "They will go by train.",
+      "answer": "No"
+    },
+    {
+      "q": "Tom wants to see the dinosaurs.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna says to forget your lunch.",
+      "answer": "No"
+    },
+    {
+      "q": "It will be a great day.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Tom",
+      "pic": "👦"
+    },
+    {
+      "word": "Anna",
+      "pic": "👧"
+    },
+    {
+      "word": "museum",
+      "pic": "🏛️"
+    },
+    {
+      "word": "bus",
+      "pic": "🚌"
+    },
+    {
+      "word": "robot",
+      "pic": "🤖"
+    },
+    {
+      "word": "dinosaur",
+      "pic": "🦖"
+    },
+    {
+      "word": "sandwich",
+      "pic": "🥪"
+    }
+  ],
+  "wh": [
+    {
+      "q": "Where will they go?",
+      "a": "They will go to the science museum.",
+      "wrong": [
+        "They will go to the beach.",
+        "They will go to the farm."
+      ]
+    },
+    {
+      "q": "How will they get there?",
+      "a": "They will go by bus.",
+      "wrong": [
+        "They will go by plane.",
+        "They will go by boat."
+      ]
+    },
+    {
+      "q": "What will they see?",
+      "a": "They will see robots and dinosaurs.",
+      "wrong": [
+        "They will see lions and bears.",
+        "They will see ships."
+      ]
+    },
+    {
+      "q": "Why does Tom want to see the dinosaurs?",
+      "a": "Because they are huge.",
+      "wrong": [
+        "Because they are small.",
+        "Because they are scary."
+      ]
+    },
+    {
+      "q": "What will Tom bring?",
+      "a": "He will bring a sandwich and water.",
+      "wrong": [
+        "He will bring a cake.",
+        "He will bring a tent."
+      ]
+    }
+  ],
+  "clozeType": "context",
+  "cloze": [
+    {
+      "text": "We will go to the science ___.",
+      "answer": "museum",
+      "wrong": [
+        "dinner",
+        "morning"
+      ]
+    },
+    {
+      "text": "We will go by ___.",
+      "answer": "bus",
+      "wrong": [
+        "lunch",
+        "rain"
+      ]
+    },
+    {
+      "text": "We will see robots and ___.",
+      "answer": "dinosaurs",
+      "wrong": [
+        "weekends",
+        "colors"
+      ]
+    },
+    {
+      "text": "I want to see them because they are ___.",
+      "answer": "huge",
+      "wrong": [
+        "quiet",
+        "late"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "We",
+      "will",
+      "go",
+      "to",
+      "the",
+      "museum"
+    ],
+    [
+      "How",
+      "will",
+      "we",
+      "get",
+      "there"
+    ],
+    [
+      "We",
+      "will",
+      "go",
+      "by",
+      "bus"
+    ],
+    [
+      "I",
+      "want",
+      "to",
+      "see",
+      "the",
+      "dinosaurs"
+    ]
+  ],
+  "dictation": [
+    "We will go to the science museum.",
+    "We will go by bus.",
+    "We will see robots and dinosaurs.",
+    "I will bring a sandwich and some water."
+  ]
+}

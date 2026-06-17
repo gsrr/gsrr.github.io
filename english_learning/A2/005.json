@@ -1,0 +1,191 @@
+{
+  "quiz3": [
+    {
+      "q": "Ben eats healthy food.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Ben eats vegetables and fruit.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Ben drinks water.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Ben runs every morning.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Exercise makes Ben strong.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Ben eats junk food.",
+      "answer": "No"
+    },
+    {
+      "q": "Ben drinks soda every day.",
+      "answer": "No"
+    },
+    {
+      "q": "Ben thinks soda is good for him.",
+      "answer": "No"
+    },
+    {
+      "q": "Ben runs in the morning.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Ben wants to be strong.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Emma",
+      "pic": "👧"
+    },
+    {
+      "word": "Ben",
+      "pic": "👦"
+    },
+    {
+      "word": "vegetables",
+      "pic": "🥦"
+    },
+    {
+      "word": "fruit",
+      "pic": "🍎"
+    },
+    {
+      "word": "water",
+      "pic": "💧"
+    },
+    {
+      "word": "soda",
+      "pic": "🥤"
+    },
+    {
+      "word": "run",
+      "pic": "🏃"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What does Ben eat?",
+      "a": "He eats vegetables and fruit.",
+      "wrong": [
+        "He eats candy and chips.",
+        "He eats cake."
+      ]
+    },
+    {
+      "q": "What does Ben drink?",
+      "a": "He drinks water.",
+      "wrong": [
+        "He drinks soda.",
+        "He drinks juice."
+      ]
+    },
+    {
+      "q": "Why doesn't Ben drink soda?",
+      "a": "Because it is bad for him.",
+      "wrong": [
+        "Because it is too sweet to buy.",
+        "Because he has none."
+      ]
+    },
+    {
+      "q": "When does Ben run?",
+      "a": "He runs every morning.",
+      "wrong": [
+        "He runs every night.",
+        "He never runs."
+      ]
+    },
+    {
+      "q": "Why does Ben run?",
+      "a": "Because exercise makes him strong.",
+      "wrong": [
+        "Because he likes to be tired.",
+        "Because his mom runs."
+      ]
+    }
+  ],
+  "clozeType": "pos",
+  "cloze": [
+    {
+      "text": "I eat ___ every day.",
+      "answer": "vegetables",
+      "wrong": [
+        "quickly",
+        "green"
+      ]
+    },
+    {
+      "text": "Soda is ___ for me.",
+      "answer": "bad",
+      "wrong": [
+        "badly",
+        "run"
+      ]
+    },
+    {
+      "text": "I ___ every morning.",
+      "answer": "run",
+      "wrong": [
+        "runner",
+        "fast"
+      ]
+    },
+    {
+      "text": "Exercise makes me ___.",
+      "answer": "strong",
+      "wrong": [
+        "strongly",
+        "strength"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "I",
+      "eat",
+      "vegetables",
+      "and",
+      "fruit",
+      "every",
+      "day"
+    ],
+    [
+      "I",
+      "drink",
+      "water",
+      "because",
+      "soda",
+      "is",
+      "bad"
+    ],
+    [
+      "I",
+      "run",
+      "every",
+      "morning"
+    ],
+    [
+      "Exercise",
+      "makes",
+      "me",
+      "strong"
+    ]
+  ],
+  "dictation": [
+    "I eat vegetables and fruit every day.",
+    "I drink water because soda is bad for me.",
+    "I run every morning.",
+    "Exercise makes me strong."
+  ]
+}

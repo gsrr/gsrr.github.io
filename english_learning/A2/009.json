@@ -1,0 +1,187 @@
+{
+  "quiz3": [
+    {
+      "q": "Emma's project is about volcanoes.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Emma will make a model volcano.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The volcano will erupt with baking soda and vinegar.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Leo's project is about plants.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Leo is studying which plant grows faster.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Leo's project is about volcanoes.",
+      "answer": "No"
+    },
+    {
+      "q": "Emma will make a model car.",
+      "answer": "No"
+    },
+    {
+      "q": "Emma's volcano uses water only.",
+      "answer": "No"
+    },
+    {
+      "q": "Leo studies plants.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They think their projects will be the best.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Leo",
+      "pic": "👦"
+    },
+    {
+      "word": "Emma",
+      "pic": "👧"
+    },
+    {
+      "word": "volcano",
+      "pic": "🌋"
+    },
+    {
+      "word": "plant",
+      "pic": "🌱"
+    },
+    {
+      "word": "microscope",
+      "pic": "🔬"
+    },
+    {
+      "word": "test tube",
+      "pic": "🧪"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What is Emma's project about?",
+      "a": "It is about volcanoes.",
+      "wrong": [
+        "It is about animals.",
+        "It is about cars."
+      ]
+    },
+    {
+      "q": "What will Emma make?",
+      "a": "She will make a model volcano.",
+      "wrong": [
+        "She will make a cake.",
+        "She will make a robot."
+      ]
+    },
+    {
+      "q": "How will the volcano erupt?",
+      "a": "With baking soda and vinegar.",
+      "wrong": [
+        "With water and sand.",
+        "With fire."
+      ]
+    },
+    {
+      "q": "What is Leo's project about?",
+      "a": "It is about plants.",
+      "wrong": [
+        "It is about stars.",
+        "It is about rocks."
+      ]
+    },
+    {
+      "q": "What is Leo studying?",
+      "a": "Which plant grows faster.",
+      "wrong": [
+        "Which plant is taller.",
+        "Which animal is faster."
+      ]
+    }
+  ],
+  "clozeType": "pos",
+  "cloze": [
+    {
+      "text": "My project is about ___.",
+      "answer": "volcanoes",
+      "wrong": [
+        "quickly",
+        "tall"
+      ]
+    },
+    {
+      "text": "I will ___ a model volcano.",
+      "answer": "make",
+      "wrong": [
+        "maker",
+        "ready"
+      ]
+    },
+    {
+      "text": "Which plant grows ___?",
+      "answer": "faster",
+      "wrong": [
+        "speed",
+        "quick"
+      ]
+    },
+    {
+      "text": "Our projects will be the ___.",
+      "answer": "best",
+      "wrong": [
+        "well",
+        "win"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "My",
+      "project",
+      "is",
+      "about",
+      "volcanoes"
+    ],
+    [
+      "I",
+      "will",
+      "make",
+      "a",
+      "model",
+      "volcano"
+    ],
+    [
+      "My",
+      "project",
+      "is",
+      "about",
+      "plants"
+    ],
+    [
+      "Our",
+      "projects",
+      "will",
+      "be",
+      "the",
+      "best"
+    ]
+  ],
+  "dictation": [
+    "My project is about volcanoes.",
+    "I will make a model volcano.",
+    "I am studying which plant grows faster.",
+    "Our projects will be the best."
+  ]
+}

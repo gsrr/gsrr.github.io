@@ -1,0 +1,193 @@
+{
+  "quiz3": [
+    {
+      "q": "Mia wants to be a doctor.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Mia wants to help sick people.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Leo wants to be a pilot.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Leo loves airplanes.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They should study hard.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Leo wants to be a doctor.",
+      "answer": "No"
+    },
+    {
+      "q": "Mia wants to be a pilot.",
+      "answer": "No"
+    },
+    {
+      "q": "Mia wants to help sick people.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Leo is afraid of the sky.",
+      "answer": "No"
+    },
+    {
+      "q": "They will study hard for their dreams.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Leo",
+      "pic": "👦"
+    },
+    {
+      "word": "Mia",
+      "pic": "👧"
+    },
+    {
+      "word": "doctor",
+      "pic": "🩺"
+    },
+    {
+      "word": "pilot",
+      "pic": "🧑‍✈️"
+    },
+    {
+      "word": "airplane",
+      "pic": "✈️"
+    },
+    {
+      "word": "hospital",
+      "pic": "🏥"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What does Mia want to be?",
+      "a": "She wants to be a doctor.",
+      "wrong": [
+        "She wants to be a teacher.",
+        "She wants to be a singer."
+      ]
+    },
+    {
+      "q": "Why does Mia want to be a doctor?",
+      "a": "Because she wants to help sick people.",
+      "wrong": [
+        "Because she likes money.",
+        "Because it is easy."
+      ]
+    },
+    {
+      "q": "What does Leo want to be?",
+      "a": "He wants to be a pilot.",
+      "wrong": [
+        "He wants to be a doctor.",
+        "He wants to be a chef."
+      ]
+    },
+    {
+      "q": "Why does Leo want to be a pilot?",
+      "a": "Because he loves airplanes.",
+      "wrong": [
+        "Because he hates flying.",
+        "Because his mom said so."
+      ]
+    },
+    {
+      "q": "What should they do for their dreams?",
+      "a": "They should study hard.",
+      "wrong": [
+        "They should sleep all day.",
+        "They should give up."
+      ]
+    }
+  ],
+  "clozeType": "context",
+  "cloze": [
+    {
+      "text": "I want to be a ___.",
+      "answer": "doctor",
+      "wrong": [
+        "holiday",
+        "weather"
+      ]
+    },
+    {
+      "text": "I want to help ___ people.",
+      "answer": "sick",
+      "wrong": [
+        "sunny",
+        "fast"
+      ]
+    },
+    {
+      "text": "I want to be a pilot because I love ___.",
+      "answer": "airplanes",
+      "wrong": [
+        "homework",
+        "rain"
+      ]
+    },
+    {
+      "text": "We should ___ hard for our dreams.",
+      "answer": "study",
+      "wrong": [
+        "sleep",
+        "cry"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "I",
+      "want",
+      "to",
+      "be",
+      "a",
+      "doctor"
+    ],
+    [
+      "Why",
+      "do",
+      "you",
+      "want",
+      "to",
+      "be",
+      "a",
+      "pilot"
+    ],
+    [
+      "Because",
+      "I",
+      "love",
+      "airplanes",
+      "and",
+      "the",
+      "sky"
+    ],
+    [
+      "We",
+      "should",
+      "study",
+      "hard",
+      "for",
+      "our",
+      "dreams"
+    ]
+  ],
+  "dictation": [
+    "I want to be a doctor.",
+    "I want to help sick people.",
+    "I want to be a pilot because I love airplanes.",
+    "We should study hard for our dreams."
+  ]
+}

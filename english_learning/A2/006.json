@@ -1,0 +1,190 @@
+{
+  "quiz3": [
+    {
+      "q": "They were going to have a picnic.",
+      "answer": "Yes"
+    },
+    {
+      "q": "It started to rain.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Lily made sandwiches and a cake.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They will eat inside.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Sam will bring the juice.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "They had the picnic in the park.",
+      "answer": "No"
+    },
+    {
+      "q": "It was sunny all day.",
+      "answer": "No"
+    },
+    {
+      "q": "Sam tells Lily to be sad.",
+      "answer": "No"
+    },
+    {
+      "q": "They have an indoor picnic.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Lily made some food.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Lily",
+      "pic": "👧"
+    },
+    {
+      "word": "Sam",
+      "pic": "👦"
+    },
+    {
+      "word": "picnic",
+      "pic": "🧺"
+    },
+    {
+      "word": "rain",
+      "pic": "🌧️"
+    },
+    {
+      "word": "sandwich",
+      "pic": "🥪"
+    },
+    {
+      "word": "cake",
+      "pic": "🍰"
+    },
+    {
+      "word": "juice",
+      "pic": "🧃"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What were they going to do?",
+      "a": "They were going to have a picnic.",
+      "wrong": [
+        "They were going to swim.",
+        "They were going to sleep."
+      ]
+    },
+    {
+      "q": "Why couldn't they have the picnic outside?",
+      "a": "Because it started to rain.",
+      "wrong": [
+        "Because it was too hot.",
+        "Because they were sick."
+      ]
+    },
+    {
+      "q": "What did Lily make?",
+      "a": "She made sandwiches and a cake.",
+      "wrong": [
+        "She made soup.",
+        "She made pizza."
+      ]
+    },
+    {
+      "q": "Where will they have the picnic?",
+      "a": "They will have it inside.",
+      "wrong": [
+        "They will have it at school.",
+        "They will have it on the bus."
+      ]
+    },
+    {
+      "q": "What will Sam bring?",
+      "a": "He will bring the juice.",
+      "wrong": [
+        "He will bring the rain.",
+        "He will bring a dog."
+      ]
+    }
+  ],
+  "clozeType": "context",
+  "cloze": [
+    {
+      "text": "We were going to have a ___.",
+      "answer": "picnic",
+      "wrong": [
+        "winter",
+        "corner"
+      ]
+    },
+    {
+      "text": "But it started to ___.",
+      "answer": "rain",
+      "wrong": [
+        "sleep",
+        "read"
+      ]
+    },
+    {
+      "text": "We can eat ___.",
+      "answer": "inside",
+      "wrong": [
+        "loudly",
+        "yellow"
+      ]
+    },
+    {
+      "text": "Next time the ___ will be better.",
+      "answer": "weather",
+      "wrong": [
+        "pencil",
+        "music"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "We",
+      "were",
+      "going",
+      "to",
+      "have",
+      "a",
+      "picnic"
+    ],
+    [
+      "But",
+      "it",
+      "started",
+      "to",
+      "rain"
+    ],
+    [
+      "We",
+      "can",
+      "eat",
+      "inside"
+    ],
+    [
+      "I",
+      "will",
+      "bring",
+      "the",
+      "juice"
+    ]
+  ],
+  "dictation": [
+    "We were going to have a picnic today.",
+    "But it started to rain.",
+    "We can have an indoor picnic.",
+    "Next time the weather will be better."
+  ]
+}

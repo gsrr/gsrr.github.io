@@ -1,0 +1,187 @@
+{
+  "quiz3": [
+    {
+      "q": "Leo is recycling bottles.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Leo recycles because it is good for the Earth.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They can recycle paper, glass, and plastic.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Mia will start recycling today.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Recycling keeps the planet clean.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Mia is recycling the bottles.",
+      "answer": "No"
+    },
+    {
+      "q": "Leo thinks recycling is bad for the Earth.",
+      "answer": "No"
+    },
+    {
+      "q": "They can only recycle paper.",
+      "answer": "No"
+    },
+    {
+      "q": "Mia will start recycling today.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Leo wants a clean planet.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Mia",
+      "pic": "👧"
+    },
+    {
+      "word": "Leo",
+      "pic": "👦"
+    },
+    {
+      "word": "bottle",
+      "pic": "🍶"
+    },
+    {
+      "word": "paper",
+      "pic": "📄"
+    },
+    {
+      "word": "plastic",
+      "pic": "♻️"
+    },
+    {
+      "word": "Earth",
+      "pic": "🌍"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What is Leo doing with the bottles?",
+      "a": "He is recycling them.",
+      "wrong": [
+        "He is eating them.",
+        "He is hiding them."
+      ]
+    },
+    {
+      "q": "Why does Leo recycle?",
+      "a": "Because it is good for the Earth.",
+      "wrong": [
+        "Because it is fun.",
+        "Because his mom pays him."
+      ]
+    },
+    {
+      "q": "What can they recycle?",
+      "a": "Paper, glass, and plastic.",
+      "wrong": [
+        "Food and water.",
+        "Cars and trains."
+      ]
+    },
+    {
+      "q": "What does Mia usually do?",
+      "a": "She throws everything in the trash.",
+      "wrong": [
+        "She recycles everything.",
+        "She burns it."
+      ]
+    },
+    {
+      "q": "What will Mia do?",
+      "a": "She will start recycling today.",
+      "wrong": [
+        "She will stop recycling.",
+        "She will move away."
+      ]
+    }
+  ],
+  "clozeType": "pos",
+  "cloze": [
+    {
+      "text": "I am ___ the bottles.",
+      "answer": "recycling",
+      "wrong": [
+        "recycle",
+        "green"
+      ]
+    },
+    {
+      "text": "Recycling is good for the ___.",
+      "answer": "Earth",
+      "wrong": [
+        "happily",
+        "clean"
+      ]
+    },
+    {
+      "text": "You ___ recycle, too.",
+      "answer": "should",
+      "wrong": [
+        "quickly",
+        "good"
+      ]
+    },
+    {
+      "text": "We can keep our planet ___.",
+      "answer": "clean",
+      "wrong": [
+        "cleanly",
+        "cleaning"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "I",
+      "am",
+      "putting",
+      "them",
+      "in",
+      "the",
+      "bin"
+    ],
+    [
+      "Why",
+      "do",
+      "you",
+      "recycle"
+    ],
+    [
+      "Because",
+      "it",
+      "is",
+      "good",
+      "for",
+      "the",
+      "Earth"
+    ],
+    [
+      "You",
+      "should",
+      "recycle",
+      "too"
+    ]
+  ],
+  "dictation": [
+    "I am putting them in the recycling bin.",
+    "I recycle because it is good for the Earth.",
+    "We can recycle paper, glass, and plastic.",
+    "Together we can keep our planet clean."
+  ]
+}

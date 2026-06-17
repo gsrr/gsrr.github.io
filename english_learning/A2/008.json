@@ -1,0 +1,186 @@
+{
+  "quiz3": [
+    {
+      "q": "Ben can swim now.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Last year Ben could not swim.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Ben's dad taught him.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Ben practices at the pool.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Lily wants to learn to swim.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Ben could always swim.",
+      "answer": "No"
+    },
+    {
+      "q": "Ben's mom taught him.",
+      "answer": "No"
+    },
+    {
+      "q": "Ben practices at the beach.",
+      "answer": "No"
+    },
+    {
+      "q": "Now swimming is easy for Ben.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Swimming was easy at first.",
+      "answer": "No"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Ben",
+      "pic": "👦"
+    },
+    {
+      "word": "Lily",
+      "pic": "👧"
+    },
+    {
+      "word": "swim",
+      "pic": "🏊"
+    },
+    {
+      "word": "water",
+      "pic": "🌊"
+    },
+    {
+      "word": "goggles",
+      "pic": "🥽"
+    },
+    {
+      "word": "dad",
+      "pic": "👨"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What can Ben do now?",
+      "a": "He can swim.",
+      "wrong": [
+        "He can fly.",
+        "He can drive."
+      ]
+    },
+    {
+      "q": "Who taught Ben?",
+      "a": "His dad taught him.",
+      "wrong": [
+        "His teacher taught him.",
+        "His sister taught him."
+      ]
+    },
+    {
+      "q": "Where does Ben practice?",
+      "a": "He practices at the swimming pool.",
+      "wrong": [
+        "He practices at home.",
+        "He practices in the sea."
+      ]
+    },
+    {
+      "q": "When did his dad teach him?",
+      "a": "Every weekend.",
+      "wrong": [
+        "Every night.",
+        "Once a year."
+      ]
+    },
+    {
+      "q": "How was swimming at first?",
+      "a": "It was hard.",
+      "wrong": [
+        "It was easy.",
+        "It was boring."
+      ]
+    }
+  ],
+  "clozeType": "context",
+  "cloze": [
+    {
+      "text": "I can ___ now.",
+      "answer": "swim",
+      "wrong": [
+        "green",
+        "table"
+      ]
+    },
+    {
+      "text": "My dad ___ me every weekend.",
+      "answer": "taught",
+      "wrong": [
+        "ate",
+        "slept"
+      ]
+    },
+    {
+      "text": "I practice at the swimming ___.",
+      "answer": "pool",
+      "wrong": [
+        "lunch",
+        "story"
+      ]
+    },
+    {
+      "text": "It was hard at first, but now it is ___.",
+      "answer": "easy",
+      "wrong": [
+        "winter",
+        "pencil"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "I",
+      "can",
+      "swim",
+      "now"
+    ],
+    [
+      "Last",
+      "year",
+      "I",
+      "could",
+      "not",
+      "swim"
+    ],
+    [
+      "My",
+      "dad",
+      "taught",
+      "me",
+      "every",
+      "weekend"
+    ],
+    [
+      "I",
+      "practice",
+      "at",
+      "the",
+      "pool"
+    ]
+  ],
+  "dictation": [
+    "I can swim now.",
+    "Last year I could not swim.",
+    "My dad taught me every weekend.",
+    "It was hard at first, but now it is easy."
+  ]
+}

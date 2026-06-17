@@ -1,0 +1,188 @@
+{
+  "quiz3": [
+    {
+      "q": "They are ready for a football match.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Ben thinks they will win.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They practiced very hard.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Sam runs the fastest.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Ben scores the most goals.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "They are ready for a swimming race.",
+      "answer": "No"
+    },
+    {
+      "q": "Ben thinks they will lose.",
+      "answer": "No"
+    },
+    {
+      "q": "They did not practice.",
+      "answer": "No"
+    },
+    {
+      "q": "Sam is a fast runner.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They want to do their best.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Sam",
+      "pic": "👦"
+    },
+    {
+      "word": "Ben",
+      "pic": "👦"
+    },
+    {
+      "word": "football",
+      "pic": "⚽"
+    },
+    {
+      "word": "goal",
+      "pic": "🥅"
+    },
+    {
+      "word": "trophy",
+      "pic": "🏆"
+    },
+    {
+      "word": "team",
+      "pic": "👥"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What are they ready for?",
+      "a": "A football match.",
+      "wrong": [
+        "A music class.",
+        "A spelling test."
+      ]
+    },
+    {
+      "q": "Why does Ben think they will win?",
+      "a": "Because they practiced hard.",
+      "wrong": [
+        "Because they are lucky.",
+        "Because the other team is sick."
+      ]
+    },
+    {
+      "q": "Who runs the fastest?",
+      "a": "Sam runs the fastest.",
+      "wrong": [
+        "Ben runs the fastest.",
+        "The coach runs the fastest."
+      ]
+    },
+    {
+      "q": "Who scores the most goals?",
+      "a": "Ben scores the most goals.",
+      "wrong": [
+        "Sam scores the most.",
+        "Nobody scores."
+      ]
+    },
+    {
+      "q": "What will make them strong?",
+      "a": "Playing together.",
+      "wrong": [
+        "Playing alone.",
+        "Not practicing."
+      ]
+    }
+  ],
+  "clozeType": "context",
+  "cloze": [
+    {
+      "text": "I think we will ___ today.",
+      "answer": "win",
+      "wrong": [
+        "sleep",
+        "read"
+      ]
+    },
+    {
+      "text": "Because we ___ very hard.",
+      "answer": "practiced",
+      "wrong": [
+        "smiled",
+        "slept"
+      ]
+    },
+    {
+      "text": "You run the ___.",
+      "answer": "fastest",
+      "wrong": [
+        "dinner",
+        "window"
+      ]
+    },
+    {
+      "text": "You score the most ___.",
+      "answer": "goals",
+      "wrong": [
+        "mornings",
+        "colors"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "I",
+      "think",
+      "we",
+      "will",
+      "win",
+      "today"
+    ],
+    [
+      "Because",
+      "we",
+      "practiced",
+      "very",
+      "hard"
+    ],
+    [
+      "You",
+      "run",
+      "the",
+      "fastest"
+    ],
+    [
+      "If",
+      "we",
+      "play",
+      "together",
+      "we",
+      "will",
+      "be",
+      "strong"
+    ]
+  ],
+  "dictation": [
+    "I think we will win today.",
+    "Because we practiced very hard.",
+    "You run the fastest.",
+    "If we play together, we will be strong."
+  ]
+}

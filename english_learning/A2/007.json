@@ -1,0 +1,188 @@
+{
+  "quiz3": [
+    {
+      "q": "Sam is saving money.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Sam wants to buy a bike.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The bike costs fifty dollars.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Sam has thirty dollars.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Sam needs twenty more dollars.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Mia is saving money.",
+      "answer": "No"
+    },
+    {
+      "q": "Sam wants to buy a car.",
+      "answer": "No"
+    },
+    {
+      "q": "The bike costs thirty dollars.",
+      "answer": "No"
+    },
+    {
+      "q": "Sam will save for two more weeks.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Mia thinks Sam can do it.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Sam",
+      "pic": "👦"
+    },
+    {
+      "word": "Mia",
+      "pic": "👧"
+    },
+    {
+      "word": "money",
+      "pic": "💰"
+    },
+    {
+      "word": "bike",
+      "pic": "🚲"
+    },
+    {
+      "word": "dollar",
+      "pic": "💵"
+    },
+    {
+      "word": "bank",
+      "pic": "🐷"
+    }
+  ],
+  "wh": [
+    {
+      "q": "Why is Sam saving money?",
+      "a": "Because he wants to buy a bike.",
+      "wrong": [
+        "Because he likes coins.",
+        "Because his bank is full."
+      ]
+    },
+    {
+      "q": "How much does the bike cost?",
+      "a": "It costs fifty dollars.",
+      "wrong": [
+        "It costs five dollars.",
+        "It costs ten dollars."
+      ]
+    },
+    {
+      "q": "How much does Sam have?",
+      "a": "He has thirty dollars.",
+      "wrong": [
+        "He has fifty dollars.",
+        "He has nothing."
+      ]
+    },
+    {
+      "q": "How much more does he need?",
+      "a": "He needs twenty more dollars.",
+      "wrong": [
+        "He needs fifty more.",
+        "He needs no more."
+      ]
+    },
+    {
+      "q": "How long will Sam save?",
+      "a": "He will save for two more weeks.",
+      "wrong": [
+        "He will save for a year.",
+        "He will stop today."
+      ]
+    }
+  ],
+  "clozeType": "context",
+  "cloze": [
+    {
+      "text": "I want to buy a new ___.",
+      "answer": "bike",
+      "wrong": [
+        "lunch",
+        "story"
+      ]
+    },
+    {
+      "text": "The bike ___ fifty dollars.",
+      "answer": "costs",
+      "wrong": [
+        "sleeps",
+        "sings"
+      ]
+    },
+    {
+      "text": "I have thirty ___.",
+      "answer": "dollars",
+      "wrong": [
+        "windows",
+        "songs"
+      ]
+    },
+    {
+      "text": "I will ___ for two more weeks.",
+      "answer": "save",
+      "wrong": [
+        "fly",
+        "draw"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "I",
+      "am",
+      "saving",
+      "my",
+      "money"
+    ],
+    [
+      "I",
+      "want",
+      "to",
+      "buy",
+      "a",
+      "new",
+      "bike"
+    ],
+    [
+      "The",
+      "bike",
+      "costs",
+      "fifty",
+      "dollars"
+    ],
+    [
+      "I",
+      "will",
+      "save",
+      "for",
+      "two",
+      "weeks"
+    ]
+  ],
+  "dictation": [
+    "I am saving my money.",
+    "I want to buy a new bike.",
+    "The bike costs fifty dollars.",
+    "I will save for two more weeks."
+  ]
+}

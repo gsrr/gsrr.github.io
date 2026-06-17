@@ -1,0 +1,47 @@
+<svg viewBox="0 0 360 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Leo and Mia talk about future jobs">
+        <defs><linearGradient id="sky-future-job" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bae6fd"/><stop offset="1" stop-color="#e0f2fe"/></linearGradient></defs>
+        <rect x="0" y="0" width="360" height="170" fill="url(#sky-future-job)"/>
+        <rect x="0" y="128" width="360" height="42" fill="#86efac"/>
+        <rect x="0" y="128" width="360" height="6" fill="#4ade80"/>
+        <g transform="translate(312,30)"><g class="rays"><g stroke="#fbbf24" stroke-width="3" stroke-linecap="round"><line x1="0" y1="-26" x2="0" y2="-20"/><line x1="0" y1="26" x2="0" y2="20"/><line x1="-26" y1="0" x2="-20" y2="0"/><line x1="26" y1="0" x2="20" y2="0"/><line x1="-18" y1="-18" x2="-14" y2="-14"/><line x1="18" y1="18" x2="14" y2="14"/><line x1="-18" y1="18" x2="-14" y2="14"/><line x1="18" y1="-18" x2="14" y2="-14"/></g></g><circle r="15" fill="#fde047"/></g><g class="cloud1" fill="#ffffff" opacity="0.9"><ellipse cx="64" cy="32" rx="18" ry="10"/><ellipse cx="80" cy="34" rx="13" ry="8"/></g>
+        <g transform="translate(168,108)"><g class="jump-a"><text x="0" y="0" font-size="28" text-anchor="middle">✈️</text></g></g><g transform="translate(44,146)"><text x="0" y="0" font-size="24" text-anchor="middle">🩺</text></g><g transform="translate(320,120)"><text x="0" y="0" font-size="30" text-anchor="middle">🏥</text></g>
+        <g transform="translate(60,55)"><g class="bob-a">
+          <g class="talkA"><path d="M34,-3 L30,5 L42,-2 Z" fill="#fff" stroke="#dc2626" stroke-width="1.5"/><rect x="26" y="-24" width="57" height="22" rx="11" fill="#fff" stroke="#dc2626" stroke-width="1.5"/><text x="54.5" y="-9" font-size="11" font-weight="700" fill="#dc2626" text-anchor="middle">Pilot!</text></g>
+          <ellipse cx="20" cy="80" rx="15" ry="3" fill="#000" opacity="0.10"/>
+          <rect x="13" y="60" width="6" height="14" rx="3" fill="#ffe0bd"/><rect x="21" y="60" width="6" height="14" rx="3" fill="#ffe0bd"/>
+          <rect x="10" y="73" width="11" height="6" rx="3" fill="#1f2937"/><rect x="19" y="73" width="11" height="6" rx="3" fill="#1f2937"/>
+          <rect x="9" y="50" width="22" height="12" rx="4" fill="#7f1d1d"/><rect x="19.3" y="52" width="1.4" height="9" fill="#450a0a"/>
+          <rect x="7" y="28" width="26" height="24" rx="9" fill="#dc2626"/><rect x="7" y="39" width="26" height="3.5" fill="#fff" opacity="0.7"/>
+          <rect x="2" y="29" width="8" height="11" rx="4" fill="#dc2626"/><rect x="1.5" y="37" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(8 4 42)"/><circle cx="4" cy="49" r="3.3" fill="#ffe0bd"/>
+          <rect x="30" y="29" width="8" height="11" rx="4" fill="#dc2626"/><rect x="32.5" y="37" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(-8 36 42)"/><circle cx="36" cy="49" r="3.3" fill="#ffe0bd"/>
+          <rect x="16.5" y="24" width="7" height="6" fill="#ffe0bd"/>
+          <circle cx="20" cy="13" r="13" fill="#3b2415"/><circle cx="20" cy="15" r="12" fill="#ffe0bd"/>
+          <ellipse cx="7.7" cy="15" rx="2" ry="3" fill="#ffe0bd"/><ellipse cx="32.3" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
+          <path d="M8,12 Q20,2 32,12 Q20,8 8,12 Z" fill="#3b2415"/>
+          <circle cx="11" cy="19" r="2.5" fill="#fca5a5" opacity="0.55"/><circle cx="29" cy="19" r="2.5" fill="#fca5a5" opacity="0.55"/>
+          <ellipse cx="14" cy="15" rx="2.2" ry="2.8" fill="#fff"/><circle cx="14.4" cy="15.4" r="1.4" fill="#3b2415"/>
+          <ellipse cx="26" cy="15" rx="2.2" ry="2.8" fill="#fff"/><circle cx="25.6" cy="15.4" r="1.4" fill="#3b2415"/>
+          <path d="M15,21 Q20,25 25,21" stroke="#b5503a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+        </g></g>
+        <g transform="translate(258,55)"><g class="bob-b">
+          <g class="talkB"><path d="M6,-3 L10,5 L-2,-2 Z" fill="#fff" stroke="#0d9488" stroke-width="1.5"/><rect x="-48" y="-24" width="64" height="22" rx="11" fill="#fff" stroke="#0d9488" stroke-width="1.5"/><text x="-16.0" y="-9" font-size="11" font-weight="700" fill="#0d9488" text-anchor="middle">Doctor!</text></g>
+          <ellipse cx="20" cy="80" rx="15" ry="3" fill="#000" opacity="0.10"/>
+          <path d="M4,16 Q1,44 7,58 L33,58 Q39,44 36,16 Z" fill="#2b1a0f"/>
+          <rect x="13" y="58" width="6" height="14" rx="3" fill="#ffe0bd"/><rect x="21" y="58" width="6" height="14" rx="3" fill="#ffe0bd"/>
+          <rect x="10" y="72" width="11" height="6" rx="3" fill="#0f766e"/><rect x="19" y="72" width="11" height="6" rx="3" fill="#0f766e"/>
+          <path d="M9,30 Q5,48 2,60 L38,60 Q35,48 31,30 Z" fill="#0d9488"/><rect x="9" y="30" width="22" height="7" rx="3" fill="#0f766e" opacity="0.45"/>
+          <rect x="2" y="31" width="8" height="10" rx="4" fill="#0d9488"/><rect x="1.5" y="38" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(8 4 43)"/><circle cx="4" cy="50" r="3.3" fill="#ffe0bd"/>
+          <rect x="30" y="31" width="8" height="10" rx="4" fill="#0d9488"/><rect x="32.5" y="38" width="6" height="11" rx="3" fill="#ffe0bd" transform="rotate(-8 36 43)"/><circle cx="36" cy="50" r="3.3" fill="#ffe0bd"/>
+          <rect x="16.5" y="24" width="7" height="6" fill="#ffe0bd"/>
+          <ellipse cx="4" cy="27" rx="5" ry="10" fill="#2b1a0f"/><ellipse cx="36" cy="27" rx="5" ry="10" fill="#2b1a0f"/>
+          <circle cx="5" cy="18" r="2" fill="#f43f5e"/><circle cx="35" cy="18" r="2" fill="#f43f5e"/>
+          <circle cx="20" cy="13" r="13" fill="#2b1a0f"/><circle cx="20" cy="15" r="12" fill="#ffe0bd"/>
+          <ellipse cx="7.7" cy="15" rx="2" ry="3" fill="#ffe0bd"/><ellipse cx="32.3" cy="15" rx="2" ry="3" fill="#ffe0bd"/>
+          <path d="M7,12 Q20,1 33,12 Q20,7 7,12 Z" fill="#2b1a0f"/>
+          <path d="M20,5 L13,2 L13,8 Z" fill="#f43f5e"/><path d="M20,5 L27,2 L27,8 Z" fill="#f43f5e"/><circle cx="20" cy="5" r="2.2" fill="#e11d48"/>
+          <circle cx="11" cy="19" r="2.5" fill="#fca5a5" opacity="0.6"/><circle cx="29" cy="19" r="2.5" fill="#fca5a5" opacity="0.6"/>
+          <ellipse cx="14" cy="15" rx="2.2" ry="2.9" fill="#fff"/><circle cx="14.4" cy="15.4" r="1.5" fill="#3b2415"/>
+          <ellipse cx="26" cy="15" rx="2.2" ry="2.9" fill="#fff"/><circle cx="25.6" cy="15.4" r="1.5" fill="#3b2415"/>
+          <path d="M15,21 Q20,25 25,21" stroke="#b5503a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+        </g></g>
+        </svg>

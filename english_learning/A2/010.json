@@ -1,0 +1,185 @@
+{
+  "quiz3": [
+    {
+      "q": "Anna visited her grandma last weekend.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They baked cookies.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The cookies were delicious.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Grandma told Anna stories.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna will visit again next month.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Tom visited his grandma.",
+      "answer": "No"
+    },
+    {
+      "q": "They baked bread.",
+      "answer": "No"
+    },
+    {
+      "q": "The cookies were bad.",
+      "answer": "No"
+    },
+    {
+      "q": "They looked at old photos.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna will visit her next month.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Anna",
+      "pic": "👧"
+    },
+    {
+      "word": "Tom",
+      "pic": "👦"
+    },
+    {
+      "word": "grandma",
+      "pic": "👵"
+    },
+    {
+      "word": "cookies",
+      "pic": "🍪"
+    },
+    {
+      "word": "photo",
+      "pic": "🖼️"
+    },
+    {
+      "word": "story",
+      "pic": "📖"
+    }
+  ],
+  "wh": [
+    {
+      "q": "Who did Anna visit?",
+      "a": "She visited her grandma.",
+      "wrong": [
+        "She visited her teacher.",
+        "She visited Tom."
+      ]
+    },
+    {
+      "q": "What did they bake?",
+      "a": "They baked cookies.",
+      "wrong": [
+        "They baked a cake.",
+        "They baked bread."
+      ]
+    },
+    {
+      "q": "How were the cookies?",
+      "a": "They were delicious.",
+      "wrong": [
+        "They were burnt.",
+        "They were cold."
+      ]
+    },
+    {
+      "q": "What did grandma do?",
+      "a": "She told stories.",
+      "wrong": [
+        "She sang songs.",
+        "She slept."
+      ]
+    },
+    {
+      "q": "When will Anna visit again?",
+      "a": "She will visit next month.",
+      "wrong": [
+        "She will visit next year.",
+        "She will not visit."
+      ]
+    }
+  ],
+  "clozeType": "context",
+  "cloze": [
+    {
+      "text": "Last weekend I visited my ___.",
+      "answer": "grandma",
+      "wrong": [
+        "summer",
+        "corner"
+      ]
+    },
+    {
+      "text": "We baked ___ together.",
+      "answer": "cookies",
+      "wrong": [
+        "weekends",
+        "colors"
+      ]
+    },
+    {
+      "text": "They were ___.",
+      "answer": "delicious",
+      "wrong": [
+        "yesterday",
+        "slowly"
+      ]
+    },
+    {
+      "text": "I will visit her next ___.",
+      "answer": "month",
+      "wrong": [
+        "apple",
+        "music"
+      ]
+    }
+  ],
+  "reorder": [
+    [
+      "Last",
+      "weekend",
+      "I",
+      "visited",
+      "my",
+      "grandma"
+    ],
+    [
+      "We",
+      "baked",
+      "cookies",
+      "together"
+    ],
+    [
+      "She",
+      "told",
+      "me",
+      "stories"
+    ],
+    [
+      "I",
+      "will",
+      "visit",
+      "her",
+      "next",
+      "month"
+    ]
+  ],
+  "dictation": [
+    "Last weekend I visited my grandma.",
+    "We baked cookies together.",
+    "They were delicious.",
+    "I will visit her next month."
+  ]
+}

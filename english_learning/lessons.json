@@ -314,6 +314,176 @@
             8,
             9
           ]
+        },
+        {
+          "id": "003",
+          "title": "003 · My Future Job",
+          "file": "A2/003",
+          "scene": "future-job",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "id": "004",
+          "title": "004 · The School Trip",
+          "file": "A2/004",
+          "scene": "school-trip",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "id": "005",
+          "title": "005 · Healthy Habits",
+          "file": "A2/005",
+          "scene": "healthy",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "id": "006",
+          "title": "006 · A Rainy Picnic",
+          "file": "A2/006",
+          "scene": "rainy-picnic",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "id": "007",
+          "title": "007 · Saving Money",
+          "file": "A2/007",
+          "scene": "saving-money",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "id": "008",
+          "title": "008 · Learning to Swim",
+          "file": "A2/008",
+          "scene": "learn-swim",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "id": "009",
+          "title": "009 · The Science Project",
+          "file": "A2/009",
+          "scene": "science-project",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "id": "010",
+          "title": "010 · A Visit to Grandma",
+          "file": "A2/010",
+          "scene": "visit-grandma",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "id": "011",
+          "title": "011 · Recycling at Home",
+          "file": "A2/011",
+          "scene": "recycling",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        },
+        {
+          "id": "012",
+          "title": "012 · The Football Match",
+          "file": "A2/012",
+          "scene": "football-match",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
         }
       ]
     }
