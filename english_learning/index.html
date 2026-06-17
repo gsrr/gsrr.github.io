@@ -593,8 +593,6 @@
       <div id="sAcctPanel" class="hidden">
         <div class="acct-top"><span id="sWho"></span></div>
         <p class="screen-intro">☁️ Your progress saves automatically.</p>
-        <label class="avatar-label">Change your character 🦸</label>
-        <div class="avatar-pick avatar-pick-panel" id="sAvatarPickPanel"></div>
         <div class="acct-btns">
           <button id="sStartBtn" class="dict-play">▶ Start learning</button>
           <button id="sJoinBtn" class="back-btn">🧒 Join a Class</button>
@@ -667,6 +665,8 @@
         <span class="learn-title">My Progress</span>
       </div>
       <div id="statsBody"></div>
+      <label class="avatar-label">Change your character 🦸</label>
+      <div class="avatar-pick avatar-pick-panel" id="sAvatarPickPanel"></div>
     </div>
 
     <!-- 畫面 2：選課程 -->
@@ -2625,6 +2625,7 @@
 
   function openProfileStats() {
     renderProfileStats();
+    renderPanelAvatar();
     showScreen(screenProfileStats);
   }
   userChip.addEventListener("click", openProfileStats);
@@ -3267,9 +3268,8 @@
     document.getElementById("sAcctLogin").classList.add("hidden");
     document.getElementById("sAcctPanel").classList.remove("hidden");
     document.getElementById("sWho").textContent = "🧒 " + (localStorage.getItem("sacct:user") || "");
-    renderPanelAvatar();
   }
-  // 登入後在帳號頁換頭像：立即套用、更新右上角、並自動上雲
+  // 換頭像（My Progress 頁）：立即套用、更新右上角、並自動上雲
   function renderPanelAvatar() {
     const wrap = document.getElementById("sAvatarPickPanel");
     if (!wrap) return;
