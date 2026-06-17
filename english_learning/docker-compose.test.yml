@@ -1,0 +1,18 @@
+# 本機測試用：HTTP（免 Let's Encrypt 憑證、免網域）。
+# 用法： docker compose -f docker-compose.test.yml up -d --build
+# 然後開 http://localhost:8000/  （localhost 上 HTTP 仍是 secure context，麥克風/錄音可用）
+services:
+  english-learning-test:
+    build: .
+    image: english-learning:test
+    container_name: english-learning-test
+    environment:
+      - TEST_MODE=1            # 啟動腳本據此改用 HTTP(80) 設定
+    ports:
+      - "8000:80"             # 主機 8000 -> 容器 80 (HTTP)
+    volumes:
+      - visits-data-test:/data
+    restart: unless-stopped
+
+volumes:
+  visits-data-test:
