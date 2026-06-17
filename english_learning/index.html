@@ -341,6 +341,10 @@
   .acct-sep { border: none; border-top: 1px solid #e2e8f0; margin: 18px 0; }
   .acct-code { text-align: center; font-size: 15px; margin: 8px 0; }
   .acct-code b { font-size: 22px; letter-spacing: 2px; color: #7c3aed; background: #f5f3ff; padding: 4px 12px; border-radius: 8px; }
+  .role-pick { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+  .role-card { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 144px; padding: 24px 10px; border: 2px solid #e2e8f0; border-radius: 16px; background: #fff; font-size: 16px; font-weight: 700; color: #1e293b; cursor: pointer; }
+  .role-card:active { transform: scale(0.97); }
+  .role-emoji { font-size: 46px; }
   .shadow-finish-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
   .shadow-finish-btns button { font-size: 16px; padding: 10px 22px; }
   #shadowRetry { background: #e2e8f0; color: #334155; }
@@ -535,8 +539,18 @@
       <button id="userChip" class="user-chip" type="button" title="My Progress"></button>
     </div>
 
-    <!-- 畫面 0：選使用者 -->
-    <div id="screenProfile">
+    <!-- 畫面 0：選身分（老師 / 學生）— 一進來先選 -->
+    <div id="screenRole">
+      <p class="screen-intro">Who's using the app? 👋</p>
+      <div class="role-pick">
+        <button id="studentRoleBtn" class="role-card"><span class="role-emoji">🧒</span><span>Student</span></button>
+        <button id="teacherRoleBtn" class="role-card"><span class="role-emoji">👩‍🏫</span><span>Teacher / Parent</span></button>
+      </div>
+    </div>
+
+    <!-- 畫面 0a：學生選使用者 -->
+    <div id="screenProfile" class="hidden">
+      <div class="learn-top"><button class="back-btn" id="backToRole">← Back</button><span class="learn-title">🧒 Student</span></div>
       <p class="screen-intro">Who are you? 👋</p>
       <div id="profileGrid" class="pick-grid"></div>
       <div id="newProfileForm" class="name-row hidden">
@@ -548,17 +562,35 @@
           <button id="newProfileGo" class="dict-play">Go</button>
         </div>
       </div>
-      <div style="text-align:center;margin-top:14px"><button id="openAcctBtn" class="back-btn">☁️ For Teachers / Parents</button></div>
+      <div style="text-align:center;margin-top:14px">
+        <button id="openStudentBtn" class="back-btn">🧒 Join a Class</button>
+      </div>
     </div>
 
-    <!-- 畫面 0b：班級進度（老師建班/看後台；學生用班級碼加入） -->
-    <div id="screenAccount" class="hidden">
+    <!-- 畫面 0b：學生加入班級 -->
+    <div id="screenStudent" class="hidden">
       <div class="learn-top">
-        <button class="back-btn" id="backFromAcct">← Back</button>
-        <span class="learn-title">☁️ Class Progress</span>
+        <button class="back-btn" id="backFromStudent">← Back</button>
+        <span class="learn-title">🧒 Join a Class</span>
+      </div>
+      <p class="screen-intro">Enter the class code from your teacher to share your progress. 🎒</p>
+      <div class="acct-form">
+        <input id="joinCode" type="text" placeholder="Class code (e.g. AB7K)" autocomplete="off" maxlength="8" style="text-transform:uppercase">
+      </div>
+      <div class="acct-btns">
+        <button id="joinBtn" class="dict-play">Join &amp; Sync</button>
+      </div>
+      <div id="joinMsg" class="acct-msg"></div>
+    </div>
+
+    <!-- 畫面 0c：老師/家長後台 -->
+    <div id="screenTeacher" class="hidden">
+      <div class="learn-top">
+        <button class="back-btn" id="backFromTeacher">← Back</button>
+        <span class="learn-title">👩‍🏫 Teacher / Parent</span>
       </div>
       <div id="acctTeacher">
-        <p class="screen-intro">👩‍🏫 Teacher / Parent — log in to see your class.</p>
+        <p class="screen-intro">Log in to see your class, or create a new class.</p>
         <div class="acct-form">
           <input id="acctUser" type="text" placeholder="Username" autocomplete="username" maxlength="40">
           <input id="acctPass" type="password" placeholder="Password" autocomplete="current-password" maxlength="60">
@@ -568,17 +600,6 @@
           <button id="acctRegisterBtn" class="back-btn">Create class</button>
         </div>
         <div id="acctMsg" class="acct-msg"></div>
-      </div>
-      <div id="acctStudent">
-        <hr class="acct-sep">
-        <p class="screen-intro">🧒 Student — join your class with the code from your teacher.</p>
-        <div class="acct-form">
-          <input id="joinCode" type="text" placeholder="Class code (e.g. AB7K)" autocomplete="off" maxlength="8" style="text-transform:uppercase">
-        </div>
-        <div class="acct-btns">
-          <button id="joinBtn" class="dict-play">Join &amp; Sync this device</button>
-        </div>
-        <div id="joinMsg" class="acct-msg"></div>
       </div>
       <div id="acctPanel" class="hidden">
         <div class="acct-top"><span id="acctWho"></span>
@@ -2184,6 +2205,7 @@
   const clozeCtl = makeCloze(document.getElementById("clozeBox"));
 
   /* ================= 課程載入（讀取 lessons.json 與文章檔） ================= */
+  const screenRole    = document.getElementById("screenRole");
   const screenProfile = document.getElementById("screenProfile");
   const screenLevel   = document.getElementById("screenLevel");
   const screenProfileStats = document.getElementById("screenProfileStats");
@@ -2339,10 +2361,10 @@
   userNameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") addProfile(); });
 
   function showScreen(el) {
-    [screenProfile, screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena, screenAccount].forEach(s => s.classList.add("hidden"));
+    [screenRole, screenProfile, screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena, screenStudent, screenTeacher].forEach(s => s.classList.add("hidden"));
     el.classList.remove("hidden");
-    // 右上角區（使用者鈕 + 匯出）：選好使用者後，除了「選使用者」頁以外都顯示
-    topRight.classList.toggle("hidden", !(userName && el !== screenProfile));
+    // 右上角區（使用者鈕 + 匯出）：只在學生 app 內的畫面顯示
+    topRight.classList.toggle("hidden", !(userName && [screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena].indexOf(el) !== -1));
   }
 
   // 把 "Tom: Hi, Anna." 這種純文字解析成 { who, gender, text }
@@ -3045,7 +3067,8 @@
   });
 
   /* ================= 老師/家長帳號 + 雲端進度後台 ================= */
-  const screenAccount = document.getElementById("screenAccount");
+  const screenStudent = document.getElementById("screenStudent");
+  const screenTeacher = document.getElementById("screenTeacher");
   function acctToken() { try { return localStorage.getItem("acct:token") || ""; } catch (e) { return ""; } }
   // 蒐集本機所有學生（profiles）的頭像/英雄/各課分數與進度，準備上傳
   function collectLocalState() {
@@ -3067,16 +3090,19 @@
     document.getElementById("acctCode").innerHTML = code
       ? 'Class code: <b>' + code + '</b><div style="font-size:12px;color:#64748b;margin-top:4px">Give this code to your students.</div>' : "";
   }
-  function openAccount() {
-    showScreen(screenAccount);
-    if (acctToken()) enterDashboard(); else showAcctLogin();
+  function openStudent() {
+    showScreen(screenStudent);
+    document.getElementById("joinMsg").textContent = "";
+    try { const c = localStorage.getItem("class:code") || ""; if (c) document.getElementById("joinCode").value = c; } catch (e) {}
   }
-  function showAcctLogin() {
+  function openTeacher() {
+    showScreen(screenTeacher);
+    if (acctToken()) enterDashboard(); else showTeacherLogin();
+  }
+  function showTeacherLogin() {
     document.getElementById("acctTeacher").classList.remove("hidden");
-    document.getElementById("acctStudent").classList.remove("hidden");
     document.getElementById("acctPanel").classList.add("hidden");
     document.getElementById("acctMsg").textContent = "";
-    try { const c = localStorage.getItem("class:code") || ""; if (c) document.getElementById("joinCode").value = c; } catch (e) {}
   }
   function acctAuth(path) {
     const user = (document.getElementById("acctUser").value || "").trim();
@@ -3113,7 +3139,6 @@
   }
   function enterDashboard() {
     document.getElementById("acctTeacher").classList.add("hidden");
-    document.getElementById("acctStudent").classList.add("hidden");
     document.getElementById("acctPanel").classList.remove("hidden");
     document.getElementById("acctWho").textContent = "👩‍🏫 " + (localStorage.getItem("acct:user") || "");
     setAcctCode(localStorage.getItem("acct:code") || "");
@@ -3159,11 +3184,15 @@
   }
   function acctLogout() {
     try { localStorage.removeItem("acct:token"); localStorage.removeItem("acct:user"); localStorage.removeItem("acct:code"); } catch (e) {}
-    showAcctLogin();
+    showTeacherLogin();
   }
   document.getElementById("joinBtn").addEventListener("click", joinClass);
-  document.getElementById("openAcctBtn").addEventListener("click", openAccount);
-  document.getElementById("backFromAcct").addEventListener("click", () => { renderProfiles(); showScreen(screenProfile); });
+  document.getElementById("openStudentBtn").addEventListener("click", openStudent);
+  document.getElementById("studentRoleBtn").addEventListener("click", () => { renderProfiles(); showScreen(screenProfile); });
+  document.getElementById("teacherRoleBtn").addEventListener("click", openTeacher);
+  document.getElementById("backToRole").addEventListener("click", () => showScreen(screenRole));
+  document.getElementById("backFromStudent").addEventListener("click", () => { renderProfiles(); showScreen(screenProfile); });
+  document.getElementById("backFromTeacher").addEventListener("click", () => showScreen(screenRole));
   document.getElementById("acctLoginBtn").addEventListener("click", () => acctAuth("login"));
   document.getElementById("acctRegisterBtn").addEventListener("click", () => acctAuth("register"));
   document.getElementById("acctSyncBtn").addEventListener("click", () => syncNow(loadDashboard));
@@ -3184,7 +3213,7 @@
       return;
     }
     renderProfiles();
-    showScreen(screenProfile);
+    showScreen(screenRole);
   }
 
   initLessons();
