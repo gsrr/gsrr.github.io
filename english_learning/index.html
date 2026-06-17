@@ -3306,7 +3306,7 @@
     sShowLogin();
   }
   document.getElementById("openSAcctBtn").addEventListener("click", openStudentAcct);
-  document.getElementById("backFromSAcct").addEventListener("click", () => { renderProfiles(); showScreen(screenProfile); });
+  document.getElementById("backFromSAcct").addEventListener("click", () => showScreen(screenRole));
   document.getElementById("sLoginBtn").addEventListener("click", () => sAuth("login"));
   document.getElementById("sRegisterBtn").addEventListener("click", () => sAuth("register"));
   document.getElementById("sStartBtn").addEventListener("click", () => {
