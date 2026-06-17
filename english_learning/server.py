@@ -80,7 +80,7 @@ def load_accounts():
         with open(ACCT) as f:
             return json.load(f)
     except Exception:
-        return {"users": {}, "tokens": {}}
+        return {"users": {}, "tokens": {}, "codes": {}}
 
 
 def save_accounts(db):
@@ -93,6 +93,18 @@ def save_accounts(db):
 
 def hash_pw(password, salt):
     return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), bytes.fromhex(salt), 100000).hex()
+
+
+# 班級加入碼：去掉易混字（0/O/1/I/L），學生輸入用
+CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+
+
+def gen_code(db):
+    codes = db.setdefault("codes", {})
+    while True:
+        code = "".join(secrets.choice(CODE_ALPHABET) for _ in range(5))
+        if code not in codes:
+            return code
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -128,6 +140,8 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_auth(register=False)
         elif path == "/api/sync":
             self._handle_sync()
+        elif path == "/api/class/sync":
+            self._handle_class_sync()
         else:
             self._send({"error": "not found"}, 404)
 
@@ -167,22 +181,28 @@ class Handler(BaseHTTPRequestHandler):
             return
         with acct_lock:
             db = load_accounts()
+            db.setdefault("codes", {})
             u = db["users"].get(user)
             if register:
                 if u:
                     self._send({"error": "User already exists"}, 409)
                     return
                 salt = secrets.token_hex(16)
-                db["users"][user] = {"salt": salt, "hash": hash_pw(pw, salt), "data": {"students": {}}}
+                u = {"salt": salt, "hash": hash_pw(pw, salt), "code": None, "data": {"students": {}}}
+                db["users"][user] = u
             else:
                 if not u or hash_pw(pw, u["salt"]) != u["hash"]:
                     self._send({"error": "Wrong username or password"}, 401)
                     return
+            if not u.get("code"):                  # 確保每個老師帳號有一組班級碼
+                u["code"] = gen_code(db)
+                db["codes"][u["code"]] = user
             token = secrets.token_hex(24)
             db["tokens"][token] = user
             save_accounts(db)
-        self._send({"token": token, "user": user})
+        self._send({"token": token, "user": user, "code": u["code"]})
 
+    # 老師自己的裝置（用 token）上傳
     def _handle_sync(self):
         d = self._body_json()
         incoming = d.get("students") or {}
@@ -191,6 +211,23 @@ class Handler(BaseHTTPRequestHandler):
             user = db["tokens"].get(self._token())
             if not user:
                 self._send({"error": "Not logged in"}, 401)
+                return
+            students = db["users"][user]["data"].setdefault("students", {})
+            for name, blob in incoming.items():
+                students[name] = blob
+            save_accounts(db)
+        self._send({"ok": True})
+
+    # 學生裝置：只用班級碼上傳（不需老師密碼）
+    def _handle_class_sync(self):
+        d = self._body_json()
+        code = ((parse_qs(urlparse(self.path).query).get("code", [""]) or [""])[0] or d.get("code") or "").strip().upper()
+        incoming = d.get("students") or {}
+        with acct_lock:
+            db = load_accounts()
+            user = db.setdefault("codes", {}).get(code)
+            if not user:
+                self._send({"error": "Invalid class code"}, 404)
                 return
             students = db["users"][user]["data"].setdefault("students", {})
             for name, blob in incoming.items():
@@ -205,7 +242,9 @@ class Handler(BaseHTTPRequestHandler):
             if not user:
                 self._send({"error": "Not logged in"}, 401)
                 return
-            data = db["users"][user]["data"]
+            u = db["users"][user]
+            data = dict(u["data"])
+            data["code"] = u.get("code")
         self._send(data)
 
     def log_message(self, *args):

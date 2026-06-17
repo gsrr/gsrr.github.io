@@ -338,6 +338,9 @@
   .dash-head { font-size: 16px; margin-bottom: 6px; }
   .dash-lvs { display: flex; flex-wrap: wrap; gap: 8px; }
   .dash-lv { font-size: 13px; background: #f1f5f9; border-radius: 8px; padding: 3px 8px; }
+  .acct-sep { border: none; border-top: 1px solid #e2e8f0; margin: 18px 0; }
+  .acct-code { text-align: center; font-size: 15px; margin: 8px 0; }
+  .acct-code b { font-size: 22px; letter-spacing: 2px; color: #7c3aed; background: #f5f3ff; padding: 4px 12px; border-radius: 8px; }
   .shadow-finish-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
   .shadow-finish-btns button { font-size: 16px; padding: 10px 22px; }
   #shadowRetry { background: #e2e8f0; color: #334155; }
@@ -548,27 +551,39 @@
       <div style="text-align:center;margin-top:14px"><button id="openAcctBtn" class="back-btn">☁️ For Teachers / Parents</button></div>
     </div>
 
-    <!-- 畫面 0b：老師/家長進度後台 -->
+    <!-- 畫面 0b：班級進度（老師建班/看後台；學生用班級碼加入） -->
     <div id="screenAccount" class="hidden">
       <div class="learn-top">
         <button class="back-btn" id="backFromAcct">← Back</button>
-        <span class="learn-title">☁️ Teacher / Parent</span>
+        <span class="learn-title">☁️ Class Progress</span>
       </div>
-      <div id="acctLogin">
-        <p class="screen-intro">Log in to see your students' progress on any device. 👩‍🏫</p>
+      <div id="acctTeacher">
+        <p class="screen-intro">👩‍🏫 Teacher / Parent — log in to see your class.</p>
         <div class="acct-form">
           <input id="acctUser" type="text" placeholder="Username" autocomplete="username" maxlength="40">
           <input id="acctPass" type="password" placeholder="Password" autocomplete="current-password" maxlength="60">
         </div>
         <div class="acct-btns">
           <button id="acctLoginBtn" class="dict-play">Log in</button>
-          <button id="acctRegisterBtn" class="back-btn">Create account</button>
+          <button id="acctRegisterBtn" class="back-btn">Create class</button>
         </div>
         <div id="acctMsg" class="acct-msg"></div>
+      </div>
+      <div id="acctStudent">
+        <hr class="acct-sep">
+        <p class="screen-intro">🧒 Student — join your class with the code from your teacher.</p>
+        <div class="acct-form">
+          <input id="joinCode" type="text" placeholder="Class code (e.g. AB7K)" autocomplete="off" maxlength="8" style="text-transform:uppercase">
+        </div>
+        <div class="acct-btns">
+          <button id="joinBtn" class="dict-play">Join &amp; Sync this device</button>
+        </div>
+        <div id="joinMsg" class="acct-msg"></div>
       </div>
       <div id="acctPanel" class="hidden">
         <div class="acct-top"><span id="acctWho"></span>
           <button id="acctLogoutBtn" class="back-btn">Log out</button></div>
+        <div id="acctCode" class="acct-code"></div>
         <div class="acct-btns">
           <button id="acctSyncBtn" class="dict-play">⬆ Sync this device</button>
           <button id="acctRefreshBtn" class="back-btn">↻ Refresh</button>
@@ -3048,14 +3063,20 @@
     });
     return students;
   }
+  function setAcctCode(code) {
+    document.getElementById("acctCode").innerHTML = code
+      ? 'Class code: <b>' + code + '</b><div style="font-size:12px;color:#64748b;margin-top:4px">Give this code to your students.</div>' : "";
+  }
   function openAccount() {
     showScreen(screenAccount);
     if (acctToken()) enterDashboard(); else showAcctLogin();
   }
   function showAcctLogin() {
-    document.getElementById("acctLogin").classList.remove("hidden");
+    document.getElementById("acctTeacher").classList.remove("hidden");
+    document.getElementById("acctStudent").classList.remove("hidden");
     document.getElementById("acctPanel").classList.add("hidden");
     document.getElementById("acctMsg").textContent = "";
+    try { const c = localStorage.getItem("class:code") || ""; if (c) document.getElementById("joinCode").value = c; } catch (e) {}
   }
   function acctAuth(path) {
     const user = (document.getElementById("acctUser").value || "").trim();
@@ -3067,15 +3088,35 @@
       .then(r => r.json().then(j => ({ ok: r.ok, j: j })))
       .then(o => {
         if (!o.ok || !o.j.token) { msg.textContent = o.j.error || "Failed."; return; }
-        try { localStorage.setItem("acct:token", o.j.token); localStorage.setItem("acct:user", user); } catch (e) {}
+        try {
+          localStorage.setItem("acct:token", o.j.token); localStorage.setItem("acct:user", user);
+          if (o.j.code) localStorage.setItem("acct:code", o.j.code);
+        } catch (e) {}
         enterDashboard();
       })
-      .catch(() => { msg.textContent = "Server not available (needs the Docker build; not on GitHub Pages)."; });
+      .catch(() => { msg.textContent = "Server not available (needs the server; not on GitHub Pages)."; });
+  }
+  // 學生：用班級碼把這台裝置的所有 profile 進度上傳到該班
+  function joinClass() {
+    const code = (document.getElementById("joinCode").value || "").trim().toUpperCase();
+    const msg = document.getElementById("joinMsg");
+    if (!code) { msg.textContent = "Enter your class code."; return; }
+    msg.textContent = "Joining…";
+    fetch("/api/class/sync?code=" + encodeURIComponent(code), { method: "POST", body: JSON.stringify({ students: collectLocalState() }) })
+      .then(r => r.json().then(j => ({ ok: r.ok, j: j })))
+      .then(o => {
+        if (!o.ok || !o.j.ok) { msg.textContent = o.j.error || "Could not join."; return; }
+        try { localStorage.setItem("class:code", code); } catch (e) {}
+        msg.textContent = "Joined class " + code + " ✓  Progress synced!";
+      })
+      .catch(() => { msg.textContent = "Server not available (needs the server)."; });
   }
   function enterDashboard() {
-    document.getElementById("acctLogin").classList.add("hidden");
+    document.getElementById("acctTeacher").classList.add("hidden");
+    document.getElementById("acctStudent").classList.add("hidden");
     document.getElementById("acctPanel").classList.remove("hidden");
     document.getElementById("acctWho").textContent = "👩‍🏫 " + (localStorage.getItem("acct:user") || "");
+    setAcctCode(localStorage.getItem("acct:code") || "");
     syncNow(loadDashboard);
   }
   function syncNow(cb) {
@@ -3088,7 +3129,10 @@
   }
   function loadDashboard() {
     const token = acctToken(); if (!token) return;
-    fetch("/api/dashboard?token=" + encodeURIComponent(token)).then(r => r.json()).then(renderDashboard).catch(() => {});
+    fetch("/api/dashboard?token=" + encodeURIComponent(token)).then(r => r.json()).then(data => {
+      if (data && data.code) { try { localStorage.setItem("acct:code", data.code); } catch (e) {} setAcctCode(data.code); }
+      renderDashboard(data);
+    }).catch(() => {});
   }
   function renderDashboard(data) {
     const el = document.getElementById("dashboard");
@@ -3114,9 +3158,10 @@
     el.innerHTML = html;
   }
   function acctLogout() {
-    try { localStorage.removeItem("acct:token"); localStorage.removeItem("acct:user"); } catch (e) {}
+    try { localStorage.removeItem("acct:token"); localStorage.removeItem("acct:user"); localStorage.removeItem("acct:code"); } catch (e) {}
     showAcctLogin();
   }
+  document.getElementById("joinBtn").addEventListener("click", joinClass);
   document.getElementById("openAcctBtn").addEventListener("click", openAccount);
   document.getElementById("backFromAcct").addEventListener("click", () => { renderProfiles(); showScreen(screenProfile); });
   document.getElementById("acctLoginBtn").addEventListener("click", () => acctAuth("login"));
