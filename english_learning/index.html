@@ -315,6 +315,10 @@
 
   .shadow-finish { text-align: center; margin-top: 18px; }
   .shadow-finish p { font-size: 18px; font-weight: 700; color: #1e293b; margin: 0 0 14px; }
+  .shadow-finish p.shadow-score { font-size: 15px; font-weight: 600; color: #2563eb; margin: -6px 0 14px; }
+  .attack-btn { font-size: 20px; font-weight: 800; padding: 14px 30px; background: #ef4444; color: #fff; border-radius: 14px; }
+  .attack-btn:active { transform: scale(0.95); }
+  .attack-btn:disabled { opacity: 0.5; }
   .shadow-finish-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
   .shadow-finish-btns button { font-size: 16px; padding: 10px 22px; }
   #shadowRetry { background: #e2e8f0; color: #334155; }
@@ -623,6 +627,7 @@
       <!-- 全部句子結束後的選擇 -->
       <div id="shadowFinish" class="shadow-finish hidden">
         <p>🎉 You read all the sentences!</p>
+        <p id="shadowScore" class="shadow-score hidden"></p>
         <div class="shadow-finish-btns">
           <button id="shadowRetry">🔄 Try Again</button>
           <button id="shadowNextLevel">Next Level ➡</button>
@@ -1248,6 +1253,7 @@
   const prevBtn        = document.getElementById("prevBtn");
   const nextBtn        = document.getElementById("nextBtn");
   const shadowFinish   = document.getElementById("shadowFinish");
+  const shadowScore    = document.getElementById("shadowScore");
   const shadowRetry    = document.getElementById("shadowRetry");
   const shadowNextLevel = document.getElementById("shadowNextLevel");
   const shadowNavWrap  = document.querySelector(".shadow-nav-wrap");
@@ -1258,6 +1264,7 @@
   let mediaRecorder = null;
   let chunks = [];
   let recordings = {};   // { 句子index: audio URL }
+  let pronScores = {};   // { 句子index: 該句最佳發音分數 0-100 }
   let isRecording = false;
   let pronRec = null;    // 發音辨識（與錄音同時進行）
 
@@ -1384,14 +1391,27 @@
         persistProgress();
         updateProgress();
       }
-      recordScore(2, script.length, script.length);   // 口說完成 = 滿分
+      // 計入每句發音分數：Level 2 分數 = 各句最佳分數的平均（沒錄到的句子算 0）。
+      // 若整課都拿不到發音分（GitHub Pages / 無後端），退回「完成即滿分」。
+      const scoredCount = Object.keys(pronScores).length;
+      if (scoredCount > 0) {
+        let sum = 0;
+        for (let i = 0; i < script.length; i++) sum += (pronScores[i] || 0);
+        const avg = Math.round(sum / script.length);
+        recordScore(2, avg, 100);
+        shadowScore.textContent = "🎤 Pronunciation: " + avg + "% (" + scoredCount + "/" + script.length + " sentences scored)";
+        shadowScore.classList.remove("hidden");
+      } else {
+        recordScore(2, script.length, script.length);   // 無發音評分環境：完成即滿分
+        shadowScore.classList.add("hidden");
+      }
       showShadowFinish();
     }
   });
 
   /* 重來 */
   shadowRetry.addEventListener("click", () => {
-    idx = 0; recordings = {};
+    idx = 0; recordings = {}; pronScores = {};
     renderShadow();
   });
 
@@ -1440,6 +1460,7 @@
       return '<span class="pw-bad">' + tok + '</span>';
     }).join(" ");
     const pct = total ? Math.round(matched / total * 100) : 0;
+    pronScores[idx] = Math.max(pronScores[idx] || 0, pct);   // 記錄這句最佳分數，計入 Level 2 統計
     const face = pct >= 80 ? "🌟" : pct >= 50 ? "🙂" : "💪";
     pronResult.innerHTML = '<div class="pron-score">' + face + ' ' + pct + '%</div>' +
       '<div class="pron-sentence">' + html + '</div>' +
@@ -2295,6 +2316,7 @@
     stopRecordingIfAny();
     idx = 0;
     recordings = {};
+    pronScores = {};
     renderDialogue();
     renderShadow();
     currentScene = article.scene || "park-ball";
@@ -2495,18 +2517,6 @@
   function heroLevel(h) { return 1 + Math.floor((h.atk + h.def + h.luck - 3) / 3); }
   function starsFromAvg(a) { return a >= 100 ? 3 : a >= 90 ? 2 : a >= 80 ? 1 : 0; }
 
-  // 從這課的題目組出戰鬥複習題（選擇題）
-  function buildBattleQuestions(a) {
-    const qs = [];
-    (a.quiz3 || []).concat(a.quiz4 || []).forEach(it =>
-      qs.push({ q: it.q, opts: ["Yes", "No"], correct: it.answer }));
-    (a.wh || []).forEach(it =>
-      qs.push({ q: it.q, opts: shuffle([it.a].concat(it.wrong || [])), correct: it.a }));
-    (a.cloze || []).forEach(it =>
-      qs.push({ q: it.text.replace("___", "_____"), opts: shuffle([it.answer].concat(it.wrong || [])), correct: it.answer }));
-    return shuffle(qs);
-  }
-
   let battle = null;
   const bossEmojiEl = document.getElementById("bossEmoji");
   const heroEmojiEl = document.getElementById("heroEmoji");
@@ -2521,21 +2531,8 @@
     f.appendChild(d);
     setTimeout(() => d.remove(), 880);
   }
-  // 題庫載不到時（通常是內容檔沒部署或瀏覽器快取舊版）給明確訊息，而不是默默跳回列表
-  function battleError() {
-    showScreen(screenBattle);
-    document.getElementById("battleStats").textContent = "";
-    document.getElementById("battleLog").textContent = "";
-    document.getElementById("battleQ").textContent =
-      "⚠️ Could not load the boss questions. Please refresh the page (Ctrl+F5).";
-    document.getElementById("battleOpts").innerHTML = "";
-    const r = document.getElementById("battleResult");
-    r.classList.remove("hidden");
-    r.innerHTML = '<button class="dict-play" id="battleErrBack">← Back</button>';
-    document.getElementById("battleErrBack").addEventListener("click", leaveBattle);
-  }
   function openBattle() {
-    if (!currentArticle) { battleError(); return; }
+    if (!currentArticle) { selectLevel(selLevelIdx); return; }
     const lvStars = (manifest.levels[selLevelIdx] && manifest.levels[selLevelIdx].stars) || 1;
     const hero = loadHero();
     const hLv = heroLevel(hero);
@@ -2546,9 +2543,8 @@
       hero: hero,
       heroMax: heroMaxHP(hero), heroHP: heroMaxHP(hero),
       bossMax: bossHP, bossHP: bossHP, bossAtk: bossAtk,
-      pool: buildBattleQuestions(currentArticle), qi: 0, over: false
+      over: false, busy: false
     };
-    if (!battle.pool.length) { battleError(); return; }
     const villainTier = VILLAINS[lvStars] || VILLAINS[1];
     bossEmojiEl.textContent = villainTier[Math.floor(Math.random() * villainTier.length)];
     heroEmojiEl.textContent = avatarOf(userName);
@@ -2557,7 +2553,7 @@
     r.classList.add("hidden"); r.innerHTML = "";
     document.getElementById("battleLog").textContent = "";
     renderBattleHUD();
-    nextBattleQ();
+    renderAttackUI();
     showScreen(screenBattle);
   }
   function renderBattleHUD() {
@@ -2567,41 +2563,31 @@
     document.getElementById("heroHpFill").style.width = Math.max(0, battle.heroHP / battle.heroMax * 100) + "%";
     document.getElementById("bossHpFill").style.width = Math.max(0, battle.bossHP / battle.bossMax * 100) + "%";
   }
-  function nextBattleQ() {
-    if (battle.over) return;
-    const q = battle.pool[battle.qi % battle.pool.length]; battle.qi++;
-    document.getElementById("battleQ").textContent = q.q;
+  function renderAttackUI() {
+    document.getElementById("battleQ").textContent = "Tap ⚔️ Attack to beat the boss!";
     const opts = document.getElementById("battleOpts");
     opts.innerHTML = "";
-    q.opts.forEach(o => {
-      const b = document.createElement("button");
-      b.className = "opt"; b.textContent = o;
-      b.addEventListener("click", () => answerBattle(q, o, b, opts));
-      opts.appendChild(b);
-    });
+    const b = document.createElement("button");
+    b.className = "opt attack-btn"; b.id = "attackBtn"; b.textContent = "⚔️ Attack!";
+    b.addEventListener("click", battleAttack);
+    opts.appendChild(b);
   }
-  function answerBattle(q, choice, btn, opts) {
-    if (battle.over) return;
-    opts.querySelectorAll(".opt").forEach(b => {
-      b.disabled = true;
-      if (b.textContent === q.correct) b.classList.add("correct");
-    });
+  function setAttackEnabled(on) { const b = document.getElementById("attackBtn"); if (b) b.disabled = !on; }
+  function battleAttack() {
+    if (!battle || battle.over || battle.busy) return;
+    battle.busy = true;
+    setAttackEnabled(false);
     const h = battle.hero;
-    // 玩家階段：答對才打到 Boss；答錯則沒命中
-    if (choice === q.correct) {
-      let dmg = 5 + h.atk * 2;
-      const crit = Math.random() < h.luck * 0.04;
-      if (crit) dmg *= 2;
-      battle.bossHP -= dmg;
-      fxLunge(heroEmojiEl, "r"); fxHit(bossEmojiEl); fxDmg(bossEmojiEl, dmg, crit ? "toboss crit" : "toboss");
-      document.getElementById("battleLog").textContent = "✅ You hit " + dmg + (crit ? " 🍀 CRIT!" : "") + "!";
-    } else {
-      btn.classList.add("wrong");
-      document.getElementById("battleLog").textContent = "❌ Wrong — you miss!";
-    }
+    // 傷害：基礎 + 攻擊力 + 一點隨機；幸運提高爆擊機率
+    let dmg = 4 + h.atk * 2 + Math.floor(Math.random() * 4);
+    const crit = Math.random() < Math.min(0.6, h.luck * 0.05);
+    if (crit) dmg *= 2;
+    battle.bossHP -= dmg;
+    fxLunge(heroEmojiEl, "r"); fxHit(bossEmojiEl); fxDmg(bossEmojiEl, dmg, crit ? "toboss crit" : "toboss");
+    document.getElementById("battleLog").textContent = "⚔️ You hit " + dmg + (crit ? " 🍀 CRIT!" : "") + "!";
     renderBattleHUD();
     if (battle.bossHP <= 0) { battle.over = true; setTimeout(battleWin, 750); return; }
-    setTimeout(bossAttack, 750);   // 換 Boss 主動反擊一次
+    setTimeout(bossAttack, 700);   // Boss 主動反擊一次
   }
   function bossAttack() {
     if (!battle || battle.over) return;
@@ -2611,7 +2597,8 @@
     document.getElementById("battleLog").textContent = "👊 Boss attacks!  −" + dmg;
     renderBattleHUD();
     if (battle.heroHP <= 0) { battle.over = true; setTimeout(battleLose, 750); return; }
-    setTimeout(nextBattleQ, 850);
+    battle.busy = false;
+    setAttackEnabled(true);
   }
   function battleWin() {
     bossEmojiEl.classList.add("defeated");
