@@ -7,7 +7,7 @@
    計數存於 /data/visits.json（docker volume）。
    STT 用 faster-whisper（開源、免費、CPU 可跑）；缺套件/ffmpeg 時回傳錯誤、不影響計數。
 """
-import json, os, threading, tempfile, subprocess
+import json, os, threading, tempfile, subprocess, hashlib, secrets
 from urllib.parse import urlparse, parse_qs
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -68,6 +68,33 @@ def write_count(n):
     os.replace(tmp, DATA)
 
 
+# ---- 帳號（老師/家長）+ 雲端進度 ----
+# 存於 /data/accounts.json：{"users":{user:{salt,hash,data}}, "tokens":{token:user}}
+# 密碼用 PBKDF2 雜湊（不存明碼）。這是 pilot 等級的簡易驗證，不是高安全方案。
+ACCT = "/data/accounts.json"
+acct_lock = threading.Lock()
+
+
+def load_accounts():
+    try:
+        with open(ACCT) as f:
+            return json.load(f)
+    except Exception:
+        return {"users": {}, "tokens": {}}
+
+
+def save_accounts(db):
+    os.makedirs(os.path.dirname(ACCT), exist_ok=True)
+    tmp = ACCT + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(db, f)
+    os.replace(tmp, ACCT)
+
+
+def hash_pw(password, salt):
+    return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), bytes.fromhex(salt), 100000).hex()
+
+
 class Handler(BaseHTTPRequestHandler):
     def _send(self, obj, code=200):
         body = json.dumps(obj).encode()
@@ -78,8 +105,11 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
-        if self.path == "/api/count":
+        path = self.path.split("?")[0]
+        if path == "/api/count":
             self._send({"count": read_count()})
+        elif path == "/api/dashboard":
+            self._handle_dashboard()
         else:
             self._send({"error": "not found"}, 404)
 
@@ -92,6 +122,12 @@ class Handler(BaseHTTPRequestHandler):
             self._send({"count": n})
         elif path == "/api/stt":
             self._handle_stt()
+        elif path == "/api/register":
+            self._handle_auth(register=True)
+        elif path == "/api/login":
+            self._handle_auth(register=False)
+        elif path == "/api/sync":
+            self._handle_sync()
         else:
             self._send({"error": "not found"}, 404)
 
@@ -108,6 +144,69 @@ class Handler(BaseHTTPRequestHandler):
             self._send({"transcript": text, "target": target})
         except Exception as e:
             self._send({"error": str(e)}, 500)
+
+    # ---- 帳號 / 雲端進度 ----
+    def _body_json(self):
+        length = int(self.headers.get("Content-Length") or 0)
+        if length <= 0:
+            return {}
+        try:
+            return json.loads(self.rfile.read(length).decode("utf-8"))
+        except Exception:
+            return {}
+
+    def _token(self):
+        return (parse_qs(urlparse(self.path).query).get("token", [""]) or [""])[0]
+
+    def _handle_auth(self, register):
+        d = self._body_json()
+        user = (d.get("user") or "").strip()
+        pw = d.get("pass") or ""
+        if not user or not pw:
+            self._send({"error": "Missing username or password"}, 400)
+            return
+        with acct_lock:
+            db = load_accounts()
+            u = db["users"].get(user)
+            if register:
+                if u:
+                    self._send({"error": "User already exists"}, 409)
+                    return
+                salt = secrets.token_hex(16)
+                db["users"][user] = {"salt": salt, "hash": hash_pw(pw, salt), "data": {"students": {}}}
+            else:
+                if not u or hash_pw(pw, u["salt"]) != u["hash"]:
+                    self._send({"error": "Wrong username or password"}, 401)
+                    return
+            token = secrets.token_hex(24)
+            db["tokens"][token] = user
+            save_accounts(db)
+        self._send({"token": token, "user": user})
+
+    def _handle_sync(self):
+        d = self._body_json()
+        incoming = d.get("students") or {}
+        with acct_lock:
+            db = load_accounts()
+            user = db["tokens"].get(self._token())
+            if not user:
+                self._send({"error": "Not logged in"}, 401)
+                return
+            students = db["users"][user]["data"].setdefault("students", {})
+            for name, blob in incoming.items():
+                students[name] = blob          # 以學生名為鍵，後寫覆蓋
+            save_accounts(db)
+        self._send({"ok": True})
+
+    def _handle_dashboard(self):
+        with acct_lock:
+            db = load_accounts()
+            user = db["tokens"].get(self._token())
+            if not user:
+                self._send({"error": "Not logged in"}, 401)
+                return
+            data = db["users"][user]["data"]
+        self._send(data)
 
     def log_message(self, *args):
         pass  # 安靜

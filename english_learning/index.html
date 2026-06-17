@@ -330,6 +330,14 @@
   .attack-btn { font-size: 20px; font-weight: 800; padding: 14px 30px; background: #ef4444; color: #fff; border-radius: 14px; }
   .attack-btn:active { transform: scale(0.95); }
   .attack-btn:disabled { opacity: 0.5; }
+  .acct-form, .acct-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; margin: 10px 0; }
+  .acct-form input { padding: 9px 11px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; }
+  .acct-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .acct-msg { text-align: center; font-size: 13px; color: #64748b; margin-top: 6px; min-height: 18px; }
+  .dash-card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 12px; margin: 8px 0; background: #fff; }
+  .dash-head { font-size: 16px; margin-bottom: 6px; }
+  .dash-lvs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .dash-lv { font-size: 13px; background: #f1f5f9; border-radius: 8px; padding: 3px 8px; }
   .shadow-finish-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
   .shadow-finish-btns button { font-size: 16px; padding: 10px 22px; }
   #shadowRetry { background: #e2e8f0; color: #334155; }
@@ -536,6 +544,37 @@
           <input id="userName" type="text" placeholder="e.g. Amy" autocomplete="off" maxlength="20">
           <button id="newProfileGo" class="dict-play">Go</button>
         </div>
+      </div>
+      <div style="text-align:center;margin-top:14px"><button id="openAcctBtn" class="back-btn">☁️ For Teachers / Parents</button></div>
+    </div>
+
+    <!-- 畫面 0b：老師/家長進度後台 -->
+    <div id="screenAccount" class="hidden">
+      <div class="learn-top">
+        <button class="back-btn" id="backFromAcct">← Back</button>
+        <span class="learn-title">☁️ Teacher / Parent</span>
+      </div>
+      <div id="acctLogin">
+        <p class="screen-intro">Log in to see your students' progress on any device. 👩‍🏫</p>
+        <div class="acct-form">
+          <input id="acctUser" type="text" placeholder="Username" autocomplete="username" maxlength="40">
+          <input id="acctPass" type="password" placeholder="Password" autocomplete="current-password" maxlength="60">
+        </div>
+        <div class="acct-btns">
+          <button id="acctLoginBtn" class="dict-play">Log in</button>
+          <button id="acctRegisterBtn" class="back-btn">Create account</button>
+        </div>
+        <div id="acctMsg" class="acct-msg"></div>
+      </div>
+      <div id="acctPanel" class="hidden">
+        <div class="acct-top"><span id="acctWho"></span>
+          <button id="acctLogoutBtn" class="back-btn">Log out</button></div>
+        <div class="acct-btns">
+          <button id="acctSyncBtn" class="dict-play">⬆ Sync this device</button>
+          <button id="acctRefreshBtn" class="back-btn">↻ Refresh</button>
+        </div>
+        <div id="acctMsg2" class="acct-msg"></div>
+        <div id="dashboard"></div>
       </div>
     </div>
 
@@ -1046,11 +1085,10 @@
     if (a.cloze && a.cloze.length)       lv.push("9");
     return lv;
   }
-  // 計算一課的狀態：所有計分關卡都有分數才算數，平均達 PASS_MARK 即通過
-  function lessonStatus(a) {
+  // 從一個 scores 物件算出某課狀態（後台 dashboard 也用，故抽出來）
+  function statusFromScores(a, scores) {
     const need = scoredLevelsFor(a);
-    let scores = {};
-    try { scores = JSON.parse(localStorage.getItem(scoreKey(a.file)) || "{}"); } catch (e) {}
+    scores = scores || {};
     const allScored = need.every(l => scores[l] && scores[l].total);
     let avg = null, passed = false;
     if (allScored) {
@@ -1058,6 +1096,12 @@
       passed = avg >= PASS_MARK;
     }
     return { need: need, scores: scores, allScored: allScored, avg: avg, passed: passed };
+  }
+  // 計算一課的狀態：所有計分關卡都有分數才算數，平均達 PASS_MARK 即通過
+  function lessonStatus(a) {
+    let scores = {};
+    try { scores = JSON.parse(localStorage.getItem(scoreKey(a.file)) || "{}"); } catch (e) {}
+    return statusFromScores(a, scores);
   }
   const summaryEl = document.getElementById("lessonSummary");
   function renderLessonSummary() {
@@ -2280,7 +2324,7 @@
   userNameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") addProfile(); });
 
   function showScreen(el) {
-    [screenProfile, screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena].forEach(s => s.classList.add("hidden"));
+    [screenProfile, screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena, screenAccount].forEach(s => s.classList.add("hidden"));
     el.classList.remove("hidden");
     // 右上角區（使用者鈕 + 匯出）：選好使用者後，除了「選使用者」頁以外都顯示
     topRight.classList.toggle("hidden", !(userName && el !== screenProfile));
@@ -2984,6 +3028,102 @@
     synth.cancel(); stopListenL1(); stopRecordingIfAny();
     selectLevel(selLevelIdx);   // 回課程列表（順便刷新完成度）
   });
+
+  /* ================= 老師/家長帳號 + 雲端進度後台 ================= */
+  const screenAccount = document.getElementById("screenAccount");
+  function acctToken() { try { return localStorage.getItem("acct:token") || ""; } catch (e) { return ""; } }
+  // 蒐集本機所有學生（profiles）的頭像/英雄/各課分數與進度，準備上傳
+  function collectLocalState() {
+    const students = {};
+    loadProfiles().forEach(name => {
+      const scores = {}, progress = {};
+      (manifest ? manifest.levels : []).forEach(lv => lv.articles.forEach(a => {
+        try { const s = localStorage.getItem("score:" + name + ":" + a.file); if (s) scores[a.file] = JSON.parse(s); } catch (e) {}
+        try { const p = localStorage.getItem("prog:" + name + ":" + a.file); if (p) progress[a.file] = JSON.parse(p); } catch (e) {}
+      }));
+      let hero = null, avatar = "👦";
+      try { hero = JSON.parse(localStorage.getItem("hero:" + name) || "null"); } catch (e) {}
+      try { avatar = localStorage.getItem("avatar:" + name) || "👦"; } catch (e) {}
+      students[name] = { avatar: avatar, hero: hero, scores: scores, progress: progress, updated: Date.now() };
+    });
+    return students;
+  }
+  function openAccount() {
+    showScreen(screenAccount);
+    if (acctToken()) enterDashboard(); else showAcctLogin();
+  }
+  function showAcctLogin() {
+    document.getElementById("acctLogin").classList.remove("hidden");
+    document.getElementById("acctPanel").classList.add("hidden");
+    document.getElementById("acctMsg").textContent = "";
+  }
+  function acctAuth(path) {
+    const user = (document.getElementById("acctUser").value || "").trim();
+    const pass = document.getElementById("acctPass").value || "";
+    const msg = document.getElementById("acctMsg");
+    if (!user || !pass) { msg.textContent = "Enter a username and password."; return; }
+    msg.textContent = "…";
+    fetch("/api/" + path, { method: "POST", body: JSON.stringify({ user: user, pass: pass }) })
+      .then(r => r.json().then(j => ({ ok: r.ok, j: j })))
+      .then(o => {
+        if (!o.ok || !o.j.token) { msg.textContent = o.j.error || "Failed."; return; }
+        try { localStorage.setItem("acct:token", o.j.token); localStorage.setItem("acct:user", user); } catch (e) {}
+        enterDashboard();
+      })
+      .catch(() => { msg.textContent = "Server not available (needs the Docker build; not on GitHub Pages)."; });
+  }
+  function enterDashboard() {
+    document.getElementById("acctLogin").classList.add("hidden");
+    document.getElementById("acctPanel").classList.remove("hidden");
+    document.getElementById("acctWho").textContent = "👩‍🏫 " + (localStorage.getItem("acct:user") || "");
+    syncNow(loadDashboard);
+  }
+  function syncNow(cb) {
+    const token = acctToken(); if (!token) return;
+    const msg = document.getElementById("acctMsg2"); msg.textContent = "Syncing…";
+    fetch("/api/sync?token=" + encodeURIComponent(token), { method: "POST", body: JSON.stringify({ students: collectLocalState() }) })
+      .then(r => r.json())
+      .then(j => { msg.textContent = j.ok ? "Synced ✓" : (j.error || "Sync failed"); if (cb) cb(); })
+      .catch(() => { msg.textContent = "Server not available."; });
+  }
+  function loadDashboard() {
+    const token = acctToken(); if (!token) return;
+    fetch("/api/dashboard?token=" + encodeURIComponent(token)).then(r => r.json()).then(renderDashboard).catch(() => {});
+  }
+  function renderDashboard(data) {
+    const el = document.getElementById("dashboard");
+    const students = (data && data.students) || {};
+    const names = Object.keys(students).sort();
+    if (!names.length) {
+      el.innerHTML = '<p class="screen-intro">No student data yet. On each student device, log in here and tap “⬆ Sync this device”.</p>';
+      return;
+    }
+    let html = "";
+    names.forEach(name => {
+      const st = students[name] || {}, sc = st.scores || {};
+      let pcts = [], rows = "";
+      (manifest ? manifest.levels : []).forEach(lv => {
+        let passed = 0;
+        lv.articles.forEach(a => { const s = statusFromScores(a, sc[a.file]); if (s.passed) passed++; if (s.avg != null) pcts.push(s.avg); });
+        rows += '<span class="dash-lv">' + (lv.icon || "") + ' ' + (lv.name || lv.id) + ': ' + passed + '/' + lv.articles.length + '</span>';
+      });
+      const avg = pcts.length ? Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length) : null;
+      html += '<div class="dash-card"><div class="dash-head">' + (st.avatar || "👦") + ' <b>' + name + '</b>' +
+              (avg != null ? ' · avg ' + avg + '%' : '') + '</div><div class="dash-lvs">' + rows + '</div></div>';
+    });
+    el.innerHTML = html;
+  }
+  function acctLogout() {
+    try { localStorage.removeItem("acct:token"); localStorage.removeItem("acct:user"); } catch (e) {}
+    showAcctLogin();
+  }
+  document.getElementById("openAcctBtn").addEventListener("click", openAccount);
+  document.getElementById("backFromAcct").addEventListener("click", () => { renderProfiles(); showScreen(screenProfile); });
+  document.getElementById("acctLoginBtn").addEventListener("click", () => acctAuth("login"));
+  document.getElementById("acctRegisterBtn").addEventListener("click", () => acctAuth("register"));
+  document.getElementById("acctSyncBtn").addEventListener("click", () => syncNow(loadDashboard));
+  document.getElementById("acctRefreshBtn").addEventListener("click", loadDashboard);
+  document.getElementById("acctLogoutBtn").addEventListener("click", acctLogout);
 
   async function initLessons() {
     try {
