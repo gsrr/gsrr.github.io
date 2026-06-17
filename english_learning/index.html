@@ -2521,8 +2521,21 @@
     f.appendChild(d);
     setTimeout(() => d.remove(), 880);
   }
+  // 題庫載不到時（通常是內容檔沒部署或瀏覽器快取舊版）給明確訊息，而不是默默跳回列表
+  function battleError() {
+    showScreen(screenBattle);
+    document.getElementById("battleStats").textContent = "";
+    document.getElementById("battleLog").textContent = "";
+    document.getElementById("battleQ").textContent =
+      "⚠️ Could not load the boss questions. Please refresh the page (Ctrl+F5).";
+    document.getElementById("battleOpts").innerHTML = "";
+    const r = document.getElementById("battleResult");
+    r.classList.remove("hidden");
+    r.innerHTML = '<button class="dict-play" id="battleErrBack">← Back</button>';
+    document.getElementById("battleErrBack").addEventListener("click", leaveBattle);
+  }
   function openBattle() {
-    if (!currentArticle) { selectLevel(selLevelIdx); return; }
+    if (!currentArticle) { battleError(); return; }
     const lvStars = (manifest.levels[selLevelIdx] && manifest.levels[selLevelIdx].stars) || 1;
     const hero = loadHero();
     const hLv = heroLevel(hero);
@@ -2535,7 +2548,7 @@
       bossMax: bossHP, bossHP: bossHP, bossAtk: bossAtk,
       pool: buildBattleQuestions(currentArticle), qi: 0, over: false
     };
-    if (!battle.pool.length) { selectLevel(selLevelIdx); return; }
+    if (!battle.pool.length) { battleError(); return; }
     const villainTier = VILLAINS[lvStars] || VILLAINS[1];
     bossEmojiEl.textContent = villainTier[Math.floor(Math.random() * villainTier.length)];
     heroEmojiEl.textContent = avatarOf(userName);
