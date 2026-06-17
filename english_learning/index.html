@@ -590,7 +590,11 @@
         <div class="acct-top"><span id="sWho"></span>
           <button id="sLogoutBtn" class="back-btn">Log out</button></div>
         <p class="screen-intro">Your progress saves to the cloud automatically. ✓</p>
-        <div class="acct-btns"><button id="sSaveBtn" class="dict-play">⬆ Save now</button></div>
+        <div class="acct-btns">
+          <button id="sStartBtn" class="dict-play">▶ Start learning</button>
+          <button id="sJoinBtn" class="back-btn">🧒 Join a Class</button>
+          <button id="sSaveBtn" class="back-btn">⬆ Save now</button>
+        </div>
         <div id="sMsg2" class="acct-msg"></div>
       </div>
     </div>
@@ -645,7 +649,7 @@
     <!-- 畫面 1：選等級 -->
     <div id="screenLevel" class="hidden">
       <div class="learn-top">
-        <button class="back-btn" id="backToProfile">← Switch user</button>
+        <button class="back-btn" id="backToProfile">👤 Account</button>
         <span class="learn-title" id="greetTitle"></span>
       </div>
       <p class="screen-intro">Choose a level to start 📚</p>
@@ -3082,10 +3086,7 @@
     showScreen(screenLearn);
   }
 
-  document.getElementById("backToProfile").addEventListener("click", () => {
-    renderProfiles();
-    showScreen(screenProfile);
-  });
+  document.getElementById("backToProfile").addEventListener("click", openStudentAcct);
   document.getElementById("backToLevels").addEventListener("click", () => {
     synth.cancel(); stopListenL1(); stopRecordingIfAny();
     renderLevelGrid();
@@ -3218,10 +3219,10 @@
   }
   document.getElementById("joinBtn").addEventListener("click", joinClass);
   document.getElementById("openStudentBtn").addEventListener("click", openStudent);
-  document.getElementById("studentRoleBtn").addEventListener("click", () => { renderProfiles(); showScreen(screenProfile); });
+  document.getElementById("studentRoleBtn").addEventListener("click", openStudentAcct);
   document.getElementById("teacherRoleBtn").addEventListener("click", openTeacher);
   document.getElementById("backToRole").addEventListener("click", () => showScreen(screenRole));
-  document.getElementById("backFromStudent").addEventListener("click", () => { renderProfiles(); showScreen(screenProfile); });
+  document.getElementById("backFromStudent").addEventListener("click", openStudentAcct);
   document.getElementById("backFromTeacher").addEventListener("click", () => showScreen(screenRole));
   document.getElementById("acctLoginBtn").addEventListener("click", () => acctAuth("login"));
   document.getElementById("acctRegisterBtn").addEventListener("click", () => acctAuth("register"));
@@ -3268,6 +3269,12 @@
     const user = (document.getElementById("sUser").value || "").trim();
     const pass = document.getElementById("sPass").value || "";
     const msg = document.getElementById("sMsg");
+    if (user === ADMIN_CODE) {   // 測試者代碼：切換解鎖模式，不建帳號
+      setAdminMode(!adminMode);
+      document.getElementById("sUser").value = "";
+      msg.textContent = adminMode ? "🔓 Tester mode ON" : "🔒 Tester mode OFF";
+      return;
+    }
     if (!user || !pass) { msg.textContent = "Enter a username and password."; return; }
     msg.textContent = "…";
     fetch("/api/student/" + path, { method: "POST", body: JSON.stringify({ user: user, pass: pass }) })
@@ -3276,8 +3283,9 @@
         if (!o.ok || !o.j.token) { msg.textContent = o.j.error || "Failed."; return; }
         try { localStorage.setItem("sacct:token", o.j.token); localStorage.setItem("sacct:user", user); } catch (e) {}
         if (path === "login" && o.j.data) restoreSnapshot(o.j.data);  // 還原雲端進度
-        renderProfiles();
-        sShowPanel();
+        saveProfiles([user]);                                          // 帳號即唯一使用者
+        if (!localStorage.getItem("avatar:" + user)) setAvatar(user, selectedAvatar);
+        selectProfile(user);                                           // 直接進入 app（level grid）
       })
       .catch(() => { msg.textContent = "Server not available (needs the server)."; });
   }
@@ -3304,6 +3312,10 @@
     document.getElementById("sMsg2").textContent = "Saving…";
     studentSave(j => { document.getElementById("sMsg2").textContent = (j && j.ok) ? "Saved ✓" : "Save failed"; });
   });
+  document.getElementById("sStartBtn").addEventListener("click", () => {
+    const u = localStorage.getItem("sacct:user") || ""; if (u) selectProfile(u);
+  });
+  document.getElementById("sJoinBtn").addEventListener("click", openStudent);
   document.getElementById("sLogoutBtn").addEventListener("click", sLogout);
 
   async function initLessons() {
