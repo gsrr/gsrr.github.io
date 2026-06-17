@@ -316,14 +316,15 @@
   .shadow-finish { text-align: center; margin-top: 18px; }
   .shadow-finish p { font-size: 18px; font-weight: 700; color: #1e293b; margin: 0 0 14px; }
   .shadow-finish p.shadow-score { font-size: 15px; font-weight: 600; color: #2563eb; margin: -6px 0 14px; }
-  .bkt { position: relative; overflow: auto; max-height: 46vh; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px; margin-bottom: 10px; background: #fff; }
+  .bkt { position: relative; overflow: auto; max-height: 62vh; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; margin-bottom: 10px; background: #fff; }
   #bktLines { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 0; }
-  .bkt-cols { position: relative; display: flex; gap: 26px; align-items: stretch; z-index: 1; }
-  .bkt-round { display: flex; flex-direction: column; justify-content: space-around; min-width: 122px; }
-  .bkt-match { position: relative; display: flex; flex-direction: column; gap: 3px; margin: 6px 0; }
-  .bkt-cell { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 118px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 3px 7px; }
+  .bkt-cols { position: relative; display: flex; gap: 40px; align-items: stretch; z-index: 1; }
+  .bkt-round { display: flex; flex-direction: column; justify-content: space-around; min-width: 158px; }
+  .bkt-match { position: relative; display: flex; flex-direction: column; gap: 4px; margin: 10px 0; }
+  .bkt-cell { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 158px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 7px 11px; }
   .bkt-cell.win { background: #bbf7d0; border-color: #22c55e; font-weight: 700; }
-  .bkt-cell.lose { opacity: 0.45; }
+  .bkt-cell.lose { opacity: 0.4; }
+  .bkt-cell.bye { color: #cbd5e1; font-style: italic; background: #f8fafc; border-style: dashed; }
   .bkt-match.cur .bkt-cell { outline: 2px solid #f59e0b; }
   .alloc-row small { display: block; font-size: 11px; font-weight: 400; color: #94a3b8; }
   .attack-btn { font-size: 20px; font-weight: 800; padding: 14px 30px; background: #ef4444; color: #fff; border-radius: 14px; }
@@ -2719,13 +2720,19 @@
 
   function startTournament() {
     const comp = arenaCompetitors();
-    let size = 1; while (size < comp.length) size *= 2; if (size < 2) size = 2;
-    const seed = comp.slice(); while (seed.length < size) seed.push(null);   // null = 輪空
+    const n = comp.length;
+    let size = 1; while (size < n) size *= 2; if (size < 2) size = 2;
+    const half = size / 2;           // 第一輪場數
+    const byes = size - n;           // 輪空數：每場最多一個，避免出現空場（byes < half 必成立）
     const rounds = [];
     const r0 = [];
-    for (let i = 0; i < size / 2; i++) r0.push({ a: seed[2 * i], b: seed[2 * i + 1], w: null });
+    let ri = 0;
+    for (let m = 0; m < half; m++) {
+      if (m < byes) r0.push({ a: comp[ri++], b: null, w: null });     // (選手, 輪空)
+      else r0.push({ a: comp[ri++], b: comp[ri++], w: null });        // (選手, 選手)
+    }
     rounds.push(r0);
-    for (let cnt = size / 4; cnt >= 1; cnt = Math.floor(cnt / 2)) {
+    for (let cnt = half / 2; cnt >= 1; cnt = Math.floor(cnt / 2)) {
       rounds.push(Array.from({ length: cnt }, () => ({ a: null, b: null, w: null })));
       if (cnt === 1) break;
     }
@@ -2839,7 +2846,7 @@
     renderBracket();
   }
   function bktCell(comp, winner) {
-    if (!comp) return '<div class="bkt-cell">—</div>';
+    if (!comp) return '<div class="bkt-cell bye">bye</div>';
     const cls = winner ? (winner === comp ? " win" : " lose") : "";
     return '<div class="bkt-cell' + cls + '">' + comp.av + ' ' + comp.name + '</div>';
   }
