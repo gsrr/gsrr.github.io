@@ -591,8 +591,7 @@
         <div id="sMsg" class="acct-msg"></div>
       </div>
       <div id="sAcctPanel" class="hidden">
-        <div class="acct-top"><span id="sWho"></span>
-          <button id="sLogoutBtn" class="back-btn">Log out</button></div>
+        <div class="acct-top"><span id="sWho"></span></div>
         <p class="screen-intro">☁️ Your progress saves automatically.</p>
         <div class="acct-btns">
           <button id="sStartBtn" class="dict-play">▶ Start learning</button>
@@ -3314,7 +3313,6 @@
     const u = localStorage.getItem("sacct:user") || ""; if (u) selectProfile(u);
   });
   document.getElementById("sJoinBtn").addEventListener("click", openStudent);
-  document.getElementById("sLogoutBtn").addEventListener("click", sLogout);
   document.getElementById("logoutChip").addEventListener("click", () => { showScreen(screenStudentAcct); sLogout(); });
 
   async function initLessons() {
