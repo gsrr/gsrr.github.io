@@ -316,6 +316,15 @@
   .shadow-finish { text-align: center; margin-top: 18px; }
   .shadow-finish p { font-size: 18px; font-weight: 700; color: #1e293b; margin: 0 0 14px; }
   .shadow-finish p.shadow-score { font-size: 15px; font-weight: 600; color: #2563eb; margin: -6px 0 14px; }
+  .bkt { position: relative; overflow: auto; max-height: 46vh; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px; margin-bottom: 10px; background: #fff; }
+  #bktLines { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 0; }
+  .bkt-cols { position: relative; display: flex; gap: 26px; align-items: stretch; z-index: 1; }
+  .bkt-round { display: flex; flex-direction: column; justify-content: space-around; min-width: 122px; }
+  .bkt-match { position: relative; display: flex; flex-direction: column; gap: 3px; margin: 6px 0; }
+  .bkt-cell { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 118px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 3px 7px; }
+  .bkt-cell.win { background: #bbf7d0; border-color: #22c55e; font-weight: 700; }
+  .bkt-cell.lose { opacity: 0.45; }
+  .bkt-match.cur .bkt-cell { outline: 2px solid #f59e0b; }
   .attack-btn { font-size: 20px; font-weight: 800; padding: 14px 30px; background: #ef4444; color: #fff; border-radius: 14px; }
   .attack-btn:active { transform: scale(0.95); }
   .attack-btn:disabled { opacity: 0.5; }
@@ -745,7 +754,8 @@
       </div>
       <div id="arenaBattle" class="hidden">
         <div id="arenaStatus" class="battle-stats"></div>
-        <div class="battle-arena">
+        <div id="arenaBracket" class="bkt"><svg id="bktLines"></svg><div id="bktCols" class="bkt-cols"></div></div>
+        <div id="arenaFighters" class="battle-arena hidden">
           <div class="fighter">
             <div class="fighter-emoji" id="arenaE1"></div>
             <div class="hp-bar"><span id="arenaHp1" class="hp-fill hero"></span></div>
@@ -2679,52 +2689,96 @@
   }
   function arenaDmg(at, df) { let d = Math.max(1, (5 + at.atk * 2) - df.def); if (Math.random() < at.luck * 0.04) d *= 2; return d; }
   function arenaFighter(comp) { const max = heroMaxHP(comp.hero); return { name: comp.name, av: comp.av, hero: comp.hero, max: max, hp: max, ref: comp }; }
-  function arenaAlive() { return arena.queue.length + arena.winners.length + (arena.f1 ? 1 : 0) + (arena.f2 ? 1 : 0); }
-  function arenaHud() {
-    document.getElementById("arenaHp1").style.width = Math.max(0, arena.f1.hp / arena.f1.max * 100) + "%";
-    document.getElementById("arenaHp2").style.width = Math.max(0, arena.f2.hp / arena.f2.max * 100) + "%";
+  // 純模擬一場（給怪物對怪物 / Skip 用），回傳勝方 comp
+  function arenaSim(a, b) {
+    let ah = heroMaxHP(a.hero), bh = heroMaxHP(b.hero), t = Math.random() < 0.5 ? 0 : 1, g = 0;
+    while (ah > 0 && bh > 0 && g++ < 3000) {
+      if (t % 2 === 0) bh -= arenaDmg(a.hero, b.hero); else ah -= arenaDmg(b.hero, a.hero);
+      t++;
+    }
+    return ah > 0 ? a : b;
   }
-  function arenaStatus() {
-    document.getElementById("arenaStatus").textContent =
-      "🏆 Round " + arena.round + " / " + arena.rounds + "   ·   " + arenaAlive() + " left";
-  }
+
   function startTournament() {
     const comp = arenaCompetitors();
-    arena = { queue: comp, winners: [], round: 1, rounds: Math.max(1, Math.ceil(Math.log2(comp.length))),
-              f1: null, f2: null, turn: 0, over: false };
+    let size = 1; while (size < comp.length) size *= 2; if (size < 2) size = 2;
+    const seed = comp.slice(); while (seed.length < size) seed.push(null);   // null = 輪空
+    const rounds = [];
+    const r0 = [];
+    for (let i = 0; i < size / 2; i++) r0.push({ a: seed[2 * i], b: seed[2 * i + 1], w: null });
+    rounds.push(r0);
+    for (let cnt = size / 4; cnt >= 1; cnt = Math.floor(cnt / 2)) {
+      rounds.push(Array.from({ length: cnt }, () => ({ a: null, b: null, w: null })));
+      if (cnt === 1) break;
+    }
+    arena = { rounds: rounds, R: rounds.length, order: [], ci: 0, over: false, curMatch: null, am: null };
+    rounds.forEach((rr, r) => rr.forEach((m, i) => arena.order.push({ r: r, i: i })));
     document.getElementById("arenaSetup").classList.add("hidden");
     document.getElementById("arenaResult").classList.add("hidden");
     document.getElementById("arenaResult").innerHTML = "";
     document.getElementById("arenaBattle").classList.remove("hidden");
-    nextArenaMatch();
+    document.getElementById("arenaFighters").classList.add("hidden");
+    renderBracket();
+    setTimeout(playCurrent, 500);
   }
-  function nextArenaMatch() {
+  function propagate(r, i, winner) {
+    if (r + 1 >= arena.R) return;
+    const nm = arena.rounds[r + 1][Math.floor(i / 2)];
+    if (i % 2 === 0) nm.a = winner; else nm.b = winner;
+  }
+  function resolveMatch(r, i, winner) {
+    arena.rounds[r][i].w = winner;
+    propagate(r, i, winner);
+    renderBracket();
+    if (r === arena.R - 1) return arenaChampion(winner);
+    arena.ci++;
+    setTimeout(playCurrent, 80);
+  }
+  function playCurrent() {
     if (!arena || arena.over) return;
-    if (arena.queue.length === 0) {                 // 本輪結束 → 下一輪
-      if (arena.winners.length === 1) return arenaChampion(arena.winners[0]);
-      arena.queue = arena.winners; arena.winners = []; arena.round++;
+    if (arena.ci >= arena.order.length) {
+      const fin = arena.rounds[arena.R - 1][0];
+      if (fin && fin.w) return arenaChampion(fin.w);
+      return;
     }
-    if (arena.queue.length === 1) {                 // 落單 → 輪空晉級
-      arena.winners.push(arena.queue.shift());
-      return nextArenaMatch();
+    const r = arena.order[arena.ci].r, i = arena.order[arena.ci].i;
+    const m = arena.rounds[r][i];
+    document.getElementById("arenaStatus").textContent = "🏆 Round " + (r + 1) + " / " + arena.R;
+    if (!m.a && !m.b) return resolveMatch(r, i, null);          // 兩邊都輪空
+    if (!m.a || !m.b) { arena.curMatch = { r: r, i: i }; return resolveMatch(r, i, m.a || m.b); }   // 輪空晉級
+    if (m.a.kind === "monster" && m.b.kind === "monster") {     // 怪物 vs 怪物 → 跳過過程直接出結果
+      arena.curMatch = { r: r, i: i };
+      document.getElementById("arenaFighters").classList.add("hidden");
+      document.getElementById("arenaLog").textContent = m.a.av + " " + m.a.name + "  vs  " + m.b.av + " " + m.b.name + " …";
+      const w = arenaSim(m.a, m.b);
+      renderBracket();
+      setTimeout(() => resolveMatch(r, i, w), 240);
+      return;
     }
-    arena.f1 = arenaFighter(arena.queue.shift());
-    arena.f2 = arenaFighter(arena.queue.shift());
-    arena.turn = Math.random() < 0.5 ? 0 : 1;
+    animateMatch(r, i, m);                                       // 有玩家參與 → 動畫對戰
+  }
+  function animateMatch(r, i, m) {
+    arena.curMatch = { r: r, i: i };
+    arena.am = { r: r, i: i, f1: arenaFighter(m.a), f2: arenaFighter(m.b), turn: Math.random() < 0.5 ? 0 : 1 };
+    document.getElementById("arenaFighters").classList.remove("hidden");
     const e1 = document.getElementById("arenaE1"), e2 = document.getElementById("arenaE2");
-    e1.textContent = arena.f1.av; e2.textContent = arena.f2.av;
+    e1.textContent = arena.am.f1.av; e2.textContent = arena.am.f2.av;
     e1.classList.remove("defeated"); e2.classList.remove("defeated");
-    document.getElementById("arenaN1").textContent = arena.f1.name + " (LV." + heroLevel(arena.f1.hero) + ")";
-    document.getElementById("arenaN2").textContent = arena.f2.name + " (LV." + heroLevel(arena.f2.hero) + ")";
-    arenaStatus();
+    document.getElementById("arenaN1").textContent = arena.am.f1.name + " (LV." + heroLevel(arena.am.f1.hero) + ")";
+    document.getElementById("arenaN2").textContent = arena.am.f2.name + " (LV." + heroLevel(arena.am.f2.hero) + ")";
     arenaHud();
-    document.getElementById("arenaLog").textContent = arena.f1.name + "  VS  " + arena.f2.name;
-    setTimeout(arenaStep, 800);
+    renderBracket();
+    document.getElementById("arenaLog").textContent = arena.am.f1.name + "  VS  " + arena.am.f2.name;
+    setTimeout(arenaStep, 700);
+  }
+  function arenaHud() {
+    document.getElementById("arenaHp1").style.width = Math.max(0, arena.am.f1.hp / arena.am.f1.max * 100) + "%";
+    document.getElementById("arenaHp2").style.width = Math.max(0, arena.am.f2.hp / arena.am.f2.max * 100) + "%";
   }
   function arenaStep() {
-    if (!arena || arena.over || !arena.f1) return;
-    const p1turn = arena.turn % 2 === 0;
-    const atkF = p1turn ? arena.f1 : arena.f2, defF = p1turn ? arena.f2 : arena.f1;
+    if (!arena || arena.over || !arena.am) return;
+    const am = arena.am, p1turn = am.turn % 2 === 0;
+    const atkF = p1turn ? am.f1 : am.f2, defF = p1turn ? am.f2 : am.f1;
     const atkEl = document.getElementById(p1turn ? "arenaE1" : "arenaE2");
     const defEl = document.getElementById(p1turn ? "arenaE2" : "arenaE1");
     let dmg = Math.max(1, (5 + atkF.hero.atk * 2) - defF.hero.def);
@@ -2734,45 +2788,84 @@
     fxLunge(atkEl, p1turn ? "r" : "l"); fxHit(defEl); fxDmg(defEl, dmg, crit ? "toboss crit" : "tohero");
     document.getElementById("arenaLog").textContent = atkF.name + " hits " + defF.name + "  −" + dmg + (crit ? " 🍀 CRIT!" : "");
     arenaHud();
-    arena.turn++;
+    am.turn++;
     if (defF.hp <= 0) {
       defEl.classList.add("defeated");
-      arena.winners.push(atkF.ref);
-      arena.f1 = arena.f2 = null;
-      setTimeout(nextArenaMatch, 900);
+      const w = atkF.ref, r = am.r, i = am.i;
+      arena.am = null;
+      setTimeout(() => resolveMatch(r, i, w), 800);
       return;
     }
-    setTimeout(arenaStep, 650);
+    setTimeout(arenaStep, 600);
   }
-  // 把目前進行中與剩下所有對戰瞬間算完，直接出冠軍
+  // Skip：把目前＋剩下所有對戰瞬間算完，直接出冠軍
   function skipArena() {
     if (!arena || arena.over) return;
-    const fight = (A, B, turn) => {
-      let g = 0;
-      while (A.hp > 0 && B.hp > 0 && g++ < 2000) {
-        if (turn % 2 === 0) B.hp -= arenaDmg(A.hero, B.hero); else A.hp -= arenaDmg(B.hero, A.hero);
-        turn++;
-      }
-      return (A.hp > 0 ? A : B).ref;
-    };
-    if (arena.f1 && arena.f2) { arena.winners.push(fight(arena.f1, arena.f2, arena.turn || 0)); arena.f1 = arena.f2 = null; }
+    arena.am = null;
+    document.getElementById("arenaFighters").classList.add("hidden");
     let guard = 0;
-    while (guard++ < 5000) {
-      if (arena.queue.length === 0) {
-        if (arena.winners.length === 1) return arenaChampion(arena.winners[0]);
-        arena.queue = arena.winners; arena.winners = []; arena.round++;
-      }
-      if (arena.queue.length === 1) { arena.winners.push(arena.queue.shift()); continue; }
-      arena.winners.push(fight(arenaFighter(arena.queue.shift()), arenaFighter(arena.queue.shift()), Math.random() < 0.5 ? 0 : 1));
+    while (arena.ci < arena.order.length && guard++ < 10000) {
+      const r = arena.order[arena.ci].r, i = arena.order[arena.ci].i, m = arena.rounds[r][i];
+      const w = (m.a && m.b) ? arenaSim(m.a, m.b) : (m.a || m.b);
+      m.w = w; propagate(r, i, w);
+      if (r === arena.R - 1) { renderBracket(); return arenaChampion(w); }
+      arena.ci++;
     }
+    renderBracket();
+  }
+  function bktCell(comp, winner) {
+    if (!comp) return '<div class="bkt-cell">—</div>';
+    const cls = winner ? (winner === comp ? " win" : " lose") : "";
+    return '<div class="bkt-cell' + cls + '">' + comp.av + ' ' + comp.name + '</div>';
+  }
+  function renderBracket() {
+    const cols = document.getElementById("bktCols");
+    if (!cols || !arena) return;
+    let html = "";
+    for (let r = 0; r < arena.R; r++) {
+      html += '<div class="bkt-round">';
+      arena.rounds[r].forEach((m, i) => {
+        const cur = (arena.curMatch && arena.curMatch.r === r && arena.curMatch.i === i) ? " cur" : "";
+        html += '<div class="bkt-match' + cur + '" id="bm-' + r + '-' + i + '">' +
+                bktCell(m.a, m.w) + bktCell(m.b, m.w) + '</div>';
+      });
+      html += '</div>';
+    }
+    cols.innerHTML = html;
+    if (typeof requestAnimationFrame !== "undefined") requestAnimationFrame(drawConnectors); else drawConnectors();
+  }
+  // 用實際版面位置畫出賽程連接線（肘形折線）
+  function drawConnectors() {
+    const wrap = document.getElementById("arenaBracket"), svg = document.getElementById("bktLines");
+    if (!wrap || !svg || !arena) return;
+    const base = wrap.getBoundingClientRect();
+    const W = wrap.scrollWidth, H = wrap.scrollHeight;
+    svg.setAttribute("width", W); svg.setAttribute("height", H);
+    let d = "";
+    for (let r = 0; r < arena.R - 1; r++) {
+      arena.rounds[r].forEach((m, i) => {
+        const from = document.getElementById("bm-" + r + "-" + i);
+        const to = document.getElementById("bm-" + (r + 1) + "-" + Math.floor(i / 2));
+        if (!from || !to) return;
+        const a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
+        const x1 = a.right - base.left + wrap.scrollLeft, y1 = a.top + a.height / 2 - base.top + wrap.scrollTop;
+        const x2 = b.left - base.left + wrap.scrollLeft, y2 = b.top + b.height / 2 - base.top + wrap.scrollTop;
+        const midX = (x1 + x2) / 2;
+        d += "M" + x1 + " " + y1 + " H" + midX + " V" + y2 + " H" + x2 + " ";
+      });
+    }
+    svg.innerHTML = '<path d="' + d + '" fill="none" stroke="#94a3b8" stroke-width="2"/>';
   }
   function arenaChampion(comp) {
     arena.over = true;
     document.getElementById("arenaLog").textContent = "";
-    document.getElementById("arenaStatus").textContent = "";
+    document.getElementById("arenaStatus").textContent = "🏆 Tournament complete!";
+    document.getElementById("arenaFighters").classList.add("hidden");
+    arena.curMatch = null;
+    renderBracket();
     const r = document.getElementById("arenaResult");
     r.classList.remove("hidden");
-    r.innerHTML = '<div class="battle-msg">🏆 Champion: ' + comp.av + ' ' + comp.name + '!</div>' +
+    r.innerHTML = '<div class="battle-msg">🏆 Champion: ' + (comp ? comp.av + ' ' + comp.name : "—") + '!</div>' +
       '<div class="battle-btns"><button id="arenaRematch" class="dict-play">New Tournament 🏆</button>' +
       '<button id="arenaBack" class="back-btn">Back</button></div>';
     document.getElementById("arenaRematch").addEventListener("click", startTournament);
