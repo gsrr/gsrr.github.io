@@ -1285,8 +1285,11 @@
     const visible = Array.from(tabs).filter(t => !t.classList.contains("hidden"));
     const i = visible.indexOf(active);
     const isLast = !(i >= 0 && i < visible.length - 1);
+    const passed = levelPassed(active.dataset.level);
+    // 通關(≥80)就不顯示 Try Again；沒過才留著讓學生重做
+    finishRetry.classList.toggle("hidden", passed);
     // 這關沒達 PASS_MARK -> 不開放「下一關」，只能 Try Again
-    if (!isLast && !levelPassed(active.dataset.level)) {
+    if (!isLast && !passed) {
       nextLevelBtn.classList.add("hidden");
       showLockedMsg("🔒 You scored below " + PASS_MARK + "%. Try again to unlock the next level!");
       levelFinish.classList.remove("hidden");   // 仍顯示 Try Again
@@ -1604,11 +1607,13 @@
         recordScore(2, script.length, script.length);   // 無發音評分環境：完成即滿分
         shadowScore.classList.add("hidden");
       }
-      // 沒達 PASS_MARK -> 不開放「下一關」，提示要重做
+      // 通關(≥80)只顯示 Next、藏 Try Again；沒過則相反並提示要重做
       if (levelPassed("2")) {
         shadowNextLevel.classList.remove("hidden");
+        shadowRetry.classList.add("hidden");
       } else {
         shadowNextLevel.classList.add("hidden");
+        shadowRetry.classList.remove("hidden");
         shadowScore.textContent += "  —  Score " + PASS_MARK + "%+ to unlock the next level.";
         shadowScore.classList.remove("hidden");
       }
