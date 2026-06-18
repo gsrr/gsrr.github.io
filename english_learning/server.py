@@ -145,9 +145,9 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/api/class/sync":
             self._handle_class_sync()
         elif path == "/api/student/register":
-            self._handle_student_auth(register=True)
+            self._handle_auth(register=True)        # 單一帳號：學生/老師共用
         elif path == "/api/student/login":
-            self._handle_student_auth(register=False)
+            self._handle_auth(register=False)
         elif path == "/api/student/save":
             self._handle_student_save()
         else:
@@ -196,19 +196,22 @@ class Handler(BaseHTTPRequestHandler):
                     self._send({"error": "User already exists"}, 409)
                     return
                 salt = secrets.token_hex(16)
-                u = {"salt": salt, "hash": hash_pw(pw, salt), "code": None, "data": {"students": {}}}
+                u = {"salt": salt, "hash": hash_pw(pw, salt), "code": None,
+                     "data": {"students": {}}, "sdata": {}}
                 db["users"][user] = u
             else:
                 if not u or hash_pw(pw, u["salt"]) != u["hash"]:
                     self._send({"error": "Wrong username or password"}, 401)
                     return
-            if not u.get("code"):                  # 確保每個老師帳號有一組班級碼
+            if not u.get("code"):                  # 確保每個帳號有一組班級碼（老師入口用）
                 u["code"] = gen_code(db)
                 db["codes"][u["code"]] = user
+            u.setdefault("sdata", {})              # 學生入口的個人進度快照
             token = secrets.token_hex(24)
             db["tokens"][token] = user
             save_accounts(db)
-        self._send({"token": token, "user": user, "code": u["code"]})
+        # data 回傳學生端快照，讓登入後可還原個人進度
+        self._send({"token": token, "user": user, "code": u["code"], "data": u.get("sdata", {})})
 
     # 老師自己的裝置（用 token）上傳
     def _handle_sync(self):
@@ -255,56 +258,28 @@ class Handler(BaseHTTPRequestHandler):
             data["code"] = u.get("code")
         self._send(data)
 
-    # ---- 學生個人帳號：跨裝置雲端存檔 ----
-    # 學生帳號命名空間 "@<user>"，避免與老師帳號撞名；data 直接存學生端的整包進度快照
-    def _handle_student_auth(self, register):
-        d = self._body_json()
-        user = (d.get("user") or "").strip()
-        pw = d.get("pass") or ""
-        if not user or not pw:
-            self._send({"error": "Missing username or password"}, 400)
-            return
-        key = "@" + user
-        with acct_lock:
-            db = load_accounts()
-            u = db["users"].get(key)
-            if register:
-                if u:
-                    self._send({"error": "User already exists"}, 409)
-                    return
-                salt = secrets.token_hex(16)
-                u = {"salt": salt, "hash": hash_pw(pw, salt), "kind": "student", "data": {}}
-                db["users"][key] = u
-            else:
-                if not u or hash_pw(pw, u["salt"]) != u["hash"]:
-                    self._send({"error": "Wrong username or password"}, 401)
-                    return
-            token = secrets.token_hex(24)
-            db["tokens"][token] = key
-            save_accounts(db)
-        self._send({"token": token, "user": user, "data": u.get("data", {})})
-
+    # ---- 學生入口：跨裝置雲端存檔，存在統一帳號的 sdata ----
     def _handle_student_save(self):
         d = self._body_json()
         blob = d.get("data")
         with acct_lock:
             db = load_accounts()
-            key = db["tokens"].get(self._token())
-            if not key or not key.startswith("@") or key not in db["users"]:
+            user = db["tokens"].get(self._token())
+            if not user or user not in db["users"]:
                 self._send({"error": "Not logged in"}, 401)
                 return
-            db["users"][key]["data"] = blob if isinstance(blob, dict) else {}
+            db["users"][user]["sdata"] = blob if isinstance(blob, dict) else {}
             save_accounts(db)
         self._send({"ok": True})
 
     def _handle_student_load(self):
         with acct_lock:
             db = load_accounts()
-            key = db["tokens"].get(self._token())
-            if not key or not key.startswith("@") or key not in db["users"]:
+            user = db["tokens"].get(self._token())
+            if not user or user not in db["users"]:
                 self._send({"error": "Not logged in"}, 401)
                 return
-            data = db["users"][key].get("data", {})
+            data = db["users"][user].get("sdata", {})
         self._send({"data": data})
 
     def log_message(self, *args):

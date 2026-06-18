@@ -3221,7 +3221,20 @@
 
   /* ================= 老師/家長帳號 + 雲端進度後台 ================= */
   const screenTeacher = document.getElementById("screenTeacher");
-  function acctToken() { try { return localStorage.getItem("acct:token") || ""; } catch (e) { return ""; } }
+  // 單一帳號：學生入口與老師入口共用同一個 token
+  function authToken() { try { return localStorage.getItem("auth:token") || ""; } catch (e) { return ""; } }
+  function authUser()  { try { return localStorage.getItem("auth:user") || ""; } catch (e) { return ""; } }
+  function setAuth(user, token, code) {
+    try {
+      localStorage.setItem("auth:token", token);
+      localStorage.setItem("auth:user", user);
+      if (code) localStorage.setItem("auth:code", code);
+    } catch (e) {}
+  }
+  function clearAuth() {
+    try { ["auth:token", "auth:user", "auth:code"].forEach(k => localStorage.removeItem(k)); } catch (e) {}
+  }
+  function acctToken() { return authToken(); }
   // 蒐集本機所有學生（profiles）的頭像/英雄/各課分數與進度，準備上傳
   function collectLocalState() {
     const students = {};
@@ -3266,10 +3279,10 @@
       .then(r => r.json().then(j => ({ ok: r.ok, j: j })))
       .then(o => {
         if (!o.ok || !o.j.token) { msg.textContent = o.j.error || "Failed."; return; }
-        try {
-          localStorage.setItem("acct:token", o.j.token); localStorage.setItem("acct:user", user);
-          if (o.j.code) localStorage.setItem("acct:code", o.j.code);
-        } catch (e) {}
+        setAuth(user, o.j.token, o.j.code);
+        if (o.j.data) restoreSnapshot(o.j.data);   // 同一帳號的學生進度也一併還原
+        saveProfiles([user]);
+        if (!localStorage.getItem("avatar:" + user)) setAvatar(user, selectedAvatar);
         enterDashboard();
       })
       .catch(() => { msg.textContent = "Server not available (needs the server; not on GitHub Pages)."; });
@@ -3292,8 +3305,8 @@
   function enterDashboard() {
     document.getElementById("acctTeacher").classList.add("hidden");
     document.getElementById("acctPanel").classList.remove("hidden");
-    document.getElementById("acctWho").textContent = "👩‍🏫 " + (localStorage.getItem("acct:user") || "");
-    setAcctCode(localStorage.getItem("acct:code") || "");
+    document.getElementById("acctWho").textContent = "👩‍🏫 " + authUser();
+    setAcctCode(localStorage.getItem("auth:code") || "");
     syncNow(loadDashboard);
   }
   function syncNow(cb) {
@@ -3307,7 +3320,7 @@
   function loadDashboard() {
     const token = acctToken(); if (!token) return;
     fetch("/api/dashboard?token=" + encodeURIComponent(token)).then(r => r.json()).then(data => {
-      if (data && data.code) { try { localStorage.setItem("acct:code", data.code); } catch (e) {} setAcctCode(data.code); }
+      if (data && data.code) { try { localStorage.setItem("auth:code", data.code); } catch (e) {} setAcctCode(data.code); }
       renderDashboard(data);
     }).catch(() => {});
   }
@@ -3335,14 +3348,14 @@
     el.innerHTML = html;
   }
   function acctLogout() {
-    try { localStorage.removeItem("acct:token"); localStorage.removeItem("acct:user"); localStorage.removeItem("acct:code"); } catch (e) {}
+    clearAuth();
     showTeacherLogin();
   }
   document.getElementById("joinBtn").addEventListener("click", joinClass);
   document.getElementById("studentRoleBtn").addEventListener("click", () => {
-    // 已登入學生帳號 -> 直接進 app，跳過 My Account 頁
-    const u = localStorage.getItem("sacct:user") || "";
-    if (sToken() && u) { selectProfile(u); return; }
+    // 已登入 -> 直接進 app（學生入口）；否則回 My Account 登入
+    const u = authUser();
+    if (authToken() && u) { selectProfile(u); return; }
     openStudentAcct();
   });
   document.getElementById("teacherRoleBtn").addEventListener("click", openTeacher);
@@ -3356,7 +3369,7 @@
 
   /* ===== 學生個人帳號：跨裝置雲端存檔（與班級碼分開） ===== */
   const screenStudentAcct = document.getElementById("screenStudentAcct");
-  function sToken() { try { return localStorage.getItem("sacct:token") || ""; } catch (e) { return ""; } }
+  function sToken() { return authToken(); }
   // 整台裝置的學習快照（所有 profile + 目前使用者名）
   function fullLocalSnapshot() {
     return { profiles: loadProfiles(), userName: userName, students: collectLocalState() };
@@ -3398,7 +3411,7 @@
   function sShowPanel() {
     document.getElementById("sAcctLogin").classList.add("hidden");
     document.getElementById("sAcctPanel").classList.remove("hidden");
-    document.getElementById("sWho").textContent = "🧒 " + (localStorage.getItem("sacct:user") || "");
+    document.getElementById("sWho").textContent = "🧒 " + authUser();
   }
   // 換頭像（My Progress 頁）：立即套用、更新右上角、並自動上雲
   function renderPanelAvatar() {
@@ -3441,11 +3454,11 @@
       .then(r => r.json().then(j => ({ ok: r.ok, j: j })))
       .then(o => {
         if (!o.ok || !o.j.token) { msg.textContent = o.j.error || "Failed."; return; }
-        try { localStorage.setItem("sacct:token", o.j.token); localStorage.setItem("sacct:user", user); } catch (e) {}
-        if (path === "login" && o.j.data) restoreSnapshot(o.j.data);  // 還原雲端進度
+        setAuth(user, o.j.token, o.j.code);
+        if (o.j.data) restoreSnapshot(o.j.data);                       // 還原雲端進度（新帳號為空）
         saveProfiles([user]);                                          // 帳號即唯一使用者
         if (!localStorage.getItem("avatar:" + user)) setAvatar(user, selectedAvatar);
-        selectProfile(user);                                           // 直接進入 app（level grid）
+        showScreen(screenRole);                                        // 登入/建帳後 -> 選 Student / Teacher 入口
       })
       .catch(() => { msg.textContent = "Server not available (needs the server)."; });
   }
@@ -3461,7 +3474,7 @@
     _sSaveTimer = setTimeout(function () { studentSave(); }, 1500);   // 防抖，避免每次答題都打 API
   }
   function sLogout() {
-    try { localStorage.removeItem("sacct:token"); localStorage.removeItem("sacct:user"); } catch (e) {}
+    clearAuth();
     sShowLogin();
   }
   document.getElementById("openSAcctBtn").addEventListener("click", openStudentAcct);
@@ -3471,7 +3484,7 @@
   document.getElementById("toRegister").addEventListener("click", (e) => { e.preventDefault(); sShowRegisterView(); });
   document.getElementById("toLogin").addEventListener("click", (e) => { e.preventDefault(); sShowLoginView(); });
   document.getElementById("sStartBtn").addEventListener("click", () => {
-    const u = localStorage.getItem("sacct:user") || ""; if (u) selectProfile(u);
+    const u = authUser(); if (u) selectProfile(u);
   });
   document.getElementById("logoutChip").addEventListener("click", () => { showScreen(screenStudentAcct); sLogout(); });
 
@@ -3489,9 +3502,8 @@
       return;
     }
     renderProfiles();
-    // 第一個畫面 = My Account：已登入學生直接進 app，否則顯示登入
-    const su = localStorage.getItem("sacct:user") || "";
-    if (sToken() && su) selectProfile(su);
+    // 已登入 -> 直接選 Student / Teacher 入口；否則顯示 My Account 登入
+    if (authToken() && authUser()) showScreen(screenRole);
     else openStudentAcct();
   }
 
