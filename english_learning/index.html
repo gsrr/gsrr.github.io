@@ -348,6 +348,8 @@
   /* 帳號/密碼各自一行（直向堆疊） */
   .acct-form { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 10px 0; }
   .acct-form input { padding: 9px 11px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; width: 240px; max-width: 80%; }
+  /* 欄位標籤：對齊輸入框、左對齊，清楚標示帳號/密碼 */
+  .field-label { width: 240px; max-width: 80%; text-align: left; font-size: 13px; font-weight: 700; color: #475569; margin: 6px 0 -2px; }
   .acct-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
   .acct-msg { text-align: center; font-size: 13px; color: #64748b; margin-top: 6px; min-height: 18px; }
   .acct-switch { text-align: center; font-size: 13px; color: #64748b; margin-top: 14px; }
@@ -587,11 +589,10 @@
       </div>
     </div>
 
-    <!-- 畫面 0a2：學生個人帳號（跨裝置存檔）— 一進 app 的第一個畫面 -->
+    <!-- 畫面 0a2：登入 / 建立帳號 — 一進 app 的第一個畫面（根畫面，無 Back） -->
     <div id="screenStudentAcct">
       <div class="learn-top">
-        <button class="back-btn" id="backFromSAcct">← Back</button>
-        <span class="learn-title">☁️ My Account</span>
+        <span class="learn-title">☁️ Log in</span>
       </div>
       <div id="sAcctLogin">
         <p class="screen-intro">Save your progress so it follows you to any device. ☁️</p>
@@ -599,7 +600,9 @@
         <!-- 登入（預設只顯示這個） -->
         <div id="sLoginView">
           <div class="acct-form">
+            <label class="field-label" for="sUser">👤 Username</label>
             <input id="sUser" type="text" placeholder="Username" autocomplete="username" maxlength="40">
+            <label class="field-label" for="sPass">🔒 Password</label>
             <input id="sPass" type="password" placeholder="Password" autocomplete="current-password" maxlength="60">
           </div>
           <div class="acct-btns">
@@ -613,7 +616,9 @@
           <label class="avatar-label">Pick your character 🦸</label>
           <div class="avatar-pick" id="sAvatarPick"></div>
           <div class="acct-form">
+            <label class="field-label" for="sRegUser">👤 Username</label>
             <input id="sRegUser" type="text" placeholder="Username" autocomplete="username" maxlength="40">
+            <label class="field-label" for="sRegPass">🔒 Password</label>
             <input id="sRegPass" type="password" placeholder="Password" autocomplete="new-password" maxlength="60">
           </div>
           <div class="acct-btns">
@@ -635,7 +640,9 @@
       <div id="acctTeacher">
         <p class="screen-intro">Log in to see your class, or create a new class.</p>
         <div class="acct-form">
+          <label class="field-label" for="acctUser">👤 Username</label>
           <input id="acctUser" type="text" placeholder="Username" autocomplete="username" maxlength="40">
+          <label class="field-label" for="acctPass">🔒 Password</label>
           <input id="acctPass" type="password" placeholder="Password" autocomplete="current-password" maxlength="60">
         </div>
         <div class="acct-btns">
@@ -3467,7 +3474,6 @@
     sShowLogin();
   }
   document.getElementById("openSAcctBtn").addEventListener("click", openStudentAcct);
-  document.getElementById("backFromSAcct").addEventListener("click", () => showScreen(screenRole));
   document.getElementById("sLoginBtn").addEventListener("click", () => sAuth("login"));
   document.getElementById("sRegisterBtn").addEventListener("click", () => sAuth("register"));
   document.getElementById("toRegister").addEventListener("click", (e) => { e.preventDefault(); sShowRegisterView(); });
