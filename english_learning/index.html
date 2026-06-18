@@ -579,7 +579,6 @@
       </div>
       <div style="text-align:center;margin-top:14px">
         <button id="openSAcctBtn" class="back-btn">☁️ Save my progress</button>
-        <button id="openStudentBtn" class="back-btn">🧒 Join a Class</button>
       </div>
     </div>
 
@@ -608,25 +607,8 @@
         <p class="screen-intro">☁️ Your progress saves automatically.</p>
         <div class="acct-btns">
           <button id="sStartBtn" class="dict-play">▶ Start learning</button>
-          <button id="sJoinBtn" class="back-btn">🧒 Join a Class</button>
         </div>
       </div>
-    </div>
-
-    <!-- 畫面 0b：學生加入班級 -->
-    <div id="screenStudent" class="hidden">
-      <div class="learn-top">
-        <button class="back-btn" id="backFromStudent">← Back</button>
-        <span class="learn-title">🧒 Join a Class</span>
-      </div>
-      <p class="screen-intro">Enter the class code from your teacher to share your progress. 🎒</p>
-      <div class="acct-form">
-        <input id="joinCode" type="text" placeholder="Class code (e.g. AB7K)" autocomplete="off" maxlength="8" style="text-transform:uppercase">
-      </div>
-      <div class="acct-btns">
-        <button id="joinBtn" class="dict-play">Join &amp; Sync</button>
-      </div>
-      <div id="joinMsg" class="acct-msg"></div>
     </div>
 
     <!-- 畫面 0c：老師/家長後台 -->
@@ -680,6 +662,16 @@
       <div id="statsBody"></div>
       <label class="avatar-label">Change your character 🦸</label>
       <div class="avatar-pick avatar-pick-panel" id="sAvatarPickPanel"></div>
+      <!-- 加入班級：從獨立畫面移到 My Progress 裡處理 -->
+      <label class="avatar-label">🧒 Join a Class</label>
+      <p class="screen-intro">Enter the class code from your teacher to share your progress. 🎒</p>
+      <div class="acct-form">
+        <input id="joinCode" type="text" placeholder="Class code (e.g. AB7K)" autocomplete="off" maxlength="8" style="text-transform:uppercase">
+      </div>
+      <div class="acct-btns">
+        <button id="joinBtn" class="dict-play">Join &amp; Sync</button>
+      </div>
+      <div id="joinMsg" class="acct-msg"></div>
     </div>
 
     <!-- 畫面 2：選課程 -->
@@ -2503,7 +2495,7 @@
   userNameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") addProfile(); });
 
   function showScreen(el) {
-    [screenRole, screenProfile, screenStudentAcct, screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena, screenStudent, screenTeacher].forEach(s => s.classList.add("hidden"));
+    [screenRole, screenProfile, screenStudentAcct, screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena, screenTeacher].forEach(s => s.classList.add("hidden"));
     el.classList.remove("hidden");
     // 右上角區（使用者鈕 + 匯出）：只在學生 app 內的畫面顯示
     topRight.classList.toggle("hidden", !(userName && [screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena].indexOf(el) !== -1));
@@ -2731,6 +2723,7 @@
   function openProfileStats() {
     renderProfileStats();
     renderPanelAvatar();
+    renderJoinClass();
     showScreen(screenProfileStats);
   }
   userChip.addEventListener("click", openProfileStats);
@@ -3207,7 +3200,6 @@
   });
 
   /* ================= 老師/家長帳號 + 雲端進度後台 ================= */
-  const screenStudent = document.getElementById("screenStudent");
   const screenTeacher = document.getElementById("screenTeacher");
   function acctToken() { try { return localStorage.getItem("acct:token") || ""; } catch (e) { return ""; } }
   // 蒐集本機所有學生（profiles）的頭像/英雄/各課分數與進度，準備上傳
@@ -3230,8 +3222,8 @@
     document.getElementById("acctCode").innerHTML = code
       ? 'Class code: <b>' + code + '</b><div style="font-size:12px;color:#64748b;margin-top:4px">Give this code to your students.</div>' : "";
   }
-  function openStudent() {
-    showScreen(screenStudent);
+  // Join a Class 已移到 My Progress 頁：進頁時帶入已存的班級碼、清掉訊息
+  function renderJoinClass() {
     document.getElementById("joinMsg").textContent = "";
     try { const c = localStorage.getItem("class:code") || ""; if (c) document.getElementById("joinCode").value = c; } catch (e) {}
   }
@@ -3327,11 +3319,14 @@
     showTeacherLogin();
   }
   document.getElementById("joinBtn").addEventListener("click", joinClass);
-  document.getElementById("openStudentBtn").addEventListener("click", openStudent);
-  document.getElementById("studentRoleBtn").addEventListener("click", openStudentAcct);
+  document.getElementById("studentRoleBtn").addEventListener("click", () => {
+    // 已登入學生帳號 -> 直接進 app，跳過 My Account 頁
+    const u = localStorage.getItem("sacct:user") || "";
+    if (sToken() && u) { selectProfile(u); return; }
+    openStudentAcct();
+  });
   document.getElementById("teacherRoleBtn").addEventListener("click", openTeacher);
   document.getElementById("backToRole").addEventListener("click", () => showScreen(screenRole));
-  document.getElementById("backFromStudent").addEventListener("click", openStudentAcct);
   document.getElementById("backFromTeacher").addEventListener("click", () => showScreen(screenRole));
   document.getElementById("acctLoginBtn").addEventListener("click", () => acctAuth("login"));
   document.getElementById("acctRegisterBtn").addEventListener("click", () => acctAuth("register"));
@@ -3442,7 +3437,6 @@
   document.getElementById("sStartBtn").addEventListener("click", () => {
     const u = localStorage.getItem("sacct:user") || ""; if (u) selectProfile(u);
   });
-  document.getElementById("sJoinBtn").addEventListener("click", openStudent);
   document.getElementById("logoutChip").addEventListener("click", () => { showScreen(screenStudentAcct); sLogout(); });
 
   async function initLessons() {
