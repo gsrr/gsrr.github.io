@@ -218,6 +218,19 @@
   .progress-fill { height: 100%; width: 0; background: linear-gradient(90deg, #22c55e, #16a34a); border-radius: 999px; transition: width .4s ease; }
   .progress-text { font-size: 13px; font-weight: 700; color: #16a34a; white-space: nowrap; }
   .levelTab.done::after { content: "✓"; color: #16a34a; font-weight: 700; font-size: 13px; }
+  /* 還沒達 PASS_MARK 之前，後面的關卡上鎖（仍可看到但不能點） */
+  .levelTab.locked { opacity: .4; cursor: not-allowed; }
+  .levelTab.locked::after { content: "🔒"; font-size: 12px; }
+
+  /* 鎖關提示（短暫浮現的 toast） */
+  .lock-toast {
+    position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(16px);
+    background: #1e293b; color: #fff; padding: 12px 18px; border-radius: 12px;
+    font-size: 14px; font-weight: 600; box-shadow: 0 8px 24px rgba(0,0,0,.25);
+    opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s;
+    z-index: 9999; max-width: 86%; text-align: center;
+  }
+  .lock-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   /* 完成後的「Try Again / Next Level」區塊（與 Level 2 一致） */
   .nextlevel-wrap { text-align: center; margin-top: 22px; }
@@ -1030,6 +1043,13 @@
   }
 
   tabs.forEach(tab => tab.addEventListener("click", () => {
+    // 鎖關：分數沒到 PASS_MARK 不能跳到後面的關（仍可回頭複習已通過的關）
+    const visForLock = Array.from(tabs).filter(t => !t.classList.contains("hidden"));
+    const targetIdx = visForLock.indexOf(tab);
+    if (targetIdx > maxUnlockedIndex(visForLock)) {
+      showLockedMsg();
+      return;
+    }
     tabs.forEach(t => t.classList.remove("active"));
     tab.classList.add("active");
     scrollTabIntoView(tab);
@@ -1063,6 +1083,7 @@
     else if (lv === "7") { level7El.classList.remove("hidden"); }
     else if (lv === "8") { level8El.classList.remove("hidden"); }
     else { level9El.classList.remove("hidden"); }
+    refreshLockedTabs();
   }));
 
   // 初始顯示目前關卡名稱
@@ -1141,6 +1162,41 @@
     lessonScores[String(level)] = { correct: correct, total: total };
     try { localStorage.setItem(scoreKey(currentArticleKey), JSON.stringify(lessonScores)); } catch (e) {}
     scheduleStudentSave();   // 學生若已登入 -> 分數自動上雲
+    refreshLockedTabs();     // 分數更新後，可能解鎖下一關
+  }
+  // 某一關是否「通過」(達 PASS_MARK)。Level 1 聽力不計分，永遠通過。
+  function levelPassed(lv) {
+    lv = String(lv);
+    if (lv === "1") return true;
+    const s = lessonScores[lv];
+    if (!s || !s.total) return false;                       // 還沒做完 = 未通過
+    return Math.round(s.correct / s.total * 100) >= PASS_MARK;
+  }
+  // 目前可進入的最後一個關卡 index：可停在第一個「未通過」的關，但不能再往後跳。
+  function maxUnlockedIndex(visible) {
+    for (let i = 0; i < visible.length; i++) {
+      if (!levelPassed(visible[i].dataset.level)) return i;  // 第一個未通過 = 目前能到的最遠
+    }
+    return visible.length - 1;                               // 全部通過
+  }
+  // 依分數重新標記哪些 tab 上鎖（分數沒到 PASS_MARK 不能跳下一關）
+  function refreshLockedTabs() {
+    const visible = Array.from(tabs).filter(t => !t.classList.contains("hidden"));
+    const maxIdx = maxUnlockedIndex(visible);
+    visible.forEach((t, i) => t.classList.toggle("locked", i > maxIdx));
+  }
+  // 鎖關提示
+  let lockToastEl = null, lockToastTimer = null;
+  function showLockedMsg(msg) {
+    if (!lockToastEl) {
+      lockToastEl = document.createElement("div");
+      lockToastEl.className = "lock-toast";
+      document.body.appendChild(lockToastEl);
+    }
+    lockToastEl.textContent = msg || ("🔒 Score " + PASS_MARK + "% or higher to unlock the next level!");
+    lockToastEl.classList.add("show");
+    if (lockToastTimer) clearTimeout(lockToastTimer);
+    lockToastTimer = setTimeout(() => lockToastEl.classList.remove("show"), 2600);
   }
   // 取得某關的顯示名稱（給課程卡片的小圓點 tooltip 用）
   function levelName(l) {
@@ -1228,7 +1284,16 @@
     if (!active) return;
     const visible = Array.from(tabs).filter(t => !t.classList.contains("hidden"));
     const i = visible.indexOf(active);
-    if (i >= 0 && i < visible.length - 1) {
+    const isLast = !(i >= 0 && i < visible.length - 1);
+    // 這關沒達 PASS_MARK -> 不開放「下一關」，只能 Try Again
+    if (!isLast && !levelPassed(active.dataset.level)) {
+      nextLevelBtn.classList.add("hidden");
+      showLockedMsg("🔒 You scored below " + PASS_MARK + "%. Try again to unlock the next level!");
+      levelFinish.classList.remove("hidden");   // 仍顯示 Try Again
+      return;
+    }
+    nextLevelBtn.classList.remove("hidden");
+    if (!isLast) {
       nextLevelBtn.textContent = "Next ➡";
       nextLevelBtn.dataset.mode = "next";
       hideLessonSummary();
@@ -1267,6 +1332,7 @@
       if (t) t.classList.add("done");
     });
     updateProgress();
+    refreshLockedTabs();   // 依還原的分數重新上鎖
   }
 
   /* ================= Level 1：聽 ================= */
@@ -1418,10 +1484,14 @@
     shadowWho.textContent = line.who + (line.gender === "male" ? " (boy)" : " (girl)");
     shadowText.textContent = line.text;
     prevBtn.disabled = idx === 0;
-    nextBtn.disabled = false;
     // 這句是否已有錄音
-    myPlayBtn.disabled = !recordings[idx];
-    statusEl.textContent = "Listen 🔊, then Record 🎤 — you'll hear yourself and get a score.";
+    const recorded = !!recordings[idx];
+    myPlayBtn.disabled = !recorded;
+    // 沒錄這句就不能往下一句（避免不念書直接連點 > 拿分）
+    nextBtn.disabled = !recorded;
+    statusEl.textContent = recorded
+      ? "Listen 🔊, Record 🎤 again, or tap › for the next sentence."
+      : "Listen 🔊, then Record 🎤 this sentence to continue.";
     recBtn.classList.remove("recording");
     recBtn.textContent = "🎤 Record";
   }
@@ -1455,6 +1525,7 @@
         if (recordings[idx]) URL.revokeObjectURL(recordings[idx]);
         recordings[idx] = URL.createObjectURL(blob);
         myPlayBtn.disabled = false;
+        nextBtn.disabled = false;          // 錄好這句才解鎖「下一句」
         stream.getTracks().forEach(t => t.stop());
         playMyRecording();                 // 聽自己
         scorePronunciation(target, blob);   // 上傳音檔 → 後端 Whisper → 發音分數
@@ -1519,7 +1590,8 @@
         updateProgress();
       }
       // 計入每句發音分數：Level 2 分數 = 各句最佳分數的平均（沒錄到的句子算 0）。
-      // 若整課都拿不到發音分（GitHub Pages / 無後端），退回「完成即滿分」。
+      // 因為「下一句」需先錄音，能走到這裡代表每句都錄過；
+      // 若整課都拿不到發音分（GitHub Pages / 無後端），退回「完成即滿分」才公平。
       const scoredCount = Object.keys(pronScores).length;
       if (scoredCount > 0) {
         let sum = 0;
@@ -1531,6 +1603,14 @@
       } else {
         recordScore(2, script.length, script.length);   // 無發音評分環境：完成即滿分
         shadowScore.classList.add("hidden");
+      }
+      // 沒達 PASS_MARK -> 不開放「下一關」，提示要重做
+      if (levelPassed("2")) {
+        shadowNextLevel.classList.remove("hidden");
+      } else {
+        shadowNextLevel.classList.add("hidden");
+        shadowScore.textContent += "  —  Score " + PASS_MARK + "%+ to unlock the next level.";
+        shadowScore.classList.remove("hidden");
       }
       showShadowFinish();
     }
