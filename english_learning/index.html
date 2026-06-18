@@ -622,13 +622,6 @@
 
         <div id="sMsg" class="acct-msg"></div>
       </div>
-      <div id="sAcctPanel" class="hidden">
-        <div class="acct-top"><span id="sWho"></span></div>
-        <p class="screen-intro">☁️ Your progress saves automatically.</p>
-        <div class="acct-btns">
-          <button id="sStartBtn" class="dict-play">▶ Start learning</button>
-        </div>
-      </div>
     </div>
 
     <!-- 畫面 0c：老師/家長後台 -->
@@ -3390,10 +3383,9 @@
       if (blob.userName) { userName = blob.userName; localStorage.setItem("userName", blob.userName); }
     } catch (e) {}
   }
-  function openStudentAcct() { showScreen(screenStudentAcct); if (sToken()) sShowPanel(); else sShowLogin(); }
+  function openStudentAcct() { showScreen(screenStudentAcct); sShowLogin(); }
   function sShowLogin() {
     document.getElementById("sAcctLogin").classList.remove("hidden");
-    document.getElementById("sAcctPanel").classList.add("hidden");
     sShowLoginView();
   }
   // 登入 / 註冊兩個檢視互相切換（預設顯示登入）
@@ -3407,11 +3399,6 @@
     document.getElementById("sRegisterView").classList.remove("hidden");
     document.getElementById("sMsg").textContent = "";
     renderAvatarPicker();
-  }
-  function sShowPanel() {
-    document.getElementById("sAcctLogin").classList.add("hidden");
-    document.getElementById("sAcctPanel").classList.remove("hidden");
-    document.getElementById("sWho").textContent = "🧒 " + authUser();
   }
   // 換頭像（My Progress 頁）：立即套用、更新右上角、並自動上雲
   function renderPanelAvatar() {
@@ -3483,9 +3470,6 @@
   document.getElementById("sRegisterBtn").addEventListener("click", () => sAuth("register"));
   document.getElementById("toRegister").addEventListener("click", (e) => { e.preventDefault(); sShowRegisterView(); });
   document.getElementById("toLogin").addEventListener("click", (e) => { e.preventDefault(); sShowLoginView(); });
-  document.getElementById("sStartBtn").addEventListener("click", () => {
-    const u = authUser(); if (u) selectProfile(u);
-  });
   document.getElementById("logoutChip").addEventListener("click", () => { showScreen(screenStudentAcct); sLogout(); });
 
   async function initLessons() {
