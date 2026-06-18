@@ -1859,10 +1859,12 @@
   /* ================= Level 5：單字配圖 ================= */
   function makeMatch(wordsEl, picsEl, statusEl, resetEl) {
     let vocab = [], seq = [], expected = 0;
+    let firstTry = 0, missedCurrent = false;   // 一次就點對才算分
 
     const matchWrap = wordsEl.parentElement;
     function build() {
       expected = 0;
+      firstTry = 0; missedCurrent = false;
       wordsEl.innerHTML = "";
       picsEl.innerHTML = "";
       matchWrap.classList.remove("hidden");
@@ -1904,20 +1906,24 @@
         const w = document.getElementById("mword-" + expected);
         w.classList.remove("current");
         w.classList.add("done");
-        document.getElementById("wmark-" + expected).textContent = " ✓";
+        // 這個字在 current 期間沒點錯 -> 一次就對，計分
+        if (!missedCurrent) firstTry++;
+        document.getElementById("wmark-" + expected).textContent = missedCurrent ? " ✗" : " ✓";
         expected++;
+        missedCurrent = false;
         if (expected < seq.length) {
           document.getElementById("mword-" + expected).classList.add("current");
           updateStatus();
         } else {
           matchWrap.classList.add("hidden");
-          statusEl.textContent = "🏆 All matched! Great job!";
+          statusEl.textContent = "🏆 All matched! " + firstTry + " / " + seq.length + " on the first try!";
           resetEl.classList.remove("hidden");
           playDing();
-          recordScore(5, seq.length, seq.length);   // 配圖完成 = 滿分
+          recordScore(5, firstTry, seq.length);   // 一次就點對的題數 / 總題數
           markLevelDone(5);
         }
       } else {
+        missedCurrent = true;                      // 這個字點錯過，不算一次就對
         btn.classList.add("shake");
         setTimeout(() => btn.classList.remove("shake"), 400);
         statusEl.textContent = `Look at word #${expected + 1} on the left!`;
