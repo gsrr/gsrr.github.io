@@ -1462,6 +1462,7 @@
   let recordings = {};   // { 句子index: audio URL }
   let pronScores = {};   // { 句子index: 該句最佳發音分數 0-100 }
   let isRecording = false;
+  let isScoring = false; // 計分中（送後端 Whisper 等回應）：此時不能再按 Record
   let pronRec = null;    // 發音辨識（與錄音同時進行）
 
   function showShadowFinish() {
@@ -1497,6 +1498,7 @@
       : "Listen 🔊, then Record 🎤 this sentence to continue.";
     recBtn.classList.remove("recording");
     recBtn.textContent = "🎤 Record";
+    recBtn.disabled = isScoring;   // 計分中不能錄音
   }
 
   listenBtn.addEventListener("click", () => {
@@ -1509,6 +1511,7 @@
 
   /* 錄音 */
   recBtn.addEventListener("click", async () => {
+    if (isScoring) return;                       // 計分中，先等分數出來
     if (isRecording) { stopRecording(); return; }
     if (/FBAN|FBAV|FB_IAB|Instagram/i.test(navigator.userAgent || "")) {
       statusEl.textContent = "🎤 Recording needs an external browser (⋯ menu → Open in external browser)."; return;
@@ -1544,6 +1547,10 @@
   });
   // 把錄好的音檔送到後端 Whisper，轉文字後比對目標句算發音分數
   function scorePronunciation(target, blob) {
+    isScoring = true;
+    recBtn.disabled = true;        // 計分期間鎖住 Record，等分數回來
+    prevBtn.disabled = true;       // 計分期間也鎖住上一句/下一句，避免分數記到別句
+    nextBtn.disabled = true;
     pronResult.innerHTML = '<div style="font-size:13px;color:#94a3b8">🎯 Scoring…</div>';
     pronResult.classList.remove("hidden");
     fetch("/api/stt?text=" + encodeURIComponent(target), { method: "POST", body: blob })
@@ -1555,6 +1562,12 @@
       .catch(() => {
         pronResult.innerHTML = '<div style="font-size:13px;color:#94a3b8">🎯 Pronunciation score needs the server (Docker build). Not available on GitHub Pages / local file.</div>';
         pronResult.classList.remove("hidden");
+      })
+      .finally(() => {
+        isScoring = false;
+        recBtn.disabled = false;            // 計分結束 -> 解鎖 Record
+        prevBtn.disabled = idx === 0;       // 依 renderShadow 的規則恢復導覽
+        nextBtn.disabled = !recordings[idx];
       });
   }
 
