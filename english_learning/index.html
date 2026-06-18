@@ -344,8 +344,10 @@
   .attack-btn { font-size: 20px; font-weight: 800; padding: 14px 30px; background: #ef4444; color: #fff; border-radius: 14px; }
   .attack-btn:active { transform: scale(0.95); }
   .attack-btn:disabled { opacity: 0.5; }
-  .acct-form, .acct-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; margin: 10px 0; }
-  .acct-form input { padding: 9px 11px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; }
+  .acct-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; margin: 10px 0; }
+  /* 帳號/密碼各自一行（直向堆疊） */
+  .acct-form { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 10px 0; }
+  .acct-form input { padding: 9px 11px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; width: 240px; max-width: 80%; }
   .acct-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
   .acct-msg { text-align: center; font-size: 13px; color: #64748b; margin-top: 6px; min-height: 18px; }
   .acct-switch { text-align: center; font-size: 13px; color: #64748b; margin-top: 14px; }
