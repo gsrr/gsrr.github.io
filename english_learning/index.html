@@ -665,7 +665,7 @@
     <!-- 畫面 1：選等級 -->
     <div id="screenLevel" class="hidden">
       <div class="learn-top">
-        <button class="back-btn" id="backToProfile">👤 Account</button>
+        <button class="back-btn" id="backToProfile">🏠 Home</button>
         <span class="learn-title" id="greetTitle"></span>
       </div>
       <p class="screen-intro">Choose a level to start 📚</p>
@@ -3208,7 +3208,7 @@
     showScreen(screenLearn);
   }
 
-  document.getElementById("backToProfile").addEventListener("click", openStudentAcct);
+  document.getElementById("backToProfile").addEventListener("click", () => showScreen(screenRole));
   document.getElementById("backToLevels").addEventListener("click", () => {
     synth.cancel(); stopListenL1(); stopRecordingIfAny();
     renderLevelGrid();
