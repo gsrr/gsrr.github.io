@@ -366,6 +366,10 @@
   .role-card { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 144px; padding: 24px 10px; border: 2px solid #e2e8f0; border-radius: 16px; background: #fff; font-size: 16px; font-weight: 700; color: #1e293b; cursor: pointer; }
   .role-card:active { transform: scale(0.97); }
   .role-emoji { font-size: 46px; }
+  .energy { text-align: center; font-size: 14px; color: #334155; margin: 0 0 12px; }
+  .energy-track { display: inline-block; vertical-align: middle; width: 120px; height: 10px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin: 0 8px; }
+  .energy-fill { display: block; height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+  .energy .low { color: #b91c1c; }
   .shadow-finish-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
   .shadow-finish-btns button { font-size: 16px; padding: 10px 22px; }
   #shadowRetry { background: #e2e8f0; color: #334155; }
@@ -671,6 +675,7 @@
         <span class="learn-title" id="greetTitle"></span>
       </div>
       <p class="screen-intro">Choose a level to start 📚</p>
+      <div id="energyBar" class="energy"></div>
       <div style="text-align:center;margin-bottom:14px"><button id="openArenaBtn" style="background:#7c3aed;color:#fff">🏆 Arena Tournament</button></div>
       <div id="levelGrid" class="pick-grid"></div>
     </div>
@@ -1129,7 +1134,56 @@
     startTestWrap.style.display = tab1.classList.contains("done") ? "" : "none";
   }
 
+  /* ---------- 體力（energy）：避免一直玩 ---------- */
+  const STAMINA_MAX = 100, STAMINA_COST = 35, STAMINA_PER_HR = 30;
+  function staminaKey(name) { return "stamina:" + (name || userName || "guest"); }
+  function readStamina(name) {
+    try {
+      const o = JSON.parse(localStorage.getItem(staminaKey(name)) || "null");
+      if (o && typeof o.v === "number" && typeof o.t === "number") return o;
+    } catch (e) {}
+    return { v: STAMINA_MAX, t: Date.now() };
+  }
+  function currentStamina(name) {
+    const o = readStamina(name);
+    const gained = (Date.now() - o.t) / 3600000 * STAMINA_PER_HR;   // 每小時 +30，連續恢復
+    return Math.max(0, Math.min(STAMINA_MAX, o.v + gained));
+  }
+  function writeStamina(name, v) {
+    try { localStorage.setItem(staminaKey(name), JSON.stringify({ v: Math.max(0, Math.min(STAMINA_MAX, v)), t: Date.now() })); } catch (e) {}
+  }
+  function spendStamina(cost) {
+    const cur = currentStamina(userName);
+    if (cur < cost) {
+      const mins = Math.ceil((cost - cur) / STAMINA_PER_HR * 60);
+      return { ok: false, mins: mins, cur: Math.floor(cur) };
+    }
+    writeStamina(userName, cur - cost);
+    return { ok: true };
+  }
+  function updateEnergy() {
+    const el = document.getElementById("energyBar");
+    if (!el) return;
+    const cur = Math.floor(currentStamina(userName));
+    let note = "";
+    if (cur < STAMINA_COST) {
+      const mins = Math.ceil((STAMINA_COST - cur) / STAMINA_PER_HR * 60);
+      note = ' <span class="low">· rest ~' + mins + ' min to play</span>';
+    }
+    el.innerHTML = '⚡ Energy <b>' + cur + '</b>/' + STAMINA_MAX +
+      '<span class="energy-track"><span class="energy-fill" style="width:' + cur + '%"></span></span>' +
+      '<span style="font-size:12px;color:#94a3b8">−' + STAMINA_COST + ' per test</span>' + note;
+  }
+
   function enterTestMode() {
+    // 開始一大題（測驗）扣體力；不夠就請他休息一下
+    const e = spendStamina(STAMINA_COST);
+    if (!e.ok) {
+      alert("⚡ Out of energy!\nYou have " + e.cur + "/" + STAMINA_MAX + ", need " + STAMINA_COST +
+            ".\nCome back in about " + e.mins + " minutes (energy refills " + STAMINA_PER_HR + "/hour).");
+      return;
+    }
+    scheduleStudentSave();   // 體力變動也存雲
     listenMode = false;
     // 顯示 tab 列、進度條、level 名稱
     levelsBar.style.display = "";
@@ -2636,6 +2690,7 @@
 
   // 畫面 1：等級卡片
   function renderLevelGrid() {
+    updateEnergy();
     levelGrid.innerHTML = "";
     manifest.levels.forEach((lv, i) => {
       const btn = document.createElement("button");
@@ -3249,10 +3304,11 @@
         try { const s = localStorage.getItem("score:" + name + ":" + a.file); if (s) scores[a.file] = JSON.parse(s); } catch (e) {}
         try { const p = localStorage.getItem("prog:" + name + ":" + a.file); if (p) progress[a.file] = JSON.parse(p); } catch (e) {}
       }));
-      let hero = null, avatar = "👦";
+      let hero = null, avatar = "👦", stamina = null;
       try { hero = JSON.parse(localStorage.getItem("hero:" + name) || "null"); } catch (e) {}
       try { avatar = localStorage.getItem("avatar:" + name) || "👦"; } catch (e) {}
-      students[name] = { avatar: avatar, hero: hero, scores: scores, progress: progress, updated: Date.now() };
+      try { stamina = JSON.parse(localStorage.getItem("stamina:" + name) || "null"); } catch (e) {}
+      students[name] = { avatar: avatar, hero: hero, scores: scores, progress: progress, stamina: stamina, updated: Date.now() };
     });
     return students;
   }
@@ -3391,6 +3447,7 @@
         if (st.hero) localStorage.setItem("hero:" + name, JSON.stringify(st.hero));
         const sc = st.scores || {}; Object.keys(sc).forEach(f => localStorage.setItem("score:" + name + ":" + f, JSON.stringify(sc[f])));
         const pr = st.progress || {}; Object.keys(pr).forEach(f => localStorage.setItem("prog:" + name + ":" + f, JSON.stringify(pr[f])));
+        if (st.stamina && typeof st.stamina.v === "number") localStorage.setItem("stamina:" + name, JSON.stringify(st.stamina));
       });
       if (blob.userName) { userName = blob.userName; localStorage.setItem("userName", blob.userName); }
     } catch (e) {}
