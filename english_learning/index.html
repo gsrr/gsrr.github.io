@@ -2861,12 +2861,15 @@
   function battleWin() {
     bossEmojiEl.classList.add("defeated");
     const avg = lessonStatus(currentArticle).avg || 0;
-    const pts = 3 + starsFromAvg(avg);
+    // 依表現給點：<80 → 0、80–89 → 1、90–99 → 2、100 → 3
+    const pts = starsFromAvg(avg);
     const h = loadHero(); h.unspent += pts; saveHero(h); battle.hero = h;
     document.getElementById("battleQ").textContent = "";
     document.getElementById("battleOpts").innerHTML = "";
     document.getElementById("battleLog").textContent = "";
-    renderAllocation("🏆 You defeated the boss!  +" + pts + " points!");
+    renderAllocation(pts > 0
+      ? "🏆 You defeated the boss!  +" + pts + " points!"
+      : "🏆 You defeated the boss! Score 80%+ to earn points.");
   }
   function battleLose() {
     heroEmojiEl.classList.add("defeated");
