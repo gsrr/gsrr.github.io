@@ -1,0 +1,149 @@
+{
+  "quiz3": [
+    {
+      "q": "Anna's hands are dirty.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna uses soap and water.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Now Anna's hands are clean.",
+      "answer": "Yes"
+    },
+    {
+      "q": "We wash before we eat.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna dries her hands with a towel.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Anna's hands are clean at first.",
+      "answer": "No"
+    },
+    {
+      "q": "Anna uses milk to wash.",
+      "answer": "No"
+    },
+    {
+      "q": "We wash after we eat.",
+      "answer": "No"
+    },
+    {
+      "q": "Clean hands are healthy.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Sam says good job.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Anna",
+      "pic": "👧"
+    },
+    {
+      "word": "Sam",
+      "pic": "👦"
+    },
+    {
+      "word": "hands",
+      "pic": "🙌"
+    },
+    {
+      "word": "soap",
+      "pic": "🧼"
+    },
+    {
+      "word": "water",
+      "pic": "💧"
+    },
+    {
+      "word": "towel",
+      "pic": "🧻"
+    }
+  ],
+  "wh": [
+    {
+      "q": "How are Anna's hands at first?",
+      "a": "They are dirty.",
+      "wrong": [
+        "They are clean.",
+        "They are wet."
+      ]
+    },
+    {
+      "q": "What does Anna use?",
+      "a": "Soap and water.",
+      "wrong": [
+        "Milk and sugar.",
+        "Sand."
+      ]
+    },
+    {
+      "q": "When do we wash hands?",
+      "a": "Before we eat.",
+      "wrong": [
+        "After we sleep.",
+        "Never."
+      ]
+    },
+    {
+      "q": "What does Anna dry with?",
+      "a": "A towel.",
+      "wrong": [
+        "A shoe.",
+        "A book."
+      ]
+    },
+    {
+      "q": "How are clean hands?",
+      "a": "Healthy.",
+      "wrong": [
+        "Dirty.",
+        "Sick."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "My hands are ___.",
+      "answer": "dirty",
+      "wrong": [
+        "soap",
+        "wash"
+      ]
+    },
+    {
+      "text": "I use soap and ___.",
+      "answer": "water",
+      "wrong": [
+        "clean",
+        "dirty"
+      ]
+    },
+    {
+      "text": "Now my hands are ___.",
+      "answer": "clean",
+      "wrong": [
+        "soap",
+        "towel"
+      ]
+    },
+    {
+      "text": "I dry my hands with a ___.",
+      "answer": "towel",
+      "wrong": [
+        "clean",
+        "wash"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "quiz3": [
+    {
+      "q": "Tom has a school bag.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Tom's bag is blue.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Tom has a book.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Tom has a pencil and a ruler.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna's bag is green.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Anna's bag is blue.",
+      "answer": "No"
+    },
+    {
+      "q": "Tom has a cat in his bag.",
+      "answer": "No"
+    },
+    {
+      "q": "Tom's pencil case is red.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna's bag is small.",
+      "answer": "No"
+    },
+    {
+      "q": "Anna puts her lunch in her bag.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Tom",
+      "pic": "👦"
+    },
+    {
+      "word": "Anna",
+      "pic": "👧"
+    },
+    {
+      "word": "bag",
+      "pic": "🎒"
+    },
+    {
+      "word": "book",
+      "pic": "📖"
+    },
+    {
+      "word": "pencil",
+      "pic": "✏️"
+    },
+    {
+      "word": "ruler",
+      "pic": "📏"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What color is Tom's bag?",
+      "a": "It is blue.",
+      "wrong": [
+        "It is red.",
+        "It is green."
+      ]
+    },
+    {
+      "q": "What does Tom have in his bag?",
+      "a": "A book.",
+      "wrong": [
+        "A ball.",
+        "A dog."
+      ]
+    },
+    {
+      "q": "What color is the pencil case?",
+      "a": "It is red.",
+      "wrong": [
+        "It is blue.",
+        "It is yellow."
+      ]
+    },
+    {
+      "q": "What color is Anna's bag?",
+      "a": "It is green.",
+      "wrong": [
+        "It is blue.",
+        "It is pink."
+      ]
+    },
+    {
+      "q": "What does Anna put in her bag?",
+      "a": "Her lunch.",
+      "wrong": [
+        "Her shoes.",
+        "Her cat."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "Look at my school ___.",
+      "answer": "bag",
+      "wrong": [
+        "blue",
+        "like"
+      ]
+    },
+    {
+      "text": "I have a ___ in my bag.",
+      "answer": "book",
+      "wrong": [
+        "red",
+        "big"
+      ]
+    },
+    {
+      "text": "I have a pencil and a ___.",
+      "answer": "ruler",
+      "wrong": [
+        "blue",
+        "have"
+      ]
+    },
+    {
+      "text": "My pencil case is ___.",
+      "answer": "red",
+      "wrong": [
+        "bag",
+        "book"
+      ]
+    }
+  ]
+}

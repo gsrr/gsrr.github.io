@@ -228,6 +228,156 @@
             7,
             9
           ]
+        },
+        {
+          "id": "015",
+          "title": "015 · My School Bag",
+          "file": "Pre-A1/015",
+          "scene": "school-bag",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7,
+            9
+          ]
+        },
+        {
+          "id": "016",
+          "title": "016 · I Like Fruit",
+          "file": "Pre-A1/016",
+          "scene": "fruit",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7,
+            9
+          ]
+        },
+        {
+          "id": "017",
+          "title": "017 · The Big Bus",
+          "file": "Pre-A1/017",
+          "scene": "bus",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7,
+            9
+          ]
+        },
+        {
+          "id": "018",
+          "title": "018 · My New Shoes",
+          "file": "Pre-A1/018",
+          "scene": "shoes",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7,
+            9
+          ]
+        },
+        {
+          "id": "019",
+          "title": "019 · Wash Your Hands",
+          "file": "Pre-A1/019",
+          "scene": "wash-hands",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7,
+            9
+          ]
+        },
+        {
+          "id": "020",
+          "title": "020 · The Little Duck",
+          "file": "Pre-A1/020",
+          "scene": "duck-pond",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7,
+            9
+          ]
+        },
+        {
+          "id": "021",
+          "title": "021 · My Teddy Bear",
+          "file": "Pre-A1/021",
+          "scene": "teddy",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7,
+            9
+          ]
+        },
+        {
+          "id": "022",
+          "title": "022 · Ice Cream Day",
+          "file": "Pre-A1/022",
+          "scene": "ice-cream",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7,
+            9
+          ]
+        },
+        {
+          "id": "023",
+          "title": "023 · The Kite",
+          "file": "Pre-A1/023",
+          "scene": "kite",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7,
+            9
+          ]
+        },
+        {
+          "id": "024",
+          "title": "024 · Feed the Fish",
+          "file": "Pre-A1/024",
+          "scene": "fish-tank",
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7,
+            9
+          ]
         }
       ]
     },

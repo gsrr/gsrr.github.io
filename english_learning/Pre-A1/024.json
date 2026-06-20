@@ -1,0 +1,149 @@
+{
+  "quiz3": [
+    {
+      "q": "Anna has fish.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The fish are orange.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna has three fish.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The fish live in a tank.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The fish eat fish food.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Ben has the fish.",
+      "answer": "No"
+    },
+    {
+      "q": "The fish are blue.",
+      "answer": "No"
+    },
+    {
+      "q": "Anna has ten fish.",
+      "answer": "No"
+    },
+    {
+      "q": "The fish can swim.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Anna feeds the fish.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Anna",
+      "pic": "👧"
+    },
+    {
+      "word": "Ben",
+      "pic": "👦"
+    },
+    {
+      "word": "fish",
+      "pic": "🐠"
+    },
+    {
+      "word": "water",
+      "pic": "💧"
+    },
+    {
+      "word": "food",
+      "pic": "🍚"
+    },
+    {
+      "word": "swim",
+      "pic": "🏊"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What does Anna have?",
+      "a": "Fish.",
+      "wrong": [
+        "A cat.",
+        "A bird."
+      ]
+    },
+    {
+      "q": "What color are the fish?",
+      "a": "They are orange.",
+      "wrong": [
+        "They are red.",
+        "They are black."
+      ]
+    },
+    {
+      "q": "How many fish?",
+      "a": "Three fish.",
+      "wrong": [
+        "One fish.",
+        "Ten fish."
+      ]
+    },
+    {
+      "q": "Where do the fish live?",
+      "a": "In a tank.",
+      "wrong": [
+        "In a box.",
+        "In the sky."
+      ]
+    },
+    {
+      "q": "What do the fish eat?",
+      "a": "Fish food.",
+      "wrong": [
+        "Cake.",
+        "Grass."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "Look at my ___.",
+      "answer": "fish",
+      "wrong": [
+        "orange",
+        "swim"
+      ]
+    },
+    {
+      "text": "They live in a ___.",
+      "answer": "tank",
+      "wrong": [
+        "fish",
+        "swim"
+      ]
+    },
+    {
+      "text": "The fish can ___.",
+      "answer": "swim",
+      "wrong": [
+        "tank",
+        "fish"
+      ]
+    },
+    {
+      "text": "They eat fish ___.",
+      "answer": "food",
+      "wrong": [
+        "swim",
+        "tank"
+      ]
+    }
+  ]
+}

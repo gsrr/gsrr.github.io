@@ -1,0 +1,149 @@
+{
+  "quiz3": [
+    {
+      "q": "Lily is hungry.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Lily likes apples.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Ben likes bananas.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Oranges are sweet.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Fruit is good for us.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Ben is hungry.",
+      "answer": "No"
+    },
+    {
+      "q": "Lily likes bananas.",
+      "answer": "No"
+    },
+    {
+      "q": "The apple is green.",
+      "answer": "No"
+    },
+    {
+      "q": "Ben likes oranges.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The banana is yellow.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Lily",
+      "pic": "👧"
+    },
+    {
+      "word": "Ben",
+      "pic": "👦"
+    },
+    {
+      "word": "apple",
+      "pic": "🍎"
+    },
+    {
+      "word": "banana",
+      "pic": "🍌"
+    },
+    {
+      "word": "orange",
+      "pic": "🍊"
+    },
+    {
+      "word": "fruit",
+      "pic": "🍇"
+    }
+  ],
+  "wh": [
+    {
+      "q": "Who is hungry?",
+      "a": "Lily is hungry.",
+      "wrong": [
+        "Ben is hungry.",
+        "Mom is hungry."
+      ]
+    },
+    {
+      "q": "What does Lily like?",
+      "a": "She likes apples.",
+      "wrong": [
+        "She likes cake.",
+        "She likes meat."
+      ]
+    },
+    {
+      "q": "What does Ben like?",
+      "a": "He likes bananas.",
+      "wrong": [
+        "He likes apples.",
+        "He likes candy."
+      ]
+    },
+    {
+      "q": "How do oranges taste?",
+      "a": "They are sweet.",
+      "wrong": [
+        "They are sour.",
+        "They are salty."
+      ]
+    },
+    {
+      "q": "What color is the apple?",
+      "a": "It is red.",
+      "wrong": [
+        "It is blue.",
+        "It is black."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "I like ___.",
+      "answer": "apples",
+      "wrong": [
+        "sweet",
+        "good"
+      ]
+    },
+    {
+      "text": "Oranges are ___.",
+      "answer": "sweet",
+      "wrong": [
+        "apple",
+        "eat"
+      ]
+    },
+    {
+      "text": "This apple is ___.",
+      "answer": "red",
+      "wrong": [
+        "fruit",
+        "eat"
+      ]
+    },
+    {
+      "text": "Fruit is good for ___.",
+      "answer": "us",
+      "wrong": [
+        "red",
+        "sweet"
+      ]
+    }
+  ]
+}

@@ -1145,7 +1145,7 @@
   }
 
   /* ---------- 體力（energy）：避免一直玩 ---------- */
-  const STAMINA_MAX = 100, STAMINA_COST = 35, STAMINA_PER_HR = 30;
+  const STAMINA_MAX = 100, STAMINA_COST = 20, STAMINA_PER_HR = 20;   // 每題扣20、每小時回20(=每30分10)
   function staminaKey(name) { return "stamina:" + (name || userName || "guest"); }
   function readStamina(name) {
     try {
@@ -1190,7 +1190,7 @@
     const e = spendStamina(STAMINA_COST);
     if (!e.ok) {
       alert("⚡ Out of energy!\nYou have " + e.cur + "/" + STAMINA_MAX + ", need " + STAMINA_COST +
-            ".\nCome back in about " + e.mins + " minutes (energy refills " + STAMINA_PER_HR + "/hour).");
+            ".\nCome back in about " + e.mins + " minutes (energy refills 10 every 30 min).");
       return;
     }
     scheduleStudentSave();   // 體力變動也存雲

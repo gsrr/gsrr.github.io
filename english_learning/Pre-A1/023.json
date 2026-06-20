@@ -1,0 +1,149 @@
+{
+  "quiz3": [
+    {
+      "q": "Leo has a kite.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The kite is red and big.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The wind is strong.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The kite flies high.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Mia holds the string.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Mia has the kite.",
+      "answer": "No"
+    },
+    {
+      "q": "The kite is small.",
+      "answer": "No"
+    },
+    {
+      "q": "There is no wind.",
+      "answer": "No"
+    },
+    {
+      "q": "The kite flies high.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They fly it together.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Leo",
+      "pic": "👦"
+    },
+    {
+      "word": "Mia",
+      "pic": "👧"
+    },
+    {
+      "word": "kite",
+      "pic": "🪁"
+    },
+    {
+      "word": "wind",
+      "pic": "🌬️"
+    },
+    {
+      "word": "sky",
+      "pic": "☁️"
+    },
+    {
+      "word": "string",
+      "pic": "🧵"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What does Leo have?",
+      "a": "A kite.",
+      "wrong": [
+        "A ball.",
+        "A bike."
+      ]
+    },
+    {
+      "q": "What color is the kite?",
+      "a": "It is red.",
+      "wrong": [
+        "It is blue.",
+        "It is green."
+      ]
+    },
+    {
+      "q": "How is the wind?",
+      "a": "It is strong.",
+      "wrong": [
+        "It is gone.",
+        "It is cold."
+      ]
+    },
+    {
+      "q": "Where does the kite fly?",
+      "a": "In the sky.",
+      "wrong": [
+        "In the sea.",
+        "Under the bed."
+      ]
+    },
+    {
+      "q": "What does Mia hold?",
+      "a": "The string.",
+      "wrong": [
+        "The bus.",
+        "The dog."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "Look at my ___!",
+      "answer": "kite",
+      "wrong": [
+        "red",
+        "big"
+      ]
+    },
+    {
+      "text": "The ___ is strong.",
+      "answer": "wind",
+      "wrong": [
+        "kite",
+        "high"
+      ]
+    },
+    {
+      "text": "It goes up in the ___.",
+      "answer": "sky",
+      "wrong": [
+        "kite",
+        "wind"
+      ]
+    },
+    {
+      "text": "Hold the ___.",
+      "answer": "string",
+      "wrong": [
+        "sky",
+        "wind"
+      ]
+    }
+  ]
+}

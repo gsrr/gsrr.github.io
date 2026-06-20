@@ -1,0 +1,149 @@
+{
+  "quiz3": [
+    {
+      "q": "Ben has a teddy bear.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The bear is brown and soft.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The bear's name is Fluffy.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Ben sleeps with it every night.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Lily has a teddy bear too.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Lily has the bear named Fluffy.",
+      "answer": "No"
+    },
+    {
+      "q": "The bear is hard.",
+      "answer": "No"
+    },
+    {
+      "q": "The bear is green.",
+      "answer": "No"
+    },
+    {
+      "q": "Ben hugs his bear.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Ben sleeps with the bear.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Ben",
+      "pic": "👦"
+    },
+    {
+      "word": "Lily",
+      "pic": "👧"
+    },
+    {
+      "word": "bear",
+      "pic": "🧸"
+    },
+    {
+      "word": "hug",
+      "pic": "🤗"
+    },
+    {
+      "word": "sleep",
+      "pic": "😴"
+    },
+    {
+      "word": "night",
+      "pic": "🌙"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What does Ben have?",
+      "a": "A teddy bear.",
+      "wrong": [
+        "A dog.",
+        "A ball."
+      ]
+    },
+    {
+      "q": "What color is the bear?",
+      "a": "It is brown.",
+      "wrong": [
+        "It is blue.",
+        "It is white."
+      ]
+    },
+    {
+      "q": "What is the bear's name?",
+      "a": "Fluffy.",
+      "wrong": [
+        "Max.",
+        "Coco."
+      ]
+    },
+    {
+      "q": "When does Ben sleep with it?",
+      "a": "Every night.",
+      "wrong": [
+        "Every morning.",
+        "Never."
+      ]
+    },
+    {
+      "q": "What does Ben do with his bear?",
+      "a": "He hugs it.",
+      "wrong": [
+        "He throws it.",
+        "He eats it."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "This is my teddy ___.",
+      "answer": "bear",
+      "wrong": [
+        "soft",
+        "cute"
+      ]
+    },
+    {
+      "text": "My bear is brown and ___.",
+      "answer": "soft",
+      "wrong": [
+        "bear",
+        "hug"
+      ]
+    },
+    {
+      "text": "Its ___ is Fluffy.",
+      "answer": "name",
+      "wrong": [
+        "soft",
+        "hug"
+      ]
+    },
+    {
+      "text": "I ___ my bear.",
+      "answer": "hug",
+      "wrong": [
+        "bear",
+        "night"
+      ]
+    }
+  ]
+}

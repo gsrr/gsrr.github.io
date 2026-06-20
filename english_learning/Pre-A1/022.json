@@ -1,0 +1,149 @@
+{
+  "quiz3": [
+    {
+      "q": "It is a hot day.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Sam wants chocolate ice cream.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Emma wants strawberry.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The ice cream is cold.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The ice cream is melting.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "It is a cold day.",
+      "answer": "No"
+    },
+    {
+      "q": "Sam wants strawberry.",
+      "answer": "No"
+    },
+    {
+      "q": "Emma wants chocolate.",
+      "answer": "No"
+    },
+    {
+      "q": "Sam loves ice cream.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The ice cream is sweet.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Sam",
+      "pic": "👦"
+    },
+    {
+      "word": "Emma",
+      "pic": "👧"
+    },
+    {
+      "word": "ice cream",
+      "pic": "🍦"
+    },
+    {
+      "word": "hot",
+      "pic": "☀️"
+    },
+    {
+      "word": "cold",
+      "pic": "🧊"
+    },
+    {
+      "word": "sweet",
+      "pic": "🍬"
+    }
+  ],
+  "wh": [
+    {
+      "q": "How is the day?",
+      "a": "It is hot.",
+      "wrong": [
+        "It is cold.",
+        "It is rainy."
+      ]
+    },
+    {
+      "q": "What does Sam want?",
+      "a": "Chocolate ice cream.",
+      "wrong": [
+        "Strawberry.",
+        "Vanilla."
+      ]
+    },
+    {
+      "q": "What does Emma want?",
+      "a": "Strawberry.",
+      "wrong": [
+        "Chocolate.",
+        "Mango."
+      ]
+    },
+    {
+      "q": "How is the ice cream?",
+      "a": "It is cold.",
+      "wrong": [
+        "It is hot.",
+        "It is warm."
+      ]
+    },
+    {
+      "q": "What happens to the ice cream?",
+      "a": "It melts.",
+      "wrong": [
+        "It freezes.",
+        "It grows."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "It is a hot ___.",
+      "answer": "day",
+      "wrong": [
+        "cold",
+        "sweet"
+      ]
+    },
+    {
+      "text": "I want chocolate ice ___.",
+      "answer": "cream",
+      "wrong": [
+        "hot",
+        "cold"
+      ]
+    },
+    {
+      "text": "My ice cream is ___.",
+      "answer": "cold",
+      "wrong": [
+        "cream",
+        "day"
+      ]
+    },
+    {
+      "text": "Oh no, it is ___!",
+      "answer": "melting",
+      "wrong": [
+        "cold",
+        "sweet"
+      ]
+    }
+  ]
+}

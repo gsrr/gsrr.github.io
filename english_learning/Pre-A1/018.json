@@ -1,0 +1,149 @@
+{
+  "quiz3": [
+    {
+      "q": "Emma has new shoes.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The shoes are white.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Emma can run fast.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Emma can jump high.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Emma wears socks.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "Leo has new shoes.",
+      "answer": "No"
+    },
+    {
+      "q": "The shoes are black.",
+      "answer": "No"
+    },
+    {
+      "q": "Emma can not run.",
+      "answer": "No"
+    },
+    {
+      "q": "Leo's shoes are old.",
+      "answer": "Yes"
+    },
+    {
+      "q": "They will run together.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Emma",
+      "pic": "👧"
+    },
+    {
+      "word": "Leo",
+      "pic": "👦"
+    },
+    {
+      "word": "shoes",
+      "pic": "👟"
+    },
+    {
+      "word": "socks",
+      "pic": "🧦"
+    },
+    {
+      "word": "run",
+      "pic": "🏃"
+    },
+    {
+      "word": "jump",
+      "pic": "🦘"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What color are the shoes?",
+      "a": "They are white.",
+      "wrong": [
+        "They are black.",
+        "They are red."
+      ]
+    },
+    {
+      "q": "What can Emma do in them?",
+      "a": "Run fast.",
+      "wrong": [
+        "Swim fast.",
+        "Fly high."
+      ]
+    },
+    {
+      "q": "Can Emma jump?",
+      "a": "Yes, she can jump high.",
+      "wrong": [
+        "No, she can not.",
+        "She can sit."
+      ]
+    },
+    {
+      "q": "What does Emma wear with shoes?",
+      "a": "Socks.",
+      "wrong": [
+        "A hat.",
+        "Gloves."
+      ]
+    },
+    {
+      "q": "How are Leo's shoes?",
+      "a": "They are old.",
+      "wrong": [
+        "They are new.",
+        "They are big."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "Look at my new ___.",
+      "answer": "shoes",
+      "wrong": [
+        "white",
+        "run"
+      ]
+    },
+    {
+      "text": "They are ___.",
+      "answer": "white",
+      "wrong": [
+        "shoes",
+        "jump"
+      ]
+    },
+    {
+      "text": "I can run ___.",
+      "answer": "fast",
+      "wrong": [
+        "shoes",
+        "socks"
+      ]
+    },
+    {
+      "text": "I wear ___ with my shoes.",
+      "answer": "socks",
+      "wrong": [
+        "fast",
+        "run"
+      ]
+    }
+  ]
+}

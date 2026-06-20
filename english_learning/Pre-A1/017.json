@@ -1,0 +1,149 @@
+{
+  "quiz3": [
+    {
+      "q": "The bus is big.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The bus is yellow.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Sam goes to school by bus.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The bus has six wheels.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The bus is fast.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "The bus is small.",
+      "answer": "No"
+    },
+    {
+      "q": "The bus is red.",
+      "answer": "No"
+    },
+    {
+      "q": "Sam walks to school.",
+      "answer": "No"
+    },
+    {
+      "q": "Mia likes the bus.",
+      "answer": "Yes"
+    },
+    {
+      "q": "Sam sits by the window.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Sam",
+      "pic": "👦"
+    },
+    {
+      "word": "Mia",
+      "pic": "👧"
+    },
+    {
+      "word": "bus",
+      "pic": "🚌"
+    },
+    {
+      "word": "wheel",
+      "pic": "🛞"
+    },
+    {
+      "word": "window",
+      "pic": "🪟"
+    },
+    {
+      "word": "school",
+      "pic": "🏫"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What color is the bus?",
+      "a": "It is yellow.",
+      "wrong": [
+        "It is red.",
+        "It is green."
+      ]
+    },
+    {
+      "q": "How does Sam go to school?",
+      "a": "By bus.",
+      "wrong": [
+        "By car.",
+        "On foot."
+      ]
+    },
+    {
+      "q": "How many wheels?",
+      "a": "Six wheels.",
+      "wrong": [
+        "Two wheels.",
+        "Ten wheels."
+      ]
+    },
+    {
+      "q": "Where does Sam sit?",
+      "a": "By the window.",
+      "wrong": [
+        "On the floor.",
+        "Near the door."
+      ]
+    },
+    {
+      "q": "How is the bus?",
+      "a": "It is fast.",
+      "wrong": [
+        "It is slow.",
+        "It is broken."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "The bus is ___.",
+      "answer": "yellow",
+      "wrong": [
+        "wheel",
+        "window"
+      ]
+    },
+    {
+      "text": "I go to school by ___.",
+      "answer": "bus",
+      "wrong": [
+        "yellow",
+        "fast"
+      ]
+    },
+    {
+      "text": "It has six ___.",
+      "answer": "wheels",
+      "wrong": [
+        "yellow",
+        "big"
+      ]
+    },
+    {
+      "text": "I sit by the ___.",
+      "answer": "window",
+      "wrong": [
+        "bus",
+        "fast"
+      ]
+    }
+  ]
+}

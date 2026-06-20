@@ -1,0 +1,149 @@
+{
+  "quiz3": [
+    {
+      "q": "There is a little duck.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The duck is yellow.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The duck can swim.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The duck swims in the pond.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The duck has two wings.",
+      "answer": "Yes"
+    }
+  ],
+  "quiz4": [
+    {
+      "q": "The duck is big.",
+      "answer": "No"
+    },
+    {
+      "q": "The duck is blue.",
+      "answer": "No"
+    },
+    {
+      "q": "The duck can not swim.",
+      "answer": "No"
+    },
+    {
+      "q": "The duck says quack.",
+      "answer": "Yes"
+    },
+    {
+      "q": "The duck can flap its wings.",
+      "answer": "Yes"
+    }
+  ],
+  "vocab": [
+    {
+      "word": "Mia",
+      "pic": "👧"
+    },
+    {
+      "word": "Tom",
+      "pic": "👦"
+    },
+    {
+      "word": "duck",
+      "pic": "🦆"
+    },
+    {
+      "word": "pond",
+      "pic": "💧"
+    },
+    {
+      "word": "swim",
+      "pic": "🏊"
+    },
+    {
+      "word": "wing",
+      "pic": "🪶"
+    }
+  ],
+  "wh": [
+    {
+      "q": "What color is the duck?",
+      "a": "It is yellow.",
+      "wrong": [
+        "It is red.",
+        "It is green."
+      ]
+    },
+    {
+      "q": "How big is the duck?",
+      "a": "It is small.",
+      "wrong": [
+        "It is big.",
+        "It is tall."
+      ]
+    },
+    {
+      "q": "What can the duck do?",
+      "a": "It can swim.",
+      "wrong": [
+        "It can drive.",
+        "It can read."
+      ]
+    },
+    {
+      "q": "Where does the duck swim?",
+      "a": "In the pond.",
+      "wrong": [
+        "In a cup.",
+        "In the sky."
+      ]
+    },
+    {
+      "q": "What does the duck say?",
+      "a": "Quack.",
+      "wrong": [
+        "Moo.",
+        "Woof."
+      ]
+    }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    {
+      "text": "Look at the little ___.",
+      "answer": "duck",
+      "wrong": [
+        "yellow",
+        "swim"
+      ]
+    },
+    {
+      "text": "The duck can ___.",
+      "answer": "swim",
+      "wrong": [
+        "duck",
+        "pond"
+      ]
+    },
+    {
+      "text": "It swims in the ___.",
+      "answer": "pond",
+      "wrong": [
+        "swim",
+        "yellow"
+      ]
+    },
+    {
+      "text": "The duck has two ___.",
+      "answer": "wings",
+      "wrong": [
+        "swim",
+        "pond"
+      ]
+    }
+  ]
+}
