@@ -293,7 +293,7 @@ class Handler(BaseHTTPRequestHandler):
                     self._send({"error": "User already exists"}, 409)
                     return
                 salt = secrets.token_hex(16)
-                u = {"salt": salt, "hash": hash_pw(pw, salt), "code": gen_code(db)}
+                u = {"salt": salt, "hash": hash_pw(pw, salt), "code": gen_code(db), "created": time.time()}
                 db["users"][user] = u
                 db["codes"][u["code"]] = user
             else:
@@ -393,7 +393,8 @@ class Handler(BaseHTTPRequestHandler):
                 sd = (p.get("sdata") or {}).get("students") or {}  # 本人個人進度
                 for n, b in sd.items():
                     students.setdefault(n, b)
-                accounts.append({"user": user, "code": u.get("code"), "students": students})
+                accounts.append({"user": user, "code": u.get("code"),
+                                 "created": u.get("created"), "students": students})
         self._send({"accounts": accounts})
 
     def log_message(self, *args):
