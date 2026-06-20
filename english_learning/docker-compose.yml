@@ -3,6 +3,8 @@ services:
     build: .
     image: english-learning:latest
     container_name: english-learning
+    environment:
+      - ADMIN_KEY=change-me-please     # 後台總管金鑰，請改成自己的強密碼；留空則停用後台
     ports:
       - "8000:443"         # 主機 8000 -> 容器 443 (HTTPS)
     volumes:

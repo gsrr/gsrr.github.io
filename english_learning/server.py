@@ -7,7 +7,7 @@
    計數存於 /data/visits.json（docker volume）。
    STT 用 faster-whisper（開源、免費、CPU 可跑）；缺套件/ffmpeg 時回傳錯誤、不影響計數。
 """
-import json, os, threading, tempfile, subprocess, hashlib, secrets
+import json, os, threading, tempfile, subprocess, hashlib, secrets, time
 from urllib.parse import urlparse, parse_qs
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -68,19 +68,59 @@ def write_count(n):
     os.replace(tmp, DATA)
 
 
-# ---- 帳號（老師/家長）+ 雲端進度 ----
-# 存於 /data/accounts.json：{"users":{user:{salt,hash,data}}, "tokens":{token:user}}
-# 密碼用 PBKDF2 雜湊（不存明碼）。這是 pilot 等級的簡易驗證，不是高安全方案。
+# ---- 帳號 + 雲端進度（拆檔） ----
+# accounts.json 只放帳密與班級碼：{"users":{user:{salt,hash,code}}, "codes":{code:user}}
+# 進度各自一檔： /data/progress/<hash>.json = {"students":{…班級名冊…}, "sdata":{…個人快照…}}
+# token 放記憶體、有過期時間（伺服器重啟需重新登入）。密碼 PBKDF2 雜湊。pilot 等級驗證。
 ACCT = "/data/accounts.json"
+PROG_DIR = "/data/progress"
 acct_lock = threading.Lock()
+ADMIN_KEY = os.environ.get("ADMIN_KEY", "")     # 後台總管金鑰；沒設則停用後台
+CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"   # 班級碼去掉易混字 0/O/1/I/L
+
+# --- 記憶體 token（含過期）---
+TOKEN_TTL = 30 * 24 * 3600        # 30 天
+_tokens = {}                      # token -> {"user":.., "exp":..}
+_tok_lock = threading.Lock()
 
 
+def _prune_tokens():
+    now = time.time()
+    for t in [t for t, r in _tokens.items() if r["exp"] < now]:
+        _tokens.pop(t, None)
+
+
+def issue_token(user):
+    tok = secrets.token_hex(24)
+    with _tok_lock:
+        _prune_tokens()
+        _tokens[tok] = {"user": user, "exp": time.time() + TOKEN_TTL}
+    return tok
+
+
+def token_user(tok):
+    if not tok:
+        return None
+    with _tok_lock:
+        rec = _tokens.get(tok)
+        if not rec:
+            return None
+        if rec["exp"] < time.time():
+            _tokens.pop(tok, None)
+            return None
+        return rec["user"]
+
+
+# --- accounts.json（帳密 + 碼）---
 def load_accounts():
     try:
         with open(ACCT) as f:
-            return json.load(f)
+            db = json.load(f)
     except Exception:
-        return {"users": {}, "tokens": {}, "codes": {}}
+        db = {}
+    db.setdefault("users", {})
+    db.setdefault("codes", {})
+    return db
 
 
 def save_accounts(db):
@@ -91,12 +131,34 @@ def save_accounts(db):
     os.replace(tmp, ACCT)
 
 
+# --- 進度檔（每位使用者一檔，檔名用使用者名雜湊避免特殊字元）---
+def _prog_path(user):
+    h = hashlib.sha1(user.encode("utf-8")).hexdigest()[:20]
+    return os.path.join(PROG_DIR, h + ".json")
+
+
+def load_progress(user):
+    try:
+        with open(_prog_path(user)) as f:
+            p = json.load(f)
+    except Exception:
+        p = {}
+    p.setdefault("students", {})
+    p.setdefault("sdata", {})
+    return p
+
+
+def save_progress(user, p):
+    os.makedirs(PROG_DIR, exist_ok=True)
+    path = _prog_path(user)
+    tmp = path + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(p, f)
+    os.replace(tmp, path)
+
+
 def hash_pw(password, salt):
     return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), bytes.fromhex(salt), 100000).hex()
-
-
-# 班級加入碼：去掉易混字（0/O/1/I/L），學生輸入用
-CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 
 
 def gen_code(db):
@@ -105,6 +167,32 @@ def gen_code(db):
         code = "".join(secrets.choice(CODE_ALPHABET) for _ in range(5))
         if code not in codes:
             return code
+
+
+# 舊版 accounts.json（data/sdata/tokens 內嵌）一次性搬到拆檔結構
+def migrate_accounts():
+    try:
+        with open(ACCT) as f:
+            db = json.load(f)
+    except Exception:
+        return
+    changed = False
+    for user, u in db.get("users", {}).items():
+        if "data" in u or "sdata" in u:
+            p = load_progress(user)
+            if isinstance(u.get("data"), dict):
+                p["students"] = u["data"].get("students", {}) or p.get("students", {})
+            if "sdata" in u:
+                p["sdata"] = u.get("sdata") or {}
+            save_progress(user, p)
+            u.pop("data", None)
+            u.pop("sdata", None)
+            changed = True
+    if "tokens" in db:        # 舊的檔案內 token 丟掉（改記憶體）
+        db.pop("tokens", None)
+        changed = True
+    if changed:
+        save_accounts(db)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -124,6 +212,8 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_dashboard()
         elif path == "/api/student/load":
             self._handle_student_load()
+        elif path == "/api/admin/overview":
+            self._handle_admin_overview()
         else:
             self._send({"error": "not found"}, 404)
 
@@ -189,44 +279,41 @@ class Handler(BaseHTTPRequestHandler):
             return
         with acct_lock:
             db = load_accounts()
-            db.setdefault("codes", {})
             u = db["users"].get(user)
             if register:
                 if u:
                     self._send({"error": "User already exists"}, 409)
                     return
                 salt = secrets.token_hex(16)
-                u = {"salt": salt, "hash": hash_pw(pw, salt), "code": None,
-                     "data": {"students": {}}, "sdata": {}}
+                u = {"salt": salt, "hash": hash_pw(pw, salt), "code": gen_code(db)}
                 db["users"][user] = u
+                db["codes"][u["code"]] = user
             else:
                 if not u or hash_pw(pw, u["salt"]) != u["hash"]:
                     self._send({"error": "Wrong username or password"}, 401)
                     return
-            if not u.get("code"):                  # 確保每個帳號有一組班級碼（老師入口用）
-                u["code"] = gen_code(db)
-                db["codes"][u["code"]] = user
-            u.setdefault("sdata", {})              # 學生入口的個人進度快照
-            token = secrets.token_hex(24)
-            db["tokens"][token] = user
+                if not u.get("code"):              # 老帳號補一組班級碼
+                    u["code"] = gen_code(db)
+                    db["codes"][u["code"]] = user
             save_accounts(db)
+            sdata = load_progress(user).get("sdata", {})
+        token = issue_token(user)
         # data 回傳學生端快照，讓登入後可還原個人進度
-        self._send({"token": token, "user": user, "code": u["code"], "data": u.get("sdata", {})})
+        self._send({"token": token, "user": user, "code": u["code"], "data": sdata})
 
     # 老師自己的裝置（用 token）上傳
     def _handle_sync(self):
         d = self._body_json()
         incoming = d.get("students") or {}
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
         with acct_lock:
-            db = load_accounts()
-            user = db["tokens"].get(self._token())
-            if not user:
-                self._send({"error": "Not logged in"}, 401)
-                return
-            students = db["users"][user]["data"].setdefault("students", {})
+            p = load_progress(user)
             for name, blob in incoming.items():
-                students[name] = blob
-            save_accounts(db)
+                p["students"][name] = blob
+            save_progress(user, p)
         self._send({"ok": True})
 
     # 學生裝置：只用班級碼上傳（不需老師密碼）
@@ -236,55 +323,72 @@ class Handler(BaseHTTPRequestHandler):
         incoming = d.get("students") or {}
         with acct_lock:
             db = load_accounts()
-            user = db.setdefault("codes", {}).get(code)
+            user = db["codes"].get(code)
             if not user:
                 self._send({"error": "Invalid class code"}, 404)
                 return
-            students = db["users"][user]["data"].setdefault("students", {})
+            p = load_progress(user)
             for name, blob in incoming.items():
-                students[name] = blob          # 以學生名為鍵，後寫覆蓋
-            save_accounts(db)
+                p["students"][name] = blob          # 以學生名為鍵，後寫覆蓋
+            save_progress(user, p)
         self._send({"ok": True})
 
     def _handle_dashboard(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
         with acct_lock:
             db = load_accounts()
-            user = db["tokens"].get(self._token())
-            if not user:
-                self._send({"error": "Not logged in"}, 401)
-                return
-            u = db["users"][user]
-            data = dict(u["data"])
-            data["code"] = u.get("code")
-        self._send(data)
+            code = (db["users"].get(user) or {}).get("code")
+            p = load_progress(user)
+        self._send({"code": code, "students": p.get("students", {})})
 
-    # ---- 學生入口：跨裝置雲端存檔，存在統一帳號的 sdata ----
+    # ---- 學生入口：跨裝置雲端存檔，存在個人進度檔的 sdata ----
     def _handle_student_save(self):
         d = self._body_json()
         blob = d.get("data")
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
         with acct_lock:
-            db = load_accounts()
-            user = db["tokens"].get(self._token())
-            if not user or user not in db["users"]:
-                self._send({"error": "Not logged in"}, 401)
-                return
-            db["users"][user]["sdata"] = blob if isinstance(blob, dict) else {}
-            save_accounts(db)
+            p = load_progress(user)
+            p["sdata"] = blob if isinstance(blob, dict) else {}
+            save_progress(user, p)
         self._send({"ok": True})
 
     def _handle_student_load(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        with acct_lock:
+            p = load_progress(user)
+        self._send({"data": p.get("sdata", {})})
+
+    # ---- 後台總管：看所有帳號 / 所有學生（需 ADMIN_KEY）----
+    def _handle_admin_overview(self):
+        key = (parse_qs(urlparse(self.path).query).get("key", [""]) or [""])[0]
+        if not ADMIN_KEY or key != ADMIN_KEY:
+            self._send({"error": "Forbidden"}, 403)
+            return
         with acct_lock:
             db = load_accounts()
-            user = db["tokens"].get(self._token())
-            if not user or user not in db["users"]:
-                self._send({"error": "Not logged in"}, 401)
-                return
-            data = db["users"][user].get("sdata", {})
-        self._send({"data": data})
+            accounts = []
+            for user, u in db.get("users", {}).items():
+                p = load_progress(user)
+                students = dict(p.get("students", {}))           # 班級名冊
+                sd = (p.get("sdata") or {}).get("students") or {}  # 本人個人進度
+                for n, b in sd.items():
+                    students.setdefault(n, b)
+                accounts.append({"user": user, "code": u.get("code"), "students": students})
+        self._send({"accounts": accounts})
 
     def log_message(self, *args):
         pass  # 安靜
 
 
 if __name__ == "__main__":
+    migrate_accounts()      # 舊版單檔結構 -> 拆檔（只跑一次有效果）
     ThreadingHTTPServer(("127.0.0.1", 5000), Handler).serve_forever()

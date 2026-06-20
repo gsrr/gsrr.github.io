@@ -359,6 +359,9 @@
   .dash-head { font-size: 16px; margin-bottom: 6px; }
   .dash-lvs { display: flex; flex-wrap: wrap; gap: 8px; }
   .dash-lv { font-size: 13px; background: #f1f5f9; border-radius: 8px; padding: 3px 8px; }
+  .admin-acct { border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 12px; margin: 10px 0; background: #f8fafc; }
+  .admin-acct-head { font-size: 15px; margin-bottom: 6px; }
+  .acct-code-inline { font-size: 12px; color: #7c3aed; background: #f5f3ff; padding: 1px 7px; border-radius: 6px; margin-left: 6px; }
   .acct-sep { border: none; border-top: 1px solid #e2e8f0; margin: 18px 0; }
   .acct-code { text-align: center; font-size: 15px; margin: 8px 0; }
   .acct-code b { font-size: 22px; letter-spacing: 2px; color: #7c3aed; background: #f5f3ff; padding: 4px 12px; border-radius: 8px; }
@@ -654,6 +657,7 @@
           <button id="acctRegisterBtn" class="back-btn">Create class</button>
         </div>
         <div id="acctMsg" class="acct-msg"></div>
+        <div style="text-align:center;margin-top:10px"><button id="adminBtn" class="back-btn" style="font-size:12px;opacity:0.6">🛠 Admin</button></div>
       </div>
       <div id="acctPanel" class="hidden">
         <div class="acct-top"><span id="acctWho"></span>
@@ -666,6 +670,16 @@
         <div id="acctMsg2" class="acct-msg"></div>
         <div id="dashboard"></div>
       </div>
+    </div>
+
+    <!-- 畫面 0d：後台總管（看所有帳號/學生，需 ADMIN_KEY） -->
+    <div id="screenAdmin" class="hidden">
+      <div class="learn-top">
+        <button class="back-btn" id="backFromAdmin">← Back</button>
+        <span class="learn-title">🛠 Admin — All Users</span>
+      </div>
+      <div class="acct-btns"><button id="adminRefreshBtn" class="back-btn">↻ Refresh</button></div>
+      <div id="adminBody"></div>
     </div>
 
     <!-- 畫面 1：選等級 -->
@@ -2571,7 +2585,7 @@
   userNameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") addProfile(); });
 
   function showScreen(el) {
-    [screenRole, screenProfile, screenStudentAcct, screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena, screenTeacher].forEach(s => s.classList.add("hidden"));
+    [screenRole, screenProfile, screenStudentAcct, screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena, screenTeacher, screenAdmin].forEach(s => s.classList.add("hidden"));
     el.classList.remove("hidden");
     // 右上角區（使用者鈕 + 匯出）：只在學生 app 內的畫面顯示
     topRight.classList.toggle("hidden", !(userName && [screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena].indexOf(el) !== -1));
@@ -3281,6 +3295,7 @@
 
   /* ================= 老師/家長帳號 + 雲端進度後台 ================= */
   const screenTeacher = document.getElementById("screenTeacher");
+  const screenAdmin   = document.getElementById("screenAdmin");
   // 單一帳號：學生入口與老師入口共用同一個 token
   function authToken() { try { return localStorage.getItem("auth:token") || ""; } catch (e) { return ""; } }
   function authUser()  { try { return localStorage.getItem("auth:user") || ""; } catch (e) { return ""; } }
@@ -3385,16 +3400,11 @@
       renderDashboard(data);
     }).catch(() => {});
   }
-  function renderDashboard(data) {
-    const el = document.getElementById("dashboard");
-    const students = (data && data.students) || {};
-    const names = Object.keys(students).sort();
-    if (!names.length) {
-      el.innerHTML = '<p class="screen-intro">No student data yet. On each student device, log in here and tap “⬆ Sync this device”.</p>';
-      return;
-    }
-    let html = "";
-    names.forEach(name => {
+  // 把一份 students map 畫成卡片 HTML（老師後台與總管後台共用）
+  function studentCardsHTML(students) {
+    const names = Object.keys(students || {}).sort();
+    if (!names.length) return '<p class="screen-intro" style="margin:4px 0">No students yet.</p>';
+    return names.map(name => {
       const st = students[name] || {}, sc = st.scores || {};
       let pcts = [], rows = "";
       (manifest ? manifest.levels : []).forEach(lv => {
@@ -3403,10 +3413,38 @@
         rows += '<span class="dash-lv">' + (lv.icon || "") + ' ' + (lv.name || lv.id) + ': ' + passed + '/' + lv.articles.length + '</span>';
       });
       const avg = pcts.length ? Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length) : null;
-      html += '<div class="dash-card"><div class="dash-head">' + (st.avatar || "👦") + ' <b>' + name + '</b>' +
-              (avg != null ? ' · avg ' + avg + '%' : '') + '</div><div class="dash-lvs">' + rows + '</div></div>';
+      return '<div class="dash-card"><div class="dash-head">' + (st.avatar || "👦") + ' <b>' + name + '</b>' +
+             (avg != null ? ' · avg ' + avg + '%' : '') + '</div><div class="dash-lvs">' + rows + '</div></div>';
+    }).join("");
+  }
+  function renderDashboard(data) {
+    const students = (data && data.students) || {};
+    document.getElementById("dashboard").innerHTML = Object.keys(students).length
+      ? studentCardsHTML(students)
+      : '<p class="screen-intro">No student data yet. Students join with your class code and their progress shows here.</p>';
+  }
+  // 後台總管：看所有帳號/學生（需 ADMIN_KEY）
+  function renderAdmin(data) {
+    const el = document.getElementById("adminBody");
+    const accounts = (data && data.accounts) || [];
+    if (!accounts.length) { el.innerHTML = '<p class="screen-intro">No accounts yet.</p>'; return; }
+    let total = 0; accounts.forEach(a => total += Object.keys(a.students || {}).length);
+    accounts.sort((a, b) => (a.user || "").localeCompare(b.user || ""));
+    let html = '<p class="screen-intro">' + accounts.length + ' accounts · ' + total + ' learners</p>';
+    accounts.forEach(acc => {
+      html += '<div class="admin-acct"><div class="admin-acct-head">👤 <b>' + acc.user + '</b>' +
+              (acc.code ? '<span class="acct-code-inline">code ' + acc.code + '</span>' : '') + '</div>' +
+              studentCardsHTML(acc.students) + '</div>';
     });
     el.innerHTML = html;
+  }
+  function adminEntry() {
+    let key = ""; try { key = localStorage.getItem("admin:key") || ""; } catch (e) {}
+    if (!key) { key = (prompt("Admin key:") || "").trim(); if (!key) return; }
+    fetch("/api/admin/overview?key=" + encodeURIComponent(key))
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(data => { try { localStorage.setItem("admin:key", key); } catch (e) {} renderAdmin(data); showScreen(screenAdmin); })
+      .catch(st => { try { localStorage.removeItem("admin:key"); } catch (e) {} alert(st === 403 ? "Wrong or disabled admin key." : "Server not available."); });
   }
   function acctLogout() {
     clearAuth();
@@ -3427,6 +3465,9 @@
   document.getElementById("acctSyncBtn").addEventListener("click", () => syncNow(loadDashboard));
   document.getElementById("acctRefreshBtn").addEventListener("click", loadDashboard);
   document.getElementById("acctLogoutBtn").addEventListener("click", acctLogout);
+  document.getElementById("adminBtn").addEventListener("click", adminEntry);
+  document.getElementById("adminRefreshBtn").addEventListener("click", adminEntry);
+  document.getElementById("backFromAdmin").addEventListener("click", () => showScreen(screenTeacher));
 
   /* ===== 學生個人帳號：跨裝置雲端存檔（與班級碼分開） ===== */
   const screenStudentAcct = document.getElementById("screenStudentAcct");

@@ -8,6 +8,7 @@ services:
     container_name: english-learning-test
     environment:
       - TEST_MODE=1            # 啟動腳本據此改用 HTTP(80) 設定
+      - ADMIN_KEY=admin123     # 本機測試用後台金鑰
     ports:
       - "8000:80"             # 主機 8000 -> 容器 80 (HTTP)
     volumes:
