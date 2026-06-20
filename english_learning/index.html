@@ -660,14 +660,10 @@
         <div id="acctMsg" class="acct-msg"></div>
       </div>
       <div id="acctPanel" class="hidden">
-        <div class="acct-top"><span id="acctWho"></span>
-          <button id="acctLogoutBtn" class="back-btn">Log out</button></div>
         <div id="acctCode" class="acct-code"></div>
         <div class="acct-btns">
-          <button id="acctSyncBtn" class="dict-play">⬆ Sync this device</button>
           <button id="acctRefreshBtn" class="back-btn">↻ Refresh</button>
         </div>
-        <div id="acctMsg2" class="acct-msg"></div>
         <div id="dashboard"></div>
       </div>
     </div>
@@ -2588,7 +2584,9 @@
     [screenRole, screenProfile, screenStudentAcct, screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena, screenTeacher, screenAdmin].forEach(s => s.classList.add("hidden"));
     el.classList.remove("hidden");
     // 右上角區（使用者鈕 + 匯出）：只在學生 app 內的畫面顯示
-    topRight.classList.toggle("hidden", !(userName && [screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena].indexOf(el) !== -1));
+    const inApp = [screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena].indexOf(el) !== -1;
+    const teacherView = (el === screenTeacher && !!authToken());   // 老師面板也用右上角顯示名字+登出
+    topRight.classList.toggle("hidden", !((userName && inApp) || teacherView));
   }
 
   // 把 "Tom: Hi, Anna." 這種純文字解析成 { who, gender, text }
@@ -2817,7 +2815,7 @@
     renderJoinClass();
     showScreen(screenProfileStats);
   }
-  userChip.addEventListener("click", openProfileStats);
+  userChip.addEventListener("click", () => { if (userName) openProfileStats(); });   // 老師(無 userName)點名字不動作
   document.getElementById("backFromStats").addEventListener("click", () => {
     renderLevelGrid();
     showScreen(screenLevel);
@@ -3381,17 +3379,10 @@
   function enterDashboard() {
     document.getElementById("acctTeacher").classList.add("hidden");
     document.getElementById("acctPanel").classList.remove("hidden");
-    document.getElementById("acctWho").textContent = "👩‍🏫 " + authUser();
+    userChip.textContent = "👩‍🏫 " + authUser();        // 老師名字顯示在右上角
+    if (topRight) topRight.classList.remove("hidden");
     setAcctCode(localStorage.getItem("auth:code") || "");
-    syncNow(loadDashboard);
-  }
-  function syncNow(cb) {
-    const token = acctToken(); if (!token) return;
-    const msg = document.getElementById("acctMsg2"); msg.textContent = "Syncing…";
-    fetch("/api/sync?token=" + encodeURIComponent(token), { method: "POST", body: JSON.stringify({ students: collectLocalState() }) })
-      .then(r => r.json())
-      .then(j => { msg.textContent = j.ok ? "Synced ✓" : (j.error || "Sync failed"); if (cb) cb(); })
-      .catch(() => { msg.textContent = "Server not available."; });
+    loadDashboard();
   }
   function loadDashboard() {
     const token = acctToken(); if (!token) return;
@@ -3463,9 +3454,7 @@
   document.getElementById("backFromTeacher").addEventListener("click", () => showScreen(screenRole));
   document.getElementById("acctLoginBtn").addEventListener("click", () => acctAuth("login"));
   document.getElementById("acctRegisterBtn").addEventListener("click", () => acctAuth("register"));
-  document.getElementById("acctSyncBtn").addEventListener("click", () => syncNow(loadDashboard));
   document.getElementById("acctRefreshBtn").addEventListener("click", loadDashboard);
-  document.getElementById("acctLogoutBtn").addEventListener("click", acctLogout);
   document.getElementById("adminRefreshBtn").addEventListener("click", loadAdmin);
   document.getElementById("backFromAdmin").addEventListener("click", () => { clearAuth(); openStudentAcct(); });
 
