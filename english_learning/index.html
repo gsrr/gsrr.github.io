@@ -616,6 +616,7 @@
             <button id="sLoginBtn" class="dict-play">Log in</button>
           </div>
           <p class="acct-switch">No account yet? <a id="toRegister">Create a new account →</a></p>
+          <p class="acct-switch"><a id="adminBtn">🛠 Admin login</a></p>
         </div>
 
         <!-- 註冊（點上面連結才顯示） -->
@@ -657,7 +658,6 @@
           <button id="acctRegisterBtn" class="back-btn">Create class</button>
         </div>
         <div id="acctMsg" class="acct-msg"></div>
-        <div style="text-align:center;margin-top:10px"><button id="adminBtn" class="back-btn" style="font-size:12px;opacity:0.6">🛠 Admin</button></div>
       </div>
       <div id="acctPanel" class="hidden">
         <div class="acct-top"><span id="acctWho"></span>
@@ -3467,7 +3467,7 @@
   document.getElementById("acctLogoutBtn").addEventListener("click", acctLogout);
   document.getElementById("adminBtn").addEventListener("click", adminEntry);
   document.getElementById("adminRefreshBtn").addEventListener("click", adminEntry);
-  document.getElementById("backFromAdmin").addEventListener("click", () => showScreen(screenTeacher));
+  document.getElementById("backFromAdmin").addEventListener("click", openStudentAcct);
 
   /* ===== 學生個人帳號：跨裝置雲端存檔（與班級碼分開） ===== */
   const screenStudentAcct = document.getElementById("screenStudentAcct");
