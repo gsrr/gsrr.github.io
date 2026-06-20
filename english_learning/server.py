@@ -75,7 +75,8 @@ def write_count(n):
 ACCT = "/data/accounts.json"
 PROG_DIR = "/data/progress"
 acct_lock = threading.Lock()
-ADMIN_KEY = os.environ.get("ADMIN_KEY", "")     # 後台總管金鑰；沒設則停用後台
+ADMIN_KEY = os.environ.get("ADMIN_KEY", "")          # 後台總管密碼；沒設則停用後台帳號
+ADMIN_USER = os.environ.get("ADMIN_USER", "admin")   # 內建後台帳號名稱（在登入頁用此帳號+ADMIN_KEY登入）
 CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"   # 班級碼去掉易混字 0/O/1/I/L
 
 # --- 記憶體 token（含過期）---
@@ -90,11 +91,11 @@ def _prune_tokens():
         _tokens.pop(t, None)
 
 
-def issue_token(user):
+def issue_token(user, admin=False):
     tok = secrets.token_hex(24)
     with _tok_lock:
         _prune_tokens()
-        _tokens[tok] = {"user": user, "exp": time.time() + TOKEN_TTL}
+        _tokens[tok] = {"user": user, "exp": time.time() + TOKEN_TTL, "admin": admin}
     return tok
 
 
@@ -277,6 +278,13 @@ class Handler(BaseHTTPRequestHandler):
         if not user or not pw:
             self._send({"error": "Missing username or password"}, 400)
             return
+        # 內建後台帳號：用 ADMIN_USER + ADMIN_KEY 登入，回傳 admin token
+        if user == ADMIN_USER:
+            if (not register) and ADMIN_KEY and pw == ADMIN_KEY:
+                self._send({"token": issue_token(ADMIN_USER, admin=True), "user": ADMIN_USER, "admin": True})
+            else:
+                self._send({"error": "Wrong username or password"}, 401)
+            return
         with acct_lock:
             db = load_accounts()
             u = db["users"].get(user)
@@ -369,8 +377,11 @@ class Handler(BaseHTTPRequestHandler):
 
     # ---- 後台總管：看所有帳號 / 所有學生（需 ADMIN_KEY）----
     def _handle_admin_overview(self):
-        key = (parse_qs(urlparse(self.path).query).get("key", [""]) or [""])[0]
-        if not ADMIN_KEY or key != ADMIN_KEY:
+        tok = self._token()
+        with _tok_lock:
+            rec = _tokens.get(tok)
+            is_admin = bool(rec and rec.get("admin") and rec["exp"] >= time.time())
+        if not is_admin:
             self._send({"error": "Forbidden"}, 403)
             return
         with acct_lock:

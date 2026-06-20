@@ -616,7 +616,6 @@
             <button id="sLoginBtn" class="dict-play">Log in</button>
           </div>
           <p class="acct-switch">No account yet? <a id="toRegister">Create a new account →</a></p>
-          <p class="acct-switch"><a id="adminBtn">🛠 Admin login</a></p>
         </div>
 
         <!-- 註冊（點上面連結才顯示） -->
@@ -3438,13 +3437,12 @@
     });
     el.innerHTML = html;
   }
-  function adminEntry() {
-    let key = ""; try { key = localStorage.getItem("admin:key") || ""; } catch (e) {}
-    if (!key) { key = (prompt("Admin key:") || "").trim(); if (!key) return; }
-    fetch("/api/admin/overview?key=" + encodeURIComponent(key))
+  // 用目前登入的 admin token 載入後台
+  function loadAdmin() {
+    fetch("/api/admin/overview?token=" + encodeURIComponent(authToken()))
       .then(r => r.ok ? r.json() : Promise.reject(r.status))
-      .then(data => { try { localStorage.setItem("admin:key", key); } catch (e) {} renderAdmin(data); showScreen(screenAdmin); })
-      .catch(st => { try { localStorage.removeItem("admin:key"); } catch (e) {} alert(st === 403 ? "Wrong or disabled admin key." : "Server not available."); });
+      .then(data => { renderAdmin(data); showScreen(screenAdmin); })
+      .catch(st => alert(st === 403 ? "Admin session expired — log in again." : "Server not available."));
   }
   function acctLogout() {
     clearAuth();
@@ -3465,9 +3463,8 @@
   document.getElementById("acctSyncBtn").addEventListener("click", () => syncNow(loadDashboard));
   document.getElementById("acctRefreshBtn").addEventListener("click", loadDashboard);
   document.getElementById("acctLogoutBtn").addEventListener("click", acctLogout);
-  document.getElementById("adminBtn").addEventListener("click", adminEntry);
-  document.getElementById("adminRefreshBtn").addEventListener("click", adminEntry);
-  document.getElementById("backFromAdmin").addEventListener("click", openStudentAcct);
+  document.getElementById("adminRefreshBtn").addEventListener("click", loadAdmin);
+  document.getElementById("backFromAdmin").addEventListener("click", () => { clearAuth(); openStudentAcct(); });
 
   /* ===== 學生個人帳號：跨裝置雲端存檔（與班級碼分開） ===== */
   const screenStudentAcct = document.getElementById("screenStudentAcct");
@@ -3552,6 +3549,7 @@
       .then(o => {
         if (!o.ok || !o.j.token) { msg.textContent = o.j.error || "Failed."; return; }
         setAuth(user, o.j.token, o.j.code);
+        if (o.j.admin) { loadAdmin(); return; }                        // 內建後台帳號 -> 進後台
         if (o.j.data) restoreSnapshot(o.j.data);                       // 還原雲端進度（新帳號為空）
         saveProfiles([user]);                                          // 帳號即唯一使用者
         if (!localStorage.getItem("avatar:" + user)) setAvatar(user, selectedAvatar);
