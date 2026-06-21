@@ -363,6 +363,19 @@
   .admin-acct-head { font-size: 15px; margin-bottom: 6px; }
   .acct-code-inline { font-size: 12px; color: #7c3aed; background: #f5f3ff; padding: 1px 7px; border-radius: 6px; margin-left: 6px; }
   .admin-date { font-size: 12px; color: #94a3b8; margin-left: 4px; }
+  /* ===== 小遊戲 ===== */
+  .game-instr { text-align: center; font-size: 16px; font-weight: 700; color: #1e293b; margin: 8px 0 2px; }
+  .game-status { text-align: center; font-size: 14px; color: #64748b; margin: 4px 0 8px; min-height: 20px; }
+  .game-grid { display: grid; gap: 8px; justify-content: center; margin: 10px auto; }
+  .game-cell { width: 68px; height: 68px; font-size: 34px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; border: 2px solid #cbd5e1; border-radius: 14px; cursor: pointer; user-select: none; }
+  .game-cell:active { transform: scale(0.92); }
+  .game-stage { position: relative; height: 300px; background: linear-gradient(#e0f2fe, #f0f9ff); border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; margin: 10px 0; }
+  .game-sprite { position: absolute; font-size: 40px; cursor: pointer; user-select: none; line-height: 1; }
+  .game-big-btn { font-size: 20px; font-weight: 800; padding: 14px 28px; background: #2563eb; color: #fff; border-radius: 14px; }
+  .flip-card { width: 62px; height: 62px; font-size: 32px; display: flex; align-items: center; justify-content: center; background: #2563eb; color: #2563eb; border-radius: 12px; cursor: pointer; }
+  .flip-card.up { background: #fff; color: #1e293b; border: 2px solid #cbd5e1; }
+  .flip-card.done { background: #bbf7d0; color: #1e293b; border: 2px solid #22c55e; }
+  .reaction-box { height: 200px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: #fff; cursor: pointer; margin: 10px 0; }
   .acct-sep { border: none; border-top: 1px solid #e2e8f0; margin: 18px 0; }
   .acct-code { text-align: center; font-size: 15px; margin: 8px 0; }
   .acct-code b { font-size: 22px; letter-spacing: 2px; color: #7c3aed; background: #f5f3ff; padding: 4px 12px; border-radius: 8px; }
@@ -875,24 +888,27 @@
 
     <!-- 畫面 4：Boss 戰 -->
     <div id="screenBattle" class="hidden">
-      <div class="learn-top"><span class="learn-title">⚔️ Boss Battle</span></div>
-      <div class="battle-arena">
-        <div class="fighter">
-          <div class="fighter-emoji" id="heroEmoji">🦸</div>
-          <div class="hp-bar"><span id="heroHpFill" class="hp-fill hero"></span></div>
-          <div class="fighter-name">You</div>
+      <div class="learn-top"><span class="learn-title" id="battleTitle">🎮 Mini Game</span></div>
+      <div id="bossWrap">
+        <div class="battle-arena">
+          <div class="fighter">
+            <div class="fighter-emoji" id="heroEmoji">🦸</div>
+            <div class="hp-bar"><span id="heroHpFill" class="hp-fill hero"></span></div>
+            <div class="fighter-name">You</div>
+          </div>
+          <div class="vs">VS</div>
+          <div class="fighter">
+            <div class="fighter-emoji" id="bossEmoji">👾</div>
+            <div class="hp-bar"><span id="bossHpFill" class="hp-fill boss"></span></div>
+            <div class="fighter-name">Boss</div>
+          </div>
         </div>
-        <div class="vs">VS</div>
-        <div class="fighter">
-          <div class="fighter-emoji" id="bossEmoji">👾</div>
-          <div class="hp-bar"><span id="bossHpFill" class="hp-fill boss"></span></div>
-          <div class="fighter-name">Boss</div>
-        </div>
+        <div id="battleStats" class="battle-stats"></div>
+        <div id="battleLog" class="battle-log"></div>
+        <div id="battleQ" class="battle-q"></div>
+        <div id="battleOpts" class="quiz-opts vert"></div>
       </div>
-      <div id="battleStats" class="battle-stats"></div>
-      <div id="battleLog" class="battle-log"></div>
-      <div id="battleQ" class="battle-q"></div>
-      <div id="battleOpts" class="quiz-opts vert"></div>
+      <div id="gameArea" class="hidden"></div>
       <div id="battleResult" class="hidden"></div>
     </div>
 
@@ -1379,17 +1395,17 @@
       nextLevelBtn.dataset.mode = "next";
       hideLessonSummary();
     } else {
-      nextLevelBtn.textContent = "⚔️ Fight the Boss!";
-      nextLevelBtn.dataset.mode = "boss";
+      nextLevelBtn.textContent = "🎮 Play & Win!";
+      nextLevelBtn.dataset.mode = "game";
       renderLessonSummary();   // 最後一關完成 -> 顯示整課總分
     }
     levelFinish.classList.remove("hidden");
   }
   nextLevelBtn.addEventListener("click", () => {
     levelFinish.classList.add("hidden");
-    if (nextLevelBtn.dataset.mode === "boss") {
+    if (nextLevelBtn.dataset.mode === "game") {
       synth.cancel(); stopListenL1(); stopRecordingIfAny();
-      openBattle();
+      startPostLessonGame();
       return;
     }
     if (nextLevelBtn.dataset.mode === "back") {
@@ -2852,6 +2868,10 @@
   }
   function openBattle() {
     if (!currentArticle) { selectLevel(selLevelIdx); return; }
+    clearGame();
+    document.getElementById("bossWrap").classList.remove("hidden");
+    document.getElementById("gameArea").classList.add("hidden");
+    document.getElementById("battleTitle").textContent = "⚔️ Boss Battle";
     const lvStars = (manifest.levels[selLevelIdx] && manifest.levels[selLevelIdx].stars) || 1;
     const hero = loadHero();
     const hLv = heroLevel(hero);
@@ -2981,7 +3001,175 @@
     }
     draw();
   }
-  function leaveBattle() { selectLevel(selLevelIdx); }
+  function leaveBattle() { clearGame(); selectLevel(selLevelIdx); }
+
+  /* ================= 過關小遊戲（10 種，隨機抽一種） ================= */
+  let _gameIvs = [], _gameTo = [];
+  function clearGame() { _gameIvs.forEach(clearInterval); _gameIvs = []; _gameTo.forEach(clearTimeout); _gameTo = []; }
+  function gInterval(fn, ms) { const iv = setInterval(fn, ms); _gameIvs.push(iv); return iv; }
+  function gTimeout(fn, ms) { const t = setTimeout(fn, ms); _gameTo.push(t); return t; }
+  const ga = () => document.getElementById("gameArea");
+  function openGameScreen(title) {
+    clearGame();
+    document.getElementById("bossWrap").classList.add("hidden");
+    document.getElementById("battleTitle").textContent = title;
+    const r = document.getElementById("battleResult"); r.classList.add("hidden"); r.innerHTML = "";
+    const a = ga(); a.classList.remove("hidden"); a.innerHTML = "";
+    showScreen(screenBattle);
+    return a;
+  }
+  // 結束小遊戲 -> 依該課平均給點數 + 分配畫面（與打 Boss 一致）
+  function endGame(resultMsg) {
+    clearGame();
+    const avg = lessonStatus(currentArticle).avg || 0;
+    const pts = starsFromAvg(avg);
+    const h = loadHero(); h.unspent += pts; saveHero(h); battle = { hero: h };
+    ga().classList.add("hidden");
+    renderAllocation((resultMsg || "🎉 Nice!") + (pts > 0 ? "  +" + pts + " points!" : "  Score 80%+ to earn points."));
+  }
+  function startPostLessonGame() {
+    if (!currentArticle) { selectLevel(selLevelIdx); return; }
+    const games = [openBattle, gameWhack, gameMemory, gameCatch, gameBubble, gameSpin, gameReaction, gameOddOne, gameBalloon, gameTreasure];
+    games[Math.floor(Math.random() * games.length)]();
+  }
+  function rnd(n) { return Math.floor(Math.random() * n); }
+
+  // 1) 打地鼠
+  function gameWhack() {
+    const a = openGameScreen("🐹 Whack-a-Mole");
+    let hits = 0, left = 15;
+    a.innerHTML = '<div class="game-instr">Tap the moles! 🔨</div><div class="game-status" id="gst"></div>' +
+      '<div class="game-grid" id="gg" style="grid-template-columns:repeat(3,1fr)"></div>';
+    const gg = document.getElementById("gg"); const cells = [];
+    for (let i = 0; i < 9; i++) { const c = document.createElement("div"); c.className = "game-cell"; gg.appendChild(c); cells.push(c); }
+    const st = () => document.getElementById("gst").textContent = "⏱ " + left + "s   🐹 " + hits;
+    st();
+    let active = -1;
+    gInterval(() => { if (active >= 0) cells[active].textContent = ""; active = rnd(9); cells[active].textContent = "🐹"; }, 800);
+    cells.forEach((c, i) => c.addEventListener("click", () => { if (i === active && c.textContent === "🐹") { hits++; c.textContent = "💥"; active = -1; st(); } }));
+    gInterval(() => { left--; st(); if (left <= 0) endGame("🐹 You whacked " + hits + " moles!"); }, 1000);
+  }
+
+  // 2) 翻牌配對
+  function gameMemory() {
+    const a = openGameScreen("🃏 Memory Match");
+    const emo = ["🍎", "⚽", "🐱", "⭐"]; let deck = shuffle(emo.concat(emo));
+    a.innerHTML = '<div class="game-instr">Find the pairs! 🃏</div><div class="game-status" id="gst">Pairs: 0/4</div>' +
+      '<div class="game-grid" id="gg" style="grid-template-columns:repeat(4,1fr)"></div>';
+    const gg = document.getElementById("gg"); let first = null, lock = false, found = 0;
+    deck.forEach((e, i) => {
+      const c = document.createElement("div"); c.className = "flip-card"; c.textContent = "?"; c.dataset.e = e;
+      c.addEventListener("click", () => {
+        if (lock || c.classList.contains("up") || c.classList.contains("done")) return;
+        c.classList.add("up"); c.textContent = e;
+        if (!first) { first = c; return; }
+        if (first.dataset.e === e) { first.classList.add("done"); c.classList.add("done"); first = null; found++;
+          document.getElementById("gst").textContent = "Pairs: " + found + "/4";
+          if (found === 4) gTimeout(() => endGame("🃏 All pairs matched!"), 600);
+        } else { lock = true; const f = first; first = null; gTimeout(() => { f.classList.remove("up"); f.textContent = "?"; c.classList.remove("up"); c.textContent = "?"; lock = false; }, 700); }
+      });
+      gg.appendChild(c);
+    });
+  }
+
+  // 3) 接星星
+  function gameCatch() { fallingGame("⭐", "🌟 Catch the Stars", "stars"); }
+  // 4) 戳泡泡
+  function gameBubble() { fallingGame("🫧", "🫧 Pop the Bubbles", "bubbles"); }
+  function fallingGame(emoji, title, word) {
+    const a = openGameScreen(title);
+    let score = 0, left = 15;
+    a.innerHTML = '<div class="game-instr">Tap the ' + word + '! 👆</div><div class="game-status" id="gst"></div><div class="game-stage" id="stage"></div>';
+    const stage = document.getElementById("stage");
+    const st = () => document.getElementById("gst").textContent = "⏱ " + left + "s   ✨ " + score;
+    st();
+    gInterval(() => {
+      const s = document.createElement("div"); s.className = "game-sprite"; s.textContent = emoji;
+      s.style.left = (8 + rnd(80)) + "%"; s.style.top = "-50px"; stage.appendChild(s);
+      let y = -50; const fall = gInterval(() => { y += 6; s.style.top = y + "px"; if (y > 300) { clearInterval(fall); s.remove(); } }, 40);
+      s.addEventListener("click", () => { score++; st(); clearInterval(fall); s.textContent = "✨"; gTimeout(() => s.remove(), 150); });
+    }, 700);
+    gInterval(() => { left--; st(); if (left <= 0) endGame("Caught " + score + " " + word + "!"); }, 1000);
+  }
+
+  // 5) 幸運轉盤
+  function gameSpin() {
+    const a = openGameScreen("🎡 Lucky Spin");
+    const faces = ["🎁", "🍭", "⭐", "💎", "🏆", "🍀"];
+    a.innerHTML = '<div class="game-instr">Spin the wheel! 🎡</div><div id="wheel" style="font-size:72px;text-align:center;margin:14px">🎡</div>' +
+      '<div style="text-align:center"><button id="spinBtn" class="game-big-btn">Spin!</button></div>';
+    const w = document.getElementById("wheel");
+    document.getElementById("spinBtn").addEventListener("click", function () {
+      this.disabled = true; let n = 0; const total = 18 + rnd(12);
+      const iv = gInterval(() => { w.textContent = faces[rnd(faces.length)]; n++; if (n >= total) { clearInterval(iv); const prize = faces[rnd(faces.length)]; w.textContent = prize; gTimeout(() => endGame("🎡 You won " + prize + "!"), 500); } }, 90);
+    });
+  }
+
+  // 6) 反應力
+  function gameReaction() {
+    const a = openGameScreen("⚡ Quick Tap");
+    a.innerHTML = '<div class="game-instr">Tap when it turns GREEN! ⚡</div><div class="reaction-box" id="rb" style="background:#ef4444">Wait...</div><div class="game-status" id="gst"></div>';
+    const rb = document.getElementById("rb"); let ready = false, t0 = 0;
+    gTimeout(() => { rb.style.background = "#22c55e"; rb.textContent = "TAP!"; ready = true; t0 = performance.now(); }, 1200 + rnd(2500));
+    rb.addEventListener("click", () => {
+      if (!ready) { document.getElementById("gst").textContent = "Too early! 😅"; return; }
+      const ms = Math.round(performance.now() - t0);
+      rb.textContent = ms + " ms"; endGame("⚡ " + ms + " ms reaction!");
+    });
+  }
+
+  // 7) 找不一樣
+  function gameOddOne() {
+    const a = openGameScreen("🔍 Odd One Out");
+    let round = 0, score = 0;
+    a.innerHTML = '<div class="game-instr">Tap the different one! 🔍</div><div class="game-status" id="gst"></div><div class="game-grid" id="gg" style="grid-template-columns:repeat(4,1fr)"></div>';
+    const sets = [["🐶", "🐱"], ["🍎", "🍊"], ["⭐", "🌙"], ["🚗", "🚌"], ["😀", "😎"]];
+    function draw() {
+      const gg = document.getElementById("gg"); gg.innerHTML = "";
+      const pair = sets[rnd(sets.length)]; const odd = rnd(16);
+      document.getElementById("gst").textContent = "Round " + (round + 1) + "/5   ✔ " + score;
+      for (let i = 0; i < 16; i++) {
+        const c = document.createElement("div"); c.className = "game-cell"; c.style.width = "44px"; c.style.height = "44px"; c.style.fontSize = "24px";
+        c.textContent = i === odd ? pair[1] : pair[0];
+        c.addEventListener("click", () => {
+          if (i === odd) score++;
+          round++;
+          if (round >= 5) endGame("🔍 Found " + score + "/5!"); else draw();
+        });
+        gg.appendChild(c);
+      }
+    }
+    draw();
+  }
+
+  // 8) 打氣球（按到接近滿但別爆）
+  function gameBalloon() {
+    const a = openGameScreen("🎈 Pump It!");
+    let size = 40, pop = 130 + rnd(60), done = false;
+    a.innerHTML = '<div class="game-instr">Pump big… but don\'t POP! 🎈</div><div class="game-status" id="gst">Tap Pump, then Stop to keep your points.</div>' +
+      '<div style="height:200px;display:flex;align-items:center;justify-content:center"><div id="bal" style="font-size:40px">🎈</div></div>' +
+      '<div style="text-align:center"><button id="pumpBtn" class="game-big-btn">Pump</button> <button id="stopBtn" class="back-btn">Stop</button></div>';
+    const bal = document.getElementById("bal");
+    document.getElementById("pumpBtn").addEventListener("click", () => {
+      if (done) return; size += 14 + rnd(10); bal.style.fontSize = size + "px";
+      if (size >= pop) { done = true; bal.textContent = "💥"; gTimeout(() => endGame("💥 It popped! Still a great lesson!"), 600); }
+    });
+    document.getElementById("stopBtn").addEventListener("click", () => { if (done) return; done = true; endGame("🎈 Nice big balloon!"); });
+  }
+
+  // 9) 選寶箱
+  function gameTreasure() {
+    const a = openGameScreen("🗝️ Pick a Treasure");
+    a.innerHTML = '<div class="game-instr">Pick a box! 🗝️</div><div class="game-status" id="gst"></div>' +
+      '<div class="game-grid" id="gg" style="grid-template-columns:repeat(3,1fr)"></div>';
+    const gg = document.getElementById("gg"); const prizes = shuffle(["💎", "🏆", "⭐"]);
+    let done = false;
+    for (let i = 0; i < 3; i++) {
+      const c = document.createElement("div"); c.className = "game-cell"; c.style.width = "80px"; c.style.height = "80px"; c.textContent = "📦";
+      c.addEventListener("click", () => { if (done) return; done = true; c.textContent = prizes[i]; gTimeout(() => endGame("🗝️ You found " + prizes[i] + "!"), 600); });
+      gg.appendChild(c);
+    }
+  }
 
   /* ================= 競技場 PvP：兩位使用者的英雄自動對戰 ================= */
   function loadHeroFor(name) {
