@@ -215,6 +215,8 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_student_load()
         elif path == "/api/admin/overview":
             self._handle_admin_overview()
+        elif path == "/api/leaderboard":
+            self._handle_leaderboard()
         else:
             self._send({"error": "not found"}, 404)
 
@@ -396,6 +398,20 @@ class Handler(BaseHTTPRequestHandler):
                 accounts.append({"user": user, "code": u.get("code"),
                                  "created": u.get("created"), "students": students})
         self._send({"accounts": accounts})
+
+    # ---- 公開排行榜：依每個帳號 sdata.stats（前端算好的通過課數/英雄等級）----
+    def _handle_leaderboard(self):
+        with acct_lock:
+            db = load_accounts()
+            out = []
+            for user in db.get("users", {}):
+                if user == "testaccount":
+                    continue
+                stats = (load_progress(user).get("sdata") or {}).get("stats") or {}
+                out.append({"name": user, "avatar": stats.get("avatar", "👦"),
+                            "passed": int(stats.get("passed", 0) or 0), "level": int(stats.get("level", 1) or 1)})
+        out.sort(key=lambda x: (-x["passed"], -x["level"], x["name"].lower()))
+        self._send({"leaders": out[:50]})
 
     def log_message(self, *args):
         pass  # 安靜

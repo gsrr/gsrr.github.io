@@ -376,6 +376,10 @@
   .flip-card.up { background: #fff; color: #1e293b; border: 2px solid #cbd5e1; }
   .flip-card.done { background: #bbf7d0; color: #1e293b; border: 2px solid #22c55e; }
   .reaction-box { height: 200px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: #fff; cursor: pointer; margin: 10px 0; }
+  .lb-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 10px; margin: 6px 0; background: #fff; }
+  .lb-rank { font-size: 18px; width: 36px; text-align: center; font-weight: 800; }
+  .lb-name { flex: 1; font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-score { font-size: 13px; color: #64748b; white-space: nowrap; }
   .acct-sep { border: none; border-top: 1px solid #e2e8f0; margin: 18px 0; }
   .acct-code { text-align: center; font-size: 15px; margin: 8px 0; }
   .acct-code b { font-size: 22px; letter-spacing: 2px; color: #7c3aed; background: #f5f3ff; padding: 4px 12px; border-radius: 8px; }
@@ -691,6 +695,16 @@
       <div id="adminBody"></div>
     </div>
 
+    <!-- 畫面 0e：排行榜（所有使用者） -->
+    <div id="screenLeader" class="hidden">
+      <div class="learn-top">
+        <button class="back-btn" id="backFromLeader">← Back</button>
+        <span class="learn-title">🏅 Leaderboard</span>
+      </div>
+      <p class="screen-intro">Top players by lessons passed 🏆</p>
+      <div id="leaderBody"></div>
+    </div>
+
     <!-- 畫面 1：選等級 -->
     <div id="screenLevel" class="hidden">
       <div class="learn-top">
@@ -699,7 +713,10 @@
       </div>
       <p class="screen-intro">Choose a level to start 📚</p>
       <div id="energyBar" class="energy"></div>
-      <div style="text-align:center;margin-bottom:14px"><button id="openArenaBtn" style="background:#7c3aed;color:#fff">🏆 Arena Tournament</button></div>
+      <div style="text-align:center;margin-bottom:14px">
+        <button id="openArenaBtn" style="background:#7c3aed;color:#fff">🏆 Arena Tournament</button>
+        <button id="openLeaderBtn" style="background:#0ea5e9;color:#fff">🏅 Leaderboard</button>
+      </div>
       <div id="testGamesWrap" class="hidden" style="text-align:center;margin-bottom:14px"><button id="testGamesBtn" class="back-btn">🎮 Test Games (tester)</button></div>
       <div id="levelGrid" class="pick-grid"></div>
     </div>
@@ -2599,7 +2616,7 @@
   userNameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") addProfile(); });
 
   function showScreen(el) {
-    [screenRole, screenProfile, screenStudentAcct, screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena, screenTeacher, screenAdmin].forEach(s => s.classList.add("hidden"));
+    [screenRole, screenProfile, screenStudentAcct, screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena, screenTeacher, screenAdmin, screenLeader].forEach(s => s.classList.add("hidden"));
     el.classList.remove("hidden");
     // 右上角區（使用者鈕 + 匯出）：只在學生 app 內的畫面顯示
     const inApp = [screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena].indexOf(el) !== -1;
@@ -3464,6 +3481,29 @@
   }
   document.getElementById("openArenaBtn").addEventListener("click", () => { renderArenaIntro(); showScreen(screenArena); });
   document.getElementById("testGamesBtn").addEventListener("click", openGameTest);
+  function openLeaderboard() {
+    document.getElementById("leaderBody").innerHTML = '<p class="screen-intro">Loading…</p>';
+    showScreen(screenLeader);
+    studentSave(() => {   // 先把自己的最新進度上傳，排行才即時（沒登入也會直接 fetch）
+      fetch("/api/leaderboard").then(r => r.json()).then(renderLeaderboard)
+        .catch(() => { document.getElementById("leaderBody").innerHTML = '<p class="screen-intro">Server not available (needs the server).</p>'; });
+    });
+  }
+  function renderLeaderboard(data) {
+    const el = document.getElementById("leaderBody");
+    const L = (data && data.leaders) || [];
+    if (!L.length) { el.innerHTML = '<p class="screen-intro">No players yet.</p>'; return; }
+    const me = (authUser() || "").toLowerCase();
+    el.innerHTML = L.map((p, i) => {
+      const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "#" + (i + 1);
+      const mine = p.name.toLowerCase() === me ? ' style="background:#eff6ff;border-color:#93c5fd"' : "";
+      return '<div class="lb-row"' + mine + '><span class="lb-rank">' + medal + '</span>' +
+        '<span class="lb-name">' + (p.avatar || "👦") + ' ' + p.name + '</span>' +
+        '<span class="lb-score">✅ ' + p.passed + ' · LV.' + p.level + '</span></div>';
+    }).join("");
+  }
+  document.getElementById("openLeaderBtn").addEventListener("click", openLeaderboard);
+  document.getElementById("backFromLeader").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
   document.getElementById("backFromArena").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
   document.getElementById("arenaFight").addEventListener("click", startTournament);
   document.getElementById("arenaSkip").addEventListener("click", skipArena);
@@ -3545,6 +3585,7 @@
   /* ================= 老師/家長帳號 + 雲端進度後台 ================= */
   const screenTeacher = document.getElementById("screenTeacher");
   const screenAdmin   = document.getElementById("screenAdmin");
+  const screenLeader  = document.getElementById("screenLeader");
   // 單一帳號：學生入口與老師入口共用同一個 token
   function authToken() { try { return localStorage.getItem("auth:token") || ""; } catch (e) { return ""; } }
   function authUser()  { try { return localStorage.getItem("auth:user") || ""; } catch (e) { return ""; } }
@@ -3714,7 +3755,13 @@
   function sToken() { return authToken(); }
   // 整台裝置的學習快照（所有 profile + 目前使用者名）
   function fullLocalSnapshot() {
-    return { profiles: loadProfiles(), userName: userName, students: collectLocalState() };
+    return { profiles: loadProfiles(), userName: userName, students: collectLocalState(), stats: computeMyStats() };
+  }
+  // 給排行榜用：通過課數 + 英雄等級 + 頭像
+  function computeMyStats() {
+    let passed = 0;
+    (manifest ? manifest.levels : []).forEach(lv => lv.articles.forEach(a => { if (lessonStatus(a).passed) passed++; }));
+    return { passed: passed, level: heroLevel(loadHero()), avatar: userName ? avatarOf(userName) : "👦" };
   }
   // 把雲端快照寫回本機 localStorage（換裝置登入時還原）
   function restoreSnapshot(blob) {
