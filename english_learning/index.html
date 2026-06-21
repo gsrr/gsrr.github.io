@@ -3019,13 +3019,15 @@
     return a;
   }
   // 結束小遊戲 -> 依該課平均給點數 + 分配畫面（與打 Boss 一致）
-  function endGame(resultMsg) {
+  function endGame(resultMsg, win) {
     clearGame();
     const avg = lessonStatus(currentArticle).avg || 0;
-    const pts = starsFromAvg(avg);
+    let pts = starsFromAvg(avg);
+    if (win) pts += 1;                                  // 贏小遊戲 +1 點（賭注）
     const h = loadHero(); h.unspent += pts; saveHero(h); battle = { hero: h };
     ga().classList.add("hidden");
-    renderAllocation((resultMsg || "🎉 Nice!") + (pts > 0 ? "  +" + pts + " points!" : "  Score 80%+ to earn points."));
+    const head = win ? "🏆 YOU WIN! " : "💪 Good try! ";
+    renderAllocation(head + (resultMsg || "") + (pts > 0 ? "  +" + pts + " points!" : "  Score 80%+ to earn points."));
   }
   function startPostLessonGame() {
     if (!currentArticle) { selectLevel(selLevelIdx); return; }
@@ -3038,34 +3040,38 @@
   function gameWhack() {
     const a = openGameScreen("🐹 Whack-a-Mole");
     let hits = 0, left = 15;
-    a.innerHTML = '<div class="game-instr">Tap the moles! 🔨</div><div class="game-status" id="gst"></div>' +
+    const GOAL = 8;
+    a.innerHTML = '<div class="game-instr">Hit ' + GOAL + ' moles to win! 🔨</div><div class="game-status" id="gst"></div>' +
       '<div class="game-grid" id="gg" style="grid-template-columns:repeat(3,1fr)"></div>';
     const gg = document.getElementById("gg"); const cells = [];
     for (let i = 0; i < 9; i++) { const c = document.createElement("div"); c.className = "game-cell"; gg.appendChild(c); cells.push(c); }
-    const st = () => document.getElementById("gst").textContent = "⏱ " + left + "s   🐹 " + hits;
+    const st = () => document.getElementById("gst").textContent = "⏱ " + left + "s   🐹 " + hits + "/" + GOAL;
     st();
     let active = -1;
     gInterval(() => { if (active >= 0) cells[active].textContent = ""; active = rnd(9); cells[active].textContent = "🐹"; }, 800);
     cells.forEach((c, i) => c.addEventListener("click", () => { if (i === active && c.textContent === "🐹") { hits++; c.textContent = "💥"; active = -1; st(); } }));
-    gInterval(() => { left--; st(); if (left <= 0) endGame("🐹 You whacked " + hits + " moles!"); }, 1000);
+    gInterval(() => { left--; st(); if (left <= 0) endGame("You whacked " + hits + "/" + GOAL + " moles.", hits >= GOAL); }, 1000);
   }
 
   // 2) 翻牌配對
   function gameMemory() {
     const a = openGameScreen("🃏 Memory Match");
-    const emo = ["🍎", "⚽", "🐱", "⭐"]; let deck = shuffle(emo.concat(emo));
-    a.innerHTML = '<div class="game-instr">Find the pairs! 🃏</div><div class="game-status" id="gst">Pairs: 0/4</div>' +
+    const emo = ["🍎", "⚽", "🐱", "⭐"]; const deck = shuffle(emo.concat(emo));
+    let left = 25, first = null, lock = false, found = 0, over = false;
+    a.innerHTML = '<div class="game-instr">Match all 4 pairs before time runs out! 🃏</div><div class="game-status" id="gst"></div>' +
       '<div class="game-grid" id="gg" style="grid-template-columns:repeat(4,1fr)"></div>';
-    const gg = document.getElementById("gg"); let first = null, lock = false, found = 0;
-    deck.forEach((e, i) => {
+    const gg = document.getElementById("gg");
+    const st = () => document.getElementById("gst").textContent = "⏱ " + left + "s   Pairs: " + found + "/4";
+    st();
+    gInterval(() => { if (over) return; left--; st(); if (left <= 0) { over = true; endGame("Matched " + found + "/4 pairs.", false); } }, 1000);
+    deck.forEach((e) => {
       const c = document.createElement("div"); c.className = "flip-card"; c.textContent = "?"; c.dataset.e = e;
       c.addEventListener("click", () => {
-        if (lock || c.classList.contains("up") || c.classList.contains("done")) return;
+        if (over || lock || c.classList.contains("up") || c.classList.contains("done")) return;
         c.classList.add("up"); c.textContent = e;
         if (!first) { first = c; return; }
-        if (first.dataset.e === e) { first.classList.add("done"); c.classList.add("done"); first = null; found++;
-          document.getElementById("gst").textContent = "Pairs: " + found + "/4";
-          if (found === 4) gTimeout(() => endGame("🃏 All pairs matched!"), 600);
+        if (first.dataset.e === e) { first.classList.add("done"); c.classList.add("done"); first = null; found++; st();
+          if (found === 4) { over = true; gTimeout(() => endGame("All pairs matched!", true), 500); }
         } else { lock = true; const f = first; first = null; gTimeout(() => { f.classList.remove("up"); f.textContent = "?"; c.classList.remove("up"); c.textContent = "?"; lock = false; }, 700); }
       });
       gg.appendChild(c);
@@ -3073,15 +3079,15 @@
   }
 
   // 3) 接星星
-  function gameCatch() { fallingGame("⭐", "🌟 Catch the Stars", "stars"); }
+  function gameCatch() { fallingGame("⭐", "🌟 Catch the Stars", "stars", 8); }
   // 4) 戳泡泡
-  function gameBubble() { fallingGame("🫧", "🫧 Pop the Bubbles", "bubbles"); }
-  function fallingGame(emoji, title, word) {
+  function gameBubble() { fallingGame("🫧", "🫧 Pop the Bubbles", "bubbles", 10); }
+  function fallingGame(emoji, title, word, goal) {
     const a = openGameScreen(title);
     let score = 0, left = 15;
-    a.innerHTML = '<div class="game-instr">Tap the ' + word + '! 👆</div><div class="game-status" id="gst"></div><div class="game-stage" id="stage"></div>';
+    a.innerHTML = '<div class="game-instr">Catch ' + goal + ' ' + word + ' to win! 👆</div><div class="game-status" id="gst"></div><div class="game-stage" id="stage"></div>';
     const stage = document.getElementById("stage");
-    const st = () => document.getElementById("gst").textContent = "⏱ " + left + "s   ✨ " + score;
+    const st = () => document.getElementById("gst").textContent = "⏱ " + left + "s   ✨ " + score + "/" + goal;
     st();
     gInterval(() => {
       const s = document.createElement("div"); s.className = "game-sprite"; s.textContent = emoji;
@@ -3089,32 +3095,33 @@
       let y = -50; const fall = gInterval(() => { y += 6; s.style.top = y + "px"; if (y > 300) { clearInterval(fall); s.remove(); } }, 40);
       s.addEventListener("click", () => { score++; st(); clearInterval(fall); s.textContent = "✨"; gTimeout(() => s.remove(), 150); });
     }, 700);
-    gInterval(() => { left--; st(); if (left <= 0) endGame("Caught " + score + " " + word + "!"); }, 1000);
+    gInterval(() => { left--; st(); if (left <= 0) endGame("Caught " + score + "/" + goal + " " + word + ".", score >= goal); }, 1000);
   }
 
   // 5) 幸運轉盤
   function gameSpin() {
     const a = openGameScreen("🎡 Lucky Spin");
     const faces = ["🎁", "🍭", "⭐", "💎", "🏆", "🍀"];
-    a.innerHTML = '<div class="game-instr">Spin the wheel! 🎡</div><div id="wheel" style="font-size:72px;text-align:center;margin:14px">🎡</div>' +
+    a.innerHTML = '<div class="game-instr">Spin and land on 🏆 to win! 🎡</div><div id="wheel" style="font-size:72px;text-align:center;margin:14px">🎡</div>' +
       '<div style="text-align:center"><button id="spinBtn" class="game-big-btn">Spin!</button></div>';
     const w = document.getElementById("wheel");
     document.getElementById("spinBtn").addEventListener("click", function () {
       this.disabled = true; let n = 0; const total = 18 + rnd(12);
-      const iv = gInterval(() => { w.textContent = faces[rnd(faces.length)]; n++; if (n >= total) { clearInterval(iv); const prize = faces[rnd(faces.length)]; w.textContent = prize; gTimeout(() => endGame("🎡 You won " + prize + "!"), 500); } }, 90);
+      const iv = gInterval(() => { w.textContent = faces[rnd(faces.length)]; n++; if (n >= total) { clearInterval(iv); const prize = faces[rnd(faces.length)]; w.textContent = prize; gTimeout(() => endGame("You landed on " + prize + ".", prize === "🏆"), 500); } }, 90);
     });
   }
 
   // 6) 反應力
   function gameReaction() {
     const a = openGameScreen("⚡ Quick Tap");
-    a.innerHTML = '<div class="game-instr">Tap when it turns GREEN! ⚡</div><div class="reaction-box" id="rb" style="background:#ef4444">Wait...</div><div class="game-status" id="gst"></div>';
-    const rb = document.getElementById("rb"); let ready = false, t0 = 0;
+    a.innerHTML = '<div class="game-instr">Tap within 400 ms of GREEN to win! ⚡</div><div class="reaction-box" id="rb" style="background:#ef4444">Wait...</div><div class="game-status" id="gst"></div>';
+    const rb = document.getElementById("rb"); let ready = false, t0 = 0, fired = false;
     gTimeout(() => { rb.style.background = "#22c55e"; rb.textContent = "TAP!"; ready = true; t0 = performance.now(); }, 1200 + rnd(2500));
     rb.addEventListener("click", () => {
-      if (!ready) { document.getElementById("gst").textContent = "Too early! 😅"; return; }
-      const ms = Math.round(performance.now() - t0);
-      rb.textContent = ms + " ms"; endGame("⚡ " + ms + " ms reaction!");
+      if (fired) return;
+      if (!ready) { fired = true; rb.style.background = "#ef4444"; rb.textContent = "Too early!"; endGame("Too early! 😅", false); return; }
+      fired = true; const ms = Math.round(performance.now() - t0);
+      rb.textContent = ms + " ms"; endGame(ms + " ms reaction.", ms <= 400);
     });
   }
 
@@ -3122,7 +3129,7 @@
   function gameOddOne() {
     const a = openGameScreen("🔍 Odd One Out");
     let round = 0, score = 0;
-    a.innerHTML = '<div class="game-instr">Tap the different one! 🔍</div><div class="game-status" id="gst"></div><div class="game-grid" id="gg" style="grid-template-columns:repeat(4,1fr)"></div>';
+    a.innerHTML = '<div class="game-instr">Find 4 of 5 to win! Tap the different one 🔍</div><div class="game-status" id="gst"></div><div class="game-grid" id="gg" style="grid-template-columns:repeat(4,1fr)"></div>';
     const sets = [["🐶", "🐱"], ["🍎", "🍊"], ["⭐", "🌙"], ["🚗", "🚌"], ["😀", "😎"]];
     function draw() {
       const gg = document.getElementById("gg"); gg.innerHTML = "";
@@ -3134,7 +3141,7 @@
         c.addEventListener("click", () => {
           if (i === odd) score++;
           round++;
-          if (round >= 5) endGame("🔍 Found " + score + "/5!"); else draw();
+          if (round >= 5) endGame("Found " + score + "/5.", score >= 4); else draw();
         });
         gg.appendChild(c);
       }
@@ -3142,31 +3149,36 @@
     draw();
   }
 
-  // 8) 打氣球（按到接近滿但別爆）
+  // 8) 打氣球（充過目標線、但別充到爆）
   function gameBalloon() {
     const a = openGameScreen("🎈 Pump It!");
-    let size = 40, pop = 130 + rnd(60), done = false;
-    a.innerHTML = '<div class="game-instr">Pump big… but don\'t POP! 🎈</div><div class="game-status" id="gst">Tap Pump, then Stop to keep your points.</div>' +
-      '<div style="height:200px;display:flex;align-items:center;justify-content:center"><div id="bal" style="font-size:40px">🎈</div></div>' +
+    const GOAL = 100; let size = 40, pop = 130 + rnd(60), done = false;
+    a.innerHTML = '<div class="game-instr">Pump past ' + GOAL + ', then STOP before it pops! 🎈</div><div class="game-status" id="gst"></div>' +
+      '<div style="height:190px;display:flex;align-items:center;justify-content:center"><div id="bal" style="font-size:40px">🎈</div></div>' +
       '<div style="text-align:center"><button id="pumpBtn" class="game-big-btn">Pump</button> <button id="stopBtn" class="back-btn">Stop</button></div>';
     const bal = document.getElementById("bal");
+    const gst = document.getElementById("gst");
+    const st = () => gst.textContent = "Size " + Math.round(size) + " (goal " + GOAL + ")";
+    st();
     document.getElementById("pumpBtn").addEventListener("click", () => {
-      if (done) return; size += 14 + rnd(10); bal.style.fontSize = size + "px";
-      if (size >= pop) { done = true; bal.textContent = "💥"; gTimeout(() => endGame("💥 It popped! Still a great lesson!"), 600); }
+      if (done) return; size += 14 + rnd(10); bal.style.fontSize = Math.min(size, 150) + "px"; st();
+      if (size >= pop) { done = true; bal.textContent = "💥"; gTimeout(() => endGame("It popped at " + Math.round(size) + "!", false), 600); }
     });
-    document.getElementById("stopBtn").addEventListener("click", () => { if (done) return; done = true; endGame("🎈 Nice big balloon!"); });
+    document.getElementById("stopBtn").addEventListener("click", () => {
+      if (done) return; done = true; endGame("You stopped at " + Math.round(size) + ".", size >= GOAL);
+    });
   }
 
   // 9) 選寶箱
   function gameTreasure() {
     const a = openGameScreen("🗝️ Pick a Treasure");
-    a.innerHTML = '<div class="game-instr">Pick a box! 🗝️</div><div class="game-status" id="gst"></div>' +
+    a.innerHTML = '<div class="game-instr">Find the 🏆 to win! Pick a box 🗝️</div><div class="game-status" id="gst"></div>' +
       '<div class="game-grid" id="gg" style="grid-template-columns:repeat(3,1fr)"></div>';
     const gg = document.getElementById("gg"); const prizes = shuffle(["💎", "🏆", "⭐"]);
     let done = false;
     for (let i = 0; i < 3; i++) {
       const c = document.createElement("div"); c.className = "game-cell"; c.style.width = "80px"; c.style.height = "80px"; c.textContent = "📦";
-      c.addEventListener("click", () => { if (done) return; done = true; c.textContent = prizes[i]; gTimeout(() => endGame("🗝️ You found " + prizes[i] + "!"), 600); });
+      c.addEventListener("click", () => { if (done) return; done = true; c.textContent = prizes[i]; gTimeout(() => endGame("You found " + prizes[i] + ".", prizes[i] === "🏆"), 600); });
       gg.appendChild(c);
     }
   }
