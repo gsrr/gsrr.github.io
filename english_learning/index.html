@@ -2471,6 +2471,7 @@
 
   // 測試者模式：輸入 IamAdmin8000 切換，開啟後所有文章解鎖（不受過關限制）
   const ADMIN_CODE = "IamAdmin8000";
+  const TEST_ACCOUNT = "testaccount";   // 用這個帳號登入 = 測試者(解鎖 + Test Games)
   let adminMode = false;
   try { adminMode = localStorage.getItem("adminMode") === "1"; } catch (e) {}
   function setAdminMode(on) {
@@ -3790,6 +3791,7 @@
         if (!o.ok || !o.j.token) { msg.textContent = o.j.error || "Failed."; return; }
         setAuth(user, o.j.token, o.j.code);
         if (o.j.admin) { loadAdmin(); return; }                        // 內建後台帳號 -> 進後台
+        setAdminMode(user === TEST_ACCOUNT);                           // testaccount = 測試者模式
         if (o.j.data) restoreSnapshot(o.j.data);                       // 還原雲端進度（新帳號為空）
         saveProfiles([user]);                                          // 帳號即唯一使用者
         if (!localStorage.getItem("avatar:" + user)) setAvatar(user, selectedAvatar);
