@@ -700,6 +700,7 @@
       <p class="screen-intro">Choose a level to start 📚</p>
       <div id="energyBar" class="energy"></div>
       <div style="text-align:center;margin-bottom:14px"><button id="openArenaBtn" style="background:#7c3aed;color:#fff">🏆 Arena Tournament</button></div>
+      <div id="testGamesWrap" class="hidden" style="text-align:center;margin-bottom:14px"><button id="testGamesBtn" class="back-btn">🎮 Test Games (tester)</button></div>
       <div id="levelGrid" class="pick-grid"></div>
     </div>
 
@@ -2719,6 +2720,7 @@
   // 畫面 1：等級卡片
   function renderLevelGrid() {
     updateEnergy();
+    document.getElementById("testGamesWrap").classList.toggle("hidden", !adminMode);   // 測試者才看得到
     levelGrid.innerHTML = "";
     manifest.levels.forEach((lv, i) => {
       const btn = document.createElement("button");
@@ -3021,7 +3023,7 @@
   // 結束小遊戲 -> 依該課平均給點數 + 分配畫面（與打 Boss 一致）
   function endGame(resultMsg, win) {
     clearGame();
-    const avg = lessonStatus(currentArticle).avg || 0;
+    const avg = currentArticle ? (lessonStatus(currentArticle).avg || 0) : 0;
     let pts = starsFromAvg(avg);
     if (win) pts += 1;                                  // 贏小遊戲 +1 點（賭注）
     const h = loadHero(); h.unspent += pts; saveHero(h); battle = { hero: h };
@@ -3033,6 +3035,20 @@
     if (!currentArticle) { selectLevel(selLevelIdx); return; }
     const games = [openBattle, gameWhack, gameMemory, gameCatch, gameBubble, gameSpin, gameReaction, gameOddOne, gameBalloon, gameTreasure];
     games[Math.floor(Math.random() * games.length)]();
+  }
+  // 測試者：逐一啟動每個遊戲（不必過關）
+  function openGameTest() {
+    if (!currentArticle) {   // 沒開過課 -> 借本等級第一課，讓點數/Boss 能運作
+      const lv = manifest.levels[selLevelIdx];
+      if (lv && lv.articles[0]) { currentArticle = lv.articles[0]; currentArticleKey = currentArticle.file; }
+    }
+    const games = [["⚔️ Boss", openBattle], ["🐹 Whack", gameWhack], ["🃏 Memory", gameMemory],
+      ["🌟 Catch", gameCatch], ["🫧 Bubbles", gameBubble], ["🎡 Spin", gameSpin], ["⚡ Reaction", gameReaction],
+      ["🔍 Odd One", gameOddOne], ["🎈 Balloon", gameBalloon], ["🗝️ Treasure", gameTreasure]];
+    const a = openGameScreen("🎮 Test Games");
+    a.innerHTML = '<div class="game-instr">Pick a game to test 🎮</div><div class="acct-btns" id="gtbtns" style="flex-wrap:wrap"></div>';
+    const wrap = document.getElementById("gtbtns");
+    games.forEach((g, i) => { const b = document.createElement("button"); b.className = "back-btn"; b.textContent = g[0]; b.addEventListener("click", g[1]); wrap.appendChild(b); });
   }
   function rnd(n) { return Math.floor(Math.random() * n); }
 
@@ -3413,6 +3429,7 @@
     document.getElementById("arenaBack").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
   }
   document.getElementById("openArenaBtn").addEventListener("click", () => { renderArenaIntro(); showScreen(screenArena); });
+  document.getElementById("testGamesBtn").addEventListener("click", openGameTest);
   document.getElementById("backFromArena").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
   document.getElementById("arenaFight").addEventListener("click", startTournament);
   document.getElementById("arenaSkip").addEventListener("click", skipArena);
