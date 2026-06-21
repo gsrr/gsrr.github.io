@@ -3096,8 +3096,39 @@
 
   // 3) 接星星
   function gameCatch() { fallingGame("⭐", "🌟 Catch the Stars", "stars", 8); }
-  // 4) 戳泡泡
-  function gameBubble() { fallingGame("🫧", "🫧 Pop the Bubbles", "bubbles", 10); }
+  // 4) 泡泡射擊（準心瞄準 + 點擊開槍）
+  function gameBubble() {
+    const a = openGameScreen("🔫 Bubble Shooter");
+    const GOAL = 10; let score = 0, left = 15;
+    a.innerHTML = '<div class="game-instr">Aim 🎯 and tap to shoot ' + GOAL + ' bubbles! 🔫</div>' +
+      '<div class="game-status" id="gst"></div>' +
+      '<div class="game-stage" id="stage" style="cursor:crosshair">' +
+      '<div id="cross" style="position:absolute;left:50%;top:50%;font-size:34px;transform:translate(-50%,-50%);pointer-events:none">🎯</div>' +
+      '<div style="position:absolute;left:50%;bottom:2px;transform:translateX(-50%);font-size:34px;pointer-events:none">🔫</div>' +
+      '</div>';
+    const stage = document.getElementById("stage"), cross = document.getElementById("cross");
+    const st = () => document.getElementById("gst").textContent = "⏱ " + left + "s   💥 " + score + "/" + GOAL;
+    st();
+    const at = (e) => { const r = stage.getBoundingClientRect(); const p = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e; return { r: r, x: p.clientX - r.left, y: p.clientY - r.top }; };
+    function aim(e) { const a2 = at(e); cross.style.left = a2.x + "px"; cross.style.top = a2.y + "px"; }
+    stage.addEventListener("mousemove", aim);
+    stage.addEventListener("touchmove", (e) => { aim(e); e.preventDefault(); }, { passive: false });
+    const bubbles = [];
+    gInterval(() => {
+      const b = document.createElement("div"); b.className = "game-sprite"; b.textContent = "🫧";
+      b.style.left = (10 + rnd(78)) + "%"; let y = 300; b.style.top = y + "px"; stage.appendChild(b);
+      const obj = { el: b };
+      obj.rise = gInterval(() => { y -= 4; b.style.top = y + "px"; if (y < -40) { clearInterval(obj.rise); b.remove(); const k = bubbles.indexOf(obj); if (k >= 0) bubbles.splice(k, 1); } }, 40);
+      bubbles.push(obj);
+    }, 650);
+    stage.addEventListener("click", (e) => {
+      const a2 = at(e); cross.style.left = a2.x + "px"; cross.style.top = a2.y + "px";
+      let best = null, bd = 1e9;
+      bubbles.forEach(o => { const br = o.el.getBoundingClientRect(); const cx = br.left - a2.r.left + br.width / 2, cy = br.top - a2.r.top + br.height / 2; const d = Math.hypot(cx - a2.x, cy - a2.y); if (d < bd) { bd = d; best = o; } });
+      if (best && bd < 42) { best.el.textContent = "💥"; clearInterval(best.rise); const k = bubbles.indexOf(best); if (k >= 0) bubbles.splice(k, 1); gTimeout(() => best.el.remove(), 150); score++; st(); }
+    });
+    gInterval(() => { left--; st(); if (left <= 0) endGame("Shot " + score + "/" + GOAL + " bubbles.", score >= GOAL); }, 1000);
+  }
   function fallingGame(emoji, title, word, goal) {
     const a = openGameScreen(title);
     let score = 0, left = 15;
