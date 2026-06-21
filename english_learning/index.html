@@ -3061,7 +3061,9 @@
     a.innerHTML = '<div class="game-instr">Hit ' + GOAL + ' moles to win! 🔨</div><div class="game-status" id="gst"></div>' +
       '<div class="game-grid" id="gg" style="grid-template-columns:repeat(3,1fr)"></div>';
     const gg = document.getElementById("gg"); const cells = [];
-    for (let i = 0; i < 9; i++) { const c = document.createElement("div"); c.className = "game-cell"; gg.appendChild(c); cells.push(c); }
+    const HAMMER = "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><text x='2' y='32' font-size='30'>🔨</text></svg>\") 6 30, pointer";
+    gg.style.cursor = HAMMER;
+    for (let i = 0; i < 9; i++) { const c = document.createElement("div"); c.className = "game-cell"; c.style.cursor = HAMMER; gg.appendChild(c); cells.push(c); }
     const st = () => document.getElementById("gst").textContent = "⏱ " + left + "s   🐹 " + hits + "/" + GOAL;
     st();
     let active = -1;
