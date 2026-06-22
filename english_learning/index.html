@@ -2967,16 +2967,14 @@
   }
   function battleWin() {
     bossEmojiEl.classList.add("defeated");
-    const avg = lessonStatus(currentArticle).avg || 0;
-    // 依表現給點：<80 → 0、80–89 → 1、90–99 → 2、100 → 3
-    const pts = starsFromAvg(avg);
-    const h = loadHero(); h.unspent += pts; saveHero(h); battle.hero = h;
+    const r = grantReward(true);
+    const h = loadHero(); h.unspent += r.pts; saveHero(h); battle.hero = h;
     document.getElementById("battleQ").textContent = "";
     document.getElementById("battleOpts").innerHTML = "";
     document.getElementById("battleLog").textContent = "";
-    renderAllocation(pts > 0
-      ? "🏆 You defeated the boss!  +" + pts + " points!"
-      : "🏆 You defeated the boss! Score 80%+ to earn points.");
+    renderAllocation(r.claimed ? "🏆 You defeated the boss!  (Reward already earned)"
+      : (r.pts > 0 ? "🏆 You defeated the boss!  +" + r.pts + " points!"
+        : "🏆 You defeated the boss! Score 80%+ to earn points."));
   }
   function battleLose() {
     heroEmojiEl.classList.add("defeated");
@@ -3039,15 +3037,27 @@
     return a;
   }
   // 結束小遊戲 -> 依該課平均給點數 + 分配畫面（與打 Boss 一致）
+  function rewardKey(file) { return "reward:" + (userName || "guest") + ":" + file; }
+  // 每課的過關獎勵只給一次（防止重玩同一課刷點）。回傳這次實際給的點數。
+  function grantReward(win) {
+    const file = currentArticle && currentArticle.file;
+    let claimed = false;
+    try { claimed = !!file && localStorage.getItem(rewardKey(file)) === "1"; } catch (e) {}
+    if (claimed) return { pts: 0, claimed: true };
+    const avg = currentArticle ? (lessonStatus(currentArticle).avg || 0) : 0;
+    const pts = starsFromAvg(avg) + ((win && avg >= PASS_MARK) ? 1 : 0);   // 贏小遊戲 +1（需通過該課）
+    if (pts > 0 && file) { try { localStorage.setItem(rewardKey(file), "1"); } catch (e) {} scheduleStudentSave(); }
+    return { pts: pts, claimed: false };
+  }
   function endGame(resultMsg, win) {
     clearGame();
-    const avg = currentArticle ? (lessonStatus(currentArticle).avg || 0) : 0;
-    let pts = starsFromAvg(avg);
-    if (win) pts += 1;                                  // 贏小遊戲 +1 點（賭注）
-    const h = loadHero(); h.unspent += pts; saveHero(h); battle = { hero: h };
+    const r = grantReward(win);
+    const h = loadHero(); h.unspent += r.pts; saveHero(h); battle = { hero: h };
     ga().classList.add("hidden");
     const head = win ? "🏆 YOU WIN! " : "💪 Good try! ";
-    renderAllocation(head + (resultMsg || "") + (pts > 0 ? "  +" + pts + " points!" : "  Score 80%+ to earn points."));
+    const tail = r.claimed ? "  (Reward already earned — replay just for fun!)"
+      : (r.pts > 0 ? "  +" + r.pts + " points!" : "  Score 80%+ to earn points.");
+    renderAllocation(head + (resultMsg || "") + tail);
   }
   function startPostLessonGame() {
     if (!currentArticle) { selectLevel(selLevelIdx); return; }
@@ -3604,16 +3614,17 @@
   function collectLocalState() {
     const students = {};
     loadProfiles().forEach(name => {
-      const scores = {}, progress = {};
+      const scores = {}, progress = {}, rewards = {};
       (manifest ? manifest.levels : []).forEach(lv => lv.articles.forEach(a => {
         try { const s = localStorage.getItem("score:" + name + ":" + a.file); if (s) scores[a.file] = JSON.parse(s); } catch (e) {}
         try { const p = localStorage.getItem("prog:" + name + ":" + a.file); if (p) progress[a.file] = JSON.parse(p); } catch (e) {}
+        try { const w = localStorage.getItem("reward:" + name + ":" + a.file); if (w) rewards[a.file] = w; } catch (e) {}
       }));
       let hero = null, avatar = "👦", stamina = null;
       try { hero = JSON.parse(localStorage.getItem("hero:" + name) || "null"); } catch (e) {}
       try { avatar = localStorage.getItem("avatar:" + name) || "👦"; } catch (e) {}
       try { stamina = JSON.parse(localStorage.getItem("stamina:" + name) || "null"); } catch (e) {}
-      students[name] = { avatar: avatar, hero: hero, scores: scores, progress: progress, stamina: stamina, updated: Date.now() };
+      students[name] = { avatar: avatar, hero: hero, scores: scores, progress: progress, rewards: rewards, stamina: stamina, updated: Date.now() };
     });
     return students;
   }
@@ -3775,6 +3786,7 @@
         if (st.hero) localStorage.setItem("hero:" + name, JSON.stringify(st.hero));
         const sc = st.scores || {}; Object.keys(sc).forEach(f => localStorage.setItem("score:" + name + ":" + f, JSON.stringify(sc[f])));
         const pr = st.progress || {}; Object.keys(pr).forEach(f => localStorage.setItem("prog:" + name + ":" + f, JSON.stringify(pr[f])));
+        const rw = st.rewards || {}; Object.keys(rw).forEach(f => localStorage.setItem("reward:" + name + ":" + f, rw[f]));
         if (st.stamina && typeof st.stamina.v === "number") localStorage.setItem("stamina:" + name, JSON.stringify(st.stamina));
       });
       if (blob.userName) { userName = blob.userName; localStorage.setItem("userName", blob.userName); }
