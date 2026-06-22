@@ -387,6 +387,11 @@
   .role-card { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 144px; padding: 24px 10px; border: 2px solid #e2e8f0; border-radius: 16px; background: #fff; font-size: 16px; font-weight: 700; color: #1e293b; cursor: pointer; }
   .role-card:active { transform: scale(0.97); }
   .role-emoji { font-size: 46px; }
+  .land-feats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px auto; max-width: 440px; }
+  .land-feat { display: flex; align-items: center; gap: 8px; font-size: 24px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 12px; }
+  .land-feat span { font-size: 13px; color: #334155; text-align: left; }
+  .land-cta { display: flex; flex-direction: column; gap: 10px; align-items: center; margin: 16px 0; }
+  .land-cta button { width: 240px; }
   .energy { text-align: center; font-size: 14px; color: #334155; margin: 0 0 12px; }
   .energy-track { display: inline-block; vertical-align: middle; width: 120px; height: 10px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin: 0 8px; }
   .energy-fill { display: block; height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); }
@@ -586,6 +591,22 @@
       <button id="logoutChip" class="user-chip" type="button" title="Log out">🚪</button>
     </div>
 
+    <!-- 著陸頁（門面）：說明 + 免登入試玩 -->
+    <div id="screenLanding">
+      <p class="screen-intro" style="font-size:18px;font-weight:700">Fun English reading for ages 6–12 🎈</p>
+      <div class="land-feats">
+        <div class="land-feat">🔊<span>Listen &amp; read with natural voices</span></div>
+        <div class="land-feat">🎤<span>Speak &amp; get a pronunciation score</span></div>
+        <div class="land-feat">🎮<span>Quizzes, mini-games &amp; boss battles</span></div>
+        <div class="land-feat">📈<span>Pre-A1 → B1, tracked progress</span></div>
+      </div>
+      <div class="land-cta">
+        <button id="landTryBtn" class="dict-play" style="font-size:18px">▶ Try it free</button>
+        <button id="landLoginBtn" class="back-btn">🔑 Log in / Sign up</button>
+      </div>
+      <p class="screen-intro" style="font-size:12px;color:#94a3b8">No sign-up to try. Create an account to save progress across devices.</p>
+    </div>
+
     <!-- 畫面 0：選身分（老師 / 學生）— 從 My Account 的 ← Back 進入 -->
     <div id="screenRole" class="hidden">
       <p class="screen-intro">Who's using the app? 👋</p>
@@ -712,6 +733,7 @@
         <span class="learn-title" id="greetTitle"></span>
       </div>
       <p class="screen-intro">Choose a level to start 📚</p>
+      <div id="guestHint" class="hidden" style="text-align:center;font-size:13px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:8px;margin-bottom:10px;cursor:pointer">🔒 Guest mode — tap to log in & save your progress</div>
       <div id="energyBar" class="energy"></div>
       <div style="text-align:center;margin-bottom:14px">
         <button id="openArenaBtn" style="background:#7c3aed;color:#fff">🏆 Arena Tournament</button>
@@ -2459,6 +2481,7 @@
   const clozeCtl = makeCloze(document.getElementById("clozeBox"));
 
   /* ================= 課程載入（讀取 lessons.json 與文章檔） ================= */
+  const screenLanding = document.getElementById("screenLanding");
   const screenRole    = document.getElementById("screenRole");
   const screenProfile = document.getElementById("screenProfile");
   const screenLevel   = document.getElementById("screenLevel");
@@ -2616,7 +2639,7 @@
   userNameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") addProfile(); });
 
   function showScreen(el) {
-    [screenRole, screenProfile, screenStudentAcct, screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena, screenTeacher, screenAdmin, screenLeader].forEach(s => s.classList.add("hidden"));
+    [screenLanding, screenRole, screenProfile, screenStudentAcct, screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena, screenTeacher, screenAdmin, screenLeader].forEach(s => s.classList.add("hidden"));
     el.classList.remove("hidden");
     // 右上角區（使用者鈕 + 匯出）：只在學生 app 內的畫面顯示
     const inApp = [screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena].indexOf(el) !== -1;
@@ -2739,6 +2762,7 @@
   function renderLevelGrid() {
     updateEnergy();
     document.getElementById("testGamesWrap").classList.toggle("hidden", !adminMode);   // 測試者才看得到
+    document.getElementById("guestHint").classList.toggle("hidden", !(userName === "guest"));
     levelGrid.innerHTML = "";
     manifest.levels.forEach((lv, i) => {
       const btn = document.createElement("button");
@@ -3880,7 +3904,12 @@
   document.getElementById("sRegisterBtn").addEventListener("click", () => sAuth("register"));
   document.getElementById("toRegister").addEventListener("click", (e) => { e.preventDefault(); sShowRegisterView(); });
   document.getElementById("toLogin").addEventListener("click", (e) => { e.preventDefault(); sShowLoginView(); });
-  document.getElementById("logoutChip").addEventListener("click", () => { showScreen(screenStudentAcct); sLogout(); });
+  document.getElementById("logoutChip").addEventListener("click", () => { clearAuth(); userName = ""; try { localStorage.removeItem("userName"); } catch (e) {} showScreen(screenLanding); });
+  // 著陸頁：免登入試玩 / 登入
+  function startGuest() { setAdminMode(false); selectProfile("guest"); }
+  document.getElementById("landTryBtn").addEventListener("click", startGuest);
+  document.getElementById("landLoginBtn").addEventListener("click", openStudentAcct);
+  document.getElementById("guestHint").addEventListener("click", openStudentAcct);
 
   async function initLessons() {
     try {
@@ -3896,9 +3925,9 @@
       return;
     }
     renderProfiles();
-    // 已登入 -> 直接選 Student / Teacher 入口；否則顯示 My Account 登入
+    // 已登入 -> 直接選 Student / Teacher 入口；否則顯示著陸頁（可免登入試玩）
     if (authToken() && authUser()) showScreen(screenRole);
-    else openStudentAcct();
+    else showScreen(screenLanding);
   }
 
   initLessons();
