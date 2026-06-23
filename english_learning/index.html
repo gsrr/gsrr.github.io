@@ -1399,8 +1399,8 @@
     try { localStorage.setItem(readKey(userName), JSON.stringify(data)); } catch (e) {}
     scheduleStudentSave();
   }
-  function readStreak(name) {
-    const dates = (loadRead(name).dates) || {};
+  function streakFromDates(dates) {
+    dates = dates || {};
     const cur = new Date();
     if (!dates[todayStr(cur)]) cur.setDate(cur.getDate() - 1);   // 今天還沒讀就從昨天起算（不算斷）
     let s = 0; while (dates[todayStr(cur)]) { s++; cur.setDate(cur.getDate() - 1); }
@@ -1411,6 +1411,7 @@
     });
     return { streak: s, best: best, total: Object.keys(dates).length, today: dates[todayStr()] || 0 };
   }
+  function readStreak(name) { return streakFromDates((loadRead(name).dates) || {}); }
   const summaryEl = document.getElementById("lessonSummary");
   function renderLessonSummary() {
     // 測驗模式下只看 Level 2+ 的關卡（依分頁順序）
@@ -3895,8 +3896,10 @@
         rows += '<span class="dash-lv">' + (lv.icon || "") + ' ' + (lv.name || lv.id) + ': ' + passed + '/' + lv.articles.length + '</span>';
       });
       const avg = pcts.length ? Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length) : null;
+      const rd = (st.read && st.read.dates) ? streakFromDates(st.read.dates) : null;
+      const streakTxt = rd ? ' · 🔥' + rd.streak + 'd' + (rd.today > 0 ? ' ✅today' : '') : '';
       return '<div class="dash-card"><div class="dash-head">' + (st.avatar || "👦") + ' <b>' + name + '</b>' +
-             (avg != null ? ' · avg ' + avg + '%' : '') + '</div><div class="dash-lvs">' + rows + '</div></div>';
+             (avg != null ? ' · avg ' + avg + '%' : '') + streakTxt + '</div><div class="dash-lvs">' + rows + '</div></div>';
     }).join("");
   }
   function renderDashboard(data) {
