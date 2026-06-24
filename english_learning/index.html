@@ -401,18 +401,22 @@
   .day-dot { width: 16px; height: 16px; border-radius: 4px; background: #e2e8f0; }
   .day-dot.on { background: #22c55e; }
   /* ===== 戰棋地圖 ===== */
-  .map-board { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; padding: 16px; border-radius: 14px;
+  .map-board { border-radius: 14px; overflow: hidden;
     background-color: #dcfce7; background-image: radial-gradient(#86efac 1.5px, transparent 1.5px); background-size: 20px 20px; }
-  .map-node { position: relative; width: 96px; min-height: 92px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-    border: 2px solid #94a3b8; border-radius: 14px; background: #fff; cursor: pointer; padding: 8px 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
+  .map-track { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; }
+  .map-node { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; overflow: hidden;
+    border: 2px solid #94a3b8; border-radius: 14px; background: #fff; cursor: pointer; padding: 6px 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 1; }
   .map-node:active { transform: scale(0.94); }
-  .map-ico { font-size: 32px; line-height: 1; }
+  .map-ico { font-size: 30px; line-height: 1; }
   .map-num { font-size: 10px; color: #64748b; }
-  .map-lbl { font-size: 11px; color: #1e293b; text-align: center; line-height: 1.15; max-width: 88px; }
-  .map-node.cleared { background: #eef2f7; border-color: #cbd5e1; opacity: 0.85; }
-  .map-hero { position: absolute; top: -14px; right: -6px; font-size: 26px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3)); }
-  .map-boss { border-color: #dc2626; background: #fef2f2; width: 110px; }
+  .map-lbl { font-size: 11px; color: #1e293b; text-align: center; line-height: 1.1; max-width: 84px; max-height: 26px; overflow: hidden; }
+  .map-node.cleared { background: #eef2f7; border-color: #cbd5e1; opacity: 0.8; }
+  .map-boss { border-color: #dc2626; background: #fef2f2; }
   .map-boss.cleared { border-color: #22c55e; background: #f0fdf4; }
+  .map-hero-piece { position: absolute; z-index: 3; font-size: 30px; pointer-events: none;
+    transition: left .45s ease, top .45s ease; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
+  .map-hero-piece.hop { animation: heroHop .45s ease; }
+  @keyframes heroHop { 50% { transform: translateY(-12px); } }
   .energy { text-align: center; font-size: 14px; color: #334155; margin: 0 0 12px; }
   .energy-track { display: inline-block; vertical-align: middle; width: 120px; height: 10px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin: 0 8px; }
   .energy-fill { display: block; height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); }
@@ -3711,36 +3715,75 @@
   document.getElementById("arenaSkip").addEventListener("click", skipArena);
 
   // 畫面 2：課程卡片
+  let _mapTo = [];
+  function clearMapTimers() { _mapTo.forEach(clearTimeout); _mapTo = []; }
+  function mapTo(fn, ms) { const t = setTimeout(fn, ms); _mapTo.push(t); return t; }
+  function mapPosKey(levelId) { return "mappos:" + (userName || "guest") + ":" + levelId; }
   function selectLevel(i) {
+    clearMapTimers();
     selLevelIdx = i;
-    const lv = manifest.levels[i];
-    const next = manifest.levels[i + 1];
+    const lv = manifest.levels[i], next = manifest.levels[i + 1];
     articleScreenTitle.textContent = (lv.name || lv.id) + " · Battle Map ⚔️";
     const board = articleGrid; board.className = "map-board"; board.innerHTML = "";
+    const COLS = 3, NW = 92, NH = 86, GX = 18, GY = 26, stepX = NW + GX, stepY = NH + GY;
     const passedArr = lv.articles.map(a => lessonStatus(a).passed);
-    const front = passedArr.indexOf(false);   // 前線：第一個還沒清的據點
-    lv.articles.forEach((a, idx) => {
-      const st = lessonStatus(a), passed = passedArr[idx];
+    // 據點 + 最後一個 Boss 據點，沿蛇形路線排列
+    const items = lv.articles.map((a, idx) => ({ a: a, passed: passedArr[idx], boss: false }));
+    items.push({ boss: true, passed: next ? examPassed(lv.id) : false });
+    const centers = [];
+    items.forEach((it, k) => {
+      const row = Math.floor(k / COLS), colRaw = k % COLS, col = (row % 2 === 0) ? colRaw : (COLS - 1 - colRaw);
+      const x = col * stepX, y = row * stepY;
+      centers.push({ x: x + NW / 2, y: y + NH / 2 });
       const node = document.createElement("button");
-      node.className = "map-node" + (passed ? " cleared" : "");
-      const title = a.title ? a.title.split("·").pop().trim() : a.id;
-      node.innerHTML = (idx === front ? '<span class="map-hero">🦸</span>' : '') +
-        '<span class="map-ico">' + (passed ? "💥" : "🏰") + '</span>' +
-        '<span class="map-num">#' + (idx + 1) + (passed && st.avg != null ? ' · ' + st.avg : '') + '</span>' +
-        '<span class="map-lbl">' + title + '</span>';
-      node.addEventListener("click", () => selectArticle(a));
+      node.className = "map-node" + (it.boss ? " map-boss" : "") + (it.passed ? " cleared" : "");
+      node.style.position = "absolute"; node.style.left = x + "px"; node.style.top = y + "px";
+      node.style.width = NW + "px"; node.style.height = NH + "px";
+      if (it.boss) {
+        node.innerHTML = '<span class="map-ico">' + (it.passed ? "🏆" : "🐉") + '</span>' +
+          '<span class="map-lbl">' + (next ? "Level Boss" : "Final Boss") + '</span>' +
+          '<span class="map-num">' + (it.passed ? "cleared" : "20Q · 80") + '</span>';
+        node.addEventListener("click", () => startLevelExam(i));
+      } else {
+        const st = lessonStatus(it.a), title = it.a.title ? it.a.title.split("·").pop().trim() : it.a.id;
+        node.innerHTML = '<span class="map-ico">' + (it.passed ? "💥" : "🏰") + '</span>' +
+          '<span class="map-num">#' + (k + 1) + (it.passed && st.avg != null ? ' · ' + st.avg : '') + '</span>' +
+          '<span class="map-lbl">' + title + '</span>';
+        node.addEventListener("click", () => selectArticle(it.a));
+      }
       board.appendChild(node);
     });
-    // Boss 據點：打贏可（解鎖下一等級）；最後一級是 Final Boss
-    const bossDone = next ? examPassed(lv.id) : false;
-    const boss = document.createElement("button");
-    boss.className = "map-node map-boss" + (bossDone ? " cleared" : "");
-    boss.innerHTML = (front === -1 && !bossDone ? '<span class="map-hero">🦸</span>' : '') +
-      '<span class="map-ico">' + (bossDone ? "🏆" : "🐉") + '</span>' +
-      '<span class="map-lbl">' + (next ? "Level Boss" : "Final Boss") + '</span>' +
-      '<span class="map-num">' + (bossDone ? "cleared" : "20 Q · 80 to win") + '</span>';
-    boss.addEventListener("click", () => startLevelExam(i));
-    board.appendChild(boss);
+    const rows = Math.ceil(items.length / COLS);
+    board.style.position = "relative";
+    board.style.width = (COLS * stepX) + "px";
+    board.style.height = (rows * stepY + 30) + "px";
+    board.style.margin = "0 auto";
+    // 路徑軌跡
+    const NS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("class", "map-track"); svg.setAttribute("width", COLS * stepX); svg.setAttribute("height", rows * stepY + 30);
+    let d = "M" + centers[0].x + " " + centers[0].y;
+    for (let k = 1; k < centers.length; k++) d += " L" + centers[k].x + " " + centers[k].y;
+    const path = document.createElementNS(NS, "path");
+    path.setAttribute("d", d); path.setAttribute("fill", "none"); path.setAttribute("stroke", "#9ca3af");
+    path.setAttribute("stroke-width", "6"); path.setAttribute("stroke-dasharray", "2 12"); path.setAttribute("stroke-linecap", "round");
+    svg.appendChild(path); board.appendChild(svg);
+    // 英雄棋子
+    const hero = document.createElement("div"); hero.className = "map-hero-piece"; hero.textContent = "🦸"; board.appendChild(hero);
+    const placeHero = k => { const c = centers[k]; hero.style.left = (c.x - 16) + "px"; hero.style.top = (c.y - 40) + "px"; };
+    let target = passedArr.indexOf(false); if (target < 0) target = items.length - 1;   // 前線；全清則到 Boss
+    let prev = target;
+    try { const p = localStorage.getItem(mapPosKey(lv.id)); if (p !== null) prev = Math.max(0, Math.min(items.length - 1, parseInt(p, 10))); } catch (e) {}
+    placeHero(prev);
+    if (prev !== target) {   // 上次之後有推進 -> 一格一格走過去
+      let k = prev; const dir = target > prev ? 1 : -1;
+      const stepFn = () => {
+        k += dir; placeHero(k);
+        hero.classList.remove("hop"); void hero.offsetWidth; hero.classList.add("hop");
+        if (k !== target) mapTo(stepFn, 480); else { try { localStorage.setItem(mapPosKey(lv.id), String(target)); } catch (e) {} }
+      };
+      mapTo(stepFn, 400);
+    } else { try { localStorage.setItem(mapPosKey(lv.id), String(target)); } catch (e) {} }
     document.getElementById("examWrap").classList.add("hidden");
     showScreen(screenArticle);
   }
