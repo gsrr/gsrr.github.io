@@ -400,6 +400,19 @@
   .daily-cal { display: flex; gap: 4px; flex-wrap: wrap; }
   .day-dot { width: 16px; height: 16px; border-radius: 4px; background: #e2e8f0; }
   .day-dot.on { background: #22c55e; }
+  /* ===== 戰棋地圖 ===== */
+  .map-board { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; padding: 16px; border-radius: 14px;
+    background-color: #dcfce7; background-image: radial-gradient(#86efac 1.5px, transparent 1.5px); background-size: 20px 20px; }
+  .map-node { position: relative; width: 96px; min-height: 92px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    border: 2px solid #94a3b8; border-radius: 14px; background: #fff; cursor: pointer; padding: 8px 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
+  .map-node:active { transform: scale(0.94); }
+  .map-ico { font-size: 32px; line-height: 1; }
+  .map-num { font-size: 10px; color: #64748b; }
+  .map-lbl { font-size: 11px; color: #1e293b; text-align: center; line-height: 1.15; max-width: 88px; }
+  .map-node.cleared { background: #eef2f7; border-color: #cbd5e1; opacity: 0.85; }
+  .map-hero { position: absolute; top: -14px; right: -6px; font-size: 26px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3)); }
+  .map-boss { border-color: #dc2626; background: #fef2f2; width: 110px; }
+  .map-boss.cleared { border-color: #22c55e; background: #f0fdf4; }
   .energy { text-align: center; font-size: 14px; color: #334155; margin: 0 0 12px; }
   .energy-track { display: inline-block; vertical-align: middle; width: 120px; height: 10px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin: 0 8px; }
   .energy-fill { display: block; height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); }
@@ -3701,68 +3714,34 @@
   function selectLevel(i) {
     selLevelIdx = i;
     const lv = manifest.levels[i];
-    articleScreenTitle.textContent = (lv.name || lv.id) + " · Choose a lesson";
-    articleGrid.innerHTML = "";
-    let prevPassed = true;   // 第一課永遠解鎖；之後要上一課通過才解鎖
-    lv.articles.forEach(a => {
-      const btn = document.createElement("button");
-      btn.className = "pick-card";
-      const st = lessonStatus(a);
-
-      // 上一課沒過關 -> 鎖住（測試者模式則全部解鎖，不上鎖）
-      if (!prevPassed && !adminMode) {
-        btn.classList.add("locked");
-        btn.disabled = true;
-        btn.innerHTML = '<span class="lock-big">🔒</span>' +
-                        '<span class="pick-title">' + (a.title || a.id) + '</span>' +
-                        '<span class="pick-sub">Pass the previous lesson to unlock</span>';
-        articleGrid.appendChild(btn);
-        prevPassed = false;   // 一旦上鎖，後面全部跟著鎖（不能跳關）
-        return;
-      }
-
-      const total = articleTotal(a), done = Math.min(articleDone(a), total);
-      // 紅綠燈：要「所有計分關卡都有分數紀錄」才亮燈；達 80 綠、未達紅；否則白
-      let light = "white", sub = done + '/' + total + ' done';
-      if (st.allScored) {
-        light = st.passed ? "green" : "red";
-        sub = 'Score ' + st.avg + '/100';
-      }
-      // 每關完成狀態（Level 1 看聽力完成紀錄，計分關卡看有沒有分數）
-      let prog = [];
-      try { prog = (JSON.parse(localStorage.getItem(progKey(a.file)) || "[]") || []).map(String); } catch (e) {}
-      const dots = ["1"].concat(st.need).map(l => {
-        let cls = "";   // 灰=未完成
-        if (l === "1") {
-          if (prog.indexOf("1") >= 0) cls = " done";   // Level 1 聽力無分數，完成即綠
-        } else if (st.scores[l] && st.scores[l].total) {
-          const p = Math.round(st.scores[l].correct / st.scores[l].total * 100);
-          cls = p >= PASS_MARK ? " done" : " fail";     // 該關達 80 綠、未達紅
-        }
-        return '<span class="lvl-dot' + cls + '" title="' + levelName(l) + '">' + l + '</span>';
-      }).join("");
-      btn.innerHTML = '<span class="light-dot light-' + light + '"></span>' +
-                      '<span class="pick-title">' + (a.title || a.id) + '</span>' +
-                      '<span class="pick-sub">' + sub + '</span>' +
-                      '<span class="lvl-dots">' + dots + '</span>';
-      btn.addEventListener("click", () => selectArticle(a));
-      articleGrid.appendChild(btn);
-      prevPassed = st.passed;
-    });
-    // 等級進階大考按鈕（若有下一等級）
-    const examWrap = document.getElementById("examWrap");
     const next = manifest.levels[i + 1];
-    if (next) {
-      const passedExam = examPassed(lv.id);
-      examWrap.classList.remove("hidden");
-      examWrap.innerHTML = passedExam
-        ? '<div style="color:#16a34a;font-weight:700">🏆 ' + next.name + ' unlocked! </div><button id="examBtn" class="back-btn">Re-take test</button>'
-        : '<button id="examBtn" class="dict-play" style="background:#dc2626;color:#fff">🐲 Level-Up Test → unlock ' + next.name + '</button>' +
-          '<div style="font-size:12px;color:#94a3b8;margin-top:4px">20 questions · beat the boss (reach 80) before 5 mistakes</div>';
-      document.getElementById("examBtn").addEventListener("click", () => startLevelExam(i));
-    } else {
-      examWrap.classList.add("hidden"); examWrap.innerHTML = "";
-    }
+    articleScreenTitle.textContent = (lv.name || lv.id) + " · Battle Map ⚔️";
+    const board = articleGrid; board.className = "map-board"; board.innerHTML = "";
+    const passedArr = lv.articles.map(a => lessonStatus(a).passed);
+    const front = passedArr.indexOf(false);   // 前線：第一個還沒清的據點
+    lv.articles.forEach((a, idx) => {
+      const st = lessonStatus(a), passed = passedArr[idx];
+      const node = document.createElement("button");
+      node.className = "map-node" + (passed ? " cleared" : "");
+      const title = a.title ? a.title.split("·").pop().trim() : a.id;
+      node.innerHTML = (idx === front ? '<span class="map-hero">🦸</span>' : '') +
+        '<span class="map-ico">' + (passed ? "💥" : "🏰") + '</span>' +
+        '<span class="map-num">#' + (idx + 1) + (passed && st.avg != null ? ' · ' + st.avg : '') + '</span>' +
+        '<span class="map-lbl">' + title + '</span>';
+      node.addEventListener("click", () => selectArticle(a));
+      board.appendChild(node);
+    });
+    // Boss 據點：打贏可（解鎖下一等級）；最後一級是 Final Boss
+    const bossDone = next ? examPassed(lv.id) : false;
+    const boss = document.createElement("button");
+    boss.className = "map-node map-boss" + (bossDone ? " cleared" : "");
+    boss.innerHTML = (front === -1 && !bossDone ? '<span class="map-hero">🦸</span>' : '') +
+      '<span class="map-ico">' + (bossDone ? "🏆" : "🐉") + '</span>' +
+      '<span class="map-lbl">' + (next ? "Level Boss" : "Final Boss") + '</span>' +
+      '<span class="map-num">' + (bossDone ? "cleared" : "20 Q · 80 to win") + '</span>';
+    boss.addEventListener("click", () => startLevelExam(i));
+    board.appendChild(boss);
+    document.getElementById("examWrap").classList.add("hidden");
     showScreen(screenArticle);
   }
 
