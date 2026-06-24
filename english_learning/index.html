@@ -3116,8 +3116,7 @@
       let c = null;
       try { const r = await fetch(a.file + ".json", { cache: "no-cache" }); if (r.ok) c = await r.json(); } catch (e) {}
       if (!c) continue;
-      (c.quiz3 || []).concat(c.quiz4 || []).forEach(it => qs.push({ q: it.q, opts: ["Yes", "No"], correct: it.answer }));
-      (c.wh || []).forEach(it => qs.push({ q: it.q, opts: shuffle([it.a].concat(it.wrong || [])), correct: it.a }));
+      // 只用填空題：一句完整句子挖一格，單看題目就懂，不依賴某篇文章的前後文
       (c.cloze || []).forEach(it => qs.push({ q: it.text.replace("___", "_____"), opts: shuffle([it.answer].concat(it.wrong || [])), correct: it.answer }));
     }
     return shuffle(qs);
