@@ -939,7 +939,7 @@
 
     <!-- 畫面 4：Boss 戰 -->
     <div id="screenBattle" class="hidden">
-      <div class="learn-top"><span class="learn-title" id="battleTitle">🎮 Mini Game</span></div>
+      <div class="learn-top"><button class="back-btn" id="battleBack">← Back</button><span class="learn-title" id="battleTitle">🎮 Mini Game</span></div>
       <div id="bossWrap">
         <div class="battle-arena">
           <div class="fighter">
@@ -3107,6 +3107,14 @@
     draw();
   }
   function leaveBattle() { clearGame(); selectLevel(selLevelIdx); }
+  // 戰鬥/大考/小遊戲頁的「← Back」：中途離開回到課程列表
+  function quitBattle() {
+    if (exam) exam.over = true;
+    if (battle) battle.over = true;
+    clearGame();
+    selectLevel(selLevelIdx);
+  }
+  document.getElementById("battleBack").addEventListener("click", quitBattle);
 
   /* ============ 等級進階大考（quiz Boss：20 題 × 5 分，到 80 打敗 Boss；錯 5 題被擊敗） ============ */
   let exam = null;
