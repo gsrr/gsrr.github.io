@@ -417,6 +417,15 @@
     transition: left .45s ease, top .45s ease; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
   .map-hero-piece.hop { animation: heroHop .45s ease; }
   @keyframes heroHop { 50% { transform: translateY(-12px); } }
+  /* 占地盤 */
+  .terr-banner { max-width: 360px; margin: 0 auto 10px; padding: 7px 12px; border-radius: 10px; background: #fff7ed; border: 1px solid #fed7aa; font-size: 13px; color: #7c2d12; text-align: center; }
+  .terr-link { color: #2563eb; cursor: pointer; font-weight: 700; white-space: nowrap; }
+  .map-node.terr-mine { border-color: #16a34a; box-shadow: 0 0 0 2px #bbf7d0, 0 2px 4px rgba(0,0,0,.1); }
+  .map-node.terr-foe { border-color: #f59e0b; box-shadow: 0 0 0 2px #fde68a, 0 2px 4px rgba(0,0,0,.1); }
+  .terr-flag { position: absolute; top: -1px; right: -1px; display: flex; align-items: center; gap: 1px; padding: 1px 3px 1px 1px;
+    background: rgba(255,255,255,.95); border-radius: 0 12px 0 8px; font-size: 14px; line-height: 1; box-shadow: -1px 1px 2px rgba(0,0,0,.15); }
+  .terr-sc { font-size: 9px; font-weight: 800; color: #b45309; }
+  .map-node.terr-mine .terr-sc { color: #15803d; }
   .energy { text-align: center; font-size: 14px; color: #334155; margin: 0 0 12px; }
   .energy-track { display: inline-block; vertical-align: middle; width: 120px; height: 10px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin: 0 8px; }
   .energy-fill { display: block; height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); }
@@ -3245,20 +3254,44 @@
     if (pts > 0 && file) { try { localStorage.setItem(rewardKey(file), "1"); } catch (e) {} scheduleStudentSave(); }
     return { pts: pts, claimed: false };
   }
-  function endGame(resultMsg, win) {
+  // 占地盤：記下這課的最佳「遊戲成績」(0–100)，要超越前一個擁有者才能搶下據點
+  function gscoreKey(file) { return "gscore:" + (userName || "guest") + ":" + file; }
+  function recordGameScore(score) {
+    const file = currentArticle && currentArticle.file; if (!file) return 0;
+    score = Math.max(0, Math.min(100, Math.round(score || 0)));
+    let cur = null; try { cur = JSON.parse(localStorage.getItem(gscoreKey(file)) || "null"); } catch (e) {}
+    if (!cur || score > (cur.s || 0)) {
+      try { localStorage.setItem(gscoreKey(file), JSON.stringify({ s: score, t: Date.now() })); } catch (e) {}
+      scheduleStudentSave();   // 上雲 -> 別人地圖上才看得到你搶了地盤
+      return score;
+    }
+    return cur.s || 0;
+  }
+  function endGame(resultMsg, win, score) {
     clearGame();
+    if (typeof score !== "number") score = win ? 100 : 0;
+    score = Math.max(0, Math.min(100, Math.round(score)));
+    const best = recordGameScore(score);
     const r = grantReward(win);
     const h = loadHero(); h.unspent += r.pts; saveHero(h); battle = { hero: h };
     ga().classList.add("hidden");
     const head = win ? "🏆 YOU WIN! " : "💪 Good try! ";
-    const tail = r.claimed ? "  (Reward already earned — replay just for fun!)"
+    const pts = r.claimed ? "  (Reward already earned — replay just for fun!)"
       : (r.pts > 0 ? "  +" + r.pts + " points!" : "  Score 80%+ to earn points.");
-    renderAllocation(head + (resultMsg || "") + tail);
+    const terr = '<div style="margin-top:6px;font-weight:700">🚩 Game score: ' + score +
+      (score >= best ? ' — your best!' : ' (best ' + best + ')') + '</div>';
+    renderAllocation(head + (resultMsg || "") + pts + terr);
+  }
+  // 占地盤用的「技術型」遊戲（純運氣的轉盤/寶箱、靠數值的 Boss 不列入，分勝負才公平）
+  const TERR_GAMES = [gameWhack, gameMemory, gameCatch, gameBubble, gameReaction, gameOddOne, gameBalloon];
+  function gameForFile(file) {   // 每課固定一種遊戲（同一課大家都玩同一個 -> 成績可直接比）
+    let h = 0; const s = String(file || "");
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return TERR_GAMES[h % TERR_GAMES.length];
   }
   function startPostLessonGame() {
     if (!currentArticle) { selectLevel(selLevelIdx); return; }
-    const games = [openBattle, gameWhack, gameMemory, gameCatch, gameBubble, gameSpin, gameReaction, gameOddOne, gameBalloon, gameTreasure];
-    games[Math.floor(Math.random() * games.length)]();
+    gameForFile(currentArticle.file)();
   }
   // 測試者：逐一啟動每個遊戲（不必過關）
   function openGameTest() {
@@ -3292,7 +3325,7 @@
     let active = -1;
     gInterval(() => { if (active >= 0) cells[active].textContent = ""; active = rnd(9); cells[active].textContent = "🐹"; }, 800);
     cells.forEach((c, i) => c.addEventListener("click", () => { if (i === active && c.textContent === "🐹") { hits++; c.textContent = "💥"; active = -1; st(); } }));
-    gInterval(() => { left--; st(); if (left <= 0) endGame("You whacked " + hits + "/" + GOAL + " moles.", hits >= GOAL); }, 1000);
+    gInterval(() => { left--; st(); if (left <= 0) endGame("You whacked " + hits + "/" + GOAL + " moles.", hits >= GOAL, hits / GOAL * 100); }, 1000);
   }
 
   // 2) 翻牌配對
@@ -3305,7 +3338,7 @@
     const gg = document.getElementById("gg");
     const st = () => document.getElementById("gst").textContent = "⏱ " + left + "s   Pairs: " + found + "/4";
     st();
-    gInterval(() => { if (over) return; left--; st(); if (left <= 0) { over = true; endGame("Matched " + found + "/4 pairs.", false); } }, 1000);
+    gInterval(() => { if (over) return; left--; st(); if (left <= 0) { over = true; endGame("Matched " + found + "/4 pairs.", false, found / 4 * 100); } }, 1000);
     deck.forEach((e) => {
       const c = document.createElement("div"); c.className = "flip-card"; c.textContent = "?"; c.dataset.e = e;
       c.addEventListener("click", () => {
@@ -3313,7 +3346,7 @@
         c.classList.add("up"); c.textContent = e;
         if (!first) { first = c; return; }
         if (first.dataset.e === e) { first.classList.add("done"); c.classList.add("done"); first = null; found++; st();
-          if (found === 4) { over = true; gTimeout(() => endGame("All pairs matched!", true), 500); }
+          if (found === 4) { over = true; gTimeout(() => endGame("All pairs matched!", true, 100), 500); }
         } else { lock = true; const f = first; first = null; gTimeout(() => { f.classList.remove("up"); f.textContent = "?"; c.classList.remove("up"); c.textContent = "?"; lock = false; }, 700); }
       });
       gg.appendChild(c);
@@ -3353,7 +3386,7 @@
       bubbles.forEach(o => { const br = o.el.getBoundingClientRect(); const cx = br.left - a2.r.left + br.width / 2, cy = br.top - a2.r.top + br.height / 2; const d = Math.hypot(cx - a2.x, cy - a2.y); if (d < bd) { bd = d; best = o; } });
       if (best && bd < 42) { best.el.textContent = "💥"; clearInterval(best.rise); const k = bubbles.indexOf(best); if (k >= 0) bubbles.splice(k, 1); gTimeout(() => best.el.remove(), 150); score++; st(); }
     });
-    gInterval(() => { left--; st(); if (left <= 0) endGame("Shot " + score + "/" + GOAL + " bubbles.", score >= GOAL); }, 1000);
+    gInterval(() => { left--; st(); if (left <= 0) endGame("Shot " + score + "/" + GOAL + " bubbles.", score >= GOAL, score / GOAL * 100); }, 1000);
   }
   function fallingGame(emoji, title, word, goal) {
     const a = openGameScreen(title);
@@ -3368,7 +3401,7 @@
       let y = -50; const fall = gInterval(() => { y += 6; s.style.top = y + "px"; if (y > 300) { clearInterval(fall); s.remove(); } }, 40);
       s.addEventListener("click", () => { score++; st(); clearInterval(fall); s.textContent = "✨"; gTimeout(() => s.remove(), 150); });
     }, 700);
-    gInterval(() => { left--; st(); if (left <= 0) endGame("Caught " + score + "/" + goal + " " + word + ".", score >= goal); }, 1000);
+    gInterval(() => { left--; st(); if (left <= 0) endGame("Caught " + score + "/" + goal + " " + word + ".", score >= goal, score / goal * 100); }, 1000);
   }
 
   // 5) 幸運轉盤
@@ -3392,9 +3425,9 @@
     gTimeout(() => { rb.style.background = "#22c55e"; rb.textContent = "TAP!"; ready = true; t0 = performance.now(); }, 1200 + rnd(2500));
     rb.addEventListener("click", () => {
       if (fired) return;
-      if (!ready) { fired = true; rb.style.background = "#ef4444"; rb.textContent = "Too early!"; endGame("Too early! 😅", false); return; }
+      if (!ready) { fired = true; rb.style.background = "#ef4444"; rb.textContent = "Too early!"; endGame("Too early! 😅", false, 0); return; }
       fired = true; const ms = Math.round(performance.now() - t0);
-      rb.textContent = ms + " ms"; endGame(ms + " ms reaction.", ms <= 400);
+      rb.textContent = ms + " ms"; endGame(ms + " ms reaction.", ms <= 400, (700 - ms) / 5.5);
     });
   }
 
@@ -3414,7 +3447,7 @@
         c.addEventListener("click", () => {
           if (i === odd) score++;
           round++;
-          if (round >= 5) endGame("Found " + score + "/5.", score >= 4); else draw();
+          if (round >= 5) endGame("Found " + score + "/5.", score >= 4, score / 5 * 100); else draw();
         });
         gg.appendChild(c);
       }
@@ -3435,10 +3468,10 @@
     st();
     document.getElementById("pumpBtn").addEventListener("click", () => {
       if (done) return; size += 14 + rnd(10); bal.style.fontSize = Math.min(size, 150) + "px"; st();
-      if (size >= pop) { done = true; bal.textContent = "💥"; gTimeout(() => endGame("It popped at " + Math.round(size) + "!", false), 600); }
+      if (size >= pop) { done = true; bal.textContent = "💥"; gTimeout(() => endGame("It popped at " + Math.round(size) + "!", false, 0), 600); }
     });
     document.getElementById("stopBtn").addEventListener("click", () => {
-      if (done) return; done = true; endGame("You stopped at " + Math.round(size) + ".", size >= GOAL);
+      if (done) return; done = true; endGame("You stopped at " + Math.round(size) + ".", size >= GOAL, size / pop * 100);
     });
   }
 
@@ -3691,21 +3724,27 @@
     document.getElementById("leaderBody").innerHTML = '<p class="screen-intro">Loading…</p>';
     showScreen(screenLeader);
     studentSave(() => {   // 先把自己的最新進度上傳，排行才即時（沒登入也會直接 fetch）
-      fetch("/api/leaderboard").then(r => r.json()).then(renderLeaderboard)
+      Promise.all([
+        fetch("/api/leaderboard").then(r => r.json()).catch(() => null),
+        fetch("/api/territory").then(r => r.json()).catch(() => null)
+      ]).then(([lb, terr]) => { if (terr && terr.holders) territory = terr; renderLeaderboard(lb, terr); })
         .catch(() => { document.getElementById("leaderBody").innerHTML = '<p class="screen-intro">Server not available (needs the server).</p>'; });
     });
   }
-  function renderLeaderboard(data) {
+  function renderLeaderboard(data, terr) {
     const el = document.getElementById("leaderBody");
     const L = (data && data.leaders) || [];
     if (!L.length) { el.innerHTML = '<p class="screen-intro">No players yet.</p>'; return; }
+    const counts = (terr && terr.counts) || {};
+    L.forEach(p => { p.held = counts[p.name] || 0; });
+    L.sort((a, b) => (b.held - a.held) || (b.passed - a.passed) || (b.level - a.level) || a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
     const me = (authUser() || "").toLowerCase();
-    el.innerHTML = L.map((p, i) => {
+    el.innerHTML = '<p class="screen-intro" style="margin:0 0 8px">🚩 Most outposts held wins the map!</p>' + L.map((p, i) => {
       const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "#" + (i + 1);
       const mine = p.name.toLowerCase() === me ? ' style="background:#eff6ff;border-color:#93c5fd"' : "";
       return '<div class="lb-row"' + mine + '><span class="lb-rank">' + medal + '</span>' +
-        '<span class="lb-name">' + (p.avatar || "👦") + ' ' + p.name + '</span>' +
-        '<span class="lb-score">✅ ' + p.passed + ' · LV.' + p.level + '</span></div>';
+        '<span class="lb-name">' + (p.avatar || "👦") + ' ' + dispName(p.name) + '</span>' +
+        '<span class="lb-score">🚩 ' + p.held + ' · ✅ ' + p.passed + '</span></div>';
     }).join("");
   }
   document.getElementById("openLeaderBtn").addEventListener("click", openLeaderboard);
@@ -3719,21 +3758,28 @@
   function clearMapTimers() { _mapTo.forEach(clearTimeout); _mapTo = []; }
   function mapTo(fn, ms) { const t = setTimeout(fn, ms); _mapTo.push(t); return t; }
   function mapPosKey(levelId) { return "mappos:" + (userName || "guest") + ":" + levelId; }
+  // 占地盤：每個據點歸目前「遊戲成績」最高（同分比最近達成）的玩家所有
+  let territory = null;
+  function dispName(n) { return (n || "").replace(/^@/, ""); }
+  function loadTerritory(cb) {
+    fetch("/api/territory").then(r => r.json()).then(j => { if (j && j.holders) territory = j; if (cb) cb(); }).catch(() => { if (cb) cb(); });
+  }
   function selectLevel(i) {
     clearMapTimers();
     selLevelIdx = i;
     const lv = manifest.levels[i], next = manifest.levels[i + 1];
     articleScreenTitle.textContent = (lv.name || lv.id) + " · Battle Map ⚔️";
     const board = articleGrid; board.className = "map-board"; board.innerHTML = "";
+    let banner = document.getElementById("terrBanner");   // 地盤橫幅（地圖上方）
+    if (!banner) { banner = document.createElement("div"); banner.id = "terrBanner"; banner.className = "terr-banner"; board.parentNode.insertBefore(banner, board); }
+    banner.style.display = "none";
     const COLS = 3, NW = 92, NH = 86, GX = 18, GY = 26, stepX = NW + GX, stepY = NH + GY;
     const passedArr = lv.articles.map(a => lessonStatus(a).passed);
-    // 據點 + 最後一個 Boss 據點，沿蛇形路線排列
     const items = lv.articles.map((a, idx) => ({ a: a, passed: passedArr[idx], boss: false }));
     items.push({ boss: true, passed: next ? examPassed(lv.id) : false });
-    const centers = [];
+    const centers = [], fileNodes = {};
     items.forEach((it, k) => {
-      const row = Math.floor(k / COLS), colRaw = k % COLS, col = (row % 2 === 0) ? colRaw : (COLS - 1 - colRaw);
-      const x = col * stepX, y = row * stepY;
+      const x = (k % COLS) * stepX, y = Math.floor(k / COLS) * stepY;
       centers.push({ x: x + NW / 2, y: y + NH / 2 });
       const node = document.createElement("button");
       node.className = "map-node" + (it.boss ? " map-boss" : "") + (it.passed ? " cleared" : "");
@@ -3743,47 +3789,60 @@
         node.innerHTML = '<span class="map-ico">' + (it.passed ? "🏆" : "🐉") + '</span>' +
           '<span class="map-lbl">' + (next ? "Level Boss" : "Final Boss") + '</span>' +
           '<span class="map-num">' + (it.passed ? "cleared" : "20Q · 80") + '</span>';
-        node.addEventListener("click", () => startLevelExam(i));
+        node.addEventListener("click", () => moveHeroThenGo(k, () => startLevelExam(i)));
       } else {
         const st = lessonStatus(it.a), title = it.a.title ? it.a.title.split("·").pop().trim() : it.a.id;
         node.innerHTML = '<span class="map-ico">' + (it.passed ? "💥" : "🏰") + '</span>' +
           '<span class="map-num">#' + (k + 1) + (it.passed && st.avg != null ? ' · ' + st.avg : '') + '</span>' +
           '<span class="map-lbl">' + title + '</span>';
-        node.addEventListener("click", () => selectArticle(it.a));
+        node.addEventListener("click", () => moveHeroThenGo(k, () => selectArticle(it.a)));
+        fileNodes[it.a.file] = node;
       }
       board.appendChild(node);
     });
     const rows = Math.ceil(items.length / COLS);
     board.style.position = "relative";
     board.style.width = (COLS * stepX) + "px";
-    board.style.height = (rows * stepY + 30) + "px";
+    board.style.height = (rows * stepY + 10) + "px";
     board.style.margin = "0 auto";
-    // 路徑軌跡
-    const NS = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(NS, "svg");
-    svg.setAttribute("class", "map-track"); svg.setAttribute("width", COLS * stepX); svg.setAttribute("height", rows * stepY + 30);
-    let d = "M" + centers[0].x + " " + centers[0].y;
-    for (let k = 1; k < centers.length; k++) d += " L" + centers[k].x + " " + centers[k].y;
-    const path = document.createElementNS(NS, "path");
-    path.setAttribute("d", d); path.setAttribute("fill", "none"); path.setAttribute("stroke", "#9ca3af");
-    path.setAttribute("stroke-width", "6"); path.setAttribute("stroke-dasharray", "2 12"); path.setAttribute("stroke-linecap", "round");
-    svg.appendChild(path); board.appendChild(svg);
-    // 英雄棋子
     const hero = document.createElement("div"); hero.className = "map-hero-piece"; hero.textContent = "🦸"; board.appendChild(hero);
-    const placeHero = k => { const c = centers[k]; hero.style.left = (c.x - 16) + "px"; hero.style.top = (c.y - 40) + "px"; };
-    let target = passedArr.indexOf(false); if (target < 0) target = items.length - 1;   // 前線；全清則到 Boss
-    let prev = target;
-    try { const p = localStorage.getItem(mapPosKey(lv.id)); if (p !== null) prev = Math.max(0, Math.min(items.length - 1, parseInt(p, 10))); } catch (e) {}
-    placeHero(prev);
-    if (prev !== target) {   // 上次之後有推進 -> 一格一格走過去
-      let k = prev; const dir = target > prev ? 1 : -1;
-      const stepFn = () => {
-        k += dir; placeHero(k);
-        hero.classList.remove("hop"); void hero.offsetWidth; hero.classList.add("hop");
-        if (k !== target) mapTo(stepFn, 480); else { try { localStorage.setItem(mapPosKey(lv.id), String(target)); } catch (e) {} }
-      };
-      mapTo(stepFn, 400);
-    } else { try { localStorage.setItem(mapPosKey(lv.id), String(target)); } catch (e) {} }
+    function placeHero(k) { const c = centers[Math.max(0, Math.min(centers.length - 1, k))]; hero.style.left = (c.x - 16) + "px"; hero.style.top = (c.y - 40) + "px"; }
+    // 點哪個據點，英雄就走過去再進入（移動跟你的選擇綁定，無先後順序）
+    function moveHeroThenGo(k, go) {
+      placeHero(k);
+      hero.classList.remove("hop"); void hero.offsetWidth; hero.classList.add("hop");
+      try { localStorage.setItem(mapPosKey(lv.id), String(k)); } catch (e) {}
+      mapTo(go, 480);
+    }
+    let pos = passedArr.indexOf(false); if (pos < 0) pos = items.length - 1;
+    try { const p = localStorage.getItem(mapPosKey(lv.id)); if (p !== null) pos = Math.max(0, Math.min(items.length - 1, parseInt(p, 10))); } catch (e) {}
+    placeHero(pos);
+    // 標出每個據點目前的擁有者旗子（頭像 + 要超越的分數）
+    function decorateTerritory() {
+      if (!territory || !territory.holders) { banner.style.display = "none"; return; }
+      const me = (authUser() || userName || "").toLowerCase();
+      let mine = 0;
+      lv.articles.forEach(a => {
+        const node = fileNodes[a.file]; if (!node) return;
+        const old = node.querySelector(".terr-flag"); if (old) old.remove();
+        node.classList.remove("terr-mine", "terr-foe");
+        const h = territory.holders[a.file]; if (!h) return;
+        const isMine = (h.name || "").toLowerCase() === me; if (isMine) mine++;
+        node.classList.add(isMine ? "terr-mine" : "terr-foe");
+        const flag = document.createElement("span");
+        flag.className = "terr-flag";
+        flag.innerHTML = (h.avatar || "🚩") + '<span class="terr-sc">' + h.score + '</span>';
+        flag.title = dispName(h.name) + " · score " + h.score; node.appendChild(flag);
+      });
+      const counts = territory.counts || {}; let top = null;
+      Object.keys(counts).forEach(n => { if (!top || counts[n] > counts[top]) top = n; });
+      banner.innerHTML = '🚩 You hold <b>' + mine + '</b> outpost' + (mine === 1 ? '' : 's') +
+        (top ? ' · 👑 ' + dispName(top) + ' (' + counts[top] + ')' : '') + ' <span class="terr-link">Ranking ▸</span>';
+      banner.style.display = "block";
+      const link = banner.querySelector(".terr-link"); if (link) link.addEventListener("click", openLeaderboard);
+    }
+    decorateTerritory();              // 先用快取畫
+    loadTerritory(decorateTerritory); // 再抓最新覆蓋
     document.getElementById("examWrap").classList.add("hidden");
     showScreen(screenArticle);
   }
@@ -3829,11 +3888,12 @@
   function collectLocalState() {
     const students = {};
     loadProfiles().forEach(name => {
-      const scores = {}, progress = {}, rewards = {};
+      const scores = {}, progress = {}, rewards = {}, gscores = {};
       (manifest ? manifest.levels : []).forEach(lv => lv.articles.forEach(a => {
         try { const s = localStorage.getItem("score:" + name + ":" + a.file); if (s) scores[a.file] = JSON.parse(s); } catch (e) {}
         try { const p = localStorage.getItem("prog:" + name + ":" + a.file); if (p) progress[a.file] = JSON.parse(p); } catch (e) {}
         try { const w = localStorage.getItem("reward:" + name + ":" + a.file); if (w) rewards[a.file] = w; } catch (e) {}
+        try { const g = localStorage.getItem("gscore:" + name + ":" + a.file); if (g) gscores[a.file] = JSON.parse(g); } catch (e) {}
       }));
       let hero = null, avatar = "👦", stamina = null;
       try { hero = JSON.parse(localStorage.getItem("hero:" + name) || "null"); } catch (e) {}
@@ -3842,7 +3902,7 @@
       const exams = {};
       (manifest ? manifest.levels : []).forEach(lv => { try { const e = localStorage.getItem("exam:" + name + ":" + lv.id); if (e) exams[lv.id] = e; } catch (x) {} });
       let read = null; try { read = JSON.parse(localStorage.getItem("read:" + name) || "null"); } catch (e) {}
-      students[name] = { avatar: avatar, hero: hero, scores: scores, progress: progress, rewards: rewards, exams: exams, read: read, stamina: stamina, updated: Date.now() };
+      students[name] = { avatar: avatar, hero: hero, scores: scores, progress: progress, rewards: rewards, gscores: gscores, exams: exams, read: read, stamina: stamina, updated: Date.now() };
     });
     return students;
   }
@@ -3990,9 +4050,13 @@
   }
   // 給排行榜用：通過課數 + 英雄等級 + 頭像
   function computeMyStats() {
-    let passed = 0;
-    (manifest ? manifest.levels : []).forEach(lv => lv.articles.forEach(a => { if (lessonStatus(a).passed) passed++; }));
-    return { passed: passed, level: heroLevel(loadHero()), avatar: userName ? avatarOf(userName) : "👦" };
+    let passed = 0; const lessons = {};   // lessons[file] = {a: 遊戲成績, t: 達成時間} 供占地盤伺服器比對
+    (manifest ? manifest.levels : []).forEach(lv => lv.articles.forEach(a => {
+      if (lessonStatus(a).passed) passed++;
+      let g = null; try { g = JSON.parse(localStorage.getItem("gscore:" + (userName || "guest") + ":" + a.file) || "null"); } catch (e) {}
+      if (g && typeof g.s === "number") lessons[a.file] = { a: g.s, t: g.t || 0 };
+    }));
+    return { passed: passed, level: heroLevel(loadHero()), avatar: userName ? avatarOf(userName) : "👦", lessons: lessons };
   }
   // 把雲端快照寫回本機 localStorage（換裝置登入時還原）
   function restoreSnapshot(blob) {
@@ -4007,6 +4071,7 @@
         const sc = st.scores || {}; Object.keys(sc).forEach(f => localStorage.setItem("score:" + name + ":" + f, JSON.stringify(sc[f])));
         const pr = st.progress || {}; Object.keys(pr).forEach(f => localStorage.setItem("prog:" + name + ":" + f, JSON.stringify(pr[f])));
         const rw = st.rewards || {}; Object.keys(rw).forEach(f => localStorage.setItem("reward:" + name + ":" + f, rw[f]));
+        const gs = st.gscores || {}; Object.keys(gs).forEach(f => localStorage.setItem("gscore:" + name + ":" + f, JSON.stringify(gs[f])));
         const ex = st.exams || {}; Object.keys(ex).forEach(id => localStorage.setItem("exam:" + name + ":" + id, ex[id]));
         if (st.read && st.read.dates) localStorage.setItem("read:" + name, JSON.stringify(st.read));
         if (st.stamina && typeof st.stamina.v === "number") localStorage.setItem("stamina:" + name, JSON.stringify(st.stamina));

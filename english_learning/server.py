@@ -217,6 +217,8 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_admin_overview()
         elif path == "/api/leaderboard":
             self._handle_leaderboard()
+        elif path == "/api/territory":
+            self._handle_territory()
         else:
             self._send({"error": "not found"}, 404)
 
@@ -412,6 +414,32 @@ class Handler(BaseHTTPRequestHandler):
                             "passed": int(stats.get("passed", 0) or 0), "level": int(stats.get("level", 1) or 1)})
         out.sort(key=lambda x: (-x["passed"], -x["level"], x["name"].lower()))
         self._send({"leaders": out[:50]})
+
+    # ---- 占地盤：每課歸「遊戲成績最高（同分比最近達成）」的玩家所有 ----
+    def _handle_territory(self):
+        holders = {}   # file -> {name, avatar, score, t}
+        with acct_lock:
+            db = load_accounts()
+            for user in db.get("users", {}):
+                if user == "testaccount":
+                    continue
+                stats = (load_progress(user).get("sdata") or {}).get("stats") or {}
+                avatar = stats.get("avatar", "👦")
+                lessons = stats.get("lessons") or {}
+                for f, info in (lessons.items() if isinstance(lessons, dict) else []):
+                    try:
+                        score = int(info.get("a", 0)); t = float(info.get("t", 0) or 0)
+                    except Exception:
+                        continue
+                    cur = holders.get(f)
+                    if cur is None or score > cur["score"] or (score == cur["score"] and t > cur["t"]):
+                        holders[f] = {"name": user, "avatar": avatar, "score": score, "t": t}
+        counts = {}
+        out_h = {}
+        for f, h in holders.items():
+            counts[h["name"]] = counts.get(h["name"], 0) + 1
+            out_h[f] = {"name": h["name"], "avatar": h["avatar"], "score": h["score"]}
+        self._send({"holders": out_h, "counts": counts})
 
     def log_message(self, *args):
         pass  # 安靜
