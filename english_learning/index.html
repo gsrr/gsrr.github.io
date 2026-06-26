@@ -319,6 +319,7 @@
   #recBtn    { background: #ef4444; color: #fff; }
   #recBtn.recording { background: #b91c1c; animation: pulse 1s infinite; }
   #myPlayBtn { background: #16a34a; color: #fff; }
+  #speedBtn  { background: #f59e0b; color: #fff; min-width: 64px; }
   #checkBtn  { background: #0d9488; color: #fff; }
   .pron-result { text-align: center; margin-top: 10px; font-size: 18px; }
   .pron-result .pron-score { font-size: 22px; font-weight: 800; color: #0f766e; }
@@ -872,6 +873,7 @@
       </div>
       <div class="shadow-actions">
         <button id="listenBtn">🔊 Listen</button>
+        <button id="speedBtn" title="Change listening speed">🐢 1×</button>
         <button id="recBtn">🎤 Record</button>
         <button id="myPlayBtn" disabled>▶ Play</button>
       </div>
@@ -1662,6 +1664,17 @@
   const shadowNavWrap  = document.querySelector(".shadow-nav-wrap");
   const shadowActions  = document.querySelector(".shadow-actions");
   const pronResult     = document.getElementById("pronResult");
+  const speedBtn       = document.getElementById("speedBtn");
+
+  // 跟讀播放速度：可循環切換 1× → 0.75× → 0.5×（慢速方便聽清楚）
+  const shadowSpeeds = [{ rate: 1, label: "🐢 1×" }, { rate: 0.75, label: "🐢 0.75×" }, { rate: 0.5, label: "🐌 0.5×" }];
+  let shadowSpeedIdx = 0;
+  function updateSpeedBtn() { speedBtn.textContent = shadowSpeeds[shadowSpeedIdx].label; }
+  speedBtn.addEventListener("click", () => {
+    shadowSpeedIdx = (shadowSpeedIdx + 1) % shadowSpeeds.length;
+    updateSpeedBtn();
+  });
+  updateSpeedBtn();
 
   let idx = 0;
   let mediaRecorder = null;
@@ -1711,9 +1724,10 @@
 
   listenBtn.addEventListener("click", () => {
     const line = script[idx];
+    const rate = shadowSpeeds[shadowSpeedIdx].rate;
     synth.cancel(); stopAudio();
-    if (playClip(line.text, line.gender)) return;
-    const u = makeUtter(line, 0.9);
+    if (playClip(line.text, line.gender, rate)) return;
+    const u = makeUtter(line, 0.9 * rate);
     if (u) synth.speak(u);
   });
 
