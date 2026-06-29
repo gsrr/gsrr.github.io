@@ -467,6 +467,9 @@
   .coll-plus:not([disabled]):active { transform: scale(0.95); }
   .coll-set { width: 100%; padding: 3px; border: 1px solid #fbbf24; border-radius: 999px; background: #fff7ed; cursor: pointer; font-size: 10px; }
   .coll-champ { font-size: 10px; font-weight: 700; color: #b45309; }
+  .coll-dep { font-size: 9px; font-weight: 700; color: #15803d; line-height: 1.2; margin-bottom: 3px; }
+  .coll-dep.idle { color: #94a3b8; font-weight: 400; }
+  .op-dep { display: block; font-size: 10px; color: #b45309; margin-top: 2px; }
   .energy { text-align: center; font-size: 14px; color: #334155; margin: 0 0 12px; }
   .energy-track { display: inline-block; vertical-align: middle; width: 120px; height: 10px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin: 0 8px; }
   .energy-fill { display: block; height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); }
@@ -2996,8 +2999,8 @@
       '<span>⚔️ ' + h.atk + '</span><span>🛡️ ' + h.def + '</span><span>🍀 ' + h.luck + '</span>' +
       (h.unspent ? '<span class="hero-unspent">' + h.unspent + ' pts to spend</span>' : '') + '</div>';
 
-    // 🎴 Boss 卡收藏：看所有卡、加點數、選出戰卡
-    const cc = loadCards(), canSpend = cc.unspent > 0;
+    // 🎴 Boss 卡收藏：看所有卡、加點數、選出戰卡、看部署在哪
+    const cc = loadCards(), canSpend = cc.unspent > 0, dep = myDeployMap();
     function statBtn(id, stat, ico, val) {
       return '<button class="coll-plus" data-id="' + id + '" data-stat="' + stat + '"' + (canSpend ? '' : ' disabled') + '>' +
         ico + val + (canSpend ? ' ＋' : '') + '</button>';
@@ -3005,12 +3008,13 @@
     const cardsHtml = '<div class="stats-h">🎴 Boss Cards (' + cc.list.length + ')' +
       (cc.unspent ? ' · <b>' + cc.unspent + '</b> pts to spend' : '') + '</div>' +
       (cc.list.length ? '<div class="coll-grid">' + cc.list.map(cd => {
-        const champ = cc.active === cd.id;
+        const champ = cc.active === cd.id, at = dep[cd.id];
         return '<div class="coll-card' + (champ ? ' champ' : '') + '">' +
           '<div class="coll-emo">' + cd.emoji + '</div>' +
           '<div class="coll-name">' + cd.name + '</div>' +
           '<div class="coll-lv">LV.' + heroLevel(cd) + '</div>' +
           '<div class="coll-stats">' + statBtn(cd.id, "atk", "⚔️", cd.atk) + statBtn(cd.id, "def", "🛡️", cd.def) + statBtn(cd.id, "luck", "🍀", cd.luck) + '</div>' +
+          (at ? '<div class="coll-dep">🚩 ' + lessonTitleByFile(at) + '</div>' : '<div class="coll-dep idle">in hand</div>') +
           (champ ? '<div class="coll-champ">⭐ Champion</div>' : '<button class="coll-set" data-id="' + cd.id + '">Set ⭐</button>') +
           '</div>';
       }).join("") + '</div>' : '<p class="screen-intro">Pass a lesson (80%+) to earn your first Boss Card!</p>');
@@ -3045,6 +3049,7 @@
     renderPanelAvatar();
     renderJoinClass();
     showScreen(screenProfileStats);
+    loadTerritory(renderProfileStats);   // 抓最新部署狀態，刷新卡片「守在哪」
   }
   userChip.addEventListener("click", () => { if (userName) openProfileStats(); });   // 老師(無 userName)點名字不動作
   document.getElementById("backFromStats").addEventListener("click", () => {
@@ -3990,10 +3995,14 @@
   }
   function closeModal() { const m = document.getElementById("appModal"); if (m) m.remove(); }
   function cardStatStr(c) { return "⚔️" + (c.atk || 0) + " 🛡️" + (c.def || 0) + " 🍀" + (c.luck || 0); }
-  function cardPickHTML(cards) {
+  function cardPickHTML(cards, selfFile) {
     if (!cards.list.length) return '<p class="op-hint">You have no Boss Cards yet — pass a lesson (80%+) to earn one!</p>';
-    return '<div class="op-cards">' + cards.list.map(cd =>
-      '<button class="op-card-btn" data-id="' + cd.id + '">' + cd.emoji + ' <b>' + cd.name + '</b><br>' + cardStatStr(cd) + '</button>').join("") + '</div>';
+    const dep = myDeployMap();
+    return '<div class="op-cards">' + cards.list.map(cd => {
+      const at = dep[cd.id];
+      const tag = (at && at !== selfFile) ? '<span class="op-dep">🚩 guarding ' + lessonTitleByFile(at) + ' — moves here</span>' : '';
+      return '<button class="op-card-btn" data-id="' + cd.id + '">' + cd.emoji + ' <b>' + cd.name + '</b> ' + cardStatStr(cd) + tag + '</button>';
+    }).join("") + '</div>';
   }
   function wireCardPick(root, cb) {
     root.querySelectorAll(".op-card-btn").forEach(b => b.addEventListener("click", () => {
@@ -4021,15 +4030,15 @@
     if (!authToken()) { terr.innerHTML = '<p class="op-hint">🔒 Log in with a student account to battle for territory.</p>'; return; }
     const cards = loadCards();
     if (mine) {
-      terr.innerHTML = '<p class="op-hint">✅ You hold this outpost. Swap the guard:</p>' + cardPickHTML(cards);
+      terr.innerHTML = '<p class="op-hint">✅ You hold this outpost. Swap the guard:</p>' + cardPickHTML(cards, file);
       wireCardPick(terr, cd => claimOutpost(file, cd, () => { closeModal(); refreshMap(); }));
     } else if (!h || !h.owner) {
       if (passed) {
-        terr.innerHTML = '<p class="op-hint">🚩 Deploy a Boss Card to guard this outpost:</p>' + cardPickHTML(cards);
+        terr.innerHTML = '<p class="op-hint">🚩 Deploy a Boss Card to guard this outpost:</p>' + cardPickHTML(cards, file);
         wireCardPick(terr, cd => claimOutpost(file, cd, () => { closeModal(); refreshMap(); }));
       } else { terr.innerHTML = '<p class="op-hint">Study &amp; pass this lesson (80%+) to claim it.</p>'; }
     } else {
-      terr.innerHTML = '<p class="op-hint">⚔️ Pick your Boss Card to attack the guard:</p>' + cardPickHTML(cards);
+      terr.innerHTML = '<p class="op-hint">⚔️ Pick your Boss Card to attack the guard:</p>' + cardPickHTML(cards, file);
       wireCardPick(terr, cd => startCapture(file, cd, h.card || {}));
     }
   }
@@ -4037,10 +4046,27 @@
     const t = authToken(); if (!t) { if (cb) cb(); return; }
     fetch("/api/territory/claim?token=" + encodeURIComponent(t), {
       method: "POST", body: JSON.stringify({
-        file: file, avatar: avatarOf(userName),
+        file: file, avatar: avatarOf(userName), cardId: card.id,
         card: { emoji: card.emoji, name: card.name, atk: card.atk || 0, def: card.def || 0, luck: card.luck || 0 }
       })
     }).then(r => r.json()).then(() => loadTerritory(() => { if (cb) cb(); })).catch(() => { if (cb) cb(); });
+  }
+  // 我目前用哪張卡守哪個據點：cardId -> 部署的據點 file
+  function myDeployMap() {
+    const m = {}; if (!territory || !territory.holders) return m;
+    const me = (authUser() || userName || "").toLowerCase();
+    Object.keys(territory.holders).forEach(f => {
+      const h = territory.holders[f];
+      if (h && h.owner && (h.owner || "").toLowerCase() === me && h.cardId) m[h.cardId] = f;
+    });
+    return m;
+  }
+  function lessonTitleByFile(file) {
+    let t = file;
+    (manifest ? manifest.levels : []).forEach(lv => lv.articles.forEach(a => {
+      if (a.file === file) t = a.title ? a.title.split("·").pop().trim() : a.id;
+    }));
+    return t;
   }
   // 卡片對戰：攻方 att vs 守方 def，回傳攻方是否獲勝（含爆擊/閃避，與競技場同公式）
   function cardBattleWin(att, def) {

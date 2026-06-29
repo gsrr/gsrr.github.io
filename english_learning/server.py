@@ -448,7 +448,7 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(h, dict):
                 continue
             owner = h.get("owner")
-            holders[f] = {"owner": owner, "avatar": h.get("avatar", "👦"), "card": h.get("card") or {}}
+            holders[f] = {"owner": owner, "avatar": h.get("avatar", "👦"), "card": h.get("card") or {}, "cardId": h.get("cardId")}
             if owner:
                 counts[owner] = counts.get(owner, 0) + 1
         self._send({"holders": holders, "counts": counts})
@@ -462,6 +462,7 @@ class Handler(BaseHTTPRequestHandler):
         d = self._body_json()
         f = (d.get("file") or "").strip()
         card = d.get("card") or {}
+        card_id = (d.get("cardId") or "").strip()
         if not f or not isinstance(card, dict):
             self._send({"error": "missing file/card"}, 400)
             return
@@ -469,7 +470,12 @@ class Handler(BaseHTTPRequestHandler):
                  "atk": int(card.get("atk", 0) or 0), "def": int(card.get("def", 0) or 0), "luck": int(card.get("luck", 0) or 0)}
         with terr_lock:
             store = load_territory_store()
-            store[f] = {"owner": user, "avatar": str(d.get("avatar", "👦"))[:8], "card": clean}
+            # 一張卡只能守一個地方：先把這張卡（同擁有者）從別處撤走
+            if card_id:
+                for k in [k for k, v in store.items()
+                          if isinstance(v, dict) and v.get("owner") == user and v.get("cardId") == card_id and k != f]:
+                    store.pop(k, None)
+            store[f] = {"owner": user, "avatar": str(d.get("avatar", "👦"))[:8], "card": clean, "cardId": card_id}
             save_territory_store(store)
         self._send({"ok": True})
 
