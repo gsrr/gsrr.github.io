@@ -427,6 +427,33 @@
     background: rgba(255,255,255,.95); border-radius: 0 12px 0 8px; font-size: 14px; line-height: 1; box-shadow: -1px 1px 2px rgba(0,0,0,.15); }
   .terr-sc { font-size: 9px; font-weight: 800; color: #b45309; }
   .map-node.terr-mine .terr-sc { color: #15803d; }
+  /* 據點面板 / 卡片 / 占領對戰 */
+  .modal-ov { position: fixed; inset: 0; background: rgba(15,23,42,.55); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
+  .modal-card { background: #fff; border-radius: 16px; padding: 18px; max-width: 360px; width: 100%; max-height: 86vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+  .modal-title { margin: 0 0 10px; font-size: 18px; }
+  .op-def { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 10px; font-size: 13px; margin-bottom: 10px; }
+  .op-def.op-mine { background: #f0fdf4; border-color: #bbf7d0; }
+  .op-card { color: #475569; font-size: 12px; }
+  .op-hint { font-size: 13px; color: #475569; margin: 10px 0 6px; }
+  .op-btns { display: flex; gap: 8px; justify-content: center; margin: 8px 0; }
+  .op-cards { display: flex; flex-direction: column; gap: 6px; }
+  .op-card-btn { text-align: left; padding: 8px 10px; border: 2px solid #c7d2fe; border-radius: 10px; background: #eef2ff; cursor: pointer; font-size: 13px; line-height: 1.3; }
+  .op-card-btn:active { transform: scale(0.98); }
+  .card-list { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; margin: 8px 0; }
+  .boss-card { border: 2px solid #e2e8f0; border-radius: 12px; padding: 8px 10px; background: #fff; }
+  .boss-card.champ { border-color: #f59e0b; background: #fffbeb; }
+  .bc-head { display: flex; align-items: center; gap: 6px; font-size: 14px; margin-bottom: 6px; }
+  .bc-emo { font-size: 20px; }
+  .bc-lv { font-size: 11px; color: #64748b; margin-left: auto; }
+  .bc-star { font-size: 11px; color: #b45309; font-weight: 700; }
+  .bc-set { font-size: 11px; padding: 2px 8px; border: 1px solid #fbbf24; border-radius: 999px; background: #fff7ed; cursor: pointer; }
+  .bc-stats { display: flex; gap: 6px; }
+  .bc-plus { flex: 1; padding: 6px 4px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; cursor: pointer; font-size: 13px; font-weight: 600; }
+  .bc-plus:active { transform: scale(0.96); }
+  .cap-arena { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 14px 0; }
+  .cap-emo { font-size: 52px; }
+  .cap-vs { font-size: 18px; font-weight: 800; color: #94a3b8; }
+  .cap-log { text-align: center; font-size: 15px; font-weight: 700; min-height: 22px; margin-bottom: 8px; }
   .energy { text-align: center; font-size: 14px; color: #334155; margin: 0 0 12px; }
   .energy-track { display: inline-block; vertical-align: middle; width: 120px; height: 10px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin: 0 8px; }
   .energy-fill { display: block; height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); }
@@ -2985,15 +3012,49 @@
   });
 
   /* ================= RPG：角色養成 + Boss 戰 ================= */
+  // ===== Boss 卡系統（取代單一英雄）：每過一課拿一張卡，過關點數加在自選的卡上 =====
+  const VILLAIN_POOL = ["👾", "👹", "👺", "🤖", "👻", "🧟", "🧛", "🐉", "🦖", "🐲", "🦂", "🦇", "🐍", "🦈", "🐙"];
+  function villainForFile(file) { let h = 0, s = String(file || ""); for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return VILLAIN_POOL[h % VILLAIN_POOL.length]; }
+  function cardsKey() { return "cards:" + (userName || "guest"); }
+  function loadCards() {
+    let c = { list: [], unspent: 0, active: null };
+    try { const raw = JSON.parse(localStorage.getItem(cardsKey()) || "null"); if (raw && Array.isArray(raw.list)) c = raw; } catch (e) {}
+    if (!c.list.length) {   // 一次性：把舊的單一英雄轉成一張 Champion 卡，進度不歸零
+      try {
+        const old = JSON.parse(localStorage.getItem("hero:" + (userName || "guest")) || "null");
+        if (old && (old.atk > 1 || old.def > 1 || old.luck > 1 || old.unspent)) {
+          c.list.push({ id: "_champion", emoji: "🦸", name: "Champion", atk: old.atk || 0, def: old.def || 0, luck: old.luck || 0 });
+          c.unspent = old.unspent || 0; c.active = "_champion";
+        }
+      } catch (e) {}
+    }
+    return c;
+  }
+  function saveCards(c) { try { localStorage.setItem(cardsKey(), JSON.stringify(c)); } catch (e) {} scheduleStudentSave(); }
+  function findCard(c, id) { return (c.list || []).find(x => x.id === id) || null; }
+  function cardPower(c) { return (c.atk || 0) + (c.def || 0) + (c.luck || 0); }
+  function strongestCard(c) { if (!c.list || !c.list.length) return null; return c.list.slice().sort((a, b) => cardPower(b) - cardPower(a))[0]; }
+  function activeCard(c) { c = c || loadCards(); return findCard(c, c.active) || strongestCard(c) || { id: null, emoji: "🦸", name: "No card yet", atk: 0, def: 0, luck: 0 }; }
+  function grantCard(file, title) {   // 過某一課 -> 拿一張該課的 boss 卡（每課一張）
+    const c = loadCards(); if (findCard(c, file)) return c;
+    const name = ((title || "").split("·").pop() || "").trim() || "Boss";
+    c.list.push({ id: file, emoji: villainForFile(file), name: name, atk: 0, def: 0, luck: 0 });
+    if (!c.active) c.active = file;
+    saveCards(c); return c;
+  }
+  // 相容層：舊的 loadHero/saveHero 改成操作「目前出戰的卡」+ 共用點數池
   function heroKey() { return "hero:" + (userName || "guest"); }
   function loadHero() {
-    let h = { atk: 1, def: 1, luck: 1, unspent: 0 };
-    try { Object.assign(h, JSON.parse(localStorage.getItem(heroKey()) || "{}")); } catch (e) {}
-    return h;
+    const c = loadCards(), a = activeCard(c);
+    return { atk: a.atk || 0, def: a.def || 0, luck: a.luck || 0, unspent: c.unspent || 0, _cardId: a.id, emoji: a.emoji };
   }
-  function saveHero(h) { try { localStorage.setItem(heroKey(), JSON.stringify(h)); } catch (e) {} }
+  function saveHero(h) {
+    const c = loadCards(), a = findCard(c, h._cardId) || activeCard(c);
+    if (a && a.id) { a.atk = h.atk; a.def = h.def; a.luck = h.luck; }
+    c.unspent = h.unspent || 0; saveCards(c);
+  }
   function heroMaxHP(h) { return 20 + h.def * 5; }
-  function heroLevel(h) { return 1 + Math.floor((h.atk + h.def + h.luck - 3) / 3); }
+  function heroLevel(h) { return 1 + Math.floor(((h.atk || 0) + (h.def || 0) + (h.luck || 0)) / 3); }
   function starsFromAvg(a) { return a >= 100 ? 3 : a >= 90 ? 2 : a >= 80 ? 1 : 0; }
   // 🍀 LUCK 的兩個作用：爆擊（×2 傷害）與閃避（完全免傷）
   function critChance(luck) { return Math.min(0.6, (luck || 0) * 0.05); }
@@ -3115,34 +3176,41 @@
     document.getElementById("battleRetry").addEventListener("click", openBattle);
     document.getElementById("battleLeave").addEventListener("click", leaveBattle);
   }
+  // 過關獎勵分配：選一張 boss 卡，把點數加在它的 ⚔️/🛡️/🍀 上；可設定出戰卡 ⭐
   function renderAllocation(msg) {
     const r = document.getElementById("battleResult");
     r.classList.remove("hidden");
-    function row(stat, label, val) {
-      return '<div class="alloc-row"><span>' + label + '</span><span class="alloc-val">' + val +
-        '</span><button class="alloc-plus opt" data-stat="' + stat + '">＋</button></div>';
-    }
     function draw() {
-      const h = battle.hero;
-      r.innerHTML = '<div class="battle-msg">' + msg + '</div>' +
-        '<div class="alloc">Points to spend: <b>' + h.unspent + '</b></div>' +
-        '<div class="alloc-rows">' +
-          row("atk", "⚔️ Attack <small>more damage</small>", h.atk) +
-          row("def", "🛡️ Defense <small>more HP & less damage</small>", h.def) +
-          row("luck", "🍀 Luck <small>crit ×2 & dodge</small>", h.luck) +
-        '</div>' +
-        '<div class="battle-btns"><button id="battleDone" class="back-btn">Back to Lessons</button></div>';
-      r.querySelectorAll(".alloc-plus").forEach(b => b.addEventListener("click", () => {
-        if (battle.hero.unspent <= 0) return;
-        battle.hero[b.dataset.stat]++;
-        battle.hero.unspent--;
-        saveHero(battle.hero);
-        battle.heroMax = heroMaxHP(battle.hero);
-        renderBattleHUD();
-        draw();
+      const c = loadCards();
+      let html = '<div class="battle-msg">' + msg + '</div>' +
+        '<div class="alloc">🎴 Power up a Boss Card — points to spend: <b>' + c.unspent + '</b></div>';
+      if (!c.list.length) {
+        html += '<p class="screen-intro">Pass a lesson (80%+) to earn your first Boss Card!</p>';
+      } else {
+        html += '<div class="card-list">' + c.list.map(cd => {
+          const champ = c.active === cd.id;
+          return '<div class="boss-card' + (champ ? ' champ' : '') + '">' +
+            '<div class="bc-head"><span class="bc-emo">' + cd.emoji + '</span><b>' + cd.name + '</b>' +
+            '<span class="bc-lv">LV.' + heroLevel(cd) + '</span>' +
+            (champ ? '<span class="bc-star">⭐ Champion</span>' : '<button class="bc-set" data-id="' + cd.id + '">Set ⭐</button>') + '</div>' +
+            '<div class="bc-stats">' +
+              '<button class="bc-plus" data-id="' + cd.id + '" data-stat="atk">⚔️ ' + cd.atk + ' ＋</button>' +
+              '<button class="bc-plus" data-id="' + cd.id + '" data-stat="def">🛡️ ' + cd.def + ' ＋</button>' +
+              '<button class="bc-plus" data-id="' + cd.id + '" data-stat="luck">🍀 ' + cd.luck + ' ＋</button>' +
+            '</div></div>';
+        }).join("") + '</div>';
+      }
+      html += '<div class="battle-btns"><button id="battleDone" class="back-btn">Back to Map</button></div>';
+      r.innerHTML = html;
+      r.querySelectorAll(".bc-plus").forEach(b => b.addEventListener("click", () => {
+        const c2 = loadCards(); if (c2.unspent <= 0) return;
+        const cd = findCard(c2, b.dataset.id); if (!cd) return;
+        cd[b.dataset.stat]++; c2.unspent--; saveCards(c2); draw();
+      }));
+      r.querySelectorAll(".bc-set").forEach(b => b.addEventListener("click", () => {
+        const c2 = loadCards(); c2.active = b.dataset.id; saveCards(c2); draw();
       }));
       r.querySelector("#battleDone").addEventListener("click", leaveBattle);
-      renderBattleHUD();
     }
     draw();
   }
@@ -3264,6 +3332,7 @@
     try { claimed = !!file && localStorage.getItem(rewardKey(file)) === "1"; } catch (e) {}
     if (claimed) return { pts: 0, claimed: true };
     const avg = currentArticle ? (lessonStatus(currentArticle).avg || 0) : 0;
+    if (file && avg >= PASS_MARK) grantCard(file, currentArticle.title);   // 過關 -> 拿一張該課的 boss 卡
     const pts = starsFromAvg(avg) + ((win && avg >= PASS_MARK) ? 1 : 0);   // 贏小遊戲 +1（需通過該課）
     if (pts > 0 && file) { try { localStorage.setItem(rewardKey(file), "1"); } catch (e) {} scheduleStudentSave(); }
     return { pts: pts, claimed: false };
@@ -3504,7 +3573,14 @@
   }
 
   /* ================= 競技場 PvP：兩位使用者的英雄自動對戰 ================= */
-  function loadHeroFor(name) {
+  function loadHeroFor(name) {   // 競技場：用該玩家最強的一張卡出戰
+    try {
+      const cc = JSON.parse(localStorage.getItem("cards:" + name) || "null");
+      if (cc && Array.isArray(cc.list) && cc.list.length) {
+        const s = cc.list.slice().sort((a, b) => ((b.atk + b.def + b.luck) - (a.atk + a.def + a.luck)))[0];
+        return { atk: s.atk || 0, def: s.def || 0, luck: s.luck || 0, unspent: 0, emoji: s.emoji };
+      }
+    } catch (e) {}
     let h = { atk: 1, def: 1, luck: 1, unspent: 0 };
     try { Object.assign(h, JSON.parse(localStorage.getItem("hero:" + name) || "{}")); } catch (e) {}
     return h;
@@ -3809,7 +3885,7 @@
         node.innerHTML = '<span class="map-ico">' + (it.passed ? "💥" : "🏰") + '</span>' +
           '<span class="map-num">#' + (k + 1) + (it.passed && st.avg != null ? ' · ' + st.avg : '') + '</span>' +
           '<span class="map-lbl">' + title + '</span>';
-        node.addEventListener("click", () => moveHeroThenGo(k, () => selectArticle(it.a)));
+        node.addEventListener("click", () => moveHeroThenGo(k, () => openOutpost(it.a)));
         fileNodes[it.a.file] = node;
       }
       board.appendChild(node);
@@ -3831,7 +3907,7 @@
     let pos = passedArr.indexOf(false); if (pos < 0) pos = items.length - 1;
     try { const p = localStorage.getItem(mapPosKey(lv.id)); if (p !== null) pos = Math.max(0, Math.min(items.length - 1, parseInt(p, 10))); } catch (e) {}
     placeHero(pos);
-    // 標出每個據點目前的擁有者旗子（頭像 + 要超越的分數）
+    // 標出每個據點目前守護的 boss 卡（卡片表情 + 戰力）
     function decorateTerritory() {
       if (!territory || !territory.holders) { banner.style.display = "none"; return; }
       const me = (authUser() || userName || "").toLowerCase();
@@ -3840,13 +3916,14 @@
         const node = fileNodes[a.file]; if (!node) return;
         const old = node.querySelector(".terr-flag"); if (old) old.remove();
         node.classList.remove("terr-mine", "terr-foe");
-        const h = territory.holders[a.file]; if (!h) return;
-        const isMine = (h.name || "").toLowerCase() === me; if (isMine) mine++;
+        const h = territory.holders[a.file]; if (!h || !h.owner) return;
+        const isMine = (h.owner || "").toLowerCase() === me; if (isMine) mine++;
         node.classList.add(isMine ? "terr-mine" : "terr-foe");
+        const card = h.card || {}; const pw = (card.atk || 0) + (card.def || 0) + (card.luck || 0);
         const flag = document.createElement("span");
         flag.className = "terr-flag";
-        flag.innerHTML = (h.avatar || "🚩") + '<span class="terr-sc">' + h.score + '</span>';
-        flag.title = dispName(h.name) + " · score " + h.score; node.appendChild(flag);
+        flag.innerHTML = (card.emoji || "👾") + '<span class="terr-sc">' + pw + '</span>';
+        flag.title = dispName(h.owner) + " · " + (card.name || "Boss") + " (power " + pw + ")"; node.appendChild(flag);
       });
       const counts = territory.counts || {}; let top = null;
       Object.keys(counts).forEach(n => { if (!top || counts[n] > counts[top]) top = n; });
@@ -3859,6 +3936,106 @@
     loadTerritory(decorateTerritory); // 再抓最新覆蓋
     document.getElementById("examWrap").classList.add("hidden");
     showScreen(screenArticle);
+  }
+
+  // ===== 占地盤：據點面板（讀書 / 插旗守護 / 用卡片攻打）=====
+  function refreshMap() { selectLevel(selLevelIdx); }
+  function openModal(html) {
+    closeModal();
+    const ov = document.createElement("div"); ov.className = "modal-ov"; ov.id = "appModal";
+    ov.innerHTML = '<div class="modal-card">' + html + '</div>';
+    ov.addEventListener("click", e => { if (e.target === ov) closeModal(); });
+    document.body.appendChild(ov); return ov;
+  }
+  function closeModal() { const m = document.getElementById("appModal"); if (m) m.remove(); }
+  function cardStatStr(c) { return "⚔️" + (c.atk || 0) + " 🛡️" + (c.def || 0) + " 🍀" + (c.luck || 0); }
+  function cardPickHTML(cards) {
+    if (!cards.list.length) return '<p class="op-hint">You have no Boss Cards yet — pass a lesson (80%+) to earn one!</p>';
+    return '<div class="op-cards">' + cards.list.map(cd =>
+      '<button class="op-card-btn" data-id="' + cd.id + '">' + cd.emoji + ' <b>' + cd.name + '</b><br>' + cardStatStr(cd) + '</button>').join("") + '</div>';
+  }
+  function wireCardPick(root, cb) {
+    root.querySelectorAll(".op-card-btn").forEach(b => b.addEventListener("click", () => {
+      const cd = findCard(loadCards(), b.dataset.id); if (cd) cb(cd);
+    }));
+  }
+  function openOutpost(a) {
+    const file = a.file, passed = lessonStatus(a).passed;
+    const h = (territory && territory.holders && territory.holders[file]) || null;
+    const me = (authUser() || userName || "").toLowerCase();
+    const mine = !!(h && h.owner && (h.owner || "").toLowerCase() === me);
+    const title = a.title ? a.title.split("·").pop().trim() : a.id;
+    let html = '<h3 class="modal-title">🏰 ' + title + '</h3>';
+    if (h && h.owner) {
+      const card = h.card || {}, pw = (card.atk || 0) + (card.def || 0) + (card.luck || 0);
+      html += '<div class="op-def' + (mine ? ' op-mine' : '') + '">Guarded by ' + (h.avatar || "👦") + ' <b>' + dispName(h.owner) + '</b><br>' +
+        '<span class="op-card">' + (card.emoji || "👾") + ' ' + (card.name || "Boss") + ' · ' + cardStatStr(card) + ' · power ' + pw + '</span></div>';
+    } else { html += '<div class="op-def">🏳️ Unclaimed outpost</div>'; }
+    html += '<div class="op-btns"><button id="opStudy" class="dict-play">📖 Study lesson</button></div><div id="opTerr"></div>' +
+      '<div class="op-btns"><button id="opClose" class="back-btn">✕ Close</button></div>';
+    const ov = openModal(html);
+    ov.querySelector("#opStudy").addEventListener("click", () => { closeModal(); selectArticle(a); });
+    ov.querySelector("#opClose").addEventListener("click", closeModal);
+    const terr = ov.querySelector("#opTerr");
+    if (!authToken()) { terr.innerHTML = '<p class="op-hint">🔒 Log in with a student account to battle for territory.</p>'; return; }
+    const cards = loadCards();
+    if (mine) {
+      terr.innerHTML = '<p class="op-hint">✅ You hold this outpost. Swap the guard:</p>' + cardPickHTML(cards);
+      wireCardPick(terr, cd => claimOutpost(file, cd, () => { closeModal(); refreshMap(); }));
+    } else if (!h || !h.owner) {
+      if (passed) {
+        terr.innerHTML = '<p class="op-hint">🚩 Deploy a Boss Card to guard this outpost:</p>' + cardPickHTML(cards);
+        wireCardPick(terr, cd => claimOutpost(file, cd, () => { closeModal(); refreshMap(); }));
+      } else { terr.innerHTML = '<p class="op-hint">Study &amp; pass this lesson (80%+) to claim it.</p>'; }
+    } else {
+      terr.innerHTML = '<p class="op-hint">⚔️ Pick your Boss Card to attack the guard:</p>' + cardPickHTML(cards);
+      wireCardPick(terr, cd => startCapture(file, cd, h.card || {}));
+    }
+  }
+  function claimOutpost(file, card, cb) {
+    const t = authToken(); if (!t) { if (cb) cb(); return; }
+    fetch("/api/territory/claim?token=" + encodeURIComponent(t), {
+      method: "POST", body: JSON.stringify({
+        file: file, avatar: avatarOf(userName),
+        card: { emoji: card.emoji, name: card.name, atk: card.atk || 0, def: card.def || 0, luck: card.luck || 0 }
+      })
+    }).then(r => r.json()).then(() => loadTerritory(() => { if (cb) cb(); })).catch(() => { if (cb) cb(); });
+  }
+  // 卡片對戰：攻方 att vs 守方 def，回傳攻方是否獲勝（含爆擊/閃避，與競技場同公式）
+  function cardBattleWin(att, def) {
+    let ah = 20 + (att.def || 0) * 5, dh = 20 + (def.def || 0) * 5, t = Math.random() < 0.5 ? 0 : 1, g = 0;
+    while (ah > 0 && dh > 0 && g++ < 3000) {
+      const A = (t % 2 === 0) ? att : def, D = (t % 2 === 0) ? def : att;
+      if (Math.random() >= dodgeChance(D.luck || 0)) {
+        let d = Math.max(1, (5 + (A.atk || 0) * 2) - (D.def || 0));
+        if (Math.random() < critChance(A.luck || 0)) d *= 2;
+        if (t % 2 === 0) dh -= d; else ah -= d;
+      }
+      t++;
+    }
+    return ah > 0;
+  }
+  function startCapture(file, myCard, defCard) {
+    const win = cardBattleWin(myCard, defCard);
+    const html = '<h3 class="modal-title">⚔️ Capture Battle</h3>' +
+      '<div class="cap-arena"><span class="cap-emo" id="capA">' + (myCard.emoji || "🦸") + '</span>' +
+      '<span class="cap-vs">VS</span><span class="cap-emo" id="capB">' + (defCard.emoji || "👾") + '</span></div>' +
+      '<div class="cap-log" id="capLog">Fight!</div><div class="op-btns" id="capBtns"></div>';
+    const ov = openModal(html);
+    const a = ov.querySelector("#capA"), b = ov.querySelector("#capB"), log = ov.querySelector("#capLog");
+    let n = 0; const iv = setInterval(() => {
+      n++; fxLunge(a, "r"); fxHit(b); setTimeout(() => { fxLunge(b, "l"); fxHit(a); }, 200);
+      if (n >= 3) { clearInterval(iv); finish(); }
+    }, 520);
+    function finish() {
+      (win ? b : a).classList.add("defeated");
+      log.textContent = win ? "🏆 You captured the outpost!" : "💀 Your card lost — power it up and try again!";
+      ov.querySelector("#capBtns").innerHTML = '<button id="capDone" class="back-btn">' + (win ? "🚩 Plant my flag" : "Back") + '</button>';
+      ov.querySelector("#capDone").addEventListener("click", () => {
+        if (win) claimOutpost(file, myCard, () => { closeModal(); refreshMap(); });
+        else closeModal();
+      });
+    }
   }
 
   // 畫面 3：載入並開始學習
@@ -3913,10 +4090,11 @@
       try { hero = JSON.parse(localStorage.getItem("hero:" + name) || "null"); } catch (e) {}
       try { avatar = localStorage.getItem("avatar:" + name) || "👦"; } catch (e) {}
       try { stamina = JSON.parse(localStorage.getItem("stamina:" + name) || "null"); } catch (e) {}
+      let cards = null; try { cards = JSON.parse(localStorage.getItem("cards:" + name) || "null"); } catch (e) {}
       const exams = {};
       (manifest ? manifest.levels : []).forEach(lv => { try { const e = localStorage.getItem("exam:" + name + ":" + lv.id); if (e) exams[lv.id] = e; } catch (x) {} });
       let read = null; try { read = JSON.parse(localStorage.getItem("read:" + name) || "null"); } catch (e) {}
-      students[name] = { avatar: avatar, hero: hero, scores: scores, progress: progress, rewards: rewards, gscores: gscores, exams: exams, read: read, stamina: stamina, updated: Date.now() };
+      students[name] = { avatar: avatar, hero: hero, cards: cards, scores: scores, progress: progress, rewards: rewards, gscores: gscores, exams: exams, read: read, stamina: stamina, updated: Date.now() };
     });
     return students;
   }
@@ -4062,15 +4240,12 @@
   function fullLocalSnapshot() {
     return { profiles: loadProfiles(), userName: userName, students: collectLocalState(), stats: computeMyStats() };
   }
-  // 給排行榜用：通過課數 + 英雄等級 + 頭像
+  // 給排行榜用：通過課數 + 最強卡等級 + 頭像
   function computeMyStats() {
-    let passed = 0; const lessons = {};   // lessons[file] = {a: 遊戲成績, t: 達成時間} 供占地盤伺服器比對
-    (manifest ? manifest.levels : []).forEach(lv => lv.articles.forEach(a => {
-      if (lessonStatus(a).passed) passed++;
-      let g = null; try { g = JSON.parse(localStorage.getItem("gscore:" + (userName || "guest") + ":" + a.file) || "null"); } catch (e) {}
-      if (g && typeof g.s === "number") lessons[a.file] = { a: g.s, t: g.t || 0 };
-    }));
-    return { passed: passed, level: heroLevel(loadHero()), avatar: userName ? avatarOf(userName) : "👦", lessons: lessons };
+    let passed = 0;
+    (manifest ? manifest.levels : []).forEach(lv => lv.articles.forEach(a => { if (lessonStatus(a).passed) passed++; }));
+    const best = strongestCard(loadCards());
+    return { passed: passed, level: best ? heroLevel(best) : 1, avatar: userName ? avatarOf(userName) : "👦" };
   }
   // 把雲端快照寫回本機 localStorage（換裝置登入時還原）
   function restoreSnapshot(blob) {
@@ -4082,6 +4257,7 @@
         const st = sts[name] || {};
         if (st.avatar) localStorage.setItem("avatar:" + name, st.avatar);
         if (st.hero) localStorage.setItem("hero:" + name, JSON.stringify(st.hero));
+        if (st.cards) localStorage.setItem("cards:" + name, JSON.stringify(st.cards));
         const sc = st.scores || {}; Object.keys(sc).forEach(f => localStorage.setItem("score:" + name + ":" + f, JSON.stringify(sc[f])));
         const pr = st.progress || {}; Object.keys(pr).forEach(f => localStorage.setItem("prog:" + name + ":" + f, JSON.stringify(pr[f])));
         const rw = st.rewards || {}; Object.keys(rw).forEach(f => localStorage.setItem("reward:" + name + ":" + f, rw[f]));

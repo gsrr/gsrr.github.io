@@ -158,6 +158,28 @@ def save_progress(user, p):
     os.replace(tmp, path)
 
 
+# --- 占地盤（全站共用一檔）：{file: {owner, avatar, card:{emoji,name,atk,def,luck}}} ---
+TERR_FILE = "/data/territory.json"
+terr_lock = threading.Lock()
+
+
+def load_territory_store():
+    try:
+        with open(TERR_FILE) as f:
+            t = json.load(f)
+            return t if isinstance(t, dict) else {}
+    except Exception:
+        return {}
+
+
+def save_territory_store(t):
+    os.makedirs(os.path.dirname(TERR_FILE), exist_ok=True)
+    tmp = TERR_FILE + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(t, f)
+    os.replace(tmp, TERR_FILE)
+
+
 def hash_pw(password, salt):
     return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), bytes.fromhex(salt), 100000).hex()
 
@@ -245,6 +267,8 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_auth(register=False)
         elif path == "/api/student/save":
             self._handle_student_save()
+        elif path == "/api/territory/claim":
+            self._handle_territory_claim()
         else:
             self._send({"error": "not found"}, 404)
 
@@ -415,31 +439,39 @@ class Handler(BaseHTTPRequestHandler):
         out.sort(key=lambda x: (-x["passed"], -x["level"], x["name"].lower()))
         self._send({"leaders": out[:50]})
 
-    # ---- 占地盤：每課歸「遊戲成績最高（同分比最近達成）」的玩家所有 ----
+    # ---- 占地盤：每個據點由一張守護的 boss 卡佔領（攻方卡片打贏才換人）----
     def _handle_territory(self):
-        holders = {}   # file -> {name, avatar, score, t}
-        with acct_lock:
-            db = load_accounts()
-            for user in db.get("users", {}):
-                if user == "testaccount":
-                    continue
-                stats = (load_progress(user).get("sdata") or {}).get("stats") or {}
-                avatar = stats.get("avatar", "👦")
-                lessons = stats.get("lessons") or {}
-                for f, info in (lessons.items() if isinstance(lessons, dict) else []):
-                    try:
-                        score = int(info.get("a", 0)); t = float(info.get("t", 0) or 0)
-                    except Exception:
-                        continue
-                    cur = holders.get(f)
-                    if cur is None or score > cur["score"] or (score == cur["score"] and t > cur["t"]):
-                        holders[f] = {"name": user, "avatar": avatar, "score": score, "t": t}
-        counts = {}
-        out_h = {}
-        for f, h in holders.items():
-            counts[h["name"]] = counts.get(h["name"], 0) + 1
-            out_h[f] = {"name": h["name"], "avatar": h["avatar"], "score": h["score"]}
-        self._send({"holders": out_h, "counts": counts})
+        with terr_lock:
+            store = load_territory_store()
+        holders, counts = {}, {}
+        for f, h in store.items():
+            if not isinstance(h, dict):
+                continue
+            owner = h.get("owner")
+            holders[f] = {"owner": owner, "avatar": h.get("avatar", "👦"), "card": h.get("card") or {}}
+            if owner:
+                counts[owner] = counts.get(owner, 0) + 1
+        self._send({"holders": holders, "counts": counts})
+
+    # 攻方在前端用卡片打贏（或佔領空據點）後呼叫，存下新的守護卡（pilot：信任前端結果）
+    def _handle_territory_claim(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        d = self._body_json()
+        f = (d.get("file") or "").strip()
+        card = d.get("card") or {}
+        if not f or not isinstance(card, dict):
+            self._send({"error": "missing file/card"}, 400)
+            return
+        clean = {"emoji": str(card.get("emoji", "👾"))[:8], "name": str(card.get("name", "Boss"))[:40],
+                 "atk": int(card.get("atk", 0) or 0), "def": int(card.get("def", 0) or 0), "luck": int(card.get("luck", 0) or 0)}
+        with terr_lock:
+            store = load_territory_store()
+            store[f] = {"owner": user, "avatar": str(d.get("avatar", "👦"))[:8], "card": clean}
+            save_territory_store(store)
+        self._send({"ok": True})
 
     def log_message(self, *args):
         pass  # 安靜
