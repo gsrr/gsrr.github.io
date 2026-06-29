@@ -4043,13 +4043,22 @@
     }
   }
   function claimOutpost(file, card, cb) {
-    const t = authToken(); if (!t) { if (cb) cb(); return; }
+    const t = authToken();
+    if (!t) { alert("Log in with a student account to deploy a Boss Card."); if (cb) cb(); return; }
     fetch("/api/territory/claim?token=" + encodeURIComponent(t), {
       method: "POST", body: JSON.stringify({
         file: file, avatar: avatarOf(userName), cardId: card.id,
         card: { emoji: card.emoji, name: card.name, atk: card.atk || 0, def: card.def || 0, luck: card.luck || 0 }
       })
-    }).then(r => r.json()).then(() => loadTerritory(() => { if (cb) cb(); })).catch(() => { if (cb) cb(); });
+    }).then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(j => {
+        if (j && j.ok) { loadTerritory(() => { if (cb) cb(); }); }
+        else { alert("Deploy failed: " + ((j && j.error) || "unknown")); if (cb) cb(); }
+      })
+      .catch(() => {
+        alert("Couldn't reach the territory server.\n\nTerritory needs the self-hosted server (e.g. kyotozuiryu.com) running the LATEST code — rebuild with: docker compose up -d --build.\nThe free GitHub Pages demo has no server, so deploying won't work there.");
+        if (cb) cb();
+      });
   }
   // 我目前用哪張卡守哪個據點：cardId -> 部署的據點 file
   function myDeployMap() {
