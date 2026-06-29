@@ -454,6 +454,19 @@
   .cap-emo { font-size: 52px; }
   .cap-vs { font-size: 18px; font-weight: 800; color: #94a3b8; }
   .cap-log { text-align: center; font-size: 15px; font-weight: 700; min-height: 22px; margin-bottom: 8px; }
+  /* Boss 卡收藏（My Progress） */
+  .coll-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin: 6px 0 14px; }
+  .coll-card { border: 2px solid #e2e8f0; border-radius: 12px; padding: 8px 6px; text-align: center; background: #fff; }
+  .coll-card.champ { border-color: #f59e0b; background: #fffbeb; }
+  .coll-emo { font-size: 30px; line-height: 1; }
+  .coll-name { font-size: 11px; font-weight: 700; color: #1e293b; line-height: 1.15; margin: 2px 0; min-height: 26px; }
+  .coll-lv { font-size: 10px; color: #64748b; }
+  .coll-stats { display: flex; gap: 3px; margin: 5px 0; }
+  .coll-plus { flex: 1; padding: 4px 2px; border: 1px solid #cbd5e1; border-radius: 7px; background: #f8fafc; cursor: pointer; font-size: 11px; font-weight: 600; }
+  .coll-plus[disabled] { cursor: default; opacity: 0.7; border-style: dashed; }
+  .coll-plus:not([disabled]):active { transform: scale(0.95); }
+  .coll-set { width: 100%; padding: 3px; border: 1px solid #fbbf24; border-radius: 999px; background: #fff7ed; cursor: pointer; font-size: 10px; }
+  .coll-champ { font-size: 10px; font-weight: 700; color: #b45309; }
   .energy { text-align: center; font-size: 14px; color: #334155; margin: 0 0 12px; }
   .energy-track { display: inline-block; vertical-align: middle; width: 120px; height: 10px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin: 0 8px; }
   .energy-fill { display: block; height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); }
@@ -2982,9 +2995,37 @@
     const heroHtml = '<div class="hero-card">' + avatarOf(userName) + ' <span>LV.' + heroLevel(h) + '</span>' +
       '<span>⚔️ ' + h.atk + '</span><span>🛡️ ' + h.def + '</span><span>🍀 ' + h.luck + '</span>' +
       (h.unspent ? '<span class="hero-unspent">' + h.unspent + ' pts to spend</span>' : '') + '</div>';
+
+    // 🎴 Boss 卡收藏：看所有卡、加點數、選出戰卡
+    const cc = loadCards(), canSpend = cc.unspent > 0;
+    function statBtn(id, stat, ico, val) {
+      return '<button class="coll-plus" data-id="' + id + '" data-stat="' + stat + '"' + (canSpend ? '' : ' disabled') + '>' +
+        ico + val + (canSpend ? ' ＋' : '') + '</button>';
+    }
+    const cardsHtml = '<div class="stats-h">🎴 Boss Cards (' + cc.list.length + ')' +
+      (cc.unspent ? ' · <b>' + cc.unspent + '</b> pts to spend' : '') + '</div>' +
+      (cc.list.length ? '<div class="coll-grid">' + cc.list.map(cd => {
+        const champ = cc.active === cd.id;
+        return '<div class="coll-card' + (champ ? ' champ' : '') + '">' +
+          '<div class="coll-emo">' + cd.emoji + '</div>' +
+          '<div class="coll-name">' + cd.name + '</div>' +
+          '<div class="coll-lv">LV.' + heroLevel(cd) + '</div>' +
+          '<div class="coll-stats">' + statBtn(cd.id, "atk", "⚔️", cd.atk) + statBtn(cd.id, "def", "🛡️", cd.def) + statBtn(cd.id, "luck", "🍀", cd.luck) + '</div>' +
+          (champ ? '<div class="coll-champ">⭐ Champion</div>' : '<button class="coll-set" data-id="' + cd.id + '">Set ⭐</button>') +
+          '</div>';
+      }).join("") + '</div>' : '<p class="screen-intro">Pass a lesson (80%+) to earn your first Boss Card!</p>');
+
     statsBody.innerHTML =
       '<p class="screen-intro">' + (userName ? 'Hi, ' + userName + ' 👋' : '') + '</p>' +
-      heroHtml + statCards + badgeHtml + levelHtml;
+      heroHtml + cardsHtml + statCards + badgeHtml + levelHtml;
+    statsBody.querySelectorAll(".coll-plus").forEach(b => b.addEventListener("click", () => {
+      const c = loadCards(); if (c.unspent <= 0) return;
+      const cd = findCard(c, b.dataset.id); if (!cd) return;
+      cd[b.dataset.stat]++; c.unspent--; saveCards(c); renderProfileStats();
+    }));
+    statsBody.querySelectorAll(".coll-set").forEach(b => b.addEventListener("click", () => {
+      const c = loadCards(); c.active = b.dataset.id; saveCards(c); renderProfileStats();
+    }));
   }
 
   function renderDailyReport() {
