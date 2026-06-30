@@ -467,6 +467,7 @@ class Handler(BaseHTTPRequestHandler):
             self._send({"error": "missing file/card"}, 400)
             return
         clean = {"emoji": str(card.get("emoji", "👾"))[:8], "name": str(card.get("name", "Boss"))[:40],
+                 "elem": str(card.get("elem", "fire"))[:8], "rarity": int(card.get("rarity", 1) or 1),
                  "atk": int(card.get("atk", 0) or 0), "def": int(card.get("def", 0) or 0), "luck": int(card.get("luck", 0) or 0)}
         with terr_lock:
             store = load_territory_store()

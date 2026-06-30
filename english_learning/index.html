@@ -470,6 +470,27 @@
   .coll-dep { font-size: 9px; font-weight: 700; color: #15803d; line-height: 1.2; margin-bottom: 3px; }
   .coll-dep.idle { color: #94a3b8; font-weight: 400; }
   .op-dep { display: block; font-size: 10px; color: #b45309; margin-top: 2px; }
+  .op-adv { color: #15803d; font-weight: 700; margin-left: 4px; }
+  .op-weak { color: #b91c1c; font-weight: 700; margin-left: 4px; }
+  .cap-el { position: absolute; bottom: -4px; right: -4px; font-size: 22px; }
+  .cap-emo { position: relative; }
+  .cap-adv { color: #15803d; } .cap-dis { color: #b91c1c; }
+  /* 屬性/稀有度邊框 */
+  .rar-c { border-color: #cbd5e1 !important; }
+  .rar-r { border-color: #3b82f6 !important; box-shadow: 0 0 0 1px #bfdbfe; }
+  .rar-e { border-color: #a855f7 !important; box-shadow: 0 0 0 2px #e9d5ff; }
+  /* 圖鑑 */
+  .dex-legend { text-align: center; font-size: 11px; color: #64748b; margin: 0 0 10px; }
+  .dex-lv { font-weight: 700; font-size: 14px; margin: 14px 0 6px; color: #334155; }
+  .dex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
+  .dex-card { position: relative; border: 2px solid #e2e8f0; border-radius: 12px; padding: 8px 4px; text-align: center; background: #fff; }
+  .dex-emo { font-size: 32px; line-height: 1; }
+  .dex-badge { position: absolute; top: 3px; right: 4px; font-size: 12px; }
+  .dex-nm { font-size: 10px; font-weight: 700; color: #1e293b; line-height: 1.1; margin-top: 3px; min-height: 24px; }
+  .dex-pw { font-size: 9px; color: #64748b; }
+  .dex-locked { background: #f1f5f9; border-style: dashed; opacity: 0.7; }
+  .dex-locked .dex-emo { filter: grayscale(1) opacity(0.5); }
+  .dex-locked .dex-nm { color: #94a3b8; }
   .energy { text-align: center; font-size: 14px; color: #334155; margin: 0 0 12px; }
   .energy-track { display: inline-block; vertical-align: middle; width: 120px; height: 10px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin: 0 8px; }
   .energy-fill { display: block; height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); }
@@ -804,6 +825,15 @@
       <div id="leaderBody"></div>
     </div>
 
+    <!-- 畫面 0f：卡片圖鑑 -->
+    <div id="screenDex" class="hidden">
+      <div class="learn-top">
+        <button class="back-btn" id="backFromDex">← Back</button>
+        <span class="learn-title">🎴 Card Dex</span>
+      </div>
+      <div id="dexBody"></div>
+    </div>
+
     <!-- 畫面 1：選等級 -->
     <div id="screenLevel" class="hidden">
       <div class="learn-top">
@@ -815,6 +845,7 @@
       <div id="dailyBanner" class="daily-banner"></div>
       <div id="energyBar" class="energy"></div>
       <div style="text-align:center;margin-bottom:14px">
+        <button id="openDexBtn" style="background:#16a34a;color:#fff">🎴 Card Dex</button>
         <button id="openArenaBtn" style="background:#7c3aed;color:#fff">🏆 Arena Tournament</button>
         <button id="openLeaderBtn" style="background:#0ea5e9;color:#fff">🏅 Leaderboard</button>
       </div>
@@ -2769,10 +2800,10 @@
   userNameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") addProfile(); });
 
   function showScreen(el) {
-    [screenLanding, screenRole, screenProfile, screenStudentAcct, screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena, screenTeacher, screenAdmin, screenLeader].forEach(s => s.classList.add("hidden"));
+    [screenLanding, screenRole, screenProfile, screenStudentAcct, screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena, screenTeacher, screenAdmin, screenLeader, screenDex].forEach(s => s.classList.add("hidden"));
     el.classList.remove("hidden");
     // 右上角區（使用者鈕 + 匯出）：只在學生 app 內的畫面顯示
-    const inApp = [screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena].indexOf(el) !== -1;
+    const inApp = [screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena, screenDex].indexOf(el) !== -1;
     const teacherView = (el === screenTeacher && !!authToken());   // 老師面板也用右上角顯示名字+登出
     topRight.classList.toggle("hidden", !((userName && inApp) || teacherView));
   }
@@ -3009,9 +3040,9 @@
       (cc.unspent ? ' · <b>' + cc.unspent + '</b> pts to spend' : '') + '</div>' +
       (cc.list.length ? '<div class="coll-grid">' + cc.list.map(cd => {
         const champ = cc.active === cd.id, at = dep[cd.id];
-        return '<div class="coll-card' + (champ ? ' champ' : '') + '">' +
+        return '<div class="coll-card ' + cardRarity(cd).cls + (champ ? ' champ' : '') + '">' +
           '<div class="coll-emo">' + cd.emoji + '</div>' +
-          '<div class="coll-name">' + cd.name + '</div>' +
+          '<div class="coll-name">' + cardElem(cd).icon + cardRarity(cd).star + ' ' + cd.name + '</div>' +
           '<div class="coll-lv">LV.' + heroLevel(cd) + '</div>' +
           '<div class="coll-stats">' + statBtn(cd.id, "atk", "⚔️", cd.atk) + statBtn(cd.id, "def", "🛡️", cd.def) + statBtn(cd.id, "luck", "🍀", cd.luck) + '</div>' +
           (at ? '<div class="coll-dep">🚩 ' + lessonTitleByFile(at) + '</div>' : '<div class="coll-dep idle">in hand</div>') +
@@ -3060,7 +3091,23 @@
   /* ================= RPG：角色養成 + Boss 戰 ================= */
   // ===== Boss 卡系統（取代單一英雄）：每過一課拿一張卡，過關點數加在自選的卡上 =====
   const VILLAIN_POOL = ["👾", "👹", "👺", "🤖", "👻", "🧟", "🧛", "🐉", "🦖", "🐲", "🦂", "🦇", "🐍", "🦈", "🐙"];
-  function villainForFile(file) { let h = 0, s = String(file || ""); for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return VILLAIN_POOL[h % VILLAIN_POOL.length]; }
+  function fileHash(file) { let h = 0, s = String(file || ""); for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
+  function villainForFile(file) { return VILLAIN_POOL[fileHash(file) % VILLAIN_POOL.length]; }
+  // 屬性（克制循環：🔥火 > 🌿草 > 💧水 > ⚡電 > 🔥）。打到被克制方 ×1.5 傷害
+  const ELEMENTS = [
+    { id: "fire",  icon: "🔥", name: "Fire",  beats: "grass" },
+    { id: "grass", icon: "🌿", name: "Grass", beats: "water" },
+    { id: "water", icon: "💧", name: "Water", beats: "elec" },
+    { id: "elec",  icon: "⚡", name: "Elec",  beats: "fire" }
+  ];
+  function elementForFile(file) { return ELEMENTS[fileHash(file) % ELEMENTS.length]; }
+  function elementById(id) { return ELEMENTS.find(e => e.id === id) || ELEMENTS[0]; }
+  function elemMult(att, def) { return (att && def && elementById(att).beats === def) ? 1.5 : 1; }
+  // 稀有度（依該課平均）：升高分可升級；給起始點數
+  const RARITY = { 1: { name: "Common", star: "⬜", cls: "rar-c", base: 0 },
+                   2: { name: "Rare",   star: "🔵", cls: "rar-r", base: 1 },
+                   3: { name: "Epic",   star: "🟣", cls: "rar-e", base: 2 } };
+  function rarityFromAvg(avg) { return avg >= 100 ? 3 : avg >= 90 ? 2 : 1; }
   function cardsKey() { return "cards:" + (userName || "guest"); }
   function loadCards() {
     let c = { list: [], unspent: 0, active: null };
@@ -3081,13 +3128,26 @@
   function cardPower(c) { return (c.atk || 0) + (c.def || 0) + (c.luck || 0); }
   function strongestCard(c) { if (!c.list || !c.list.length) return null; return c.list.slice().sort((a, b) => cardPower(b) - cardPower(a))[0]; }
   function activeCard(c) { c = c || loadCards(); return findCard(c, c.active) || strongestCard(c) || { id: null, emoji: "🦸", name: "No card yet", atk: 0, def: 0, luck: 0 }; }
-  function grantCard(file, title) {   // 過某一課 -> 拿一張該課的 boss 卡（每課一張）
-    const c = loadCards(); if (findCard(c, file)) return c;
+  function grantCard(file, title, avg) {   // 過某一課 -> 拿一張該課的 boss 卡（每課一張）
+    const c = loadCards();
     const name = ((title || "").split("·").pop() || "").trim() || "Boss";
-    c.list.push({ id: file, emoji: villainForFile(file), name: name, atk: 0, def: 0, luck: 0 });
+    const rar = rarityFromAvg(avg || 0), el = elementForFile(file);
+    const existing = findCard(c, file);
+    if (existing) {   // 已有：若這次分數更高，升級稀有度並補足起始點數差
+      if (rar > (existing.rarity || 1)) {
+        const add = RARITY[rar].base - RARITY[existing.rarity || 1].base;
+        existing.rarity = rar;
+        if (add > 0) { existing.atk += add; existing.def += add; existing.luck += add; }
+      }
+      saveCards(c); return c;
+    }
+    const b = RARITY[rar].base;
+    c.list.push({ id: file, emoji: villainForFile(file), name: name, elem: el.id, rarity: rar, atk: b, def: b, luck: b });
     if (!c.active) c.active = file;
     saveCards(c); return c;
   }
+  function cardElem(cd) { return elementById(cd && cd.elem); }
+  function cardRarity(cd) { return RARITY[(cd && cd.rarity) || 1]; }
   // 相容層：舊的 loadHero/saveHero 改成操作「目前出戰的卡」+ 共用點數池
   function heroKey() { return "hero:" + (userName || "guest"); }
   function loadHero() {
@@ -3378,7 +3438,7 @@
     try { claimed = !!file && localStorage.getItem(rewardKey(file)) === "1"; } catch (e) {}
     if (claimed) return { pts: 0, claimed: true };
     const avg = currentArticle ? (lessonStatus(currentArticle).avg || 0) : 0;
-    if (file && avg >= PASS_MARK) grantCard(file, currentArticle.title);   // 過關 -> 拿一張該課的 boss 卡
+    if (file && avg >= PASS_MARK) grantCard(file, currentArticle.title, avg);   // 過關 -> 拿一張該課的 boss 卡（稀有度依分數）
     const pts = starsFromAvg(avg) + ((win && avg >= PASS_MARK) ? 1 : 0);   // 贏小遊戲 +1（需通過該課）
     if (pts > 0 && file) { try { localStorage.setItem(rewardKey(file), "1"); } catch (e) {} scheduleStudentSave(); }
     return { pts: pts, claimed: false };
@@ -3886,6 +3946,34 @@
   document.getElementById("openLeaderBtn").addEventListener("click", openLeaderboard);
   document.getElementById("backFromLeader").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
   document.getElementById("backFromArena").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
+  // 🎴 卡片圖鑑：列出所有課的卡，未收集是灰色 ?；依屬性循環的克制提示
+  function openCardDex() {
+    const owned = {}; loadCards().list.forEach(c => owned[c.id] = c);
+    const all = []; (manifest ? manifest.levels : []).forEach(lv => lv.articles.forEach(a => all.push({ a: a, lv: lv })));
+    const got = all.filter(x => owned[x.a.file]).length;
+    let html = '<p class="screen-intro" style="margin:0 0 4px">Collected <b>' + got + '</b> / ' + all.length + ' cards 🎴</p>' +
+      '<p class="dex-legend">' + ELEMENTS.map(e => e.icon + e.name).join(" › ") + ' › ' + ELEMENTS[0].icon +
+      ' &nbsp; ⬜Common 🔵Rare 🟣Epic</p>';
+    (manifest ? manifest.levels : []).forEach(lv => {
+      html += '<div class="dex-lv">' + (lv.icon || "") + ' ' + (lv.name || lv.id) + '</div><div class="dex-grid">';
+      lv.articles.forEach(a => {
+        const cd = owned[a.file];
+        if (cd) {
+          html += '<div class="dex-card ' + cardRarity(cd).cls + '"><div class="dex-emo">' + cd.emoji + '</div>' +
+            '<div class="dex-badge">' + cardElem(cd).icon + cardRarity(cd).star + '</div>' +
+            '<div class="dex-nm">' + cd.name + '</div><div class="dex-pw">LV.' + heroLevel(cd) + '</div></div>';
+        } else {
+          html += '<div class="dex-card dex-locked"><div class="dex-emo">❔</div>' +
+            '<div class="dex-nm">' + (a.title ? a.title.split("·").pop().trim() : a.id) + '</div><div class="dex-pw">locked</div></div>';
+        }
+      });
+      html += '</div>';
+    });
+    document.getElementById("dexBody").innerHTML = html;
+    showScreen(screenDex);
+  }
+  document.getElementById("openDexBtn").addEventListener("click", openCardDex);
+  document.getElementById("backFromDex").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
   document.getElementById("arenaFight").addEventListener("click", startTournament);
   document.getElementById("arenaSkip").addEventListener("click", skipArena);
 
@@ -3995,13 +4083,17 @@
   }
   function closeModal() { const m = document.getElementById("appModal"); if (m) m.remove(); }
   function cardStatStr(c) { return "⚔️" + (c.atk || 0) + " 🛡️" + (c.def || 0) + " 🍀" + (c.luck || 0); }
-  function cardPickHTML(cards, selfFile) {
+  function cardBadge(cd) { return cardRarity(cd).star + cardElem(cd).icon; }   // 稀有度 + 屬性
+  function cardPickHTML(cards, selfFile, foeElem) {
     if (!cards.list.length) return '<p class="op-hint">You have no Boss Cards yet — pass a lesson (80%+) to earn one!</p>';
     const dep = myDeployMap();
     return '<div class="op-cards">' + cards.list.map(cd => {
       const at = dep[cd.id];
       const tag = (at && at !== selfFile) ? '<span class="op-dep">🚩 guarding ' + lessonTitleByFile(at) + ' — moves here</span>' : '';
-      return '<button class="op-card-btn" data-id="' + cd.id + '">' + cd.emoji + ' <b>' + cd.name + '</b> ' + cardStatStr(cd) + tag + '</button>';
+      const adv = foeElem ? (elemMult(cd.elem, foeElem) > 1 ? '<span class="op-adv">▲ strong</span>'
+        : (elemMult(foeElem, cd.elem) > 1 ? '<span class="op-weak">▼ weak</span>' : '')) : '';
+      return '<button class="op-card-btn" data-id="' + cd.id + '">' + cd.emoji + ' <b>' + cd.name + '</b> ' +
+        cardBadge(cd) + ' ' + cardStatStr(cd) + adv + tag + '</button>';
     }).join("") + '</div>';
   }
   function wireCardPick(root, cb) {
@@ -4019,7 +4111,7 @@
     if (h && h.owner) {
       const card = h.card || {}, pw = (card.atk || 0) + (card.def || 0) + (card.luck || 0);
       html += '<div class="op-def' + (mine ? ' op-mine' : '') + '">Guarded by ' + (h.avatar || "👦") + ' <b>' + dispName(h.owner) + '</b><br>' +
-        '<span class="op-card">' + (card.emoji || "👾") + ' ' + (card.name || "Boss") + ' · ' + cardStatStr(card) + ' · power ' + pw + '</span></div>';
+        '<span class="op-card">' + (card.emoji || "👾") + ' ' + (card.name || "Boss") + ' ' + cardBadge(card) + ' · ' + cardStatStr(card) + ' · power ' + pw + '</span></div>';
     } else { html += '<div class="op-def">🏳️ Unclaimed outpost</div>'; }
     html += '<div class="op-btns"><button id="opStudy" class="dict-play">📖 Study lesson</button></div><div id="opTerr"></div>' +
       '<div class="op-btns"><button id="opClose" class="back-btn">✕ Close</button></div>';
@@ -4038,8 +4130,9 @@
         wireCardPick(terr, cd => claimOutpost(file, cd, () => { closeModal(); refreshMap(); }));
       } else { terr.innerHTML = '<p class="op-hint">Study &amp; pass this lesson (80%+) to claim it.</p>'; }
     } else {
-      terr.innerHTML = '<p class="op-hint">⚔️ Pick your Boss Card to attack the guard:</p>' + cardPickHTML(cards, file);
-      wireCardPick(terr, cd => startCapture(file, cd, h.card || {}));
+      const foe = h.card || {};
+      terr.innerHTML = '<p class="op-hint">⚔️ Pick your Boss Card to attack the guard ' + (foe.emoji || "👾") + ' ' + cardElem(foe).icon + ':</p>' + cardPickHTML(cards, file, foe.elem);
+      wireCardPick(terr, cd => startCapture(file, cd, foe));
     }
   }
   function claimOutpost(file, card, cb) {
@@ -4048,7 +4141,7 @@
     fetch("/api/territory/claim?token=" + encodeURIComponent(t), {
       method: "POST", body: JSON.stringify({
         file: file, avatar: avatarOf(userName), cardId: card.id,
-        card: { emoji: card.emoji, name: card.name, atk: card.atk || 0, def: card.def || 0, luck: card.luck || 0 }
+        card: { emoji: card.emoji, name: card.name, elem: card.elem, rarity: card.rarity || 1, atk: card.atk || 0, def: card.def || 0, luck: card.luck || 0 }
       })
     }).then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then(j => {
@@ -4077,13 +4170,14 @@
     }));
     return t;
   }
-  // 卡片對戰：攻方 att vs 守方 def，回傳攻方是否獲勝（含爆擊/閃避，與競技場同公式）
+  // 卡片對戰：攻方 att vs 守方 def，回傳攻方是否獲勝（含爆擊/閃避 + 屬性克制 ×1.5）
   function cardBattleWin(att, def) {
     let ah = 20 + (att.def || 0) * 5, dh = 20 + (def.def || 0) * 5, t = Math.random() < 0.5 ? 0 : 1, g = 0;
+    const amA = elemMult(att.elem, def.elem), amD = elemMult(def.elem, att.elem);
     while (ah > 0 && dh > 0 && g++ < 3000) {
-      const A = (t % 2 === 0) ? att : def, D = (t % 2 === 0) ? def : att;
+      const A = (t % 2 === 0) ? att : def, D = (t % 2 === 0) ? def : att, mult = (t % 2 === 0) ? amA : amD;
       if (Math.random() >= dodgeChance(D.luck || 0)) {
-        let d = Math.max(1, (5 + (A.atk || 0) * 2) - (D.def || 0));
+        let d = Math.max(1, Math.round(((5 + (A.atk || 0) * 2) - (D.def || 0)) * mult));
         if (Math.random() < critChance(A.luck || 0)) d *= 2;
         if (t % 2 === 0) dh -= d; else ah -= d;
       }
@@ -4093,10 +4187,12 @@
   }
   function startCapture(file, myCard, defCard) {
     const win = cardBattleWin(myCard, defCard);
+    const adv = elemMult(myCard.elem, defCard.elem) > 1 ? ' <span class="cap-adv">' + cardElem(myCard).icon + ' ×1.5!</span>'
+      : (elemMult(defCard.elem, myCard.elem) > 1 ? ' <span class="cap-dis">' + cardElem(defCard).icon + ' ×1.5 against you</span>' : '');
     const html = '<h3 class="modal-title">⚔️ Capture Battle</h3>' +
-      '<div class="cap-arena"><span class="cap-emo" id="capA">' + (myCard.emoji || "🦸") + '</span>' +
-      '<span class="cap-vs">VS</span><span class="cap-emo" id="capB">' + (defCard.emoji || "👾") + '</span></div>' +
-      '<div class="cap-log" id="capLog">Fight!</div><div class="op-btns" id="capBtns"></div>';
+      '<div class="cap-arena"><span class="cap-emo" id="capA">' + (myCard.emoji || "🦸") + '<span class="cap-el">' + cardElem(myCard).icon + '</span></span>' +
+      '<span class="cap-vs">VS</span><span class="cap-emo" id="capB">' + (defCard.emoji || "👾") + '<span class="cap-el">' + cardElem(defCard).icon + '</span></span></div>' +
+      '<div class="cap-log" id="capLog">Fight!' + adv + '</div><div class="op-btns" id="capBtns"></div>';
     const ov = openModal(html);
     const a = ov.querySelector("#capA"), b = ov.querySelector("#capB"), log = ov.querySelector("#capLog");
     let n = 0; const iv = setInterval(() => {
@@ -4137,6 +4233,7 @@
   const screenTeacher = document.getElementById("screenTeacher");
   const screenAdmin   = document.getElementById("screenAdmin");
   const screenLeader  = document.getElementById("screenLeader");
+  const screenDex     = document.getElementById("screenDex");
   // 單一帳號：學生入口與老師入口共用同一個 token
   function authToken() { try { return localStorage.getItem("auth:token") || ""; } catch (e) { return ""; } }
   function authUser()  { try { return localStorage.getItem("auth:user") || ""; } catch (e) { return ""; } }
