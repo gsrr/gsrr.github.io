@@ -491,6 +491,14 @@
   .dex-locked { background: #f1f5f9; border-style: dashed; opacity: 0.7; }
   .dex-locked .dex-emo { filter: grayscale(1) opacity(0.5); }
   .dex-locked .dex-nm { color: #94a3b8; }
+  .dex-stg { color: #f59e0b; }
+  .coll-evo { color: #2563eb; font-weight: 700; }
+  /* 進化動畫 */
+  .evo-arena { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 16px 0; }
+  .evo-old { font-size: 42px; opacity: 0.55; filter: grayscale(0.4); }
+  .evo-arrow { font-size: 22px; color: #94a3b8; }
+  .evo-new { font-size: 62px; animation: evoPop 0.7s ease; filter: drop-shadow(0 0 10px #fde047); }
+  @keyframes evoPop { 0% { transform: scale(0.3) rotate(-20deg); opacity: 0; } 60% { transform: scale(1.25); } 100% { transform: scale(1); opacity: 1; } }
   .energy { text-align: center; font-size: 14px; color: #334155; margin: 0 0 12px; }
   .energy-track { display: inline-block; vertical-align: middle; width: 120px; height: 10px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin: 0 8px; }
   .energy-fill { display: block; height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); }
@@ -3039,11 +3047,12 @@
     const cardsHtml = '<div class="stats-h">🎴 Boss Cards (' + cc.list.length + ')' +
       (cc.unspent ? ' · <b>' + cc.unspent + '</b> pts to spend' : '') + '</div>' +
       (cc.list.length ? '<div class="coll-grid">' + cc.list.map(cd => {
-        const champ = cc.active === cd.id, at = dep[cd.id];
+        const champ = cc.active === cd.id, at = dep[cd.id], stg = cd.stage || 1;
+        const nextLv = stg < 3 ? EVO_LV[stg - 1] : 0;
         return '<div class="coll-card ' + cardRarity(cd).cls + (champ ? ' champ' : '') + '">' +
           '<div class="coll-emo">' + cd.emoji + '</div>' +
           '<div class="coll-name">' + cardElem(cd).icon + cardRarity(cd).star + ' ' + cd.name + '</div>' +
-          '<div class="coll-lv">LV.' + heroLevel(cd) + '</div>' +
+          '<div class="coll-lv">LV.' + heroLevel(cd) + ' ' + "★".repeat(stg) + (nextLv ? ' <span class="coll-evo">→LV' + nextLv + '</span>' : '') + '</div>' +
           '<div class="coll-stats">' + statBtn(cd.id, "atk", "⚔️", cd.atk) + statBtn(cd.id, "def", "🛡️", cd.def) + statBtn(cd.id, "luck", "🍀", cd.luck) + '</div>' +
           (at ? '<div class="coll-dep">🚩 ' + lessonTitleByFile(at) + '</div>' : '<div class="coll-dep idle">in hand</div>') +
           (champ ? '<div class="coll-champ">⭐ Champion</div>' : '<button class="coll-set" data-id="' + cd.id + '">Set ⭐</button>') +
@@ -3054,9 +3063,8 @@
       '<p class="screen-intro">' + (userName ? 'Hi, ' + userName + ' 👋' : '') + '</p>' +
       heroHtml + cardsHtml + statCards + badgeHtml + levelHtml;
     statsBody.querySelectorAll(".coll-plus").forEach(b => b.addEventListener("click", () => {
-      const c = loadCards(); if (c.unspent <= 0) return;
-      const cd = findCard(c, b.dataset.id); if (!cd) return;
-      cd[b.dataset.stat]++; c.unspent--; saveCards(c); renderProfileStats();
+      const res = spendPointOnCard(b.dataset.id, b.dataset.stat); if (!res) return;
+      if (res.evolved) showEvolveModal(res.evolved, renderProfileStats); else renderProfileStats();
     }));
     statsBody.querySelectorAll(".coll-set").forEach(b => b.addEventListener("click", () => {
       const c = loadCards(); c.active = b.dataset.id; saveCards(c); renderProfileStats();
@@ -3108,6 +3116,12 @@
                    2: { name: "Rare",   star: "🔵", cls: "rar-r", base: 1 },
                    3: { name: "Epic",   star: "🟣", cls: "rar-e", base: 2 } };
   function rarityFromAvg(avg) { return avg >= 100 ? 3 : avg >= 90 ? 2 : 1; }
+  // 進化：每屬性一條 3 階進化鏈，靠等級門檻升階（造型升級 + 點數獎勵）
+  const EVO_CHAINS = { fire: ["🦎", "🐉", "🐲"], water: ["🐠", "🦈", "🐳"], grass: ["🐛", "🐍", "🦖"], elec: ["🐤", "🦇", "🦅"] };
+  const EVO_LV = [5, 10];   // LV≥5 → 第2階；LV≥10 → 第3階
+  function evoChain(cd) { return EVO_CHAINS[(cd && cd.elem)] || EVO_CHAINS.fire; }
+  function targetStage(cd) { const lv = heroLevel(cd); return lv >= EVO_LV[1] ? 3 : lv >= EVO_LV[0] ? 2 : 1; }
+  function evoEmoji(cd) { return evoChain(cd)[Math.min(Math.max(cd.stage || 1, 1), 3) - 1]; }
   function cardsKey() { return "cards:" + (userName || "guest"); }
   function loadCards() {
     let c = { list: [], unspent: 0, active: null };
@@ -3121,6 +3135,13 @@
         }
       } catch (e) {}
     }
+    // 正規化：補上屬性/稀有度/進化階段，並讓既有卡片造型對齊目前等級的進化形態
+    (c.list || []).forEach(cd => {
+      if (!cd.elem) cd.elem = elementForFile(cd.id).id;
+      if (!cd.rarity) cd.rarity = 1;
+      if (!cd.stage) cd.stage = targetStage(cd);
+      if (cd.id !== "_champion") cd.emoji = evoEmoji(cd);   // Champion 保留 🦸
+    });
     return c;
   }
   function saveCards(c) { try { localStorage.setItem(cardsKey(), JSON.stringify(c)); } catch (e) {} scheduleStudentSave(); }
@@ -3142,12 +3163,34 @@
       saveCards(c); return c;
     }
     const b = RARITY[rar].base;
-    c.list.push({ id: file, emoji: villainForFile(file), name: name, elem: el.id, rarity: rar, atk: b, def: b, luck: b });
+    const cd = { id: file, name: name, elem: el.id, rarity: rar, stage: 1, atk: b, def: b, luck: b };
+    cd.stage = targetStage(cd); cd.emoji = evoEmoji(cd);
+    c.list.push(cd);
     if (!c.active) c.active = file;
     saveCards(c); return c;
   }
   function cardElem(cd) { return elementById(cd && cd.elem); }
   function cardRarity(cd) { return RARITY[(cd && cd.rarity) || 1]; }
+  // 加一點到某張卡；跨過等級門檻則進化（造型升級 + 各 +1 獎勵）。回傳 {card, evolved}
+  function spendPointOnCard(cardId, stat) {
+    const c = loadCards(); if (c.unspent <= 0) return null;
+    const cd = findCard(c, cardId); if (!cd) return null;
+    cd[stat] = (cd[stat] || 0) + 1; c.unspent--;
+    let evolved = null; const tgt = targetStage(cd);
+    if (tgt > (cd.stage || 1)) {                 // 進化！
+      cd.stage = tgt; cd.atk++; cd.def++; cd.luck++; cd.emoji = evoEmoji(cd); evolved = cd;
+    }
+    saveCards(c); return { card: cd, evolved: evolved };
+  }
+  function showEvolveModal(cd, after) {
+    const chain = evoChain(cd), prev = chain[Math.max(0, (cd.stage || 2) - 2)];
+    const html = '<h3 class="modal-title">✨ Evolution!</h3>' +
+      '<div class="evo-arena"><span class="evo-old">' + prev + '</span><span class="evo-arrow">➜</span><span class="evo-new">' + cd.emoji + '</span></div>' +
+      '<div class="cap-log">' + cd.name + ' evolved to Stage ' + cd.stage + '!<br>+1 ⚔️ +1 🛡️ +1 🍀</div>' +
+      '<div class="op-btns"><button id="evoOk" class="back-btn">Awesome! 🎉</button></div>';
+    const ov = openModal(html);
+    ov.querySelector("#evoOk").addEventListener("click", () => { closeModal(); if (after) after(); });
+  }
   // 相容層：舊的 loadHero/saveHero 改成操作「目前出戰的卡」+ 共用點數池
   function heroKey() { return "hero:" + (userName || "guest"); }
   function loadHero() {
@@ -3309,9 +3352,8 @@
       html += '<div class="battle-btns"><button id="battleDone" class="back-btn">Back to Map</button></div>';
       r.innerHTML = html;
       r.querySelectorAll(".bc-plus").forEach(b => b.addEventListener("click", () => {
-        const c2 = loadCards(); if (c2.unspent <= 0) return;
-        const cd = findCard(c2, b.dataset.id); if (!cd) return;
-        cd[b.dataset.stat]++; c2.unspent--; saveCards(c2); draw();
+        const res = spendPointOnCard(b.dataset.id, b.dataset.stat); if (!res) return;
+        if (res.evolved) showEvolveModal(res.evolved, draw); else draw();
       }));
       r.querySelectorAll(".bc-set").forEach(b => b.addEventListener("click", () => {
         const c2 = loadCards(); c2.active = b.dataset.id; saveCards(c2); draw();
@@ -3959,9 +4001,10 @@
       lv.articles.forEach(a => {
         const cd = owned[a.file];
         if (cd) {
+          const stg = "★".repeat(cd.stage || 1);
           html += '<div class="dex-card ' + cardRarity(cd).cls + '"><div class="dex-emo">' + cd.emoji + '</div>' +
             '<div class="dex-badge">' + cardElem(cd).icon + cardRarity(cd).star + '</div>' +
-            '<div class="dex-nm">' + cd.name + '</div><div class="dex-pw">LV.' + heroLevel(cd) + '</div></div>';
+            '<div class="dex-nm">' + cd.name + '</div><div class="dex-pw">LV.' + heroLevel(cd) + ' · <span class="dex-stg">' + stg + '</span></div></div>';
         } else {
           html += '<div class="dex-card dex-locked"><div class="dex-emo">❔</div>' +
             '<div class="dex-nm">' + (a.title ? a.title.split("·").pop().trim() : a.id) + '</div><div class="dex-pw">locked</div></div>';
