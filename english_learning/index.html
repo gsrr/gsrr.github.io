@@ -421,12 +421,21 @@
   /* 占地盤 */
   .terr-banner { max-width: 360px; margin: 0 auto 10px; padding: 7px 12px; border-radius: 10px; background: #fff7ed; border: 1px solid #fed7aa; font-size: 13px; color: #7c2d12; text-align: center; }
   .terr-link { color: #2563eb; cursor: pointer; font-weight: 700; white-space: nowrap; }
-  .map-node.terr-mine { border-color: #16a34a; box-shadow: 0 0 0 2px #bbf7d0, 0 2px 4px rgba(0,0,0,.1); }
-  .map-node.terr-foe { border-color: #f59e0b; box-shadow: 0 0 0 2px #fde68a, 0 2px 4px rgba(0,0,0,.1); }
-  .terr-flag { position: absolute; top: -1px; right: -1px; display: flex; align-items: center; gap: 1px; padding: 1px 3px 1px 1px;
-    background: rgba(255,255,255,.95); border-radius: 0 12px 0 8px; font-size: 14px; line-height: 1; box-shadow: -1px 1px 2px rgba(0,0,0,.15); }
-  .terr-sc { font-size: 9px; font-weight: 800; color: #b45309; }
+  .map-node.terr-mine { border-color: #16a34a; box-shadow: 0 0 0 2px #bbf7d0, 0 2px 5px rgba(0,0,0,.15); }
+  .map-node.terr-foe { border-color: #f59e0b; box-shadow: 0 0 0 2px #fde68a, 0 2px 5px rgba(0,0,0,.15); }
+  .map-node.terr-held { padding-bottom: 3px; }
+  .map-node.terr-held .map-ico { font-size: 34px; }        /* 防守卡放大，一眼看到用哪張守 */
+  .map-node.terr-held .map-num { display: none; }
+  .map-node.terr-held .map-lbl { font-size: 10px; font-weight: 700; color: #334155; max-height: 13px; }
+  .terr-flag { position: absolute; top: -1px; right: -1px; display: flex; align-items: center; gap: 1px; padding: 1px 4px 2px 3px;
+    background: rgba(255,255,255,.96); border-radius: 0 12px 0 9px; font-size: 13px; line-height: 1; box-shadow: -1px 1px 2px rgba(0,0,0,.18); }
+  .terr-sc { font-size: 10px; font-weight: 800; color: #b45309; }
   .map-node.terr-mine .terr-sc { color: #15803d; }
+  .terr-owner { display: flex; align-items: center; justify-content: center; gap: 2px; max-width: 88px; margin-top: 1px;
+    padding: 1px 6px; border-radius: 9px; font-size: 10px; font-weight: 800; line-height: 1.35; color: #fff; }
+  .terr-owner .terr-nm { max-width: 58px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .map-node.terr-mine .terr-owner { background: #16a34a; }   /* 綠 = 你佔的 */
+  .map-node.terr-foe .terr-owner { background: #f59e0b; }    /* 橘 = 對手佔的 */
   /* 據點面板 / 卡片 / 占領對戰 */
   .modal-ov { position: fixed; inset: 0; background: rgba(15,23,42,.55); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
   .modal-card { background: #fff; border-radius: 16px; padding: 18px; max-width: 360px; width: 100%; max-height: 86vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
@@ -4091,16 +4100,28 @@
       let mine = 0;
       lv.articles.forEach(a => {
         const node = fileNodes[a.file]; if (!node) return;
+        const ico = node.querySelector(".map-ico"), lbl = node.querySelector(".map-lbl");
+        if (ico && ico.dataset.orig == null) ico.dataset.orig = ico.textContent;   // 記住原本的 🏰/💥 與課名
+        if (lbl && lbl.dataset.orig == null) lbl.dataset.orig = lbl.textContent;
         const old = node.querySelector(".terr-flag"); if (old) old.remove();
-        node.classList.remove("terr-mine", "terr-foe");
+        const oldOwn = node.querySelector(".terr-owner"); if (oldOwn) oldOwn.remove();
+        node.classList.remove("terr-mine", "terr-foe", "terr-held");
+        if (ico && ico.dataset.orig != null) ico.textContent = ico.dataset.orig;   // 先還原（此函式會被呼叫兩次）
+        if (lbl && lbl.dataset.orig != null) lbl.textContent = lbl.dataset.orig;
         const h = territory.holders[a.file]; if (!h || !h.owner) return;
         const isMine = (h.owner || "").toLowerCase() === me; if (isMine) mine++;
-        node.classList.add(isMine ? "terr-mine" : "terr-foe");
+        node.classList.add("terr-held", isMine ? "terr-mine" : "terr-foe");
         const card = h.card || {}; const pw = (card.atk || 0) + (card.def || 0) + (card.luck || 0);
-        const flag = document.createElement("span");
+        if (ico) ico.textContent = card.emoji || "👾";     // 主圖 = 防守的卡（哪一張守）
+        if (lbl) lbl.textContent = card.name || "Boss";
+        const flag = document.createElement("span");       // 右上角標：屬性 + 戰力
         flag.className = "terr-flag";
-        flag.innerHTML = (card.emoji || "👾") + '<span class="terr-sc">' + pw + '</span>';
-        flag.title = dispName(h.owner) + " · " + (card.name || "Boss") + " (power " + pw + ")"; node.appendChild(flag);
+        flag.innerHTML = cardElem(card).icon + '<span class="terr-sc">' + pw + '</span>';
+        flag.title = (card.name || "Boss") + " · power " + pw; node.appendChild(flag);
+        const own = document.createElement("span");         // 底部名條：誰佔的（綠=你 / 橘=對手）
+        own.className = "terr-owner";
+        own.innerHTML = (h.avatar || "👦") + '<span class="terr-nm">' + dispName(h.owner) + '</span>';
+        own.title = (isMine ? "You hold" : dispName(h.owner) + " holds") + " this outpost"; node.appendChild(own);
       });
       const counts = territory.counts || {}; let top = null;
       Object.keys(counts).forEach(n => { if (!top || counts[n] > counts[top]) top = n; });
