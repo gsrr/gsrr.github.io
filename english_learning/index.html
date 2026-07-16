@@ -4706,8 +4706,8 @@
   }
   function shuffled(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
 
-  // 單擊基礎傷害（攻×加成 − 防×加成，最低 1）；實際扣血 = 基礎 × 出手方當前兵力
-  function baseHit(A, D) { return Math.max(1, Math.round(TROOP[A.type].atk * atkBonus(A.type, D.type) - TROOP[D.type].def * defBonus(D.type, A.type))); }
+  // 單擊基礎傷害（攻×(克制加成+額外) − 防×加成，最低 1）；實際扣血 = 基礎 × 出手方當前兵力
+  function baseHit(A, D, extraAtk) { return Math.max(1, Math.round(TROOP[A.type].atk * (atkBonus(A.type, D.type) + (extraAtk || 0)) - TROOP[D.type].def * defBonus(D.type, A.type))); }
   // 4v4 對戰：攻方(玩家排序) vs 守方(電腦亂序)。每回合當前兩張卡「同時出手」，
   //   傷害 = 基礎 × 該卡回合開始時的兵力 → 同時扣血；陣亡換下一張，一方無兵即敗（同歸於盡則守方保住）。
   function runBattle(file, attTroops, defTroops, pop, foeName) {
@@ -4733,25 +4733,30 @@
     }
     render();
     if (!def.length) return end(true, "Undefended — you take the region!");
-    let round = 0;
+    let round = 0, lastAi = -1, lastDi = -1, engage = 0;
     const iv = setInterval(() => {
       const ai = fa(att, 0), di = fa(def, 0);
       if (ai >= att.length || di >= def.length || round++ > 50) { clearInterval(iv); return end(fa(att, 0) < att.length, null); }
+      if (ai === lastAi && di === lastDi) engage++; else { engage = 1; lastAi = ai; lastDi = di; }   // 同一對纏鬥回合數
       const a = att[ai], d = def[di], preA = a.hp, preD = d.hp;
+      // 非弓兵攻擊弓兵：每回合累加 10% 攻擊（逼近）
+      const closeA = (a.type !== "archer" && d.type === "archer") ? 0.1 * engage : 0;
+      const closeD = (d.type !== "archer" && a.type === "archer") ? 0.1 * engage : 0;
       const aArch = a.type === "archer", dArch = d.type === "archer";   // 只有弓兵有先攻權
       let dmgAD = 0, dmgDA = 0, note = "";
       if (aArch && !dArch) {                       // 攻方弓兵先攻
-        dmgAD = baseHit(a, d) * a.hp; d.hp -= dmgAD; note = " 🏹你先攻";
-        if (d.hp > 0) { dmgDA = baseHit(d, a) * d.hp; a.hp -= dmgDA; }
+        dmgAD = baseHit(a, d, closeA) * a.hp; d.hp -= dmgAD; note = " 🏹你先攻";
+        if (d.hp > 0) { dmgDA = baseHit(d, a, closeD) * d.hp; a.hp -= dmgDA; }
       } else if (dArch && !aArch) {                // 守方弓兵先攻
-        dmgDA = baseHit(d, a) * d.hp; a.hp -= dmgDA; note = " 🏹敵先攻";
-        if (a.hp > 0) { dmgAD = baseHit(a, d) * a.hp; d.hp -= dmgAD; }
+        dmgDA = baseHit(d, a, closeD) * d.hp; a.hp -= dmgDA; note = " 🏹敵先攻";
+        if (a.hp > 0) { dmgAD = baseHit(a, d, closeA) * a.hp; d.hp -= dmgAD; }
       } else {                                     // 同時出手
-        dmgAD = baseHit(a, d) * a.hp; dmgDA = baseHit(d, a) * d.hp;
+        dmgAD = baseHit(a, d, closeA) * a.hp; dmgDA = baseHit(d, a, closeD) * d.hp;
         d.hp -= dmgAD; a.hp -= dmgDA;
       }
+      const closeNote = (closeA || closeD) ? " 逼近+" + Math.round((closeA || closeD) * 100) + "%" : "";
       logEl.textContent = TROOP[a.type].emoji + "×" + Math.round(preA) + " ⚔ " + TROOP[d.type].emoji + "×" + Math.round(preD) +
-        " → −" + dmgAD + " / −" + dmgDA + note +
+        " → −" + dmgAD + " / −" + dmgDA + note + closeNote +
         (atkBonus(a.type, d.type) > 1 ? " ✨你剋制!" : (atkBonus(d.type, a.type) > 1 ? " ⚠️被剋制" : ""));
       render();
       if (fa(att, 0) >= att.length || fa(def, 0) >= def.length) { clearInterval(iv); end(fa(att, 0) < att.length, null); }
