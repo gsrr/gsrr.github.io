@@ -439,7 +439,9 @@ class Handler(BaseHTTPRequestHandler):
         out.sort(key=lambda x: (-x["passed"], -x["level"], x["name"].lower()))
         self._send({"leaders": out[:50]})
 
-    # ---- 占地盤：每個據點由一張守護的 boss 卡佔領（攻方卡片打贏才換人）----
+    # ---- 占地盤：每個據點由「4 兵種 + 兵力」守備（攻方 4v4 打贏才換人）----
+    TROOP_TYPES = ("cav", "archer", "inf", "spear")
+
     def _handle_territory(self):
         with terr_lock:
             store = load_territory_store()
@@ -448,12 +450,13 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(h, dict):
                 continue
             owner = h.get("owner")
-            holders[f] = {"owner": owner, "avatar": h.get("avatar", "👦"), "card": h.get("card") or {}, "cardId": h.get("cardId")}
+            holders[f] = {"owner": owner, "avatar": h.get("avatar", "👦"),
+                          "troops": h.get("troops") or [], "pop": h.get("pop")}
             if owner:
                 counts[owner] = counts.get(owner, 0) + 1
         self._send({"holders": holders, "counts": counts})
 
-    # 攻方在前端用卡片打贏（或佔領空據點）後呼叫，存下新的守護卡（pilot：信任前端結果）
+    # 攻方在前端用兵種打贏（或佔領空據點）後呼叫，存下新的守備軍（pilot：信任前端結果）
     def _handle_territory_claim(self):
         user = token_user(self._token())
         if not user:
@@ -461,22 +464,23 @@ class Handler(BaseHTTPRequestHandler):
             return
         d = self._body_json()
         f = (d.get("file") or "").strip()
-        card = d.get("card") or {}
-        card_id = (d.get("cardId") or "").strip()
-        if not f or not isinstance(card, dict):
-            self._send({"error": "missing file/card"}, 400)
+        troops_in = d.get("troops")
+        if not f or not isinstance(troops_in, list):
+            self._send({"error": "missing file/troops"}, 400)
             return
-        clean = {"emoji": str(card.get("emoji", "👾"))[:8], "name": str(card.get("name", "Boss"))[:40],
-                 "elem": str(card.get("elem", "fire"))[:8], "rarity": int(card.get("rarity", 1) or 1),
-                 "atk": int(card.get("atk", 0) or 0), "def": int(card.get("def", 0) or 0), "luck": int(card.get("luck", 0) or 0)}
+        troops = []
+        for t in troops_in[:4]:
+            if not isinstance(t, dict):
+                continue
+            ty = str(t.get("type", ""))
+            if ty not in self.TROOP_TYPES:
+                continue
+            hp = int(t.get("hp", 0) or 0)
+            troops.append({"type": ty, "hp": max(0, min(100000, hp))})
         with terr_lock:
             store = load_territory_store()
-            # 一張卡只能守一個地方：先把這張卡（同擁有者）從別處撤走
-            if card_id:
-                for k in [k for k, v in store.items()
-                          if isinstance(v, dict) and v.get("owner") == user and v.get("cardId") == card_id and k != f]:
-                    store.pop(k, None)
-            store[f] = {"owner": user, "avatar": str(d.get("avatar", "👦"))[:8], "card": clean, "cardId": card_id}
+            store[f] = {"owner": user, "avatar": str(d.get("avatar", "👦"))[:8],
+                        "troops": troops, "pop": int(d.get("pop", 0) or 0)}
             save_territory_store(store)
         self._send({"ok": True})
 

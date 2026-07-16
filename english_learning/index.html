@@ -541,6 +541,31 @@
   .op-def.op-mine { background: #f0fdf4; border-color: #bbf7d0; }
   .op-card { color: #475569; font-size: 12px; }
   .op-hint { font-size: 13px; color: #475569; margin: 10px 0 6px; }
+  /* 兵種部署 + 對戰（彈窗白底，深色字）*/
+  .op-pop { text-align: center; font-size: 13px; color: #334155; margin: -4px 0 10px; }
+  .dep-left { text-align: center; font-size: 13px; font-weight: 700; color: #334155; margin: 0 0 6px; }
+  .dep-l { color: #2563eb; }
+  .dep-rows { display: flex; flex-direction: column; gap: 4px; }
+  .dep-row { display: flex; align-items: center; gap: 8px; padding: 5px 4px; border-bottom: 1px solid #eef2f7; }
+  .dep-ord { display: flex; flex-direction: column; gap: 2px; }
+  .dep-ord button { padding: 0 5px; font-size: 10px; line-height: 1.4; background: #334155; color: #fff; border-radius: 5px; }
+  .dep-ord button:disabled { opacity: .3; }
+  .dep-slot { width: 16px; text-align: center; font-weight: 800; color: #94a3b8; font-size: 12px; }
+  .dep-emo { font-size: 22px; line-height: 1; }
+  .dep-nm { flex: 0 0 64px; font-weight: 700; font-size: 13px; color: #1e293b; line-height: 1.1; }
+  .dep-nm small { display: block; font-size: 10px; color: #94a3b8; font-weight: 600; }
+  .dep-hp { flex: 1; min-width: 40px; }
+  .dep-val { width: 40px; text-align: right; font-weight: 800; color: #2563eb; }
+  .bt-side { display: flex; gap: 6px; justify-content: center; margin: 6px 0; }
+  .bt-unit { width: 56px; text-align: center; padding: 4px 2px; border-radius: 10px; }
+  .bt-unit.cur { background: #fef9c3; outline: 2px solid #f59e0b; }
+  .bt-unit.dead { opacity: .28; filter: grayscale(1); }
+  .bt-emo { font-size: 26px; line-height: 1; }
+  .bt-hpbar { height: 5px; background: #e2e8f0; border-radius: 3px; overflow: hidden; margin: 2px 0; }
+  .bt-hpfill { display: block; height: 100%; background: #22c55e; }
+  .bt-hp { font-size: 11px; font-weight: 700; color: #334155; }
+  .bt-log { text-align: center; font-weight: 700; color: #1e293b; min-height: 22px; margin: 8px 0; font-size: 14px; }
+  .bt-vs { text-align: center; color: #64748b; font-weight: 700; font-size: 12px; margin: 2px 0; }
   .op-btns { display: flex; gap: 8px; justify-content: center; margin: 8px 0; }
   .op-cards { display: flex; flex-direction: column; gap: 6px; }
   .op-card-btn { text-align: left; padding: 8px 10px; border: 2px solid #c7d2fe; border-radius: 10px; background: #eef2ff; cursor: pointer; font-size: 13px; line-height: 1.3; }
@@ -1000,8 +1025,8 @@
       <div id="dailyBanner" class="daily-banner"></div>
       <div id="energyBar" class="energy"></div>
       <div style="text-align:center;margin-bottom:14px">
-        <button id="openDexBtn" style="background:#16a34a;color:#fff">🎴 Card Dex</button>
-        <button id="openArenaBtn" style="background:#7c3aed;color:#fff">🏆 Arena Tournament</button>
+        <button id="openDexBtn" style="background:#16a34a;color:#fff;display:none">🎴 Card Dex</button>
+        <button id="openArenaBtn" style="background:#7c3aed;color:#fff;display:none">🏆 Arena Tournament</button>
         <button id="openLeaderBtn" style="background:#0ea5e9;color:#fff">🏅 Leaderboard</button>
       </div>
       <div id="testGamesWrap" class="hidden" style="text-align:center;margin-bottom:14px"><button id="testGamesBtn" class="back-btn">🎮 Test Games (tester)</button></div>
@@ -3191,20 +3216,7 @@
       return '<button class="coll-plus" data-id="' + id + '" data-stat="' + stat + '"' + (canSpend ? '' : ' disabled') + '>' +
         ico + val + (canSpend ? ' ＋' : '') + '</button>';
     }
-    const cardsHtml = '<div class="stats-h">🎴 Boss Cards (' + cc.list.length + ')' +
-      (cc.unspent ? ' · <b>' + cc.unspent + '</b> pts to spend' : '') + '</div>' +
-      (cc.list.length ? '<div class="coll-grid">' + cc.list.map(cd => {
-        const champ = cc.active === cd.id, at = dep[cd.id], stg = cd.stage || 1;
-        const nextLv = stg < 3 ? EVO_LV[stg - 1] : 0;
-        return '<div class="coll-card ' + cardRarity(cd).cls + (champ ? ' champ' : '') + '">' +
-          '<div class="coll-emo">' + cd.emoji + '</div>' +
-          '<div class="coll-name">' + cardElem(cd).icon + cardRarity(cd).star + ' ' + cd.name + '</div>' +
-          '<div class="coll-lv">LV.' + heroLevel(cd) + ' ' + "★".repeat(stg) + (nextLv ? ' <span class="coll-evo">→LV' + nextLv + '</span>' : '') + '</div>' +
-          '<div class="coll-stats">' + statBtn(cd.id, "atk", "⚔️", cd.atk) + statBtn(cd.id, "def", "🛡️", cd.def) + statBtn(cd.id, "luck", "🍀", cd.luck) + '</div>' +
-          (at ? '<div class="coll-dep">🚩 ' + lessonTitleByFile(at) + '</div>' : '<div class="coll-dep idle">in hand</div>') +
-          (champ ? '<div class="coll-champ">⭐ Champion</div>' : '<button class="coll-set" data-id="' + cd.id + '">Set ⭐</button>') +
-          '</div>';
-      }).join("") + '</div>' : '<p class="screen-intro">Pass a lesson (80%+) to earn your first Boss Card!</p>');
+    const cardsHtml = "";   // Boss 卡收藏已停用（改用兵種佔領系統）
 
     statsBody.innerHTML =
       '<p class="screen-intro">' + (userName ? 'Hi, ' + userName + ' 👋' : '') + '</p>' +
@@ -3627,7 +3639,8 @@
     try { claimed = !!file && localStorage.getItem(rewardKey(file)) === "1"; } catch (e) {}
     if (claimed) return { pts: 0, claimed: true };
     const avg = currentArticle ? (lessonStatus(currentArticle).avg || 0) : 0;
-    if (file && avg >= PASS_MARK) grantCard(file, currentArticle.title, avg);   // 過關 -> 拿一張該課的 boss 卡（稀有度依分數）
+    // 過關獎勵改成「可佔領該區」；不再發 Boss 卡（改用兵種系統）
+    // if (file && avg >= PASS_MARK) grantCard(file, currentArticle.title, avg);
     const pts = starsFromAvg(avg) + ((win && avg >= PASS_MARK) ? 1 : 0);   // 贏小遊戲 +1（需通過該課）
     if (pts > 0 && file) { try { localStorage.setItem(rewardKey(file), "1"); } catch (e) {} scheduleStudentSave(); }
     return { pts: pts, claimed: false };
@@ -4268,6 +4281,7 @@
         if (!a) { p.classList.add("geo-locked"); p.style.pointerEvents = "none"; return; }
         cur++;
         const rn = regionName(p);
+        a._region = rn; a._pop = popForName(rn);   // 該區人口 = 兵力預算
         addTitle(p, "#" + cur + " " + rn + " · " + ttl(a));
         p.addEventListener("click", () => openOutpost(a));
         marker(p, String(cur));
@@ -4550,35 +4564,66 @@
   function closeModal() { const m = document.getElementById("appModal"); if (m) m.remove(); }
   function cardStatStr(c) { return "⚔️" + (c.atk || 0) + " 🛡️" + (c.def || 0) + " 🍀" + (c.luck || 0); }
   function cardBadge(cd) { return cardRarity(cd).star + cardElem(cd).icon; }   // 稀有度 + 屬性
-  function cardPickHTML(cards, selfFile, foeElem) {
-    if (!cards.list.length) return '<p class="op-hint">You have no Boss Cards yet — pass a lesson (80%+) to earn one!</p>';
-    const dep = myDeployMap();
-    return '<div class="op-cards">' + cards.list.map(cd => {
-      const at = dep[cd.id];
-      const tag = (at && at !== selfFile) ? '<span class="op-dep">🚩 guarding ' + lessonTitleByFile(at) + ' — moves here</span>' : '';
-      const adv = foeElem ? (elemMult(cd.elem, foeElem) > 1 ? '<span class="op-adv">▲ strong</span>'
-        : (elemMult(foeElem, cd.elem) > 1 ? '<span class="op-weak">▼ weak</span>' : '')) : '';
-      return '<button class="op-card-btn" data-id="' + cd.id + '">' + cd.emoji + ' <b>' + cd.name + '</b> ' +
-        cardBadge(cd) + ' ' + cardStatStr(cd) + adv + tag + '</button>';
-    }).join("") + '</div>';
+  // ===== 兵種系統：騎/弓/步/槍，攻10 防8；克制加成 =====
+  const TROOPS = [
+    { id: "cav",    zh: "騎兵", en: "Cavalry",  emoji: "🐎", atk: 10, def: 8 },
+    { id: "archer", zh: "弓兵", en: "Archer",   emoji: "🏹", atk: 10, def: 8 },
+    { id: "inf",    zh: "步兵", en: "Infantry", emoji: "🛡️", atk: 10, def: 8 },
+    { id: "spear",  zh: "槍兵", en: "Spear",    emoji: "🔱", atk: 10, def: 8 }
+  ];
+  const TROOP = {}; TROOPS.forEach(t => TROOP[t.id] = t);
+  function atkBonus(at, df) {                       // 攻方 at 打守方 df 的攻擊倍率
+    if (at === "spear"  && df === "cav") return 1.2;                   // 槍剋騎 +20%
+    if (at === "cav"    && df === "archer") return 1.1;               // 騎剋弓 +10%
+    if (at === "archer" && (df === "spear" || df === "inf")) return 1.2; // 弓剋槍/步 +20%
+    return 1;
   }
-  function wireCardPick(root, cb) {
-    root.querySelectorAll(".op-card-btn").forEach(b => b.addEventListener("click", () => {
-      const cd = findCard(loadCards(), b.dataset.id); if (cd) cb(cd);
-    }));
+  function defBonus(df, at) {                        // 守方 df 面對攻方 at 的防守倍率
+    if (df === "cav" && at === "archer") return 1.1;                  // 騎對弓 +10% 防
+    return 1;
   }
+  function troopDamage(A, D) {                        // A/D: {type}
+    return Math.max(1, Math.round(TROOP[A.type].atk * atkBonus(A.type, D.type) - TROOP[D.type].def * defBonus(D.type, A.type)));
+  }
+  // 區域人口（= 兵力預算）：台灣/台北用近似真實值，其餘用名稱雜湊落在 60–300
+  const POP_TABLE = {
+    "Taipei City": 250, "New Taipei City": 400, "Taichung City": 280, "Kaohsiung City": 273, "Taoyuan City": 230,
+    "Tainan City": 186, "Changhua County": 125, "Pingtung County": 80, "Yunlin County": 66, "Hsinchu County": 58,
+    "Miaoli County": 54, "Chiayi County": 48, "Nantou County": 48, "Yilan County": 45, "Hsinchu City": 45,
+    "Keelung City": 40, "Hualien County": 40, "Chiayi City": 40, "Taitung County": 40, "Kinmen County": 40,
+    "Penghu County": 40, "Lienchiang County": 40,
+    "Beitou": 180, "Shilin": 200, "Datong": 100, "Zhongshan": 160, "Songshan": 140, "Neihu": 200,
+    "Nangang": 100, "Xinyi": 150, "Daan": 220, "Zhongzheng": 120, "Wanhua": 130, "Wenshan": 190
+  };
+  function popForName(name) {
+    if (!name) return 120;
+    const key = name.replace(/[一-鿿].*$/, "").trim();   // 去掉中文尾巴
+    if (POP_TABLE[key] != null) return POP_TABLE[key];
+    if (POP_TABLE[name] != null) return POP_TABLE[name];
+    let h = 0; for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+    return 60 + (h % 241);
+  }
+  function popOf(a) { return a._pop != null ? a._pop : popForName(a._region || (a.title ? a.title.split("·").pop().trim() : a.id)); }
+  function aliveTroops(troops) { return (troops || []).filter(t => t && t.hp > 0); }
+  function garrisonHTML(troops) {
+    const al = aliveTroops(troops);
+    if (!al.length) return '<span class="op-card">— no garrison —</span>';
+    return '<span class="op-card">' + al.map(t => TROOP[t.type].emoji + '<b>' + t.hp + '</b>').join(" &nbsp; ") + '</span>';
+  }
+
   function openOutpost(a) {
     const file = a.file, passed = lessonStatus(a).passed;
     const h = (territory && territory.holders && territory.holders[file]) || null;
     const me = (authUser() || userName || "").toLowerCase();
     const mine = !!(h && h.owner && (h.owner || "").toLowerCase() === me);
     const title = a.title ? a.title.split("·").pop().trim() : a.id;
-    let html = '<h3 class="modal-title">🏰 ' + title + '</h3>';
+    const pop = popOf(a);
+    let html = '<h3 class="modal-title">🏰 ' + title + '</h3>' +
+      '<div class="op-pop">👥 Population <b>' + pop + '</b> — deploy this many troop HP</div>';
     if (h && h.owner) {
-      const card = h.card || {}, pw = (card.atk || 0) + (card.def || 0) + (card.luck || 0);
-      html += '<div class="op-def' + (mine ? ' op-mine' : '') + '">Guarded by ' + (h.avatar || "👦") + ' <b>' + dispName(h.owner) + '</b><br>' +
-        '<span class="op-card">' + (card.emoji || "👾") + ' ' + (card.name || "Boss") + ' ' + cardBadge(card) + ' · ' + cardStatStr(card) + ' · power ' + pw + '</span></div>';
-    } else { html += '<div class="op-def">🏳️ Unclaimed outpost</div>'; }
+      html += '<div class="op-def' + (mine ? ' op-mine' : '') + '">Held by ' + (h.avatar || "👦") + ' <b>' + dispName(h.owner) + '</b><br>' +
+        garrisonHTML(h.troops) + '</div>';
+    } else { html += '<div class="op-def">🏳️ Unclaimed region</div>'; }
     html += '<div class="op-btns"><button id="opStudy" class="dict-play">📖 Study lesson</button></div><div id="opTerr"></div>' +
       '<div class="op-btns"><button id="opClose" class="back-btn">✕ Close</button></div>';
     const ov = openModal(html);
@@ -4586,91 +4631,144 @@
     ov.querySelector("#opClose").addEventListener("click", closeModal);
     const terr = ov.querySelector("#opTerr");
     if (!authToken()) { terr.innerHTML = '<p class="op-hint">🔒 Log in with a student account to battle for territory.</p>'; return; }
-    const cards = loadCards();
     if (mine) {
-      terr.innerHTML = '<p class="op-hint">✅ You hold this outpost. Swap the guard:</p>' + cardPickHTML(cards, file);
-      wireCardPick(terr, cd => claimOutpost(file, cd, () => { closeModal(); refreshMap(); }));
+      terr.innerHTML = '<p class="op-hint">✅ You hold this region. Re-deploy your garrison:</p>';
+      deployPanel(terr, pop, { init: h.troops, label: "🚩 Deploy", onGo: troops => claimTroops(file, troops, pop, () => { closeModal(); refreshMap(); }) });
     } else if (!h || !h.owner) {
       if (passed) {
-        terr.innerHTML = '<p class="op-hint">🚩 Deploy a Boss Card to guard this outpost:</p>' + cardPickHTML(cards, file);
-        wireCardPick(terr, cd => claimOutpost(file, cd, () => { closeModal(); refreshMap(); }));
+        terr.innerHTML = '<p class="op-hint">🚩 Occupy: split the population into your 4 troops:</p>';
+        deployPanel(terr, pop, { label: "🚩 Occupy", onGo: troops => claimTroops(file, troops, pop, () => { closeModal(); refreshMap(); }) });
       } else { terr.innerHTML = '<p class="op-hint">Study &amp; pass this lesson (80%+) to claim it.</p>'; }
     } else {
-      const foe = h.card || {};
-      terr.innerHTML = '<p class="op-hint">⚔️ Pick your Boss Card to attack the guard ' + (foe.emoji || "👾") + ' ' + cardElem(foe).icon + ':</p>' + cardPickHTML(cards, file, foe.elem);
-      wireCardPick(terr, cd => startCapture(file, cd, foe));
+      terr.innerHTML = '<p class="op-hint">⚔️ Attack! Order your 4 troops and split the population as HP:</p>';
+      deployPanel(terr, pop, { attack: true, label: "⚔️ Attack", onGo: troops => runBattle(file, troops, h.troops || [], pop, dispName(h.owner)) });
     }
   }
-  function claimOutpost(file, card, cb) {
+
+  // 部署面板：4 兵種各分配 HP（總和≤人口）；attack 時可用 ▲▼ 排順序（=出戰順序）
+  function deployPanel(root, pop, opts) {
+    opts = opts || {};
+    const initMap = {}; (opts.init || []).forEach(t => { initMap[t.type] = t.hp; });
+    const base = Math.floor(pop / 4);
+    const order = TROOPS.map((t, i) => ({ type: t.id, hp: initMap[t.id] != null ? initMap[t.id] : (base + (i === 0 ? pop - base * 4 : 0)) }));
+    const wrap = document.createElement("div"); wrap.className = "dep";
+    wrap.innerHTML = '<p class="dep-left">Left: <span class="dep-l">0</span> / ' + pop + '</p><div class="dep-rows"></div>' +
+      '<div class="op-btns"><button class="dict-play dep-go">' + (opts.label || "Deploy") + '</button></div>';
+    const rowsEl = wrap.querySelector(".dep-rows"), leftEl = wrap.querySelector(".dep-l"), goBtn = wrap.querySelector(".dep-go");
+    function render() {
+      rowsEl.innerHTML = "";
+      order.forEach((o, idx) => {
+        const t = TROOP[o.type];
+        const row = document.createElement("div"); row.className = "dep-row";
+        row.innerHTML = (opts.attack ? '<span class="dep-ord"><button class="dep-up" ' + (idx === 0 ? "disabled" : "") + '>▲</button><button class="dep-dn" ' + (idx === order.length - 1 ? "disabled" : "") + '>▼</button></span>' : '') +
+          '<span class="dep-slot">' + (idx + 1) + '</span><span class="dep-emo">' + t.emoji + '</span><span class="dep-nm">' + t.zh + '<small>' + t.en + '</small></span>' +
+          '<input type="range" class="dep-hp" min="0" max="' + pop + '" value="' + o.hp + '"><span class="dep-val">' + o.hp + '</span>';
+        const range = row.querySelector(".dep-hp"), val = row.querySelector(".dep-val");
+        range.addEventListener("input", () => {
+          let v = parseInt(range.value, 10) || 0;
+          const others = order.reduce((s, x, j) => s + (j === idx ? 0 : x.hp), 0);
+          if (v + others > pop) { v = pop - others; range.value = v; }   // 夾住不超過人口
+          o.hp = v; val.textContent = v; sync();
+        });
+        if (opts.attack) {
+          row.querySelector(".dep-up").addEventListener("click", () => { if (idx > 0) { const x = order[idx - 1]; order[idx - 1] = order[idx]; order[idx] = x; render(); } });
+          row.querySelector(".dep-dn").addEventListener("click", () => { if (idx < order.length - 1) { const x = order[idx + 1]; order[idx + 1] = order[idx]; order[idx] = x; render(); } });
+        }
+        rowsEl.appendChild(row);
+      });
+      sync();
+    }
+    function sync() {
+      const sum = order.reduce((s, x) => s + x.hp, 0);
+      leftEl.textContent = pop - sum;
+      goBtn.disabled = sum <= 0 || sum > pop;
+    }
+    goBtn.addEventListener("click", () => opts.onGo(order.map(o => ({ type: o.type, hp: o.hp }))));
+    render();
+    root.appendChild(wrap);
+  }
+
+  function claimTroops(file, troops, pop, cb) {
     const t = authToken();
-    if (!t) { alert("Log in with a student account to deploy a Boss Card."); if (cb) cb(); return; }
+    if (!t) { alert("Log in to deploy troops."); if (cb) cb(); return; }
     fetch("/api/territory/claim?token=" + encodeURIComponent(t), {
-      method: "POST", body: JSON.stringify({
-        file: file, avatar: avatarOf(userName), cardId: card.id,
-        card: { emoji: card.emoji, name: card.name, elem: card.elem, rarity: card.rarity || 1, atk: card.atk || 0, def: card.def || 0, luck: card.luck || 0 }
-      })
+      method: "POST", body: JSON.stringify({ file: file, avatar: avatarOf(userName), pop: pop, troops: troops })
     }).then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-      .then(j => {
-        if (j && j.ok) { loadTerritory(() => { if (cb) cb(); }); }
-        else { alert("Deploy failed: " + ((j && j.error) || "unknown")); if (cb) cb(); }
-      })
+      .then(j => { if (j && j.ok) { loadTerritory(() => { if (cb) cb(); }); } else { alert("Deploy failed: " + ((j && j.error) || "unknown")); if (cb) cb(); } })
       .catch(() => {
-        alert("Couldn't reach the territory server.\n\nTerritory needs the self-hosted server (e.g. kyotozuiryu.com) running the LATEST code — rebuild with: docker compose up -d --build.\nThe free GitHub Pages demo has no server, so deploying won't work there.");
+        alert("Couldn't reach the territory server.\n\nTerritory needs the self-hosted server running the LATEST code — rebuild with: docker compose up -d --build.");
         if (cb) cb();
       });
   }
-  // 我目前用哪張卡守哪個據點：cardId -> 部署的據點 file
-  function myDeployMap() {
-    const m = {}; if (!territory || !territory.holders) return m;
-    const me = (authUser() || userName || "").toLowerCase();
-    Object.keys(territory.holders).forEach(f => {
-      const h = territory.holders[f];
-      if (h && h.owner && (h.owner || "").toLowerCase() === me && h.cardId) m[h.cardId] = f;
-    });
-    return m;
-  }
+
+  function myDeployMap() { return {}; }   // 舊卡片部署對照已停用（佔領改用兵種）
   function lessonTitleByFile(file) {
     let t = file;
-    (manifest ? manifest.levels : []).forEach(lv => lv.articles.forEach(a => {
-      if (a.file === file) t = a.title ? a.title.split("·").pop().trim() : a.id;
-    }));
+    (manifest ? manifest.levels : []).forEach(lv => lv.articles.forEach(a => { if (a.file === file) t = a.title ? a.title.split("·").pop().trim() : a.id; }));
     return t;
   }
-  // 卡片對戰：攻方 att vs 守方 def，回傳攻方是否獲勝（含爆擊/閃避 + 屬性克制 ×1.5）
-  function cardBattleWin(att, def) {
-    let ah = 20 + (att.def || 0) * 5, dh = 20 + (def.def || 0) * 5, t = Math.random() < 0.5 ? 0 : 1, g = 0;
-    const amA = elemMult(att.elem, def.elem), amD = elemMult(def.elem, att.elem);
-    while (ah > 0 && dh > 0 && g++ < 3000) {
-      const A = (t % 2 === 0) ? att : def, D = (t % 2 === 0) ? def : att, mult = (t % 2 === 0) ? amA : amD;
-      if (Math.random() >= dodgeChance(D.luck || 0)) {
-        let d = Math.max(1, Math.round(((5 + (A.atk || 0) * 2) - (D.def || 0)) * mult));
-        if (Math.random() < critChance(A.luck || 0)) d *= 2;
-        if (t % 2 === 0) dh -= d; else ah -= d;
-      }
-      t++;
+  function shuffled(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
+
+  // 4v4 對戰：攻方(玩家排序) vs 守方(電腦亂序)，逐回合輪流攻擊(傷害=攻−防)，生存者留場。
+  // 先完整模擬出每一擊，再用固定約 5 秒的動畫播放（兵力高時每格多打幾拳），不管人口多大都不會拖。
+  function runBattle(file, attTroops, defTroops, pop, foeName) {
+    const attStart = aliveTroops(attTroops).map(t => ({ type: t.type, hp: t.hp, max: t.hp }));
+    const defStart = shuffled(aliveTroops(defTroops)).map(t => ({ type: t.type, hp: t.hp, max: t.hp }));
+    function fa(arr, from) { while (from < arr.length && arr[from].hp <= 0) from++; return from; }
+    // 模擬（在副本上）算出每一擊事件
+    const A = attStart.map(u => ({ type: u.type, hp: u.hp })), D = defStart.map(u => ({ type: u.type, hp: u.hp }));
+    const ev = []; let ai = fa(A, 0), di = fa(D, 0), turn = 0, g = 0;
+    while (ai < A.length && di < D.length && g++ < 4000) {
+      if (turn % 2 === 0) { const dm = troopDamage(A[ai], D[di]); D[di].hp -= dm; ev.push({ side: "a", ai: ai, di: di, dm: dm }); }
+      else { const dm = troopDamage(D[di], A[ai]); A[ai].hp -= dm; ev.push({ side: "d", ai: ai, di: di, dm: dm }); }
+      turn++; ai = fa(A, ai); di = fa(D, di);
     }
-    return ah > 0;
-  }
-  function startCapture(file, myCard, defCard) {
-    const win = cardBattleWin(myCard, defCard);
-    const adv = elemMult(myCard.elem, defCard.elem) > 1 ? ' <span class="cap-adv">' + cardElem(myCard).icon + ' ×1.5!</span>'
-      : (elemMult(defCard.elem, myCard.elem) > 1 ? ' <span class="cap-dis">' + cardElem(defCard).icon + ' ×1.5 against you</span>' : '');
-    const html = '<h3 class="modal-title">⚔️ Capture Battle</h3>' +
-      '<div class="cap-arena"><span class="cap-emo" id="capA">' + (myCard.emoji || "🦸") + '<span class="cap-el">' + cardElem(myCard).icon + '</span></span>' +
-      '<span class="cap-vs">VS</span><span class="cap-emo" id="capB">' + (defCard.emoji || "👾") + '<span class="cap-el">' + cardElem(defCard).icon + '</span></span></div>' +
-      '<div class="cap-log" id="capLog">Fight!' + adv + '</div><div class="op-btns" id="capBtns"></div>';
+    const win = ai < A.length;
+
+    const html = '<h3 class="modal-title">⚔️ Battle for the region</h3>' +
+      '<div class="bt-vs">🛡️ ' + foeName + ' (defender)</div><div class="bt-side" id="btDef"></div>' +
+      '<div class="bt-log" id="btLog">Your troops charge in!</div>' +
+      '<div class="bt-side" id="btAtt"></div><div class="bt-vs">🗡️ You (attacker)</div>' +
+      '<div class="op-btns" id="btBtns"></div>';
     const ov = openModal(html);
-    const a = ov.querySelector("#capA"), b = ov.querySelector("#capB"), log = ov.querySelector("#capLog");
-    let n = 0; const iv = setInterval(() => {
-      n++; fxLunge(a, "r"); fxHit(b); setTimeout(() => { fxLunge(b, "l"); fxHit(a); }, 200);
-      if (n >= 3) { clearInterval(iv); finish(); }
-    }, 520);
-    function finish() {
-      (win ? b : a).classList.add("defeated");
-      log.textContent = win ? "🏆 You captured the outpost!" : "💀 Your card lost — power it up and try again!";
-      ov.querySelector("#capBtns").innerHTML = '<button id="capDone" class="back-btn">' + (win ? "🚩 Plant my flag" : "Back") + '</button>';
-      ov.querySelector("#capDone").addEventListener("click", () => {
-        if (win) claimOutpost(file, myCard, () => { closeModal(); refreshMap(); });
+    const attEl = ov.querySelector("#btAtt"), defEl = ov.querySelector("#btDef"), logEl = ov.querySelector("#btLog");
+    const att = attStart.map(u => ({ type: u.type, hp: u.hp, max: u.max }));
+    const def = defStart.map(u => ({ type: u.type, hp: u.hp, max: u.max }));
+    function unitHTML(u, cur) {
+      const pct = u.max ? Math.max(0, Math.round(u.hp / u.max * 100)) : 0;
+      return '<div class="bt-unit' + (u.hp <= 0 ? " dead" : "") + (cur ? " cur" : "") + '"><div class="bt-emo">' + TROOP[u.type].emoji + '</div>' +
+        '<div class="bt-hpbar"><span class="bt-hpfill" style="width:' + pct + '%"></span></div><div class="bt-hp">' + Math.max(0, u.hp) + '</div></div>';
+    }
+    function render() {
+      const cai = fa(att, 0), cdi = fa(def, 0);
+      attEl.innerHTML = att.map((u, i) => unitHTML(u, i === cai)).join("");
+      defEl.innerHTML = def.map((u, i) => unitHTML(u, i === cdi)).join("");
+    }
+    render();
+    if (!def.length) return end(true, "Undefended — you take the region!");
+    const per = Math.max(1, Math.ceil(ev.length / 40));   // 目標 ~40 格動畫
+    let k = 0;
+    const iv = setInterval(() => {
+      let last = null;
+      for (let n = 0; n < per && k < ev.length; n++, k++) {
+        const e = ev[k]; last = e;
+        if (e.side === "a") def[e.di].hp -= e.dm; else att[e.ai].hp -= e.dm;
+      }
+      if (last) {
+        const at = last.side === "a" ? att[last.ai] : def[last.di], df = last.side === "a" ? def[last.di] : att[last.ai];
+        logEl.textContent = TROOP[at.type].emoji + (last.side === "a" ? " hits " : " hits back ") + TROOP[df.type].emoji + " −" + last.dm +
+          (atkBonus(at.type, df.type) > 1 ? " ✨strong!" : "");
+      }
+      render();
+      if (k >= ev.length) { clearInterval(iv); end(win, null); }
+    }, 130);
+
+    function end(w, msg) {
+      render();
+      logEl.textContent = msg || (w ? "🏆 You captured the region!" : "💀 Your army was defeated — power up your lessons and retry!");
+      ov.querySelector("#btBtns").innerHTML = '<button id="btDone" class="back-btn">' + (w ? "🚩 Occupy" : "Back") + '</button>';
+      ov.querySelector("#btDone").addEventListener("click", () => {
+        if (w) claimTroops(file, attTroops, pop, () => { closeModal(); refreshMap(); });
         else closeModal();
       });
     }
