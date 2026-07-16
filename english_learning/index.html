@@ -486,6 +486,19 @@
   .geo-drill { fill: #7c3aed !important; }                    /* 可下鑽的地區（容器）*/
   .geo-marker-drill { fill: rgba(88,28,135,.92); }
   .geo-leader { stroke: rgba(15,23,42,.5); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+  .geo-region.geo-hi { filter: brightness(1.25) drop-shadow(0 0 5px #fff); }   /* 滑清單時對應地區發亮 */
+  .geo-index { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin: 12px 0 2px; }
+  .geo-idx { display: flex; align-items: center; gap: 7px; text-align: left; padding: 7px 9px; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #e8edf5; cursor: pointer;
+    font-size: 12px; line-height: 1.2; }
+  .geo-idx:hover { background: rgba(255,255,255,.14); }
+  .geo-idx .gi-no { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-weight: 800; font-size: 12px; color: #fff; background: #64748b; }
+  .geo-idx.gi-mine .gi-no { background: #16a34a; } .geo-idx.gi-foe .gi-no { background: #f59e0b; }
+  .geo-idx.gi-open .gi-no { background: #2563eb; } .geo-idx.gi-drill .gi-no { background: #7c3aed; }
+  .geo-idx .gi-tx { min-width: 0; }
+  .geo-idx .gi-rg { font-weight: 700; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .geo-idx .gi-ls { color: #aebacd; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .geo-back { background: #334155; color: #e8edf5; padding: 7px 14px; border-radius: 10px;
     font-size: 13px; font-weight: 700; cursor: pointer; margin-bottom: 10px; }
   .gl-drill::before { background: #7c3aed; }
@@ -4177,7 +4190,14 @@
                     { id: "tp-market", title: "Taipei 3 · The Night Market", file: "Pre-A1/taipei/market", scene: "snack",     levels: [1,2,3,4,5,7,9] },
                     { id: "tp-park",   title: "Taipei 4 · At the Park",      file: "Pre-A1/taipei/park",   scene: "park-ball", levels: [1,2,3,4,5,7,9] }
                   ] } } },
-    "A1":     { file: "maps/china.svg",  label: "China 中國 🗺️", viewBox: "0 0 1000 850", region: id => /^p[A-Z]{2}$/.test(id) },
+    "A1":     { file: "maps/china.svg",  label: "China 中國 🗺️", viewBox: "0 0 1000 850", region: id => /^p[A-Z]{2}$/.test(id),
+                names: { pBJ:"Beijing 北京", pTJ:"Tianjin 天津", pSH:"Shanghai 上海", pCQ:"Chongqing 重慶",
+                  pHE:"Hebei 河北", pSX:"Shanxi 山西", pNM:"Inner Mongolia 內蒙古", pLN:"Liaoning 遼寧", pJL:"Jilin 吉林",
+                  pHJ:"Heilongjiang 黑龍江", pJS:"Jiangsu 江蘇", pZJ:"Zhejiang 浙江", pAH:"Anhui 安徽", pFJ:"Fujian 福建",
+                  pJX:"Jiangxi 江西", pSD:"Shandong 山東", pHA:"Henan 河南", pHB:"Hubei 湖北", pHN:"Hunan 湖南",
+                  pGD:"Guangdong 廣東", pGX:"Guangxi 廣西", pHI:"Hainan 海南", pSC:"Sichuan 四川", pGZ:"Guizhou 貴州",
+                  pYN:"Yunnan 雲南", pXZ:"Tibet 西藏", pSN:"Shaanxi 陝西", pGS:"Gansu 甘肅", pQH:"Qinghai 青海",
+                  pNX:"Ningxia 寧夏", pXJ:"Xinjiang 新疆", pHK:"Hong Kong 香港", pMO:"Macau 澳門", pTW:"Taiwan 台灣" } },
     "A2":     { file: "maps/world.svg",  label: "World 世界 🗺️" },
     "B1":     { file: "maps/world.svg",  label: "World 世界 🗺️" }
   };
@@ -4231,6 +4251,7 @@
       const vb = (svg.getAttribute("viewBox") || "0 0 1000 1000").split(/\s+/).map(Number);
       const rMark = Math.max(7, Math.min(vb[2], vb[3]) * 0.02);
       const regionList = [];
+      function regionName(p) { return spec.names ? (spec.names[p.id] || p.id) : (p.getAttribute("aria-label") || p.id); }
       function addTitle(p, txt) { let t = p.querySelector("title"); if (!t) { t = document.createElementNS(NSU, "title"); p.appendChild(t); } t.textContent = txt; }
       const markerSpecs = [];
       function marker(p, label, extra) {                 // 先記位置，之後統一分散再畫
@@ -4246,10 +4267,11 @@
         p.setAttribute("class", "geo-region");
         if (!a) { p.classList.add("geo-locked"); p.style.pointerEvents = "none"; return; }
         cur++;
-        addTitle(p, "#" + cur + " " + ttl(a));
+        const rn = regionName(p);
+        addTitle(p, "#" + cur + " " + rn + " · " + ttl(a));
         p.addEventListener("click", () => openOutpost(a));
         marker(p, String(cur));
-        regionList.push({ p: p, a: a });
+        regionList.push({ p: p, a: a, name: rn, num: cur, open: () => openOutpost(a) });
       });
       // 2) 容器地區（可下鑽）：把剩下的課交給它的子地圖
       containers.forEach((p, ci) => {
@@ -4258,10 +4280,11 @@
         const slice = sub.articles ? sub.articles : (ci === 0 ? lessons.slice(cur) : []);
         if (!sub.articles && ci === 0) cur = lessons.length;
         p.setAttribute("class", "geo-region geo-drill");
-        addTitle(p, sub.label + " — " + slice.length + " lessons · click to enter");
-        p.addEventListener("click", () => drawGeo(sub, slice, () => renderGeoMap(i, spec), i, lv));
+        const rn = regionName(p), open = () => drawGeo(sub, slice, () => renderGeoMap(i, spec), i, lv);
+        addTitle(p, rn + " — " + slice.length + " lessons · click to enter");
+        p.addEventListener("click", open);
         marker(p, "🏙️", " geo-marker-drill");
-        regionList.push({ p: p, drill: true });
+        regionList.push({ p: p, drill: true, name: rn, count: slice.length, open: open });
       });
       // 分散重疊的標號（小而密集的地區不擠成一團）：鬆弛演算法互推
       const minD = rMark * 2 + 3;
@@ -4306,6 +4329,20 @@
       legend.innerHTML = '<span class="gl gl-mine">You</span><span class="gl gl-foe">Rival</span><span class="gl gl-open">Open</span><span class="gl gl-todo">Locked lesson</span>' +
         (containers.length ? '<span class="gl gl-drill">Zoom in</span>' : '');
       wrap.appendChild(legend);
+      // 對照清單：號碼 · 地區名 · 課名（滑過 highlight 對應地區，點擊進課）—— 一眼看出每個號碼是哪一區
+      const idx = document.createElement("div"); idx.className = "geo-index";
+      regionList.forEach(r => {
+        if (!r.p) return;   // 只列地圖上有地區者（溢出課已用上方 chip 呈現）
+        const btn = document.createElement("button"); btn.className = "geo-idx" + (r.drill ? " gi-drill" : "");
+        btn.innerHTML = '<span class="gi-no">' + (r.drill ? "🏙️" : r.num) + '</span>' +
+          '<span class="gi-tx"><span class="gi-rg">' + r.name + '</span>' +
+          '<span class="gi-ls">' + (r.drill ? (r.count + "-episode story ▸") : ttl(r.a)) + '</span></span>';
+        btn.addEventListener("click", r.open);
+        btn.addEventListener("mouseenter", () => r.p.classList.add("geo-hi"));
+        btn.addEventListener("mouseleave", () => r.p.classList.remove("geo-hi"));
+        r.idxEl = btn; idx.appendChild(btn);
+      });
+      wrap.appendChild(idx);
       if (!backFn) {   // 只有頂層顯示 Boss
         const bossWrap = document.createElement("div"); bossWrap.className = "geo-boss";
         const next = manifest.levels[i + 1], bp = examPassed(lv.id);
@@ -4319,11 +4356,13 @@
         regionList.forEach(r => {
           const el = r.p || r.btn; if (!el || r.drill) return;
           ["geo-mine", "geo-foe", "geo-open", "geo-todo"].forEach(c => el.classList.remove(c));
+          if (r.idxEl) ["gi-mine", "gi-foe", "gi-open"].forEach(c => r.idxEl.classList.remove(c));
           const h = territory && territory.holders && territory.holders[r.a.file];
-          let stat;
-          if (h && h.owner) { const isMine = (h.owner || "").toLowerCase() === me; stat = isMine ? "geo-mine" : "geo-foe"; if (isMine) mine++; }
-          else stat = lessonStatus(r.a).passed ? "geo-open" : "geo-todo";
+          let stat, gi = "";
+          if (h && h.owner) { const isMine = (h.owner || "").toLowerCase() === me; stat = isMine ? "geo-mine" : "geo-foe"; gi = isMine ? "gi-mine" : "gi-foe"; if (isMine) mine++; }
+          else { const pass = lessonStatus(r.a).passed; stat = pass ? "geo-open" : "geo-todo"; gi = pass ? "gi-open" : ""; }
           el.classList.add(stat);
+          if (r.idxEl && gi) r.idxEl.classList.add(gi);
         });
         if (banner) {
           const counts = (territory && territory.counts) || {}; let top = null;
