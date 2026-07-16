@@ -33,8 +33,16 @@
   * { box-sizing: border-box; }
   body {
     font-family: "Segoe UI", "Microsoft JhengHei", system-ui, sans-serif;
+    font-size: 17px;                     /* 整體 baseline 調大，對小朋友的眼睛較友善 */
     margin: 0;
-    background: linear-gradient(135deg, #e0f2fe 0%, #fce7f3 100%);
+    /* 四角柔和光暈 + 斜向底色，桌機留白不再空蕩 */
+    background:
+      radial-gradient(circle at 12% 18%, rgba(96,165,250,.45), transparent 42%),
+      radial-gradient(circle at 88% 14%, rgba(244,114,182,.42), transparent 44%),
+      radial-gradient(circle at 82% 86%, rgba(167,139,250,.42), transparent 46%),
+      radial-gradient(circle at 16% 88%, rgba(52,211,153,.38), transparent 44%),
+      linear-gradient(135deg, #e0f2fe 0%, #fce7f3 55%, #ede9fe 100%);
+    background-attachment: fixed;
     min-height: 100vh;
     display: flex;
     justify-content: center;
@@ -283,7 +291,7 @@
 
   /* 對話 */
   .dialogue { display: flex; flex-direction: column; gap: 10px; }
-  .line { display: flex; gap: 10px; padding: 12px 14px; border-radius: 14px; line-height: 1.4; transition: background .2s, transform .2s; }
+  .line { display: flex; gap: 10px; padding: 12px 14px; border-radius: 14px; font-size: 19px; line-height: 1.5; transition: background .2s, transform .2s; }
   .line .who { font-weight: 700; min-width: 52px; }
   .line.male   { background: #eff6ff; }
   .line.female { background: #fdf2f8; align-self: flex-end; flex-direction: row-reverse; text-align: right; }
@@ -525,7 +533,7 @@
     border: 2px solid #e2e8f0; border-radius: 16px; padding: 16px 18px;
     transition: border-color .2s, background .2s;
   }
-  .quiz-q { font-size: 18px; font-weight: 600; color: #1e293b; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .quiz-q { font-size: 20px; font-weight: 600; color: #1e293b; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
   .speak-q {
     flex-shrink: 0; border: none; background: #eff6ff; color: #2563eb;
     border-radius: 50%; width: 34px; height: 34px; padding: 0; font-size: 17px;
@@ -537,7 +545,7 @@
   .quiz-opts { display: flex; gap: 10px; }
   .opt {
     flex: 1; border: 2px solid #cbd5e1; background: #fff; color: #334155;
-    border-radius: 12px; padding: 10px; font-size: 16px; font-weight: 700; cursor: pointer;
+    border-radius: 12px; padding: 11px 10px; font-size: 18px; font-weight: 700; cursor: pointer;
     transition: all .15s;
   }
   .opt:hover:not(:disabled) { border-color: #94a3b8; }
@@ -558,17 +566,17 @@
   .dict-playrow { text-align: center; margin-bottom: 14px; }
   .dict-play { background: #2563eb; color: #fff; }
   .dict-input {
-    width: 100%; font-size: 17px; padding: 12px 14px; border: 2px solid #cbd5e1;
+    width: 100%; font-size: 19px; padding: 12px 14px; border: 2px solid #cbd5e1;
     border-radius: 12px; margin-bottom: 4px; font-family: inherit;
   }
   .dict-input:focus { outline: none; border-color: #2563eb; }
-  .dict-feedback { text-align: center; margin-top: 12px; font-size: 17px; font-weight: 600; min-height: 24px; }
+  .dict-feedback { text-align: center; margin-top: 12px; font-size: 18px; font-weight: 600; min-height: 24px; }
   .dict-ok { color: #15803d; }
   .dict-bad { color: #b91c1c; }
   .dict-answer { margin-top: 6px; color: #15803d; background: #dcfce7; border-radius: 10px; padding: 8px 12px; display: inline-block; font-weight: 700; }
 
   /* Level 9 單字填空 */
-  .cloze-sentence { font-size: 20px; font-weight: 600; color: #1e293b; line-height: 1.7; text-align: center; margin-bottom: 18px; }
+  .cloze-sentence { font-size: 22px; font-weight: 600; color: #1e293b; line-height: 1.7; text-align: center; margin-bottom: 18px; }
   .cloze-sentence .speak-q { vertical-align: middle; margin-right: 6px; }
   .cloze-blank { display: inline-block; min-width: 56px; border-bottom: 3px solid #94a3b8; text-align: center; color: #2563eb; font-weight: 700; margin: 0 2px; }
   .cloze-blank.filled { border-bottom-color: #16a34a; color: #15803d; }
@@ -622,7 +630,7 @@
   .reorder-pool { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; min-height: 44px; margin-bottom: 8px; }
   .chip {
     border: 2px solid #cbd5e1; background: #fff; color: #1e293b; border-radius: 10px;
-    padding: 8px 14px; font-size: 17px; font-weight: 600; cursor: pointer; transition: all .12s;
+    padding: 8px 14px; font-size: 19px; font-weight: 600; cursor: pointer; transition: all .12s;
   }
   .chip:hover { border-color: #94a3b8; }
   .chip:active { transform: scale(0.94); }
