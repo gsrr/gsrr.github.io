@@ -485,6 +485,7 @@
   .geo-boss-btn.done { background: #16a34a; }
   .geo-drill { fill: #7c3aed !important; }                    /* 可下鑽的地區（容器）*/
   .geo-marker-drill { fill: rgba(88,28,135,.92); }
+  .geo-leader { stroke: rgba(15,23,42,.5); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
   .geo-back { background: #334155; color: #e8edf5; padding: 7px 14px; border-radius: 10px;
     font-size: 13px; font-weight: 700; cursor: pointer; margin-bottom: 10px; }
   .gl-drill::before { background: #7c3aed; }
@@ -4231,16 +4232,12 @@
       const rMark = Math.max(7, Math.min(vb[2], vb[3]) * 0.02);
       const regionList = [];
       function addTitle(p, txt) { let t = p.querySelector("title"); if (!t) { t = document.createElementNS(NSU, "title"); p.appendChild(t); } t.textContent = txt; }
-      function marker(p, label, extra) {
+      const markerSpecs = [];
+      function marker(p, label, extra) {                 // 先記位置，之後統一分散再畫
         let bb = null; try { bb = p.getBBox(); } catch (e) {}
         if (!bb || !bb.width) return;
         const cx = bb.x + bb.width / 2, cy = bb.y + bb.height / 2;
-        const c = document.createElementNS(NSU, "circle");
-        c.setAttribute("cx", cx); c.setAttribute("cy", cy); c.setAttribute("r", rMark); c.setAttribute("class", "geo-marker-c" + (extra || ""));
-        const tx = document.createElementNS(NSU, "text");
-        tx.setAttribute("x", cx); tx.setAttribute("y", cy); tx.setAttribute("font-size", rMark * 1.05);
-        tx.setAttribute("class", "geo-marker-t"); tx.textContent = label;
-        mg.appendChild(c); mg.appendChild(tx);
+        markerSpecs.push({ cx: cx, cy: cy, ox: cx, oy: cy, label: label, extra: extra || "" });
       }
       // 1) 一般地區：課依序填入
       let cur = 0;
@@ -4265,6 +4262,33 @@
         p.addEventListener("click", () => drawGeo(sub, slice, () => renderGeoMap(i, spec), i, lv));
         marker(p, "🏙️", " geo-marker-drill");
         regionList.push({ p: p, drill: true });
+      });
+      // 分散重疊的標號（小而密集的地區不擠成一團）：鬆弛演算法互推
+      const minD = rMark * 2 + 3;
+      for (let it = 0; it < 80; it++) {
+        let moved = false;
+        for (let x = 0; x < markerSpecs.length; x++) for (let y = x + 1; y < markerSpecs.length; y++) {
+          const A = markerSpecs[x], B = markerSpecs[y];
+          const dx = B.cx - A.cx, dy = B.cy - A.cy, d = Math.hypot(dx, dy) || 0.01;
+          if (d < minD) { const push = (minD - d) / 2, ux = dx / d, uy = dy / d;
+            A.cx -= ux * push; A.cy -= uy * push; B.cx += ux * push; B.cy += uy * push; moved = true; }
+        }
+        if (!moved) break;
+      }
+      markerSpecs.forEach(s => {
+        if (Math.hypot(s.cx - s.ox, s.cy - s.oy) > rMark * 1.3) {   // 位移大 → 補引線連回地區
+          const ln = document.createElementNS(NSU, "line");
+          ln.setAttribute("x1", s.ox); ln.setAttribute("y1", s.oy); ln.setAttribute("x2", s.cx); ln.setAttribute("y2", s.cy);
+          ln.setAttribute("class", "geo-leader"); mg.appendChild(ln);
+        }
+      });
+      markerSpecs.forEach(s => {
+        const c = document.createElementNS(NSU, "circle");
+        c.setAttribute("cx", s.cx); c.setAttribute("cy", s.cy); c.setAttribute("r", rMark); c.setAttribute("class", "geo-marker-c" + s.extra);
+        const tx = document.createElementNS(NSU, "text");
+        tx.setAttribute("x", s.cx); tx.setAttribute("y", s.cy); tx.setAttribute("font-size", rMark * 1.05);
+        tx.setAttribute("class", "geo-marker-t"); tx.textContent = s.label;
+        mg.appendChild(c); mg.appendChild(tx);
       });
       // 3) 課比地區還多（且無容器可收）→ 地圖下方補小節點
       if (cur < lessons.length) {
