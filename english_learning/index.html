@@ -445,15 +445,16 @@
   .day-dot { width: 16px; height: 16px; border-radius: 4px; background: #e2e8f0; }
   .day-dot.on { background: #22c55e; }
   /* ===== 戰棋地圖 ===== */
-  .map-board { border-radius: 16px; overflow: hidden; box-shadow: inset 0 0 0 2px rgba(120,90,40,.25);
-    background-color: #d6f0c8;
+  .map-board { border-radius: 16px; overflow: hidden; box-shadow: inset 0 0 0 2px rgba(40,90,120,.3);
+    background-color: #aedcf0;                                  /* 海洋 */
     background-image:
-      radial-gradient(circle at 50% 0%, rgba(255,255,255,.5), transparent 60%),
-      radial-gradient(rgba(134,196,120,.55) 1.5px, transparent 1.5px);
-    background-size: auto, 20px 20px; }
+      radial-gradient(circle at 25% 12%, rgba(255,255,255,.4), transparent 45%),
+      radial-gradient(rgba(120,190,225,.45) 1.5px, transparent 1.5px);
+    background-size: auto, 22px 22px; }
   .map-track { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; }
   .map-deco { position: absolute; z-index: 0; pointer-events: none; font-size: 24px; line-height: 1;
-    opacity: .7; filter: drop-shadow(0 1px 1px rgba(0,0,0,.18)); }
+    opacity: .78; filter: drop-shadow(0 1px 1px rgba(0,0,0,.18)); }
+  .map-compass { font-size: 26px; opacity: .9; }
   .map-node { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; overflow: hidden;
     border: 2px solid #94a3b8; border-radius: 14px; background: #fff; cursor: pointer; padding: 6px 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 1; }
   .map-node:active { transform: scale(0.94); }
@@ -4139,51 +4140,76 @@
     let banner = document.getElementById("terrBanner");   // 地盤橫幅（地圖上方）
     if (!banner) { banner = document.createElement("div"); banner.id = "terrBanner"; banner.className = "terr-banner"; board.parentNode.insertBefore(banner, board); }
     banner.style.display = "none";
-    // 蛇形排列：關卡沿著一條蜿蜒小徑一關接一關（像冒險地圖，而非排排站）
-    const COLS = 3, NW = 92, NH = 86, GX = 30, GY = 42, stepX = NW + GX, stepY = NH + GY, PAD = 24;
+    // 世界地圖：關卡散落在一片蜿蜒的陸地上，一條平滑小徑（像河/路）串起每一關
+    const COLS = 3, NW = 92, NH = 86, GX = 30, GY = 44, stepX = NW + GX, stepY = NH + GY, PAD = 44;
     const passedArr = lv.articles.map(a => lessonStatus(a).passed);
     const items = lv.articles.map((a, idx) => ({ a: a, passed: passedArr[idx], boss: false }));
     items.push({ boss: true, passed: next ? examPassed(lv.id) : false });
     const rows = Math.ceil(items.length / COLS);
+    function rowShift(row) { return Math.round(Math.sin(row * 0.8) * 20); }   // 每列左右擺動 → 陸地蜿蜒
     const boardW = PAD * 2 + (COLS - 1) * stepX + NW;
     const boardH = PAD * 2 + (rows - 1) * stepY + NH;
     board.style.position = "relative";
     board.style.width = boardW + "px";
     board.style.height = boardH + "px";
     board.style.margin = "0 auto";
-    function cellXY(k) {                                  // 奇數列反向 → 蛇形走位
+    function cellXY(k) {                                  // 奇數列反向（蛇形）+ 每列擺動
       const row = Math.floor(k / COLS); let col = k % COLS;
       if (row % 2 === 1) col = COLS - 1 - col;
-      return { x: PAD + col * stepX, y: PAD + row * stepY };
+      return { x: PAD + col * stepX + rowShift(row), y: PAD + row * stepY };
     }
     const centers = [], fileNodes = {};
     for (let k = 0; k < items.length; k++) { const p = cellXY(k); centers.push({ x: p.x + NW / 2, y: p.y + NH / 2 }); }
-    // 1) 底層地圖裝飾（樹/山/雲），被關卡蓋到也無妨
-    const DECOS = ["🌲", "🌳", "⛰️", "🪨", "🌴", "🌳", "☁️", "🌲", "🏕️"];
-    for (let d = 0; d < DECOS.length; d++) {
-      const dec = document.createElement("span"); dec.className = "map-deco"; dec.textContent = DECOS[d];
-      const fx = (d * 0.37 + 0.06) % 1, fy = (d * 0.19 + 0.04) % 1;   // 散佈、不全擠中間
-      dec.style.left = (fx * (boardW - 28)) + "px"; dec.style.top = (fy * (boardH - 28)) + "px";
-      board.appendChild(dec);
+    // 平滑曲線（Catmull-Rom → 貝茲），讓陸地與小徑蜿蜒而非硬折角
+    function smoothPath(pts) {
+      if (pts.length < 2) return "M " + pts[0].x + " " + pts[0].y;
+      let d = "M " + pts[0].x + " " + pts[0].y;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+        d += " C " + (p1.x + (p2.x - p0.x) / 6) + " " + (p1.y + (p2.y - p0.y) / 6) + " " +
+             (p2.x - (p3.x - p1.x) / 6) + " " + (p2.y - (p3.y - p1.y) / 6) + " " + p2.x + " " + p2.y;
+      }
+      return d;
     }
-    // 2) 蜿蜒小徑（沙色底 + 深色虛線腳印）串起每一關 —— 這才像地圖
+    const dPath = smoothPath(centers);
+    // 陸地 + 小徑都畫在最底 SVG（海是 .map-board 的底色）
     const NSU = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(NSU, "svg");
     svg.setAttribute("class", "map-track"); svg.setAttribute("width", boardW); svg.setAttribute("height", boardH);
     svg.setAttribute("viewBox", "0 0 " + boardW + " " + boardH);
-    let dPath = "M " + centers[0].x + " " + centers[0].y;
-    for (let k = 1; k < centers.length; k++) dPath += " L " + centers[k].x + " " + centers[k].y;
-    function trackPath(stroke, w, dash) {
+    function layer(stroke, w, dash) {
       const p = document.createElementNS(NSU, "path");
       p.setAttribute("d", dPath); p.setAttribute("fill", "none"); p.setAttribute("stroke", stroke);
       p.setAttribute("stroke-width", w); p.setAttribute("stroke-linecap", "round"); p.setAttribute("stroke-linejoin", "round");
       if (dash) p.setAttribute("stroke-dasharray", dash);
-      return p;
+      svg.appendChild(p);
     }
-    svg.appendChild(trackPath("rgba(190,150,90,.55)", 12));    // 小徑底
-    svg.appendChild(trackPath("#7c4a12", 3.5, "1 13"));        // 虛線腳印
+    layer("#e8d6a6", 92);                 // 沙灘海岸線
+    layer("#a9dc86", 72);                 // 陸地（草）
+    layer("#c6ef9d", 54);                 // 陸地亮面
+    layer("rgba(150,110,60,.5)", 12);     // 小徑底
+    layer("#6b3f10", 3.5, "1 13");        // 虛線腳印
     board.appendChild(svg);
-    // 3) 關卡節點
+    // 陸地上山/樹（沿小徑左右擺放），海上浪，右上角羅盤
+    const DECOS = ["🏔️", "🌲", "⛰️", "🌳", "🗻", "🌴", "🏕️", "🌲"];
+    for (let d = 0; d < DECOS.length; d++) {
+      const c = centers[Math.floor((d + 0.5) / DECOS.length * centers.length)] || centers[0];
+      const side = d % 2 ? 1 : -1;
+      const dec = document.createElement("span"); dec.className = "map-deco"; dec.textContent = DECOS[d];
+      dec.style.left = Math.max(2, Math.min(boardW - 28, c.x + side * 58 - 12)) + "px";
+      dec.style.top = Math.max(2, Math.min(boardH - 28, c.y - 46)) + "px";
+      board.appendChild(dec);
+    }
+    for (let wi = 0; wi < 3; wi++) {       // 海浪貼邊 = 海
+      const dec = document.createElement("span"); dec.className = "map-deco"; dec.textContent = "🌊";
+      dec.style.opacity = ".5";
+      dec.style.left = (wi % 2 ? boardW - 32 : 6) + "px";
+      dec.style.top = (24 + wi * (boardH - 70) / 2) + "px";
+      board.appendChild(dec);
+    }
+    const comp = document.createElement("span"); comp.className = "map-deco map-compass"; comp.textContent = "🧭";
+    comp.style.left = (boardW - 40) + "px"; comp.style.top = "8px"; board.appendChild(comp);
+    // 關卡節點
     items.forEach((it, k) => {
       const p = cellXY(k);
       const node = document.createElement("button");
