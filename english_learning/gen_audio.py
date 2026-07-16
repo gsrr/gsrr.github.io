@@ -53,44 +53,67 @@ def parse_dialogue(text, speakers):
     return items
 
 
+LEVEL_DIRS = ("Pre-A1", "A1", "A2", "B1")
+
+
+def collect_from_file(path, speakers, pairs):
+    """把一課（對話檔 <path> + 內容檔 <path>.json）要念的所有句子加進 pairs。"""
+    try:
+        with open(path, encoding="utf-8") as f:
+            pairs += parse_dialogue(f.read(), speakers)
+    except FileNotFoundError:
+        print("略過（找不到檔案）:", path)
+    content = {}
+    try:
+        with open(path + ".json", encoding="utf-8") as f:
+            content = json.load(f)
+    except FileNotFoundError:
+        print("略過（找不到內容）:", path + ".json")
+    # Level 8 聽寫
+    for s in content.get("dictation", []):
+        pairs.append(("female", s, None))
+    # Level 3/4 測驗題目
+    for it in content.get("quiz3", []) + content.get("quiz4", []):
+        pairs.append(("female", it["q"], None))
+    # Level 7 WH：題目、答案、以及「N. 選項」編號朗讀
+    for it in content.get("wh", []):
+        opts = [it["a"]] + it.get("wrong", [])
+        pairs.append(("female", it["q"], None))
+        pairs.append(("female", it["a"], None))
+        for n in range(1, len(opts) + 1):
+            for opt in opts:
+                pairs.append(("female", "%d. %s" % (n, opt), None))
+    # Level 9 填空：空格唸成 blank 的版本，以及填好答案的完整句
+    for it in content.get("cloze", []):
+        pairs.append(("female", it["text"].replace("___", "blank", 1), None))
+        pairs.append(("female", it["text"].replace("___", it["answer"], 1), None))
+
+
 def collect_pairs():
     with open(os.path.join(HERE, "lessons.json"), encoding="utf-8") as f:
         manifest = json.load(f)
     speakers = manifest.get("speakers", {})
-    pairs = []  # (gender, text, who)
+    # 1) manifest 裡的課
+    paths, seen_paths = [], set()
     for lv in manifest["levels"]:
         for a in lv.get("articles", []):
-            path = os.path.join(HERE, *a["file"].split("/"))
-            try:
-                with open(path, encoding="utf-8") as f:
-                    pairs += parse_dialogue(f.read(), speakers)
-            except FileNotFoundError:
-                print("略過（找不到檔案）:", a["file"])
-            # 各關卡內容獨立成檔：<file>.json（quiz/wh/cloze/dictation）
-            content = {}
-            try:
-                with open(path + ".json", encoding="utf-8") as f:
-                    content = json.load(f)
-            except FileNotFoundError:
-                print("略過（找不到內容）:", a["file"] + ".json")
-            # Level 8 聽寫
-            for s in content.get("dictation", []):
-                pairs.append(("female", s, None))
-            # Level 3/4 測驗題目
-            for it in content.get("quiz3", []) + content.get("quiz4", []):
-                pairs.append(("female", it["q"], None))
-            # Level 7 WH：題目、答案、以及「N. 選項」編號朗讀
-            for it in content.get("wh", []):
-                opts = [it["a"]] + it.get("wrong", [])
-                pairs.append(("female", it["q"], None))
-                pairs.append(("female", it["a"], None))
-                for n in range(1, len(opts) + 1):
-                    for opt in opts:
-                        pairs.append(("female", "%d. %s" % (n, opt), None))
-            # Level 9 填空：空格唸成 blank 的版本，以及填好答案的完整句
-            for it in content.get("cloze", []):
-                pairs.append(("female", it["text"].replace("___", "blank", 1), None))
-                pairs.append(("female", it["text"].replace("___", it["answer"], 1), None))
+            p = os.path.join(HERE, *a["file"].split("/"))
+            if p not in seen_paths:
+                seen_paths.add(p); paths.append(p)
+    # 2) 額外掃各等級資料夾（含子資料夾，如 Pre-A1/taipei 的故事線）：
+    #    任何「有 <name>.json 兄弟檔」的無副檔名對話檔都算一課，免手動登記
+    for top in LEVEL_DIRS:
+        base = os.path.join(HERE, top)
+        for root, _dirs, files in os.walk(base):
+            for fn in files:
+                if fn.endswith(".json") or "." in fn:
+                    continue
+                full = os.path.join(root, fn)
+                if full not in seen_paths and os.path.exists(full + ".json"):
+                    seen_paths.add(full); paths.append(full)
+    pairs = []  # (gender, text, who)
+    for p in paths:
+        collect_from_file(p, speakers, pairs)
     # 去重、保留順序（以 性別|句子 為鍵，沿用第一次出現的角色）
     seen, uniq = set(), []
     for g, t, who in pairs:
