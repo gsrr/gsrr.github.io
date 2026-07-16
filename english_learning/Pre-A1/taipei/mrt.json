@@ -1,0 +1,38 @@
+{
+  "quiz3": [
+    { "q": "Tom and Anna take the MRT.", "answer": "Yes" },
+    { "q": "The train is fast.", "answer": "Yes" },
+    { "q": "They go to the night market.", "answer": "Yes" },
+    { "q": "Tom is hungry.", "answer": "Yes" },
+    { "q": "The train is dirty.", "answer": "No" }
+  ],
+  "quiz4": [
+    { "q": "The train is slow.", "answer": "No" },
+    { "q": "They go to the zoo now.", "answer": "No" },
+    { "q": "Anna is not hungry.", "answer": "No" },
+    { "q": "The train is clean and quiet.", "answer": "Yes" },
+    { "q": "They want some food.", "answer": "Yes" }
+  ],
+  "vocab": [
+    { "word": "train", "pic": "🚊" },
+    { "word": "food", "pic": "🍜" },
+    { "word": "sit", "pic": "🪑" },
+    { "word": "Tom", "pic": "👦" },
+    { "word": "Anna", "pic": "👧" },
+    { "word": "fast", "pic": "💨" }
+  ],
+  "wh": [
+    { "q": "What do they take?", "a": "They take the MRT.", "wrong": [ "They take a bus.", "They take a bike." ] },
+    { "q": "How is the train?", "a": "It is fast.", "wrong": [ "It is slow.", "It is old." ] },
+    { "q": "Where do they go now?", "a": "They go to the night market.", "wrong": [ "They go to the zoo.", "They go to school." ] },
+    { "q": "Why is Tom happy?", "a": "He is hungry and wants food.", "wrong": [ "He is tired.", "He wants to sleep." ] },
+    { "q": "What can they do on the train?", "a": "They can sit.", "wrong": [ "They can run.", "They can swim." ] }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    { "text": "The train is ___.", "answer": "fast", "wrong": [ "sit", "food" ] },
+    { "text": "We can ___ here.", "answer": "sit", "wrong": [ "fast", "train" ] },
+    { "text": "We can go to the night ___.", "answer": "market", "wrong": [ "hungry", "clean" ] },
+    { "text": "I am ___.", "answer": "hungry", "wrong": [ "train", "stop" ] }
+  ]
+}

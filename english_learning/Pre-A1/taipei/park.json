@@ -1,0 +1,38 @@
+{
+  "quiz3": [
+    { "q": "The park is big and green.", "answer": "Yes" },
+    { "q": "Tom can see many trees.", "answer": "Yes" },
+    { "q": "Tom is a little tired.", "answer": "Yes" },
+    { "q": "Anna can see a dog.", "answer": "Yes" },
+    { "q": "The park is small.", "answer": "No" }
+  ],
+  "quiz4": [
+    { "q": "The park is gray and small.", "answer": "No" },
+    { "q": "Anna sees a cat.", "answer": "No" },
+    { "q": "The dog is sad.", "answer": "No" },
+    { "q": "Tom wants to rest.", "answer": "Yes" },
+    { "q": "They will go home now.", "answer": "Yes" }
+  ],
+  "vocab": [
+    { "word": "park", "pic": "🏞️" },
+    { "word": "tree", "pic": "🌳" },
+    { "word": "dog", "pic": "🐶" },
+    { "word": "rest", "pic": "😌" },
+    { "word": "Tom", "pic": "👦" },
+    { "word": "Anna", "pic": "👧" }
+  ],
+  "wh": [
+    { "q": "How is the park?", "a": "It is big and green.", "wrong": [ "It is small and gray.", "It is hot." ] },
+    { "q": "What can Tom see?", "a": "He can see many trees.", "wrong": [ "He can see many cars.", "He can see the sea." ] },
+    { "q": "Where can they sit?", "a": "They can sit under the tree.", "wrong": [ "They can sit on the bus.", "They can sit in the zoo." ] },
+    { "q": "What can the dog do?", "a": "It can run.", "wrong": [ "It can fly.", "It can swim." ] },
+    { "q": "Where do they go at the end?", "a": "They go home.", "wrong": [ "They go to school.", "They go to the zoo." ] }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    { "text": "The park is big and ___.", "answer": "green", "wrong": [ "rest", "tired" ] },
+    { "text": "I can see many ___.", "answer": "trees", "wrong": [ "green", "run" ] },
+    { "text": "Let us ___.", "answer": "rest", "wrong": [ "tree", "park" ] },
+    { "text": "The dog can ___.", "answer": "run", "wrong": [ "tree", "park" ] }
+  ]
+}

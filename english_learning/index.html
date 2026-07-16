@@ -4168,7 +4168,14 @@
   // drill: { 地區id: 子地圖 } → 該地區變「容器」，點進去看子地圖（例：台北市 → 12 行政區）
   const GEO_MAPS = {
     "Pre-A1": { file: "maps/taiwan.svg", label: "Taiwan 台灣 🗺️",
-                drill: { "taipei-city": { file: "maps/taiwan-taipei.svg", label: "Taipei 台北 🗺️", viewBox: "0 0 350 461" } } },
+                drill: { "taipei-city": { file: "maps/taiwan-taipei.svg", label: "Taipei 台北 🗺️", viewBox: "0 0 350 461",
+                  // 台北下鑽 = 一條連貫故事「Tom & Anna 玩台北」，每區一集（依序）
+                  articles: [
+                    { id: "tp-zoo",    title: "Taipei 1 · At the Zoo",       file: "Pre-A1/taipei/zoo",    scene: "zoo",       levels: [1,2,3,4,5,7,9] },
+                    { id: "tp-mrt",    title: "Taipei 2 · On the MRT",       file: "Pre-A1/taipei/mrt",    scene: "run-jump",  levels: [1,2,3,4,5,7,9] },
+                    { id: "tp-market", title: "Taipei 3 · The Night Market", file: "Pre-A1/taipei/market", scene: "snack",     levels: [1,2,3,4,5,7,9] },
+                    { id: "tp-park",   title: "Taipei 4 · At the Park",      file: "Pre-A1/taipei/park",   scene: "park-ball", levels: [1,2,3,4,5,7,9] }
+                  ] } } },
     "A1":     { file: "maps/china.svg",  label: "China 中國 🗺️", viewBox: "0 0 1000 850", region: id => /^p[A-Z]{2}$/.test(id) },
     "A2":     { file: "maps/world.svg",  label: "World 世界 🗺️" },
     "B1":     { file: "maps/world.svg",  label: "World 世界 🗺️" }
@@ -4250,8 +4257,9 @@
       // 2) 容器地區（可下鑽）：把剩下的課交給它的子地圖
       containers.forEach((p, ci) => {
         const sub = drill[p.id];
-        const slice = ci === 0 ? lessons.slice(cur) : [];
-        if (ci === 0) cur = lessons.length;
+        // 有自訂故事線(articles)→ 用它、且不吞主線課；否則收下剩餘主線課
+        const slice = sub.articles ? sub.articles : (ci === 0 ? lessons.slice(cur) : []);
+        if (!sub.articles && ci === 0) cur = lessons.length;
         p.setAttribute("class", "geo-region geo-drill");
         addTitle(p, sub.label + " — " + slice.length + " lessons · click to enter");
         p.addEventListener("click", () => drawGeo(sub, slice, () => renderGeoMap(i, spec), i, lv));

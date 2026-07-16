@@ -1,0 +1,38 @@
+{
+  "quiz3": [
+    { "q": "Tom and Anna are at the zoo.", "answer": "Yes" },
+    { "q": "Anna can see a lion.", "answer": "Yes" },
+    { "q": "The panda is black and white.", "answer": "Yes" },
+    { "q": "The monkey can jump.", "answer": "Yes" },
+    { "q": "Tom is sad.", "answer": "No" }
+  ],
+  "quiz4": [
+    { "q": "The lion is small.", "answer": "No" },
+    { "q": "Anna does not like pandas.", "answer": "No" },
+    { "q": "The monkey can swim.", "answer": "No" },
+    { "q": "Tom is happy at the zoo.", "answer": "Yes" },
+    { "q": "Next they take the MRT.", "answer": "Yes" }
+  ],
+  "vocab": [
+    { "word": "lion", "pic": "🦁" },
+    { "word": "panda", "pic": "🐼" },
+    { "word": "monkey", "pic": "🐒" },
+    { "word": "Tom", "pic": "👦" },
+    { "word": "Anna", "pic": "👧" },
+    { "word": "happy", "pic": "😀" }
+  ],
+  "wh": [
+    { "q": "Where are Tom and Anna?", "a": "They are at the zoo.", "wrong": [ "They are at home.", "They are at school." ] },
+    { "q": "What can Anna see first?", "a": "She can see a lion.", "wrong": [ "She can see a dog.", "She can see a fish." ] },
+    { "q": "What color is the panda?", "a": "It is black and white.", "wrong": [ "It is all black.", "It is red and blue." ] },
+    { "q": "What can the monkey do?", "a": "It can jump.", "wrong": [ "It can fly.", "It can swim." ] },
+    { "q": "How is Tom at the zoo?", "a": "He is happy.", "wrong": [ "He is sad.", "He is tired." ] }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    { "text": "I can see a big ___.", "answer": "lion", "wrong": [ "happy", "cute" ] },
+    { "text": "The panda is black and ___.", "answer": "white", "wrong": [ "zoo", "jump" ] },
+    { "text": "The monkey can ___.", "answer": "jump", "wrong": [ "lion", "panda" ] },
+    { "text": "This zoo is ___.", "answer": "fun", "wrong": [ "see", "take" ] }
+  ]
+}

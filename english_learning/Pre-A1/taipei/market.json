@@ -1,0 +1,38 @@
+{
+  "quiz3": [
+    { "q": "The night market is big.", "answer": "Yes" },
+    { "q": "Tom wants noodles.", "answer": "Yes" },
+    { "q": "Anna wants a drink.", "answer": "Yes" },
+    { "q": "They can play a game.", "answer": "Yes" },
+    { "q": "The food is bad.", "answer": "No" }
+  ],
+  "quiz4": [
+    { "q": "The night market is small.", "answer": "No" },
+    { "q": "Tom wants a drink.", "answer": "No" },
+    { "q": "Anna wins a big car.", "answer": "No" },
+    { "q": "The food is hot and good.", "answer": "Yes" },
+    { "q": "Next they go to the park.", "answer": "Yes" }
+  ],
+  "vocab": [
+    { "word": "noodles", "pic": "🍜" },
+    { "word": "drink", "pic": "🥤" },
+    { "word": "game", "pic": "🎯" },
+    { "word": "toy", "pic": "🧸" },
+    { "word": "Tom", "pic": "👦" },
+    { "word": "Anna", "pic": "👧" }
+  ],
+  "wh": [
+    { "q": "Where are they now?", "a": "They are at the night market.", "wrong": [ "They are at the zoo.", "They are at home." ] },
+    { "q": "What does Tom want?", "a": "He wants some noodles.", "wrong": [ "He wants a toy.", "He wants a book." ] },
+    { "q": "What does Anna want?", "a": "She wants a big drink.", "wrong": [ "She wants a dog.", "She wants a ball." ] },
+    { "q": "What can Anna win?", "a": "She can win a small toy.", "wrong": [ "She can win a car.", "She can win a house." ] },
+    { "q": "How is the food?", "a": "It is hot and good.", "wrong": [ "It is cold and bad.", "It is old." ] }
+  ],
+  "clozeType": "recognition",
+  "cloze": [
+    { "text": "I want some ___.", "answer": "noodles", "wrong": [ "happy", "big" ] },
+    { "text": "I want a big ___.", "answer": "drink", "wrong": [ "hot", "full" ] },
+    { "text": "I can win a small ___.", "answer": "toy", "wrong": [ "game", "food" ] },
+    { "text": "Now I am ___.", "answer": "full", "wrong": [ "market", "drink" ] }
+  ]
+}
