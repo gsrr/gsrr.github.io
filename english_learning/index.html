@@ -445,9 +445,15 @@
   .day-dot { width: 16px; height: 16px; border-radius: 4px; background: #e2e8f0; }
   .day-dot.on { background: #22c55e; }
   /* ===== 戰棋地圖 ===== */
-  .map-board { border-radius: 14px; overflow: hidden;
-    background-color: #dcfce7; background-image: radial-gradient(#86efac 1.5px, transparent 1.5px); background-size: 20px 20px; }
+  .map-board { border-radius: 16px; overflow: hidden; box-shadow: inset 0 0 0 2px rgba(120,90,40,.25);
+    background-color: #d6f0c8;
+    background-image:
+      radial-gradient(circle at 50% 0%, rgba(255,255,255,.5), transparent 60%),
+      radial-gradient(rgba(134,196,120,.55) 1.5px, transparent 1.5px);
+    background-size: auto, 20px 20px; }
   .map-track { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; }
+  .map-deco { position: absolute; z-index: 0; pointer-events: none; font-size: 24px; line-height: 1;
+    opacity: .7; filter: drop-shadow(0 1px 1px rgba(0,0,0,.18)); }
   .map-node { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; overflow: hidden;
     border: 2px solid #94a3b8; border-radius: 14px; background: #fff; cursor: pointer; padding: 6px 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 1; }
   .map-node:active { transform: scale(0.94); }
@@ -4133,17 +4139,56 @@
     let banner = document.getElementById("terrBanner");   // 地盤橫幅（地圖上方）
     if (!banner) { banner = document.createElement("div"); banner.id = "terrBanner"; banner.className = "terr-banner"; board.parentNode.insertBefore(banner, board); }
     banner.style.display = "none";
-    const COLS = 3, NW = 92, NH = 86, GX = 18, GY = 26, stepX = NW + GX, stepY = NH + GY;
+    // 蛇形排列：關卡沿著一條蜿蜒小徑一關接一關（像冒險地圖，而非排排站）
+    const COLS = 3, NW = 92, NH = 86, GX = 30, GY = 42, stepX = NW + GX, stepY = NH + GY, PAD = 24;
     const passedArr = lv.articles.map(a => lessonStatus(a).passed);
     const items = lv.articles.map((a, idx) => ({ a: a, passed: passedArr[idx], boss: false }));
     items.push({ boss: true, passed: next ? examPassed(lv.id) : false });
+    const rows = Math.ceil(items.length / COLS);
+    const boardW = PAD * 2 + (COLS - 1) * stepX + NW;
+    const boardH = PAD * 2 + (rows - 1) * stepY + NH;
+    board.style.position = "relative";
+    board.style.width = boardW + "px";
+    board.style.height = boardH + "px";
+    board.style.margin = "0 auto";
+    function cellXY(k) {                                  // 奇數列反向 → 蛇形走位
+      const row = Math.floor(k / COLS); let col = k % COLS;
+      if (row % 2 === 1) col = COLS - 1 - col;
+      return { x: PAD + col * stepX, y: PAD + row * stepY };
+    }
     const centers = [], fileNodes = {};
+    for (let k = 0; k < items.length; k++) { const p = cellXY(k); centers.push({ x: p.x + NW / 2, y: p.y + NH / 2 }); }
+    // 1) 底層地圖裝飾（樹/山/雲），被關卡蓋到也無妨
+    const DECOS = ["🌲", "🌳", "⛰️", "🪨", "🌴", "🌳", "☁️", "🌲", "🏕️"];
+    for (let d = 0; d < DECOS.length; d++) {
+      const dec = document.createElement("span"); dec.className = "map-deco"; dec.textContent = DECOS[d];
+      const fx = (d * 0.37 + 0.06) % 1, fy = (d * 0.19 + 0.04) % 1;   // 散佈、不全擠中間
+      dec.style.left = (fx * (boardW - 28)) + "px"; dec.style.top = (fy * (boardH - 28)) + "px";
+      board.appendChild(dec);
+    }
+    // 2) 蜿蜒小徑（沙色底 + 深色虛線腳印）串起每一關 —— 這才像地圖
+    const NSU = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(NSU, "svg");
+    svg.setAttribute("class", "map-track"); svg.setAttribute("width", boardW); svg.setAttribute("height", boardH);
+    svg.setAttribute("viewBox", "0 0 " + boardW + " " + boardH);
+    let dPath = "M " + centers[0].x + " " + centers[0].y;
+    for (let k = 1; k < centers.length; k++) dPath += " L " + centers[k].x + " " + centers[k].y;
+    function trackPath(stroke, w, dash) {
+      const p = document.createElementNS(NSU, "path");
+      p.setAttribute("d", dPath); p.setAttribute("fill", "none"); p.setAttribute("stroke", stroke);
+      p.setAttribute("stroke-width", w); p.setAttribute("stroke-linecap", "round"); p.setAttribute("stroke-linejoin", "round");
+      if (dash) p.setAttribute("stroke-dasharray", dash);
+      return p;
+    }
+    svg.appendChild(trackPath("rgba(190,150,90,.55)", 12));    // 小徑底
+    svg.appendChild(trackPath("#7c4a12", 3.5, "1 13"));        // 虛線腳印
+    board.appendChild(svg);
+    // 3) 關卡節點
     items.forEach((it, k) => {
-      const x = (k % COLS) * stepX, y = Math.floor(k / COLS) * stepY;
-      centers.push({ x: x + NW / 2, y: y + NH / 2 });
+      const p = cellXY(k);
       const node = document.createElement("button");
       node.className = "map-node" + (it.boss ? " map-boss" : "") + (it.passed ? " cleared" : "");
-      node.style.position = "absolute"; node.style.left = x + "px"; node.style.top = y + "px";
+      node.style.position = "absolute"; node.style.left = p.x + "px"; node.style.top = p.y + "px";
       node.style.width = NW + "px"; node.style.height = NH + "px";
       if (it.boss) {
         node.innerHTML = '<span class="map-ico">' + (it.passed ? "🏆" : "🐉") + '</span>' +
@@ -4160,11 +4205,6 @@
       }
       board.appendChild(node);
     });
-    const rows = Math.ceil(items.length / COLS);
-    board.style.position = "relative";
-    board.style.width = (COLS * stepX) + "px";
-    board.style.height = (rows * stepY + 10) + "px";
-    board.style.margin = "0 auto";
     const hero = document.createElement("div"); hero.className = "map-hero-piece"; hero.textContent = "🦸"; board.appendChild(hero);
     function placeHero(k) { const c = centers[Math.max(0, Math.min(centers.length - 1, k))]; hero.style.left = (c.x - 16) + "px"; hero.style.top = (c.y - 40) + "px"; }
     // 點哪個據點，英雄就走過去再進入（移動跟你的選擇綁定，無先後順序）
