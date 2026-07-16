@@ -455,6 +455,34 @@
   .map-deco { position: absolute; z-index: 0; pointer-events: none; font-size: 24px; line-height: 1;
     opacity: .78; filter: drop-shadow(0 1px 1px rgba(0,0,0,.18)); }
   .map-compass { font-size: 26px; opacity: .9; }
+  /* ===== 真實地理地圖（各等級不同國家/區域）===== */
+  .geo-wrap { position: relative; }
+  .geo-svg { width: 100%; height: auto; display: block; border-radius: 16px;
+    background: #aedcf0; box-shadow: inset 0 0 0 2px rgba(40,90,120,.3); }
+  .geo-svg path { fill: #dbe7f1; stroke: #7fa8c9; stroke-width: 0.6; vector-effect: non-scaling-stroke; transition: fill .2s, filter .15s; }
+  .geo-region { cursor: pointer; }
+  .geo-region:hover { filter: brightness(1.12) drop-shadow(0 0 3px rgba(0,0,0,.35)); }
+  .geo-mine   { fill: #16a34a !important; }   /* 你佔的 */
+  .geo-foe    { fill: #f59e0b !important; }   /* 對手佔的 */
+  .geo-open   { fill: #60a5fa !important; }   /* 已通過、可佔領 */
+  .geo-todo   { fill: #cbd5e1 !important; }   /* 尚未通過 */
+  .geo-locked { fill: #8fa1b3 !important; opacity: .4; }   /* 沒對應課、上鎖 */
+  .geo-marker-c { fill: rgba(0,0,0,.28); pointer-events: none; }
+  .geo-marker-t { fill: #fff; font-weight: 800; text-anchor: middle; dominant-baseline: central;
+    paint-order: stroke; stroke: rgba(0,0,0,.4); stroke-width: 2px; pointer-events: none; }
+  .geo-legend { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 12px 0 2px; font-size: 12px; }
+  .geo-legend .gl { display: flex; align-items: center; gap: 5px; color: #cbd5e1; }
+  .geo-legend .gl::before { content: ""; width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .gl-mine::before { background: #16a34a; } .gl-foe::before { background: #f59e0b; }
+  .gl-open::before { background: #60a5fa; } .gl-todo::before { background: #cbd5e1; }
+  .geo-extra { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 12px; }
+  .geo-extra-btn { padding: 6px 10px; border-radius: 10px; font-size: 13px; font-weight: 700;
+    border: 2px solid rgba(255,255,255,.2); background: rgba(255,255,255,.08); color: #e8edf5; cursor: pointer; }
+  .geo-extra-btn.geo-mine { background: #16a34a; color: #fff; } .geo-extra-btn.geo-foe { background: #f59e0b; color: #fff; }
+  .geo-extra-btn.geo-open { background: #2563eb; color: #fff; } .geo-extra-btn.geo-todo { opacity: .65; }
+  .geo-boss { text-align: center; margin-top: 14px; }
+  .geo-boss-btn { background: #dc2626; color: #fff; font-weight: 800; padding: 12px 24px; border-radius: 14px; font-size: 16px; cursor: pointer; }
+  .geo-boss-btn.done { background: #16a34a; }
   .map-node { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; overflow: hidden;
     border: 2px solid #94a3b8; border-radius: 14px; background: #fff; cursor: pointer; padding: 6px 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 1; }
   .map-node:active { transform: scale(0.94); }
@@ -4131,7 +4159,112 @@
   function loadTerritory(cb) {
     fetch("/api/territory").then(r => r.json()).then(j => { if (j && j.holders) territory = j; if (cb) cb(); }).catch(() => { if (cb) cb(); });
   }
+  // 各等級對應一張真實地理地圖（沒列到的等級 fallback 用蜿蜒小徑地圖）
+  const GEO_MAPS = {
+    "Pre-A1": { file: "maps/taiwan.svg", label: "Taiwan 台灣 🗺️" },
+    "A1":     { file: "maps/china.svg",  label: "China 中國 🗺️", viewBox: "0 0 1000 850", region: id => /^p[A-Z]{2}$/.test(id) },
+    "A2":     { file: "maps/world.svg",  label: "World 世界 🗺️" },
+    "B1":     { file: "maps/world.svg",  label: "World 世界 🗺️" }
+  };
+  const geoCache = {};
+  // 資料驅動的地圖引擎：吃任一張地圖 SVG → 課依序綁地區 → 依佔領上色 → 點地區進課
+  function renderGeoMap(i, spec) {
+    clearMapTimers();
+    selLevelIdx = i;
+    const lv = manifest.levels[i], next = manifest.levels[i + 1];
+    articleScreenTitle.textContent = (lv.name || lv.id) + " · " + spec.label;
+    const wrap = articleGrid; wrap.className = "geo-wrap"; wrap.removeAttribute("style"); wrap.innerHTML = "";
+    let banner = document.getElementById("terrBanner");
+    if (!banner) { banner = document.createElement("div"); banner.id = "terrBanner"; banner.className = "terr-banner"; wrap.parentNode.insertBefore(banner, wrap); }
+    banner.style.display = "none";
+    document.getElementById("examWrap").classList.add("hidden");
+    showScreen(screenArticle);
+
+    function build(svgText) {
+      wrap.innerHTML = svgText;
+      const svg = wrap.querySelector("svg");
+      if (!svg) { wrap.innerHTML = '<p class="op-hint">Map failed to load.</p>'; return; }
+      svg.removeAttribute("width"); svg.removeAttribute("height");
+      if (!svg.getAttribute("viewBox") && spec.viewBox) svg.setAttribute("viewBox", spec.viewBox);
+      svg.setAttribute("class", "geo-svg");
+      const NSU = "http://www.w3.org/2000/svg";
+      const isRegion = spec.region || ((id, p) => !!(p.getAttribute("aria-label") || id));
+      const paths = Array.prototype.filter.call(svg.querySelectorAll("path"), p => isRegion(p.id, p));
+      const mg = document.createElementNS(NSU, "g"); mg.setAttribute("class", "geo-markers"); svg.appendChild(mg);
+      const vb = (svg.getAttribute("viewBox") || "0 0 1000 1000").split(/\s+/).map(Number);
+      const rMark = Math.max(7, Math.min(vb[2], vb[3]) * 0.02);
+      const regionList = [];
+      paths.forEach((p, k) => {
+        const a = lv.articles[k];
+        p.setAttribute("class", "geo-region");
+        if (!a) { p.classList.add("geo-locked"); p.style.pointerEvents = "none"; return; }
+        const nm = a.title ? a.title.split("·").pop().trim() : a.id;
+        let t = p.querySelector("title"); if (!t) { t = document.createElementNS(NSU, "title"); p.appendChild(t); }
+        t.textContent = "#" + (k + 1) + " " + nm;
+        p.addEventListener("click", () => openOutpost(a));
+        let bb = null; try { bb = p.getBBox(); } catch (e) {}
+        if (bb && bb.width) {
+          const cx = bb.x + bb.width / 2, cy = bb.y + bb.height / 2;
+          const c = document.createElementNS(NSU, "circle");
+          c.setAttribute("cx", cx); c.setAttribute("cy", cy); c.setAttribute("r", rMark); c.setAttribute("class", "geo-marker-c");
+          const tx = document.createElementNS(NSU, "text");
+          tx.setAttribute("x", cx); tx.setAttribute("y", cy); tx.setAttribute("font-size", rMark * 1.15);
+          tx.setAttribute("class", "geo-marker-t"); tx.textContent = String(k + 1);
+          mg.appendChild(c); mg.appendChild(tx);
+        }
+        regionList.push({ p: p, a: a });
+      });
+      // 課比地區多 → 地圖下方補上小節點（不漏課）
+      if (lv.articles.length > paths.length) {
+        const extra = document.createElement("div"); extra.className = "geo-extra";
+        for (let k = paths.length; k < lv.articles.length; k++) {
+          const a = lv.articles[k];
+          const b = document.createElement("button"); b.className = "geo-extra-btn";
+          b.textContent = "#" + (k + 1) + " " + (a.title ? a.title.split("·").pop().trim() : a.id);
+          b.addEventListener("click", () => openOutpost(a));
+          extra.appendChild(b); regionList.push({ btn: b, a: a });
+        }
+        wrap.appendChild(extra);
+      }
+      const legend = document.createElement("div"); legend.className = "geo-legend";
+      legend.innerHTML = '<span class="gl gl-mine">You</span><span class="gl gl-foe">Rival</span><span class="gl gl-open">Open</span><span class="gl gl-todo">Locked lesson</span>';
+      wrap.appendChild(legend);
+      const bossWrap = document.createElement("div"); bossWrap.className = "geo-boss";
+      const bp = examPassed(lv.id);
+      const bBtn = document.createElement("button"); bBtn.className = "geo-boss-btn" + (bp ? " done" : "");
+      bBtn.innerHTML = (bp ? "🏆 " : "🐉 ") + (next ? "Level Boss" : "Final Boss") + " · 20Q";
+      bBtn.addEventListener("click", () => startLevelExam(i));
+      bossWrap.appendChild(bBtn); wrap.appendChild(bossWrap);
+      function colorize() {
+        const me = (authUser() || userName || "").toLowerCase(); let mine = 0;
+        regionList.forEach(r => {
+          const el = r.p || r.btn; if (!el) return;
+          ["geo-mine", "geo-foe", "geo-open", "geo-todo"].forEach(c => el.classList.remove(c));
+          const h = territory && territory.holders && territory.holders[r.a.file];
+          let stat;
+          if (h && h.owner) { const isMine = (h.owner || "").toLowerCase() === me; stat = isMine ? "geo-mine" : "geo-foe"; if (isMine) mine++; }
+          else stat = lessonStatus(r.a).passed ? "geo-open" : "geo-todo";
+          el.classList.add(stat);
+        });
+        const counts = (territory && territory.counts) || {}; let top = null;
+        Object.keys(counts).forEach(n => { if (!top || counts[n] > counts[top]) top = n; });
+        banner.innerHTML = '🚩 You hold <b>' + mine + '</b> region' + (mine === 1 ? '' : 's') +
+          (top ? ' · 👑 ' + dispName(top) + ' (' + counts[top] + ')' : '') + ' <span class="terr-link">Ranking ▸</span>';
+        banner.style.display = "block";
+        const link = banner.querySelector(".terr-link"); if (link) link.addEventListener("click", openLeaderboard);
+      }
+      colorize();
+      loadTerritory(colorize);
+    }
+
+    if (geoCache[spec.file]) build(geoCache[spec.file]);
+    else fetch(spec.file).then(r => r.text()).then(txt => { geoCache[spec.file] = txt; build(txt); })
+      .catch(() => { wrap.innerHTML = '<p class="op-hint">Could not load map ' + spec.file + '. (Needs the server or GitHub Pages.)</p>'; });
+  }
+
   function selectLevel(i) {
+    const lv0 = manifest.levels[i];
+    if (lv0 && GEO_MAPS[lv0.id]) { renderGeoMap(i, GEO_MAPS[lv0.id]); return; }   // 有地理地圖的等級走引擎
     clearMapTimers();
     selLevelIdx = i;
     const lv = manifest.levels[i], next = manifest.levels[i + 1];
