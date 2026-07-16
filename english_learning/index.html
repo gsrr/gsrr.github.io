@@ -4737,12 +4737,22 @@
     const iv = setInterval(() => {
       const ai = fa(att, 0), di = fa(def, 0);
       if (ai >= att.length || di >= def.length || round++ > 50) { clearInterval(iv); return end(fa(att, 0) < att.length, null); }
-      const a = att[ai], d = def[di];
-      const dmgAD = baseHit(a, d) * a.hp;   // 攻方對守方（用回合開始時兵力）
-      const dmgDA = baseHit(d, a) * d.hp;   // 守方對攻方（同時）
-      d.hp -= dmgAD; a.hp -= dmgDA;
-      logEl.textContent = TROOP[a.type].emoji + "×" + Math.round(a.hp + dmgDA) + " ⚔ " + TROOP[d.type].emoji + "×" + Math.round(d.hp + dmgAD) +
-        " → −" + dmgAD + " / −" + dmgDA + (atkBonus(a.type, d.type) > 1 ? " ✨你剋制!" : (atkBonus(d.type, a.type) > 1 ? " ⚠️被剋制" : ""));
+      const a = att[ai], d = def[di], preA = a.hp, preD = d.hp;
+      const aArch = a.type === "archer", dArch = d.type === "archer";   // 只有弓兵有先攻權
+      let dmgAD = 0, dmgDA = 0, note = "";
+      if (aArch && !dArch) {                       // 攻方弓兵先攻
+        dmgAD = baseHit(a, d) * a.hp; d.hp -= dmgAD; note = " 🏹你先攻";
+        if (d.hp > 0) { dmgDA = baseHit(d, a) * d.hp; a.hp -= dmgDA; }
+      } else if (dArch && !aArch) {                // 守方弓兵先攻
+        dmgDA = baseHit(d, a) * d.hp; a.hp -= dmgDA; note = " 🏹敵先攻";
+        if (a.hp > 0) { dmgAD = baseHit(a, d) * a.hp; d.hp -= dmgAD; }
+      } else {                                     // 同時出手
+        dmgAD = baseHit(a, d) * a.hp; dmgDA = baseHit(d, a) * d.hp;
+        d.hp -= dmgAD; a.hp -= dmgDA;
+      }
+      logEl.textContent = TROOP[a.type].emoji + "×" + Math.round(preA) + " ⚔ " + TROOP[d.type].emoji + "×" + Math.round(preD) +
+        " → −" + dmgAD + " / −" + dmgDA + note +
+        (atkBonus(a.type, d.type) > 1 ? " ✨你剋制!" : (atkBonus(d.type, a.type) > 1 ? " ⚠️被剋制" : ""));
       render();
       if (fa(att, 0) >= att.length || fa(def, 0) >= def.length) { clearInterval(iv); end(fa(att, 0) < att.length, null); }
     }, 850);
