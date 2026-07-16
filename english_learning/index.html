@@ -739,6 +739,47 @@
   .alloc-plus { flex: 0 0 auto; width: 44px; padding: 6px 0; }
   .battle-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
+  /* ============================================================
+     夜空玻璃主題：內容卡片改深色半透明玻璃、文字轉亮。
+     亮色小卡片/泡泡/膠囊/彈窗維持亮色，像浮在深色玻璃上的卡片。
+     （放在最後，覆蓋前面的淺色設定）
+     ============================================================ */
+  .card {
+    background: rgba(17, 24, 39, 0.62);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 24px 60px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.08);
+    color: #e8edf5;
+  }
+  /* 直接放在深色卡片上的文字（透明底）→ 轉亮 */
+  h1 { color: #f8fafc; }
+  .subtitle, .screen-intro, .quiz-intro, .match-intro, .reorder-progress,
+  .shadow-progress, .quiz-progress, .status, .game-status, .acct-msg,
+  .acct-switch, .dex-legend, .legend, .speed, .lesson-row, .fighter-name { color: #aebacd; }
+  .name-row label, .picker label, .avatar-label, .field-label { color: #cbd5e1; }
+  .game-instr, .quiz-q, .cloze-sentence, .shadow-finish p, .battle-q,
+  .stats-h, .dex-lv, .energy, .alloc, .battle-stats { color: #f1f5f9; }
+  .lv-row .lv-nm { color: #e2e8f0; }
+  .lv-row { border-bottom-color: rgba(255,255,255,.08); }
+  .alloc-row { border-bottom-color: rgba(255,255,255,.14); }
+  /* 藍色重點字在深底上調亮 */
+  .level-name, .learn-title, #scoreBox, #matchStatus, #roStatus,
+  .battle-log, .shadow-finish p.shadow-score { color: #93c5fd; }
+  .quiz-item { border-color: rgba(255,255,255,.16); }
+  .quiz-item.answered { border-color: rgba(255,255,255,.1); }
+  .cloze-blank { color: #93c5fd; border-bottom-color: #64748b; }
+  .cloze-blank.filled { color: #86efac; border-bottom-color: #22c55e; }
+  /* 直接打字的輸入框（透明底）→ 霜面深底 + 亮字 */
+  .name-row input, .acct-form input, .dict-input {
+    background: rgba(255,255,255,.08); color: #f1f5f9; border-color: rgba(255,255,255,.22);
+  }
+  .name-row input::placeholder, .acct-form input::placeholder, .dict-input::placeholder { color: #94a3b8; }
+  /* 亮色對話泡泡維持亮底 → 強制深色字（避免亮字配亮底） */
+  .line, .shadow-bubble { color: #1e293b; }
+  /* 亮底面板/彈窗：補回深色字，避免繼承到卡片的亮字而看不見 */
+  .modal-card, .dash-card, .admin-acct, .boss-card, .bkt,
+  .coll-card, .dex-card, .pick-card, .stat-box, .badge { color: #1e293b; }
   .hidden { display: none !important; }
 </style>
 </head>
