@@ -4582,9 +4582,6 @@
     if (df === "cav" && at === "archer") return 1.1;                  // 騎對弓 +10% 防
     return 1;
   }
-  function troopDamage(A, D) {                        // A/D: {type}
-    return Math.max(1, Math.round(TROOP[A.type].atk * atkBonus(A.type, D.type) - TROOP[D.type].def * defBonus(D.type, A.type)));
-  }
   // 區域人口（= 兵力預算）：台灣/台北用近似真實值，其餘用名稱雜湊落在 60–300
   const POP_TABLE = {
     "Taipei City": 250, "New Taipei City": 400, "Taichung City": 280, "Kaohsiung City": 273, "Taoyuan City": 230,
@@ -4709,35 +4706,25 @@
   }
   function shuffled(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
 
-  // 4v4 對戰：攻方(玩家排序) vs 守方(電腦亂序)，逐回合輪流攻擊(傷害=攻−防)，生存者留場。
-  // 先完整模擬出每一擊，再用固定約 5 秒的動畫播放（兵力高時每格多打幾拳），不管人口多大都不會拖。
+  // 單擊基礎傷害（攻×加成 − 防×加成，最低 1）；實際扣血 = 基礎 × 出手方當前兵力
+  function baseHit(A, D) { return Math.max(1, Math.round(TROOP[A.type].atk * atkBonus(A.type, D.type) - TROOP[D.type].def * defBonus(D.type, A.type))); }
+  // 4v4 對戰：攻方(玩家排序) vs 守方(電腦亂序)。每回合當前兩張卡「同時出手」，
+  //   傷害 = 基礎 × 該卡回合開始時的兵力 → 同時扣血；陣亡換下一張，一方無兵即敗（同歸於盡則守方保住）。
   function runBattle(file, attTroops, defTroops, pop, foeName) {
-    const attStart = aliveTroops(attTroops).map(t => ({ type: t.type, hp: t.hp, max: t.hp }));
-    const defStart = shuffled(aliveTroops(defTroops)).map(t => ({ type: t.type, hp: t.hp, max: t.hp }));
+    const att = aliveTroops(attTroops).map(u => ({ type: u.type, hp: u.hp, max: u.hp }));
+    const def = shuffled(aliveTroops(defTroops)).map(u => ({ type: u.type, hp: u.hp, max: u.hp }));
     function fa(arr, from) { while (from < arr.length && arr[from].hp <= 0) from++; return from; }
-    // 模擬（在副本上）算出每一擊事件
-    const A = attStart.map(u => ({ type: u.type, hp: u.hp })), D = defStart.map(u => ({ type: u.type, hp: u.hp }));
-    const ev = []; let ai = fa(A, 0), di = fa(D, 0), turn = 0, g = 0;
-    while (ai < A.length && di < D.length && g++ < 4000) {
-      if (turn % 2 === 0) { const dm = troopDamage(A[ai], D[di]); D[di].hp -= dm; ev.push({ side: "a", ai: ai, di: di, dm: dm }); }
-      else { const dm = troopDamage(D[di], A[ai]); A[ai].hp -= dm; ev.push({ side: "d", ai: ai, di: di, dm: dm }); }
-      turn++; ai = fa(A, ai); di = fa(D, di);
-    }
-    const win = ai < A.length;
-
     const html = '<h3 class="modal-title">⚔️ Battle for the region</h3>' +
-      '<div class="bt-vs">🛡️ ' + foeName + ' (defender)</div><div class="bt-side" id="btDef"></div>' +
-      '<div class="bt-log" id="btLog">Your troops charge in!</div>' +
+      '<div class="bt-vs">🛡️ ' + foeName + ' (defender · random order)</div><div class="bt-side" id="btDef"></div>' +
+      '<div class="bt-log" id="btLog">Armies clash!</div>' +
       '<div class="bt-side" id="btAtt"></div><div class="bt-vs">🗡️ You (attacker)</div>' +
       '<div class="op-btns" id="btBtns"></div>';
     const ov = openModal(html);
     const attEl = ov.querySelector("#btAtt"), defEl = ov.querySelector("#btDef"), logEl = ov.querySelector("#btLog");
-    const att = attStart.map(u => ({ type: u.type, hp: u.hp, max: u.max }));
-    const def = defStart.map(u => ({ type: u.type, hp: u.hp, max: u.max }));
     function unitHTML(u, cur) {
       const pct = u.max ? Math.max(0, Math.round(u.hp / u.max * 100)) : 0;
       return '<div class="bt-unit' + (u.hp <= 0 ? " dead" : "") + (cur ? " cur" : "") + '"><div class="bt-emo">' + TROOP[u.type].emoji + '</div>' +
-        '<div class="bt-hpbar"><span class="bt-hpfill" style="width:' + pct + '%"></span></div><div class="bt-hp">' + Math.max(0, u.hp) + '</div></div>';
+        '<div class="bt-hpbar"><span class="bt-hpfill" style="width:' + pct + '%"></span></div><div class="bt-hp">' + Math.max(0, Math.round(u.hp)) + '</div></div>';
     }
     function render() {
       const cai = fa(att, 0), cdi = fa(def, 0);
@@ -4746,26 +4733,23 @@
     }
     render();
     if (!def.length) return end(true, "Undefended — you take the region!");
-    const per = Math.max(1, Math.ceil(ev.length / 40));   // 目標 ~40 格動畫
-    let k = 0;
+    let round = 0;
     const iv = setInterval(() => {
-      let last = null;
-      for (let n = 0; n < per && k < ev.length; n++, k++) {
-        const e = ev[k]; last = e;
-        if (e.side === "a") def[e.di].hp -= e.dm; else att[e.ai].hp -= e.dm;
-      }
-      if (last) {
-        const at = last.side === "a" ? att[last.ai] : def[last.di], df = last.side === "a" ? def[last.di] : att[last.ai];
-        logEl.textContent = TROOP[at.type].emoji + (last.side === "a" ? " hits " : " hits back ") + TROOP[df.type].emoji + " −" + last.dm +
-          (atkBonus(at.type, df.type) > 1 ? " ✨strong!" : "");
-      }
+      const ai = fa(att, 0), di = fa(def, 0);
+      if (ai >= att.length || di >= def.length || round++ > 50) { clearInterval(iv); return end(fa(att, 0) < att.length, null); }
+      const a = att[ai], d = def[di];
+      const dmgAD = baseHit(a, d) * a.hp;   // 攻方對守方（用回合開始時兵力）
+      const dmgDA = baseHit(d, a) * d.hp;   // 守方對攻方（同時）
+      d.hp -= dmgAD; a.hp -= dmgDA;
+      logEl.textContent = TROOP[a.type].emoji + "×" + Math.round(a.hp + dmgDA) + " ⚔ " + TROOP[d.type].emoji + "×" + Math.round(d.hp + dmgAD) +
+        " → −" + dmgAD + " / −" + dmgDA + (atkBonus(a.type, d.type) > 1 ? " ✨你剋制!" : (atkBonus(d.type, a.type) > 1 ? " ⚠️被剋制" : ""));
       render();
-      if (k >= ev.length) { clearInterval(iv); end(win, null); }
-    }, 130);
+      if (fa(att, 0) >= att.length || fa(def, 0) >= def.length) { clearInterval(iv); end(fa(att, 0) < att.length, null); }
+    }, 850);
 
     function end(w, msg) {
       render();
-      logEl.textContent = msg || (w ? "🏆 You captured the region!" : "💀 Your army was defeated — power up your lessons and retry!");
+      logEl.textContent = msg || (w ? "🏆 You captured the region!" : "💀 Your army was defeated — level up your lessons and retry!");
       ov.querySelector("#btBtns").innerHTML = '<button id="btDone" class="back-btn">' + (w ? "🚩 Occupy" : "Back") + '</button>';
       ov.querySelector("#btDone").addEventListener("click", () => {
         if (w) claimTroops(file, attTroops, pop, () => { closeModal(); refreshMap(); });
