@@ -4450,7 +4450,8 @@
         } });
       }
     } else {
-      if (T <= 0) { terr.innerHTML = '<p class="op-hint">⚠️ No troops to attack with. Home base makes <b>' + income + '</b>/day — wait and grow.</p>'; }
+      if (!passed) { terr.innerHTML = '<p class="op-hint">📖 Pass this lesson (80%+) first — then you can attack this region.</p>'; }
+      else if (T <= 0) { terr.innerHTML = '<p class="op-hint">⚠️ No troops to attack with. Home base makes <b>' + income + '</b>/day — wait and grow.</p>'; }
       else {
         terr.innerHTML = '<p class="op-hint">⚔️ Attack! Pick 4 cards (any types, e.g. all archers) & split your troops (max ' + T + '):</p>';
         deployPanel(terr, T, { attack: true, foe: h.troops || [], label: "⚔️ Attack", onGo: squad => {
