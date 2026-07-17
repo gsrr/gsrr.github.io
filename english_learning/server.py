@@ -180,6 +180,60 @@ def save_territory_store(t):
     os.replace(tmp, TERR_FILE)
 
 
+# --- 玩家經濟（每位玩家：人口 population + 兵力 troops + 上次成長時間）---
+ECON_FILE = "/data/economy.json"
+econ_lock = threading.Lock()
+DAY_SECONDS = 86400
+ECON_START_POP = 100
+ECON_START_TROOPS = 100
+
+
+def load_econ_store():
+    try:
+        with open(ECON_FILE) as f:
+            e = json.load(f)
+            return e if isinstance(e, dict) else {}
+    except Exception:
+        return {}
+
+
+def save_econ_store(e):
+    os.makedirs(os.path.dirname(ECON_FILE), exist_ok=True)
+    tmp = ECON_FILE + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(e, f)
+    os.replace(tmp, ECON_FILE)
+
+
+def clampi(v, lo=0, hi=100000000):
+    try:
+        v = int(round(float(v)))
+    except Exception:
+        v = 0
+    return max(lo, min(hi, v))
+
+
+# 取得（或初始化）玩家經濟，並依「過了幾天」補算兵力產出（人口每天生 10% 給兵力）
+def econ_get(store, user, now):
+    e = store.get(user)
+    if not isinstance(e, dict):
+        e = {"population": ECON_START_POP, "troops": ECON_START_TROOPS, "lastGrow": now}
+        store[user] = e
+    pop = clampi(e.get("population", ECON_START_POP))
+    troops = clampi(e.get("troops", 0))
+    last = e.get("lastGrow", now)
+    try:
+        last = float(last)
+    except Exception:
+        last = now
+    days = int((now - last) // DAY_SECONDS)
+    if days > 0:
+        troops = clampi(troops + days * int(round(pop * 0.10)))
+        last = last + days * DAY_SECONDS
+    e["population"], e["troops"], e["lastGrow"] = pop, troops, last
+    return e
+
+
 def hash_pw(password, salt):
     return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), bytes.fromhex(salt), 100000).hex()
 
@@ -241,6 +295,8 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_leaderboard()
         elif path == "/api/territory":
             self._handle_territory()
+        elif path == "/api/economy":
+            self._handle_economy()
         else:
             self._send({"error": "not found"}, 404)
 
@@ -269,6 +325,8 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_student_save()
         elif path == "/api/territory/claim":
             self._handle_territory_claim()
+        elif path == "/api/economy/set":
+            self._handle_economy_set()
         else:
             self._send({"error": "not found"}, 404)
 
@@ -477,12 +535,56 @@ class Handler(BaseHTTPRequestHandler):
                 continue
             hp = int(t.get("hp", 0) or 0)
             troops.append({"type": ty, "hp": max(0, min(100000, hp))})
+        region_pop = int(d.get("pop", 0) or 0)
+        prev_owner = None
         with terr_lock:
             store = load_territory_store()
+            prev = store.get(f)
+            if isinstance(prev, dict):
+                prev_owner = prev.get("owner")
             store[f] = {"owner": user, "avatar": str(d.get("avatar", "👦"))[:8],
-                        "troops": troops, "pop": int(d.get("pop", 0) or 0)}
+                        "troops": troops, "pop": region_pop}
             save_territory_store(store)
+        # 從別人手中奪下 → 前主人的人口扣掉該區人口（離線也算）
+        if prev_owner and prev_owner != user and region_pop > 0:
+            with econ_lock:
+                es = load_econ_store()
+                pe = es.get(prev_owner)
+                if isinstance(pe, dict):
+                    pe["population"] = clampi(clampi(pe.get("population", 0)) - region_pop)
+                    save_econ_store(es)
         self._send({"ok": True})
+
+    # 玩家經濟：GET 取得（含每日產兵）
+    def _handle_economy(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        with econ_lock:
+            store = load_econ_store()
+            e = econ_get(store, user, time.time())
+            save_econ_store(store)
+            pop, troops = e["population"], e["troops"]
+        self._send({"population": pop, "troops": troops, "income": int(round(pop * 0.10))})
+
+    # 玩家經濟：POST 設定（pilot：信任前端戰果，僅夾範圍）
+    def _handle_economy_set(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        d = self._body_json()
+        with econ_lock:
+            store = load_econ_store()
+            e = econ_get(store, user, time.time())
+            if "population" in d:
+                e["population"] = clampi(d.get("population"))
+            if "troops" in d:
+                e["troops"] = clampi(d.get("troops"))
+            save_econ_store(store)
+            pop, troops = e["population"], e["troops"]
+        self._send({"ok": True, "population": pop, "troops": troops})
 
     def log_message(self, *args):
         pass  # 安靜
