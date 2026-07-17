@@ -3737,9 +3737,9 @@
   }
   document.getElementById("battleBack").addEventListener("click", quitBattle);
 
-  /* ====== Level Boss：兵種戰鬥 + 答題決定攻守 ======
-     你的軍隊 = 佔領的 population 總和；Boss 兵力 = 這張地圖人口總和。
-     每題克漏字(有語音)：答對→你的軍隊攻擊 Boss(連續答對 combo 每次 +10%)；答錯→Boss 反擊你。 */
+  /* ====== Level Boss：與領土佔領相同的兵種 4v4，攻守順序由答題決定 ======
+     你從兵力池佈署 4 張牌；Boss 軍隊 = 這張地圖人口總和(分成 4 張)。
+     每題克漏字(有語音)：答對→你的前排攻擊 Boss 前排；答錯→Boss 前排攻擊你。傷害/克制與 runBattle 相同。 */
   let exam = null;
   async function buildExamPool(lv) {
     const qs = [];
@@ -3825,7 +3825,10 @@
     }
     const box = document.createElement("div");
     host.appendChild(box);
-    deployPanel(box, T, { attack: true, foe: bossSquad, label: "⚔️ Charge the Boss", onGo: squad => {
+    deployPanel(box, T, { attack: true, foe: bossSquad, label: "⚔️ Charge the Boss",
+      help: '<b>Counters</b> (beats →): 🔱→🐎 · 🐎→🏹 · 🏹→🔱🛡️.<br>' +
+        'Answer <b>correctly</b> → your front troop attacks the boss; <b>wrong</b> → the boss attacks you. More troops on a card = more damage.',
+      onGo: squad => {
       myEcon.troops = Math.max(0, T - sumHp(squad));   // 出戰即扣兵力
       saveEconomy(function () { renderEmpire(); });
       const my = squad.map(u => ({ type: u.type, hp: u.hp, max: u.hp }));
@@ -4820,10 +4823,11 @@
       return (strong.length ? '<span class="adv-s">▲' + strong.map(f => TROOP[f].emoji).join("") + '</span>' : '') +
         (weak.length ? '<span class="adv-w">▼' + weak.map(f => TROOP[f].emoji).join("") + '</span>' : '');
     }
+    const helpHtml = opts.help || ('<b>Counters</b> (beats →): 🔱→🐎 · 🐎→🏹 · 🏹→🔱🛡️ &nbsp; 🏹 <b>shoots first</b>.<br>' +
+      'More troops on a card = more damage. 🏠 Your home base makes new troops every day.');
     wrap.innerHTML = '<p class="dep-left">Troops left: <span class="dep-l">0</span> / ' + budget +
       ' <button type="button" class="dep-help-btn">❓ How</button></p>' +
-      '<div class="dep-help" style="display:none"><b>Counters</b> (beats →): 🔱→🐎 · 🐎→🏹 · 🏹→🔱🛡️ &nbsp; 🏹 <b>shoots first</b>.<br>' +
-      'More troops on a card = more damage. 🏠 Your home base makes new troops every day.</div>' +
+      '<div class="dep-help" style="display:none">' + helpHtml + '</div>' +
       '<div class="dep-rows"></div>' +
       '<div class="op-btns"><button class="dict-play dep-go">' + (opts.label || "Deploy") + '</button></div>';
     const rowsEl = wrap.querySelector(".dep-rows"), leftEl = wrap.querySelector(".dep-l"), goBtn = wrap.querySelector(".dep-go");
