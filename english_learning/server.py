@@ -30,7 +30,7 @@ def get_model():
         return _model
 
 
-def transcribe(audio_bytes):
+def transcribe(audio_bytes, hint=""):
     model = get_model()
     inp = wav = None
     try:
@@ -41,7 +41,9 @@ def transcribe(audio_bytes):
         subprocess.run(["ffmpeg", "-y", "-i", inp, "-ar", "16000", "-ac", "1", wav],
                        check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         with _infer_lock:
-            segments, _info = model.transcribe(wav, language="en", beam_size=1)
+            # 把目標句當提示 → 咬字不標準時也較容易轉出目標詞（軟性引導，非強制）
+            segments, _info = model.transcribe(wav, language="en", beam_size=1,
+                                               initial_prompt=(hint[:300] if hint else None))
             return " ".join(s.text for s in segments).strip()
     finally:
         for p in (inp, wav):
@@ -339,7 +341,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         audio = self.rfile.read(length)
         try:
-            text = transcribe(audio)
+            text = transcribe(audio, target)
             self._send({"transcript": text, "target": target})
         except Exception as e:
             self._send({"error": str(e)}, 500)
