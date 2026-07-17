@@ -1717,12 +1717,15 @@
     });
     const avg = pcts.length ? Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length) : 0;
     const passed = avg >= PASS_MARK;
+    if (passed && currentArticle && !_passCounted) { _passCounted = true; bumpPassCount(currentArticle.file); }   // 通過cnt +1
+    const unlockNote = (passed && pending && currentArticle && pending.file === currentArticle.file)
+      ? '<div class="sum-pct" style="color:#7c3aed;margin-top:8px">🗺️ Territory unlocked — go back to the map and deploy your troops!</div>' : '';
     summaryEl.innerHTML =
       '<div class="sum-title">🎉 Lesson Complete!</div>' +
       '<div class="sum-stars">' + (passed ? "🟢 Passed!" : "🔴 Keep trying!") + '</div>' +
       '<div class="sum-rows">' + rows + '</div>' +
       '<div class="sum-total">Total: ' + avg + ' / 100' +
-      ' <span class="sum-pct">(need ' + PASS_MARK + ' to pass)</span></div>';
+      ' <span class="sum-pct">(need ' + PASS_MARK + ' to pass)</span></div>' + unlockNote;
     summaryEl.classList.remove("hidden");
   }
   function hideLessonSummary() { summaryEl.classList.add("hidden"); }
@@ -3993,14 +3996,7 @@
   // drill: { 地區id: 子地圖 } → 該地區變「容器」，點進去看子地圖（例：台北市 → 12 行政區）
   const GEO_MAPS = {
     "Pre-A1": { file: "maps/taiwan.svg", label: "Taiwan 台灣 🗺️",
-                drill: { "taipei-city": { file: "maps/taiwan-taipei.svg", label: "Taipei 台北 🗺️", viewBox: "0 0 350 461",
-                  // 台北下鑽 = 一條連貫故事「Tom & Anna 玩台北」，每區一集（依序）
-                  articles: [
-                    { id: "tp-zoo",    title: "Taipei 1 · At the Zoo",       file: "Pre-A1/taipei/zoo",    scene: "zoo",       levels: [1,2,3,4,5,7,9] },
-                    { id: "tp-mrt",    title: "Taipei 2 · On the MRT",       file: "Pre-A1/taipei/mrt",    scene: "run-jump",  levels: [1,2,3,4,5,7,9] },
-                    { id: "tp-market", title: "Taipei 3 · The Night Market", file: "Pre-A1/taipei/market", scene: "snack",     levels: [1,2,3,4,5,7,9] },
-                    { id: "tp-park",   title: "Taipei 4 · At the Park",      file: "Pre-A1/taipei/park",   scene: "park-ball", levels: [1,2,3,4,5,7,9] }
-                  ] } } },
+                drill: { "taipei-city": { file: "maps/taiwan-taipei.svg", label: "Taipei 台北 🗺️", viewBox: "0 0 350 461" } } },
     "A1":     { file: "maps/china.svg",  label: "China 中國 🗺️", viewBox: "0 0 1000 850", region: id => /^p[A-Z]{2}$/.test(id),
                 names: { pBJ:"Beijing 北京", pTJ:"Tianjin 天津", pSH:"Shanghai 上海", pCQ:"Chongqing 重慶",
                   pHE:"Hebei 河北", pSX:"Shanxi 山西", pNM:"Inner Mongolia 內蒙古", pLN:"Liaoning 遼寧", pJL:"Jilin 吉林",
@@ -4017,6 +4013,32 @@
     return geoCache[file] ? Promise.resolve(geoCache[file])
       : fetch(file).then(r => r.text()).then(t => { geoCache[file] = t; return t; });
   }
+  // 每個等級的「故事線」(依序給的連貫小故事)；講完才會隨機抽一般課
+  const LEVEL_ARCS = {
+    "Pre-A1": [
+      { id: "tp-zoo",    title: "Taipei 1 · At the Zoo",       file: "Pre-A1/taipei/zoo",    scene: "zoo",       levels: [1,2,3,4,5,7,9] },
+      { id: "tp-mrt",    title: "Taipei 2 · On the MRT",       file: "Pre-A1/taipei/mrt",    scene: "run-jump",  levels: [1,2,3,4,5,7,9] },
+      { id: "tp-market", title: "Taipei 3 · The Night Market", file: "Pre-A1/taipei/market", scene: "snack",     levels: [1,2,3,4,5,7,9] },
+      { id: "tp-park",   title: "Taipei 4 · At the Park",      file: "Pre-A1/taipei/park",   scene: "park-ball", levels: [1,2,3,4,5,7,9] }
+    ]
+  };
+  function artTitle(a) { return a && a.title ? a.title.split("·").pop().trim() : (a ? a.id : ""); }
+  function passCntMap() { try { return JSON.parse(localStorage.getItem("passcnt:" + (userName || "guest")) || "{}") || {}; } catch (e) { return {}; } }
+  function passCount(file) { return passCntMap()[file] || 0; }
+  function bumpPassCount(file) { if (!file) return; const m = passCntMap(); m[file] = (m[file] || 0) + 1; try { localStorage.setItem("passcnt:" + (userName || "guest"), JSON.stringify(m)); } catch (e) {} }
+  let pending = null;   // 挑戰中：{key, file, base(通過cnt), article, i}
+  let _passCounted = false;   // 本次進課是否已計過一次通過（避免總結重繪重複累加）
+  // 挑一課當「攻打/佔領」挑戰：故事線沒講完就依序給下一集，否則本等級課裡挑「通過cnt」最小的（同分隨機）
+  function pickChallenge(i) {
+    const lv = manifest.levels[i]; if (!lv) return null;
+    const arc = LEVEL_ARCS[lv.id] || [];
+    for (let k = 0; k < arc.length; k++) if (!lessonStatus(arc[k]).passed) return arc[k];
+    const arts = (lv.articles || []).slice(); if (!arts.length) return null;
+    let min = Infinity; arts.forEach(a => { const c = passCount(a.file); if (c < min) min = c; });
+    const cand = arts.filter(a => passCount(a.file) === min);
+    return cand[Math.floor(Math.random() * cand.length)];
+  }
+  function regionKey(spec, p) { return (spec.file || "") + "#" + (p.id || p.getAttribute("aria-label") || ""); }
   // 進入某等級的地理地圖（頂層）
   function renderGeoMap(i, spec) {
     clearMapTimers();
@@ -4028,15 +4050,14 @@
     showScreen(screenArticle);
     renderEmpire();                       // 先用快取畫「我的帝國」列
     loadEconomy(renderEmpire);            // 再抓最新（含每日產兵）
-    drawGeo(spec, lv.articles, null, i, lv);
+    drawGeo(spec, null, i, lv);
   }
   // 資料驅動的地圖引擎：吃任一張地圖 SVG → 課依序綁地區 → 依佔領上色 → 點地區進課/下鑽
   //   lessons：要分配到這張地圖的課；backFn：非頂層時的返回動作
-  function drawGeo(spec, lessons, backFn, i, lv) {
+  function drawGeo(spec, backFn, i, lv) {
     const wrap = articleGrid; wrap.className = "geo-wrap"; wrap.removeAttribute("style"); wrap.innerHTML = "";
     const banner = document.getElementById("terrBanner"); if (banner) banner.style.display = "none";
     articleScreenTitle.textContent = (lv.name || lv.id) + " · " + spec.label;
-    const ttl = a => a.title ? a.title.split("·").pop().trim() : a.id;
 
     function build(svgText) {
       wrap.innerHTML = "";
@@ -4051,110 +4072,75 @@
       if (!svg.getAttribute("viewBox") && spec.viewBox) svg.setAttribute("viewBox", spec.viewBox);
       svg.setAttribute("class", "geo-svg");
       const NSU = "http://www.w3.org/2000/svg";
-      svg.querySelectorAll("style").forEach(s => s.remove());        // 移除內嵌配色
+      svg.querySelectorAll("style").forEach(s => s.remove());
       svg.querySelectorAll("path").forEach(p => { p.style.removeProperty("fill"); p.style.removeProperty("stroke"); p.style.removeProperty("opacity"); p.removeAttribute("fill"); });
-      const isRegion = spec.region || ((id, p) => !!p.getAttribute("aria-label"));   // 只認有名字的地區，排除雜線 path
-      const nonRegion = Array.prototype.filter.call(svg.querySelectorAll("path"), p => !isRegion(p.id, p));
-      nonRegion.forEach(p => { p.style.fill = "none"; p.style.pointerEvents = "none"; });   // 雜線 path 不填色、不擋點擊
+      const isRegion = spec.region || ((id, p) => !!p.getAttribute("aria-label"));   // 只認有名字的地區
+      Array.prototype.filter.call(svg.querySelectorAll("path"), p => !isRegion(p.id, p)).forEach(p => { p.style.fill = "none"; p.style.pointerEvents = "none"; });
       const paths = Array.prototype.filter.call(svg.querySelectorAll("path"), p => isRegion(p.id, p));
       const drill = spec.drill || {};
-      const containers = [], normals = [];
-      paths.forEach(p => (drill[p.id] ? containers : normals).push(p));
       const mg = document.createElementNS(NSU, "g"); mg.setAttribute("class", "geo-markers"); svg.appendChild(mg);
       const vb = (svg.getAttribute("viewBox") || "0 0 1000 1000").split(/\s+/).map(Number);
       const rMark = Math.max(7, Math.min(vb[2], vb[3]) * 0.02);
-      const regionList = [];
+      const regionList = [], markerSpecs = [];
       function regionName(p) { return spec.names ? (spec.names[p.id] || p.id) : (p.getAttribute("aria-label") || p.id); }
       function addTitle(p, txt) { let t = p.querySelector("title"); if (!t) { t = document.createElementNS(NSU, "title"); p.appendChild(t); } t.textContent = txt; }
-      const markerSpecs = [];
-      function marker(p, label, extra) {                 // 先記位置，之後統一分散再畫
+      function marker(p, label, extra) {
         let bb = null; try { bb = p.getBBox(); } catch (e) {}
         if (!bb || !bb.width) return;
         const cx = bb.x + bb.width / 2, cy = bb.y + bb.height / 2;
         markerSpecs.push({ cx: cx, cy: cy, ox: cx, oy: cy, label: label, extra: extra || "" });
       }
-      // 1) 一般地區：課依序填入
-      let cur = 0;
-      normals.forEach(p => {
-        const a = lessons[cur];
-        p.setAttribute("class", "geo-region");
-        if (!a) { p.classList.add("geo-locked"); p.style.pointerEvents = "none"; return; }
-        cur++;
-        const rn = regionName(p);
-        a._region = rn; a._pop = popForName(rn);   // 該區人口 = 兵力預算
-        addTitle(p, "#" + cur + " " + rn + " · " + ttl(a));
-        p.addEventListener("click", () => openOutpost(a));
-        marker(p, String(cur));
-        regionList.push({ p: p, a: a, name: rn, num: cur, open: () => openOutpost(a) });
+      // 地區 = 領地（不綁課程）：點了才動態抽一課當挑戰
+      let num = 0;
+      paths.forEach(p => {
+        const name = regionName(p);
+        if (drill[p.id]) {                       // 可下鑽的容器（點進更多領地）
+          const sub = drill[p.id];
+          p.setAttribute("class", "geo-region geo-drill");
+          addTitle(p, name + " — zoom in ▸");
+          const open = () => drawGeo(sub, () => renderGeoMap(i, spec), i, lv);
+          p.addEventListener("click", open);
+          marker(p, "🏙️", " geo-marker-drill");
+          regionList.push({ p: p, drill: true, name: name, open: open });
+        } else {
+          num++;
+          const key = regionKey(spec, p), pop = popForName(name);
+          p.setAttribute("class", "geo-region");
+          addTitle(p, name + " · 👥" + pop);
+          const open = () => openRegion(key, name, pop, i);
+          p.addEventListener("click", open);
+          marker(p, String(num));
+          regionList.push({ p: p, key: key, name: name, pop: pop, num: num, open: open });
+        }
       });
-      // 2) 容器地區（可下鑽）：把剩下的課交給它的子地圖
-      containers.forEach((p, ci) => {
-        const sub = drill[p.id];
-        // 有自訂故事線(articles)→ 用它、且不吞主線課；否則收下剩餘主線課
-        const slice = sub.articles ? sub.articles : (ci === 0 ? lessons.slice(cur) : []);
-        if (!sub.articles && ci === 0) cur = lessons.length;
-        p.setAttribute("class", "geo-region geo-drill");
-        const rn = regionName(p), open = () => drawGeo(sub, slice, () => renderGeoMap(i, spec), i, lv);
-        addTitle(p, rn + " — " + slice.length + " lessons · click to enter");
-        p.addEventListener("click", open);
-        marker(p, "🏙️", " geo-marker-drill");
-        regionList.push({ p: p, drill: true, name: rn, count: slice.length, open: open });
-      });
-      // 分散重疊的標號（小而密集的地區不擠成一團）：鬆弛演算法互推
+      // 分散重疊的標號
       const minD = rMark * 2 + 3;
       for (let it = 0; it < 80; it++) {
         let moved = false;
         for (let x = 0; x < markerSpecs.length; x++) for (let y = x + 1; y < markerSpecs.length; y++) {
           const A = markerSpecs[x], B = markerSpecs[y];
           const dx = B.cx - A.cx, dy = B.cy - A.cy, d = Math.hypot(dx, dy) || 0.01;
-          if (d < minD) { const push = (minD - d) / 2, ux = dx / d, uy = dy / d;
-            A.cx -= ux * push; A.cy -= uy * push; B.cx += ux * push; B.cy += uy * push; moved = true; }
+          if (d < minD) { const push = (minD - d) / 2, ux = dx / d, uy = dy / d; A.cx -= ux * push; A.cy -= uy * push; B.cx += ux * push; B.cy += uy * push; moved = true; }
         }
         if (!moved) break;
       }
-      markerSpecs.forEach(s => {
-        if (Math.hypot(s.cx - s.ox, s.cy - s.oy) > rMark * 1.3) {   // 位移大 → 補引線連回地區
-          const ln = document.createElementNS(NSU, "line");
-          ln.setAttribute("x1", s.ox); ln.setAttribute("y1", s.oy); ln.setAttribute("x2", s.cx); ln.setAttribute("y2", s.cy);
-          ln.setAttribute("class", "geo-leader"); mg.appendChild(ln);
-        }
-      });
-      markerSpecs.forEach(s => {
-        const c = document.createElementNS(NSU, "circle");
-        c.setAttribute("cx", s.cx); c.setAttribute("cy", s.cy); c.setAttribute("r", rMark); c.setAttribute("class", "geo-marker-c" + s.extra);
-        const tx = document.createElementNS(NSU, "text");
-        tx.setAttribute("x", s.cx); tx.setAttribute("y", s.cy); tx.setAttribute("font-size", rMark * 1.05);
-        tx.setAttribute("class", "geo-marker-t"); tx.textContent = s.label;
-        mg.appendChild(c); mg.appendChild(tx);
-      });
-      // 3) 課比地區還多（且無容器可收）→ 地圖下方補小節點
-      if (cur < lessons.length) {
-        const extra = document.createElement("div"); extra.className = "geo-extra";
-        for (let k = cur; k < lessons.length; k++) {
-          const a = lessons[k];
-          const b = document.createElement("button"); b.className = "geo-extra-btn";
-          b.textContent = "#" + (k + 1) + " " + ttl(a);
-          b.addEventListener("click", () => openOutpost(a));
-          extra.appendChild(b); regionList.push({ btn: b, a: a });
-        }
-        wrap.appendChild(extra);
-      }
+      markerSpecs.forEach(s => { if (Math.hypot(s.cx - s.ox, s.cy - s.oy) > rMark * 1.3) { const ln = document.createElementNS(NSU, "line"); ln.setAttribute("x1", s.ox); ln.setAttribute("y1", s.oy); ln.setAttribute("x2", s.cx); ln.setAttribute("y2", s.cy); ln.setAttribute("class", "geo-leader"); mg.appendChild(ln); } });
+      markerSpecs.forEach(s => { const c = document.createElementNS(NSU, "circle"); c.setAttribute("cx", s.cx); c.setAttribute("cy", s.cy); c.setAttribute("r", rMark); c.setAttribute("class", "geo-marker-c" + s.extra); const tx = document.createElementNS(NSU, "text"); tx.setAttribute("x", s.cx); tx.setAttribute("y", s.cy); tx.setAttribute("font-size", rMark * 1.05); tx.setAttribute("class", "geo-marker-t"); tx.textContent = s.label; mg.appendChild(c); mg.appendChild(tx); });
       const legend = document.createElement("div"); legend.className = "geo-legend";
-      legend.innerHTML = '<span class="gl gl-mine">You</span><span class="gl gl-foe">Rival</span><span class="gl gl-open">Open</span><span class="gl gl-todo">Locked lesson</span>' +
-        (containers.length ? '<span class="gl gl-drill">Zoom in</span>' : '');
+      legend.innerHTML = '<span class="gl gl-mine">You</span><span class="gl gl-foe">Rival</span><span class="gl gl-open">Open</span>' +
+        (Object.keys(drill).length ? '<span class="gl gl-drill">Zoom in</span>' : '');
       wrap.appendChild(legend);
-      // 對照清單：號碼 · 地區名 · 課名（滑過 highlight 對應地區，點擊進課）—— 一眼看出每個號碼是哪一區
+      // 對照清單：領地名 + 人口 + 守軍（滑過 highlight，點擊開領地面板）
       const idx = document.createElement("div"); idx.className = "geo-index";
       regionList.forEach(r => {
-        if (!r.p) return;   // 只列地圖上有地區者（溢出課已用上方 chip 呈現）
         const btn = document.createElement("button"); btn.className = "geo-idx" + (r.drill ? " gi-drill" : "");
         btn.innerHTML = '<span class="gi-no">' + (r.drill ? "🏙️" : r.num) + '</span>' +
           '<span class="gi-tx"><span class="gi-rg">' + r.name + '</span>' +
-          '<span class="gi-ls">' + (r.drill ? (r.count + "-episode story ▸") : ttl(r.a)) + '</span></span>';
+          '<span class="gi-ls">' + (r.drill ? "zoom in ▸" : ("👥 " + r.pop)) + '</span></span>';
         btn.addEventListener("click", r.open);
         btn.addEventListener("mouseenter", () => r.p.classList.add("geo-hi"));
         btn.addEventListener("mouseleave", () => r.p.classList.remove("geo-hi"));
-        r.idxEl = btn; idx.appendChild(btn);
+        r.idxEl = btn; r.idxLs = btn.querySelector(".gi-ls"); idx.appendChild(btn);
       });
       wrap.appendChild(idx);
       if (!backFn) {   // 只有頂層顯示 Boss
@@ -4168,20 +4154,23 @@
       function colorize() {
         const me = (authUser() || userName || "").toLowerCase(); let mine = 0;
         regionList.forEach(r => {
-          const el = r.p || r.btn; if (!el || r.drill) return;
-          ["geo-mine", "geo-foe", "geo-open", "geo-todo"].forEach(c => el.classList.remove(c));
+          if (r.drill || !r.p) return;
+          ["geo-mine", "geo-foe", "geo-open"].forEach(c => r.p.classList.remove(c));
           if (r.idxEl) ["gi-mine", "gi-foe", "gi-open"].forEach(c => r.idxEl.classList.remove(c));
-          const h = territory && territory.holders && territory.holders[r.a.file];
-          let stat, gi = "";
-          if (h && h.owner) { const isMine = (h.owner || "").toLowerCase() === me; stat = isMine ? "geo-mine" : "geo-foe"; gi = isMine ? "gi-mine" : "gi-foe"; if (isMine) mine++; }
-          else { const pass = lessonStatus(r.a).passed; stat = pass ? "geo-open" : "geo-todo"; gi = pass ? "gi-open" : ""; }
-          el.classList.add(stat);
-          if (r.idxEl && gi) r.idxEl.classList.add(gi);
+          const h = territory && territory.holders && territory.holders[r.key];
+          if (h && h.owner) {
+            const isMine = (h.owner || "").toLowerCase() === me;
+            r.p.classList.add(isMine ? "geo-mine" : "geo-foe"); if (r.idxEl) r.idxEl.classList.add(isMine ? "gi-mine" : "gi-foe"); if (isMine) mine++;
+            if (r.idxLs) r.idxLs.innerHTML = "👥 " + r.pop + " · " + (h.avatar || "") + dispName(h.owner) + " " + aliveTroops(h.troops).map(t => TROOP[t.type].emoji + t.hp).join(" ");
+          } else {
+            r.p.classList.add("geo-open"); if (r.idxEl) r.idxEl.classList.add("gi-open");
+            if (r.idxLs) r.idxLs.textContent = "👥 " + r.pop + " · Open";
+          }
         });
         if (banner) {
           const counts = (territory && territory.counts) || {}; let top = null;
           Object.keys(counts).forEach(n => { if (!top || counts[n] > counts[top]) top = n; });
-          banner.innerHTML = '🚩 You hold <b>' + mine + '</b> region' + (mine === 1 ? '' : 's') +
+          banner.innerHTML = '🚩 You hold <b>' + mine + '</b> region' + (mine === 1 ? '' : 's') + ' on this map' +
             (top ? ' · 👑 ' + dispName(top) + ' (' + counts[top] + ')' : '') + ' <span class="terr-link">Ranking ▸</span>';
           banner.style.display = "block";
           const link = banner.querySelector(".terr-link"); if (link) link.addEventListener("click", openLeaderboard);
@@ -4193,6 +4182,57 @@
 
     fetchMap(spec.file).then(build)
       .catch(() => { wrap.innerHTML = '<p class="op-hint">Could not load map ' + spec.file + '. (Needs the server or GitHub Pages.)</p>'; });
+  }
+
+  // 領地面板（地區不綁課程）：自己的→重新佈署；別人的/無主的→先「當場過關」一課挑戰，過了才出兵。每次都要重新過。
+  function openRegion(key, name, pop, i) {
+    const h = (territory && territory.holders && territory.holders[key]) || null;
+    const me = (authUser() || userName || "").toLowerCase();
+    const mine = !!(h && h.owner && (h.owner || "").toLowerCase() === me);
+    const enemy = !!(h && h.owner) && !mine;
+    const T = (myEcon && myEcon.troops) || 0, income = (myEcon && myEcon.income != null) ? myEcon.income : 10;
+    let html = '<h3 class="modal-title">🏰 ' + name + '</h3>' +
+      '<div class="op-pop">👥 Population <b>' + pop + '</b>' + (mine ? ' (yours)' : ' — added to your empire if you take it') + '</div>';
+    if (h && h.owner) html += '<div class="op-def' + (mine ? ' op-mine' : '') + '">Held by ' + (h.avatar || "👦") + ' <b>' + dispName(h.owner) + '</b><br>' + garrisonHTML(h.troops) + '</div>';
+    else html += '<div class="op-def">🏳️ Unclaimed region</div>';
+    html += '<div class="op-econ">⚔️ Your troops: <b>' + T + '</b></div><div id="opTerr"></div>' +
+      '<div class="op-btns"><button id="opClose" class="back-btn">✕ Close</button></div>';
+    const ov = openModal(html);
+    ov.querySelector("#opClose").addEventListener("click", closeModal);
+    const terr = ov.querySelector("#opTerr");
+    const noTroops = '<p class="op-hint">⚠️ No troops right now. Your home base makes <b>' + income + '</b>/day — come back later.</p>';
+    if (!authToken()) { terr.innerHTML = '<p class="op-hint">🔒 Log in to raise an army and battle for territory.</p>'; return; }
+    if (mine) {
+      const oldTot = sumHp(h.troops), budget = T + oldTot;
+      terr.innerHTML = '<p class="op-hint">✅ Yours. Re-deploy garrison (pool + current = ' + budget + '):</p>';
+      deployPanel(terr, budget, { init: h.troops, label: "🚩 Deploy", onGo: g => { myEcon.troops = Math.max(0, T + oldTot - sumHp(g)); claimTroops(key, g, pop, function () {}); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); } });
+      return;
+    }
+    const cleared = pending && pending.key === key && passCount(pending.file) > pending.base;   // 已當場過關
+    if (cleared) {
+      if (T <= 0) { terr.innerHTML = noTroops; return; }
+      if (enemy) {
+        terr.innerHTML = '<p class="op-hint">✅ Challenge cleared! ⚔️ Attack — pick 4 cards & split troops (max ' + T + '):</p>';
+        deployPanel(terr, T, { attack: true, foe: h.troops || [], label: "⚔️ Attack", onGo: squad => {
+          const A = sumHp(squad); myEcon.troops = Math.max(0, T - A); pending = null; closeModal();
+          runBattle(squad, h.troops || [], dispName(h.owner), function (win, survivors) {
+            if (win) { myEcon.population += pop; claimTroops(key, survivors, pop, function () {}); }
+            else { myEcon.troops += sumHp(survivors); }
+            saveEconomy(function () { renderEmpire(); refreshMap(); });
+          });
+        } });
+      } else {
+        terr.innerHTML = '<p class="op-hint">✅ Challenge cleared! 🚩 Occupy — send troops (max ' + T + '):</p>';
+        deployPanel(terr, T, { label: "🚩 Occupy", onGo: g => { myEcon.troops = Math.max(0, T - sumHp(g)); myEcon.population += pop; pending = null; claimTroops(key, g, pop, function () {}); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); } });
+      }
+      return;
+    }
+    const ch = pickChallenge(i);
+    if (!ch) { terr.innerHTML = '<p class="op-hint">No lesson available for this level.</p>'; return; }
+    terr.innerHTML = '<p class="op-hint">' + (enemy ? "⚔️ To attack" : "🚩 To take") + ' this region, pass this lesson (80%+):</p>' +
+      '<div class="op-def" style="text-align:center">📖 <b>' + artTitle(ch) + '</b></div>' +
+      '<div class="op-btns"><button id="chStudy" class="dict-play">📖 Study &amp; pass</button></div>';
+    ov.querySelector("#chStudy").addEventListener("click", () => { pending = { key: key, file: ch.file, base: passCount(ch.file), article: ch, i: i }; closeModal(); selectArticle(ch); });
   }
 
   function selectLevel(i) {
@@ -4638,6 +4678,7 @@
 
   // 畫面 3：載入並開始學習
   async function selectArticle(a) {
+    _passCounted = false;   // 進新的一課 → 重置「本次已計通過」旗標
     await loadArticle(a);
     learnTitle.textContent = (manifest.levels[selLevelIdx].name || "") + " · " + (a.title || a.id);
     enterListenMode();   // 進入文章時先顯示 Level 1（聽力），不直接進測驗
