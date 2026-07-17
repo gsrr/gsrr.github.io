@@ -904,6 +904,8 @@
   .geo-idx { font-size: 13px; }
   .lb-name { font-size: 16px; }
   .lb-score { font-size: 14px; }
+  .atk-proj { position: fixed; font-size: 30px; z-index: 300; pointer-events: none; will-change: transform, opacity;
+    transition: transform .5s cubic-bezier(.45,0,.9,.5), opacity .5s ease-in; filter: drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
   .hidden { display: none !important; }
 </style>
 </head>
@@ -3371,6 +3373,33 @@
     f.appendChild(d);
     setTimeout(() => d.remove(), 880);
   }
+  // 軍隊攻擊動畫：每兵種多種變體，運作時隨機挑一種；發射會飛的 emoji 從攻方飛向守方
+  const ATK_TYPES = ["cav", "archer", "inf", "spear"];
+  const ATK_ANIMS = {
+    cav:    [["🐎", "💨", "💥"], ["🐎", "💥"], ["🐎", "💨", "💫"]],       // 騎兵衝鋒
+    archer: [["🏹", "➶", "➶"], ["🏹", "➶", "➶", "➶"], ["🏹", "➶"]],      // 弓兵射箭
+    inf:    [["⚔️", "💥"], ["🗡️", "💥"], ["🛡️", "⚔️", "💥"]],            // 步兵近戰
+    spear:  [["🔱", "💥"], ["🔱", "➤", "💥"], ["🔱", "✨"]],               // 槍兵突刺
+    boss:   [["🔥", "💥"], ["👊", "💥"], ["🐲", "💢"]]                     // Boss 反擊
+  };
+  const ATK_NAME = { cav: "🐎 Cavalry charge", archer: "🏹 Archers fire", inf: "🛡️ Infantry strike", spear: "🔱 Spears thrust" };
+  function flyProjectile(fromEl, toEl, emoji, delay) {
+    if (!fromEl || !toEl) return;
+    const a = fromEl.getBoundingClientRect(), b = toEl.getBoundingClientRect();
+    const sx = a.left + a.width / 2, sy = a.top + a.height / 2, ex = b.left + b.width / 2, ey = b.top + b.height / 2;
+    const s = document.createElement("div"); s.className = "atk-proj"; s.textContent = emoji;
+    s.style.left = sx + "px"; s.style.top = sy + "px"; document.body.appendChild(s);
+    requestAnimationFrame(() => setTimeout(() => { s.style.transform = "translate(" + (ex - sx) + "px," + (ey - sy) + "px) scale(1.4) rotate(10deg)"; s.style.opacity = "0.15"; }, delay));
+    setTimeout(() => { if (s.parentNode) s.remove(); }, delay + 520);
+  }
+  // 攻方 fromEl 打向守方 toEl；type 決定飛的圖案（隨機變體）；onHit 在命中瞬間觸發
+  function playTroopAttack(type, fromEl, toEl, dir, onHit) {
+    try { fxLunge(fromEl, dir || "r"); } catch (e) {}
+    const vs = ATK_ANIMS[type] || ATK_ANIMS.inf;
+    const v = vs[Math.floor(Math.random() * vs.length)];
+    v.forEach((emo, k) => flyProjectile(fromEl, toEl, emo, 90 + k * 105));
+    setTimeout(() => { try { fxHit(toEl); } catch (e) {} if (onHit) onHit(); }, 90 + v.length * 105 + 150);
+  }
   function openBattle() {
     if (!currentArticle) { selectLevel(selLevelIdx); return; }
     clearGame();
@@ -3597,15 +3626,16 @@
       exam.streak++;
       const dmg = Math.max(1, Math.round(exam.pMax * 0.15 * comboMult()));   // 你的攻擊（含連對 combo）
       exam.bHP -= dmg;
-      fxLunge(heroEmojiEl, "r"); fxHit(bossEmojiEl); fxDmg(bossEmojiEl, dmg, "toboss");
-      document.getElementById("battleLog").textContent = "✅ Correct! Your army hits −" + dmg + (exam.streak > 1 ? "  🔥×" + comboMult().toFixed(1) : "");
+      const type = ATK_TYPES[Math.floor(Math.random() * ATK_TYPES.length)];   // 隨機一個兵種出擊
+      playTroopAttack(type, heroEmojiEl, bossEmojiEl, "r", () => fxDmg(bossEmojiEl, dmg, "toboss"));
+      document.getElementById("battleLog").textContent = "✅ " + ATK_NAME[type] + "! −" + dmg + (exam.streak > 1 ? "  🔥×" + comboMult().toFixed(1) : "");
       examHUD();
       if (exam.bHP <= 0) { exam.over = true; setTimeout(examWin, 800); return; }
     } else {
       exam.streak = 0; btn.classList.add("wrong");
       const dmg = Math.max(1, Math.round(exam.pMax * 0.15));   // Boss 反擊（固定比例，不秒殺；連對歸零）
       exam.pHP -= dmg;
-      fxLunge(bossEmojiEl, "l"); fxHit(heroEmojiEl); fxDmg(heroEmojiEl, dmg, "tohero");
+      playTroopAttack("boss", bossEmojiEl, heroEmojiEl, "l", () => fxDmg(heroEmojiEl, dmg, "tohero"));
       document.getElementById("battleLog").textContent = "❌ Wrong — the boss strikes back −" + dmg;
       examHUD();
       if (exam.pHP <= 0) { exam.over = true; setTimeout(examLose, 800); return; }
