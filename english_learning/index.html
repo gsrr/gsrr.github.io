@@ -4518,28 +4518,31 @@
       deployPanel(terr, budget, { init: h.troops, label: "🚩 Deploy", onGo: g => { myEcon.troops = Math.max(0, T + oldTot - sumHp(g)); claimTroops(key, g, pop, function () {}); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); } });
       return;
     }
-    const cleared = pending && pending.key === key && passCount(pending.file) > pending.base;   // 已當場過關
+    if (enemy) {
+      // 有主：先攻打。打贏 → 該區恢復「無主」，之後再走過關→佔領流程才真正佔領。
+      if (T <= 0) { terr.innerHTML = noTroops; return; }
+      terr.innerHTML = '<p class="op-hint">⚔️ Attack ' + dispName(h.owner) + ' — pick 4 cards & split troops (max ' + T + '):</p>';
+      deployPanel(terr, T, { attack: true, foe: h.troops || [], label: "⚔️ Attack", onGo: squad => {
+        const A = sumHp(squad); myEcon.troops = Math.max(0, T - A); closeModal();
+        runBattle(squad, h.troops || [], dispName(h.owner), function (win, survivors) {
+          myEcon.troops += sumHp(survivors);                     // 生還者一律撤回兵力池（尚未佔領）
+          if (win) releaseTerritory(key, pop, function () {});   // 打贏 → 清成無主
+          saveEconomy(function () { renderEmpire(); refreshMap(); });
+        });
+      } });
+      return;
+    }
+    // 無主：當場過關一課，過了才出兵佔領。
+    const cleared = pending && pending.key === key && passCount(pending.file) > pending.base;
     if (cleared) {
       if (T <= 0) { terr.innerHTML = noTroops; return; }
-      if (enemy) {
-        terr.innerHTML = '<p class="op-hint">✅ Challenge cleared! ⚔️ Attack — pick 4 cards & split troops (max ' + T + '):</p>';
-        deployPanel(terr, T, { attack: true, foe: h.troops || [], label: "⚔️ Attack", onGo: squad => {
-          const A = sumHp(squad); myEcon.troops = Math.max(0, T - A); pending = null; closeModal();
-          runBattle(squad, h.troops || [], dispName(h.owner), function (win, survivors) {
-            if (win) { myEcon.population += pop; claimTroops(key, survivors, pop, function () {}); }
-            else { myEcon.troops += sumHp(survivors); }
-            saveEconomy(function () { renderEmpire(); refreshMap(); });
-          });
-        } });
-      } else {
-        terr.innerHTML = '<p class="op-hint">✅ Challenge cleared! 🚩 Occupy — send troops (max ' + T + '):</p>';
-        deployPanel(terr, T, { label: "🚩 Occupy", onGo: g => { myEcon.troops = Math.max(0, T - sumHp(g)); myEcon.population += pop; pending = null; claimTroops(key, g, pop, function () {}); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); } });
-      }
+      terr.innerHTML = '<p class="op-hint">✅ Challenge cleared! 🚩 Occupy — send troops (max ' + T + '):</p>';
+      deployPanel(terr, T, { label: "🚩 Occupy", onGo: g => { myEcon.troops = Math.max(0, T - sumHp(g)); myEcon.population += pop; pending = null; claimTroops(key, g, pop, function () {}); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); } });
       return;
     }
     const ch = pickChallenge(i);
     if (!ch) { terr.innerHTML = '<p class="op-hint">No lesson available for this level.</p>'; return; }
-    terr.innerHTML = '<p class="op-hint">' + (enemy ? "⚔️ To attack" : "🚩 To take") + ' this region, pass this lesson (80%+):</p>' +
+    terr.innerHTML = '<p class="op-hint">🚩 To take this region, pass this lesson (80%+):</p>' +
       '<div class="op-def" style="text-align:center">📖 <b>' + artTitle(ch) + '</b></div>' +
       '<div class="op-btns"><button id="chStudy" class="dict-play">📖 Study &amp; pass</button></div>';
     ov.querySelector("#chStudy").addEventListener("click", () => { pending = { key: key, file: ch.file, base: passCount(ch.file), article: ch, i: i }; closeModal(); selectArticle(ch); });
@@ -4800,15 +4803,15 @@
         } });
       }
     } else {
-      if (!passed) { terr.innerHTML = '<p class="op-hint">📖 Pass this lesson (80%+) first — then you can attack this region.</p>'; }
-      else if (T <= 0) { terr.innerHTML = '<p class="op-hint">⚠️ No troops to attack with. Home base makes <b>' + income + '</b>/hr — wait and grow.</p>'; }
+      // 有主：先攻打（不需先過關）。打贏 → 該區恢復「無主」，之後走過關→佔領流程才真正佔領。
+      if (T <= 0) { terr.innerHTML = '<p class="op-hint">⚠️ No troops to attack with. Home base makes <b>' + income + '</b>/hr — wait and grow.</p>'; }
       else {
         terr.innerHTML = '<p class="op-hint">⚔️ Attack! Pick 4 cards (any types, e.g. all archers) & split your troops (max ' + T + '):</p>';
         deployPanel(terr, T, { attack: true, foe: h.troops || [], label: "⚔️ Attack", onGo: squad => {
           const A = sumHp(squad); myEcon.troops = Math.max(0, T - A); closeModal();
           runBattle(squad, h.troops || [], dispName(h.owner), function (win, survivors) {
-            if (win) { myEcon.population += regionPop; claimTroops(file, survivors, regionPop, function () {}); }
-            else { myEcon.troops += sumHp(survivors); }
+            myEcon.troops += sumHp(survivors);                          // 生還者一律撤回兵力池（尚未佔領）
+            if (win) releaseTerritory(file, regionPop, function () {});  // 打贏 → 清成無主
             saveEconomy(function () { renderEmpire(); refreshMap(); });
           });
         } });
@@ -4901,6 +4904,17 @@
       });
   }
 
+  // 打贏「有主」據點後：把它清成無主（前主人扣人口），不直接取得所有權——之後走過關→佔領流程。
+  function releaseTerritory(file, pop, cb) {
+    const t = authToken();
+    if (!t) { if (cb) cb(); return; }
+    fetch("/api/territory/release?token=" + encodeURIComponent(t), {
+      method: "POST", body: JSON.stringify({ file: file, pop: pop })
+    }).then(r => r.ok ? r.json() : null)
+      .then(() => { loadTerritory(() => { if (cb) cb(); }); })
+      .catch(() => { if (cb) cb(); });
+  }
+
   function myDeployMap() { return {}; }   // 舊卡片部署對照已停用（佔領改用兵種）
   function lessonTitleByFile(file) {
     let t = file;
@@ -4938,7 +4952,7 @@
       defEl.innerHTML = def.map((u, i) => unitHTML(u, i === cdi)).join("");
     }
     render();
-    if (!def.length) return end(true, "Undefended — you take the region!");
+    if (!def.length) return end(true, "Undefended!");
     let round = 0, lastAi = -1, lastDi = -1, engage = 0;
     function decideWin() {
       const aAlive = fa(att, 0) < att.length, dAlive = fa(def, 0) < def.length;
@@ -4977,8 +4991,11 @@
 
     function end(w, msg) {
       render();
-      logEl.textContent = msg || (w ? "🏆 You captured the region!" : "💀 Defeated — survivors retreat to your home base.");
-      ov.querySelector("#btBtns").innerHTML = '<button id="btDone" class="back-btn">' + (w ? "🚩 Occupy" : "↩ Retreat") + '</button>';
+      // 打贏「有主」據點只是把它清成無主，不會直接佔領——要再去過關才佔領。訊息要講清楚。
+      logEl.textContent = w
+        ? (msg ? msg + " " : "") + "🏆 Defenses broken — the region is now unclaimed! 📖 Pass its lesson to occupy it."
+        : (msg || "💀 Defeated — survivors retreat to your home base.");
+      ov.querySelector("#btBtns").innerHTML = '<button id="btDone" class="back-btn">' + (w ? "✅ OK" : "↩ Retreat") + '</button>';
       ov.querySelector("#btDone").addEventListener("click", () => {
         const survivors = att.filter(u => u.hp > 0).map(u => ({ type: u.type, hp: Math.round(u.hp) }));
         closeModal();

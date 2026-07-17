@@ -327,6 +327,8 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_student_save()
         elif path == "/api/territory/claim":
             self._handle_territory_claim()
+        elif path == "/api/territory/release":
+            self._handle_territory_release()
         elif path == "/api/economy/set":
             self._handle_economy_set()
         else:
@@ -549,16 +551,38 @@ class Handler(BaseHTTPRequestHandler):
             hp = int(t.get("hp", 0) or 0)
             troops.append({"type": ty, "hp": max(0, min(100000, hp))})
         region_pop = int(d.get("pop", 0) or 0)
+        # 佔領只發生在「無主」據點：有主據點要先打贏 → /territory/release 清成無主，才能佔領。
+        # 因此這裡不會有前主人可扣（扣人口在 release 時就處理過了）。
+        with terr_lock:
+            store = load_territory_store()
+            store[f] = {"owner": user, "avatar": str(d.get("avatar", "👦"))[:8],
+                        "troops": troops, "pop": region_pop}
+            save_territory_store(store)
+        self._send({"ok": True})
+
+    # 攻方打贏「有主」據點後呼叫：把該據點清成「無主」，前主人扣掉該區人口。
+    # 攻方不會馬上取得所有權——之後要走「過關→佔領」流程才真正佔領。
+    def _handle_territory_release(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        d = self._body_json()
+        f = (d.get("file") or "").strip()
+        if not f:
+            self._send({"error": "missing file"}, 400)
+            return
+        region_pop = int(d.get("pop", 0) or 0)
         prev_owner = None
         with terr_lock:
             store = load_territory_store()
             prev = store.get(f)
             if isinstance(prev, dict):
                 prev_owner = prev.get("owner")
-            store[f] = {"owner": user, "avatar": str(d.get("avatar", "👦"))[:8],
-                        "troops": troops, "pop": region_pop}
-            save_territory_store(store)
-        # 從別人手中奪下 → 前主人的人口扣掉該區人口（離線也算）
+            if f in store:
+                del store[f]           # 清空守備 → 恢復無主
+                save_territory_store(store)
+        # 前主人失去該區 → 扣人口（離線也算）
         if prev_owner and prev_owner != user and region_pop > 0:
             with econ_lock:
                 es = load_econ_store()
