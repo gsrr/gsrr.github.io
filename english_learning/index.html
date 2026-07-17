@@ -4262,6 +4262,8 @@
     const mine = [];
     if (territory && territory.holders) Object.keys(territory.holders).forEach(f => {
       const h = territory.holders[f];
+      // 地區已與課程脫鉤 → 只認地圖地區(key 含 "#")；舊版綁課程的殘留(key=課程檔名)忽略不顯示
+      if (f.indexOf("#") < 0) return;
       if (h && h.owner && (h.owner || "").toLowerCase() === me) mine.push({ file: f, h: h });
     });
     let garTotal = 0; mine.forEach(m => garTotal += sumHp(m.h.troops));
