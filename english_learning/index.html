@@ -904,6 +904,14 @@
   .geo-idx { font-size: 13px; }
   .lb-name { font-size: 16px; }
   .lb-score { font-size: 14px; }
+  /* Level 10 Role-play */
+  .rp-convo { display: flex; flex-direction: column; gap: 8px; max-height: 42vh; overflow-y: auto; margin-bottom: 12px; }
+  .rp-controls { text-align: center; }
+  .rp-turn { font-weight: 700; color: #e8edf5; margin-bottom: 6px; }
+  .rp-line { font-size: 20px; font-weight: 800; color: #1e293b; background: #fff9c3; border: 1px solid #fde68a; border-radius: 12px; padding: 10px 14px; margin: 0 auto 10px; max-width: 460px; }
+  .rp-fb { min-height: 22px; font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .rp-ok { color: #86efac; } .rp-bad { color: #fcd34d; } .rp-scoring { color: #93c5fd; }
+  .rp-done { font-size: 18px; font-weight: 800; color: #86efac; text-align: center; line-height: 1.6; }
   .atk-proj { position: fixed; font-size: 30px; z-index: 300; pointer-events: none; will-change: transform, opacity;
     transition: transform .5s cubic-bezier(.45,0,.9,.5), opacity .5s ease-in; filter: drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
   .hidden { display: none !important; }
@@ -1131,6 +1139,7 @@
       <div class="levelTab hidden" data-level="7" data-name="Level 7 · WH Questions ❓"><span class="lvl">7</span><span class="emoji">❓</span></div>
       <div class="levelTab hidden" data-level="8" data-name="Level 8 · Dictation ✍️"><span class="lvl">8</span><span class="emoji">✍️</span></div>
       <div class="levelTab hidden" data-level="9" data-name="Level 9 · Fill Blank 📝"><span class="lvl">9</span><span class="emoji">📝</span></div>
+      <div class="levelTab hidden" data-level="10" data-name="Level 10 · Role-play 🎭"><span class="lvl">10</span><span class="emoji">🎭</span></div>
     </div>
     <div class="level-name" id="levelName"></div>
 
@@ -1238,6 +1247,13 @@
     <div id="level9" class="hidden">
       <p class="match-intro">Read the sentence and choose the right word for the blank 📝 <span id="clozeTypeBadge" class="cloze-badge"></span></p>
       <div id="clozeBox"></div>
+    </div>
+
+    <div id="level10" class="hidden">
+      <p class="match-intro">🎭 Role-play! You act one character — read your lines out loud. <span id="rpRole"></span></p>
+      <div id="rpConvo" class="rp-convo"></div>
+      <div id="rpControls" class="rp-controls"></div>
+      <div id="rpProgress" class="reorder-progress"></div>
     </div>
 
     <div id="lessonSummary" class="lesson-summary hidden"></div>
@@ -1383,6 +1399,7 @@
   const level7El = document.getElementById("level7");
   const level8El = document.getElementById("level8");
   const level9El = document.getElementById("level9");
+  const level10El = document.getElementById("level10");
   const nextLevelBtn = document.getElementById("nextLevelBtn");
   const levelFinish = document.getElementById("levelFinish");
   const finishRetry = document.getElementById("finishRetry");
@@ -1450,6 +1467,8 @@
     level7El.classList.add("hidden");
     level8El.classList.add("hidden");
     level9El.classList.add("hidden");
+    level10El.classList.add("hidden");
+    stopRolePlay();
     levelFinish.classList.add("hidden");   // 換關卡時收起「下一關」
     hideLessonSummary();                     // 換關卡時收起整課總分
     // 動畫場景只在 Level 1 顯示（依文章換場景）
@@ -1464,7 +1483,8 @@
     else if (lv === "6") { level6El.classList.remove("hidden"); }
     else if (lv === "7") { level7El.classList.remove("hidden"); }
     else if (lv === "8") { level8El.classList.remove("hidden"); }
-    else { level9El.classList.remove("hidden"); }
+    else if (lv === "9") { level9El.classList.remove("hidden"); }
+    else { level10El.classList.remove("hidden"); startRolePlay(); }
     refreshLockedTabs();
   }));
 
@@ -1637,12 +1657,16 @@
   // 這篇文章「會計分」的關卡（Level 1 聽力不計；2/3/4/5 必有，6/7/8/9 視資料而定）
   function scoredLevelsFor(a) {
     // manifest 帶 levels（含 1 聽，不計分）；計分關卡為 2 以上
-    if (a.levels && a.levels.length) return a.levels.filter(l => l >= 2).map(String);
-    const lv = ["2", "3", "4", "5"];
-    if (a.reorder && a.reorder.length)   lv.push("6");
-    if (a.wh && a.wh.length)             lv.push("7");
-    if (a.dictation && a.dictation.length) lv.push("8");
-    if (a.cloze && a.cloze.length)       lv.push("9");
+    let lv;
+    if (a.levels && a.levels.length) lv = a.levels.filter(l => l >= 2).map(String);
+    else {
+      lv = ["2", "3", "4", "5"];
+      if (a.reorder && a.reorder.length)   lv.push("6");
+      if (a.wh && a.wh.length)             lv.push("7");
+      if (a.dictation && a.dictation.length) lv.push("8");
+      if (a.cloze && a.cloze.length)       lv.push("9");
+    }
+    if (lv.indexOf("10") < 0) lv.push("10");   // Level 10 Role-play：所有課都有對話，一律計分
     return lv;
   }
   // 從一個 scores 物件算出某課狀態（後台 dashboard 也用，故抽出來）
@@ -2995,6 +3019,119 @@
   }
 
   // 把 "Tom: Hi, Anna." 這種純文字解析成 { who, gender, text }
+  /* ===== Level 10：🎭 Role-play 角色扮演對話練習（電腦扮一角、你扮另一角，你的台詞用語音辨識，寬鬆比對）===== */
+  let rp = null, rpRec = null, rpChunks = [], rpRecording = false;
+  function stopRolePlay() {
+    try { if (rpRec && rpRec.state === "recording") rpRec.stop(); } catch (e) {}
+    rpRecording = false; rp = null; try { synth.cancel(); } catch (e) {}
+  }
+  function rpNorm(s) { return (s || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean); }
+  const RP_STOP = new Set("a an the is are am was were be been to of and or but in on at it its i you he she we they me him her them my your his our this that these those do does did will would can could should have has had not no yes so if then there here as with for".split(" "));
+  function rpClose(a, b) {   // 短詞容錯：前綴相符或編輯距離 ≤1（吸收 STT 咬字誤差）
+    if (a === b) return true;
+    if (a.length >= 4 && b.length >= 3 && (a.indexOf(b) === 0 || b.indexOf(a) === 0)) return true;
+    if (Math.abs(a.length - b.length) > 1) return false;
+    let i = 0, j = 0, e = 0;
+    while (i < a.length && j < b.length) {
+      if (a[i] === b[j]) { i++; j++; }
+      else { e++; if (e > 1) return false; if (a.length > b.length) i++; else if (b.length > a.length) j++; else { i++; j++; } }
+    }
+    return (e + (a.length - i) + (b.length - j)) <= 1;
+  }
+  function rpMatch(target, said) {   // 回傳關鍵字命中比例（0~1）
+    const saidW = rpNorm(said); if (!saidW.length) return 0;
+    const all = rpNorm(target), key = all.filter(w => !RP_STOP.has(w)), pool = key.length ? key : all;
+    if (!pool.length) return 1;
+    const set = new Set(saidW); let hit = 0;
+    pool.forEach(w => { if (set.has(w) || saidW.some(s => rpClose(s, w))) hit++; });
+    return hit / pool.length;
+  }
+  function rpAvatar(l) { return l.gender === "male" ? "👦" : "👧"; }
+  function rpBubble(l, cls) {
+    return '<div class="line ' + (l.gender === "male" ? "male" : "female") + ' ' + (cls || "") + '">' +
+      '<span class="who">' + rpAvatar(l) + ' ' + dispName(l.who) + '</span><span>' + l.text + '</span></div>';
+  }
+  function startRolePlay() {
+    const convo = document.getElementById("rpConvo"), ctrl = document.getElementById("rpControls");
+    if (!script || script.length < 2) { convo.innerHTML = '<p class="op-hint">This lesson has no dialogue.</p>'; ctrl.innerHTML = ""; return; }
+    const speakers = []; script.forEach(l => { if (speakers.indexOf(l.who) < 0) speakers.push(l.who); });
+    const you = speakers[Math.floor(Math.random() * speakers.length)];   // 電腦隨機選你扮的角色
+    rp = { you: you, i: 0, pass: 0, total: script.filter(l => l.who === you).length, done: false };
+    const meLine = script.find(l => l.who === you);
+    document.getElementById("rpRole").innerHTML = 'You are <b>' + dispName(you) + '</b> ' + rpAvatar(meLine);
+    rpRender();
+  }
+  function rpRender() {
+    if (!rp) return;
+    const convo = document.getElementById("rpConvo"), ctrl = document.getElementById("rpControls"), prog = document.getElementById("rpProgress");
+    convo.innerHTML = script.slice(0, rp.i).map(l => rpBubble(l)).join("");
+    prog.textContent = "Line " + Math.min(rp.i + 1, script.length) + " / " + script.length + "  ·  🎭 You: " + dispName(rp.you);
+    if (rp.i >= script.length) return rpFinish();
+    const line = script[rp.i];
+    if (line.who !== rp.you) {                       // 電腦的台詞
+      convo.innerHTML += rpBubble(line, "active");
+      ctrl.innerHTML = '<div class="rp-turn">🔊 ' + dispName(line.who) + ' speaks…</div>' +
+        '<div class="op-btns"><button id="rpPlay" class="dict-play">🔊 Again</button><button id="rpNext" class="dict-play">Continue ▶</button></div>';
+      const play = () => { if (!playClip(line.text, line.gender)) speakQuestion(line.text); };
+      play();
+      ctrl.querySelector("#rpPlay").addEventListener("click", play);
+      ctrl.querySelector("#rpNext").addEventListener("click", () => { rp.i++; rpRender(); });
+    } else {                                          // 你的台詞：錄音辨識
+      ctrl.innerHTML = '<div class="rp-turn">🎭 Your turn — read this out loud:</div>' +
+        '<div class="rp-line">“' + line.text + '”</div><div class="rp-fb" id="rpFb"></div>' +
+        '<div class="op-btns"><button id="rpRec" class="attack-btn" style="background:#ef4444;font-size:16px;padding:12px 24px">🎤 Record</button>' +
+        '<button id="rpSkip" class="back-btn">Skip ▶</button></div>';
+      ctrl.querySelector("#rpRec").addEventListener("click", () => rpRecordToggle(line));
+      ctrl.querySelector("#rpSkip").addEventListener("click", () => { rp.i++; rpRender(); });
+    }
+    convo.scrollTop = convo.scrollHeight;
+  }
+  function rpRecordToggle(line) {
+    const fb = document.getElementById("rpFb"), recBtn = document.getElementById("rpRec");
+    if (rpRecording) { try { if (rpRec && rpRec.state === "recording") rpRec.stop(); } catch (e) {} rpRecording = false; return; }
+    if (/FBAN|FBAV|FB_IAB|Instagram/i.test(navigator.userAgent || "") || !navigator.mediaDevices || !window.MediaRecorder) { rpNoMic(fb); return; }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+      rpChunks = []; rpRec = new MediaRecorder(stream);
+      rpRec.ondataavailable = e => { if (e.data.size > 0) rpChunks.push(e.data); };
+      rpRec.onstop = () => {
+        const blob = new Blob(rpChunks, { type: rpRec.mimeType || "audio/webm" });
+        stream.getTracks().forEach(t => t.stop());
+        fb.innerHTML = '<span class="rp-scoring">🎯 Checking…</span>'; recBtn.disabled = true;
+        fetch("/api/stt?text=" + encodeURIComponent(line.text), { method: "POST", body: blob })
+          .then(r => r.ok ? r.json() : Promise.reject())
+          .then(d => rpJudge(line, (d && d.transcript) || "", fb, recBtn))
+          .catch(() => { recBtn.disabled = false; recBtn.textContent = "🎤 Record"; recBtn.classList.remove("recording"); rpRecording = false; rpNoMic(fb, true); });
+      };
+      rpRec.start(); rpRecording = true;
+      recBtn.textContent = "⏹ Stop"; recBtn.classList.add("recording");
+      fb.innerHTML = '<span class="rp-scoring">🎙️ Recording… say your line, then Stop.</span>';
+    }).catch(() => rpNoMic(fb));
+  }
+  function rpJudge(line, transcript, fb, recBtn) {
+    recBtn.disabled = false; recBtn.textContent = "🎤 Record"; recBtn.classList.remove("recording"); rpRecording = false;
+    if (rpMatch(line.text, transcript) >= 0.6) {
+      rp.pass++;
+      fb.innerHTML = '<span class="rp-ok">✅ Great! (heard: “' + (transcript || "") + '”)</span>';
+      setTimeout(() => { rp.i++; rpRender(); }, 950);
+    } else {
+      fb.innerHTML = '<span class="rp-bad">🔁 Heard “' + (transcript || "…") + '”. Try again, or Skip ▶</span>';
+    }
+  }
+  function rpNoMic(fb, serverFail) {   // 無麥克風/後端 → 榮譽制：念完按鈕放行（算通過）
+    fb.innerHTML = '<span class="rp-bad">' + (serverFail ? "Speech check needs the server. " : "No mic here. ") + 'Read it aloud, then:</span>' +
+      '<div class="op-btns"><button id="rpSaid" class="dict-play">✓ I said it — next</button></div>';
+    const b = fb.querySelector("#rpSaid"); if (b) b.addEventListener("click", () => { rp.pass++; rp.i++; rpRender(); });
+  }
+  function rpFinish() {
+    if (!rp || rp.done) return; rp.done = true;
+    const pct = Math.round(rp.pass / Math.max(1, rp.total) * 100);
+    document.getElementById("rpControls").innerHTML =
+      '<div class="rp-done">🎉 Role-play complete!<br>You nailed <b>' + rp.pass + '</b>/' + rp.total + ' of your lines (' + pct + '%).</div>';
+    document.getElementById("rpProgress").textContent = "";
+    recordScore(10, rp.pass, rp.total);   // 計入該課通過分數
+    markLevelDone(10);
+  }
+
   function parseDialogue(text) {
     return text.split(/\r?\n/).map(s => s.trim()).filter(Boolean).map(line => {
       const m = line.match(/^([^:：]+)[:：]\s*(.*)$/);
@@ -3086,20 +3223,16 @@
     const badge = document.getElementById("clozeTypeBadge");
     badge.textContent = content.clozeType ? (clozeTypeLabel[content.clozeType] || content.clozeType) : "";
 
+    // Level 10（Role-play）：只要有對話(≥2 句)就顯示 → 所有課都有
+    const tab10 = document.querySelector('.levelTab[data-level="10"]');
+    if (tab10) tab10.classList.toggle("hidden", !(script && script.length >= 2));
+
     // 還原這篇文章已完成的關卡並更新進度條
     restoreProgress();
   }
 
   // 計算一篇文章共有幾關、已完成幾關（給課程卡片顯示）
-  function articleTotal(a) {
-    if (a.levels && a.levels.length) return a.levels.filter(l => l >= 2).length;
-    let t = 5;
-    if (a.reorder && a.reorder.length) t++;
-    if (a.wh && a.wh.length) t++;
-    if (a.dictation && a.dictation.length) t++;
-    if (a.cloze && a.cloze.length) t++;
-    return t;
-  }
+  function articleTotal(a) { return scoredLevelsFor(a).length; }
   function articleDone(a) {
     try { return JSON.parse(localStorage.getItem(progKey(a.file)) || "[]").length; }
     catch (e) { return 0; }
