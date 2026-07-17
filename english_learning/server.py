@@ -485,6 +485,14 @@ class Handler(BaseHTTPRequestHandler):
 
     # ---- 公開排行榜：依每個帳號 sdata.stats（前端算好的通過課數/英雄等級）----
     def _handle_leaderboard(self):
+        with terr_lock:
+            tstore = load_territory_store()
+        regions = {}
+        for f, h in tstore.items():
+            if isinstance(h, dict) and h.get("owner"):
+                regions[h["owner"]] = regions.get(h["owner"], 0) + 1
+        with econ_lock:
+            estore = load_econ_store()
         with acct_lock:
             db = load_accounts()
             out = []
@@ -492,9 +500,12 @@ class Handler(BaseHTTPRequestHandler):
                 if user == "testaccount":
                     continue
                 stats = (load_progress(user).get("sdata") or {}).get("stats") or {}
+                e = estore.get(user) if isinstance(estore, dict) else None
+                pop = clampi((e or {}).get("population", ECON_START_POP)) if isinstance(e, dict) else ECON_START_POP
                 out.append({"name": user, "avatar": stats.get("avatar", "👦"),
+                            "population": pop, "regions": regions.get(user, 0),
                             "passed": int(stats.get("passed", 0) or 0), "level": int(stats.get("level", 1) or 1)})
-        out.sort(key=lambda x: (-x["passed"], -x["level"], x["name"].lower()))
+        out.sort(key=lambda x: (-x["population"], -x["regions"], x["name"].lower()))
         self._send({"leaders": out[:50]})
 
     # ---- 占地盤：每個據點由「4 兵種 + 兵力」守備（攻方 4v4 打贏才換人）----

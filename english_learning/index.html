@@ -4153,15 +4153,15 @@
     const L = (data && data.leaders) || [];
     if (!L.length) { el.innerHTML = '<p class="screen-intro">No players yet.</p>'; return; }
     const counts = (terr && terr.counts) || {};
-    L.forEach(p => { p.held = counts[p.name] || 0; });
-    L.sort((a, b) => (b.held - a.held) || (b.passed - a.passed) || (b.level - a.level) || a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+    L.forEach(p => { if (p.regions == null) p.regions = counts[p.name] || 0; if (p.population == null) p.population = 100; });
+    L.sort((a, b) => (b.population - a.population) || (b.regions - a.regions) || a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
     const me = (authUser() || "").toLowerCase();
-    el.innerHTML = '<p class="screen-intro" style="margin:0 0 8px">🚩 Most outposts held wins the map!</p>' + L.map((p, i) => {
+    el.innerHTML = '<p class="screen-intro" style="margin:0 0 8px">👑 Biggest empire (most population) wins the world!</p>' + L.map((p, i) => {
       const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "#" + (i + 1);
       const mine = p.name.toLowerCase() === me ? ' style="background:#eff6ff;border-color:#93c5fd"' : "";
       return '<div class="lb-row"' + mine + '><span class="lb-rank">' + medal + '</span>' +
         '<span class="lb-name">' + (p.avatar || "👦") + ' ' + dispName(p.name) + '</span>' +
-        '<span class="lb-score">🚩 ' + p.held + ' · ✅ ' + p.passed + '</span></div>';
+        '<span class="lb-score">👥 ' + p.population + ' · 🚩 ' + p.regions + '</span></div>';
     }).join("");
   }
   document.getElementById("openLeaderBtn").addEventListener("click", openLeaderboard);
