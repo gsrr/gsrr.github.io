@@ -3767,6 +3767,34 @@
       return sum || 500;
     } catch (e) { return 500; }
   }
+  // Boss 對戰 = 領土佔領的兵種 4v4 對戰，唯一差別：每回合「誰出手」由答題結果決定
+  //   答對 → 你的前排攻擊 Boss 前排；答錯 → Boss 前排攻擊你的前排。傷害公式/克制/兵力係數與 runBattle 相同。
+  function makeBossSquad(budget) {
+    const base = Math.floor(budget / 4);
+    const types = shuffle(TROOPS.map(t => t.id));   // 四種兵各一，給玩家克制空間
+    const arr = [];
+    for (let i = 0; i < 4; i++) { const hp = base + (i === 0 ? budget - base * 4 : 0); arr.push({ type: types[i], hp: hp, max: hp }); }
+    return arr;
+  }
+  function faIdx(arr) { let i = 0; while (i < arr.length && arr[i].hp <= 0) i++; return i; }
+  function examUnitHTML(u, cur) {
+    const pct = u.max ? Math.max(0, Math.round(u.hp / u.max * 100)) : 0;
+    return '<div class="bt-unit' + (u.hp <= 0 ? " dead" : "") + (cur ? " cur" : "") + '"><div class="bt-emo">' + TROOP[u.type].emoji + '</div>' +
+      '<div class="bt-hpbar"><span class="bt-hpfill" style="width:' + pct + '%"></span></div><div class="bt-hp">' + Math.max(0, Math.round(u.hp)) + '</div></div>';
+  }
+  function examSideHTML(arr, front) {
+    return '<div class="bt-side">' + arr.map((u, i) => examUnitHTML(u, i === front)).join("") + '</div>';
+  }
+  function examRender() {
+    const bi = faIdx(exam.boss), pi = faIdx(exam.squad);
+    document.getElementById("battleStats").innerHTML =
+      '<div class="bt-vs">🐲 Boss army</div>' + examSideHTML(exam.boss, bi) +
+      examSideHTML(exam.squad, pi) + '<div class="bt-vs">🗡️ Your army</div>';
+    const bAlive = exam.boss.reduce((s, u) => s + Math.max(0, u.hp), 0);
+    const pAlive = exam.squad.reduce((s, u) => s + Math.max(0, u.hp), 0);
+    document.getElementById("bossHpFill").style.width = (exam.bMax ? Math.max(0, bAlive / exam.bMax * 100) : 0) + "%";
+    document.getElementById("heroHpFill").style.width = (exam.pMax ? Math.max(0, pAlive / exam.pMax * 100) : 0) + "%";
+  }
   async function startLevelExam(levelIdx) {
     const lv = manifest.levels[levelIdx], next = manifest.levels[levelIdx + 1], spec = GEO_MAPS[lv.id];
     clearGame();
@@ -3777,29 +3805,40 @@
     bossEmojiEl.textContent = "🐲"; heroEmojiEl.textContent = userName ? avatarOf(userName) : "🦸";
     bossEmojiEl.classList.remove("defeated"); heroEmojiEl.classList.remove("defeated");
     document.getElementById("battleQ").textContent = ""; document.getElementById("battleOpts").innerHTML = "";
+    document.getElementById("battleStats").innerHTML = "";
     document.getElementById("battleLog").textContent = "Loading…";
     showScreen(screenBattle);
     await new Promise(res => loadEconomy(res));
-    const P = Math.max(10, (myEcon && myEcon.population) || 10);   // 你的軍隊 = 帝國人口
-    const B = await mapPopSum(spec);                              // Boss = 地圖人口總和
+    const T = Math.max(0, (myEcon && myEcon.troops) || 0);   // 你出戰的兵力（從兵力池扣）
+    const B = await mapPopSum(spec);                         // Boss 兵力總量 = 地圖人口總和
     const pool = await buildExamPool(lv);
     if (pool.length < 1) { document.getElementById("battleLog").textContent = "No questions for this level."; return; }
-    exam = { pool: pool, qi: 0, pHP: P, pMax: P, bHP: B, bMax: B, streak: 0, over: false, levelIdx: levelIdx, next: next };
-    examHUD(); examNext();
-  }
-  function comboMult() { return 1 + 0.1 * exam.streak; }
-  function examHUD() {
-    document.getElementById("battleStats").innerHTML =
-      "🐲 Boss <b>" + Math.max(0, Math.round(exam.bHP)) + "</b>/" + exam.bMax +
-      "　🛡️ Army <b>" + Math.max(0, Math.round(exam.pHP)) + "</b>/" + exam.pMax +
-      (exam.streak > 0 ? "　🔥×" + comboMult().toFixed(1) : "");
-    document.getElementById("bossHpFill").style.width = Math.max(0, exam.bHP / exam.bMax * 100) + "%";
-    document.getElementById("heroHpFill").style.width = Math.max(0, exam.pHP / exam.pMax * 100) + "%";
+    const bossSquad = makeBossSquad(B);
+    // 出戰佈署（與攻打領地相同）：Boss 兵種先亮出來，你挑 4 張牌並分配兵力
+    const host = document.getElementById("battleStats");
+    host.innerHTML = '<div class="bt-vs">🐲 Boss army (' + B + ')</div>' + examSideHTML(bossSquad, -1);
+    document.getElementById("battleLog").textContent = "Pick your squad, then charge the boss!";
+    if (T <= 0) {
+      const income = Math.round(((myEcon && myEcon.population) || 0) * 0.10);
+      host.innerHTML += '<p class="op-hint">⚠️ No troops to fight with. Your home base makes <b>' + income + '</b>/day — conquer regions & come back.</p>';
+      return;
+    }
+    const box = document.createElement("div");
+    host.appendChild(box);
+    deployPanel(box, T, { attack: true, foe: bossSquad, label: "⚔️ Charge the Boss", onGo: squad => {
+      myEcon.troops = Math.max(0, T - sumHp(squad));   // 出戰即扣兵力
+      saveEconomy(function () { renderEmpire(); });
+      const my = squad.map(u => ({ type: u.type, hp: u.hp, max: u.hp }));
+      exam = { pool: pool, qi: 0, boss: bossSquad, squad: my,
+        bMax: bossSquad.reduce((s, u) => s + u.hp, 0), pMax: my.reduce((s, u) => s + u.hp, 0),
+        lastAi: -1, lastDi: -1, engage: 0, over: false, levelIdx: levelIdx, next: next };
+      examRender(); examNext();
+    } });
   }
   function examNext() {
     if (exam.over) return;
     const q = exam.pool[exam.qi % exam.pool.length]; exam.qi++;
-    document.getElementById("battleLog").textContent = "🔊 Listen & fill the blank — Q" + exam.qi;
+    document.getElementById("battleLog").textContent = "🔊 Listen & fill the blank — answer to attack!";
     const qEl = document.getElementById("battleQ");
     qEl.textContent = "🔊 " + q.q; qEl.style.cursor = "pointer";
     qEl.onclick = () => { if (!playClip(q.say, "female")) speakQuestion(q.say); };
@@ -3810,41 +3849,50 @@
   function examAnswer(q, choice, btn, opts) {
     if (exam.over) return;
     opts.querySelectorAll(".opt").forEach(b => { b.disabled = true; if (b.textContent === q.correct) b.classList.add("correct"); });
+    const ai = faIdx(exam.squad), di = faIdx(exam.boss);
+    if (ai >= exam.squad.length || di >= exam.boss.length) return;
+    const a = exam.squad[ai], d = exam.boss[di];
+    if (ai === exam.lastAi && di === exam.lastDi) exam.engage++; else { exam.engage = 1; exam.lastAi = ai; exam.lastDi = di; }
     if (choice === q.correct) {
-      exam.streak++;
-      const dmg = Math.max(1, Math.round(exam.pMax * 0.15 * comboMult()));   // 你的攻擊（含連對 combo）
-      exam.bHP -= dmg;
-      const type = ATK_TYPES[Math.floor(Math.random() * ATK_TYPES.length)];   // 隨機一個兵種出擊
-      playTroopAttack(type, heroEmojiEl, bossEmojiEl, "r", () => fxDmg(bossEmojiEl, dmg, "toboss"));
-      document.getElementById("battleLog").textContent = "✅ " + ATK_NAME[type] + "! −" + dmg + (exam.streak > 1 ? "  🔥×" + comboMult().toFixed(1) : "");
-      examHUD();
-      if (exam.bHP <= 0) { exam.over = true; setTimeout(examWin, 800); return; }
+      // 你的回合：你的前排攻擊 Boss 前排（非弓兵逼近弓兵每回合 +10%）
+      const closeA = (a.type !== "archer" && d.type === "archer") ? 0.1 * exam.engage : 0;
+      const dmg = troopHit(a, d, closeA); d.hp -= dmg;
+      playTroopAttack(a.type, heroEmojiEl, bossEmojiEl, "r", () => fxDmg(bossEmojiEl, dmg, "toboss"));
+      document.getElementById("battleLog").textContent = "✅ " + TROOP[a.type].emoji + " strikes " + TROOP[d.type].emoji + " −" + dmg +
+        (atkBonus(a.type, d.type) > 1 ? " ✨counter!" : "");
     } else {
-      exam.streak = 0; btn.classList.add("wrong");
-      const dmg = Math.max(1, Math.round(exam.pMax * 0.15));   // Boss 反擊（固定比例，不秒殺；連對歸零）
-      exam.pHP -= dmg;
+      btn.classList.add("wrong");
+      const closeD = (d.type !== "archer" && a.type === "archer") ? 0.1 * exam.engage : 0;
+      const dmg = troopHit(d, a, closeD); a.hp -= dmg;
       playTroopAttack("boss", bossEmojiEl, heroEmojiEl, "l", () => fxDmg(heroEmojiEl, dmg, "tohero"));
-      document.getElementById("battleLog").textContent = "❌ Wrong — the boss strikes back −" + dmg;
-      examHUD();
-      if (exam.pHP <= 0) { exam.over = true; setTimeout(examLose, 800); return; }
+      document.getElementById("battleLog").textContent = "❌ Wrong! Boss " + TROOP[d.type].emoji + " strikes " + TROOP[a.type].emoji + " −" + dmg +
+        (atkBonus(d.type, a.type) > 1 ? " ⚠️counter" : "");
     }
+    examRender();
+    if (faIdx(exam.boss) >= exam.boss.length) { exam.over = true; setTimeout(examWin, 900); return; }
+    if (faIdx(exam.squad) >= exam.squad.length) { exam.over = true; setTimeout(examLose, 900); return; }
     setTimeout(examNext, 1100);
   }
   function examWin() {
     bossEmojiEl.classList.add("defeated");
     const lv = manifest.levels[exam.levelIdx], next = exam.next;
+    const surv = sumHp(exam.squad);
+    if (surv > 0 && myEcon) { myEcon.troops += surv; saveEconomy(function () { renderEmpire(); }); }   // 生還者撤回兵力池
     setExamPassed(lv.id);
     document.getElementById("battleQ").textContent = ""; document.getElementById("battleOpts").innerHTML = ""; document.getElementById("battleLog").textContent = "";
     const rr = document.getElementById("battleResult"); rr.classList.remove("hidden");
-    rr.innerHTML = '<div class="battle-msg">🏆 Boss defeated! ' + (next ? next.name + " unlocked!" : "You are a Champion!") + '</div>' +
+    rr.innerHTML = '<div class="battle-msg">🏆 Boss defeated! ' + (next ? next.name + " unlocked!" : "You are a Champion!") +
+      (surv > 0 ? '<br><span style="font-size:14px;color:#94a3b8">' + surv + ' troops return home.</span>' : '') + '</div>' +
       '<div class="battle-btns"><button id="examDone" class="back-btn">Back to Levels</button></div>';
     document.getElementById("examDone").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
   }
   function examLose() {
     heroEmojiEl.classList.add("defeated");
+    const surv = sumHp(exam.squad);
+    if (surv > 0 && myEcon) { myEcon.troops += surv; saveEconomy(function () { renderEmpire(); }); }
     document.getElementById("battleQ").textContent = ""; document.getElementById("battleOpts").innerHTML = ""; document.getElementById("battleLog").textContent = "";
     const rr = document.getElementById("battleResult"); rr.classList.remove("hidden");
-    rr.innerHTML = '<div class="battle-msg" style="color:#b91c1c">💀 Your army fell! Conquer more regions (bigger population = bigger army), then retry.</div>' +
+    rr.innerHTML = '<div class="battle-msg" style="color:#b91c1c">💀 Your army fell! Conquer more regions (bigger army) & study the lessons, then retry.</div>' +
       '<div class="battle-btns"><button id="examRetry" class="dict-play">Try again</button><button id="examBack" class="back-btn">Back to Levels</button></div>';
     document.getElementById("examRetry").addEventListener("click", () => startLevelExam(exam.levelIdx));
     document.getElementById("examBack").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
