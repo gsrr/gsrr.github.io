@@ -1024,15 +1024,6 @@
       <div id="leaderBody"></div>
     </div>
 
-    <!-- 畫面 0f：卡片圖鑑 -->
-    <div id="screenDex" class="hidden">
-      <div class="learn-top">
-        <button class="back-btn" id="backFromDex">← Back</button>
-        <span class="learn-title">🎴 Card Dex</span>
-      </div>
-      <div id="dexBody"></div>
-    </div>
-
     <!-- 畫面 1：選等級 -->
     <div id="screenLevel" class="hidden">
       <div class="learn-top">
@@ -1044,8 +1035,6 @@
       <div id="dailyBanner" class="daily-banner"></div>
       <div id="energyBar" class="energy"></div>
       <div style="text-align:center;margin-bottom:14px">
-        <button id="openDexBtn" style="background:#16a34a;color:#fff;display:none">🎴 Card Dex</button>
-        <button id="openArenaBtn" style="background:#7c3aed;color:#fff;display:none">🏆 Arena Tournament</button>
         <button id="openLeaderBtn" style="background:#0ea5e9;color:#fff">🏅 Leaderboard</button>
       </div>
       <div id="testGamesWrap" class="hidden" style="text-align:center;margin-bottom:14px"><button id="testGamesBtn" class="back-btn">🎮 Test Games (tester)</button></div>
@@ -1262,38 +1251,6 @@
       </div>
       <div id="gameArea" class="hidden"></div>
       <div id="battleResult" class="hidden"></div>
-    </div>
-
-    <!-- 畫面 5：競技場 PvP -->
-    <div id="screenArena" class="hidden">
-      <div class="learn-top">
-        <button class="back-btn" id="backFromArena">← Levels</button>
-        <span class="learn-title">⚔️ Arena</span>
-      </div>
-      <div id="arenaSetup">
-        <p class="screen-intro">🏆 Single-elimination tournament — every player and every monster fights until one champion remains!</p>
-        <div style="text-align:center;margin-top:10px"><button id="arenaFight" class="dict-play">Start Tournament 🏆</button></div>
-      </div>
-      <div id="arenaBattle" class="hidden">
-        <div id="arenaStatus" class="battle-stats"></div>
-        <div id="arenaBracket" class="bkt"><svg id="bktLines"></svg><div id="bktCols" class="bkt-cols"></div></div>
-        <div id="arenaFighters" class="battle-arena hidden">
-          <div class="fighter">
-            <div class="fighter-emoji" id="arenaE1"></div>
-            <div class="hp-bar"><span id="arenaHp1" class="hp-fill hero"></span></div>
-            <div class="fighter-name" id="arenaN1"></div>
-          </div>
-          <div class="vs">VS</div>
-          <div class="fighter">
-            <div class="fighter-emoji" id="arenaE2"></div>
-            <div class="hp-bar"><span id="arenaHp2" class="hp-fill boss"></span></div>
-            <div class="fighter-name" id="arenaN2"></div>
-          </div>
-        </div>
-        <div id="arenaLog" class="battle-log"></div>
-        <div style="text-align:center;margin:8px 0"><button id="arenaSkip" class="back-btn">⏭ Skip to result</button></div>
-        <div id="arenaResult" class="hidden"></div>
-      </div>
     </div>
 
     <div id="visitorBox" class="visitor"></div>
@@ -2849,7 +2806,6 @@
   const screenArticle = document.getElementById("screenArticle");
   const screenLearn   = document.getElementById("screenLearn");
   const screenBattle  = document.getElementById("screenBattle");
-  const screenArena   = document.getElementById("screenArena");
   const statsBody     = document.getElementById("statsBody");
   const profileGrid   = document.getElementById("profileGrid");
   const newProfileForm = document.getElementById("newProfileForm");
@@ -2999,10 +2955,10 @@
   userNameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") addProfile(); });
 
   function showScreen(el) {
-    [screenLanding, screenRole, screenProfile, screenStudentAcct, screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena, screenTeacher, screenAdmin, screenLeader, screenDex].forEach(s => s.classList.add("hidden"));
+    [screenLanding, screenRole, screenProfile, screenStudentAcct, screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenTeacher, screenAdmin, screenLeader].forEach(s => s.classList.add("hidden"));
     el.classList.remove("hidden");
     // 右上角區（使用者鈕 + 匯出）：只在學生 app 內的畫面顯示
-    const inApp = [screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenArena, screenDex].indexOf(el) !== -1;
+    const inApp = [screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle].indexOf(el) !== -1;
     const teacherView = (el === screenTeacher && !!authToken());   // 老師面板也用右上角顯示名字+登出
     topRight.classList.toggle("hidden", !((userName && inApp) || teacherView));
   }
@@ -3229,24 +3185,9 @@
       '<span>⚔️ ' + h.atk + '</span><span>🛡️ ' + h.def + '</span><span>🍀 ' + h.luck + '</span>' +
       (h.unspent ? '<span class="hero-unspent">' + h.unspent + ' pts to spend</span>' : '') + '</div>';
 
-    // 🎴 Boss 卡收藏：看所有卡、加點數、選出戰卡、看部署在哪
-    const cc = loadCards(), canSpend = cc.unspent > 0, dep = myDeployMap();
-    function statBtn(id, stat, ico, val) {
-      return '<button class="coll-plus" data-id="' + id + '" data-stat="' + stat + '"' + (canSpend ? '' : ' disabled') + '>' +
-        ico + val + (canSpend ? ' ＋' : '') + '</button>';
-    }
-    const cardsHtml = "";   // Boss 卡收藏已停用（改用兵種佔領系統）
-
     statsBody.innerHTML =
       '<p class="screen-intro">' + (userName ? 'Hi, ' + userName + ' 👋' : '') + '</p>' +
-      heroHtml + cardsHtml + statCards + badgeHtml + levelHtml;
-    statsBody.querySelectorAll(".coll-plus").forEach(b => b.addEventListener("click", () => {
-      const res = spendPointOnCard(b.dataset.id, b.dataset.stat); if (!res) return;
-      if (res.evolved) showEvolveModal(res.evolved, renderProfileStats); else renderProfileStats();
-    }));
-    statsBody.querySelectorAll(".coll-set").forEach(b => b.addEventListener("click", () => {
-      const c = loadCards(); c.active = b.dataset.id; saveCards(c); renderProfileStats();
-    }));
+      heroHtml + statCards + badgeHtml + levelHtml;
   }
 
   function renderDailyReport() {
@@ -3912,230 +3853,6 @@
     try { Object.assign(h, JSON.parse(localStorage.getItem("hero:" + name) || "{}")); } catch (e) {}
     return h;
   }
-  let arena = null;
-  function renderArenaIntro() {
-    document.getElementById("arenaBattle").classList.add("hidden");
-    document.getElementById("arenaSetup").classList.remove("hidden");
-    document.getElementById("arenaResult").classList.add("hidden");
-    document.getElementById("arenaResult").innerHTML = "";
-  }
-  // 參賽者：最多 10 名。先放所有玩家，不足再隨機補怪物（怪物數值依星級 tier 給）
-  function arenaCompetitors() {
-    const CAP = 10;
-    const players = shuffle(loadProfiles().map(n => ({ name: n, av: avatarOf(n), hero: loadHeroFor(n), kind: "player" })));
-    const monsters = [];
-    Object.keys(VILLAINS).forEach(tier => {
-      const t = parseInt(tier, 10);
-      VILLAINS[tier].forEach(emo =>
-        monsters.push({ name: "Lv" + t + " Foe", av: emo, hero: { atk: t * 2, def: t, luck: t, unspent: 0 }, kind: "monster" }));
-    });
-    const list = players.slice(0, CAP);
-    const mons = shuffle(monsters);
-    for (let i = 0; i < mons.length && list.length < CAP; i++) list.push(mons[i]);
-    return shuffle(list);
-  }
-  function arenaFighter(comp) { const max = heroMaxHP(comp.hero); return { name: comp.name, av: comp.av, hero: comp.hero, max: max, hp: max, ref: comp }; }
-  // 純模擬一場（給怪物對怪物 / Skip 用），回傳勝方 comp。含爆擊與閃避
-  function arenaSim(a, b) {
-    let ah = heroMaxHP(a.hero), bh = heroMaxHP(b.hero), t = Math.random() < 0.5 ? 0 : 1, g = 0;
-    while (ah > 0 && bh > 0 && g++ < 3000) {
-      const at = (t % 2 === 0) ? a : b, df = (t % 2 === 0) ? b : a;
-      if (Math.random() >= dodgeChance(df.hero.luck)) {        // 沒被閃避才造成傷害
-        let d = Math.max(1, (5 + at.hero.atk * 2) - df.hero.def);
-        if (Math.random() < critChance(at.hero.luck)) d *= 2;
-        if (t % 2 === 0) bh -= d; else ah -= d;
-      }
-      t++;
-    }
-    return ah > 0 ? a : b;
-  }
-
-  function startTournament() {
-    const comp = arenaCompetitors();
-    const n = comp.length;
-    let size = 1; while (size < n) size *= 2; if (size < 2) size = 2;
-    const half = size / 2;           // 第一輪場數
-    const byes = size - n;           // 輪空數：每場最多一個，避免出現空場（byes < half 必成立）
-    const rounds = [];
-    const r0 = [];
-    let ri = 0;
-    for (let m = 0; m < half; m++) {
-      if (m < byes) r0.push({ a: comp[ri++], b: null, w: null });     // (選手, 輪空)
-      else r0.push({ a: comp[ri++], b: comp[ri++], w: null });        // (選手, 選手)
-    }
-    rounds.push(r0);
-    for (let cnt = half / 2; cnt >= 1; cnt = Math.floor(cnt / 2)) {
-      rounds.push(Array.from({ length: cnt }, () => ({ a: null, b: null, w: null })));
-      if (cnt === 1) break;
-    }
-    arena = { rounds: rounds, R: rounds.length, order: [], ci: 0, over: false, curMatch: null, am: null };
-    rounds.forEach((rr, r) => rr.forEach((m, i) => arena.order.push({ r: r, i: i })));
-    document.getElementById("arenaSetup").classList.add("hidden");
-    document.getElementById("arenaResult").classList.add("hidden");
-    document.getElementById("arenaResult").innerHTML = "";
-    document.getElementById("arenaBattle").classList.remove("hidden");
-    document.getElementById("arenaFighters").classList.add("hidden");
-    renderBracket();
-    setTimeout(playCurrent, 500);
-  }
-  function propagate(r, i, winner) {
-    if (r + 1 >= arena.R) return;
-    const nm = arena.rounds[r + 1][Math.floor(i / 2)];
-    if (i % 2 === 0) nm.a = winner; else nm.b = winner;
-  }
-  function resolveMatch(r, i, winner) {
-    arena.rounds[r][i].w = winner;
-    propagate(r, i, winner);
-    renderBracket();
-    if (r === arena.R - 1) return arenaChampion(winner);
-    arena.ci++;
-    setTimeout(playCurrent, 80);
-  }
-  function playCurrent() {
-    if (!arena || arena.over) return;
-    if (arena.ci >= arena.order.length) {
-      const fin = arena.rounds[arena.R - 1][0];
-      if (fin && fin.w) return arenaChampion(fin.w);
-      return;
-    }
-    const r = arena.order[arena.ci].r, i = arena.order[arena.ci].i;
-    const m = arena.rounds[r][i];
-    document.getElementById("arenaStatus").textContent = "🏆 Round " + (r + 1) + " / " + arena.R;
-    if (!m.a && !m.b) return resolveMatch(r, i, null);          // 兩邊都輪空
-    if (!m.a || !m.b) { arena.curMatch = { r: r, i: i }; return resolveMatch(r, i, m.a || m.b); }   // 輪空晉級
-    if (m.a.kind === "monster" && m.b.kind === "monster") {     // 怪物 vs 怪物 → 跳過過程直接出結果
-      arena.curMatch = { r: r, i: i };
-      document.getElementById("arenaFighters").classList.add("hidden");
-      document.getElementById("arenaLog").textContent = m.a.av + " " + m.a.name + "  vs  " + m.b.av + " " + m.b.name + " …";
-      const w = arenaSim(m.a, m.b);
-      renderBracket();
-      setTimeout(() => resolveMatch(r, i, w), 240);
-      return;
-    }
-    animateMatch(r, i, m);                                       // 有玩家參與 → 動畫對戰
-  }
-  function animateMatch(r, i, m) {
-    arena.curMatch = { r: r, i: i };
-    arena.am = { r: r, i: i, f1: arenaFighter(m.a), f2: arenaFighter(m.b), turn: Math.random() < 0.5 ? 0 : 1 };
-    document.getElementById("arenaFighters").classList.remove("hidden");
-    const e1 = document.getElementById("arenaE1"), e2 = document.getElementById("arenaE2");
-    e1.textContent = arena.am.f1.av; e2.textContent = arena.am.f2.av;
-    e1.classList.remove("defeated"); e2.classList.remove("defeated");
-    document.getElementById("arenaN1").textContent = arena.am.f1.name + " (LV." + heroLevel(arena.am.f1.hero) + ")";
-    document.getElementById("arenaN2").textContent = arena.am.f2.name + " (LV." + heroLevel(arena.am.f2.hero) + ")";
-    arenaHud();
-    renderBracket();
-    document.getElementById("arenaLog").textContent = arena.am.f1.name + "  VS  " + arena.am.f2.name;
-    setTimeout(arenaStep, 700);
-  }
-  function arenaHud() {
-    document.getElementById("arenaHp1").style.width = Math.max(0, arena.am.f1.hp / arena.am.f1.max * 100) + "%";
-    document.getElementById("arenaHp2").style.width = Math.max(0, arena.am.f2.hp / arena.am.f2.max * 100) + "%";
-  }
-  function arenaStep() {
-    if (!arena || arena.over || !arena.am) return;
-    const am = arena.am, p1turn = am.turn % 2 === 0;
-    const atkF = p1turn ? am.f1 : am.f2, defF = p1turn ? am.f2 : am.f1;
-    const atkEl = document.getElementById(p1turn ? "arenaE1" : "arenaE2");
-    const defEl = document.getElementById(p1turn ? "arenaE2" : "arenaE1");
-    if (Math.random() < dodgeChance(defF.hero.luck)) {          // 🍀 閃避：完全免傷
-      fxLunge(atkEl, p1turn ? "r" : "l");
-      document.getElementById("arenaLog").textContent = defF.name + " dodged! 💨🍀";
-      am.turn++;
-      setTimeout(arenaStep, 600);
-      return;
-    }
-    let dmg = Math.max(1, (5 + atkF.hero.atk * 2) - defF.hero.def);
-    const crit = Math.random() < critChance(atkF.hero.luck);
-    if (crit) dmg *= 2;
-    defF.hp -= dmg;
-    fxLunge(atkEl, p1turn ? "r" : "l"); fxHit(defEl); fxDmg(defEl, dmg, crit ? "toboss crit" : "tohero");
-    document.getElementById("arenaLog").textContent = atkF.name + " hits " + defF.name + "  −" + dmg + (crit ? " 🍀 CRIT!" : "");
-    arenaHud();
-    am.turn++;
-    if (defF.hp <= 0) {
-      defEl.classList.add("defeated");
-      const w = atkF.ref, r = am.r, i = am.i;
-      arena.am = null;
-      setTimeout(() => resolveMatch(r, i, w), 800);
-      return;
-    }
-    setTimeout(arenaStep, 600);
-  }
-  // Skip：把目前＋剩下所有對戰瞬間算完，直接出冠軍
-  function skipArena() {
-    if (!arena || arena.over) return;
-    arena.am = null;
-    document.getElementById("arenaFighters").classList.add("hidden");
-    let guard = 0;
-    while (arena.ci < arena.order.length && guard++ < 10000) {
-      const r = arena.order[arena.ci].r, i = arena.order[arena.ci].i, m = arena.rounds[r][i];
-      const w = (m.a && m.b) ? arenaSim(m.a, m.b) : (m.a || m.b);
-      m.w = w; propagate(r, i, w);
-      if (r === arena.R - 1) { renderBracket(); return arenaChampion(w); }
-      arena.ci++;
-    }
-    renderBracket();
-  }
-  function bktCell(comp, winner) {
-    if (!comp) return '<div class="bkt-cell bye">bye</div>';
-    const cls = winner ? (winner === comp ? " win" : " lose") : "";
-    return '<div class="bkt-cell' + cls + '">' + comp.av + ' ' + comp.name + '</div>';
-  }
-  function renderBracket() {
-    const cols = document.getElementById("bktCols");
-    if (!cols || !arena) return;
-    let html = "";
-    for (let r = 0; r < arena.R; r++) {
-      html += '<div class="bkt-round">';
-      arena.rounds[r].forEach((m, i) => {
-        const cur = (arena.curMatch && arena.curMatch.r === r && arena.curMatch.i === i) ? " cur" : "";
-        html += '<div class="bkt-match' + cur + '" id="bm-' + r + '-' + i + '">' +
-                bktCell(m.a, m.w) + bktCell(m.b, m.w) + '</div>';
-      });
-      html += '</div>';
-    }
-    cols.innerHTML = html;
-    if (typeof requestAnimationFrame !== "undefined") requestAnimationFrame(drawConnectors); else drawConnectors();
-  }
-  // 用實際版面位置畫出賽程連接線（肘形折線）
-  function drawConnectors() {
-    const wrap = document.getElementById("arenaBracket"), svg = document.getElementById("bktLines");
-    if (!wrap || !svg || !arena) return;
-    const base = wrap.getBoundingClientRect();
-    const W = wrap.scrollWidth, H = wrap.scrollHeight;
-    svg.setAttribute("width", W); svg.setAttribute("height", H);
-    let d = "";
-    for (let r = 0; r < arena.R - 1; r++) {
-      arena.rounds[r].forEach((m, i) => {
-        const from = document.getElementById("bm-" + r + "-" + i);
-        const to = document.getElementById("bm-" + (r + 1) + "-" + Math.floor(i / 2));
-        if (!from || !to) return;
-        const a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
-        const x1 = a.right - base.left + wrap.scrollLeft, y1 = a.top + a.height / 2 - base.top + wrap.scrollTop;
-        const x2 = b.left - base.left + wrap.scrollLeft, y2 = b.top + b.height / 2 - base.top + wrap.scrollTop;
-        const midX = (x1 + x2) / 2;
-        d += "M" + x1 + " " + y1 + " H" + midX + " V" + y2 + " H" + x2 + " ";
-      });
-    }
-    svg.innerHTML = '<path d="' + d + '" fill="none" stroke="#94a3b8" stroke-width="2"/>';
-  }
-  function arenaChampion(comp) {
-    arena.over = true;
-    document.getElementById("arenaLog").textContent = "";
-    document.getElementById("arenaStatus").textContent = "🏆 Tournament complete!";
-    document.getElementById("arenaFighters").classList.add("hidden");
-    arena.curMatch = null;
-    renderBracket();
-    const r = document.getElementById("arenaResult");
-    r.classList.remove("hidden");
-    r.innerHTML = '<div class="battle-msg">🏆 Champion: ' + (comp ? comp.av + ' ' + comp.name : "—") + '!</div>' +
-      '<div class="battle-btns"><button id="arenaRematch" class="dict-play">New Tournament 🏆</button>' +
-      '<button id="arenaBack" class="back-btn">Back</button></div>';
-    document.getElementById("arenaRematch").addEventListener("click", startTournament);
-    document.getElementById("arenaBack").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
-  }
-  document.getElementById("openArenaBtn").addEventListener("click", () => { renderArenaIntro(); showScreen(screenArena); });
   document.getElementById("testGamesBtn").addEventListener("click", openGameTest);
   function openLeaderboard() {
     document.getElementById("leaderBody").innerHTML = '<p class="screen-intro">Loading…</p>';
@@ -4166,38 +3883,6 @@
   }
   document.getElementById("openLeaderBtn").addEventListener("click", openLeaderboard);
   document.getElementById("backFromLeader").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
-  document.getElementById("backFromArena").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
-  // 🎴 卡片圖鑑：列出所有課的卡，未收集是灰色 ?；依屬性循環的克制提示
-  function openCardDex() {
-    const owned = {}; loadCards().list.forEach(c => owned[c.id] = c);
-    const all = []; (manifest ? manifest.levels : []).forEach(lv => lv.articles.forEach(a => all.push({ a: a, lv: lv })));
-    const got = all.filter(x => owned[x.a.file]).length;
-    let html = '<p class="screen-intro" style="margin:0 0 4px">Collected <b>' + got + '</b> / ' + all.length + ' cards 🎴</p>' +
-      '<p class="dex-legend">' + ELEMENTS.map(e => e.icon + e.name).join(" › ") + ' › ' + ELEMENTS[0].icon +
-      ' &nbsp; ⬜Common 🔵Rare 🟣Epic</p>';
-    (manifest ? manifest.levels : []).forEach(lv => {
-      html += '<div class="dex-lv">' + (lv.icon || "") + ' ' + (lv.name || lv.id) + '</div><div class="dex-grid">';
-      lv.articles.forEach(a => {
-        const cd = owned[a.file];
-        if (cd) {
-          const stg = "★".repeat(cd.stage || 1);
-          html += '<div class="dex-card ' + cardRarity(cd).cls + '"><div class="dex-emo">' + cd.emoji + '</div>' +
-            '<div class="dex-badge">' + cardElem(cd).icon + cardRarity(cd).star + '</div>' +
-            '<div class="dex-nm">' + cd.name + '</div><div class="dex-pw">LV.' + heroLevel(cd) + ' · <span class="dex-stg">' + stg + '</span></div></div>';
-        } else {
-          html += '<div class="dex-card dex-locked"><div class="dex-emo">❔</div>' +
-            '<div class="dex-nm">' + (a.title ? a.title.split("·").pop().trim() : a.id) + '</div><div class="dex-pw">locked</div></div>';
-        }
-      });
-      html += '</div>';
-    });
-    document.getElementById("dexBody").innerHTML = html;
-    showScreen(screenDex);
-  }
-  document.getElementById("openDexBtn").addEventListener("click", openCardDex);
-  document.getElementById("backFromDex").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
-  document.getElementById("arenaFight").addEventListener("click", startTournament);
-  document.getElementById("arenaSkip").addEventListener("click", skipArena);
 
   // 畫面 2：課程卡片
   let _mapTo = [];
@@ -4930,7 +4615,6 @@
   const screenTeacher = document.getElementById("screenTeacher");
   const screenAdmin   = document.getElementById("screenAdmin");
   const screenLeader  = document.getElementById("screenLeader");
-  const screenDex     = document.getElementById("screenDex");
   // 單一帳號：學生入口與老師入口共用同一個 token
   function authToken() { try { return localStorage.getItem("auth:token") || ""; } catch (e) { return ""; } }
   function authUser()  { try { return localStorage.getItem("auth:user") || ""; } catch (e) { return ""; } }
