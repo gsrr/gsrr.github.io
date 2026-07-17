@@ -3520,77 +3520,105 @@
   }
   document.getElementById("battleBack").addEventListener("click", quitBattle);
 
-  /* ============ 等級進階大考（quiz Boss：20 題 × 5 分，到 80 打敗 Boss；錯 5 題被擊敗） ============ */
+  /* ====== Level Boss：兵種戰鬥 + 答題決定攻守 ======
+     你的軍隊 = 佔領的 population 總和；Boss 兵力 = 這張地圖人口總和。
+     每題克漏字(有語音)：答對→你的軍隊攻擊 Boss(連續答對 combo 每次 +10%)；答錯→Boss 反擊你。 */
   let exam = null;
   async function buildExamPool(lv) {
     const qs = [];
-    for (const a of lv.articles) {
+    const arts = (lv.articles || []).concat(LEVEL_ARCS[lv.id] || []);
+    for (const a of arts) {
       let c = null;
       try { const r = await fetch(a.file + ".json", { cache: "no-cache" }); if (r.ok) c = await r.json(); } catch (e) {}
       if (!c) continue;
-      // 只用填空題：一句完整句子挖一格，單看題目就懂，不依賴某篇文章的前後文
-      (c.cloze || []).forEach(it => qs.push({ q: it.text.replace("___", "_____"), opts: shuffle([it.answer].concat(it.wrong || [])), correct: it.answer }));
+      (c.cloze || []).forEach(it => qs.push({ q: it.text.replace("___", "_____"), say: it.text.replace("___", "blank"), opts: shuffle([it.answer].concat(it.wrong || [])), correct: it.answer }));
     }
     return shuffle(qs);
   }
+  async function mapPopSum(spec) {
+    if (!spec || !spec.file) return 500;
+    try {
+      const txt = await fetchMap(spec.file);
+      const doc = new DOMParser().parseFromString(txt, "image/svg+xml");
+      const isRegion = spec.region || ((id, p) => !!p.getAttribute("aria-label"));
+      let sum = 0;
+      Array.prototype.forEach.call(doc.querySelectorAll("path"), p => {
+        if (!isRegion(p.id, p)) return;
+        const name = spec.names ? (spec.names[p.id] || p.id) : (p.getAttribute("aria-label") || p.id);
+        sum += popForName(name);
+      });
+      return sum || 500;
+    } catch (e) { return 500; }
+  }
   async function startLevelExam(levelIdx) {
-    const lv = manifest.levels[levelIdx], next = manifest.levels[levelIdx + 1];
+    const lv = manifest.levels[levelIdx], next = manifest.levels[levelIdx + 1], spec = GEO_MAPS[lv.id];
     clearGame();
     document.getElementById("bossWrap").classList.remove("hidden");
     document.getElementById("gameArea").classList.add("hidden");
-    document.getElementById("battleTitle").textContent = "🐲 Level-Up Test → " + (next ? next.name : "Champion");
+    document.getElementById("battleTitle").textContent = "🐲 Level Boss → " + (next ? next.name : "Champion");
     const rr = document.getElementById("battleResult"); rr.classList.add("hidden"); rr.innerHTML = "";
     bossEmojiEl.textContent = "🐲"; heroEmojiEl.textContent = userName ? avatarOf(userName) : "🦸";
     bossEmojiEl.classList.remove("defeated"); heroEmojiEl.classList.remove("defeated");
     document.getElementById("battleQ").textContent = ""; document.getElementById("battleOpts").innerHTML = "";
-    document.getElementById("battleLog").textContent = "Loading questions…";
+    document.getElementById("battleLog").textContent = "Loading…";
     showScreen(screenBattle);
+    await new Promise(res => loadEconomy(res));
+    const P = Math.max(10, (myEcon && myEcon.population) || 10);   // 你的軍隊 = 帝國人口
+    const B = await mapPopSum(spec);                              // Boss = 地圖人口總和
     const pool = await buildExamPool(lv);
     if (pool.length < 1) { document.getElementById("battleLog").textContent = "No questions for this level."; return; }
-    exam = { pool: pool, qi: 0, score: 0, wrong: 0, over: false, levelIdx: levelIdx };
+    exam = { pool: pool, qi: 0, pHP: P, pMax: P, bHP: B, bMax: B, streak: 0, over: false, levelIdx: levelIdx, next: next };
     examHUD(); examNext();
   }
+  function comboMult() { return 1 + 0.1 * exam.streak; }
   function examHUD() {
-    document.getElementById("battleStats").textContent = "🎯 " + exam.score + "/80   ❌ " + exam.wrong + "/5";
-    document.getElementById("bossHpFill").style.width = Math.max(0, (80 - exam.score) / 80 * 100) + "%";
-    document.getElementById("heroHpFill").style.width = Math.max(0, (5 - exam.wrong) / 5 * 100) + "%";
+    document.getElementById("battleStats").innerHTML =
+      "🐲 Boss <b>" + Math.max(0, Math.round(exam.bHP)) + "</b>/" + exam.bMax +
+      "　🛡️ Army <b>" + Math.max(0, Math.round(exam.pHP)) + "</b>/" + exam.pMax +
+      (exam.streak > 0 ? "　🔥×" + comboMult().toFixed(1) : "");
+    document.getElementById("bossHpFill").style.width = Math.max(0, exam.bHP / exam.bMax * 100) + "%";
+    document.getElementById("heroHpFill").style.width = Math.max(0, exam.pHP / exam.pMax * 100) + "%";
   }
   function examNext() {
     if (exam.over) return;
     const q = exam.pool[exam.qi % exam.pool.length]; exam.qi++;
-    document.getElementById("battleLog").textContent = "Question " + exam.qi;
-    document.getElementById("battleQ").textContent = q.q;
+    document.getElementById("battleLog").textContent = "🔊 Listen & fill the blank — Q" + exam.qi;
+    const qEl = document.getElementById("battleQ");
+    qEl.textContent = "🔊 " + q.q; qEl.style.cursor = "pointer";
+    qEl.onclick = () => { if (!playClip(q.say, "female")) speakQuestion(q.say); };
     const opts = document.getElementById("battleOpts"); opts.innerHTML = "";
     q.opts.forEach(o => { const b = document.createElement("button"); b.className = "opt"; b.textContent = o; b.addEventListener("click", () => examAnswer(q, o, b, opts)); opts.appendChild(b); });
+    if (!playClip(q.say, "female")) speakQuestion(q.say);   // 自動播題目語音
   }
   function examAnswer(q, choice, btn, opts) {
     if (exam.over) return;
     opts.querySelectorAll(".opt").forEach(b => { b.disabled = true; if (b.textContent === q.correct) b.classList.add("correct"); });
     if (choice === q.correct) {
-      exam.score += 5;
-      fxLunge(heroEmojiEl, "r"); fxHit(bossEmojiEl); fxDmg(bossEmojiEl, 5, "toboss");
-      document.getElementById("battleLog").textContent = "✅ Correct! +5";
+      exam.streak++;
+      const dmg = Math.max(1, Math.round(exam.pMax * 0.15 * comboMult()));   // 你的攻擊（含連對 combo）
+      exam.bHP -= dmg;
+      fxLunge(heroEmojiEl, "r"); fxHit(bossEmojiEl); fxDmg(bossEmojiEl, dmg, "toboss");
+      document.getElementById("battleLog").textContent = "✅ Correct! Your army hits −" + dmg + (exam.streak > 1 ? "  🔥×" + comboMult().toFixed(1) : "");
       examHUD();
-      if (exam.score >= 80) { exam.over = true; setTimeout(examWin, 800); return; }
+      if (exam.bHP <= 0) { exam.over = true; setTimeout(examWin, 800); return; }
     } else {
-      exam.wrong++; btn.classList.add("wrong");
-      fxLunge(bossEmojiEl, "l"); fxHit(heroEmojiEl); fxDmg(heroEmojiEl, 1, "tohero");
-      document.getElementById("battleLog").textContent = "❌ Wrong — the boss hits you! (" + exam.wrong + "/5)";
+      exam.streak = 0; btn.classList.add("wrong");
+      const dmg = Math.max(1, Math.round(exam.pMax * 0.15));   // Boss 反擊（固定比例，不秒殺；連對歸零）
+      exam.pHP -= dmg;
+      fxLunge(bossEmojiEl, "l"); fxHit(heroEmojiEl); fxDmg(heroEmojiEl, dmg, "tohero");
+      document.getElementById("battleLog").textContent = "❌ Wrong — the boss strikes back −" + dmg;
       examHUD();
-      if (exam.wrong >= 5) { exam.over = true; setTimeout(examLose, 800); return; }
+      if (exam.pHP <= 0) { exam.over = true; setTimeout(examLose, 800); return; }
     }
-    setTimeout(examNext, 950);
+    setTimeout(examNext, 1100);
   }
   function examWin() {
     bossEmojiEl.classList.add("defeated");
-    const lv = manifest.levels[exam.levelIdx], next = manifest.levels[exam.levelIdx + 1];
-    const first = !examPassed(lv.id);
+    const lv = manifest.levels[exam.levelIdx], next = exam.next;
     setExamPassed(lv.id);
-    let bonus = 0;
-    if (first) { bonus = 5; const h = loadHero(); h.unspent += bonus; saveHero(h); }
     document.getElementById("battleQ").textContent = ""; document.getElementById("battleOpts").innerHTML = ""; document.getElementById("battleLog").textContent = "";
     const rr = document.getElementById("battleResult"); rr.classList.remove("hidden");
-    rr.innerHTML = '<div class="battle-msg">🏆 You beat the boss! ' + (next ? next.name + " unlocked!" : "You are a Champion!") + (bonus ? "  +" + bonus + " points!" : "") + '</div>' +
+    rr.innerHTML = '<div class="battle-msg">🏆 Boss defeated! ' + (next ? next.name + " unlocked!" : "You are a Champion!") + '</div>' +
       '<div class="battle-btns"><button id="examDone" class="back-btn">Back to Levels</button></div>';
     document.getElementById("examDone").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
   }
@@ -3598,7 +3626,7 @@
     heroEmojiEl.classList.add("defeated");
     document.getElementById("battleQ").textContent = ""; document.getElementById("battleOpts").innerHTML = ""; document.getElementById("battleLog").textContent = "";
     const rr = document.getElementById("battleResult"); rr.classList.remove("hidden");
-    rr.innerHTML = '<div class="battle-msg" style="color:#b91c1c">💀 The boss won! Practice more and try again.</div>' +
+    rr.innerHTML = '<div class="battle-msg" style="color:#b91c1c">💀 Your army fell! Conquer more regions (bigger population = bigger army), then retry.</div>' +
       '<div class="battle-btns"><button id="examRetry" class="dict-play">Try again</button><button id="examBack" class="back-btn">Back to Levels</button></div>';
     document.getElementById("examRetry").addEventListener("click", () => startLevelExam(exam.levelIdx));
     document.getElementById("examBack").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
@@ -4147,7 +4175,7 @@
         const bossWrap = document.createElement("div"); bossWrap.className = "geo-boss";
         const next = manifest.levels[i + 1], bp = examPassed(lv.id);
         const bBtn = document.createElement("button"); bBtn.className = "geo-boss-btn" + (bp ? " done" : "");
-        bBtn.innerHTML = (bp ? "🏆 " : "🐉 ") + (next ? "Level Boss" : "Final Boss") + " · 20Q";
+        bBtn.innerHTML = (bp ? "🏆 " : "🐉 ") + (next ? "Level Boss" : "Final Boss") + " · quiz battle";
         bBtn.addEventListener("click", () => startLevelExam(i));
         bossWrap.appendChild(bBtn); wrap.appendChild(bossWrap);
       }
