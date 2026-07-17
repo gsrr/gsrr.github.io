@@ -560,6 +560,11 @@
   .dep-type { display: flex; gap: 3px; }
   .dep-ty { font-size: 16px; padding: 2px 5px; border: 1px solid #cbd5e1; border-radius: 7px; background: #f1f5f9; cursor: pointer; opacity: .45; }
   .dep-ty.sel { opacity: 1; border-color: #2563eb; background: #eff6ff; }
+  .dep-help-btn { font-size: 12px; font-weight: 700; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 1px 7px; cursor: pointer; }
+  .dep-help { font-size: 12.5px; line-height: 1.5; color: #334155; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 10px; margin: 0 0 8px; }
+  .dep-adv { font-size: 12px; font-weight: 800; white-space: nowrap; margin-left: 2px; }
+  .dep-adv .adv-s { color: #16a34a; margin-left: 3px; }
+  .dep-adv .adv-w { color: #dc2626; margin-left: 3px; }
   .empire-bar { max-width: 440px; margin: 0 auto 8px; padding: 6px 12px; border-radius: 10px;
     background: rgba(124,58,237,.18); border: 1px solid rgba(167,139,250,.45); color: #e8edf5; font-size: 13px; text-align: center; }
   .empire-bar .emp-inc { color: #a9b6c8; }
@@ -4448,7 +4453,7 @@
       if (T <= 0) { terr.innerHTML = '<p class="op-hint">⚠️ No troops to attack with. Home base makes <b>' + income + '</b>/day — wait and grow.</p>'; }
       else {
         terr.innerHTML = '<p class="op-hint">⚔️ Attack! Pick 4 cards (any types, e.g. all archers) & split your troops (max ' + T + '):</p>';
-        deployPanel(terr, T, { attack: true, label: "⚔️ Attack", onGo: squad => {
+        deployPanel(terr, T, { attack: true, foe: h.troops || [], label: "⚔️ Attack", onGo: squad => {
           const A = sumHp(squad); myEcon.troops = Math.max(0, T - A); closeModal();
           runBattle(squad, h.troops || [], dispName(h.owner), function (win, survivors) {
             if (win) { myEcon.population += regionPop; claimTroops(file, survivors, regionPop, function () {}); }
@@ -4472,17 +4477,33 @@
       else slots.push({ type: TROOPS[i % 4].id, hp: base + (i === 0 ? budget - base * 4 : 0) });
     }
     const wrap = document.createElement("div"); wrap.className = "dep";
-    wrap.innerHTML = '<p class="dep-left">Troops left: <span class="dep-l">0</span> / ' + budget + '</p><div class="dep-rows"></div>' +
+    const foeTypes = (opts.foe || []).map(t => t.type);
+    function advText(ty) {                       // 該兵種對守軍的克制提示
+      if (!foeTypes.length) return "";
+      const strong = [], weak = [];
+      foeTypes.forEach(ft => { if (atkBonus(ty, ft) > 1 && strong.indexOf(ft) < 0) strong.push(ft); if (atkBonus(ft, ty) > 1 && weak.indexOf(ft) < 0) weak.push(ft); });
+      return (strong.length ? '<span class="adv-s">▲' + strong.map(f => TROOP[f].emoji).join("") + '</span>' : '') +
+        (weak.length ? '<span class="adv-w">▼' + weak.map(f => TROOP[f].emoji).join("") + '</span>' : '');
+    }
+    wrap.innerHTML = '<p class="dep-left">Troops left: <span class="dep-l">0</span> / ' + budget +
+      ' <button type="button" class="dep-help-btn">❓ How</button></p>' +
+      '<div class="dep-help" style="display:none"><b>Counters</b> (beats →): 🔱→🐎 · 🐎→🏹 · 🏹→🔱🛡️ &nbsp; 🏹 <b>shoots first</b>.<br>' +
+      'More troops on a card = more damage. 🏠 Your home base makes new troops every day.</div>' +
+      '<div class="dep-rows"></div>' +
       '<div class="op-btns"><button class="dict-play dep-go">' + (opts.label || "Deploy") + '</button></div>';
     const rowsEl = wrap.querySelector(".dep-rows"), leftEl = wrap.querySelector(".dep-l"), goBtn = wrap.querySelector(".dep-go");
+    const helpBox = wrap.querySelector(".dep-help"), helpBtn = wrap.querySelector(".dep-help-btn");
+    helpBtn.addEventListener("click", () => { helpBox.style.display = helpBox.style.display === "none" ? "block" : "none"; });
+    try { if (!localStorage.getItem("troopHelpSeen")) { helpBox.style.display = "block"; localStorage.setItem("troopHelpSeen", "1"); } } catch (e) {}
     function render() {
       rowsEl.innerHTML = "";
       slots.forEach((o, idx) => {
         const row = document.createElement("div"); row.className = "dep-row";
         const picks = TROOPS.map(t => '<button class="dep-ty' + (t.id === o.type ? " sel" : "") + '" data-ty="' + t.id + '" title="' + t.zh + '">' + t.emoji + '</button>').join("");
         row.innerHTML = '<span class="dep-slot">' + (idx + 1) + '</span><span class="dep-type">' + picks + '</span>' +
-          '<input type="range" class="dep-hp" min="0" max="' + budget + '" value="' + o.hp + '"><span class="dep-val">' + o.hp + '</span>';
-        const range = row.querySelector(".dep-hp"), val = row.querySelector(".dep-val");
+          '<input type="range" class="dep-hp" min="0" max="' + budget + '" value="' + o.hp + '"><span class="dep-val">' + o.hp + '</span>' +
+          '<span class="dep-adv">' + advText(o.type) + '</span>';
+        const range = row.querySelector(".dep-hp"), val = row.querySelector(".dep-val"), advEl = row.querySelector(".dep-adv");
         range.addEventListener("input", () => {
           let v = parseInt(range.value, 10) || 0;
           const others = slots.reduce((s, x, j) => s + (j === idx ? 0 : x.hp), 0);
@@ -4491,6 +4512,7 @@
         });
         row.querySelectorAll(".dep-ty").forEach(b => b.addEventListener("click", () => {
           o.type = b.dataset.ty; row.querySelectorAll(".dep-ty").forEach(x => x.classList.toggle("sel", x.dataset.ty === o.type));
+          advEl.innerHTML = advText(o.type);
         }));
         rowsEl.appendChild(row);
       });
