@@ -4280,7 +4280,7 @@
       mine.sort((a, b) => (b.h.pop || 0) - (a.h.pop || 0));
       html += '<div class="stats-h">🚩 Regions (' + mine.length + ')</div><div class="emp-list">';
       mine.forEach(m => {
-        html += '<div class="emp-row"><div class="emp-rg"><b>' + lessonTitleByFile(m.file) + '</b><span class="emp-pop">👥 ' + (m.h.pop || 0) + '</span></div>' +
+        html += '<div class="emp-row"><div class="emp-rg"><b>' + regionDisplayName(m.file) + '</b><span class="emp-pop">👥 ' + (m.h.pop || 0) + '</span></div>' +
           '<div class="emp-gar">' + garrisonHTML(m.h.troops) + '</div></div>';
       });
       html += '</div>';
@@ -4336,6 +4336,16 @@
     return cand[Math.floor(Math.random() * cand.length)];
   }
   function regionKey(spec, p) { return (spec.file || "") + "#" + (p.id || p.getAttribute("aria-label") || ""); }
+  // 領地(regionKey) → 地理名稱 快取：地圖畫出時記錄，讓「我的帝國」等處顯示地區名而非課程名（地區已不綁課程）
+  let regionNames = {};
+  try { regionNames = JSON.parse(localStorage.getItem("regionNames") || "{}") || {}; } catch (e) { regionNames = {}; }
+  function rememberRegion(key, name) { if (key && name && regionNames[key] !== name) { regionNames[key] = name; try { localStorage.setItem("regionNames", JSON.stringify(regionNames)); } catch (e) {} } }
+  function regionDisplayName(key) {
+    if (regionNames[key]) return regionNames[key];
+    const hash = String(key).indexOf("#");
+    if (hash >= 0) { const id = key.slice(hash + 1); if (id) return id.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()); }
+    return lessonTitleByFile(key);
+  }
   // 進入某等級的地理地圖（頂層）
   function renderGeoMap(i, spec) {
     clearMapTimers();
@@ -4402,6 +4412,7 @@
         } else {
           num++;
           const key = regionKey(spec, p), pop = popForName(name);
+          rememberRegion(key, name);   // 記住地區名，供帝國清單等顯示
           p.setAttribute("class", "geo-region");
           addTitle(p, name + " · 👥" + pop);
           const open = () => openRegion(key, name, pop, i);
