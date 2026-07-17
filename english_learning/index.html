@@ -3820,7 +3820,7 @@
     document.getElementById("battleLog").textContent = "Pick your squad, then charge the boss!";
     if (T <= 0) {
       const income = Math.round(((myEcon && myEcon.population) || 0) * 0.10);
-      host.innerHTML += '<p class="op-hint">⚠️ No troops to fight with. Your home base makes <b>' + income + '</b>/day — conquer regions & come back.</p>';
+      host.innerHTML += '<p class="op-hint">⚠️ No troops to fight with. Your home base makes <b>' + income + '</b>/hr — conquer regions & come back.</p>';
       return;
     }
     const box = document.createElement("div");
@@ -4246,7 +4246,7 @@
     }
     if (!authToken()) { bar.style.display = "none"; return; }
     const e = myEcon || { population: 0, troops: 0, income: 0 };
-    bar.innerHTML = '🏠 <b>Home base</b> · 👥 Pop <b>' + e.population + '</b> · ⚔️ Troops <b>' + e.troops + '</b> <span class="emp-inc">(+' + (e.income != null ? e.income : Math.round(e.population * 0.1)) + '/day)</span> <span class="emp-more">details ▸</span>';
+    bar.innerHTML = '🏠 <b>Home base</b> · 👥 Pop <b>' + e.population + '</b> · ⚔️ Troops <b>' + e.troops + '</b> <span class="emp-inc">(+' + (e.income != null ? e.income : Math.round(e.population * 0.1)) + '/hr)</span> <span class="emp-more">details ▸</span>';
     bar.style.display = "block"; bar.style.cursor = "pointer";
     bar.onclick = openEmpire;
   }
@@ -4273,7 +4273,7 @@
       '<div><span>👥</span><b>' + e.population + '</b><small>population</small></div>' +
       '<div><span>⚔️</span><b>' + e.troops + '</b><small>free troops</small></div>' +
       '<div><span>🛡️</span><b>' + garTotal + '</b><small>garrisoned</small></div>' +
-      '<div><span>📈</span><b>+' + inc + '</b><small>troops/day</small></div>' +
+      '<div><span>📈</span><b>+' + inc + '</b><small>troops/hr</small></div>' +
       '</div>' +
       '<div class="emp-note">🏠 Home base is safe — lose a battle and your survivors retreat here.</div>';
     if (!mine.length) {
@@ -4510,7 +4510,7 @@
     const ov = openModal(html);
     ov.querySelector("#opClose").addEventListener("click", closeModal);
     const terr = ov.querySelector("#opTerr");
-    const noTroops = '<p class="op-hint">⚠️ No troops right now. Your home base makes <b>' + income + '</b>/day — come back later.</p>';
+    const noTroops = '<p class="op-hint">⚠️ No troops right now. Your home base makes <b>' + income + '</b>/hr — come back later.</p>';
     if (!authToken()) { terr.innerHTML = '<p class="op-hint">🔒 Log in to raise an army and battle for territory.</p>'; return; }
     if (mine) {
       const oldTot = sumHp(h.troops), budget = T + oldTot;
@@ -4790,7 +4790,7 @@
       } });
     } else if (!h || !h.owner) {
       if (!passed) { terr.innerHTML = '<p class="op-hint">Study &amp; pass this lesson (80%+) to claim it.</p>'; }
-      else if (T <= 0) { terr.innerHTML = '<p class="op-hint">⚠️ No troops yet. Your home base makes <b>' + income + '</b>/day — come back later.</p>'; }
+      else if (T <= 0) { terr.innerHTML = '<p class="op-hint">⚠️ No troops yet. Your home base makes <b>' + income + '</b>/hr — come back later.</p>'; }
       else {
         terr.innerHTML = '<p class="op-hint">🚩 Occupy: send troops from your pool (max ' + T + '):</p>';
         deployPanel(terr, T, { label: "🚩 Occupy", onGo: g => {
@@ -4801,7 +4801,7 @@
       }
     } else {
       if (!passed) { terr.innerHTML = '<p class="op-hint">📖 Pass this lesson (80%+) first — then you can attack this region.</p>'; }
-      else if (T <= 0) { terr.innerHTML = '<p class="op-hint">⚠️ No troops to attack with. Home base makes <b>' + income + '</b>/day — wait and grow.</p>'; }
+      else if (T <= 0) { terr.innerHTML = '<p class="op-hint">⚠️ No troops to attack with. Home base makes <b>' + income + '</b>/hr — wait and grow.</p>'; }
       else {
         terr.innerHTML = '<p class="op-hint">⚔️ Attack! Pick 4 cards (any types, e.g. all archers) & split your troops (max ' + T + '):</p>';
         deployPanel(terr, T, { attack: true, foe: h.troops || [], label: "⚔️ Attack", onGo: squad => {

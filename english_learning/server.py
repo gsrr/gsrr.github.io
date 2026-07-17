@@ -185,7 +185,7 @@ def save_territory_store(t):
 # --- 玩家經濟（每位玩家：人口 population + 兵力 troops + 上次成長時間）---
 ECON_FILE = "/data/economy.json"
 econ_lock = threading.Lock()
-DAY_SECONDS = 86400
+GROW_SECONDS = 3600   # 兵力成長結算間隔：每小時
 ECON_START_POP = 100
 ECON_START_TROOPS = 100
 
@@ -215,7 +215,7 @@ def clampi(v, lo=0, hi=100000000):
     return max(lo, min(hi, v))
 
 
-# 取得（或初始化）玩家經濟，並依「過了幾天」補算兵力產出（人口每天生 10% 給兵力）
+# 取得（或初始化）玩家經濟，並依「過了幾小時」補算兵力產出（人口每小時生 10% 給兵力）
 def econ_get(store, user, now):
     e = store.get(user)
     if not isinstance(e, dict):
@@ -228,10 +228,10 @@ def econ_get(store, user, now):
         last = float(last)
     except Exception:
         last = now
-    days = int((now - last) // DAY_SECONDS)
-    if days > 0:
-        troops = clampi(troops + days * int(round(pop * 0.10)))
-        last = last + days * DAY_SECONDS
+    hours = int((now - last) // GROW_SECONDS)
+    if hours > 0:
+        troops = clampi(troops + hours * int(round(pop * 0.10)))
+        last = last + hours * GROW_SECONDS
     e["population"], e["troops"], e["lastGrow"] = pop, troops, last
     return e
 
