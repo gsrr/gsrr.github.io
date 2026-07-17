@@ -563,6 +563,18 @@
   .empire-bar { max-width: 440px; margin: 0 auto 8px; padding: 6px 12px; border-radius: 10px;
     background: rgba(124,58,237,.18); border: 1px solid rgba(167,139,250,.45); color: #e8edf5; font-size: 13px; text-align: center; }
   .empire-bar .emp-inc { color: #a9b6c8; }
+  .empire-bar .emp-more { color: #c4b5fd; font-weight: 700; margin-left: 4px; }
+  .emp-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 4px 0 10px; }
+  .emp-stats > div { background: #f1f5f9; border-radius: 10px; padding: 8px 2px; text-align: center; }
+  .emp-stats > div > span { font-size: 18px; display: block; line-height: 1.1; }
+  .emp-stats > div > b { font-size: 17px; color: #1e293b; display: block; }
+  .emp-stats > div > small { font-size: 9.5px; color: #64748b; }
+  .emp-note { font-size: 12px; color: #475569; text-align: center; margin-bottom: 10px; }
+  .emp-list { display: flex; flex-direction: column; gap: 6px; max-height: 42vh; overflow-y: auto; margin-bottom: 10px; }
+  .emp-row { border: 1px solid #e2e8f0; border-radius: 10px; padding: 7px 10px; }
+  .emp-rg { font-size: 13px; color: #1e293b; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .emp-pop { color: #7c3aed; font-weight: 700; white-space: nowrap; }
+  .emp-gar { margin-top: 3px; }
   .bt-side { display: flex; gap: 6px; justify-content: center; margin: 6px 0; }
   .bt-unit { width: 56px; text-align: center; padding: 4px 2px; border-radius: 10px; }
   .bt-unit.cur { background: #fef9c3; outline: 2px solid #f59e0b; }
@@ -4223,8 +4235,48 @@
     }
     if (!authToken()) { bar.style.display = "none"; return; }
     const e = myEcon || { population: 0, troops: 0, income: 0 };
-    bar.innerHTML = '🏠 <b>Home base</b> · 👥 Pop <b>' + e.population + '</b> · ⚔️ Troops <b>' + e.troops + '</b> <span class="emp-inc">(+' + (e.income != null ? e.income : Math.round(e.population * 0.1)) + '/day)</span>';
-    bar.style.display = "block";
+    bar.innerHTML = '🏠 <b>Home base</b> · 👥 Pop <b>' + e.population + '</b> · ⚔️ Troops <b>' + e.troops + '</b> <span class="emp-inc">(+' + (e.income != null ? e.income : Math.round(e.population * 0.1)) + '/day)</span> <span class="emp-more">details ▸</span>';
+    bar.style.display = "block"; bar.style.cursor = "pointer";
+    bar.onclick = openEmpire;
+  }
+  // 「我的帝國」面板：總人口/兵力/每日產能 + 所有領地與守軍
+  function openEmpire() {
+    if (!authToken()) return;
+    loadEconomy(function () { loadTerritory(renderEmpireModal); });
+    renderEmpireModal();   // 先用快取畫
+  }
+  function renderEmpireModal() {
+    const me = (authUser() || userName || "").toLowerCase();
+    const e = myEcon || { population: 0, troops: 0, income: 0 };
+    const mine = [];
+    if (territory && territory.holders) Object.keys(territory.holders).forEach(f => {
+      const h = territory.holders[f];
+      if (h && h.owner && (h.owner || "").toLowerCase() === me) mine.push({ file: f, h: h });
+    });
+    let garTotal = 0; mine.forEach(m => garTotal += sumHp(m.h.troops));
+    const inc = e.income != null ? e.income : Math.round(e.population * 0.1);
+    let html = '<h3 class="modal-title">🏰 My Empire</h3>' +
+      '<div class="emp-stats">' +
+      '<div><span>👥</span><b>' + e.population + '</b><small>population</small></div>' +
+      '<div><span>⚔️</span><b>' + e.troops + '</b><small>free troops</small></div>' +
+      '<div><span>🛡️</span><b>' + garTotal + '</b><small>garrisoned</small></div>' +
+      '<div><span>📈</span><b>+' + inc + '</b><small>troops/day</small></div>' +
+      '</div>' +
+      '<div class="emp-note">🏠 Home base is safe — lose a battle and your survivors retreat here.</div>';
+    if (!mine.length) {
+      html += '<p class="op-hint" style="text-align:center">No regions yet. Pass a lesson, then occupy its region on the map!</p>';
+    } else {
+      mine.sort((a, b) => (b.h.pop || 0) - (a.h.pop || 0));
+      html += '<div class="stats-h">🚩 Regions (' + mine.length + ')</div><div class="emp-list">';
+      mine.forEach(m => {
+        html += '<div class="emp-row"><div class="emp-rg"><b>' + lessonTitleByFile(m.file) + '</b><span class="emp-pop">👥 ' + (m.h.pop || 0) + '</span></div>' +
+          '<div class="emp-gar">' + garrisonHTML(m.h.troops) + '</div></div>';
+      });
+      html += '</div>';
+    }
+    html += '<div class="op-btns"><button id="empClose" class="back-btn">✕ Close</button></div>';
+    const ov = openModal(html);
+    ov.querySelector("#empClose").addEventListener("click", closeModal);
   }
   // 各等級對應一張真實地理地圖（沒列到的等級 fallback 用蜿蜒小徑地圖）
   // drill: { 地區id: 子地圖 } → 該地區變「容器」，點進去看子地圖（例：台北市 → 12 行政區）
