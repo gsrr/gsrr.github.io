@@ -87,7 +87,7 @@
   }
   @keyframes twinkle { 0%, 100% { opacity: .95; } 50% { opacity: .45; } }
   body::after {
-    content: "🌙"; position: fixed; top: 26px; left: 30px; z-index: 0; pointer-events: none;
+    content: var(--sky-icon, "🌙"); position: fixed; top: 26px; left: 30px; z-index: 0; pointer-events: none;
     font-size: 60px; line-height: 1;
     filter: drop-shadow(0 0 14px rgba(255,241,150,.55));
   }
@@ -4782,6 +4782,27 @@
   }
 
   initLessons();
+
+  // 左上角天體：白天顯示太陽 🌞，晚上顯示當下月相（朔🌑 → 望🌕 → 晦）。
+  function updateSkyIcon() {
+    const now = new Date();
+    const hour = now.getHours();
+    let icon;
+    if (hour >= 6 && hour < 18) {
+      icon = "🌞";                                   // 白天：太陽
+    } else {
+      // 以 2000-01-06 18:14 UTC 已知朔月為基準，會合月 29.530589 天，換算目前月相
+      const SYN = 29.530588853;
+      const refDays = Date.UTC(2000, 0, 6, 18, 14) / 86400000;
+      let phase = ((now.getTime() / 86400000 - refDays) % SYN) / SYN;
+      if (phase < 0) phase += 1;
+      const idx = Math.round(phase * 8) % 8;         // 0=朔 … 4=望
+      icon = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"][idx];
+    }
+    document.documentElement.style.setProperty("--sky-icon", '"' + icon + '"');
+  }
+  updateSkyIcon();
+  setInterval(updateSkyIcon, 10 * 60 * 1000);        // 每 10 分鐘更新，跨越日夜/月相變化
 
   // 訪客計數：每次載入 +1（需後端 /api；GitHub Pages / file:// 沒有後端時自動略過）
   const visitorBox = document.getElementById("visitorBox");
