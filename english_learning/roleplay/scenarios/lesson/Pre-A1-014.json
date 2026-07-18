@@ -11,188 +11,435 @@
   "nodes": [
     {
       "id": "night",
-      "npc": { "text": "It is night. Look at the moon.", "gender": "male" },
-      "learning_objective": ["Talk about the night sky", "Use: moon, stars"],
+      "npc": {
+        "text": "It is night. Look at the moon.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Talk about the night sky",
+        "Use: moon, stars"
+      ],
       "routes": [
         {
           "intent": "see_stars",
           "meaning": "Anna says she can see many stars.",
-          "examples": ["I can see many stars.", "I see stars.", "I can see many stars in the sky.", "Look, many stars!"],
-          "keywords": ["stars", "star", "many", "see", "moon"],
+          "examples": [
+            "I can see many stars.",
+            "I see stars.",
+            "I can see many stars in the sky.",
+            "Look, many stars!"
+          ],
+          "keywords": [
+            "stars",
+            "star",
+            "many",
+            "see",
+            "moon"
+          ],
           "hint": "💬 Try saying: “I can see many stars.”",
-          "next_nodes": [{ "id": "moon", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "moon",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "wow_stars",
           "meaning": "Anna just points at the bright stars.",
-          "examples": ["So many stars!", "The stars are bright.", "Wow, stars!", "Look, a big star!"],
-          "keywords": ["stars", "star", "bright", "wow"],
+          "examples": [
+            "So many stars!",
+            "The stars are bright.",
+            "Wow, stars!",
+            "Look, a big star!"
+          ],
+          "keywords": [
+            "stars",
+            "star",
+            "bright",
+            "wow"
+          ],
           "hint": "💬 Try saying: “I can see many stars.”",
-          "next_nodes": [{ "id": "stars_reply", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "stars_reply",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Look up at the sky! Say “I can see many stars.”" },
-        "off_topic": { "message": "Ben is looking at the night sky. Try “I can see many stars.”" }
+        "partial": {
+          "message": "Look up at the sky! Say “I can see many stars.”"
+        },
+        "off_topic": {
+          "message": "Ben is looking at the night sky. Try “I can see many stars.”"
+        }
       }
     },
     {
       "id": "stars_reply",
-      "npc": { "text": "Yes, the sky has so many stars tonight.", "gender": "male" },
+      "npc": {
+        "text": "Yes, the sky has so many stars tonight.",
+        "gender": "male"
+      },
       "routes": [
         {
           "intent": "see_stars",
           "meaning": "Anna agrees she can see many stars.",
-          "examples": ["I can see many stars.", "Yes, many stars.", "They are so pretty."],
-          "keywords": ["stars", "star", "many", "pretty", "yes"],
+          "examples": [
+            "I can see many stars.",
+            "Yes, many stars.",
+            "They are so pretty."
+          ],
+          "keywords": [
+            "stars",
+            "star",
+            "many",
+            "pretty",
+            "yes"
+          ],
           "hint": "💬 Try saying: “I can see many stars.”",
-          "next_nodes": [{ "id": "moon", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "moon",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Ben about the stars: “I can see many stars.”" },
-        "off_topic": { "message": "Look at the sky! Say “I can see many stars.”" }
+        "partial": {
+          "message": "Tell Ben about the stars: “I can see many stars.”"
+        },
+        "off_topic": {
+          "message": "Look at the sky! Say “I can see many stars.”"
+        }
       }
     },
     {
       "id": "moon",
-      "npc": { "text": "The moon is big and white.", "gender": "male" },
-      "learning_objective": ["Say how you feel", "Use: sleepy"],
+      "npc": {
+        "text": "The moon is big and white.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say how you feel",
+        "Use: sleepy"
+      ],
       "routes": [
         {
           "intent": "sleepy",
           "meaning": "Anna says she is sleepy now.",
-          "examples": ["I am sleepy now.", "I am sleepy.", "I feel sleepy.", "I am so sleepy."],
-          "keywords": ["sleepy", "tired", "now"],
+          "examples": [
+            "I am sleepy now.",
+            "I am sleepy.",
+            "I feel sleepy.",
+            "I am so sleepy."
+          ],
+          "keywords": [
+            "sleepy",
+            "tired",
+            "now"
+          ],
           "hint": "💬 Try saying: “I am sleepy now.”",
-          "next_nodes": [{ "id": "bedtime", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "bedtime",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "moon_pretty",
           "meaning": "Anna talks about the big white moon.",
-          "examples": ["The moon is white.", "It is so big!", "I like the moon.", "The moon is round."],
-          "keywords": ["moon", "white", "big", "round", "like"],
+          "examples": [
+            "The moon is white.",
+            "It is so big!",
+            "I like the moon.",
+            "The moon is round."
+          ],
+          "keywords": [
+            "moon",
+            "white",
+            "big",
+            "round",
+            "like"
+          ],
           "hint": "💬 Try saying: “I am sleepy now.”",
-          "next_nodes": [{ "id": "moon_reply", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "moon_reply",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "How do you feel? Say “I am sleepy now.”" },
-        "off_topic": { "message": "It is late! Tell Ben “I am sleepy now.”" }
+        "partial": {
+          "message": "How do you feel? Say “I am sleepy now.”"
+        },
+        "off_topic": {
+          "message": "It is late! Tell Ben “I am sleepy now.”"
+        }
       }
     },
     {
       "id": "moon_reply",
-      "npc": { "text": "Yes, it is big and white. Are you sleepy?", "gender": "male" },
+      "npc": {
+        "text": "Yes, it is big and white. Are you sleepy?",
+        "gender": "male"
+      },
       "routes": [
         {
           "intent": "sleepy",
           "meaning": "Anna says she is sleepy.",
-          "examples": ["I am sleepy now.", "Yes, I am sleepy.", "A little tired."],
-          "keywords": ["sleepy", "tired", "yes", "now"],
+          "examples": [
+            "I am sleepy now.",
+            "Yes, I am sleepy.",
+            "A little tired."
+          ],
+          "keywords": [
+            "sleepy",
+            "tired",
+            "yes",
+            "now"
+          ],
           "hint": "💬 Try saying: “I am sleepy now.”",
-          "next_nodes": [{ "id": "bedtime", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "bedtime",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Ben how you feel: “I am sleepy now.”" },
-        "off_topic": { "message": "Are you tired? Say “I am sleepy now.”" }
+        "partial": {
+          "message": "Tell Ben how you feel: “I am sleepy now.”"
+        },
+        "off_topic": {
+          "message": "Are you tired? Say “I am sleepy now.”"
+        }
       }
     },
     {
       "id": "bedtime",
-      "npc": { "text": "It is time for bed.", "gender": "male" },
-      "learning_objective": ["Say good night"],
+      "npc": {
+        "text": "It is time for bed.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say good night"
+      ],
       "routes": [
         {
           "intent": "good_night",
           "meaning": "Anna says good night to Ben.",
-          "examples": ["Good night, Ben.", "Good night.", "Good night, Ben!", "Night night, Ben."],
-          "keywords": ["good", "night", "ben"],
+          "examples": [
+            "Good night, Ben.",
+            "Good night.",
+            "Good night, Ben!",
+            "Night night, Ben."
+          ],
+          "keywords": [
+            "good",
+            "night",
+            "ben"
+          ],
           "hint": "💬 Try saying: “Good night, Ben.”",
-          "next_nodes": [{ "id": "goodnight", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "goodnight",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "one_more",
           "meaning": "Anna wants to stay up a little longer.",
-          "examples": ["One more minute.", "Not yet.", "Wait please.", "A little more."],
-          "keywords": ["wait", "minute", "not", "yet", "more"],
-          "hint": "You can say “One more minute.” or “Good night, Ben.”",
-          "next_nodes": [{ "id": "one_more", "weight": 100 }]
+          "examples": [
+            "One more minute.",
+            "Not yet.",
+            "Wait please.",
+            "A little more."
+          ],
+          "keywords": [
+            "wait",
+            "minute",
+            "not",
+            "yet",
+            "more"
+          ],
+          "hint": "💬 You can say “One more minute.” or “Good night, Ben.”",
+          "next_nodes": [
+            {
+              "id": "one_more",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "It is bedtime. Say “Good night, Ben.”" },
-        "off_topic": { "message": "Time for bed! Try “Good night, Ben.”" }
+        "partial": {
+          "message": "It is bedtime. Say “Good night, Ben.”"
+        },
+        "off_topic": {
+          "message": "Time for bed! Try “Good night, Ben.”"
+        }
       }
     },
     {
       "id": "one_more",
-      "npc": { "text": "Okay, but it is late now. Say good night.", "gender": "male" },
+      "npc": {
+        "text": "Okay, but it is late now. Say good night.",
+        "gender": "male"
+      },
       "routes": [
         {
           "intent": "good_night",
           "meaning": "Anna says good night.",
-          "examples": ["Good night, Ben.", "Good night.", "Okay, good night."],
-          "keywords": ["good", "night", "ben", "okay"],
+          "examples": [
+            "Good night, Ben.",
+            "Good night.",
+            "Okay, good night."
+          ],
+          "keywords": [
+            "good",
+            "night",
+            "ben",
+            "okay"
+          ],
           "hint": "💬 Try saying: “Good night, Ben.”",
-          "next_nodes": [{ "id": "goodnight", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "goodnight",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say good night to Ben: “Good night, Ben.”" },
-        "off_topic": { "message": "It is late! Try “Good night, Ben.”" }
+        "partial": {
+          "message": "Say good night to Ben: “Good night, Ben.”"
+        },
+        "off_topic": {
+          "message": "It is late! Try “Good night, Ben.”"
+        }
       }
     },
     {
       "id": "goodnight",
-      "npc": { "text": "Good night, Anna.", "gender": "male" },
-      "learning_objective": ["Get ready to sleep"],
+      "npc": {
+        "text": "Good night, Anna.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Get ready to sleep"
+      ],
       "routes": [
         {
           "intent": "close_eyes",
           "meaning": "Anna closes her eyes.",
-          "examples": ["I close my eyes.", "I close my eyes now.", "I shut my eyes."],
-          "keywords": ["close", "eyes", "shut"],
+          "examples": [
+            "I close my eyes.",
+            "I close my eyes now.",
+            "I shut my eyes."
+          ],
+          "keywords": [
+            "close",
+            "eyes",
+            "shut"
+          ],
           "hint": "💬 Try saying: “I close my eyes.”",
-          "next_nodes": [{ "id": "sleepwell", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "sleepwell",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "sweet_dreams",
           "meaning": "Anna wishes Ben sweet dreams too.",
-          "examples": ["Good night!", "Sweet dreams.", "Sleep well too.", "See you, Ben."],
-          "keywords": ["dreams", "sleep", "night", "well"],
+          "examples": [
+            "Good night!",
+            "Sweet dreams.",
+            "Sleep well too.",
+            "See you, Ben."
+          ],
+          "keywords": [
+            "dreams",
+            "sleep",
+            "night",
+            "well"
+          ],
           "hint": "💬 Try saying: “I close my eyes.”",
-          "next_nodes": [{ "id": "sleepwell", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "sleepwell",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Time to sleep. Say “I close my eyes.”" },
-        "off_topic": { "message": "Ben said good night. Try “I close my eyes.”" }
+        "partial": {
+          "message": "Time to sleep. Say “I close my eyes.”"
+        },
+        "off_topic": {
+          "message": "Ben said good night. Try “I close my eyes.”"
+        }
       }
     },
     {
       "id": "sleepwell",
-      "npc": { "text": "Sleep well!", "gender": "male" },
-      "learning_objective": ["Say see you tomorrow"],
+      "npc": {
+        "text": "Sleep well!",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say see you tomorrow"
+      ],
       "routes": [
         {
           "intent": "morning",
           "meaning": "Anna says she will see Ben in the morning.",
-          "examples": ["See you in the morning.", "See you in the morning!", "Good night, see you tomorrow.", "See you tomorrow."],
-          "keywords": ["morning", "see", "tomorrow"],
+          "examples": [
+            "See you in the morning.",
+            "See you in the morning!",
+            "Good night, see you tomorrow.",
+            "See you tomorrow."
+          ],
+          "keywords": [
+            "morning",
+            "see",
+            "tomorrow"
+          ],
           "hint": "💬 Try saying: “See you in the morning.”",
-          "next_nodes": [{ "id": "done", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "done",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say goodbye for the night: “See you in the morning.”" },
-        "off_topic": { "message": "Ben said sleep well. Try “See you in the morning.”" }
+        "partial": {
+          "message": "Say goodbye for the night: “See you in the morning.”"
+        },
+        "off_topic": {
+          "message": "Ben said sleep well. Try “See you in the morning.”"
+        }
       }
     },
     {
       "id": "done",
-      "npc": { "text": "Good night! Sweet dreams, Anna.", "gender": "male" },
+      "npc": {
+        "text": "Good night! Sweet dreams, Anna.",
+        "gender": "male"
+      },
       "end": true
     }
   ]

@@ -11,180 +11,438 @@
   "nodes": [
     {
       "id": "q_summer",
-      "npc": { "text": "What are you going to do this summer, Anna?", "gender": "male" },
-      "learning_objective": ["Talk about future plans", "Use: going to"],
+      "npc": {
+        "text": "What are you going to do this summer, Anna?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Talk about future plans",
+        "Use: going to"
+      ],
       "routes": [
         {
           "intent": "visit_grandparents",
           "meaning": "Anna says she is going to visit her grandparents in the countryside.",
-          "examples": ["I'm going to visit my grandparents in the countryside.", "I am going to visit my grandparents.", "I'll visit my grandparents this summer.", "I'm going to the countryside to see my grandparents."],
-          "keywords": ["grandparents", "grandpa", "visit", "countryside", "going"],
-          "hint": "Say your plan: “I'm going to visit my grandparents in the countryside.”",
-          "next_nodes": [{ "id": "how_long", "weight": 100 }]
+          "examples": [
+            "I'm going to visit my grandparents in the countryside.",
+            "I am going to visit my grandparents.",
+            "I'll visit my grandparents this summer.",
+            "I'm going to the countryside to see my grandparents."
+          ],
+          "keywords": [
+            "grandparents",
+            "grandpa",
+            "visit",
+            "countryside",
+            "going"
+          ],
+          "hint": "💬 Say your plan: “I'm going to visit my grandparents in the countryside.”",
+          "next_nodes": [
+            {
+              "id": "how_long",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "other_plan",
           "meaning": "Anna names a different summer plan.",
-          "examples": ["I'm going to stay home and read.", "I am going to the beach.", "I'm going to a summer camp too.", "I will travel with my family."],
-          "keywords": ["home", "beach", "camp", "travel", "family"],
-          "hint": "You can share any plan, or say “I'm going to visit my grandparents in the countryside.”",
-          "next_nodes": [{ "id": "travel_followup", "weight": 100 }]
+          "examples": [
+            "I'm going to stay home and read.",
+            "I am going to the beach.",
+            "I'm going to a summer camp too.",
+            "I will travel with my family."
+          ],
+          "keywords": [
+            "home",
+            "beach",
+            "camp",
+            "travel",
+            "family"
+          ],
+          "hint": "💬 You can share any plan, or say “I'm going to visit my grandparents in the countryside.”",
+          "next_nodes": [
+            {
+              "id": "travel_followup",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Tom your summer plan: “I'm going to visit my grandparents in the countryside.”" },
-        "off_topic": { "message": "Tom asked about your summer. Try “I'm going to visit my grandparents in the countryside.”" }
+        "partial": {
+          "message": "Tell Tom your summer plan: “I'm going to visit my grandparents in the countryside.”"
+        },
+        "off_topic": {
+          "message": "Tom asked about your summer. Try “I'm going to visit my grandparents in the countryside.”"
+        }
       }
     },
     {
       "id": "travel_followup",
-      "npc": { "text": "Oh, nice! Are you going to visit family this summer too?", "gender": "male" },
-      "learning_objective": ["Say who you will visit"],
+      "npc": {
+        "text": "Oh, nice! Are you going to visit family this summer too?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say who you will visit"
+      ],
       "routes": [
         {
           "intent": "yes_grandparents",
           "meaning": "Anna says yes, she will visit her grandparents in the countryside.",
-          "examples": ["Yes, I'm going to visit my grandparents in the countryside.", "Yes, I'll visit my grandparents.", "Yes, I am going to see my grandpa.", "Yes, I'm going to the countryside."],
-          "keywords": ["yes", "grandparents", "grandpa", "countryside", "visit"],
-          "hint": "Say yes and where: “Yes, I'm going to visit my grandparents in the countryside.”",
-          "next_nodes": [{ "id": "how_long", "weight": 100 }]
+          "examples": [
+            "Yes, I'm going to visit my grandparents in the countryside.",
+            "Yes, I'll visit my grandparents.",
+            "Yes, I am going to see my grandpa.",
+            "Yes, I'm going to the countryside."
+          ],
+          "keywords": [
+            "yes",
+            "grandparents",
+            "grandpa",
+            "countryside",
+            "visit"
+          ],
+          "hint": "💬 Say yes and where: “Yes, I'm going to visit my grandparents in the countryside.”",
+          "next_nodes": [
+            {
+              "id": "how_long",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Tom who you will visit: “I'm going to visit my grandparents in the countryside.”" },
-        "off_topic": { "message": "Tom asked about family. Try “Yes, I'm going to visit my grandparents in the countryside.”" }
+        "partial": {
+          "message": "Tell Tom who you will visit: “I'm going to visit my grandparents in the countryside.”"
+        },
+        "off_topic": {
+          "message": "Tom asked about family. Try “Yes, I'm going to visit my grandparents in the countryside.”"
+        }
       }
     },
     {
       "id": "how_long",
-      "npc": { "text": "That sounds relaxing. How long will you stay?", "gender": "male" },
-      "learning_objective": ["Say how long", "Use: I'll help"],
+      "npc": {
+        "text": "That sounds relaxing. How long will you stay?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say how long",
+        "Use: I'll help"
+      ],
       "routes": [
         {
           "intent": "two_weeks",
           "meaning": "Anna says two weeks and that she will help her grandpa on the farm.",
-          "examples": ["For two weeks. I'll help my grandpa on the farm.", "Two weeks. I will help my grandpa on the farm.", "For two weeks. I'm going to help on the farm.", "About two weeks, and I'll help my grandpa."],
-          "keywords": ["two", "weeks", "help", "grandpa", "farm"],
-          "hint": "Say how long and what you'll do: “For two weeks. I'll help my grandpa on the farm.”",
-          "next_nodes": [{ "id": "hard_work", "weight": 100 }]
+          "examples": [
+            "For two weeks. I'll help my grandpa on the farm.",
+            "Two weeks. I will help my grandpa on the farm.",
+            "For two weeks. I'm going to help on the farm.",
+            "About two weeks, and I'll help my grandpa."
+          ],
+          "keywords": [
+            "two",
+            "weeks",
+            "help",
+            "grandpa",
+            "farm"
+          ],
+          "hint": "💬 Say how long and what you'll do: “For two weeks. I'll help my grandpa on the farm.”",
+          "next_nodes": [
+            {
+              "id": "hard_work",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "short_stay",
           "meaning": "Anna gives a different length of stay.",
-          "examples": ["Just for a few days.", "For one week.", "For a whole month!", "Maybe ten days."],
-          "keywords": ["days", "week", "month", "ten"],
-          "hint": "You can name any time, or say “For two weeks. I'll help my grandpa on the farm.”",
-          "next_nodes": [{ "id": "hard_work", "weight": 100 }]
+          "examples": [
+            "Just for a few days.",
+            "For one week.",
+            "For a whole month!",
+            "Maybe ten days."
+          ],
+          "keywords": [
+            "days",
+            "week",
+            "month",
+            "ten"
+          ],
+          "hint": "💬 You can name any time, or say “For two weeks. I'll help my grandpa on the farm.”",
+          "next_nodes": [
+            {
+              "id": "hard_work",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Tom how long: “For two weeks. I'll help my grandpa on the farm.”" },
-        "off_topic": { "message": "Tom asked how long you will stay. Try “For two weeks. I'll help my grandpa on the farm.”" }
+        "partial": {
+          "message": "Tell Tom how long: “For two weeks. I'll help my grandpa on the farm.”"
+        },
+        "off_topic": {
+          "message": "Tom asked how long you will stay. Try “For two weeks. I'll help my grandpa on the farm.”"
+        }
       }
     },
     {
       "id": "hard_work",
-      "npc": { "text": "Sounds fun, but also hard work!", "gender": "male" },
-      "learning_objective": ["Give your feeling", "Ask a follow-up question"],
+      "npc": {
+        "text": "Sounds fun, but also hard work!",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Give your feeling",
+        "Ask a follow-up question"
+      ],
       "routes": [
         {
           "intent": "enjoy_it",
           "meaning": "Anna agrees it is work but says she enjoys it, then asks Tom back.",
-          "examples": ["It is, but I enjoy it. What about you?", "It is, but I like it. What about you?", "Yes, but I enjoy it. And you?", "It's hard, but fun. What about you?"],
-          "keywords": ["enjoy", "like", "fun", "what", "you"],
-          "hint": "Share your feeling and ask back: “It is, but I enjoy it. What about you?”",
-          "next_nodes": [{ "id": "toms_plan", "weight": 100 }]
+          "examples": [
+            "It is, but I enjoy it. What about you?",
+            "It is, but I like it. What about you?",
+            "Yes, but I enjoy it. And you?",
+            "It's hard, but fun. What about you?"
+          ],
+          "keywords": [
+            "enjoy",
+            "like",
+            "fun",
+            "what",
+            "you"
+          ],
+          "hint": "💬 Share your feeling and ask back: “It is, but I enjoy it. What about you?”",
+          "next_nodes": [
+            {
+              "id": "toms_plan",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "agree_hard",
           "meaning": "Anna agrees it is hard work but stays positive.",
-          "examples": ["Yes, but I like helping.", "It is hard, but I don't mind.", "True, but the farm is fun.", "Yes, but I love the countryside."],
-          "keywords": ["hard", "help", "farm", "like", "love"],
-          "hint": "You can say “It is, but I enjoy it. What about you?”",
-          "next_nodes": [{ "id": "toms_plan", "weight": 100 }]
+          "examples": [
+            "Yes, but I like helping.",
+            "It is hard, but I don't mind.",
+            "True, but the farm is fun.",
+            "Yes, but I love the countryside."
+          ],
+          "keywords": [
+            "hard",
+            "help",
+            "farm",
+            "like",
+            "love"
+          ],
+          "hint": "💬 You can say “It is, but I enjoy it. What about you?”",
+          "next_nodes": [
+            {
+              "id": "toms_plan",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Tom how you feel and ask back: “It is, but I enjoy it. What about you?”" },
-        "off_topic": { "message": "Tom said it's hard work. Try “It is, but I enjoy it. What about you?”" }
+        "partial": {
+          "message": "Tell Tom how you feel and ask back: “It is, but I enjoy it. What about you?”"
+        },
+        "off_topic": {
+          "message": "Tom said it's hard work. Try “It is, but I enjoy it. What about you?”"
+        }
       }
     },
     {
       "id": "toms_plan",
-      "npc": { "text": "I'm going to a summer camp because I want to make new friends.", "gender": "male" },
-      "learning_objective": ["React to a plan", "Ask about details"],
+      "npc": {
+        "text": "I'm going to a summer camp because I want to make new friends.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "React to a plan",
+        "Ask about details"
+      ],
       "routes": [
         {
           "intent": "great_idea",
           "meaning": "Anna says it is a great idea and asks what he will do there.",
-          "examples": ["That's a great idea. What will you do there?", "That is a great idea! What will you do there?", "Nice! What will you do at the camp?", "Cool! What will you do there?"],
-          "keywords": ["great", "idea", "what", "do", "there"],
-          "hint": "React and ask: “That's a great idea. What will you do there?”",
-          "next_nodes": [{ "id": "camp_activities", "weight": 100 }]
+          "examples": [
+            "That's a great idea. What will you do there?",
+            "That is a great idea! What will you do there?",
+            "Nice! What will you do at the camp?",
+            "Cool! What will you do there?"
+          ],
+          "keywords": [
+            "great",
+            "idea",
+            "what",
+            "do",
+            "there"
+          ],
+          "hint": "💬 React and ask: “That's a great idea. What will you do there?”",
+          "next_nodes": [
+            {
+              "id": "camp_activities",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "ask_where",
           "meaning": "Anna asks where the camp is.",
-          "examples": ["That sounds fun! Where is the camp?", "Where is your summer camp?", "Nice! Where is it?", "Where will the camp be?"],
-          "keywords": ["where", "camp", "fun"],
-          "hint": "You can ask “Where is the camp?” or say “That's a great idea. What will you do there?”",
-          "next_nodes": [{ "id": "camp_where", "weight": 100 }]
+          "examples": [
+            "That sounds fun! Where is the camp?",
+            "Where is your summer camp?",
+            "Nice! Where is it?",
+            "Where will the camp be?"
+          ],
+          "keywords": [
+            "where",
+            "camp",
+            "fun"
+          ],
+          "hint": "💬 You can ask “Where is the camp?” or say “That's a great idea. What will you do there?”",
+          "next_nodes": [
+            {
+              "id": "camp_where",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "React to Tom's plan: “That's a great idea. What will you do there?”" },
-        "off_topic": { "message": "Tom is going to camp. Try “That's a great idea. What will you do there?”" }
+        "partial": {
+          "message": "React to Tom's plan: “That's a great idea. What will you do there?”"
+        },
+        "off_topic": {
+          "message": "Tom is going to camp. Try “That's a great idea. What will you do there?”"
+        }
       }
     },
     {
       "id": "camp_where",
-      "npc": { "text": "It's near the mountains. We'll do lots of fun things.", "gender": "male" },
-      "learning_objective": ["Ask what someone will do"],
+      "npc": {
+        "text": "It's near the mountains. We'll do lots of fun things.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Ask what someone will do"
+      ],
       "routes": [
         {
           "intent": "ask_what",
           "meaning": "Anna asks what Tom will do there.",
-          "examples": ["What will you do there?", "What will you do at the camp?", "Wow! What will you do there?", "That's cool. What will you do?"],
-          "keywords": ["what", "do", "there", "camp"],
-          "hint": "Ask about it: “What will you do there?”",
-          "next_nodes": [{ "id": "camp_activities", "weight": 100 }]
+          "examples": [
+            "What will you do there?",
+            "What will you do at the camp?",
+            "Wow! What will you do there?",
+            "That's cool. What will you do?"
+          ],
+          "keywords": [
+            "what",
+            "do",
+            "there",
+            "camp"
+          ],
+          "hint": "💬 Ask about it: “What will you do there?”",
+          "next_nodes": [
+            {
+              "id": "camp_activities",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask Tom about the camp: “What will you do there?”" },
-        "off_topic": { "message": "Ask what Tom will do. Try “What will you do there?”" }
+        "partial": {
+          "message": "Ask Tom about the camp: “What will you do there?”"
+        },
+        "off_topic": {
+          "message": "Ask what Tom will do. Try “What will you do there?”"
+        }
       }
     },
     {
       "id": "camp_activities",
-      "npc": { "text": "We'll go hiking and swimming every day.", "gender": "male" },
-      "learning_objective": ["End the chat warmly"],
+      "npc": {
+        "text": "We'll go hiking and swimming every day.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "End the chat warmly"
+      ],
       "routes": [
         {
           "intent": "wish_summer",
           "meaning": "Anna hopes they both have a wonderful summer.",
-          "examples": ["I hope we both have a wonderful summer!", "I hope we both have a great summer!", "That sounds amazing! Have a wonderful summer.", "I hope you have a wonderful summer!"],
-          "keywords": ["hope", "wonderful", "great", "summer", "both"],
-          "hint": "End warmly: “I hope we both have a wonderful summer!”",
-          "next_nodes": [{ "id": "done", "weight": 100 }]
+          "examples": [
+            "I hope we both have a wonderful summer!",
+            "I hope we both have a great summer!",
+            "That sounds amazing! Have a wonderful summer.",
+            "I hope you have a wonderful summer!"
+          ],
+          "keywords": [
+            "hope",
+            "wonderful",
+            "great",
+            "summer",
+            "both"
+          ],
+          "hint": "💬 End warmly: “I hope we both have a wonderful summer!”",
+          "next_nodes": [
+            {
+              "id": "done",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "sounds_great",
           "meaning": "Anna says the camp sounds great and wishes Tom fun.",
-          "examples": ["That sounds wonderful! Have fun.", "Hiking and swimming sound great!", "Wow, that will be so much fun!", "That's amazing! Enjoy the camp."],
-          "keywords": ["wonderful", "great", "fun", "hiking", "swimming"],
-          "hint": "You can say “I hope we both have a wonderful summer!”",
-          "next_nodes": [{ "id": "done", "weight": 100 }]
+          "examples": [
+            "That sounds wonderful! Have fun.",
+            "Hiking and swimming sound great!",
+            "Wow, that will be so much fun!",
+            "That's amazing! Enjoy the camp."
+          ],
+          "keywords": [
+            "wonderful",
+            "great",
+            "fun",
+            "hiking",
+            "swimming"
+          ],
+          "hint": "💬 You can say “I hope we both have a wonderful summer!”",
+          "next_nodes": [
+            {
+              "id": "done",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "End the chat: “I hope we both have a wonderful summer!”" },
-        "off_topic": { "message": "Time to finish. Try “I hope we both have a wonderful summer!”" }
+        "partial": {
+          "message": "End the chat: “I hope we both have a wonderful summer!”"
+        },
+        "off_topic": {
+          "message": "Time to finish. Try “I hope we both have a wonderful summer!”"
+        }
       }
     },
     {
       "id": "done",
-      "npc": { "text": "Thanks, Anna! Have a great summer too. See you in September!", "gender": "male" },
+      "npc": {
+        "text": "Thanks, Anna! Have a great summer too. See you in September!",
+        "gender": "male"
+      },
       "end": true
     }
   ]

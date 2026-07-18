@@ -11,172 +11,386 @@
   "nodes": [
     {
       "id": "my_family",
-      "npc": { "text": "This is my family.", "gender": "male" },
-      "learning_objective": ["Ask who someone is"],
+      "npc": {
+        "text": "This is my family.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Ask who someone is"
+      ],
       "routes": [
         {
           "intent": "who_this",
           "meaning": "Anna asks who is in the picture.",
-          "examples": ["Who is this?", "Who is this?", "Oh, who is this?", "Who are they?"],
-          "keywords": ["who", "this"],
-          "hint": "Ask who they are: “Who is this?”",
-          "next_nodes": [{ "id": "mom_dad", "weight": 100 }]
+          "examples": [
+            "Who is this?",
+            "Who is this?",
+            "Oh, who is this?",
+            "Who are they?"
+          ],
+          "keywords": [
+            "who",
+            "this"
+          ],
+          "hint": "💬 Ask who they are: “Who is this?”",
+          "next_nodes": [
+            {
+              "id": "mom_dad",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "nice_family",
           "meaning": "Anna says it is a nice family.",
-          "examples": ["Wow! Nice family!", "What a nice family!", "Wow! Your family is nice!"],
-          "keywords": ["wow", "nice", "family"],
-          "hint": "Nice! Now ask “Who is this?”",
-          "next_nodes": [{ "id": "look_here", "weight": 100 }]
+          "examples": [
+            "Wow! Nice family!",
+            "What a nice family!",
+            "Wow! Your family is nice!"
+          ],
+          "keywords": [
+            "wow",
+            "nice",
+            "family"
+          ],
+          "hint": "💬 Nice! Now ask “Who is this?”",
+          "next_nodes": [
+            {
+              "id": "look_here",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask about the family: “Who is this?”" },
-        "off_topic": { "message": "Tom shows his family! Say “Who is this?”" }
+        "partial": {
+          "message": "Ask about the family: “Who is this?”"
+        },
+        "off_topic": {
+          "message": "Tom shows his family! Say “Who is this?”"
+        }
       }
     },
     {
       "id": "look_here",
-      "npc": { "text": "Thank you! Look here. Do you know who they are?", "gender": "male" },
-      "learning_objective": ["Ask who someone is"],
+      "npc": {
+        "text": "Thank you! Look here. Do you know who they are?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Ask who someone is"
+      ],
       "routes": [
         {
           "intent": "ask_who",
           "meaning": "Anna asks who they are.",
-          "examples": ["Who is this?", "Who are they?", "No. Who is this?"],
-          "keywords": ["who", "this"],
-          "hint": "Ask “Who is this?”",
-          "next_nodes": [{ "id": "mom_dad", "weight": 100 }]
+          "examples": [
+            "Who is this?",
+            "Who are they?",
+            "No. Who is this?"
+          ],
+          "keywords": [
+            "who",
+            "this"
+          ],
+          "hint": "💬 Ask “Who is this?”",
+          "next_nodes": [
+            {
+              "id": "mom_dad",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask who they are: “Who is this?”" },
-        "off_topic": { "message": "Look at the picture. Say “Who is this?”" }
+        "partial": {
+          "message": "Ask who they are: “Who is this?”"
+        },
+        "off_topic": {
+          "message": "Look at the picture. Say “Who is this?”"
+        }
       }
     },
     {
       "id": "mom_dad",
-      "npc": { "text": "This is my mom and my dad.", "gender": "male" },
-      "learning_objective": ["Ask about family with is"],
+      "npc": {
+        "text": "This is my mom and my dad.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Ask about family with is"
+      ],
       "routes": [
         {
           "intent": "baby_sister",
           "meaning": "Anna asks if the little one is his baby sister.",
-          "examples": ["Is this your baby sister?", "Is this your baby sister?", "Is that your baby sister?", "Is she your baby sister?"],
-          "keywords": ["baby", "sister", "is", "your"],
-          "hint": "Ask about the little one: “Is this your baby sister?”",
-          "next_nodes": [{ "id": "she_small", "weight": 100 }]
+          "examples": [
+            "Is this your baby sister?",
+            "Is this your baby sister?",
+            "Is that your baby sister?",
+            "Is she your baby sister?"
+          ],
+          "keywords": [
+            "baby",
+            "sister",
+            "is",
+            "your"
+          ],
+          "hint": "💬 Ask about the little one: “Is this your baby sister?”",
+          "next_nodes": [
+            {
+              "id": "she_small",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "ask_more",
           "meaning": "Anna asks who the little one is.",
-          "examples": ["Who is the little one?", "Who is the baby?", "And who is this little one?"],
-          "keywords": ["who", "little", "baby"],
-          "hint": "You can ask “Is this your baby sister?”",
-          "next_nodes": [{ "id": "she_small", "weight": 100 }]
+          "examples": [
+            "Who is the little one?",
+            "Who is the baby?",
+            "And who is this little one?"
+          ],
+          "keywords": [
+            "who",
+            "little",
+            "baby"
+          ],
+          "hint": "💬 You can ask “Is this your baby sister?”",
+          "next_nodes": [
+            {
+              "id": "she_small",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask about the baby: “Is this your baby sister?”" },
-        "off_topic": { "message": "That is his mom and dad! Say “Is this your baby sister?”" }
+        "partial": {
+          "message": "Ask about the baby: “Is this your baby sister?”"
+        },
+        "off_topic": {
+          "message": "That is his mom and dad! Say “Is this your baby sister?”"
+        }
       }
     },
     {
       "id": "she_small",
-      "npc": { "text": "Yes, she is small.", "gender": "male" },
-      "learning_objective": ["Say who is in your family"],
+      "npc": {
+        "text": "Yes, she is small.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say who is in your family"
+      ],
       "routes": [
         {
           "intent": "big_brother",
           "meaning": "Anna says she has a big brother.",
-          "examples": ["I have a big brother.", "I have a big brother!", "I have a big brother, too.", "Me, I have a big brother."],
-          "keywords": ["big", "brother", "have"],
-          "hint": "Tell Tom about your family: “I have a big brother.”",
-          "next_nodes": [{ "id": "have_pet", "weight": 100 }]
+          "examples": [
+            "I have a big brother.",
+            "I have a big brother!",
+            "I have a big brother, too.",
+            "Me, I have a big brother."
+          ],
+          "keywords": [
+            "big",
+            "brother",
+            "have"
+          ],
+          "hint": "💬 Tell Tom about your family: “I have a big brother.”",
+          "next_nodes": [
+            {
+              "id": "have_pet",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "just_cute",
           "meaning": "Anna says the baby is cute.",
-          "examples": ["She is so cute!", "The baby is cute!", "So cute!"],
-          "keywords": ["cute", "baby"],
-          "hint": "Nice! You can also say “I have a big brother.”",
-          "next_nodes": [{ "id": "have_pet", "weight": 100 }]
+          "examples": [
+            "She is so cute!",
+            "The baby is cute!",
+            "So cute!"
+          ],
+          "keywords": [
+            "cute",
+            "baby"
+          ],
+          "hint": "💬 Nice! You can also say “I have a big brother.”",
+          "next_nodes": [
+            {
+              "id": "have_pet",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Tom about your family: “I have a big brother.”" },
-        "off_topic": { "message": "The baby is small! Say “I have a big brother.”" }
+        "partial": {
+          "message": "Tell Tom about your family: “I have a big brother.”"
+        },
+        "off_topic": {
+          "message": "The baby is small! Say “I have a big brother.”"
+        }
       }
     },
     {
       "id": "have_pet",
-      "npc": { "text": "Do you have a pet?", "gender": "male" },
-      "learning_objective": ["Say what pet you have"],
+      "npc": {
+        "text": "Do you have a pet?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say what pet you have"
+      ],
       "routes": [
         {
           "intent": "yes_cat",
           "meaning": "Anna says she has a cat.",
-          "examples": ["Yes, I have a cat.", "Yes, I have a cat!", "Yes! I have a cat.", "I have a cat."],
-          "keywords": ["yes", "cat", "have"],
-          "hint": "Say what pet you have: “Yes, I have a cat.”",
-          "next_nodes": [{ "id": "love_family", "weight": 100 }]
+          "examples": [
+            "Yes, I have a cat.",
+            "Yes, I have a cat!",
+            "Yes! I have a cat.",
+            "I have a cat."
+          ],
+          "keywords": [
+            "yes",
+            "cat",
+            "have"
+          ],
+          "hint": "💬 Say what pet you have: “Yes, I have a cat.”",
+          "next_nodes": [
+            {
+              "id": "love_family",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "no_pet",
           "meaning": "Anna says she does not have a pet.",
-          "examples": ["No, I don't.", "No, I have no pet.", "Not yet."],
-          "keywords": ["no", "not", "don't"],
-          "hint": "You can say “Yes, I have a cat.”",
-          "next_nodes": [{ "id": "thats_ok", "weight": 100 }]
+          "examples": [
+            "No, I don't.",
+            "No, I have no pet.",
+            "Not yet."
+          ],
+          "keywords": [
+            "no",
+            "not",
+            "don't"
+          ],
+          "hint": "💬 You can say “Yes, I have a cat.”",
+          "next_nodes": [
+            {
+              "id": "thats_ok",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Tom about your pet: “Yes, I have a cat.”" },
-        "off_topic": { "message": "Tom asked about pets. Say “Yes, I have a cat.”" }
+        "partial": {
+          "message": "Tell Tom about your pet: “Yes, I have a cat.”"
+        },
+        "off_topic": {
+          "message": "Tom asked about pets. Say “Yes, I have a cat.”"
+        }
       }
     },
     {
       "id": "thats_ok",
-      "npc": { "text": "That is okay. Pets are fun!", "gender": "male" },
-      "learning_objective": ["Say what pet you want"],
+      "npc": {
+        "text": "That is okay. Pets are fun!",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say what pet you want"
+      ],
       "routes": [
         {
           "intent": "want_pet",
           "meaning": "Anna says she wants a cat.",
-          "examples": ["Yes, I want a cat.", "I want a cat.", "I want a cat, too.", "Yes! I want a cat."],
-          "keywords": ["yes", "want", "cat"],
-          "hint": "Say “Yes, I want a cat.”",
-          "next_nodes": [{ "id": "love_family", "weight": 100 }]
+          "examples": [
+            "Yes, I want a cat.",
+            "I want a cat.",
+            "I want a cat, too.",
+            "Yes! I want a cat."
+          ],
+          "keywords": [
+            "yes",
+            "want",
+            "cat"
+          ],
+          "hint": "💬 Say “Yes, I want a cat.”",
+          "next_nodes": [
+            {
+              "id": "love_family",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say what you want: “Yes, I want a cat.”" },
-        "off_topic": { "message": "Pets are fun! Say “Yes, I want a cat.”" }
+        "partial": {
+          "message": "Say what you want: “Yes, I want a cat.”"
+        },
+        "off_topic": {
+          "message": "Pets are fun! Say “Yes, I want a cat.”"
+        }
       }
     },
     {
       "id": "love_family",
-      "npc": { "text": "I love my family.", "gender": "male" },
-      "learning_objective": ["Agree with a friend"],
+      "npc": {
+        "text": "I love my family.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Agree with a friend"
+      ],
       "routes": [
         {
           "intent": "me_too",
           "meaning": "Anna agrees and says me too.",
-          "examples": ["Me too!", "Me too!", "Me too! I love my family.", "Yes, me too!"],
-          "keywords": ["me", "too", "love", "family"],
-          "hint": "Agree with Tom: “Me too!”",
-          "next_nodes": [{ "id": "done", "weight": 100 }]
+          "examples": [
+            "Me too!",
+            "Me too!",
+            "Me too! I love my family.",
+            "Yes, me too!"
+          ],
+          "keywords": [
+            "me",
+            "too",
+            "love",
+            "family"
+          ],
+          "hint": "💬 Agree with Tom: “Me too!”",
+          "next_nodes": [
+            {
+              "id": "done",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Agree with Tom: “Me too!”" },
-        "off_topic": { "message": "Tom loves his family. Say “Me too!”" }
+        "partial": {
+          "message": "Agree with Tom: “Me too!”"
+        },
+        "off_topic": {
+          "message": "Tom loves his family. Say “Me too!”"
+        }
       }
     },
     {
       "id": "done",
-      "npc": { "text": "Family is the best. Thank you for looking!", "gender": "male" },
+      "npc": {
+        "text": "Family is the best. Thank you for looking!",
+        "gender": "male"
+      },
       "end": true
     }
   ]

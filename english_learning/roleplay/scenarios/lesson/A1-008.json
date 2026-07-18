@@ -11,204 +11,466 @@
   "nodes": [
     {
       "id": "soccer_game",
-      "npc": { "text": "We played a soccer game yesterday.", "gender": "male" },
-      "learning_objective": ["Ask about the past", "Use: team, win"],
+      "npc": {
+        "text": "We played a soccer game yesterday.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Ask about the past",
+        "Use: team, win"
+      ],
       "routes": [
         {
           "intent": "ask_win",
           "meaning": "Leo asks if Sam's team won.",
-          "examples": ["Did your team win?", "Did you win?", "Who won the game?"],
-          "keywords": ["win", "won", "team", "game"],
+          "examples": [
+            "Did your team win?",
+            "Did you win?",
+            "Who won the game?"
+          ],
+          "keywords": [
+            "win",
+            "won",
+            "team",
+            "game"
+          ],
           "hint": "💬 Try saying: “Did your team win?”",
-          "next_nodes": [{ "id": "won_score", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "won_score",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "react_love",
           "meaning": "Leo says he loves soccer.",
-          "examples": ["I love soccer!", "Soccer is my favorite!", "Cool, I like soccer!"],
-          "keywords": ["love", "soccer", "like", "favorite"],
-          "hint": "You can ask “Did your team win?”",
-          "next_nodes": [{ "id": "love_soccer", "weight": 100 }]
+          "examples": [
+            "I love soccer!",
+            "Soccer is my favorite!",
+            "Cool, I like soccer!"
+          ],
+          "keywords": [
+            "love",
+            "soccer",
+            "like",
+            "favorite"
+          ],
+          "hint": "💬 You can ask “Did your team win?”",
+          "next_nodes": [
+            {
+              "id": "love_soccer",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask about the game: “Did your team win?”" },
-        "off_topic": { "message": "Sam played soccer. Ask “Did your team win?”" }
+        "partial": {
+          "message": "Ask about the game: “Did your team win?”"
+        },
+        "off_topic": {
+          "message": "Sam played soccer. Ask “Did your team win?”"
+        }
       }
     },
     {
       "id": "love_soccer",
-      "npc": { "text": "Me too! It was a close game. Guess what happened?", "gender": "male" },
-      "learning_objective": ["Ask if the team won"],
+      "npc": {
+        "text": "Me too! It was a close game. Guess what happened?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Ask if the team won"
+      ],
       "routes": [
         {
           "intent": "ask_win",
           "meaning": "Leo asks if Sam's team won.",
-          "examples": ["Did your team win?", "Did you win?", "So who won?"],
-          "keywords": ["win", "won", "team"],
+          "examples": [
+            "Did your team win?",
+            "Did you win?",
+            "So who won?"
+          ],
+          "keywords": [
+            "win",
+            "won",
+            "team"
+          ],
           "hint": "💬 Try saying: “Did your team win?”",
-          "next_nodes": [{ "id": "won_score", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "won_score",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask if they won: “Did your team win?”" },
-        "off_topic": { "message": "It was a close game. Ask “Did your team win?”" }
+        "partial": {
+          "message": "Ask if they won: “Did your team win?”"
+        },
+        "off_topic": {
+          "message": "It was a close game. Ask “Did your team win?”"
+        }
       }
     },
     {
       "id": "won_score",
-      "npc": { "text": "Yes, we won three to two!", "gender": "male" },
-      "learning_objective": ["React and ask who", "Use: scored"],
+      "npc": {
+        "text": "Yes, we won three to two!",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "React and ask who",
+        "Use: scored"
+      ],
       "routes": [
         {
           "intent": "ask_scored",
           "meaning": "Leo is happy and asks who scored.",
-          "examples": ["That's great! Who scored?", "Great! Who scored the goals?", "Who scored?"],
-          "keywords": ["great", "who", "scored", "goals"],
+          "examples": [
+            "That's great! Who scored?",
+            "Great! Who scored the goals?",
+            "Who scored?"
+          ],
+          "keywords": [
+            "great",
+            "who",
+            "scored",
+            "goals"
+          ],
           "hint": "💬 Try saying: “That's great! Who scored?”",
-          "next_nodes": [{ "id": "scored_two", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "scored_two",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "ask_close",
           "meaning": "Leo asks if it was a close game.",
-          "examples": ["Was it a close game?", "Was it close?", "Only one goal more?"],
-          "keywords": ["close", "one", "goal", "near"],
-          "hint": "You can say “That's great! Who scored?”",
-          "next_nodes": [{ "id": "close_side", "weight": 100 }]
+          "examples": [
+            "Was it a close game?",
+            "Was it close?",
+            "Only one goal more?"
+          ],
+          "keywords": [
+            "close",
+            "one",
+            "goal",
+            "near"
+          ],
+          "hint": "💬 You can say “That's great! Who scored?”",
+          "next_nodes": [
+            {
+              "id": "close_side",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask who scored: “That's great! Who scored?”" },
-        "off_topic": { "message": "Sam's team won 3 to 2. Ask “Who scored?”" }
+        "partial": {
+          "message": "Ask who scored: “That's great! Who scored?”"
+        },
+        "off_topic": {
+          "message": "Sam's team won 3 to 2. Ask “Who scored?”"
+        }
       }
     },
     {
       "id": "close_side",
-      "npc": { "text": "Very close! But we scored more. Do you want to know who scored?", "gender": "male" },
-      "learning_objective": ["Ask who scored"],
+      "npc": {
+        "text": "Very close! But we scored more. Do you want to know who scored?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Ask who scored"
+      ],
       "routes": [
         {
           "intent": "ask_scored",
           "meaning": "Leo asks who scored.",
-          "examples": ["Who scored?", "Who scored the goals?", "Yes, who scored?"],
-          "keywords": ["who", "scored", "goals"],
+          "examples": [
+            "Who scored?",
+            "Who scored the goals?",
+            "Yes, who scored?"
+          ],
+          "keywords": [
+            "who",
+            "scored",
+            "goals"
+          ],
           "hint": "💬 Try saying: “Who scored?”",
-          "next_nodes": [{ "id": "scored_two", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "scored_two",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask who scored: “Who scored?”" },
-        "off_topic": { "message": "Ask Sam “Who scored?”" }
+        "partial": {
+          "message": "Ask who scored: “Who scored?”"
+        },
+        "off_topic": {
+          "message": "Ask Sam “Who scored?”"
+        }
       }
     },
     {
       "id": "scored_two",
-      "npc": { "text": "I scored two goals.", "gender": "male" },
-      "learning_objective": ["Give praise", "Use: played well"],
+      "npc": {
+        "text": "I scored two goals.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Give praise",
+        "Use: played well"
+      ],
       "routes": [
         {
           "intent": "praise",
           "meaning": "Leo praises Sam.",
-          "examples": ["Wow, you played really well.", "Wow, you played great!", "You did really well!"],
-          "keywords": ["wow", "well", "great", "good"],
+          "examples": [
+            "Wow, you played really well.",
+            "Wow, you played great!",
+            "You did really well!"
+          ],
+          "keywords": [
+            "wow",
+            "well",
+            "great",
+            "good"
+          ],
           "hint": "💬 Try saying: “Wow, you played really well.”",
-          "next_nodes": [{ "id": "friend_goal", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "friend_goal",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "ask_others",
           "meaning": "Leo asks if anyone else scored.",
-          "examples": ["Did anyone else score?", "Did your friends score too?", "Who scored the other goal?"],
-          "keywords": ["else", "friend", "other", "too"],
-          "hint": "You can say “Wow, you played really well.”",
-          "next_nodes": [{ "id": "friend_goal", "weight": 100 }]
+          "examples": [
+            "Did anyone else score?",
+            "Did your friends score too?",
+            "Who scored the other goal?"
+          ],
+          "keywords": [
+            "else",
+            "friend",
+            "other",
+            "too"
+          ],
+          "hint": "💬 You can say “Wow, you played really well.”",
+          "next_nodes": [
+            {
+              "id": "friend_goal",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say something nice: “Wow, you played really well.”" },
-        "off_topic": { "message": "Sam scored two goals. Say “Wow, you played really well.”" }
+        "partial": {
+          "message": "Say something nice: “Wow, you played really well.”"
+        },
+        "off_topic": {
+          "message": "Sam scored two goals. Say “Wow, you played really well.”"
+        }
       }
     },
     {
       "id": "friend_goal",
-      "npc": { "text": "My friend scored the last goal.", "gender": "male" },
-      "learning_objective": ["Ask about the game", "Use: hard"],
+      "npc": {
+        "text": "My friend scored the last goal.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Ask about the game",
+        "Use: hard"
+      ],
       "routes": [
         {
           "intent": "ask_hard",
           "meaning": "Leo asks if the game was hard.",
-          "examples": ["Was the game hard?", "Was it hard?", "Was it a hard game?"],
-          "keywords": ["hard", "difficult", "game", "tough"],
+          "examples": [
+            "Was the game hard?",
+            "Was it hard?",
+            "Was it a hard game?"
+          ],
+          "keywords": [
+            "hard",
+            "difficult",
+            "game",
+            "tough"
+          ],
           "hint": "💬 Try saying: “Was the game hard?”",
-          "next_nodes": [{ "id": "strong_team", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "strong_team",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "ask_fun",
           "meaning": "Leo asks if it was fun.",
-          "examples": ["Was it fun?", "Did you have fun?", "Was the game fun?"],
-          "keywords": ["fun", "enjoy", "good", "game"],
-          "hint": "You can ask “Was the game hard?”",
-          "next_nodes": [{ "id": "fun_side", "weight": 100 }]
+          "examples": [
+            "Was it fun?",
+            "Did you have fun?",
+            "Was the game fun?"
+          ],
+          "keywords": [
+            "fun",
+            "enjoy",
+            "good",
+            "game"
+          ],
+          "hint": "💬 You can ask “Was the game hard?”",
+          "next_nodes": [
+            {
+              "id": "fun_side",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask about the game: “Was the game hard?”" },
-        "off_topic": { "message": "Sam's friend scored last. Ask “Was the game hard?”" }
+        "partial": {
+          "message": "Ask about the game: “Was the game hard?”"
+        },
+        "off_topic": {
+          "message": "Sam's friend scored last. Ask “Was the game hard?”"
+        }
       }
     },
     {
       "id": "fun_side",
-      "npc": { "text": "It was so fun! But the other team gave us a hard time.", "gender": "male" },
-      "learning_objective": ["Ask if it was hard"],
+      "npc": {
+        "text": "It was so fun! But the other team gave us a hard time.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Ask if it was hard"
+      ],
       "routes": [
         {
           "intent": "ask_hard",
           "meaning": "Leo asks if the game was hard.",
-          "examples": ["Was the game hard?", "Was it hard?", "So it was hard?"],
-          "keywords": ["hard", "difficult", "game", "tough"],
+          "examples": [
+            "Was the game hard?",
+            "Was it hard?",
+            "So it was hard?"
+          ],
+          "keywords": [
+            "hard",
+            "difficult",
+            "game",
+            "tough"
+          ],
           "hint": "💬 Try saying: “Was the game hard?”",
-          "next_nodes": [{ "id": "strong_team", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "strong_team",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask if it was hard: “Was the game hard?”" },
-        "off_topic": { "message": "It was fun but tough. Ask “Was the game hard?”" }
+        "partial": {
+          "message": "Ask if it was hard: “Was the game hard?”"
+        },
+        "off_topic": {
+          "message": "It was fun but tough. Ask “Was the game hard?”"
+        }
       }
     },
     {
       "id": "strong_team",
-      "npc": { "text": "Yes, the other team was strong.", "gender": "male" },
-      "learning_objective": ["Give a closing comment"],
+      "npc": {
+        "text": "Yes, the other team was strong.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Give a closing comment"
+      ],
       "routes": [
         {
           "intent": "congrats",
           "meaning": "Leo congratulates Sam on the win.",
-          "examples": ["Congratulations on the win!", "Congratulations!", "Well done on the win!"],
-          "keywords": ["congratulations", "win", "done", "great"],
+          "examples": [
+            "Congratulations on the win!",
+            "Congratulations!",
+            "Well done on the win!"
+          ],
+          "keywords": [
+            "congratulations",
+            "win",
+            "done",
+            "great"
+          ],
           "hint": "💬 Try saying: “Congratulations on the win!”",
-          "next_nodes": [{ "id": "end_congrats", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "end_congrats",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "say_wow",
           "meaning": "Leo says what a great game.",
-          "examples": ["Wow, what a great game!", "That is a great win!", "Amazing game!"],
-          "keywords": ["wow", "great", "amazing", "game"],
-          "hint": "You can say “Congratulations on the win!”",
-          "next_nodes": [{ "id": "end_great", "weight": 100 }]
+          "examples": [
+            "Wow, what a great game!",
+            "That is a great win!",
+            "Amazing game!"
+          ],
+          "keywords": [
+            "wow",
+            "great",
+            "amazing",
+            "game"
+          ],
+          "hint": "💬 You can say “Congratulations on the win!”",
+          "next_nodes": [
+            {
+              "id": "end_great",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say something nice: “Congratulations on the win!”" },
-        "off_topic": { "message": "The other team was strong. Say “Congratulations on the win!”" }
+        "partial": {
+          "message": "Say something nice: “Congratulations on the win!”"
+        },
+        "off_topic": {
+          "message": "The other team was strong. Say “Congratulations on the win!”"
+        }
       }
     },
     {
       "id": "end_congrats",
-      "npc": { "text": "Thank you, Leo! It was a great day. See you!", "gender": "male" },
+      "npc": {
+        "text": "Thank you, Leo! It was a great day. See you!",
+        "gender": "male"
+      },
       "end": true
     },
     {
       "id": "end_great",
-      "npc": { "text": "It really was! Thanks, Leo. Bye!", "gender": "male" },
+      "npc": {
+        "text": "It really was! Thanks, Leo. Bye!",
+        "gender": "male"
+      },
       "end": true
     }
   ]

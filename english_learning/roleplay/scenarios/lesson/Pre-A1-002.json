@@ -11,164 +11,371 @@
   "nodes": [
     {
       "id": "see_ball",
-      "npc": { "text": "Look! Here is the ball.", "gender": "male" },
-      "learning_objective": ["Say what you see", "Ask what someone can do"],
+      "npc": {
+        "text": "Look! Here is the ball.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say what you see",
+        "Ask what someone can do"
+      ],
       "routes": [
         {
           "intent": "see_and_ask_run",
           "meaning": "Anna sees the ball and asks Tom if he can run.",
-          "examples": ["I see it. Can you run?", "I see the ball. Can you run?", "Yes, I see it! Can you run?", "I see it! Can you run fast?"],
-          "keywords": ["see", "ball", "run", "can"],
-          "hint": "Say what you see and ask Tom: “I see it. Can you run?”",
-          "next_nodes": [{ "id": "run_fast", "weight": 100 }]
+          "examples": [
+            "I see it. Can you run?",
+            "I see the ball. Can you run?",
+            "Yes, I see it! Can you run?",
+            "I see it! Can you run fast?"
+          ],
+          "keywords": [
+            "see",
+            "ball",
+            "run",
+            "can"
+          ],
+          "hint": "💬 Say what you see and ask Tom: “I see it. Can you run?”",
+          "next_nodes": [
+            {
+              "id": "run_fast",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "where_ball",
           "meaning": "Anna asks where the ball is.",
-          "examples": ["Where is the ball?", "Where is it?", "I don't see it. Where?"],
-          "keywords": ["where", "ball"],
-          "hint": "You can say “I see it. Can you run?” or ask “Where is the ball?”",
-          "next_nodes": [{ "id": "find_ball", "weight": 100 }]
+          "examples": [
+            "Where is the ball?",
+            "Where is it?",
+            "I don't see it. Where?"
+          ],
+          "keywords": [
+            "where",
+            "ball"
+          ],
+          "hint": "💬 You can say “I see it. Can you run?” or ask “Where is the ball?”",
+          "next_nodes": [
+            {
+              "id": "find_ball",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Tom you see it: “I see it. Can you run?”" },
-        "off_topic": { "message": "Tom found the ball! Say “I see it. Can you run?”" }
+        "partial": {
+          "message": "Tell Tom you see it: “I see it. Can you run?”"
+        },
+        "off_topic": {
+          "message": "Tom found the ball! Say “I see it. Can you run?”"
+        }
       }
     },
     {
       "id": "find_ball",
-      "npc": { "text": "It is right here! Now, can you see it?", "gender": "male" },
-      "learning_objective": ["Say you see it", "Ask what someone can do"],
+      "npc": {
+        "text": "It is right here! Now, can you see it?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say you see it",
+        "Ask what someone can do"
+      ],
       "routes": [
         {
           "intent": "yes_see_run",
           "meaning": "Anna sees the ball now and asks if Tom can run.",
-          "examples": ["I see it. Can you run?", "Yes, I see it! Can you run?", "Now I see it. Can you run?"],
-          "keywords": ["see", "yes", "run", "can"],
-          "hint": "Say “I see it. Can you run?”",
-          "next_nodes": [{ "id": "run_fast", "weight": 100 }]
+          "examples": [
+            "I see it. Can you run?",
+            "Yes, I see it! Can you run?",
+            "Now I see it. Can you run?"
+          ],
+          "keywords": [
+            "see",
+            "yes",
+            "run",
+            "can"
+          ],
+          "hint": "💬 Say “I see it. Can you run?”",
+          "next_nodes": [
+            {
+              "id": "run_fast",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "The ball is here! Say “I see it. Can you run?”" },
-        "off_topic": { "message": "Look at the ball. Try “I see it. Can you run?”" }
+        "partial": {
+          "message": "The ball is here! Say “I see it. Can you run?”"
+        },
+        "off_topic": {
+          "message": "Look at the ball. Try “I see it. Can you run?”"
+        }
       }
     },
     {
       "id": "run_fast",
-      "npc": { "text": "Yes, I can run fast.", "gender": "male" },
-      "learning_objective": ["Tell someone where to go"],
+      "npc": {
+        "text": "Yes, I can run fast.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Tell someone where to go"
+      ],
       "routes": [
         {
           "intent": "run_to_tree",
           "meaning": "Anna tells Tom to run to the big tree.",
-          "examples": ["Run to the big tree!", "Run to the tree!", "Go to the big tree!", "Run fast to the tree!"],
-          "keywords": ["run", "tree", "big"],
-          "hint": "Tell Tom where to run: “Run to the big tree!”",
-          "next_nodes": [{ "id": "look_me", "weight": 100 }]
+          "examples": [
+            "Run to the big tree!",
+            "Run to the tree!",
+            "Go to the big tree!",
+            "Run fast to the tree!"
+          ],
+          "keywords": [
+            "run",
+            "tree",
+            "big"
+          ],
+          "hint": "💬 Tell Tom where to run: “Run to the big tree!”",
+          "next_nodes": [
+            {
+              "id": "look_me",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Tom where to run: “Run to the big tree!”" },
-        "off_topic": { "message": "Tom can run fast! Say “Run to the big tree!”" }
+        "partial": {
+          "message": "Tell Tom where to run: “Run to the big tree!”"
+        },
+        "off_topic": {
+          "message": "Tom can run fast! Say “Run to the big tree!”"
+        }
       }
     },
     {
       "id": "look_me",
-      "npc": { "text": "I can do it. Look at me!", "gender": "male" },
-      "learning_objective": ["Say someone is fast", "Tell someone to jump"],
+      "npc": {
+        "text": "I can do it. Look at me!",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say someone is fast",
+        "Tell someone to jump"
+      ],
       "routes": [
         {
           "intent": "fast_and_jump",
           "meaning": "Anna says Tom is fast and tells him to jump up.",
-          "examples": ["You are fast! Now jump up.", "You are fast! Jump up!", "So fast! Now jump up.", "You are fast! Can you jump up?"],
-          "keywords": ["fast", "jump", "up"],
-          "hint": "Tell Tom he is fast, then say jump: “You are fast! Now jump up.”",
-          "next_nodes": [{ "id": "can_jump", "weight": 100 }]
+          "examples": [
+            "You are fast! Now jump up.",
+            "You are fast! Jump up!",
+            "So fast! Now jump up.",
+            "You are fast! Can you jump up?"
+          ],
+          "keywords": [
+            "fast",
+            "jump",
+            "up"
+          ],
+          "hint": "💬 Tell Tom he is fast, then say jump: “You are fast! Now jump up.”",
+          "next_nodes": [
+            {
+              "id": "can_jump",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "just_fast",
           "meaning": "Anna only says Tom is fast.",
-          "examples": ["Wow, you are fast!", "You are so fast!", "You are fast!"],
-          "keywords": ["fast", "wow"],
-          "hint": "Nice! Now tell Tom to jump: “You are fast! Now jump up.”",
-          "next_nodes": [{ "id": "can_jump", "weight": 100 }]
+          "examples": [
+            "Wow, you are fast!",
+            "You are so fast!",
+            "You are fast!"
+          ],
+          "keywords": [
+            "fast",
+            "wow"
+          ],
+          "hint": "💬 Nice! Now tell Tom to jump: “You are fast! Now jump up.”",
+          "next_nodes": [
+            {
+              "id": "can_jump",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Tom to jump: “You are fast! Now jump up.”" },
-        "off_topic": { "message": "Tom ran to the tree! Say “You are fast! Now jump up.”" }
+        "partial": {
+          "message": "Tell Tom to jump: “You are fast! Now jump up.”"
+        },
+        "off_topic": {
+          "message": "Tom ran to the tree! Say “You are fast! Now jump up.”"
+        }
       }
     },
     {
       "id": "can_jump",
-      "npc": { "text": "I can jump. Can you jump too?", "gender": "male" },
-      "learning_objective": ["Say what you can do"],
+      "npc": {
+        "text": "I can jump. Can you jump too?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say what you can do"
+      ],
       "routes": [
         {
           "intent": "yes_jump",
           "meaning": "Anna says she can jump up and down.",
-          "examples": ["Yes, I can jump up and down.", "Yes! I can jump up and down.", "I can jump up and down, too.", "Yes, I can jump!"],
-          "keywords": ["yes", "jump", "up", "down"],
-          "hint": "Say you can jump: “Yes, I can jump up and down.”",
-          "next_nodes": [{ "id": "lets_play", "weight": 100 }]
+          "examples": [
+            "Yes, I can jump up and down.",
+            "Yes! I can jump up and down.",
+            "I can jump up and down, too.",
+            "Yes, I can jump!"
+          ],
+          "keywords": [
+            "yes",
+            "jump",
+            "up",
+            "down"
+          ],
+          "hint": "💬 Say you can jump: “Yes, I can jump up and down.”",
+          "next_nodes": [
+            {
+              "id": "lets_play",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "no_jump",
           "meaning": "Anna is not sure she can jump.",
-          "examples": ["No, I can't.", "I don't know.", "Not yet."],
-          "keywords": ["no", "can't", "not"],
-          "hint": "You can try! Say “Yes, I can jump up and down.”",
-          "next_nodes": [{ "id": "try_jump", "weight": 100 }]
+          "examples": [
+            "No, I can't.",
+            "I don't know.",
+            "Not yet."
+          ],
+          "keywords": [
+            "no",
+            "can't",
+            "not"
+          ],
+          "hint": "💬 You can try! Say “Yes, I can jump up and down.”",
+          "next_nodes": [
+            {
+              "id": "try_jump",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Can you jump? Say “Yes, I can jump up and down.”" },
-        "off_topic": { "message": "Tom asked if you can jump. Try “Yes, I can jump up and down.”" }
+        "partial": {
+          "message": "Can you jump? Say “Yes, I can jump up and down.”"
+        },
+        "off_topic": {
+          "message": "Tom asked if you can jump. Try “Yes, I can jump up and down.”"
+        }
       }
     },
     {
       "id": "try_jump",
-      "npc": { "text": "Come on, you can do it! Can you jump up?", "gender": "male" },
-      "learning_objective": ["Say what you can do"],
+      "npc": {
+        "text": "Come on, you can do it! Can you jump up?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say what you can do"
+      ],
       "routes": [
         {
           "intent": "yes_now",
           "meaning": "Anna jumps now.",
-          "examples": ["Yes, I can jump up and down.", "Yes, I can jump!", "Okay, I can jump up and down."],
-          "keywords": ["yes", "jump", "up", "down"],
-          "hint": "Say “Yes, I can jump up and down.”",
-          "next_nodes": [{ "id": "lets_play", "weight": 100 }]
+          "examples": [
+            "Yes, I can jump up and down.",
+            "Yes, I can jump!",
+            "Okay, I can jump up and down."
+          ],
+          "keywords": [
+            "yes",
+            "jump",
+            "up",
+            "down"
+          ],
+          "hint": "💬 Say “Yes, I can jump up and down.”",
+          "next_nodes": [
+            {
+              "id": "lets_play",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "You can do it! Say “Yes, I can jump up and down.”" },
-        "off_topic": { "message": "Give it a try! Say “Yes, I can jump up and down.”" }
+        "partial": {
+          "message": "You can do it! Say “Yes, I can jump up and down.”"
+        },
+        "off_topic": {
+          "message": "Give it a try! Say “Yes, I can jump up and down.”"
+        }
       }
     },
     {
       "id": "lets_play",
-      "npc": { "text": "That is fun! Let us play.", "gender": "male" },
-      "learning_objective": ["Say you like to play"],
+      "npc": {
+        "text": "That is fun! Let us play.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say you like to play"
+      ],
       "routes": [
         {
           "intent": "like_play",
           "meaning": "Anna says she likes to play with Tom.",
-          "examples": ["Good! I like to play with you.", "Yes! I like to play with you.", "I like to play with you!", "Okay! I like to play."],
-          "keywords": ["good", "like", "play", "you"],
-          "hint": "Say you like to play: “Good! I like to play with you.”",
-          "next_nodes": [{ "id": "done", "weight": 100 }]
+          "examples": [
+            "Good! I like to play with you.",
+            "Yes! I like to play with you.",
+            "I like to play with you!",
+            "Okay! I like to play."
+          ],
+          "keywords": [
+            "good",
+            "like",
+            "play",
+            "you"
+          ],
+          "hint": "💬 Say you like to play: “Good! I like to play with you.”",
+          "next_nodes": [
+            {
+              "id": "done",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say you like to play: “Good! I like to play with you.”" },
-        "off_topic": { "message": "Tom wants to play. Try “Good! I like to play with you.”" }
+        "partial": {
+          "message": "Say you like to play: “Good! I like to play with you.”"
+        },
+        "off_topic": {
+          "message": "Tom wants to play. Try “Good! I like to play with you.”"
+        }
       }
     },
     {
       "id": "done",
-      "npc": { "text": "Yay! Let us run and jump together. This is fun!", "gender": "male" },
+      "npc": {
+        "text": "Yay! Let us run and jump together. This is fun!",
+        "gender": "male"
+      },
       "end": true
     }
   ]

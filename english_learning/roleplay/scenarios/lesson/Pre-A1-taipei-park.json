@@ -11,145 +11,340 @@
   "nodes": [
     {
       "id": "arrive",
-      "npc": { "text": "Look, Tom. The park is big and green.", "gender": "female" },
-      "learning_objective": ["Talk about the park", "Use: tree, green"],
+      "npc": {
+        "text": "Look, Tom. The park is big and green.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Talk about the park",
+        "Use: tree, green"
+      ],
       "routes": [
         {
           "intent": "see_trees",
           "meaning": "Tom says he can see many trees.",
-          "examples": ["Yes. I can see many trees.", "I can see many trees.", "Yes, so many trees!", "I see many trees."],
-          "keywords": ["trees", "many", "see", "yes"],
+          "examples": [
+            "Yes. I can see many trees.",
+            "I can see many trees.",
+            "Yes, so many trees!",
+            "I see many trees."
+          ],
+          "keywords": [
+            "trees",
+            "many",
+            "see",
+            "yes"
+          ],
           "hint": "💬 Try saying: “Yes. I can see many trees.”",
-          "next_nodes": [{ "id": "sit", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "sit",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "agree_green",
           "meaning": "Tom agrees the park is big and green.",
-          "examples": ["Yes, so green!", "It is big and green.", "Wow, big park!", "Yes, very green."],
-          "keywords": ["green", "big", "yes", "park"],
-          "hint": "You can say “Yes, so green!” or “Yes. I can see many trees.”",
-          "next_nodes": [{ "id": "green_reply", "weight": 100 }]
+          "examples": [
+            "Yes, so green!",
+            "It is big and green.",
+            "Wow, big park!",
+            "Yes, very green."
+          ],
+          "keywords": [
+            "green",
+            "big",
+            "yes",
+            "park"
+          ],
+          "hint": "💬 You can say “Yes, so green!” or “Yes. I can see many trees.”",
+          "next_nodes": [
+            {
+              "id": "green_reply",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Anna what you see: “Yes. I can see many trees.”" },
-        "off_topic": { "message": "The park is big and green! Say “Yes. I can see many trees.”" }
+        "partial": {
+          "message": "Tell Anna what you see: “Yes. I can see many trees.”"
+        },
+        "off_topic": {
+          "message": "The park is big and green! Say “Yes. I can see many trees.”"
+        }
       }
     },
     {
       "id": "green_reply",
-      "npc": { "text": "Yes, so green! Look at all the trees.", "gender": "female" },
-      "learning_objective": ["Talk about the trees"],
+      "npc": {
+        "text": "Yes, so green! Look at all the trees.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Talk about the trees"
+      ],
       "routes": [
         {
           "intent": "see_trees",
           "meaning": "Tom says he can see many trees.",
-          "examples": ["Yes. I can see many trees.", "I can see many trees.", "So many trees!", "I see many trees."],
-          "keywords": ["trees", "many", "see", "green"],
+          "examples": [
+            "Yes. I can see many trees.",
+            "I can see many trees.",
+            "So many trees!",
+            "I see many trees."
+          ],
+          "keywords": [
+            "trees",
+            "many",
+            "see",
+            "green"
+          ],
           "hint": "💬 Try saying: “Yes. I can see many trees.”",
-          "next_nodes": [{ "id": "sit", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "sit",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say what you see: “Yes. I can see many trees.”" },
-        "off_topic": { "message": "Look at the trees! Say “Yes. I can see many trees.”" }
+        "partial": {
+          "message": "Say what you see: “Yes. I can see many trees.”"
+        },
+        "off_topic": {
+          "message": "Look at the trees! Say “Yes. I can see many trees.”"
+        }
       }
     },
     {
       "id": "sit",
-      "npc": { "text": "We can sit under the tree.", "gender": "female" },
-      "learning_objective": ["Say you are tired", "Use: rest"],
+      "npc": {
+        "text": "We can sit under the tree.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Say you are tired",
+        "Use: rest"
+      ],
       "routes": [
         {
           "intent": "tired_rest",
           "meaning": "Tom is a little tired and wants to rest.",
-          "examples": ["I am a little tired. Let us rest.", "I am tired. Let us rest.", "Yes, let us rest.", "I am a little tired."],
-          "keywords": ["tired", "rest", "little"],
+          "examples": [
+            "I am a little tired. Let us rest.",
+            "I am tired. Let us rest.",
+            "Yes, let us rest.",
+            "I am a little tired."
+          ],
+          "keywords": [
+            "tired",
+            "rest",
+            "little"
+          ],
           "hint": "💬 Try saying: “I am a little tired. Let us rest.”",
-          "next_nodes": [{ "id": "dog", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "dog",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "ok_sit",
           "meaning": "Tom agrees to sit under the tree.",
-          "examples": ["Okay, let's sit.", "Good, under the tree.", "Yes, I sit here.", "Okay!"],
-          "keywords": ["okay", "sit", "tree", "yes"],
-          "hint": "You can say “Okay, let's sit.” or “I am a little tired. Let us rest.”",
-          "next_nodes": [{ "id": "dog", "weight": 100 }]
+          "examples": [
+            "Okay, let's sit.",
+            "Good, under the tree.",
+            "Yes, I sit here.",
+            "Okay!"
+          ],
+          "keywords": [
+            "okay",
+            "sit",
+            "tree",
+            "yes"
+          ],
+          "hint": "💬 You can say “Okay, let's sit.” or “I am a little tired. Let us rest.”",
+          "next_nodes": [
+            {
+              "id": "dog",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Anna how you feel: “I am a little tired. Let us rest.”" },
-        "off_topic": { "message": "You can sit under the tree. Say “I am a little tired. Let us rest.”" }
+        "partial": {
+          "message": "Tell Anna how you feel: “I am a little tired. Let us rest.”"
+        },
+        "off_topic": {
+          "message": "You can sit under the tree. Say “I am a little tired. Let us rest.”"
+        }
       }
     },
     {
       "id": "dog",
-      "npc": { "text": "Look! I can see a dog. It can run.", "gender": "female" },
-      "learning_objective": ["Say what you like", "Use: dog, happy"],
+      "npc": {
+        "text": "Look! I can see a dog. It can run.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Say what you like",
+        "Use: dog, happy"
+      ],
       "routes": [
         {
           "intent": "like_dog",
           "meaning": "Tom says the dog is happy and he likes it.",
-          "examples": ["The dog is happy. I like it.", "I like the dog.", "The dog is happy!", "Yes, I like the dog."],
-          "keywords": ["dog", "happy", "like", "run"],
+          "examples": [
+            "The dog is happy. I like it.",
+            "I like the dog.",
+            "The dog is happy!",
+            "Yes, I like the dog."
+          ],
+          "keywords": [
+            "dog",
+            "happy",
+            "like",
+            "run"
+          ],
           "hint": "💬 Try saying: “The dog is happy. I like it.”",
-          "next_nodes": [{ "id": "good_day", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "good_day",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "dog_run",
           "meaning": "Tom is excited that the dog can run.",
-          "examples": ["Wow, the dog can run!", "The dog runs fast!", "Look, it can run!", "The dog is fast."],
-          "keywords": ["dog", "run", "wow", "fast"],
-          "hint": "You can say “Wow, the dog can run!” or “The dog is happy. I like it.”",
-          "next_nodes": [{ "id": "good_day", "weight": 100 }]
+          "examples": [
+            "Wow, the dog can run!",
+            "The dog runs fast!",
+            "Look, it can run!",
+            "The dog is fast."
+          ],
+          "keywords": [
+            "dog",
+            "run",
+            "wow",
+            "fast"
+          ],
+          "hint": "💬 You can say “Wow, the dog can run!” or “The dog is happy. I like it.”",
+          "next_nodes": [
+            {
+              "id": "good_day",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Anna about the dog: “The dog is happy. I like it.”" },
-        "off_topic": { "message": "A dog can run! Say “The dog is happy. I like it.”" }
+        "partial": {
+          "message": "Tell Anna about the dog: “The dog is happy. I like it.”"
+        },
+        "off_topic": {
+          "message": "A dog can run! Say “The dog is happy. I like it.”"
+        }
       }
     },
     {
       "id": "good_day",
-      "npc": { "text": "This is a good day. I am happy.", "gender": "female" },
-      "learning_objective": ["Say you want to come again"],
+      "npc": {
+        "text": "This is a good day. I am happy.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Say you want to come again"
+      ],
       "routes": [
         {
           "intent": "come_again",
           "meaning": "Tom is happy too and wants to come again.",
-          "examples": ["Me too. We can come again.", "Me too! Let us come again.", "Yes, we can come again.", "I am happy too."],
-          "keywords": ["me", "too", "come", "again", "happy"],
+          "examples": [
+            "Me too. We can come again.",
+            "Me too! Let us come again.",
+            "Yes, we can come again.",
+            "I am happy too."
+          ],
+          "keywords": [
+            "me",
+            "too",
+            "come",
+            "again",
+            "happy"
+          ],
           "hint": "💬 Try saying: “Me too. We can come again.”",
-          "next_nodes": [{ "id": "fun", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "fun",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Anna you agree: “Me too. We can come again.”" },
-        "off_topic": { "message": "It is a good day! Say “Me too. We can come again.”" }
+        "partial": {
+          "message": "Tell Anna you agree: “Me too. We can come again.”"
+        },
+        "off_topic": {
+          "message": "It is a good day! Say “Me too. We can come again.”"
+        }
       }
     },
     {
       "id": "fun",
-      "npc": { "text": "Yes! Taipei is fun.", "gender": "female" },
-      "learning_objective": ["Say you want to go home"],
+      "npc": {
+        "text": "Yes! Taipei is fun.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Say you want to go home"
+      ],
       "routes": [
         {
           "intent": "go_home",
           "meaning": "Tom says let us go home and says bye-bye.",
-          "examples": ["Now let us go home. Bye-bye!", "Let us go home.", "Okay, let us go home!", "Time to go home. Bye-bye!"],
-          "keywords": ["home", "go", "bye", "now"],
+          "examples": [
+            "Now let us go home. Bye-bye!",
+            "Let us go home.",
+            "Okay, let us go home!",
+            "Time to go home. Bye-bye!"
+          ],
+          "keywords": [
+            "home",
+            "go",
+            "bye",
+            "now"
+          ],
           "hint": "💬 Try saying: “Now let us go home. Bye-bye!”",
-          "next_nodes": [{ "id": "bye", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "bye",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Time to go home. Say “Now let us go home. Bye-bye!”" },
-        "off_topic": { "message": "Taipei is fun! Say “Now let us go home. Bye-bye!”" }
+        "partial": {
+          "message": "Time to go home. Say “Now let us go home. Bye-bye!”"
+        },
+        "off_topic": {
+          "message": "Taipei is fun! Say “Now let us go home. Bye-bye!”"
+        }
       }
     },
     {
       "id": "bye",
-      "npc": { "text": "Bye-bye! It was a happy day. See you again, Tom!", "gender": "female" },
+      "npc": {
+        "text": "Bye-bye! It was a happy day. See you again, Tom!",
+        "gender": "female"
+      },
       "end": true
     }
   ]

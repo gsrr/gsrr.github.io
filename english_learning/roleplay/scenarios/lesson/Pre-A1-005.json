@@ -11,183 +11,407 @@
   "nodes": [
     {
       "id": "have_dog",
-      "npc": { "text": "Look! I have a dog.", "gender": "male" },
-      "learning_objective": ["Ask for a name"],
+      "npc": {
+        "text": "Look! I have a dog.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Ask for a name"
+      ],
       "routes": [
         {
           "intent": "ask_name",
           "meaning": "Lily is excited and asks the dog's name.",
-          "examples": ["Wow! What is its name?", "Wow! What is its name?", "What is its name?", "Cool! What is its name?"],
-          "keywords": ["wow", "what", "name"],
-          "hint": "Ask its name: “Wow! What is its name?”",
-          "next_nodes": [{ "id": "its_name", "weight": 100 }]
+          "examples": [
+            "Wow! What is its name?",
+            "Wow! What is its name?",
+            "What is its name?",
+            "Cool! What is its name?"
+          ],
+          "keywords": [
+            "wow",
+            "what",
+            "name"
+          ],
+          "hint": "💬 Ask its name: “Wow! What is its name?”",
+          "next_nodes": [
+            {
+              "id": "its_name",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "ask_what",
           "meaning": "Lily asks what the animal is.",
-          "examples": ["Wow! What is it?", "What is it?", "Wow! Is it a dog?"],
-          "keywords": ["wow", "what", "dog"],
-          "hint": "You can ask “Wow! What is its name?”",
-          "next_nodes": [{ "id": "its_a_dog", "weight": 100 }]
+          "examples": [
+            "Wow! What is it?",
+            "What is it?",
+            "Wow! Is it a dog?"
+          ],
+          "keywords": [
+            "wow",
+            "what",
+            "dog"
+          ],
+          "hint": "💬 You can ask “Wow! What is its name?”",
+          "next_nodes": [
+            {
+              "id": "its_a_dog",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask about the dog: “Wow! What is its name?”" },
-        "off_topic": { "message": "Ben has a dog! Say “Wow! What is its name?”" }
+        "partial": {
+          "message": "Ask about the dog: “Wow! What is its name?”"
+        },
+        "off_topic": {
+          "message": "Ben has a dog! Say “Wow! What is its name?”"
+        }
       }
     },
     {
       "id": "its_a_dog",
-      "npc": { "text": "It is my dog! Do you want to know its name?", "gender": "male" },
-      "learning_objective": ["Ask for a name"],
+      "npc": {
+        "text": "It is my dog! Do you want to know its name?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Ask for a name"
+      ],
       "routes": [
         {
           "intent": "yes_name",
           "meaning": "Lily asks the dog's name.",
-          "examples": ["Yes! What is its name?", "What is its name?", "Yes, what is its name?"],
-          "keywords": ["yes", "what", "name"],
-          "hint": "Ask “What is its name?”",
-          "next_nodes": [{ "id": "its_name", "weight": 100 }]
+          "examples": [
+            "Yes! What is its name?",
+            "What is its name?",
+            "Yes, what is its name?"
+          ],
+          "keywords": [
+            "yes",
+            "what",
+            "name"
+          ],
+          "hint": "💬 Ask “What is its name?”",
+          "next_nodes": [
+            {
+              "id": "its_name",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask the dog's name: “What is its name?”" },
-        "off_topic": { "message": "Find out its name! Say “What is its name?”" }
+        "partial": {
+          "message": "Ask the dog's name: “What is its name?”"
+        },
+        "off_topic": {
+          "message": "Find out its name! Say “What is its name?”"
+        }
       }
     },
     {
       "id": "its_name",
-      "npc": { "text": "Its name is Max.", "gender": "male" },
-      "learning_objective": ["Say it is big", "Ask what it can do"],
+      "npc": {
+        "text": "Its name is Max.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say it is big",
+        "Ask what it can do"
+      ],
       "routes": [
         {
           "intent": "big_and_run",
           "meaning": "Lily says Max is big and asks if he can run.",
-          "examples": ["Max is big. Can he run?", "Max is big! Can he run?", "He is big. Can he run?", "Max is big. Can he run fast?"],
-          "keywords": ["max", "big", "run", "can"],
-          "hint": "Say he is big and ask: “Max is big. Can he run?”",
-          "next_nodes": [{ "id": "run_fast", "weight": 100 }]
+          "examples": [
+            "Max is big. Can he run?",
+            "Max is big! Can he run?",
+            "He is big. Can he run?",
+            "Max is big. Can he run fast?"
+          ],
+          "keywords": [
+            "max",
+            "big",
+            "run",
+            "can"
+          ],
+          "hint": "💬 Say he is big and ask: “Max is big. Can he run?”",
+          "next_nodes": [
+            {
+              "id": "run_fast",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "just_big",
           "meaning": "Lily only says Max is big.",
-          "examples": ["Max is big!", "He is so big!", "Max is big."],
-          "keywords": ["big", "max"],
-          "hint": "Nice! Now ask “Can he run?”",
-          "next_nodes": [{ "id": "can_he_run", "weight": 100 }]
+          "examples": [
+            "Max is big!",
+            "He is so big!",
+            "Max is big."
+          ],
+          "keywords": [
+            "big",
+            "max"
+          ],
+          "hint": "💬 Nice! Now ask “Can he run?”",
+          "next_nodes": [
+            {
+              "id": "can_he_run",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask about Max: “Max is big. Can he run?”" },
-        "off_topic": { "message": "The dog is Max! Say “Max is big. Can he run?”" }
+        "partial": {
+          "message": "Ask about Max: “Max is big. Can he run?”"
+        },
+        "off_topic": {
+          "message": "The dog is Max! Say “Max is big. Can he run?”"
+        }
       }
     },
     {
       "id": "can_he_run",
-      "npc": { "text": "Yes, he is big! Do you want to know what he can do?", "gender": "male" },
-      "learning_objective": ["Ask what it can do"],
+      "npc": {
+        "text": "Yes, he is big! Do you want to know what he can do?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Ask what it can do"
+      ],
       "routes": [
         {
           "intent": "ask_run",
           "meaning": "Lily asks if Max can run.",
-          "examples": ["Can he run?", "Can Max run?", "Can he run fast?"],
-          "keywords": ["can", "run"],
-          "hint": "Ask “Can he run?”",
-          "next_nodes": [{ "id": "run_fast", "weight": 100 }]
+          "examples": [
+            "Can he run?",
+            "Can Max run?",
+            "Can he run fast?"
+          ],
+          "keywords": [
+            "can",
+            "run"
+          ],
+          "hint": "💬 Ask “Can he run?”",
+          "next_nodes": [
+            {
+              "id": "run_fast",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask what Max can do: “Can he run?”" },
-        "off_topic": { "message": "Max is big! Say “Can he run?”" }
+        "partial": {
+          "message": "Ask what Max can do: “Can he run?”"
+        },
+        "off_topic": {
+          "message": "Max is big! Say “Can he run?”"
+        }
       }
     },
     {
       "id": "run_fast",
-      "npc": { "text": "Yes, he can run fast.", "gender": "male" },
-      "learning_objective": ["Ask if it can play with a ball"],
+      "npc": {
+        "text": "Yes, he can run fast.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Ask if it can play with a ball"
+      ],
       "routes": [
         {
           "intent": "ball_play",
           "meaning": "Lily asks if Max can play with a ball.",
-          "examples": ["Can Max play with a ball?", "Can he play with a ball?", "Can Max play ball?", "Can Max play with the ball?"],
-          "keywords": ["can", "max", "play", "ball"],
-          "hint": "Ask about the ball: “Can Max play with a ball?”",
-          "next_nodes": [{ "id": "likes_ball", "weight": 100 }]
+          "examples": [
+            "Can Max play with a ball?",
+            "Can he play with a ball?",
+            "Can Max play ball?",
+            "Can Max play with the ball?"
+          ],
+          "keywords": [
+            "can",
+            "max",
+            "play",
+            "ball"
+          ],
+          "hint": "💬 Ask about the ball: “Can Max play with a ball?”",
+          "next_nodes": [
+            {
+              "id": "likes_ball",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "just_wow",
           "meaning": "Lily says wow, so fast.",
-          "examples": ["Wow, so fast!", "He is so fast!", "Wow!"],
-          "keywords": ["wow", "fast"],
-          "hint": "Nice! Now ask “Can Max play with a ball?”",
-          "next_nodes": [{ "id": "and_ball", "weight": 100 }]
+          "examples": [
+            "Wow, so fast!",
+            "He is so fast!",
+            "Wow!"
+          ],
+          "keywords": [
+            "wow",
+            "fast"
+          ],
+          "hint": "💬 Nice! Now ask “Can Max play with a ball?”",
+          "next_nodes": [
+            {
+              "id": "and_ball",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask about play: “Can Max play with a ball?”" },
-        "off_topic": { "message": "Max runs fast! Say “Can Max play with a ball?”" }
+        "partial": {
+          "message": "Ask about play: “Can Max play with a ball?”"
+        },
+        "off_topic": {
+          "message": "Max runs fast! Say “Can Max play with a ball?”"
+        }
       }
     },
     {
       "id": "and_ball",
-      "npc": { "text": "Yes, he loves to run! He likes toys, too.", "gender": "male" },
-      "learning_objective": ["Ask if it can play with a ball"],
+      "npc": {
+        "text": "Yes, he loves to run! He likes toys, too.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Ask if it can play with a ball"
+      ],
       "routes": [
         {
           "intent": "ask_ball",
           "meaning": "Lily asks if Max can play with a ball.",
-          "examples": ["Can Max play with a ball?", "Can he play with a ball?", "Can Max play ball?"],
-          "keywords": ["can", "max", "play", "ball"],
-          "hint": "Ask “Can Max play with a ball?”",
-          "next_nodes": [{ "id": "likes_ball", "weight": 100 }]
+          "examples": [
+            "Can Max play with a ball?",
+            "Can he play with a ball?",
+            "Can Max play ball?"
+          ],
+          "keywords": [
+            "can",
+            "max",
+            "play",
+            "ball"
+          ],
+          "hint": "💬 Ask “Can Max play with a ball?”",
+          "next_nodes": [
+            {
+              "id": "likes_ball",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask about the ball: “Can Max play with a ball?”" },
-        "off_topic": { "message": "Max likes toys! Say “Can Max play with a ball?”" }
+        "partial": {
+          "message": "Ask about the ball: “Can Max play with a ball?”"
+        },
+        "off_topic": {
+          "message": "Max likes toys! Say “Can Max play with a ball?”"
+        }
       }
     },
     {
       "id": "likes_ball",
-      "npc": { "text": "Yes! Max likes the ball.", "gender": "male" },
-      "learning_objective": ["Say it is a good dog"],
+      "npc": {
+        "text": "Yes! Max likes the ball.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say it is a good dog"
+      ],
       "routes": [
         {
           "intent": "good_dog",
           "meaning": "Lily says Max is a good dog.",
-          "examples": ["Max is a good dog.", "Max is a good dog!", "He is a good dog.", "Max is such a good dog."],
-          "keywords": ["max", "good", "dog"],
-          "hint": "Say “Max is a good dog.”",
-          "next_nodes": [{ "id": "best_friend", "weight": 100 }]
+          "examples": [
+            "Max is a good dog.",
+            "Max is a good dog!",
+            "He is a good dog.",
+            "Max is such a good dog."
+          ],
+          "keywords": [
+            "max",
+            "good",
+            "dog"
+          ],
+          "hint": "💬 Say “Max is a good dog.”",
+          "next_nodes": [
+            {
+              "id": "best_friend",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say something nice: “Max is a good dog.”" },
-        "off_topic": { "message": "Max likes the ball! Say “Max is a good dog.”" }
+        "partial": {
+          "message": "Say something nice: “Max is a good dog.”"
+        },
+        "off_topic": {
+          "message": "Max likes the ball! Say “Max is a good dog.”"
+        }
       }
     },
     {
       "id": "best_friend",
-      "npc": { "text": "He is my best friend.", "gender": "male" },
-      "learning_objective": ["Say what you want"],
+      "npc": {
+        "text": "He is my best friend.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say what you want"
+      ],
       "routes": [
         {
           "intent": "want_dog",
           "meaning": "Lily says she wants a dog, too.",
-          "examples": ["I want a dog, too.", "I want a dog, too!", "I want a dog!", "Me too! I want a dog."],
-          "keywords": ["want", "dog", "too"],
-          "hint": "Say what you want: “I want a dog, too.”",
-          "next_nodes": [{ "id": "done", "weight": 100 }]
+          "examples": [
+            "I want a dog, too.",
+            "I want a dog, too!",
+            "I want a dog!",
+            "Me too! I want a dog."
+          ],
+          "keywords": [
+            "want",
+            "dog",
+            "too"
+          ],
+          "hint": "💬 Say what you want: “I want a dog, too.”",
+          "next_nodes": [
+            {
+              "id": "done",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Ben what you want: “I want a dog, too.”" },
-        "off_topic": { "message": "Max is his best friend! Say “I want a dog, too.”" }
+        "partial": {
+          "message": "Tell Ben what you want: “I want a dog, too.”"
+        },
+        "off_topic": {
+          "message": "Max is his best friend! Say “I want a dog, too.”"
+        }
       }
     },
     {
       "id": "done",
-      "npc": { "text": "A dog is a good friend. I hope you get one, too!", "gender": "male" },
+      "npc": {
+        "text": "A dog is a good friend. I hope you get one, too!",
+        "gender": "male"
+      },
       "end": true
     }
   ]

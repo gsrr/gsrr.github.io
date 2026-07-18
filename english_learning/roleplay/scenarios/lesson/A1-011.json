@@ -11,196 +11,444 @@
   "nodes": [
     {
       "id": "camping",
-      "npc": { "text": "Last summer we went camping.", "gender": "male" },
-      "learning_objective": ["Ask about the past", "Use: where, sleep"],
+      "npc": {
+        "text": "Last summer we went camping.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Ask about the past",
+        "Use: where, sleep"
+      ],
       "routes": [
         {
           "intent": "ask_sleep",
           "meaning": "Mia asks where Leo slept.",
-          "examples": ["Where did you sleep?", "Where did you stay?", "Where did you sleep at night?"],
-          "keywords": ["where", "sleep", "stay", "camping"],
+          "examples": [
+            "Where did you sleep?",
+            "Where did you stay?",
+            "Where did you sleep at night?"
+          ],
+          "keywords": [
+            "where",
+            "sleep",
+            "stay",
+            "camping"
+          ],
           "hint": "💬 Try saying: “Where did you sleep?”",
-          "next_nodes": [{ "id": "tent", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "tent",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "react_cool",
           "meaning": "Mia reacts that it sounds cool.",
-          "examples": ["That sounds cool!", "Camping is fun!", "Cool!"],
-          "keywords": ["cool", "fun", "nice", "wow"],
-          "hint": "You can ask “Where did you sleep?”",
-          "next_nodes": [{ "id": "cool_side", "weight": 100 }]
+          "examples": [
+            "That sounds cool!",
+            "Camping is fun!",
+            "Cool!"
+          ],
+          "keywords": [
+            "cool",
+            "fun",
+            "nice",
+            "wow"
+          ],
+          "hint": "💬 You can ask “Where did you sleep?”",
+          "next_nodes": [
+            {
+              "id": "cool_side",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask about camping: “Where did you sleep?”" },
-        "off_topic": { "message": "Leo went camping. Ask “Where did you sleep?”" }
+        "partial": {
+          "message": "Ask about camping: “Where did you sleep?”"
+        },
+        "off_topic": {
+          "message": "Leo went camping. Ask “Where did you sleep?”"
+        }
       }
     },
     {
       "id": "cool_side",
-      "npc": { "text": "It was the best! We stayed out in nature. Ask me where we slept!", "gender": "male" },
-      "learning_objective": ["Ask where someone slept"],
+      "npc": {
+        "text": "It was the best! We stayed out in nature. Ask me where we slept!",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Ask where someone slept"
+      ],
       "routes": [
         {
           "intent": "ask_sleep",
           "meaning": "Mia asks where Leo slept.",
-          "examples": ["Where did you sleep?", "Where did you stay?", "So where did you sleep?"],
-          "keywords": ["where", "sleep", "stay"],
+          "examples": [
+            "Where did you sleep?",
+            "Where did you stay?",
+            "So where did you sleep?"
+          ],
+          "keywords": [
+            "where",
+            "sleep",
+            "stay"
+          ],
           "hint": "💬 Try saying: “Where did you sleep?”",
-          "next_nodes": [{ "id": "tent", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "tent",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask where he slept: “Where did you sleep?”" },
-        "off_topic": { "message": "Ask Leo “Where did you sleep?”" }
+        "partial": {
+          "message": "Ask where he slept: “Where did you sleep?”"
+        },
+        "off_topic": {
+          "message": "Ask Leo “Where did you sleep?”"
+        }
       }
     },
     {
       "id": "tent",
-      "npc": { "text": "We slept in a big tent.", "gender": "male" },
-      "learning_objective": ["Ask about the night", "Use: scary"],
+      "npc": {
+        "text": "We slept in a big tent.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Ask about the night",
+        "Use: scary"
+      ],
       "routes": [
         {
           "intent": "ask_scary",
           "meaning": "Mia asks if it was scary at night.",
-          "examples": ["Was it scary at night?", "Was it scary?", "Were you scared at night?"],
-          "keywords": ["scary", "scared", "night", "spooky"],
+          "examples": [
+            "Was it scary at night?",
+            "Was it scary?",
+            "Were you scared at night?"
+          ],
+          "keywords": [
+            "scary",
+            "scared",
+            "night",
+            "spooky"
+          ],
           "hint": "💬 Try saying: “Was it scary at night?”",
-          "next_nodes": [{ "id": "campfire", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "campfire",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "ask_who",
           "meaning": "Mia asks who went with Leo.",
-          "examples": ["Who went with you?", "Who came camping?", "Did your family go too?"],
-          "keywords": ["who", "family", "with", "went"],
-          "hint": "You can ask “Was it scary at night?”",
-          "next_nodes": [{ "id": "who_side", "weight": 100 }]
+          "examples": [
+            "Who went with you?",
+            "Who came camping?",
+            "Did your family go too?"
+          ],
+          "keywords": [
+            "who",
+            "family",
+            "with",
+            "went"
+          ],
+          "hint": "💬 You can ask “Was it scary at night?”",
+          "next_nodes": [
+            {
+              "id": "who_side",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask about the night: “Was it scary at night?”" },
-        "off_topic": { "message": "Leo slept in a tent. Ask “Was it scary at night?”" }
+        "partial": {
+          "message": "Ask about the night: “Was it scary at night?”"
+        },
+        "off_topic": {
+          "message": "Leo slept in a tent. Ask “Was it scary at night?”"
+        }
       }
     },
     {
       "id": "who_side",
-      "npc": { "text": "My family came along. At night it felt a bit spooky, though!", "gender": "male" },
-      "learning_objective": ["Ask if it was scary"],
+      "npc": {
+        "text": "My family came along. At night it felt a bit spooky, though!",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Ask if it was scary"
+      ],
       "routes": [
         {
           "intent": "ask_scary",
           "meaning": "Mia asks if it was scary at night.",
-          "examples": ["Was it scary at night?", "Was it scary?", "So it was scary?"],
-          "keywords": ["scary", "scared", "night", "spooky"],
+          "examples": [
+            "Was it scary at night?",
+            "Was it scary?",
+            "So it was scary?"
+          ],
+          "keywords": [
+            "scary",
+            "scared",
+            "night",
+            "spooky"
+          ],
           "hint": "💬 Try saying: “Was it scary at night?”",
-          "next_nodes": [{ "id": "campfire", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "campfire",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask if it was scary: “Was it scary at night?”" },
-        "off_topic": { "message": "Ask Leo “Was it scary at night?”" }
+        "partial": {
+          "message": "Ask if it was scary: “Was it scary at night?”"
+        },
+        "off_topic": {
+          "message": "Ask Leo “Was it scary at night?”"
+        }
       }
     },
     {
       "id": "campfire",
-      "npc": { "text": "A little, but we made a campfire.", "gender": "male" },
-      "learning_objective": ["Ask what they did", "Use: campfire, do"],
+      "npc": {
+        "text": "A little, but we made a campfire.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Ask what they did",
+        "Use: campfire, do"
+      ],
       "routes": [
         {
           "intent": "ask_do",
           "meaning": "Mia asks what they did at the campfire.",
-          "examples": ["What did you do at the campfire?", "What did you do at the fire?", "What did you do there?"],
-          "keywords": ["what", "do", "campfire", "fire"],
+          "examples": [
+            "What did you do at the campfire?",
+            "What did you do at the fire?",
+            "What did you do there?"
+          ],
+          "keywords": [
+            "what",
+            "do",
+            "campfire",
+            "fire"
+          ],
           "hint": "💬 Try saying: “What did you do at the campfire?”",
-          "next_nodes": [{ "id": "cooked_sang", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "cooked_sang",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask about the campfire: “What did you do at the campfire?”" },
-        "off_topic": { "message": "They made a campfire. Ask “What did you do at the campfire?”" }
+        "partial": {
+          "message": "Ask about the campfire: “What did you do at the campfire?”"
+        },
+        "off_topic": {
+          "message": "They made a campfire. Ask “What did you do at the campfire?”"
+        }
       }
     },
     {
       "id": "cooked_sang",
-      "npc": { "text": "We cooked food and sang songs.", "gender": "male" },
-      "learning_objective": ["Ask about the sky", "Use: stars"],
+      "npc": {
+        "text": "We cooked food and sang songs.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Ask about the sky",
+        "Use: stars"
+      ],
       "routes": [
         {
           "intent": "ask_stars",
           "meaning": "Mia asks if they saw the stars.",
-          "examples": ["Did you see the stars?", "Did you see stars?", "Could you see the stars?"],
-          "keywords": ["stars", "see", "sky", "night"],
+          "examples": [
+            "Did you see the stars?",
+            "Did you see stars?",
+            "Could you see the stars?"
+          ],
+          "keywords": [
+            "stars",
+            "see",
+            "sky",
+            "night"
+          ],
           "hint": "💬 Try saying: “Did you see the stars?”",
-          "next_nodes": [{ "id": "full_stars", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "full_stars",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "ask_food",
           "meaning": "Mia asks what food they cooked.",
-          "examples": ["What food did you cook?", "What did you cook?", "What songs did you sing?"],
-          "keywords": ["food", "cook", "songs", "sing"],
-          "hint": "You can ask “Did you see the stars?”",
-          "next_nodes": [{ "id": "food_side", "weight": 100 }]
+          "examples": [
+            "What food did you cook?",
+            "What did you cook?",
+            "What songs did you sing?"
+          ],
+          "keywords": [
+            "food",
+            "cook",
+            "songs",
+            "sing"
+          ],
+          "hint": "💬 You can ask “Did you see the stars?”",
+          "next_nodes": [
+            {
+              "id": "food_side",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask about the sky: “Did you see the stars?”" },
-        "off_topic": { "message": "They cooked and sang. Ask “Did you see the stars?”" }
+        "partial": {
+          "message": "Ask about the sky: “Did you see the stars?”"
+        },
+        "off_topic": {
+          "message": "They cooked and sang. Ask “Did you see the stars?”"
+        }
       }
     },
     {
       "id": "food_side",
-      "npc": { "text": "We cooked hot dogs! And then we looked up at the sky.", "gender": "male" },
-      "learning_objective": ["Ask if they saw stars"],
+      "npc": {
+        "text": "We cooked hot dogs! And then we looked up at the sky.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Ask if they saw stars"
+      ],
       "routes": [
         {
           "intent": "ask_stars",
           "meaning": "Mia asks if they saw the stars.",
-          "examples": ["Did you see the stars?", "Did you see stars?", "So did you see the stars?"],
-          "keywords": ["stars", "see", "sky"],
+          "examples": [
+            "Did you see the stars?",
+            "Did you see stars?",
+            "So did you see the stars?"
+          ],
+          "keywords": [
+            "stars",
+            "see",
+            "sky"
+          ],
           "hint": "💬 Try saying: “Did you see the stars?”",
-          "next_nodes": [{ "id": "full_stars", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "full_stars",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask about the stars: “Did you see the stars?”" },
-        "off_topic": { "message": "They looked at the sky. Ask “Did you see the stars?”" }
+        "partial": {
+          "message": "Ask about the stars: “Did you see the stars?”"
+        },
+        "off_topic": {
+          "message": "They looked at the sky. Ask “Did you see the stars?”"
+        }
       }
     },
     {
       "id": "full_stars",
-      "npc": { "text": "Yes, the sky was full of stars.", "gender": "male" },
-      "learning_objective": ["Give a closing comment"],
+      "npc": {
+        "text": "Yes, the sky was full of stars.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Give a closing comment"
+      ],
       "routes": [
         {
           "intent": "say_amazing",
           "meaning": "Mia says camping sounds amazing.",
-          "examples": ["Camping sounds amazing!", "That sounds amazing!", "Camping is amazing!"],
-          "keywords": ["camping", "amazing", "great", "wow"],
+          "examples": [
+            "Camping sounds amazing!",
+            "That sounds amazing!",
+            "Camping is amazing!"
+          ],
+          "keywords": [
+            "camping",
+            "amazing",
+            "great",
+            "wow"
+          ],
           "hint": "💬 Try saying: “Camping sounds amazing!”",
-          "next_nodes": [{ "id": "end_amazing", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "end_amazing",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "ask_join",
           "meaning": "Mia asks to come next time.",
-          "examples": ["Can I come next time?", "Can I go with you next time?", "May I come too?"],
-          "keywords": ["come", "next", "time", "join"],
-          "hint": "You can say “Camping sounds amazing!”",
-          "next_nodes": [{ "id": "end_join", "weight": 100 }]
+          "examples": [
+            "Can I come next time?",
+            "Can I go with you next time?",
+            "May I come too?"
+          ],
+          "keywords": [
+            "come",
+            "next",
+            "time",
+            "join"
+          ],
+          "hint": "💬 You can say “Camping sounds amazing!”",
+          "next_nodes": [
+            {
+              "id": "end_join",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Give a comment: “Camping sounds amazing!”" },
-        "off_topic": { "message": "The sky was full of stars. Say “Camping sounds amazing!”" }
+        "partial": {
+          "message": "Give a comment: “Camping sounds amazing!”"
+        },
+        "off_topic": {
+          "message": "The sky was full of stars. Say “Camping sounds amazing!”"
+        }
       }
     },
     {
       "id": "end_amazing",
-      "npc": { "text": "It really was amazing! Let's go together someday. Bye, Mia!", "gender": "male" },
+      "npc": {
+        "text": "It really was amazing! Let's go together someday. Bye, Mia!",
+        "gender": "male"
+      },
       "end": true
     },
     {
       "id": "end_join",
-      "npc": { "text": "Yes! You should come with us next summer. See you, Mia!", "gender": "male" },
+      "npc": {
+        "text": "Yes! You should come with us next summer. See you, Mia!",
+        "gender": "male"
+      },
       "end": true
     }
   ]

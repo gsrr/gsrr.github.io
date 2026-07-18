@@ -11,164 +11,384 @@
   "nodes": [
     {
       "id": "arrive",
-      "npc": { "text": "Hi, Anna. Look! We are at the zoo.", "gender": "male" },
-      "learning_objective": ["Talk about zoo animals", "Use: lion, big"],
+      "npc": {
+        "text": "Hi, Anna. Look! We are at the zoo.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Talk about zoo animals",
+        "Use: lion, big"
+      ],
       "routes": [
         {
           "intent": "see_lion",
           "meaning": "Anna says she can see a big lion.",
-          "examples": ["Wow! I can see a big lion.", "I can see a big lion.", "Look, a big lion!", "I see a lion!"],
-          "keywords": ["lion", "big", "see", "wow"],
+          "examples": [
+            "Wow! I can see a big lion.",
+            "I can see a big lion.",
+            "Look, a big lion!",
+            "I see a lion!"
+          ],
+          "keywords": [
+            "lion",
+            "big",
+            "see",
+            "wow"
+          ],
           "hint": "💬 Try saying: “Wow! I can see a big lion.”",
-          "next_nodes": [{ "id": "lion", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "lion",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "excited_zoo",
           "meaning": "Anna is excited to be at the zoo.",
-          "examples": ["We are at the zoo!", "Yay, the zoo!", "I love the zoo!", "So many animals!"],
-          "keywords": ["zoo", "animals", "yay", "love"],
-          "hint": "You can say “We are at the zoo!” or “Wow! I can see a big lion.”",
-          "next_nodes": [{ "id": "excited", "weight": 100 }]
+          "examples": [
+            "We are at the zoo!",
+            "Yay, the zoo!",
+            "I love the zoo!",
+            "So many animals!"
+          ],
+          "keywords": [
+            "zoo",
+            "animals",
+            "yay",
+            "love"
+          ],
+          "hint": "💬 You can say “We are at the zoo!” or “Wow! I can see a big lion.”",
+          "next_nodes": [
+            {
+              "id": "excited",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Tom what you see: “Wow! I can see a big lion.”" },
-        "off_topic": { "message": "You are at the zoo! Say “Wow! I can see a big lion.”" }
+        "partial": {
+          "message": "Tell Tom what you see: “Wow! I can see a big lion.”"
+        },
+        "off_topic": {
+          "message": "You are at the zoo! Say “Wow! I can see a big lion.”"
+        }
       }
     },
     {
       "id": "excited",
-      "npc": { "text": "Yes! So many animals. Look at that big lion!", "gender": "male" },
-      "learning_objective": ["Name a zoo animal"],
+      "npc": {
+        "text": "Yes! So many animals. Look at that big lion!",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Name a zoo animal"
+      ],
       "routes": [
         {
           "intent": "see_lion",
           "meaning": "Anna says she can see a big lion.",
-          "examples": ["Wow! I can see a big lion.", "I can see a big lion.", "Yes, a big lion!", "I see the lion!"],
-          "keywords": ["lion", "big", "see"],
+          "examples": [
+            "Wow! I can see a big lion.",
+            "I can see a big lion.",
+            "Yes, a big lion!",
+            "I see the lion!"
+          ],
+          "keywords": [
+            "lion",
+            "big",
+            "see"
+          ],
           "hint": "💬 Try saying: “Wow! I can see a big lion.”",
-          "next_nodes": [{ "id": "lion", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "lion",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say what you see: “Wow! I can see a big lion.”" },
-        "off_topic": { "message": "Look at the lion! Say “Wow! I can see a big lion.”" }
+        "partial": {
+          "message": "Say what you see: “Wow! I can see a big lion.”"
+        },
+        "off_topic": {
+          "message": "Look at the lion! Say “Wow! I can see a big lion.”"
+        }
       }
     },
     {
       "id": "lion",
-      "npc": { "text": "I like the lion. It is big.", "gender": "male" },
-      "learning_objective": ["Name another animal", "Use: panda"],
+      "npc": {
+        "text": "I like the lion. It is big.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Name another animal",
+        "Use: panda"
+      ],
       "routes": [
         {
           "intent": "see_panda",
           "meaning": "Anna says she can see a panda too.",
-          "examples": ["Look! I can see a panda too.", "I can see a panda.", "Look, a panda too!", "I see a panda!"],
-          "keywords": ["panda", "see", "too", "look"],
+          "examples": [
+            "Look! I can see a panda too.",
+            "I can see a panda.",
+            "Look, a panda too!",
+            "I see a panda!"
+          ],
+          "keywords": [
+            "panda",
+            "see",
+            "too",
+            "look"
+          ],
           "hint": "💬 Try saying: “Look! I can see a panda too.”",
-          "next_nodes": [{ "id": "panda", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "panda",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "like_lion",
           "meaning": "Anna likes the lion too.",
-          "examples": ["I like the lion too.", "Me too, I like the lion.", "The lion is big!", "Yes, a big lion."],
-          "keywords": ["lion", "like", "big", "too"],
-          "hint": "You can say “I like the lion too.” or “Look! I can see a panda too.”",
-          "next_nodes": [{ "id": "panda", "weight": 100 }]
+          "examples": [
+            "I like the lion too.",
+            "Me too, I like the lion.",
+            "The lion is big!",
+            "Yes, a big lion."
+          ],
+          "keywords": [
+            "lion",
+            "like",
+            "big",
+            "too"
+          ],
+          "hint": "💬 You can say “I like the lion too.” or “Look! I can see a panda too.”",
+          "next_nodes": [
+            {
+              "id": "panda",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Tom about another animal: “Look! I can see a panda too.”" },
-        "off_topic": { "message": "Look around the zoo. Say “Look! I can see a panda too.”" }
+        "partial": {
+          "message": "Tell Tom about another animal: “Look! I can see a panda too.”"
+        },
+        "off_topic": {
+          "message": "Look around the zoo. Say “Look! I can see a panda too.”"
+        }
       }
     },
     {
       "id": "panda",
-      "npc": { "text": "The panda is black and white.", "gender": "male" },
-      "learning_objective": ["Say what you like", "Use: cute"],
+      "npc": {
+        "text": "The panda is black and white.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say what you like",
+        "Use: cute"
+      ],
       "routes": [
         {
           "intent": "like_panda",
           "meaning": "Anna says she likes pandas and they are cute.",
-          "examples": ["I like pandas. They are cute.", "I like pandas.", "Pandas are cute!", "Yes, they are cute."],
-          "keywords": ["pandas", "panda", "cute", "like"],
+          "examples": [
+            "I like pandas. They are cute.",
+            "I like pandas.",
+            "Pandas are cute!",
+            "Yes, they are cute."
+          ],
+          "keywords": [
+            "pandas",
+            "panda",
+            "cute",
+            "like"
+          ],
           "hint": "💬 Try saying: “I like pandas. They are cute.”",
-          "next_nodes": [{ "id": "monkey", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "monkey",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Tom you like pandas: “I like pandas. They are cute.”" },
-        "off_topic": { "message": "The panda is black and white! Say “I like pandas. They are cute.”" }
+        "partial": {
+          "message": "Tell Tom you like pandas: “I like pandas. They are cute.”"
+        },
+        "off_topic": {
+          "message": "The panda is black and white! Say “I like pandas. They are cute.”"
+        }
       }
     },
     {
       "id": "monkey",
-      "npc": { "text": "Can you see the monkey?", "gender": "male" },
-      "learning_objective": ["Say what the monkey can do", "Use: monkey, jump"],
+      "npc": {
+        "text": "Can you see the monkey?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say what the monkey can do",
+        "Use: monkey, jump"
+      ],
       "routes": [
         {
           "intent": "monkey_jump",
           "meaning": "Anna says yes and the monkey can jump.",
-          "examples": ["Yes! The monkey can jump.", "The monkey can jump!", "Yes, it can jump.", "I see the monkey. It can jump!"],
-          "keywords": ["monkey", "jump", "yes", "see"],
+          "examples": [
+            "Yes! The monkey can jump.",
+            "The monkey can jump!",
+            "Yes, it can jump.",
+            "I see the monkey. It can jump!"
+          ],
+          "keywords": [
+            "monkey",
+            "jump",
+            "yes",
+            "see"
+          ],
           "hint": "💬 Try saying: “Yes! The monkey can jump.”",
-          "next_nodes": [{ "id": "fun", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "fun",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "where_monkey",
           "meaning": "Anna cannot find the monkey and asks where.",
-          "examples": ["Where is the monkey?", "I can't see it. Where?", "Where is it?", "No, where?"],
-          "keywords": ["where", "monkey", "no"],
-          "hint": "You can say “Where is the monkey?” or “Yes! The monkey can jump.”",
-          "next_nodes": [{ "id": "point_monkey", "weight": 100 }]
+          "examples": [
+            "Where is the monkey?",
+            "I can't see it. Where?",
+            "Where is it?",
+            "No, where?"
+          ],
+          "keywords": [
+            "where",
+            "monkey",
+            "no"
+          ],
+          "hint": "💬 You can say “Where is the monkey?” or “Yes! The monkey can jump.”",
+          "next_nodes": [
+            {
+              "id": "point_monkey",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Tom about the monkey: “Yes! The monkey can jump.”" },
-        "off_topic": { "message": "Tom asked about the monkey. Say “Yes! The monkey can jump.”" }
+        "partial": {
+          "message": "Tell Tom about the monkey: “Yes! The monkey can jump.”"
+        },
+        "off_topic": {
+          "message": "Tom asked about the monkey. Say “Yes! The monkey can jump.”"
+        }
       }
     },
     {
       "id": "point_monkey",
-      "npc": { "text": "There! Look up. The monkey can jump.", "gender": "male" },
-      "learning_objective": ["Say what the monkey can do"],
+      "npc": {
+        "text": "There! Look up. The monkey can jump.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say what the monkey can do"
+      ],
       "routes": [
         {
           "intent": "monkey_jump",
           "meaning": "Anna sees the monkey jump.",
-          "examples": ["Yes! The monkey can jump.", "The monkey can jump!", "Wow, it can jump!", "I see it. It can jump!"],
-          "keywords": ["monkey", "jump", "yes", "see"],
+          "examples": [
+            "Yes! The monkey can jump.",
+            "The monkey can jump!",
+            "Wow, it can jump!",
+            "I see it. It can jump!"
+          ],
+          "keywords": [
+            "monkey",
+            "jump",
+            "yes",
+            "see"
+          ],
           "hint": "💬 Try saying: “Yes! The monkey can jump.”",
-          "next_nodes": [{ "id": "fun", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "fun",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Look up! Say “Yes! The monkey can jump.”" },
-        "off_topic": { "message": "There is the monkey. Say “Yes! The monkey can jump.”" }
+        "partial": {
+          "message": "Look up! Say “Yes! The monkey can jump.”"
+        },
+        "off_topic": {
+          "message": "There is the monkey. Say “Yes! The monkey can jump.”"
+        }
       }
     },
     {
       "id": "fun",
-      "npc": { "text": "This zoo is fun. I am happy.", "gender": "male" },
-      "learning_objective": ["Say what to do next", "Use: MRT"],
+      "npc": {
+        "text": "This zoo is fun. I am happy.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say what to do next",
+        "Use: MRT"
+      ],
       "routes": [
         {
           "intent": "take_mrt",
           "meaning": "Anna is happy too and wants to take the MRT next.",
-          "examples": ["Me too! Now let us take the MRT.", "Me too! Let us take the MRT.", "Yes! To the MRT!", "I am happy too. Let us take the MRT."],
-          "keywords": ["me", "too", "mrt", "take", "happy"],
+          "examples": [
+            "Me too! Now let us take the MRT.",
+            "Me too! Let us take the MRT.",
+            "Yes! To the MRT!",
+            "I am happy too. Let us take the MRT."
+          ],
+          "keywords": [
+            "me",
+            "too",
+            "mrt",
+            "take",
+            "happy"
+          ],
           "hint": "💬 Try saying: “Me too! Now let us take the MRT.”",
-          "next_nodes": [{ "id": "bye", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "bye",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say what to do next: “Me too! Now let us take the MRT.”" },
-        "off_topic": { "message": "The zoo was fun! Say “Me too! Now let us take the MRT.”" }
+        "partial": {
+          "message": "Say what to do next: “Me too! Now let us take the MRT.”"
+        },
+        "off_topic": {
+          "message": "The zoo was fun! Say “Me too! Now let us take the MRT.”"
+        }
       }
     },
     {
       "id": "bye",
-      "npc": { "text": "Great! The zoo was so much fun. Let us take the MRT. Bye-bye!", "gender": "male" },
+      "npc": {
+        "text": "Great! The zoo was so much fun. Let us take the MRT. Bye-bye!",
+        "gender": "male"
+      },
       "end": true
     }
   ]

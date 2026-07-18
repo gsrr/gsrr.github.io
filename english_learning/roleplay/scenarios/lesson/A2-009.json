@@ -11,201 +11,460 @@
   "nodes": [
     {
       "id": "ask_topic",
-      "npc": { "text": "What is your science project about?", "gender": "male" },
-      "learning_objective": ["Say what your project is about", "Use: project, volcanoes"],
+      "npc": {
+        "text": "What is your science project about?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say what your project is about",
+        "Use: project, volcanoes"
+      ],
       "routes": [
         {
           "intent": "about_volcano",
           "meaning": "Emma says her project is about volcanoes.",
-          "examples": ["My project is about volcanoes.", "It is about volcanoes.", "Mine is about volcanoes."],
-          "keywords": ["project", "about", "volcanoes", "volcano"],
+          "examples": [
+            "My project is about volcanoes.",
+            "It is about volcanoes.",
+            "Mine is about volcanoes."
+          ],
+          "keywords": [
+            "project",
+            "about",
+            "volcanoes",
+            "volcano"
+          ],
           "hint": "💬 Try saying: “My project is about volcanoes.”",
-          "next_nodes": [{ "id": "what_make", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "what_make",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "other_topic",
           "meaning": "Emma is not sure of her topic yet.",
-          "examples": ["I am not sure yet.", "I don't know yet.", "Maybe about animals."],
-          "keywords": ["not sure", "don't know", "yet", "maybe"],
-          "hint": "You can say “My project is about volcanoes.”",
-          "next_nodes": [{ "id": "help_pick", "weight": 100 }]
+          "examples": [
+            "I am not sure yet.",
+            "I don't know yet.",
+            "Maybe about animals."
+          ],
+          "keywords": [
+            "not sure",
+            "don't know",
+            "yet",
+            "maybe"
+          ],
+          "hint": "💬 You can say “My project is about volcanoes.”",
+          "next_nodes": [
+            {
+              "id": "help_pick",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Leo your topic: “My project is about volcanoes.”" },
-        "off_topic": { "message": "Leo asked about your project. Say “My project is about volcanoes.”" }
+        "partial": {
+          "message": "Tell Leo your topic: “My project is about volcanoes.”"
+        },
+        "off_topic": {
+          "message": "Leo asked about your project. Say “My project is about volcanoes.”"
+        }
       }
     },
     {
       "id": "help_pick",
-      "npc": { "text": "No problem! Volcanoes are always fun. Try that!", "gender": "male" },
+      "npc": {
+        "text": "No problem! Volcanoes are always fun. Try that!",
+        "gender": "male"
+      },
       "routes": [
         {
           "intent": "agree_volcano",
           "meaning": "Emma agrees to do volcanoes.",
-          "examples": ["Okay, my project is about volcanoes.", "Good idea, volcanoes!", "Yes, I will do volcanoes."],
-          "keywords": ["volcanoes", "volcano", "okay", "idea"],
+          "examples": [
+            "Okay, my project is about volcanoes.",
+            "Good idea, volcanoes!",
+            "Yes, I will do volcanoes."
+          ],
+          "keywords": [
+            "volcanoes",
+            "volcano",
+            "okay",
+            "idea"
+          ],
           "hint": "💬 Try saying: “My project is about volcanoes.”",
-          "next_nodes": [{ "id": "what_make", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "what_make",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say “My project is about volcanoes.”" },
-        "off_topic": { "message": "Try Leo's idea: “My project is about volcanoes.”" }
+        "partial": {
+          "message": "Say “My project is about volcanoes.”"
+        },
+        "off_topic": {
+          "message": "Try Leo's idea: “My project is about volcanoes.”"
+        }
       }
     },
     {
       "id": "what_make",
-      "npc": { "text": "That sounds cool! What will you make?", "gender": "male" },
-      "learning_objective": ["Say what you will make", "Use: make, model"],
+      "npc": {
+        "text": "That sounds cool! What will you make?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say what you will make",
+        "Use: make, model"
+      ],
       "routes": [
         {
           "intent": "make_model",
           "meaning": "Emma says she will make a model volcano.",
-          "examples": ["I will make a model volcano.", "I will build a model volcano.", "A model volcano."],
-          "keywords": ["make", "model", "volcano", "build"],
+          "examples": [
+            "I will make a model volcano.",
+            "I will build a model volcano.",
+            "A model volcano."
+          ],
+          "keywords": [
+            "make",
+            "model",
+            "volcano",
+            "build"
+          ],
           "hint": "💬 Try saying: “I will make a model volcano.”",
-          "next_nodes": [{ "id": "how_work", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "how_work",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "ask_ideas",
           "meaning": "Emma asks Leo for an idea.",
-          "examples": ["What should I make?", "Any ideas?", "What can I make?"],
-          "keywords": ["what", "make", "ideas", "should"],
-          "hint": "You can ask for ideas, or say “I will make a model volcano.”",
-          "next_nodes": [{ "id": "idea_model", "weight": 100 }]
+          "examples": [
+            "What should I make?",
+            "Any ideas?",
+            "What can I make?"
+          ],
+          "keywords": [
+            "what",
+            "make",
+            "ideas",
+            "should"
+          ],
+          "hint": "💬 You can ask for ideas, or say “I will make a model volcano.”",
+          "next_nodes": [
+            {
+              "id": "idea_model",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say what you'll build: “I will make a model volcano.”" },
-        "off_topic": { "message": "Leo asked what you will make. Say “I will make a model volcano.”" }
+        "partial": {
+          "message": "Say what you'll build: “I will make a model volcano.”"
+        },
+        "off_topic": {
+          "message": "Leo asked what you will make. Say “I will make a model volcano.”"
+        }
       }
     },
     {
       "id": "idea_model",
-      "npc": { "text": "You could make a model volcano. It looks amazing!", "gender": "male" },
+      "npc": {
+        "text": "You could make a model volcano. It looks amazing!",
+        "gender": "male"
+      },
       "routes": [
         {
           "intent": "agree_model",
           "meaning": "Emma agrees to make a model volcano.",
-          "examples": ["Yes, I will make a model volcano.", "Good idea, a model volcano!", "Okay, a model volcano."],
-          "keywords": ["model", "volcano", "make", "okay"],
+          "examples": [
+            "Yes, I will make a model volcano.",
+            "Good idea, a model volcano!",
+            "Okay, a model volcano."
+          ],
+          "keywords": [
+            "model",
+            "volcano",
+            "make",
+            "okay"
+          ],
           "hint": "💬 Try saying: “I will make a model volcano.”",
-          "next_nodes": [{ "id": "how_work", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "how_work",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say “I will make a model volcano.”" },
-        "off_topic": { "message": "Agree with Leo: “I will make a model volcano.”" }
+        "partial": {
+          "message": "Say “I will make a model volcano.”"
+        },
+        "off_topic": {
+          "message": "Agree with Leo: “I will make a model volcano.”"
+        }
       }
     },
     {
       "id": "how_work",
-      "npc": { "text": "How will it work?", "gender": "male" },
-      "learning_objective": ["Explain how something works", "Use: erupt, baking soda, vinegar"],
+      "npc": {
+        "text": "How will it work?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Explain how something works",
+        "Use: erupt, baking soda, vinegar"
+      ],
       "routes": [
         {
           "intent": "erupt",
           "meaning": "Emma explains it erupts with baking soda and vinegar.",
-          "examples": ["It will erupt with baking soda and vinegar.", "It erupts with baking soda and vinegar.", "With baking soda and vinegar."],
-          "keywords": ["erupt", "baking soda", "vinegar", "work"],
+          "examples": [
+            "It will erupt with baking soda and vinegar.",
+            "It erupts with baking soda and vinegar.",
+            "With baking soda and vinegar."
+          ],
+          "keywords": [
+            "erupt",
+            "baking soda",
+            "vinegar",
+            "work"
+          ],
           "hint": "💬 Try saying: “It will erupt with baking soda and vinegar.”",
-          "next_nodes": [{ "id": "leo_plants", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "leo_plants",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "not_sure_how",
           "meaning": "Emma is not sure how it works yet.",
-          "examples": ["I am not sure yet.", "I need to test it.", "I don't know how yet."],
-          "keywords": ["not sure", "test", "don't know", "yet"],
-          "hint": "You can say “It will erupt with baking soda and vinegar.”",
-          "next_nodes": [{ "id": "hint_erupt", "weight": 100 }]
+          "examples": [
+            "I am not sure yet.",
+            "I need to test it.",
+            "I don't know how yet."
+          ],
+          "keywords": [
+            "not sure",
+            "test",
+            "don't know",
+            "yet"
+          ],
+          "hint": "💬 You can say “It will erupt with baking soda and vinegar.”",
+          "next_nodes": [
+            {
+              "id": "hint_erupt",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Explain it: “It will erupt with baking soda and vinegar.”" },
-        "off_topic": { "message": "Leo asked how it works. Say “It will erupt with baking soda and vinegar.”" }
+        "partial": {
+          "message": "Explain it: “It will erupt with baking soda and vinegar.”"
+        },
+        "off_topic": {
+          "message": "Leo asked how it works. Say “It will erupt with baking soda and vinegar.”"
+        }
       }
     },
     {
       "id": "hint_erupt",
-      "npc": { "text": "Try baking soda and vinegar. It makes it erupt!", "gender": "male" },
+      "npc": {
+        "text": "Try baking soda and vinegar. It makes it erupt!",
+        "gender": "male"
+      },
       "routes": [
         {
           "intent": "thanks_erupt",
           "meaning": "Emma uses the idea to explain it.",
-          "examples": ["It will erupt with baking soda and vinegar!", "Great, baking soda and vinegar!", "Thanks, I will try that."],
-          "keywords": ["erupt", "baking soda", "vinegar", "thanks"],
+          "examples": [
+            "It will erupt with baking soda and vinegar!",
+            "Great, baking soda and vinegar!",
+            "Thanks, I will try that."
+          ],
+          "keywords": [
+            "erupt",
+            "baking soda",
+            "vinegar",
+            "thanks"
+          ],
           "hint": "💬 Try saying: “It will erupt with baking soda and vinegar.”",
-          "next_nodes": [{ "id": "leo_plants", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "leo_plants",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say “It will erupt with baking soda and vinegar.”" },
-        "off_topic": { "message": "Use Leo's tip: “It will erupt with baking soda and vinegar.”" }
+        "partial": {
+          "message": "Say “It will erupt with baking soda and vinegar.”"
+        },
+        "off_topic": {
+          "message": "Use Leo's tip: “It will erupt with baking soda and vinegar.”"
+        }
       }
     },
     {
       "id": "leo_plants",
-      "npc": { "text": "My project is about plants.", "gender": "male" },
-      "learning_objective": ["Ask what someone is studying", "Use: studying, plants"],
+      "npc": {
+        "text": "My project is about plants.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Ask what someone is studying",
+        "Use: studying, plants"
+      ],
       "routes": [
         {
           "intent": "ask_study",
           "meaning": "Emma asks what Leo is studying.",
-          "examples": ["What are you studying?", "What do you study?", "What are you testing?"],
-          "keywords": ["what", "studying", "study", "plants"],
+          "examples": [
+            "What are you studying?",
+            "What do you study?",
+            "What are you testing?"
+          ],
+          "keywords": [
+            "what",
+            "studying",
+            "study",
+            "plants"
+          ],
           "hint": "💬 Try saying: “What are you studying?”",
-          "next_nodes": [{ "id": "grows_faster", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "grows_faster",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "react_plants",
           "meaning": "Emma reacts to the plants topic.",
-          "examples": ["Plants are cool, too!", "Nice, I like plants.", "That sounds interesting."],
-          "keywords": ["plants", "cool", "nice", "interesting"],
-          "hint": "You can react, or ask “What are you studying?”",
-          "next_nodes": [{ "id": "grows_faster", "weight": 100 }]
+          "examples": [
+            "Plants are cool, too!",
+            "Nice, I like plants.",
+            "That sounds interesting."
+          ],
+          "keywords": [
+            "plants",
+            "cool",
+            "nice",
+            "interesting"
+          ],
+          "hint": "💬 You can react, or ask “What are you studying?”",
+          "next_nodes": [
+            {
+              "id": "grows_faster",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask Leo: “What are you studying?”" },
-        "off_topic": { "message": "Leo studies plants. Ask “What are you studying?”" }
+        "partial": {
+          "message": "Ask Leo: “What are you studying?”"
+        },
+        "off_topic": {
+          "message": "Leo studies plants. Ask “What are you studying?”"
+        }
       }
     },
     {
       "id": "grows_faster",
-      "npc": { "text": "I am studying which plant grows faster.", "gender": "male" },
-      "learning_objective": ["Give an upbeat closing", "Use: best, class"],
+      "npc": {
+        "text": "I am studying which plant grows faster.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Give an upbeat closing",
+        "Use: best, class"
+      ],
       "routes": [
         {
           "intent": "best_projects",
           "meaning": "Emma says their projects will be the best.",
-          "examples": ["Our projects will be the best in the class!", "Our projects will be the best!", "We will have the best projects!"],
-          "keywords": ["projects", "best", "class", "our"],
+          "examples": [
+            "Our projects will be the best in the class!",
+            "Our projects will be the best!",
+            "We will have the best projects!"
+          ],
+          "keywords": [
+            "projects",
+            "best",
+            "class",
+            "our"
+          ],
           "hint": "💬 Try saying: “Our projects will be the best in the class!”",
-          "next_nodes": [{ "id": "done", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "done",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "ask_which",
           "meaning": "Emma asks which plant Leo thinks is faster.",
-          "examples": ["Which plant grows faster?", "Which one do you think?", "What plants are you testing?"],
-          "keywords": ["which", "plant", "think", "testing"],
-          "hint": "You can ask more, or say “Our projects will be the best in the class!”",
-          "next_nodes": [{ "id": "which_react", "weight": 100 }]
+          "examples": [
+            "Which plant grows faster?",
+            "Which one do you think?",
+            "What plants are you testing?"
+          ],
+          "keywords": [
+            "which",
+            "plant",
+            "think",
+            "testing"
+          ],
+          "hint": "💬 You can ask more, or say “Our projects will be the best in the class!”",
+          "next_nodes": [
+            {
+              "id": "which_react",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Cheer you both on: “Our projects will be the best in the class!”" },
-        "off_topic": { "message": "Both projects sound good. Say “Our projects will be the best in the class!”" }
+        "partial": {
+          "message": "Cheer you both on: “Our projects will be the best in the class!”"
+        },
+        "off_topic": {
+          "message": "Both projects sound good. Say “Our projects will be the best in the class!”"
+        }
       }
     },
     {
       "id": "which_react",
-      "npc": { "text": "Maybe the bean plant! We will see. Our projects will be great!", "gender": "male" },
+      "npc": {
+        "text": "Maybe the bean plant! We will see. Our projects will be great!",
+        "gender": "male"
+      },
       "end": true
     },
     {
       "id": "done",
-      "npc": { "text": "Yes! We will have the best projects in the class. Good luck!", "gender": "male" },
+      "npc": {
+        "text": "Yes! We will have the best projects in the class. Good luck!",
+        "gender": "male"
+      },
       "end": true
     }
   ]

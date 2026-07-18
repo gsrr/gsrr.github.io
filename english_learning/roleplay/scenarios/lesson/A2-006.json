@@ -11,169 +11,411 @@
   "nodes": [
     {
       "id": "plan_picnic",
-      "npc": { "text": "We were going to have a picnic today.", "gender": "female" },
-      "learning_objective": ["Say what happened", "Use: started to rain"],
+      "npc": {
+        "text": "We were going to have a picnic today.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Say what happened",
+        "Use: started to rain"
+      ],
       "routes": [
         {
           "intent": "but_rain",
           "meaning": "Sam says but it started to rain.",
-          "examples": ["But it started to rain.", "But then it started to rain.", "But it began to rain.", "Yes, but it started to rain."],
-          "keywords": ["but", "started", "rain", "began"],
-          "hint": "Say what happened: “But it started to rain.”",
-          "next_nodes": [{ "id": "made_food", "weight": 100 }]
+          "examples": [
+            "But it started to rain.",
+            "But then it started to rain.",
+            "But it began to rain.",
+            "Yes, but it started to rain."
+          ],
+          "keywords": [
+            "but",
+            "started",
+            "rain",
+            "began"
+          ],
+          "hint": "💬 Say what happened: “But it started to rain.”",
+          "next_nodes": [
+            {
+              "id": "made_food",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "oh_no_rain",
           "meaning": "Sam reacts sadly that it started to rain.",
-          "examples": ["Oh no, but it started to rain.", "Oh no! It started to rain.", "What a pity, it started to rain.", "Too bad, it started to rain."],
-          "keywords": ["oh", "no", "started", "rain", "pity"],
-          "hint": "You can say “But it started to rain.”",
-          "next_nodes": [{ "id": "made_food", "weight": 100 }]
+          "examples": [
+            "Oh no, but it started to rain.",
+            "Oh no! It started to rain.",
+            "What a pity, it started to rain.",
+            "Too bad, it started to rain."
+          ],
+          "keywords": [
+            "oh",
+            "no",
+            "started",
+            "rain",
+            "pity"
+          ],
+          "hint": "💬 You can say “But it started to rain.”",
+          "next_nodes": [
+            {
+              "id": "made_food",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say what happened: “But it started to rain.”" },
-        "off_topic": { "message": "Lily wanted a picnic. Try “But it started to rain.”" }
+        "partial": {
+          "message": "Say what happened: “But it started to rain.”"
+        },
+        "off_topic": {
+          "message": "Lily wanted a picnic. Try “But it started to rain.”"
+        }
       }
     },
     {
       "id": "made_food",
-      "npc": { "text": "I made sandwiches and a cake.", "gender": "female" },
-      "learning_objective": ["Cheer someone up", "Use: don't be sad, inside"],
+      "npc": {
+        "text": "I made sandwiches and a cake.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Cheer someone up",
+        "Use: don't be sad, inside"
+      ],
       "routes": [
         {
           "intent": "eat_inside",
           "meaning": "Sam cheers Lily up and says they can eat inside.",
-          "examples": ["Don't be sad. We can eat inside.", "Don't be sad! We can eat inside.", "Don't worry. We can eat inside.", "Don't be sad. Let's eat inside."],
-          "keywords": ["don't", "sad", "eat", "inside"],
-          "hint": "Cheer Lily up: “Don't be sad. We can eat inside.”",
-          "next_nodes": [{ "id": "good_idea", "weight": 100 }]
+          "examples": [
+            "Don't be sad. We can eat inside.",
+            "Don't be sad! We can eat inside.",
+            "Don't worry. We can eat inside.",
+            "Don't be sad. Let's eat inside."
+          ],
+          "keywords": [
+            "don't",
+            "sad",
+            "eat",
+            "inside"
+          ],
+          "hint": "💬 Cheer Lily up: “Don't be sad. We can eat inside.”",
+          "next_nodes": [
+            {
+              "id": "good_idea",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "yummy_inside",
           "meaning": "Sam is excited about the food and suggests eating inside.",
-          "examples": ["That's great! We can eat inside.", "Yummy! We can eat inside.", "Wow, that sounds good! We can eat inside.", "Great food! Let's eat inside."],
-          "keywords": ["great", "yummy", "eat", "inside", "good"],
-          "hint": "You can say “Don't be sad. We can eat inside.”",
-          "next_nodes": [{ "id": "good_idea", "weight": 100 }]
+          "examples": [
+            "That's great! We can eat inside.",
+            "Yummy! We can eat inside.",
+            "Wow, that sounds good! We can eat inside.",
+            "Great food! Let's eat inside."
+          ],
+          "keywords": [
+            "great",
+            "yummy",
+            "eat",
+            "inside",
+            "good"
+          ],
+          "hint": "💬 You can say “Don't be sad. We can eat inside.”",
+          "next_nodes": [
+            {
+              "id": "good_idea",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "so_much_food",
           "meaning": "Sam is surprised at how much food Lily made.",
-          "examples": ["Wow, that's so much food!", "That's a lot of food!", "You made all of that?", "That's a big lunch!"],
-          "keywords": ["much", "lot", "food", "big"],
-          "hint": "You can say “Don't be sad. We can eat inside.”",
-          "next_nodes": [{ "id": "lily_reassure", "weight": 100 }]
+          "examples": [
+            "Wow, that's so much food!",
+            "That's a lot of food!",
+            "You made all of that?",
+            "That's a big lunch!"
+          ],
+          "keywords": [
+            "much",
+            "lot",
+            "food",
+            "big"
+          ],
+          "hint": "💬 You can say “Don't be sad. We can eat inside.”",
+          "next_nodes": [
+            {
+              "id": "lily_reassure",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Cheer Lily up: “Don't be sad. We can eat inside.”" },
-        "off_topic": { "message": "Lily made food. Try “Don't be sad. We can eat inside.”" }
+        "partial": {
+          "message": "Cheer Lily up: “Don't be sad. We can eat inside.”"
+        },
+        "off_topic": {
+          "message": "Lily made food. Try “Don't be sad. We can eat inside.”"
+        }
       }
     },
     {
       "id": "lily_reassure",
-      "npc": { "text": "I know! We can still eat it all. But where should we go?", "gender": "female" },
-      "learning_objective": ["Suggest a place to eat"],
+      "npc": {
+        "text": "I know! We can still eat it all. But where should we go?",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Suggest a place to eat"
+      ],
       "routes": [
         {
           "intent": "eat_inside",
           "meaning": "Sam says they can eat inside.",
-          "examples": ["Don't be sad. We can eat inside.", "We can eat inside.", "Let's eat inside.", "We can eat it inside the house."],
-          "keywords": ["eat", "inside", "house", "don't"],
-          "hint": "Suggest a place: “We can eat inside.”",
-          "next_nodes": [{ "id": "good_idea", "weight": 100 }]
+          "examples": [
+            "Don't be sad. We can eat inside.",
+            "We can eat inside.",
+            "Let's eat inside.",
+            "We can eat it inside the house."
+          ],
+          "keywords": [
+            "eat",
+            "inside",
+            "house",
+            "don't"
+          ],
+          "hint": "💬 Suggest a place: “We can eat inside.”",
+          "next_nodes": [
+            {
+              "id": "good_idea",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Suggest a place: “We can eat inside.”" },
-        "off_topic": { "message": "Lily asked where to go. Try “We can eat inside.”" }
+        "partial": {
+          "message": "Suggest a place: “We can eat inside.”"
+        },
+        "off_topic": {
+          "message": "Lily asked where to go. Try “We can eat inside.”"
+        }
       }
     },
     {
       "id": "good_idea",
-      "npc": { "text": "That is a good idea.", "gender": "female" },
-      "learning_objective": ["Make a plan", "Use: indoor picnic"],
+      "npc": {
+        "text": "That is a good idea.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Make a plan",
+        "Use: indoor picnic"
+      ],
       "routes": [
         {
           "intent": "indoor_floor",
           "meaning": "Sam suggests an indoor picnic on the floor.",
-          "examples": ["We can have an indoor picnic on the floor.", "We can have an indoor picnic on the floor!", "Let's have an indoor picnic on the floor.", "We can sit on the floor and have an indoor picnic."],
-          "keywords": ["indoor", "picnic", "floor"],
-          "hint": "Make a fun plan: “We can have an indoor picnic on the floor.”",
-          "next_nodes": [{ "id": "blanket", "weight": 100 }]
+          "examples": [
+            "We can have an indoor picnic on the floor.",
+            "We can have an indoor picnic on the floor!",
+            "Let's have an indoor picnic on the floor.",
+            "We can sit on the floor and have an indoor picnic."
+          ],
+          "keywords": [
+            "indoor",
+            "picnic",
+            "floor"
+          ],
+          "hint": "💬 Make a fun plan: “We can have an indoor picnic on the floor.”",
+          "next_nodes": [
+            {
+              "id": "blanket",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "picnic_inside",
           "meaning": "Sam suggests having the picnic inside.",
-          "examples": ["Let's have a picnic inside.", "We can have our picnic inside.", "Let's make an indoor picnic.", "We can still have a picnic, just inside."],
-          "keywords": ["picnic", "inside", "indoor"],
-          "hint": "You can say “We can have an indoor picnic on the floor.”",
-          "next_nodes": [{ "id": "blanket", "weight": 100 }]
+          "examples": [
+            "Let's have a picnic inside.",
+            "We can have our picnic inside.",
+            "Let's make an indoor picnic.",
+            "We can still have a picnic, just inside."
+          ],
+          "keywords": [
+            "picnic",
+            "inside",
+            "indoor"
+          ],
+          "hint": "💬 You can say “We can have an indoor picnic on the floor.”",
+          "next_nodes": [
+            {
+              "id": "blanket",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Make a plan: “We can have an indoor picnic on the floor.”" },
-        "off_topic": { "message": "Lily agreed! Try “We can have an indoor picnic on the floor.”" }
+        "partial": {
+          "message": "Make a plan: “We can have an indoor picnic on the floor.”"
+        },
+        "off_topic": {
+          "message": "Lily agreed! Try “We can have an indoor picnic on the floor.”"
+        }
       }
     },
     {
       "id": "blanket",
-      "npc": { "text": "Let's put a blanket in the living room.", "gender": "female" },
-      "learning_objective": ["Offer to help", "Use: I will bring"],
+      "npc": {
+        "text": "Let's put a blanket in the living room.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Offer to help",
+        "Use: I will bring"
+      ],
       "routes": [
         {
           "intent": "bring_juice",
           "meaning": "Sam offers to bring the juice.",
-          "examples": ["I will bring the juice.", "I'll bring the juice.", "I will bring the juice for us.", "Great! I will bring the juice."],
-          "keywords": ["bring", "juice", "will"],
-          "hint": "Offer to help: “I will bring the juice.”",
-          "next_nodes": [{ "id": "this_fun", "weight": 100 }]
+          "examples": [
+            "I will bring the juice.",
+            "I'll bring the juice.",
+            "I will bring the juice for us.",
+            "Great! I will bring the juice."
+          ],
+          "keywords": [
+            "bring",
+            "juice",
+            "will"
+          ],
+          "hint": "💬 Offer to help: “I will bring the juice.”",
+          "next_nodes": [
+            {
+              "id": "this_fun",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "good_idea_juice",
           "meaning": "Sam likes the blanket idea and offers the juice.",
-          "examples": ["Good idea! I will bring the juice.", "Nice! I'll bring the juice.", "Perfect! I will bring the juice.", "Cool! I will bring the juice."],
-          "keywords": ["good", "idea", "bring", "juice"],
-          "hint": "You can say “I will bring the juice.”",
-          "next_nodes": [{ "id": "this_fun", "weight": 100 }]
+          "examples": [
+            "Good idea! I will bring the juice.",
+            "Nice! I'll bring the juice.",
+            "Perfect! I will bring the juice.",
+            "Cool! I will bring the juice."
+          ],
+          "keywords": [
+            "good",
+            "idea",
+            "bring",
+            "juice"
+          ],
+          "hint": "💬 You can say “I will bring the juice.”",
+          "next_nodes": [
+            {
+              "id": "this_fun",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Offer to help: “I will bring the juice.”" },
-        "off_topic": { "message": "Lily set up the blanket. Try “I will bring the juice.”" }
+        "partial": {
+          "message": "Offer to help: “I will bring the juice.”"
+        },
+        "off_topic": {
+          "message": "Lily set up the blanket. Try “I will bring the juice.”"
+        }
       }
     },
     {
       "id": "this_fun",
-      "npc": { "text": "This is fun, even without the sun!", "gender": "female" },
-      "learning_objective": ["End with hope for next time", "Use: weather, better"],
+      "npc": {
+        "text": "This is fun, even without the sun!",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "End with hope for next time",
+        "Use: weather, better"
+      ],
       "routes": [
         {
           "intent": "next_time",
           "meaning": "Sam says next time the weather will be better.",
-          "examples": ["Next time the weather will be better.", "Next time the weather will be nicer.", "Maybe next time the weather will be better.", "And next time the weather will be better."],
-          "keywords": ["next", "time", "weather", "better"],
-          "hint": "End with hope: “Next time the weather will be better.”",
-          "next_nodes": [{ "id": "done", "weight": 100 }]
+          "examples": [
+            "Next time the weather will be better.",
+            "Next time the weather will be nicer.",
+            "Maybe next time the weather will be better.",
+            "And next time the weather will be better."
+          ],
+          "keywords": [
+            "next",
+            "time",
+            "weather",
+            "better"
+          ],
+          "hint": "💬 End with hope: “Next time the weather will be better.”",
+          "next_nodes": [
+            {
+              "id": "done",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "agree_fun",
           "meaning": "Sam agrees it is fun and hopes for better weather next time.",
-          "examples": ["Yes! This is fun. Next time the weather will be better.", "So much fun! Next time the weather will be better.", "I agree! Next time the weather will be better.", "This is great! Next time the weather will be better."],
-          "keywords": ["fun", "great", "next", "weather", "better"],
-          "hint": "You can say “Next time the weather will be better.”",
-          "next_nodes": [{ "id": "done", "weight": 100 }]
+          "examples": [
+            "Yes! This is fun. Next time the weather will be better.",
+            "So much fun! Next time the weather will be better.",
+            "I agree! Next time the weather will be better.",
+            "This is great! Next time the weather will be better."
+          ],
+          "keywords": [
+            "fun",
+            "great",
+            "next",
+            "weather",
+            "better"
+          ],
+          "hint": "💬 You can say “Next time the weather will be better.”",
+          "next_nodes": [
+            {
+              "id": "done",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "End the chat: “Next time the weather will be better.”" },
-        "off_topic": { "message": "The indoor picnic is fun! Try “Next time the weather will be better.”" }
+        "partial": {
+          "message": "End the chat: “Next time the weather will be better.”"
+        },
+        "off_topic": {
+          "message": "The indoor picnic is fun! Try “Next time the weather will be better.”"
+        }
       }
     },
     {
       "id": "done",
-      "npc": { "text": "You're right, Sam! An indoor picnic is fun too. Let's eat!", "gender": "female" },
+      "npc": {
+        "text": "You're right, Sam! An indoor picnic is fun too. Let's eat!",
+        "gender": "female"
+      },
       "end": true
     }
   ]

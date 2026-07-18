@@ -11,161 +11,388 @@
   "nodes": [
     {
       "id": "q_be",
-      "npc": { "text": "What do you want to be?", "gender": "male" },
-      "learning_objective": ["Say what you want to be", "Use: want to be"],
+      "npc": {
+        "text": "What do you want to be?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say what you want to be",
+        "Use: want to be"
+      ],
       "routes": [
         {
           "intent": "want_doctor",
           "meaning": "Mia says she wants to be a doctor.",
-          "examples": ["I want to be a doctor.", "I want to be a doctor when I grow up.", "I'd like to be a doctor.", "A doctor. I want to be a doctor."],
-          "keywords": ["doctor", "want", "be"],
-          "hint": "Say your dream job: “I want to be a doctor.”",
-          "next_nodes": [{ "id": "why_doctor", "weight": 100 }]
+          "examples": [
+            "I want to be a doctor.",
+            "I want to be a doctor when I grow up.",
+            "I'd like to be a doctor.",
+            "A doctor. I want to be a doctor."
+          ],
+          "keywords": [
+            "doctor",
+            "want",
+            "be"
+          ],
+          "hint": "💬 Say your dream job: “I want to be a doctor.”",
+          "next_nodes": [
+            {
+              "id": "why_doctor",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "want_other",
           "meaning": "Mia names a different job.",
-          "examples": ["I want to be a teacher.", "I want to be a vet.", "I want to be a scientist.", "I want to be a pilot too!"],
-          "keywords": ["teacher", "vet", "scientist", "pilot", "want"],
-          "hint": "You can name any job, or say “I want to be a doctor.”",
-          "next_nodes": [{ "id": "why_other", "weight": 100 }]
+          "examples": [
+            "I want to be a teacher.",
+            "I want to be a vet.",
+            "I want to be a scientist.",
+            "I want to be a pilot too!"
+          ],
+          "keywords": [
+            "teacher",
+            "vet",
+            "scientist",
+            "pilot",
+            "want"
+          ],
+          "hint": "💬 You can name any job, or say “I want to be a doctor.”",
+          "next_nodes": [
+            {
+              "id": "why_other",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Leo your dream job: “I want to be a doctor.”" },
-        "off_topic": { "message": "Leo asked what you want to be. Try “I want to be a doctor.”" }
+        "partial": {
+          "message": "Tell Leo your dream job: “I want to be a doctor.”"
+        },
+        "off_topic": {
+          "message": "Leo asked what you want to be. Try “I want to be a doctor.”"
+        }
       }
     },
     {
       "id": "why_doctor",
-      "npc": { "text": "Why do you want to be a doctor?", "gender": "male" },
-      "learning_objective": ["Give a reason", "Use: because"],
+      "npc": {
+        "text": "Why do you want to be a doctor?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Give a reason",
+        "Use: because"
+      ],
       "routes": [
         {
           "intent": "help_sick",
           "meaning": "Mia says because she wants to help sick people.",
-          "examples": ["Because I want to help sick people.", "Because I want to help sick people get better.", "Because I like helping sick people.", "Because I want to help people who are sick."],
-          "keywords": ["because", "help", "sick", "people"],
-          "hint": "Give your reason: “Because I want to help sick people.”",
-          "next_nodes": [{ "id": "great_job", "weight": 100 }]
+          "examples": [
+            "Because I want to help sick people.",
+            "Because I want to help sick people get better.",
+            "Because I like helping sick people.",
+            "Because I want to help people who are sick."
+          ],
+          "keywords": [
+            "because",
+            "help",
+            "sick",
+            "people"
+          ],
+          "hint": "💬 Give your reason: “Because I want to help sick people.”",
+          "next_nodes": [
+            {
+              "id": "great_job",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "like_helping",
           "meaning": "Mia says because she likes helping people.",
-          "examples": ["Because I like to help people.", "Because helping people makes me happy.", "Because I care about sick people.", "Because I want to make people healthy."],
-          "keywords": ["because", "help", "people", "healthy"],
-          "hint": "You can say “Because I want to help sick people.”",
-          "next_nodes": [{ "id": "great_job", "weight": 100 }]
+          "examples": [
+            "Because I like to help people.",
+            "Because helping people makes me happy.",
+            "Because I care about sick people.",
+            "Because I want to make people healthy."
+          ],
+          "keywords": [
+            "because",
+            "help",
+            "people",
+            "healthy"
+          ],
+          "hint": "💬 You can say “Because I want to help sick people.”",
+          "next_nodes": [
+            {
+              "id": "great_job",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Leo why: “Because I want to help sick people.”" },
-        "off_topic": { "message": "Leo asked why. Try “Because I want to help sick people.”" }
+        "partial": {
+          "message": "Tell Leo why: “Because I want to help sick people.”"
+        },
+        "off_topic": {
+          "message": "Leo asked why. Try “Because I want to help sick people.”"
+        }
       }
     },
     {
       "id": "why_other",
-      "npc": { "text": "That sounds interesting! Why do you want that job?", "gender": "male" },
-      "learning_objective": ["Give a reason with because"],
+      "npc": {
+        "text": "That sounds interesting! Why do you want that job?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Give a reason with because"
+      ],
       "routes": [
         {
           "intent": "because_reason",
           "meaning": "Mia gives a reason for her job using because.",
-          "examples": ["Because I want to help people.", "Because I love it.", "Because it is a great job.", "Because I want to help sick people."],
-          "keywords": ["because", "help", "love", "great", "people"],
-          "hint": "Start with because: “Because I want to help people.”",
-          "next_nodes": [{ "id": "great_job", "weight": 100 }]
+          "examples": [
+            "Because I want to help people.",
+            "Because I love it.",
+            "Because it is a great job.",
+            "Because I want to help sick people."
+          ],
+          "keywords": [
+            "because",
+            "help",
+            "love",
+            "great",
+            "people"
+          ],
+          "hint": "💬 Start with because: “Because I want to help people.”",
+          "next_nodes": [
+            {
+              "id": "great_job",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Give a reason: “Because I want to help people.”" },
-        "off_topic": { "message": "Leo asked why. Try “Because I want to help people.”" }
+        "partial": {
+          "message": "Give a reason: “Because I want to help people.”"
+        },
+        "off_topic": {
+          "message": "Leo asked why. Try “Because I want to help people.”"
+        }
       }
     },
     {
       "id": "great_job",
-      "npc": { "text": "That is a great job!", "gender": "male" },
-      "learning_objective": ["Ask someone back"],
+      "npc": {
+        "text": "That is a great job!",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Ask someone back"
+      ],
       "routes": [
         {
           "intent": "ask_you",
           "meaning": "Mia asks Leo what he wants to be.",
-          "examples": ["What about you, Leo?", "What about you?", "And what about you, Leo?", "Thank you! What about you, Leo?"],
-          "keywords": ["what", "about", "you", "leo"],
-          "hint": "Ask Leo back: “What about you, Leo?”",
-          "next_nodes": [{ "id": "leo_pilot", "weight": 100 }]
+          "examples": [
+            "What about you, Leo?",
+            "What about you?",
+            "And what about you, Leo?",
+            "Thank you! What about you, Leo?"
+          ],
+          "keywords": [
+            "what",
+            "about",
+            "you",
+            "leo"
+          ],
+          "hint": "💬 Ask Leo back: “What about you, Leo?”",
+          "next_nodes": [
+            {
+              "id": "leo_pilot",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "thanks_ask",
           "meaning": "Mia thanks him and asks him back.",
-          "examples": ["Thank you! And what about you?", "Thanks! What do you want to be?", "Thank you, Leo! What about you?", "That's kind! What about you?"],
-          "keywords": ["thank", "thanks", "what", "you"],
-          "hint": "You can say “What about you, Leo?”",
-          "next_nodes": [{ "id": "leo_pilot", "weight": 100 }]
+          "examples": [
+            "Thank you! And what about you?",
+            "Thanks! What do you want to be?",
+            "Thank you, Leo! What about you?",
+            "That's kind! What about you?"
+          ],
+          "keywords": [
+            "thank",
+            "thanks",
+            "what",
+            "you"
+          ],
+          "hint": "💬 You can say “What about you, Leo?”",
+          "next_nodes": [
+            {
+              "id": "leo_pilot",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask Leo back: “What about you, Leo?”" },
-        "off_topic": { "message": "Now ask Leo. Try “What about you, Leo?”" }
+        "partial": {
+          "message": "Ask Leo back: “What about you, Leo?”"
+        },
+        "off_topic": {
+          "message": "Now ask Leo. Try “What about you, Leo?”"
+        }
       }
     },
     {
       "id": "leo_pilot",
-      "npc": { "text": "I want to be a pilot.", "gender": "male" },
-      "learning_objective": ["React and ask why"],
+      "npc": {
+        "text": "I want to be a pilot.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "React and ask why"
+      ],
       "routes": [
         {
           "intent": "why_pilot",
           "meaning": "Mia reacts and asks why a pilot.",
-          "examples": ["Wow! Why a pilot?", "Wow! Why do you want to be a pilot?", "Cool! Why a pilot?", "Really? Why a pilot?"],
-          "keywords": ["wow", "why", "pilot"],
-          "hint": "React and ask: “Wow! Why a pilot?”",
-          "next_nodes": [{ "id": "because_airplanes", "weight": 100 }]
+          "examples": [
+            "Wow! Why a pilot?",
+            "Wow! Why do you want to be a pilot?",
+            "Cool! Why a pilot?",
+            "Really? Why a pilot?"
+          ],
+          "keywords": [
+            "wow",
+            "why",
+            "pilot"
+          ],
+          "hint": "💬 React and ask: “Wow! Why a pilot?”",
+          "next_nodes": [
+            {
+              "id": "because_airplanes",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "cool_why",
           "meaning": "Mia says it's cool and asks why he likes it.",
-          "examples": ["That's so cool! Why do you like it?", "Awesome! Why a pilot?", "Nice! Why do you want that?", "A pilot? Why do you like it?"],
-          "keywords": ["cool", "awesome", "nice", "why", "like"],
-          "hint": "You can say “Wow! Why a pilot?”",
-          "next_nodes": [{ "id": "because_airplanes", "weight": 100 }]
+          "examples": [
+            "That's so cool! Why do you like it?",
+            "Awesome! Why a pilot?",
+            "Nice! Why do you want that?",
+            "A pilot? Why do you like it?"
+          ],
+          "keywords": [
+            "cool",
+            "awesome",
+            "nice",
+            "why",
+            "like"
+          ],
+          "hint": "💬 You can say “Wow! Why a pilot?”",
+          "next_nodes": [
+            {
+              "id": "because_airplanes",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask Leo why: “Wow! Why a pilot?”" },
-        "off_topic": { "message": "Leo wants to be a pilot. Try “Wow! Why a pilot?”" }
+        "partial": {
+          "message": "Ask Leo why: “Wow! Why a pilot?”"
+        },
+        "off_topic": {
+          "message": "Leo wants to be a pilot. Try “Wow! Why a pilot?”"
+        }
       }
     },
     {
       "id": "because_airplanes",
-      "npc": { "text": "Because I love airplanes and the sky.", "gender": "male" },
-      "learning_objective": ["End with encouragement", "Use: should"],
+      "npc": {
+        "text": "Because I love airplanes and the sky.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "End with encouragement",
+        "Use: should"
+      ],
       "routes": [
         {
           "intent": "study_hard",
           "meaning": "Mia says they should study hard for their dreams.",
-          "examples": ["We should study hard for our dreams.", "We should study hard to reach our dreams.", "Then we should study hard for our dreams.", "We should both study hard for our dreams."],
-          "keywords": ["should", "study", "hard", "dreams"],
-          "hint": "End with a plan: “We should study hard for our dreams.”",
-          "next_nodes": [{ "id": "done", "weight": 100 }]
+          "examples": [
+            "We should study hard for our dreams.",
+            "We should study hard to reach our dreams.",
+            "Then we should study hard for our dreams.",
+            "We should both study hard for our dreams."
+          ],
+          "keywords": [
+            "should",
+            "study",
+            "hard",
+            "dreams"
+          ],
+          "hint": "💬 End with a plan: “We should study hard for our dreams.”",
+          "next_nodes": [
+            {
+              "id": "done",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "encourage",
           "meaning": "Mia encourages Leo to follow his dream.",
-          "examples": ["I hope your dream comes true!", "That's a great dream, Leo!", "You will be a great pilot!", "I love the sky too! Good luck."],
-          "keywords": ["hope", "dream", "great", "sky", "luck"],
-          "hint": "You can say “We should study hard for our dreams.”",
-          "next_nodes": [{ "id": "done", "weight": 100 }]
+          "examples": [
+            "I hope your dream comes true!",
+            "That's a great dream, Leo!",
+            "You will be a great pilot!",
+            "I love the sky too! Good luck."
+          ],
+          "keywords": [
+            "hope",
+            "dream",
+            "great",
+            "sky",
+            "luck"
+          ],
+          "hint": "💬 You can say “We should study hard for our dreams.”",
+          "next_nodes": [
+            {
+              "id": "done",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "End with a plan: “We should study hard for our dreams.”" },
-        "off_topic": { "message": "Time to finish. Try “We should study hard for our dreams.”" }
+        "partial": {
+          "message": "End with a plan: “We should study hard for our dreams.”"
+        },
+        "off_topic": {
+          "message": "Time to finish. Try “We should study hard for our dreams.”"
+        }
       }
     },
     {
       "id": "done",
-      "npc": { "text": "Yes! Let's study hard and follow our dreams. Good luck, Mia!", "gender": "male" },
+      "npc": {
+        "text": "Yes! Let's study hard and follow our dreams. Good luck, Mia!",
+        "gender": "male"
+      },
       "end": true
     }
   ]

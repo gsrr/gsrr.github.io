@@ -11,183 +11,406 @@
   "nodes": [
     {
       "id": "hungry",
-      "npc": { "text": "I am hungry. Do you have food?", "gender": "male" },
-      "learning_objective": ["Say what you have"],
+      "npc": {
+        "text": "I am hungry. Do you have food?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say what you have"
+      ],
       "routes": [
         {
           "intent": "have_apple",
           "meaning": "Anna says she has an apple.",
-          "examples": ["Yes, I have an apple.", "Yes, I have an apple!", "I have an apple.", "Yes! I have an apple."],
-          "keywords": ["yes", "apple", "have"],
-          "hint": "Say what you have: “Yes, I have an apple.”",
-          "next_nodes": [{ "id": "can_have", "weight": 100 }]
+          "examples": [
+            "Yes, I have an apple.",
+            "Yes, I have an apple!",
+            "I have an apple.",
+            "Yes! I have an apple."
+          ],
+          "keywords": [
+            "yes",
+            "apple",
+            "have"
+          ],
+          "hint": "💬 Say what you have: “Yes, I have an apple.”",
+          "next_nodes": [
+            {
+              "id": "can_have",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "ask_what_food",
           "meaning": "Anna asks what food Tom wants.",
-          "examples": ["What food?", "What do you want?", "What do you want to eat?"],
-          "keywords": ["what", "food", "want"],
-          "hint": "You can say “Yes, I have an apple.” or ask “What do you want?”",
-          "next_nodes": [{ "id": "want_apple", "weight": 100 }]
+          "examples": [
+            "What food?",
+            "What do you want?",
+            "What do you want to eat?"
+          ],
+          "keywords": [
+            "what",
+            "food",
+            "want"
+          ],
+          "hint": "💬 You can say “Yes, I have an apple.” or ask “What do you want?”",
+          "next_nodes": [
+            {
+              "id": "want_apple",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tom is hungry! Say “Yes, I have an apple.”" },
-        "off_topic": { "message": "Tom asked for food. Try “Yes, I have an apple.”" }
+        "partial": {
+          "message": "Tom is hungry! Say “Yes, I have an apple.”"
+        },
+        "off_topic": {
+          "message": "Tom asked for food. Try “Yes, I have an apple.”"
+        }
       }
     },
     {
       "id": "want_apple",
-      "npc": { "text": "I want something to eat. Do you have an apple?", "gender": "male" },
-      "learning_objective": ["Say what you have"],
+      "npc": {
+        "text": "I want something to eat. Do you have an apple?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say what you have"
+      ],
       "routes": [
         {
           "intent": "yes_apple",
           "meaning": "Anna says she has an apple.",
-          "examples": ["Yes, I have an apple.", "Yes, I have an apple!", "I have an apple."],
-          "keywords": ["yes", "apple", "have"],
-          "hint": "Say “Yes, I have an apple.”",
-          "next_nodes": [{ "id": "can_have", "weight": 100 }]
+          "examples": [
+            "Yes, I have an apple.",
+            "Yes, I have an apple!",
+            "I have an apple."
+          ],
+          "keywords": [
+            "yes",
+            "apple",
+            "have"
+          ],
+          "hint": "💬 Say “Yes, I have an apple.”",
+          "next_nodes": [
+            {
+              "id": "can_have",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Tom what you have: “Yes, I have an apple.”" },
-        "off_topic": { "message": "Tom wants an apple. Say “Yes, I have an apple.”" }
+        "partial": {
+          "message": "Tell Tom what you have: “Yes, I have an apple.”"
+        },
+        "off_topic": {
+          "message": "Tom wants an apple. Say “Yes, I have an apple.”"
+        }
       }
     },
     {
       "id": "can_have",
-      "npc": { "text": "Can I have it?", "gender": "male" },
-      "learning_objective": ["Give something to a friend"],
+      "npc": {
+        "text": "Can I have it?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Give something to a friend"
+      ],
       "routes": [
         {
           "intent": "yes_here",
           "meaning": "Anna says yes and gives Tom the apple.",
-          "examples": ["Yes, you can. Here you are.", "Yes! Here you are.", "Sure, here you are.", "Okay, here you are."],
-          "keywords": ["yes", "here", "you"],
-          "hint": "Give it to Tom: “Yes, you can. Here you are.”",
-          "next_nodes": [{ "id": "like_apples", "weight": 100 }]
+          "examples": [
+            "Yes, you can. Here you are.",
+            "Yes! Here you are.",
+            "Sure, here you are.",
+            "Okay, here you are."
+          ],
+          "keywords": [
+            "yes",
+            "here",
+            "you"
+          ],
+          "hint": "💬 Give it to Tom: “Yes, you can. Here you are.”",
+          "next_nodes": [
+            {
+              "id": "like_apples",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "not_yet",
           "meaning": "Anna wants to keep it for a moment.",
-          "examples": ["Wait, it is mine.", "Not yet.", "One second."],
-          "keywords": ["wait", "mine", "not", "yet"],
-          "hint": "You can share! Say “Yes, you can. Here you are.”",
-          "next_nodes": [{ "id": "please_share", "weight": 100 }]
+          "examples": [
+            "Wait, it is mine.",
+            "Not yet.",
+            "One second."
+          ],
+          "keywords": [
+            "wait",
+            "mine",
+            "not",
+            "yet"
+          ],
+          "hint": "💬 You can share! Say “Yes, you can. Here you are.”",
+          "next_nodes": [
+            {
+              "id": "please_share",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say yes and share: “Yes, you can. Here you are.”" },
-        "off_topic": { "message": "Tom wants the apple. Try “Yes, you can. Here you are.”" }
+        "partial": {
+          "message": "Say yes and share: “Yes, you can. Here you are.”"
+        },
+        "off_topic": {
+          "message": "Tom wants the apple. Try “Yes, you can. Here you are.”"
+        }
       }
     },
     {
       "id": "please_share",
-      "npc": { "text": "Please? I am so hungry.", "gender": "male" },
-      "learning_objective": ["Give something to a friend"],
+      "npc": {
+        "text": "Please? I am so hungry.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Give something to a friend"
+      ],
       "routes": [
         {
           "intent": "ok_here",
           "meaning": "Anna gives Tom the apple.",
-          "examples": ["Yes, you can. Here you are.", "Okay, here you are.", "Here you are!"],
-          "keywords": ["yes", "here", "you"],
-          "hint": "Share the apple: “Yes, you can. Here you are.”",
-          "next_nodes": [{ "id": "like_apples", "weight": 100 }]
+          "examples": [
+            "Yes, you can. Here you are.",
+            "Okay, here you are.",
+            "Here you are!"
+          ],
+          "keywords": [
+            "yes",
+            "here",
+            "you"
+          ],
+          "hint": "💬 Share the apple: “Yes, you can. Here you are.”",
+          "next_nodes": [
+            {
+              "id": "like_apples",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tom is hungry! Say “Yes, you can. Here you are.”" },
-        "off_topic": { "message": "Please share. Say “Yes, you can. Here you are.”" }
+        "partial": {
+          "message": "Tom is hungry! Say “Yes, you can. Here you are.”"
+        },
+        "off_topic": {
+          "message": "Please share. Say “Yes, you can. Here you are.”"
+        }
       }
     },
     {
       "id": "like_apples",
-      "npc": { "text": "Thank you. I like apples.", "gender": "male" },
-      "learning_objective": ["Say what else you have"],
+      "npc": {
+        "text": "Thank you. I like apples.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say what else you have"
+      ],
       "routes": [
         {
           "intent": "have_milk",
           "meaning": "Anna says she has milk, too.",
-          "examples": ["I have milk, too.", "I have milk, too!", "I have some milk, too.", "I have milk!"],
-          "keywords": ["milk", "have", "too"],
-          "hint": "Tell Tom what else you have: “I have milk, too.”",
-          "next_nodes": [{ "id": "can_milk", "weight": 100 }]
+          "examples": [
+            "I have milk, too.",
+            "I have milk, too!",
+            "I have some milk, too.",
+            "I have milk!"
+          ],
+          "keywords": [
+            "milk",
+            "have",
+            "too"
+          ],
+          "hint": "💬 Tell Tom what else you have: “I have milk, too.”",
+          "next_nodes": [
+            {
+              "id": "can_milk",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Tom about the milk: “I have milk, too.”" },
-        "off_topic": { "message": "You have more! Say “I have milk, too.”" }
+        "partial": {
+          "message": "Tell Tom about the milk: “I have milk, too.”"
+        },
+        "off_topic": {
+          "message": "You have more! Say “I have milk, too.”"
+        }
       }
     },
     {
       "id": "can_milk",
-      "npc": { "text": "Can I have some milk?", "gender": "male" },
-      "learning_objective": ["Say yes and eat together"],
+      "npc": {
+        "text": "Can I have some milk?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say yes and eat together"
+      ],
       "routes": [
         {
           "intent": "yes_eat",
           "meaning": "Anna says yes and they eat and drink.",
-          "examples": ["Yes. Let us eat and drink.", "Yes! Let us eat and drink.", "Okay, let us eat and drink.", "Sure, let us eat and drink."],
-          "keywords": ["yes", "eat", "drink"],
-          "hint": "Say yes and eat: “Yes. Let us eat and drink.”",
-          "next_nodes": [{ "id": "this_good", "weight": 100 }]
+          "examples": [
+            "Yes. Let us eat and drink.",
+            "Yes! Let us eat and drink.",
+            "Okay, let us eat and drink.",
+            "Sure, let us eat and drink."
+          ],
+          "keywords": [
+            "yes",
+            "eat",
+            "drink"
+          ],
+          "hint": "💬 Say yes and eat: “Yes. Let us eat and drink.”",
+          "next_nodes": [
+            {
+              "id": "this_good",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "no_milk",
           "meaning": "Anna has no more milk.",
-          "examples": ["Sorry, no more milk.", "No more milk.", "The milk is all gone."],
-          "keywords": ["no", "more", "sorry"],
-          "hint": "You can say “Yes. Let us eat and drink.”",
-          "next_nodes": [{ "id": "ok_apple", "weight": 100 }]
+          "examples": [
+            "Sorry, no more milk.",
+            "No more milk.",
+            "The milk is all gone."
+          ],
+          "keywords": [
+            "no",
+            "more",
+            "sorry"
+          ],
+          "hint": "💬 You can say “Yes. Let us eat and drink.”",
+          "next_nodes": [
+            {
+              "id": "ok_apple",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tom wants milk. Say “Yes. Let us eat and drink.”" },
-        "off_topic": { "message": "Time to eat! Try “Yes. Let us eat and drink.”" }
+        "partial": {
+          "message": "Tom wants milk. Say “Yes. Let us eat and drink.”"
+        },
+        "off_topic": {
+          "message": "Time to eat! Try “Yes. Let us eat and drink.”"
+        }
       }
     },
     {
       "id": "ok_apple",
-      "npc": { "text": "That is okay. Let us eat the apple.", "gender": "male" },
-      "learning_objective": ["Say yes and eat together"],
+      "npc": {
+        "text": "That is okay. Let us eat the apple.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say yes and eat together"
+      ],
       "routes": [
         {
           "intent": "yes_eat2",
           "meaning": "Anna says yes and they eat and drink.",
-          "examples": ["Yes. Let us eat and drink.", "Okay, let us eat and drink.", "Yes, let us eat!"],
-          "keywords": ["yes", "eat", "drink"],
-          "hint": "Say “Yes. Let us eat and drink.”",
-          "next_nodes": [{ "id": "this_good", "weight": 100 }]
+          "examples": [
+            "Yes. Let us eat and drink.",
+            "Okay, let us eat and drink.",
+            "Yes, let us eat!"
+          ],
+          "keywords": [
+            "yes",
+            "eat",
+            "drink"
+          ],
+          "hint": "💬 Say “Yes. Let us eat and drink.”",
+          "next_nodes": [
+            {
+              "id": "this_good",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Let us eat! Say “Yes. Let us eat and drink.”" },
-        "off_topic": { "message": "Time for the apple. Try “Yes. Let us eat and drink.”" }
+        "partial": {
+          "message": "Let us eat! Say “Yes. Let us eat and drink.”"
+        },
+        "off_topic": {
+          "message": "Time for the apple. Try “Yes. Let us eat and drink.”"
+        }
       }
     },
     {
       "id": "this_good",
-      "npc": { "text": "This is good.", "gender": "male" },
-      "learning_objective": ["Say you are happy"],
+      "npc": {
+        "text": "This is good.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say you are happy"
+      ],
       "routes": [
         {
           "intent": "happy",
           "meaning": "Anna says yum and that she is happy.",
-          "examples": ["Yum! I am happy.", "Yum! I am so happy.", "Yay! I am happy.", "I am happy!"],
-          "keywords": ["yum", "happy"],
-          "hint": "Say you are happy: “Yum! I am happy.”",
-          "next_nodes": [{ "id": "done", "weight": 100 }]
+          "examples": [
+            "Yum! I am happy.",
+            "Yum! I am so happy.",
+            "Yay! I am happy.",
+            "I am happy!"
+          ],
+          "keywords": [
+            "yum",
+            "happy"
+          ],
+          "hint": "💬 Say you are happy: “Yum! I am happy.”",
+          "next_nodes": [
+            {
+              "id": "done",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say how you feel: “Yum! I am happy.”" },
-        "off_topic": { "message": "The snack is good! Say “Yum! I am happy.”" }
+        "partial": {
+          "message": "Say how you feel: “Yum! I am happy.”"
+        },
+        "off_topic": {
+          "message": "The snack is good! Say “Yum! I am happy.”"
+        }
       }
     },
     {
       "id": "done",
-      "npc": { "text": "I am happy, too. Thank you for the yummy snack!", "gender": "male" },
+      "npc": {
+        "text": "I am happy, too. Thank you for the yummy snack!",
+        "gender": "male"
+      },
       "end": true
     }
   ]

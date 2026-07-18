@@ -11,219 +11,509 @@
   "nodes": [
     {
       "id": "pollution",
-      "npc": { "text": "Our town has a pollution problem.", "gender": "female" },
-      "learning_objective": ["Agree about a problem", "Describe a situation"],
+      "npc": {
+        "text": "Our town has a pollution problem.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Agree about a problem",
+        "Describe a situation"
+      ],
       "routes": [
         {
           "intent": "agree_river",
           "meaning": "Ben agrees and mentions the dirty river.",
-          "examples": ["I know. The river is very dirty now.", "I know. The river is really dirty now.", "Yes, the river is very dirty now.", "I know. The river is so dirty."],
-          "keywords": ["know", "river", "very", "dirty"],
+          "examples": [
+            "I know. The river is very dirty now.",
+            "I know. The river is really dirty now.",
+            "Yes, the river is very dirty now.",
+            "I know. The river is so dirty."
+          ],
+          "keywords": [
+            "know",
+            "river",
+            "very",
+            "dirty"
+          ],
           "hint": "💬 Try saying: “I know. The river is very dirty now.”",
-          "next_nodes": [{ "id": "should_help", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "should_help",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "ask_what_problem",
           "meaning": "Ben asks what is causing the problem.",
-          "examples": ["What is causing it?", "Why is our town so polluted?", "What kind of pollution?"],
-          "keywords": ["what", "causing", "why", "pollution", "polluted"],
-          "hint": "You can ask “What is causing it?” or agree: “I know. The river is very dirty now.”",
-          "next_nodes": [{ "id": "problem_detail", "weight": 100 }]
+          "examples": [
+            "What is causing it?",
+            "Why is our town so polluted?",
+            "What kind of pollution?"
+          ],
+          "keywords": [
+            "what",
+            "causing",
+            "why",
+            "pollution",
+            "polluted"
+          ],
+          "hint": "💬 You can ask “What is causing it?” or agree: “I know. The river is very dirty now.”",
+          "next_nodes": [
+            {
+              "id": "problem_detail",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Agree with Emma: “I know. The river is very dirty now.”" },
-        "off_topic": { "message": "Emma is worried about pollution. Say “I know. The river is very dirty now.”" }
+        "partial": {
+          "message": "Agree with Emma: “I know. The river is very dirty now.”"
+        },
+        "off_topic": {
+          "message": "Emma is worried about pollution. Say “I know. The river is very dirty now.”"
+        }
       }
     },
     {
       "id": "problem_detail",
-      "npc": { "text": "Litter and waste have made the river dirty.", "gender": "female" },
+      "npc": {
+        "text": "Litter and waste have made the river dirty.",
+        "gender": "female"
+      },
       "routes": [
         {
           "intent": "agree_river",
           "meaning": "Ben agrees the river is dirty.",
-          "examples": ["I know. The river is very dirty now.", "Yes, the river is very dirty now.", "You're right, the river is very dirty."],
-          "keywords": ["know", "river", "very", "dirty"],
+          "examples": [
+            "I know. The river is very dirty now.",
+            "Yes, the river is very dirty now.",
+            "You're right, the river is very dirty."
+          ],
+          "keywords": [
+            "know",
+            "river",
+            "very",
+            "dirty"
+          ],
           "hint": "💬 Try saying: “I know. The river is very dirty now.”",
-          "next_nodes": [{ "id": "should_help", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "should_help",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say “I know. The river is very dirty now.”" },
-        "off_topic": { "message": "Tell Emma “The river is very dirty now.”" }
+        "partial": {
+          "message": "Say “I know. The river is very dirty now.”"
+        },
+        "off_topic": {
+          "message": "Tell Emma “The river is very dirty now.”"
+        }
       }
     },
     {
       "id": "should_help",
-      "npc": { "text": "We should do something to help.", "gender": "female" },
-      "learning_objective": ["Suggest an action with 'could'"],
+      "npc": {
+        "text": "We should do something to help.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Suggest an action with 'could'"
+      ],
       "routes": [
         {
           "intent": "suggest_trash",
           "meaning": "Ben suggests picking up trash every weekend.",
-          "examples": ["We could pick up trash every weekend.", "We could pick up trash on weekends.", "Let's pick up trash every weekend."],
-          "keywords": ["could", "pick", "up", "trash", "weekend"],
+          "examples": [
+            "We could pick up trash every weekend.",
+            "We could pick up trash on weekends.",
+            "Let's pick up trash every weekend."
+          ],
+          "keywords": [
+            "could",
+            "pick",
+            "up",
+            "trash",
+            "weekend"
+          ],
           "hint": "💬 Try saying: “We could pick up trash every weekend.”",
-          "next_nodes": [{ "id": "plant_trees", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "plant_trees",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "ask_how_help",
           "meaning": "Ben asks how they could help.",
-          "examples": ["What could we do to help?", "How can we help?", "What should we do first?"],
-          "keywords": ["what", "how", "could", "do", "help"],
-          "hint": "You can ask “What could we do?” or suggest “We could pick up trash every weekend.”",
-          "next_nodes": [{ "id": "ideas", "weight": 100 }]
+          "examples": [
+            "What could we do to help?",
+            "How can we help?",
+            "What should we do first?"
+          ],
+          "keywords": [
+            "what",
+            "how",
+            "could",
+            "do",
+            "help"
+          ],
+          "hint": "💬 You can ask “What could we do?” or suggest “We could pick up trash every weekend.”",
+          "next_nodes": [
+            {
+              "id": "ideas",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Suggest an idea: “We could pick up trash every weekend.”" },
-        "off_topic": { "message": "Emma wants to help. Say “We could pick up trash every weekend.”" }
+        "partial": {
+          "message": "Suggest an idea: “We could pick up trash every weekend.”"
+        },
+        "off_topic": {
+          "message": "Emma wants to help. Say “We could pick up trash every weekend.”"
+        }
       }
     },
     {
       "id": "ideas",
-      "npc": { "text": "There are many ways. What could we do?", "gender": "female" },
+      "npc": {
+        "text": "There are many ways. What could we do?",
+        "gender": "female"
+      },
       "routes": [
         {
           "intent": "suggest_trash",
           "meaning": "Ben suggests picking up trash.",
-          "examples": ["We could pick up trash every weekend.", "We could pick up trash on weekends.", "Maybe we could pick up trash every weekend."],
-          "keywords": ["could", "pick", "up", "trash", "weekend"],
+          "examples": [
+            "We could pick up trash every weekend.",
+            "We could pick up trash on weekends.",
+            "Maybe we could pick up trash every weekend."
+          ],
+          "keywords": [
+            "could",
+            "pick",
+            "up",
+            "trash",
+            "weekend"
+          ],
           "hint": "💬 Try saying: “We could pick up trash every weekend.”",
-          "next_nodes": [{ "id": "plant_trees", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "plant_trees",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Suggest “We could pick up trash every weekend.”" },
-        "off_topic": { "message": "Tell Emma “We could pick up trash every weekend.”" }
+        "partial": {
+          "message": "Suggest “We could pick up trash every weekend.”"
+        },
+        "off_topic": {
+          "message": "Tell Emma “We could pick up trash every weekend.”"
+        }
       }
     },
     {
       "id": "plant_trees",
-      "npc": { "text": "That's a good idea. We could also plant trees.", "gender": "female" },
-      "learning_objective": ["Raise a concern with 'however'"],
+      "npc": {
+        "text": "That's a good idea. We could also plant trees.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Raise a concern with 'however'"
+      ],
       "routes": [
         {
           "intent": "need_people",
           "meaning": "Ben says they need more people to join.",
-          "examples": ["However, we need more people to join us.", "But we need more people to join us.", "However, we need more people to help."],
-          "keywords": ["however", "but", "need", "more", "people", "join"],
+          "examples": [
+            "However, we need more people to join us.",
+            "But we need more people to join us.",
+            "However, we need more people to help."
+          ],
+          "keywords": [
+            "however",
+            "but",
+            "need",
+            "more",
+            "people",
+            "join"
+          ],
           "hint": "💬 Try saying: “However, we need more people to join us.”",
-          "next_nodes": [{ "id": "tell_friends", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "tell_friends",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "agree_trees",
           "meaning": "Ben likes the tree idea and asks where.",
-          "examples": ["Great idea! Where could we plant them?", "I love that. Where should we plant the trees?", "Nice! Where can we plant trees?"],
-          "keywords": ["great", "idea", "where", "plant", "trees"],
-          "hint": "You can ask about the trees, or say “However, we need more people to join us.”",
-          "next_nodes": [{ "id": "tree_spot", "weight": 100 }]
+          "examples": [
+            "Great idea! Where could we plant them?",
+            "I love that. Where should we plant the trees?",
+            "Nice! Where can we plant trees?"
+          ],
+          "keywords": [
+            "great",
+            "idea",
+            "where",
+            "plant",
+            "trees"
+          ],
+          "hint": "💬 You can ask about the trees, or say “However, we need more people to join us.”",
+          "next_nodes": [
+            {
+              "id": "tree_spot",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Raise a concern: “However, we need more people to join us.”" },
-        "off_topic": { "message": "Say what you need: “However, we need more people to join us.”" }
+        "partial": {
+          "message": "Raise a concern: “However, we need more people to join us.”"
+        },
+        "off_topic": {
+          "message": "Say what you need: “However, we need more people to join us.”"
+        }
       }
     },
     {
       "id": "tree_spot",
-      "npc": { "text": "We could plant trees along the river bank.", "gender": "female" },
+      "npc": {
+        "text": "We could plant trees along the river bank.",
+        "gender": "female"
+      },
       "routes": [
         {
           "intent": "need_people",
           "meaning": "Ben says they need more people to join.",
-          "examples": ["However, we need more people to join us.", "But we need more people to join us.", "We still need more people to join us."],
-          "keywords": ["however", "but", "need", "more", "people", "join"],
+          "examples": [
+            "However, we need more people to join us.",
+            "But we need more people to join us.",
+            "We still need more people to join us."
+          ],
+          "keywords": [
+            "however",
+            "but",
+            "need",
+            "more",
+            "people",
+            "join"
+          ],
           "hint": "💬 Try saying: “However, we need more people to join us.”",
-          "next_nodes": [{ "id": "tell_friends", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "tell_friends",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say “However, we need more people to join us.”" },
-        "off_topic": { "message": "Tell Emma “We need more people to join us.”" }
+        "partial": {
+          "message": "Say “However, we need more people to join us.”"
+        },
+        "off_topic": {
+          "message": "Tell Emma “We need more people to join us.”"
+        }
       }
     },
     {
       "id": "tell_friends",
-      "npc": { "text": "Let's tell our friends and our class.", "gender": "female" },
-      "learning_objective": ["Use a conditional (if ... can)"],
+      "npc": {
+        "text": "Let's tell our friends and our class.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Use a conditional (if ... can)"
+      ],
       "routes": [
         {
           "intent": "make_difference",
           "meaning": "Ben says if everyone helps, they can make a difference.",
-          "examples": ["If everyone helps, we can make a difference.", "If everyone helps, we will make a difference.", "If we all help, we can make a difference."],
-          "keywords": ["if", "everyone", "helps", "make", "difference"],
+          "examples": [
+            "If everyone helps, we can make a difference.",
+            "If everyone helps, we will make a difference.",
+            "If we all help, we can make a difference."
+          ],
+          "keywords": [
+            "if",
+            "everyone",
+            "helps",
+            "make",
+            "difference"
+          ],
           "hint": "💬 Try saying: “If everyone helps, we can make a difference.”",
-          "next_nodes": [{ "id": "clean_town", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "clean_town",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "ask_how_tell",
           "meaning": "Ben asks how they can tell more people.",
-          "examples": ["How should we tell them?", "How can we spread the word?", "Should we make posters?"],
-          "keywords": ["how", "tell", "spread", "posters", "share"],
-          "hint": "You can ask “How should we tell them?” or say “If everyone helps, we can make a difference.”",
-          "next_nodes": [{ "id": "spread_word", "weight": 100 }]
+          "examples": [
+            "How should we tell them?",
+            "How can we spread the word?",
+            "Should we make posters?"
+          ],
+          "keywords": [
+            "how",
+            "tell",
+            "spread",
+            "posters",
+            "share"
+          ],
+          "hint": "💬 You can ask “How should we tell them?” or say “If everyone helps, we can make a difference.”",
+          "next_nodes": [
+            {
+              "id": "spread_word",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Encourage everyone: “If everyone helps, we can make a difference.”" },
-        "off_topic": { "message": "Tell Emma “If everyone helps, we can make a difference.”" }
+        "partial": {
+          "message": "Encourage everyone: “If everyone helps, we can make a difference.”"
+        },
+        "off_topic": {
+          "message": "Tell Emma “If everyone helps, we can make a difference.”"
+        }
       }
     },
     {
       "id": "spread_word",
-      "npc": { "text": "We can make posters and share it online.", "gender": "female" },
+      "npc": {
+        "text": "We can make posters and share it online.",
+        "gender": "female"
+      },
       "routes": [
         {
           "intent": "make_difference",
           "meaning": "Ben says if everyone helps, they can make a difference.",
-          "examples": ["If everyone helps, we can make a difference.", "If everyone helps, we will make a difference.", "Then if everyone helps, we can make a difference."],
-          "keywords": ["if", "everyone", "helps", "make", "difference"],
+          "examples": [
+            "If everyone helps, we can make a difference.",
+            "If everyone helps, we will make a difference.",
+            "Then if everyone helps, we can make a difference."
+          ],
+          "keywords": [
+            "if",
+            "everyone",
+            "helps",
+            "make",
+            "difference"
+          ],
           "hint": "💬 Try saying: “If everyone helps, we can make a difference.”",
-          "next_nodes": [{ "id": "clean_town", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "clean_town",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say “If everyone helps, we can make a difference.”" },
-        "off_topic": { "message": "Tell Emma “If everyone helps, we can make a difference.”" }
+        "partial": {
+          "message": "Say “If everyone helps, we can make a difference.”"
+        },
+        "off_topic": {
+          "message": "Tell Emma “If everyone helps, we can make a difference.”"
+        }
       }
     },
     {
       "id": "clean_town",
-      "npc": { "text": "A clean town is better for everyone.", "gender": "female" },
-      "learning_objective": ["Agree and set a start time"],
+      "npc": {
+        "text": "A clean town is better for everyone.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Agree and set a start time"
+      ],
       "routes": [
         {
           "intent": "start_saturday",
           "meaning": "Ben suggests starting this Saturday.",
-          "examples": ["Let's start this Saturday!", "Let's start this Saturday.", "Great, let's start this Saturday!"],
-          "keywords": ["let's", "start", "this", "saturday"],
+          "examples": [
+            "Let's start this Saturday!",
+            "Let's start this Saturday.",
+            "Great, let's start this Saturday!"
+          ],
+          "keywords": [
+            "let's",
+            "start",
+            "this",
+            "saturday"
+          ],
           "hint": "💬 Try saying: “Let's start this Saturday!”",
-          "next_nodes": [{ "id": "end_saturday", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "end_saturday",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "start_today",
           "meaning": "Ben wants to start right away.",
-          "examples": ["Let's start right now!", "Why wait? Let's start today!", "Let's begin today!"],
-          "keywords": ["start", "now", "today", "begin", "right"],
-          "hint": "You can say “Let's start this Saturday!” or “Let's start right now!”",
-          "next_nodes": [{ "id": "end_today", "weight": 100 }]
+          "examples": [
+            "Let's start right now!",
+            "Why wait? Let's start today!",
+            "Let's begin today!"
+          ],
+          "keywords": [
+            "start",
+            "now",
+            "today",
+            "begin",
+            "right"
+          ],
+          "hint": "💬 You can say “Let's start this Saturday!” or “Let's start right now!”",
+          "next_nodes": [
+            {
+              "id": "end_today",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Set a day: “Let's start this Saturday!”" },
-        "off_topic": { "message": "Emma agrees. Say “Let's start this Saturday!”" }
+        "partial": {
+          "message": "Set a day: “Let's start this Saturday!”"
+        },
+        "off_topic": {
+          "message": "Emma agrees. Say “Let's start this Saturday!”"
+        }
       }
     },
     {
       "id": "end_saturday",
-      "npc": { "text": "Perfect! I'll bring bags and gloves. See you then!", "gender": "female" },
+      "npc": {
+        "text": "Perfect! I'll bring bags and gloves. See you then!",
+        "gender": "female"
+      },
       "end": true
     },
     {
       "id": "end_today",
-      "npc": { "text": "Even better! Let's begin right now. Thank you, Ben!", "gender": "female" },
+      "npc": {
+        "text": "Even better! Let's begin right now. Thank you, Ben!",
+        "gender": "female"
+      },
       "end": true
     }
   ]

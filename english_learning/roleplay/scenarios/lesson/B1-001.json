@@ -11,201 +11,464 @@
   "nodes": [
     {
       "id": "new_hobby",
-      "npc": { "text": "I have started a new hobby.", "gender": "female" },
-      "learning_objective": ["Ask about a friend's news", "Use present perfect questions"],
+      "npc": {
+        "text": "I have started a new hobby.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Ask about a friend's news",
+        "Use present perfect questions"
+      ],
       "routes": [
         {
           "intent": "ask_what",
           "meaning": "Leo asks what hobby Mia has started.",
-          "examples": ["Really? What have you started?", "What have you started?", "Oh cool, what is it?", "That's exciting! What have you started?"],
-          "keywords": ["what", "really", "started", "hobby"],
+          "examples": [
+            "Really? What have you started?",
+            "What have you started?",
+            "Oh cool, what is it?",
+            "That's exciting! What have you started?"
+          ],
+          "keywords": [
+            "what",
+            "really",
+            "started",
+            "hobby"
+          ],
           "hint": "💬 Try saying: “Really? What have you started?”",
-          "next_nodes": [{ "id": "guitar", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "guitar",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "guess_hobby",
           "meaning": "Leo guesses what the new hobby might be.",
-          "examples": ["Cool! Is it painting?", "Nice! Have you started dancing?", "Great! Is it a sport?"],
-          "keywords": ["is", "it", "painting", "dancing", "sport", "guess"],
-          "hint": "You can guess, or ask “Really? What have you started?”",
-          "next_nodes": [{ "id": "guess_reply", "weight": 100 }]
+          "examples": [
+            "Cool! Is it painting?",
+            "Nice! Have you started dancing?",
+            "Great! Is it a sport?"
+          ],
+          "keywords": [
+            "is",
+            "it",
+            "painting",
+            "dancing",
+            "sport",
+            "guess"
+          ],
+          "hint": "💬 You can guess, or ask “Really? What have you started?”",
+          "next_nodes": [
+            {
+              "id": "guess_reply",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask Mia about her news: “Really? What have you started?”" },
-        "off_topic": { "message": "Mia has news! Ask her “Really? What have you started?”" }
+        "partial": {
+          "message": "Ask Mia about her news: “Really? What have you started?”"
+        },
+        "off_topic": {
+          "message": "Mia has news! Ask her “Really? What have you started?”"
+        }
       }
     },
     {
       "id": "guess_reply",
-      "npc": { "text": "Good guess, but no! Ask me what I have started.", "gender": "female" },
+      "npc": {
+        "text": "Good guess, but no! Ask me what I have started.",
+        "gender": "female"
+      },
       "routes": [
         {
           "intent": "ask_what",
           "meaning": "Leo asks what hobby Mia has started.",
-          "examples": ["Really? What have you started?", "Okay, what have you started?", "So what is it?"],
-          "keywords": ["what", "started", "really"],
+          "examples": [
+            "Really? What have you started?",
+            "Okay, what have you started?",
+            "So what is it?"
+          ],
+          "keywords": [
+            "what",
+            "started",
+            "really"
+          ],
           "hint": "💬 Try saying: “Really? What have you started?”",
-          "next_nodes": [{ "id": "guitar", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "guitar",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask her directly: “Really? What have you started?”" },
-        "off_topic": { "message": "Ask Mia “Really? What have you started?”" }
+        "partial": {
+          "message": "Ask her directly: “Really? What have you started?”"
+        },
+        "off_topic": {
+          "message": "Ask Mia “Really? What have you started?”"
+        }
       }
     },
     {
       "id": "guitar",
-      "npc": { "text": "I have started playing the guitar.", "gender": "female" },
-      "learning_objective": ["Ask how long with present perfect"],
+      "npc": {
+        "text": "I have started playing the guitar.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Ask how long with present perfect"
+      ],
       "routes": [
         {
           "intent": "ask_how_long",
           "meaning": "Leo says it's cool and asks how long she has played.",
-          "examples": ["That's cool! How long have you played?", "Cool! How long have you played?", "Nice! How long have you played the guitar?", "Awesome! How long have you played?"],
-          "keywords": ["cool", "how", "long", "played", "guitar"],
+          "examples": [
+            "That's cool! How long have you played?",
+            "Cool! How long have you played?",
+            "Nice! How long have you played the guitar?",
+            "Awesome! How long have you played?"
+          ],
+          "keywords": [
+            "cool",
+            "how",
+            "long",
+            "played",
+            "guitar"
+          ],
           "hint": "💬 Try saying: “That's cool! How long have you played?”",
-          "next_nodes": [{ "id": "how_long", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "how_long",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "ask_why_guitar",
           "meaning": "Leo asks why she chose the guitar.",
-          "examples": ["Why did you choose the guitar?", "Why the guitar?", "What made you pick the guitar?"],
-          "keywords": ["why", "choose", "chose", "guitar", "music"],
-          "hint": "You can ask “Why did you choose the guitar?” or “How long have you played?”",
-          "next_nodes": [{ "id": "why_guitar", "weight": 100 }]
+          "examples": [
+            "Why did you choose the guitar?",
+            "Why the guitar?",
+            "What made you pick the guitar?"
+          ],
+          "keywords": [
+            "why",
+            "choose",
+            "chose",
+            "guitar",
+            "music"
+          ],
+          "hint": "💬 You can ask “Why did you choose the guitar?” or “How long have you played?”",
+          "next_nodes": [
+            {
+              "id": "why_guitar",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask about her playing: “That's cool! How long have you played?”" },
-        "off_topic": { "message": "Mia plays guitar now. Ask “That's cool! How long have you played?”" }
+        "partial": {
+          "message": "Ask about her playing: “That's cool! How long have you played?”"
+        },
+        "off_topic": {
+          "message": "Mia plays guitar now. Ask “That's cool! How long have you played?”"
+        }
       }
     },
     {
       "id": "why_guitar",
-      "npc": { "text": "I have always loved music, so I chose the guitar.", "gender": "female" },
+      "npc": {
+        "text": "I have always loved music, so I chose the guitar.",
+        "gender": "female"
+      },
       "routes": [
         {
           "intent": "ask_how_long",
           "meaning": "Leo asks how long she has played.",
-          "examples": ["That's cool! How long have you played?", "How long have you played?", "How long have you played the guitar?"],
-          "keywords": ["cool", "how", "long", "played", "music"],
+          "examples": [
+            "That's cool! How long have you played?",
+            "How long have you played?",
+            "How long have you played the guitar?"
+          ],
+          "keywords": [
+            "cool",
+            "how",
+            "long",
+            "played",
+            "music"
+          ],
           "hint": "💬 Try saying: “That's cool! How long have you played?”",
-          "next_nodes": [{ "id": "how_long", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "how_long",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask “That's cool! How long have you played?”" },
-        "off_topic": { "message": "Ask Mia “That's cool! How long have you played?”" }
+        "partial": {
+          "message": "Ask “That's cool! How long have you played?”"
+        },
+        "off_topic": {
+          "message": "Ask Mia “That's cool! How long have you played?”"
+        }
       }
     },
     {
       "id": "how_long",
-      "npc": { "text": "I have played for three months.", "gender": "female" },
-      "learning_objective": ["Ask about difficulty"],
+      "npc": {
+        "text": "I have played for three months.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Ask about difficulty"
+      ],
       "routes": [
         {
           "intent": "ask_difficult",
           "meaning": "Leo asks if the guitar is difficult to learn.",
-          "examples": ["Is it difficult to learn?", "Is it hard to learn?", "Is the guitar difficult to learn?"],
-          "keywords": ["difficult", "hard", "learn"],
+          "examples": [
+            "Is it difficult to learn?",
+            "Is it hard to learn?",
+            "Is the guitar difficult to learn?"
+          ],
+          "keywords": [
+            "difficult",
+            "hard",
+            "learn"
+          ],
           "hint": "💬 Try saying: “Is it difficult to learn?”",
-          "next_nodes": [{ "id": "difficult", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "difficult",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "impressed",
           "meaning": "Leo is impressed with her progress.",
-          "examples": ["Wow, that's great progress!", "Only three months? That's amazing!", "That's really good for three months!"],
-          "keywords": ["wow", "great", "progress", "amazing", "good"],
-          "hint": "You can say “Wow, that's great progress!” or ask “Is it difficult to learn?”",
-          "next_nodes": [{ "id": "difficult", "weight": 100 }]
+          "examples": [
+            "Wow, that's great progress!",
+            "Only three months? That's amazing!",
+            "That's really good for three months!"
+          ],
+          "keywords": [
+            "wow",
+            "great",
+            "progress",
+            "amazing",
+            "good"
+          ],
+          "hint": "💬 You can say “Wow, that's great progress!” or ask “Is it difficult to learn?”",
+          "next_nodes": [
+            {
+              "id": "difficult",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask if it's tricky: “Is it difficult to learn?”" },
-        "off_topic": { "message": "Ask Mia “Is it difficult to learn?”" }
+        "partial": {
+          "message": "Ask if it's tricky: “Is it difficult to learn?”"
+        },
+        "off_topic": {
+          "message": "Ask Mia “Is it difficult to learn?”"
+        }
       }
     },
     {
       "id": "difficult",
-      "npc": { "text": "It was hard at first, but I practice every day.", "gender": "female" },
-      "learning_objective": ["Give an opinion about a hobby"],
+      "npc": {
+        "text": "It was hard at first, but I practice every day.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Give an opinion about a hobby"
+      ],
       "routes": [
         {
           "intent": "praise_music",
           "meaning": "Leo gives his opinion that music is a great hobby.",
-          "examples": ["I think music is a great hobby.", "Music is a great hobby.", "I think music is a wonderful hobby."],
-          "keywords": ["think", "music", "great", "hobby"],
+          "examples": [
+            "I think music is a great hobby.",
+            "Music is a great hobby.",
+            "I think music is a wonderful hobby."
+          ],
+          "keywords": [
+            "think",
+            "music",
+            "great",
+            "hobby"
+          ],
           "hint": "💬 Try saying: “I think music is a great hobby.”",
-          "next_nodes": [{ "id": "encourage", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "encourage",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "ask_practice",
           "meaning": "Leo asks how much she practices.",
-          "examples": ["How long do you practice?", "How much do you practice every day?", "How often do you practice?"],
-          "keywords": ["how", "long", "much", "practice", "often"],
-          "hint": "You can ask “How long do you practice?” or say “I think music is a great hobby.”",
-          "next_nodes": [{ "id": "practice_tip", "weight": 100 }]
+          "examples": [
+            "How long do you practice?",
+            "How much do you practice every day?",
+            "How often do you practice?"
+          ],
+          "keywords": [
+            "how",
+            "long",
+            "much",
+            "practice",
+            "often"
+          ],
+          "hint": "💬 You can ask “How long do you practice?” or say “I think music is a great hobby.”",
+          "next_nodes": [
+            {
+              "id": "practice_tip",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Share your opinion: “I think music is a great hobby.”" },
-        "off_topic": { "message": "Tell Mia what you think: “I think music is a great hobby.”" }
+        "partial": {
+          "message": "Share your opinion: “I think music is a great hobby.”"
+        },
+        "off_topic": {
+          "message": "Tell Mia what you think: “I think music is a great hobby.”"
+        }
       }
     },
     {
       "id": "practice_tip",
-      "npc": { "text": "I practice for thirty minutes every day.", "gender": "female" },
+      "npc": {
+        "text": "I practice for thirty minutes every day.",
+        "gender": "female"
+      },
       "routes": [
         {
           "intent": "praise_music",
           "meaning": "Leo says music is a great hobby.",
-          "examples": ["I think music is a great hobby.", "Music is a great hobby.", "That's dedication! I think music is a great hobby."],
-          "keywords": ["think", "music", "great", "hobby"],
+          "examples": [
+            "I think music is a great hobby.",
+            "Music is a great hobby.",
+            "That's dedication! I think music is a great hobby."
+          ],
+          "keywords": [
+            "think",
+            "music",
+            "great",
+            "hobby"
+          ],
           "hint": "💬 Try saying: “I think music is a great hobby.”",
-          "next_nodes": [{ "id": "encourage", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "encourage",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say what you think: “I think music is a great hobby.”" },
-        "off_topic": { "message": "Tell Mia “I think music is a great hobby.”" }
+        "partial": {
+          "message": "Say what you think: “I think music is a great hobby.”"
+        },
+        "off_topic": {
+          "message": "Tell Mia “I think music is a great hobby.”"
+        }
       }
     },
     {
       "id": "encourage",
-      "npc": { "text": "You should try it too, if you have time.", "gender": "female" },
-      "learning_objective": ["Talk about future plans with 'will'"],
+      "npc": {
+        "text": "You should try it too, if you have time.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Talk about future plans with 'will'"
+      ],
       "routes": [
         {
           "intent": "learn_drums",
           "meaning": "Leo says he might learn the drums.",
-          "examples": ["Maybe I will learn the drums!", "Maybe I will learn the drums.", "Good idea! Maybe I will learn the drums."],
-          "keywords": ["maybe", "will", "learn", "drums"],
+          "examples": [
+            "Maybe I will learn the drums!",
+            "Maybe I will learn the drums.",
+            "Good idea! Maybe I will learn the drums."
+          ],
+          "keywords": [
+            "maybe",
+            "will",
+            "learn",
+            "drums"
+          ],
           "hint": "💬 Try saying: “Maybe I will learn the drums!”",
-          "next_nodes": [{ "id": "end_together", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "end_together",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "maybe_later",
           "meaning": "Leo says he doesn't have time right now.",
-          "examples": ["Maybe when I have more time.", "I'm too busy right now.", "Maybe later, I don't have time now."],
-          "keywords": ["maybe", "later", "busy", "time", "not"],
-          "hint": "You can say “Maybe I will learn the drums!” or “Maybe when I have more time.”",
-          "next_nodes": [{ "id": "end_later", "weight": 100 }]
+          "examples": [
+            "Maybe when I have more time.",
+            "I'm too busy right now.",
+            "Maybe later, I don't have time now."
+          ],
+          "keywords": [
+            "maybe",
+            "later",
+            "busy",
+            "time",
+            "not"
+          ],
+          "hint": "💬 You can say “Maybe I will learn the drums!” or “Maybe when I have more time.”",
+          "next_nodes": [
+            {
+              "id": "end_later",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say what you might try: “Maybe I will learn the drums!”" },
-        "off_topic": { "message": "Mia says you should try music. Say “Maybe I will learn the drums!”" }
+        "partial": {
+          "message": "Say what you might try: “Maybe I will learn the drums!”"
+        },
+        "off_topic": {
+          "message": "Mia says you should try music. Say “Maybe I will learn the drums!”"
+        }
       }
     },
     {
       "id": "end_together",
-      "npc": { "text": "That would be awesome! We can practice together.", "gender": "female" },
+      "npc": {
+        "text": "That would be awesome! We can practice together.",
+        "gender": "female"
+      },
       "end": true
     },
     {
       "id": "end_later",
-      "npc": { "text": "No problem. Music will be here whenever you're ready!", "gender": "female" },
+      "npc": {
+        "text": "No problem. Music will be here whenever you're ready!",
+        "gender": "female"
+      },
       "end": true
     }
   ]

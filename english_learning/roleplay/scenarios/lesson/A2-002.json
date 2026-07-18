@@ -11,153 +11,370 @@
   "nodes": [
     {
       "id": "q_ceasefire",
-      "npc": { "text": "Mr. President, is there a ceasefire in the Middle East now?", "gender": "female" },
-      "learning_objective": ["Answer a yes/no question", "Use: ceasefire"],
+      "npc": {
+        "text": "Mr. President, is there a ceasefire in the Middle East now?",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Answer a yes/no question",
+        "Use: ceasefire"
+      ],
       "routes": [
         {
           "intent": "yes_ceasefire",
           "meaning": "The President says yes, there is a kind of ceasefire.",
-          "examples": ["Yes, there is a kind of ceasefire.", "Yes, there is a kind of ceasefire now.", "Yes, we have a kind of ceasefire.", "There is a ceasefire, yes."],
-          "keywords": ["yes", "ceasefire", "kind", "there"],
-          "hint": "Answer the reporter: “Yes, there is a kind of ceasefire.”",
-          "next_nodes": [{ "id": "q_stopped", "weight": 100 }]
+          "examples": [
+            "Yes, there is a kind of ceasefire.",
+            "Yes, there is a kind of ceasefire now.",
+            "Yes, we have a kind of ceasefire.",
+            "There is a ceasefire, yes."
+          ],
+          "keywords": [
+            "yes",
+            "ceasefire",
+            "kind",
+            "there"
+          ],
+          "hint": "💬 Answer the reporter: “Yes, there is a kind of ceasefire.”",
+          "next_nodes": [
+            {
+              "id": "q_stopped",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "uncertain",
           "meaning": "The President says it is complicated before answering.",
-          "examples": ["Well, it is complicated.", "It is not so simple.", "There are talks going on.", "We are working on peace."],
-          "keywords": ["complicated", "simple", "talks", "peace"],
-          "hint": "You can start with “Yes, there is a kind of ceasefire.”",
-          "next_nodes": [{ "id": "clarify", "weight": 100 }]
+          "examples": [
+            "Well, it is complicated.",
+            "It is not so simple.",
+            "There are talks going on.",
+            "We are working on peace."
+          ],
+          "keywords": [
+            "complicated",
+            "simple",
+            "talks",
+            "peace"
+          ],
+          "hint": "💬 You can start with “Yes, there is a kind of ceasefire.”",
+          "next_nodes": [
+            {
+              "id": "clarify",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Answer the reporter: “Yes, there is a kind of ceasefire.”" },
-        "off_topic": { "message": "The reporter asked about a ceasefire. Try “Yes, there is a kind of ceasefire.”" }
+        "partial": {
+          "message": "Answer the reporter: “Yes, there is a kind of ceasefire.”"
+        },
+        "off_topic": {
+          "message": "The reporter asked about a ceasefire. Try “Yes, there is a kind of ceasefire.”"
+        }
       }
     },
     {
       "id": "clarify",
-      "npc": { "text": "I see. But is there a ceasefire right now, or not?", "gender": "female" },
-      "learning_objective": ["Give a clear answer"],
+      "npc": {
+        "text": "I see. But is there a ceasefire right now, or not?",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Give a clear answer"
+      ],
       "routes": [
         {
           "intent": "yes_ceasefire",
           "meaning": "The President confirms there is a kind of ceasefire.",
-          "examples": ["Yes, there is a kind of ceasefire.", "Yes, there is a ceasefire now.", "Yes, a kind of ceasefire.", "There is a kind of ceasefire."],
-          "keywords": ["yes", "ceasefire", "kind"],
-          "hint": "Give a clear answer: “Yes, there is a kind of ceasefire.”",
-          "next_nodes": [{ "id": "q_stopped", "weight": 100 }]
+          "examples": [
+            "Yes, there is a kind of ceasefire.",
+            "Yes, there is a ceasefire now.",
+            "Yes, a kind of ceasefire.",
+            "There is a kind of ceasefire."
+          ],
+          "keywords": [
+            "yes",
+            "ceasefire",
+            "kind"
+          ],
+          "hint": "💬 Give a clear answer: “Yes, there is a kind of ceasefire.”",
+          "next_nodes": [
+            {
+              "id": "q_stopped",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Be clear for the reporter: “Yes, there is a kind of ceasefire.”" },
-        "off_topic": { "message": "Answer clearly: “Yes, there is a kind of ceasefire.”" }
+        "partial": {
+          "message": "Be clear for the reporter: “Yes, there is a kind of ceasefire.”"
+        },
+        "off_topic": {
+          "message": "Answer clearly: “Yes, there is a kind of ceasefire.”"
+        }
       }
     },
     {
       "id": "q_stopped",
-      "npc": { "text": "Does that mean the fighting has stopped?", "gender": "female" },
-      "learning_objective": ["Explain a partial situation", "Use: still, a little"],
+      "npc": {
+        "text": "Does that mean the fighting has stopped?",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Explain a partial situation",
+        "Use: still, a little"
+      ],
       "routes": [
         {
           "intent": "not_completely",
           "meaning": "The President says not completely; they are still shooting a little.",
-          "examples": ["Not completely. They are still shooting a little.", "No, not completely. They are still shooting a little.", "Not fully. There is still a little shooting.", "Not all the way. They still shoot a little."],
-          "keywords": ["not", "completely", "still", "shooting", "little"],
-          "hint": "Explain it: “Not completely. They are still shooting a little.”",
-          "next_nodes": [{ "id": "q_peace", "weight": 100 }]
+          "examples": [
+            "Not completely. They are still shooting a little.",
+            "No, not completely. They are still shooting a little.",
+            "Not fully. There is still a little shooting.",
+            "Not all the way. They still shoot a little."
+          ],
+          "keywords": [
+            "not",
+            "completely",
+            "still",
+            "shooting",
+            "little"
+          ],
+          "hint": "💬 Explain it: “Not completely. They are still shooting a little.”",
+          "next_nodes": [
+            {
+              "id": "q_peace",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "mostly_stopped",
           "meaning": "The President says it has mostly, but not fully, stopped.",
-          "examples": ["It has mostly stopped.", "Almost, but not fully.", "The fighting is much less now.", "It is calmer, but not over."],
-          "keywords": ["mostly", "almost", "less", "calmer"],
-          "hint": "You can say “Not completely. They are still shooting a little.”",
-          "next_nodes": [{ "id": "q_peace", "weight": 100 }]
+          "examples": [
+            "It has mostly stopped.",
+            "Almost, but not fully.",
+            "The fighting is much less now.",
+            "It is calmer, but not over."
+          ],
+          "keywords": [
+            "mostly",
+            "almost",
+            "less",
+            "calmer"
+          ],
+          "hint": "💬 You can say “Not completely. They are still shooting a little.”",
+          "next_nodes": [
+            {
+              "id": "q_peace",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Explain to the reporter: “Not completely. They are still shooting a little.”" },
-        "off_topic": { "message": "She asked if the fighting stopped. Try “Not completely. They are still shooting a little.”" }
+        "partial": {
+          "message": "Explain to the reporter: “Not completely. They are still shooting a little.”"
+        },
+        "off_topic": {
+          "message": "She asked if the fighting stopped. Try “Not completely. They are still shooting a little.”"
+        }
       }
     },
     {
       "id": "q_peace",
-      "npc": { "text": "So a ceasefire does not mean full peace?", "gender": "female" },
-      "learning_objective": ["Agree and add detail", "Use: moderate"],
+      "npc": {
+        "text": "So a ceasefire does not mean full peace?",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Agree and add detail",
+        "Use: moderate"
+      ],
       "routes": [
         {
           "intent": "thats_right",
           "meaning": "The President agrees and says they are shooting in a more moderate way.",
-          "examples": ["That's right. They are shooting in a more moderate way.", "That is right. They are shooting in a more moderate way.", "Correct. The shooting is more moderate now.", "Right. They shoot in a more moderate way."],
-          "keywords": ["right", "correct", "moderate", "shooting", "way"],
-          "hint": "Agree and explain: “That's right. They are shooting in a more moderate way.”",
-          "next_nodes": [{ "id": "q_moderate", "weight": 100 }]
+          "examples": [
+            "That's right. They are shooting in a more moderate way.",
+            "That is right. They are shooting in a more moderate way.",
+            "Correct. The shooting is more moderate now.",
+            "Right. They shoot in a more moderate way."
+          ],
+          "keywords": [
+            "right",
+            "correct",
+            "moderate",
+            "shooting",
+            "way"
+          ],
+          "hint": "💬 Agree and explain: “That's right. They are shooting in a more moderate way.”",
+          "next_nodes": [
+            {
+              "id": "q_moderate",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "not_full_peace",
           "meaning": "The President agrees it is not full peace yet.",
-          "examples": ["Correct, not full peace yet.", "Right, there is no full peace.", "Yes, it is not full peace.", "That's right, peace is not here yet."],
-          "keywords": ["not", "full", "peace", "yet", "right"],
-          "hint": "You can say “That's right. They are shooting in a more moderate way.”",
-          "next_nodes": [{ "id": "q_moderate", "weight": 100 }]
+          "examples": [
+            "Correct, not full peace yet.",
+            "Right, there is no full peace.",
+            "Yes, it is not full peace.",
+            "That's right, peace is not here yet."
+          ],
+          "keywords": [
+            "not",
+            "full",
+            "peace",
+            "yet",
+            "right"
+          ],
+          "hint": "💬 You can say “That's right. They are shooting in a more moderate way.”",
+          "next_nodes": [
+            {
+              "id": "q_moderate",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Agree with the reporter: “That's right. They are shooting in a more moderate way.”" },
-        "off_topic": { "message": "She asked about full peace. Try “That's right. They are shooting in a more moderate way.”" }
+        "partial": {
+          "message": "Agree with the reporter: “That's right. They are shooting in a more moderate way.”"
+        },
+        "off_topic": {
+          "message": "She asked about full peace. Try “That's right. They are shooting in a more moderate way.”"
+        }
       }
     },
     {
       "id": "q_moderate",
-      "npc": { "text": "What does \"moderate\" mean here?", "gender": "female" },
-      "learning_objective": ["Explain a word's meaning"],
+      "npc": {
+        "text": "What does \"moderate\" mean here?",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Explain a word's meaning"
+      ],
       "routes": [
         {
           "intent": "explain_moderate",
           "meaning": "The President explains that moderate means less shooting, but not zero shooting.",
-          "examples": ["It means less shooting, but not zero shooting.", "It means less shooting, but not zero.", "It means there is less shooting, but not none.", "It means the shooting is lower, but not zero."],
-          "keywords": ["less", "shooting", "not", "zero", "means"],
-          "hint": "Explain the word: “It means less shooting, but not zero shooting.”",
-          "next_nodes": [{ "id": "q_truce", "weight": 100 }]
+          "examples": [
+            "It means less shooting, but not zero shooting.",
+            "It means less shooting, but not zero.",
+            "It means there is less shooting, but not none.",
+            "It means the shooting is lower, but not zero."
+          ],
+          "keywords": [
+            "less",
+            "shooting",
+            "not",
+            "zero",
+            "means"
+          ],
+          "hint": "💬 Explain the word: “It means less shooting, but not zero shooting.”",
+          "next_nodes": [
+            {
+              "id": "q_truce",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Explain the word: “It means less shooting, but not zero shooting.”" },
-        "off_topic": { "message": "She asked what \"moderate\" means. Try “It means less shooting, but not zero shooting.”" }
+        "partial": {
+          "message": "Explain the word: “It means less shooting, but not zero shooting.”"
+        },
+        "off_topic": {
+          "message": "She asked what \"moderate\" means. Try “It means less shooting, but not zero shooting.”"
+        }
       }
     },
     {
       "id": "q_truce",
-      "npc": { "text": "So a truce can still have some fighting?", "gender": "female" },
-      "learning_objective": ["Confirm and summarize", "Use: truce"],
+      "npc": {
+        "text": "So a truce can still have some fighting?",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Confirm and summarize",
+        "Use: truce"
+      ],
       "routes": [
         {
           "intent": "truce_not_everything",
           "meaning": "The President says yes; a truce does not always stop everything.",
-          "examples": ["Yes. A truce does not always stop everything.", "Yes, a truce does not always stop everything.", "Right. A truce does not stop everything.", "Yes, a truce doesn't always stop it all."],
-          "keywords": ["yes", "truce", "not", "always", "stop", "everything"],
-          "hint": "Sum it up: “Yes. A truce does not always stop everything.”",
-          "next_nodes": [{ "id": "done", "weight": 100 }]
+          "examples": [
+            "Yes. A truce does not always stop everything.",
+            "Yes, a truce does not always stop everything.",
+            "Right. A truce does not stop everything.",
+            "Yes, a truce doesn't always stop it all."
+          ],
+          "keywords": [
+            "yes",
+            "truce",
+            "not",
+            "always",
+            "stop",
+            "everything"
+          ],
+          "hint": "💬 Sum it up: “Yes. A truce does not always stop everything.”",
+          "next_nodes": [
+            {
+              "id": "done",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "truce_not_peace",
           "meaning": "The President agrees a truce is not the same as full peace.",
-          "examples": ["Yes, a truce is not full peace.", "Right, a truce still has some fighting.", "Yes, some fighting can go on.", "Correct, a truce is not the end of all fighting."],
-          "keywords": ["truce", "peace", "fighting", "some", "yes"],
-          "hint": "You can say “Yes. A truce does not always stop everything.”",
-          "next_nodes": [{ "id": "done", "weight": 100 }]
+          "examples": [
+            "Yes, a truce is not full peace.",
+            "Right, a truce still has some fighting.",
+            "Yes, some fighting can go on.",
+            "Correct, a truce is not the end of all fighting."
+          ],
+          "keywords": [
+            "truce",
+            "peace",
+            "fighting",
+            "some",
+            "yes"
+          ],
+          "hint": "💬 You can say “Yes. A truce does not always stop everything.”",
+          "next_nodes": [
+            {
+              "id": "done",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Confirm for the reporter: “Yes. A truce does not always stop everything.”" },
-        "off_topic": { "message": "She asked about a truce. Try “Yes. A truce does not always stop everything.”" }
+        "partial": {
+          "message": "Confirm for the reporter: “Yes. A truce does not always stop everything.”"
+        },
+        "off_topic": {
+          "message": "She asked about a truce. Try “Yes. A truce does not always stop everything.”"
+        }
       }
     },
     {
       "id": "done",
-      "npc": { "text": "Thank you, Mr. President. That is very clear.", "gender": "female" },
+      "npc": {
+        "text": "Thank you, Mr. President. That is very clear.",
+        "gender": "female"
+      },
       "end": true
     }
   ]

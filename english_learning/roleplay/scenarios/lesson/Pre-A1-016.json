@@ -11,188 +11,422 @@
   "nodes": [
     {
       "id": "hungry",
-      "npc": { "text": "I am hungry.", "gender": "female" },
-      "learning_objective": ["Offer food", "Use: fruit"],
+      "npc": {
+        "text": "I am hungry.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Offer food",
+        "Use: fruit"
+      ],
       "routes": [
         {
           "intent": "give_fruit",
           "meaning": "Ben offers some fruit.",
-          "examples": ["Here is some fruit.", "Have some fruit.", "Here, eat some fruit.", "Here is fruit for you."],
-          "keywords": ["fruit", "here", "eat"],
+          "examples": [
+            "Here is some fruit.",
+            "Have some fruit.",
+            "Here, eat some fruit.",
+            "Here is fruit for you."
+          ],
+          "keywords": [
+            "fruit",
+            "here",
+            "eat"
+          ],
           "hint": "💬 Try saying: “Here is some fruit.”",
-          "next_nodes": [{ "id": "apples", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "apples",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "ask_hungry",
           "meaning": "Ben asks if she wants to eat.",
-          "examples": ["Are you hungry?", "Do you want food?", "Let us eat."],
-          "keywords": ["hungry", "eat", "food", "want"],
+          "examples": [
+            "Are you hungry?",
+            "Do you want food?",
+            "Let us eat."
+          ],
+          "keywords": [
+            "hungry",
+            "eat",
+            "food",
+            "want"
+          ],
           "hint": "💬 Try saying: “Here is some fruit.”",
-          "next_nodes": [{ "id": "fruit_reply", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "fruit_reply",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Lily is hungry. Say “Here is some fruit.”" },
-        "off_topic": { "message": "Lily wants to eat. Try “Here is some fruit.”" }
+        "partial": {
+          "message": "Lily is hungry. Say “Here is some fruit.”"
+        },
+        "off_topic": {
+          "message": "Lily wants to eat. Try “Here is some fruit.”"
+        }
       }
     },
     {
       "id": "fruit_reply",
-      "npc": { "text": "Yes, I want to eat. Do you have fruit?", "gender": "female" },
+      "npc": {
+        "text": "Yes, I want to eat. Do you have fruit?",
+        "gender": "female"
+      },
       "routes": [
         {
           "intent": "give_fruit",
           "meaning": "Ben offers some fruit.",
-          "examples": ["Here is some fruit.", "Here is fruit.", "Yes, here is some fruit."],
-          "keywords": ["fruit", "here", "yes"],
+          "examples": [
+            "Here is some fruit.",
+            "Here is fruit.",
+            "Yes, here is some fruit."
+          ],
+          "keywords": [
+            "fruit",
+            "here",
+            "yes"
+          ],
           "hint": "💬 Try saying: “Here is some fruit.”",
-          "next_nodes": [{ "id": "apples", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "apples",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Give Lily some food: “Here is some fruit.”" },
-        "off_topic": { "message": "Lily wants fruit. Try “Here is some fruit.”" }
+        "partial": {
+          "message": "Give Lily some food: “Here is some fruit.”"
+        },
+        "off_topic": {
+          "message": "Lily wants fruit. Try “Here is some fruit.”"
+        }
       }
     },
     {
       "id": "apples",
-      "npc": { "text": "I like apples.", "gender": "female" },
-      "learning_objective": ["Say what you like"],
+      "npc": {
+        "text": "I like apples.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Say what you like"
+      ],
       "routes": [
         {
           "intent": "like_bananas",
           "meaning": "Ben says he likes bananas.",
-          "examples": ["I like bananas.", "I like bananas too.", "I like bananas!"],
-          "keywords": ["bananas", "banana", "like"],
+          "examples": [
+            "I like bananas.",
+            "I like bananas too.",
+            "I like bananas!"
+          ],
+          "keywords": [
+            "bananas",
+            "banana",
+            "like"
+          ],
           "hint": "💬 Try saying: “I like bananas.”",
-          "next_nodes": [{ "id": "oranges", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "oranges",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "like_apples_too",
           "meaning": "Ben says he likes apples too.",
-          "examples": ["I like apples too.", "Apples are good.", "Me too!"],
-          "keywords": ["apples", "apple", "too", "good"],
+          "examples": [
+            "I like apples too.",
+            "Apples are good.",
+            "Me too!"
+          ],
+          "keywords": [
+            "apples",
+            "apple",
+            "too",
+            "good"
+          ],
           "hint": "💬 Try saying: “I like bananas.”",
-          "next_nodes": [{ "id": "apple_reply", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "apple_reply",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Lily what you like: “I like bananas.”" },
-        "off_topic": { "message": "Lily likes apples. What do you like? Try “I like bananas.”" }
+        "partial": {
+          "message": "Tell Lily what you like: “I like bananas.”"
+        },
+        "off_topic": {
+          "message": "Lily likes apples. What do you like? Try “I like bananas.”"
+        }
       }
     },
     {
       "id": "apple_reply",
-      "npc": { "text": "Apples are yummy! What fruit do you like?", "gender": "female" },
+      "npc": {
+        "text": "Apples are yummy! What fruit do you like?",
+        "gender": "female"
+      },
       "routes": [
         {
           "intent": "like_bananas",
           "meaning": "Ben says he likes bananas.",
-          "examples": ["I like bananas.", "I like bananas.", "Bananas for me."],
-          "keywords": ["bananas", "banana", "like"],
+          "examples": [
+            "I like bananas.",
+            "I like bananas.",
+            "Bananas for me."
+          ],
+          "keywords": [
+            "bananas",
+            "banana",
+            "like"
+          ],
           "hint": "💬 Try saying: “I like bananas.”",
-          "next_nodes": [{ "id": "oranges", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "oranges",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say your favorite fruit: “I like bananas.”" },
-        "off_topic": { "message": "What fruit do you like? Try “I like bananas.”" }
+        "partial": {
+          "message": "Say your favorite fruit: “I like bananas.”"
+        },
+        "off_topic": {
+          "message": "What fruit do you like? Try “I like bananas.”"
+        }
       }
     },
     {
       "id": "oranges",
-      "npc": { "text": "Do you like oranges?", "gender": "female" },
-      "learning_objective": ["Answer a yes/no question", "Use: sweet"],
+      "npc": {
+        "text": "Do you like oranges?",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Answer a yes/no question",
+        "Use: sweet"
+      ],
       "routes": [
         {
           "intent": "yes_sweet",
           "meaning": "Ben says yes, oranges are sweet.",
-          "examples": ["Yes, oranges are sweet.", "Yes, they are sweet.", "I like sweet oranges."],
-          "keywords": ["yes", "oranges", "sweet"],
+          "examples": [
+            "Yes, oranges are sweet.",
+            "Yes, they are sweet.",
+            "I like sweet oranges."
+          ],
+          "keywords": [
+            "yes",
+            "oranges",
+            "sweet"
+          ],
           "hint": "💬 Try saying: “Yes, oranges are sweet.”",
-          "next_nodes": [{ "id": "apple_red", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "apple_red",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "no_oranges",
           "meaning": "Ben likes another fruit more.",
-          "examples": ["No, I like bananas.", "Not really.", "I like apples more."],
-          "keywords": ["no", "not", "bananas", "apples"],
-          "hint": "You can say “Yes, oranges are sweet.” or name another fruit.",
-          "next_nodes": [{ "id": "orange_reply", "weight": 100 }]
+          "examples": [
+            "No, I like bananas.",
+            "Not really.",
+            "I like apples more."
+          ],
+          "keywords": [
+            "no",
+            "not",
+            "bananas",
+            "apples"
+          ],
+          "hint": "💬 You can say “Yes, oranges are sweet.” or name another fruit.",
+          "next_nodes": [
+            {
+              "id": "orange_reply",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Answer Lily: “Yes, oranges are sweet.”" },
-        "off_topic": { "message": "Lily asked about oranges. Try “Yes, oranges are sweet.”" }
+        "partial": {
+          "message": "Answer Lily: “Yes, oranges are sweet.”"
+        },
+        "off_topic": {
+          "message": "Lily asked about oranges. Try “Yes, oranges are sweet.”"
+        }
       }
     },
     {
       "id": "orange_reply",
-      "npc": { "text": "That is okay. Oranges are sweet, though!", "gender": "female" },
+      "npc": {
+        "text": "That is okay. Oranges are sweet, though!",
+        "gender": "female"
+      },
       "routes": [
         {
           "intent": "yes_sweet",
           "meaning": "Ben agrees oranges are sweet.",
-          "examples": ["Yes, oranges are sweet.", "Okay, they are sweet.", "Sweet oranges."],
-          "keywords": ["sweet", "oranges", "yes"],
+          "examples": [
+            "Yes, oranges are sweet.",
+            "Okay, they are sweet.",
+            "Sweet oranges."
+          ],
+          "keywords": [
+            "sweet",
+            "oranges",
+            "yes"
+          ],
           "hint": "💬 Try saying: “Yes, oranges are sweet.”",
-          "next_nodes": [{ "id": "apple_red", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "apple_red",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say “Yes, oranges are sweet.”" },
-        "off_topic": { "message": "Oranges are sweet! Try “Yes, oranges are sweet.”" }
+        "partial": {
+          "message": "Say “Yes, oranges are sweet.”"
+        },
+        "off_topic": {
+          "message": "Oranges are sweet! Try “Yes, oranges are sweet.”"
+        }
       }
     },
     {
       "id": "apple_red",
-      "npc": { "text": "This apple is red.", "gender": "female" },
-      "learning_objective": ["Say a color", "Use: yellow"],
+      "npc": {
+        "text": "This apple is red.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Say a color",
+        "Use: yellow"
+      ],
       "routes": [
         {
           "intent": "banana_yellow",
           "meaning": "Ben says the banana is yellow.",
-          "examples": ["This banana is yellow.", "The banana is yellow!", "My banana is yellow."],
-          "keywords": ["banana", "yellow"],
+          "examples": [
+            "This banana is yellow.",
+            "The banana is yellow!",
+            "My banana is yellow."
+          ],
+          "keywords": [
+            "banana",
+            "yellow"
+          ],
           "hint": "💬 Try saying: “This banana is yellow.”",
-          "next_nodes": [{ "id": "good", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "good",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "nice_red",
           "meaning": "Ben says the red apple looks nice.",
-          "examples": ["Red is nice.", "I like red apples.", "Yummy red apple."],
-          "keywords": ["red", "nice", "like", "apple"],
+          "examples": [
+            "Red is nice.",
+            "I like red apples.",
+            "Yummy red apple."
+          ],
+          "keywords": [
+            "red",
+            "nice",
+            "like",
+            "apple"
+          ],
           "hint": "💬 Try saying: “This banana is yellow.”",
-          "next_nodes": [{ "id": "good", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "good",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say the banana color: “This banana is yellow.”" },
-        "off_topic": { "message": "The apple is red. What about the banana? Try “This banana is yellow.”" }
+        "partial": {
+          "message": "Say the banana color: “This banana is yellow.”"
+        },
+        "off_topic": {
+          "message": "The apple is red. What about the banana? Try “This banana is yellow.”"
+        }
       }
     },
     {
       "id": "good",
-      "npc": { "text": "Fruit is good for us.", "gender": "female" },
-      "learning_objective": ["Say let us eat"],
+      "npc": {
+        "text": "Fruit is good for us.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Say let us eat"
+      ],
       "routes": [
         {
           "intent": "lets_eat",
           "meaning": "Ben says let us eat.",
-          "examples": ["Let us eat!", "Let's eat!", "Yes, let us eat.", "Time to eat!"],
-          "keywords": ["eat", "lets", "let", "yes"],
+          "examples": [
+            "Let us eat!",
+            "Let's eat!",
+            "Yes, let us eat.",
+            "Time to eat!"
+          ],
+          "keywords": [
+            "eat",
+            "lets",
+            "let",
+            "yes"
+          ],
           "hint": "💬 Try saying: “Let us eat!”",
-          "next_nodes": [{ "id": "done", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "done",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Fruit is good! Say “Let us eat!”" },
-        "off_topic": { "message": "Time to eat the fruit. Try “Let us eat!”" }
+        "partial": {
+          "message": "Fruit is good! Say “Let us eat!”"
+        },
+        "off_topic": {
+          "message": "Time to eat the fruit. Try “Let us eat!”"
+        }
       }
     },
     {
       "id": "done",
-      "npc": { "text": "Yes! Let us eat our fruit. Yum!", "gender": "female" },
+      "npc": {
+        "text": "Yes! Let us eat our fruit. Yum!",
+        "gender": "female"
+      },
       "end": true
     }
   ]

@@ -11,232 +11,531 @@
   "nodes": [
     {
       "id": "bottles",
-      "npc": { "text": "What are you doing with those bottles?", "gender": "female" },
-      "learning_objective": ["Say what you are doing", "Use: recycling bin, bottles"],
+      "npc": {
+        "text": "What are you doing with those bottles?",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Say what you are doing",
+        "Use: recycling bin, bottles"
+      ],
       "routes": [
         {
           "intent": "putting_bin",
           "meaning": "Leo says he is putting the bottles in the recycling bin.",
-          "examples": ["I am putting them in the recycling bin.", "I'm putting them in the recycling bin.", "I am putting the bottles in the recycling bin."],
-          "keywords": ["putting", "recycling", "bin", "bottles"],
+          "examples": [
+            "I am putting them in the recycling bin.",
+            "I'm putting them in the recycling bin.",
+            "I am putting the bottles in the recycling bin."
+          ],
+          "keywords": [
+            "putting",
+            "recycling",
+            "bin",
+            "bottles"
+          ],
           "hint": "💬 Try saying: “I am putting them in the recycling bin.”",
-          "next_nodes": [{ "id": "why_recycle", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "why_recycle",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "short_recycle",
           "meaning": "Leo says he is recycling them.",
-          "examples": ["I am recycling them.", "I am recycling the bottles.", "I recycle them."],
-          "keywords": ["recycling", "recycle", "bottles", "them"],
-          "hint": "You can say “I am putting them in the recycling bin.”",
-          "next_nodes": [{ "id": "clarify_bin", "weight": 100 }]
+          "examples": [
+            "I am recycling them.",
+            "I am recycling the bottles.",
+            "I recycle them."
+          ],
+          "keywords": [
+            "recycling",
+            "recycle",
+            "bottles",
+            "them"
+          ],
+          "hint": "💬 You can say “I am putting them in the recycling bin.”",
+          "next_nodes": [
+            {
+              "id": "clarify_bin",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Mia what you're doing: “I am putting them in the recycling bin.”" },
-        "off_topic": { "message": "Mia asked about the bottles. Say “I am putting them in the recycling bin.”" }
+        "partial": {
+          "message": "Tell Mia what you're doing: “I am putting them in the recycling bin.”"
+        },
+        "off_topic": {
+          "message": "Mia asked about the bottles. Say “I am putting them in the recycling bin.”"
+        }
       }
     },
     {
       "id": "clarify_bin",
-      "npc": { "text": "Oh, recycling! Where do they go?", "gender": "female" },
+      "npc": {
+        "text": "Oh, recycling! Where do they go?",
+        "gender": "female"
+      },
       "routes": [
         {
           "intent": "to_bin",
           "meaning": "Leo says they go in the recycling bin.",
-          "examples": ["In the recycling bin.", "I put them in the recycling bin.", "They go in the recycling bin."],
-          "keywords": ["recycling", "bin", "put", "go"],
+          "examples": [
+            "In the recycling bin.",
+            "I put them in the recycling bin.",
+            "They go in the recycling bin."
+          ],
+          "keywords": [
+            "recycling",
+            "bin",
+            "put",
+            "go"
+          ],
           "hint": "💬 Try saying: “I am putting them in the recycling bin.”",
-          "next_nodes": [{ "id": "why_recycle", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "why_recycle",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say “In the recycling bin.”" },
-        "off_topic": { "message": "Tell Mia “In the recycling bin.”" }
+        "partial": {
+          "message": "Say “In the recycling bin.”"
+        },
+        "off_topic": {
+          "message": "Tell Mia “In the recycling bin.”"
+        }
       }
     },
     {
       "id": "why_recycle",
-      "npc": { "text": "Why do you recycle?", "gender": "female" },
-      "learning_objective": ["Give a reason with because", "Use: because, Earth"],
+      "npc": {
+        "text": "Why do you recycle?",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Give a reason with because",
+        "Use: because, Earth"
+      ],
       "routes": [
         {
           "intent": "good_earth",
           "meaning": "Leo says it is good for the Earth.",
-          "examples": ["Because it is good for the Earth.", "It is good for the Earth.", "Because recycling is good for the Earth."],
-          "keywords": ["because", "good", "earth", "recycle"],
+          "examples": [
+            "Because it is good for the Earth.",
+            "It is good for the Earth.",
+            "Because recycling is good for the Earth."
+          ],
+          "keywords": [
+            "because",
+            "good",
+            "earth",
+            "recycle"
+          ],
           "hint": "💬 Try saying: “Because it is good for the Earth.”",
-          "next_nodes": [{ "id": "what_recycle", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "what_recycle",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "short_help",
           "meaning": "Leo says it helps the planet.",
-          "examples": ["It helps the planet.", "It helps the Earth.", "To help the planet."],
-          "keywords": ["helps", "planet", "earth", "help"],
-          "hint": "You can say “Because it is good for the Earth.”",
-          "next_nodes": [{ "id": "earth_react", "weight": 100 }]
+          "examples": [
+            "It helps the planet.",
+            "It helps the Earth.",
+            "To help the planet."
+          ],
+          "keywords": [
+            "helps",
+            "planet",
+            "earth",
+            "help"
+          ],
+          "hint": "💬 You can say “Because it is good for the Earth.”",
+          "next_nodes": [
+            {
+              "id": "earth_react",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Give your reason: “Because it is good for the Earth.”" },
-        "off_topic": { "message": "Mia asked why. Say “Because it is good for the Earth.”" }
+        "partial": {
+          "message": "Give your reason: “Because it is good for the Earth.”"
+        },
+        "off_topic": {
+          "message": "Mia asked why. Say “Because it is good for the Earth.”"
+        }
       }
     },
     {
       "id": "earth_react",
-      "npc": { "text": "That is nice. So it helps nature?", "gender": "female" },
+      "npc": {
+        "text": "That is nice. So it helps nature?",
+        "gender": "female"
+      },
       "routes": [
         {
           "intent": "yes_earth",
           "meaning": "Leo confirms it is good for the Earth.",
-          "examples": ["Yes, it is good for the Earth.", "Yes, good for the Earth.", "Yes, it helps the Earth."],
-          "keywords": ["good", "earth", "yes", "helps"],
+          "examples": [
+            "Yes, it is good for the Earth.",
+            "Yes, good for the Earth.",
+            "Yes, it helps the Earth."
+          ],
+          "keywords": [
+            "good",
+            "earth",
+            "yes",
+            "helps"
+          ],
           "hint": "💬 Try saying: “Because it is good for the Earth.”",
-          "next_nodes": [{ "id": "what_recycle", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "what_recycle",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say “Yes, it is good for the Earth.”" },
-        "off_topic": { "message": "Tell Mia “It is good for the Earth.”" }
+        "partial": {
+          "message": "Say “Yes, it is good for the Earth.”"
+        },
+        "off_topic": {
+          "message": "Tell Mia “It is good for the Earth.”"
+        }
       }
     },
     {
       "id": "what_recycle",
-      "npc": { "text": "What can we recycle?", "gender": "female" },
-      "learning_objective": ["List things", "Use: paper, glass, plastic"],
+      "npc": {
+        "text": "What can we recycle?",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "List things",
+        "Use: paper, glass, plastic"
+      ],
       "routes": [
         {
           "intent": "paper_glass_plastic",
           "meaning": "Leo lists paper, glass, and plastic.",
-          "examples": ["We can recycle paper, glass, and plastic.", "Paper, glass, and plastic.", "We recycle paper, glass, and plastic."],
-          "keywords": ["recycle", "paper", "glass", "plastic"],
+          "examples": [
+            "We can recycle paper, glass, and plastic.",
+            "Paper, glass, and plastic.",
+            "We recycle paper, glass, and plastic."
+          ],
+          "keywords": [
+            "recycle",
+            "paper",
+            "glass",
+            "plastic"
+          ],
           "hint": "💬 Try saying: “We can recycle paper, glass, and plastic.”",
-          "next_nodes": [{ "id": "throw_trash", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "throw_trash",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "one_example",
           "meaning": "Leo names one thing to recycle.",
-          "examples": ["We can recycle plastic.", "We can recycle paper.", "We can recycle bottles."],
-          "keywords": ["recycle", "plastic", "paper", "bottles"],
-          "hint": "You can list more: “We can recycle paper, glass, and plastic.”",
-          "next_nodes": [{ "id": "more_examples", "weight": 100 }]
+          "examples": [
+            "We can recycle plastic.",
+            "We can recycle paper.",
+            "We can recycle bottles."
+          ],
+          "keywords": [
+            "recycle",
+            "plastic",
+            "paper",
+            "bottles"
+          ],
+          "hint": "💬 You can list more: “We can recycle paper, glass, and plastic.”",
+          "next_nodes": [
+            {
+              "id": "more_examples",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "List them: “We can recycle paper, glass, and plastic.”" },
-        "off_topic": { "message": "Mia asked what to recycle. Say “We can recycle paper, glass, and plastic.”" }
+        "partial": {
+          "message": "List them: “We can recycle paper, glass, and plastic.”"
+        },
+        "off_topic": {
+          "message": "Mia asked what to recycle. Say “We can recycle paper, glass, and plastic.”"
+        }
       }
     },
     {
       "id": "more_examples",
-      "npc": { "text": "Just plastic? What else can we recycle?", "gender": "female" },
+      "npc": {
+        "text": "Just plastic? What else can we recycle?",
+        "gender": "female"
+      },
       "routes": [
         {
           "intent": "list_more",
           "meaning": "Leo adds paper and glass.",
-          "examples": ["We can recycle paper, glass, and plastic.", "Also paper and glass.", "Paper, glass, and plastic."],
-          "keywords": ["paper", "glass", "plastic", "recycle"],
+          "examples": [
+            "We can recycle paper, glass, and plastic.",
+            "Also paper and glass.",
+            "Paper, glass, and plastic."
+          ],
+          "keywords": [
+            "paper",
+            "glass",
+            "plastic",
+            "recycle"
+          ],
           "hint": "💬 Try saying: “We can recycle paper, glass, and plastic.”",
-          "next_nodes": [{ "id": "throw_trash", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "throw_trash",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Add more: “We can recycle paper, glass, and plastic.”" },
-        "off_topic": { "message": "Tell Mia “We can recycle paper, glass, and plastic.”" }
+        "partial": {
+          "message": "Add more: “We can recycle paper, glass, and plastic.”"
+        },
+        "off_topic": {
+          "message": "Tell Mia “We can recycle paper, glass, and plastic.”"
+        }
       }
     },
     {
       "id": "throw_trash",
-      "npc": { "text": "I throw everything in the trash.", "gender": "female" },
-      "learning_objective": ["Give advice with should", "Use: should, recycle"],
+      "npc": {
+        "text": "I throw everything in the trash.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Give advice with should",
+        "Use: should, recycle"
+      ],
       "routes": [
         {
           "intent": "should_recycle",
           "meaning": "Leo says Mia should recycle too.",
-          "examples": ["You should recycle, too.", "You should recycle as well.", "You should recycle, too!"],
-          "keywords": ["should", "recycle", "too", "you"],
+          "examples": [
+            "You should recycle, too.",
+            "You should recycle as well.",
+            "You should recycle, too!"
+          ],
+          "keywords": [
+            "should",
+            "recycle",
+            "too",
+            "you"
+          ],
           "hint": "💬 Try saying: “You should recycle, too.”",
-          "next_nodes": [{ "id": "start_today", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "start_today",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "explain_bad",
           "meaning": "Leo says trash is bad for the Earth.",
-          "examples": ["That is not good for the Earth.", "That is bad for the planet.", "Trash hurts the Earth."],
-          "keywords": ["bad", "not good", "earth", "planet"],
-          "hint": "You can advise her: “You should recycle, too.”",
-          "next_nodes": [{ "id": "bad_react", "weight": 100 }]
+          "examples": [
+            "That is not good for the Earth.",
+            "That is bad for the planet.",
+            "Trash hurts the Earth."
+          ],
+          "keywords": [
+            "bad",
+            "not good",
+            "earth",
+            "planet"
+          ],
+          "hint": "💬 You can advise her: “You should recycle, too.”",
+          "next_nodes": [
+            {
+              "id": "bad_react",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Give advice: “You should recycle, too.”" },
-        "off_topic": { "message": "Mia uses the trash. Say “You should recycle, too.”" }
+        "partial": {
+          "message": "Give advice: “You should recycle, too.”"
+        },
+        "off_topic": {
+          "message": "Mia uses the trash. Say “You should recycle, too.”"
+        }
       }
     },
     {
       "id": "bad_react",
-      "npc": { "text": "Oh no! What should I do instead?", "gender": "female" },
+      "npc": {
+        "text": "Oh no! What should I do instead?",
+        "gender": "female"
+      },
       "routes": [
         {
           "intent": "tell_recycle",
           "meaning": "Leo tells Mia to recycle.",
-          "examples": ["You should recycle, too.", "You should recycle.", "Try to recycle, too."],
-          "keywords": ["should", "recycle", "too", "try"],
+          "examples": [
+            "You should recycle, too.",
+            "You should recycle.",
+            "Try to recycle, too."
+          ],
+          "keywords": [
+            "should",
+            "recycle",
+            "too",
+            "try"
+          ],
           "hint": "💬 Try saying: “You should recycle, too.”",
-          "next_nodes": [{ "id": "start_today", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "start_today",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say “You should recycle, too.”" },
-        "off_topic": { "message": "Tell Mia “You should recycle, too.”" }
+        "partial": {
+          "message": "Say “You should recycle, too.”"
+        },
+        "off_topic": {
+          "message": "Tell Mia “You should recycle, too.”"
+        }
       }
     },
     {
       "id": "start_today",
-      "npc": { "text": "Okay, I will start today.", "gender": "female" },
-      "learning_objective": ["Give a team closing", "Use: together, planet, clean"],
+      "npc": {
+        "text": "Okay, I will start today.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Give a team closing",
+        "Use: together, planet, clean"
+      ],
       "routes": [
         {
           "intent": "keep_clean",
           "meaning": "Leo says together they can keep the planet clean.",
-          "examples": ["Together we can keep our planet clean.", "Together we keep the planet clean.", "Together we can keep our planet clean!"],
-          "keywords": ["together", "keep", "planet", "clean"],
+          "examples": [
+            "Together we can keep our planet clean.",
+            "Together we keep the planet clean.",
+            "Together we can keep our planet clean!"
+          ],
+          "keywords": [
+            "together",
+            "keep",
+            "planet",
+            "clean"
+          ],
           "hint": "💬 Try saying: “Together we can keep our planet clean.”",
-          "next_nodes": [{ "id": "done", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "done",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "praise",
           "meaning": "Leo praises Mia's choice.",
-          "examples": ["Great! Good choice.", "That is a great idea!", "Awesome, well done!"],
-          "keywords": ["great", "good", "choice", "idea", "awesome"],
-          "hint": "You can praise her, or say “Together we can keep our planet clean.”",
-          "next_nodes": [{ "id": "praise_react", "weight": 100 }]
+          "examples": [
+            "Great! Good choice.",
+            "That is a great idea!",
+            "Awesome, well done!"
+          ],
+          "keywords": [
+            "great",
+            "good",
+            "choice",
+            "idea",
+            "awesome"
+          ],
+          "hint": "💬 You can praise her, or say “Together we can keep our planet clean.”",
+          "next_nodes": [
+            {
+              "id": "praise_react",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "End as a team: “Together we can keep our planet clean.”" },
-        "off_topic": { "message": "Mia will start today. Say “Together we can keep our planet clean.”" }
+        "partial": {
+          "message": "End as a team: “Together we can keep our planet clean.”"
+        },
+        "off_topic": {
+          "message": "Mia will start today. Say “Together we can keep our planet clean.”"
+        }
       }
     },
     {
       "id": "praise_react",
-      "npc": { "text": "Thanks! It feels good to help. What is next?", "gender": "female" },
+      "npc": {
+        "text": "Thanks! It feels good to help. What is next?",
+        "gender": "female"
+      },
       "routes": [
         {
           "intent": "clean_planet2",
           "meaning": "Leo says they can keep the planet clean together.",
-          "examples": ["Together we can keep our planet clean.", "We can keep our planet clean.", "Let's keep the planet clean."],
-          "keywords": ["together", "keep", "planet", "clean"],
+          "examples": [
+            "Together we can keep our planet clean.",
+            "We can keep our planet clean.",
+            "Let's keep the planet clean."
+          ],
+          "keywords": [
+            "together",
+            "keep",
+            "planet",
+            "clean"
+          ],
           "hint": "💬 Try saying: “Together we can keep our planet clean.”",
-          "next_nodes": [{ "id": "done", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "done",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say “Together we can keep our planet clean.”" },
-        "off_topic": { "message": "Tell Mia “Together we can keep our planet clean.”" }
+        "partial": {
+          "message": "Say “Together we can keep our planet clean.”"
+        },
+        "off_topic": {
+          "message": "Tell Mia “Together we can keep our planet clean.”"
+        }
       }
     },
     {
       "id": "done",
-      "npc": { "text": "Yes! Together we can keep our planet clean. Thank you, Leo!", "gender": "female" },
+      "npc": {
+        "text": "Yes! Together we can keep our planet clean. Thank you, Leo!",
+        "gender": "female"
+      },
       "end": true
     }
   ]

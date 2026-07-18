@@ -11,201 +11,460 @@
   "nodes": [
     {
       "id": "visited",
-      "npc": { "text": "Last weekend I visited my grandma.", "gender": "female" },
-      "learning_objective": ["React and ask a follow-up", "Use: nice, what did you do"],
+      "npc": {
+        "text": "Last weekend I visited my grandma.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "React and ask a follow-up",
+        "Use: nice, what did you do"
+      ],
       "routes": [
         {
           "intent": "nice_what",
           "meaning": "Tom says that is nice and asks what she did.",
-          "examples": ["That is nice! What did you do?", "Nice! What did you do there?", "That's nice! What did you do?"],
-          "keywords": ["nice", "what", "did", "do"],
+          "examples": [
+            "That is nice! What did you do?",
+            "Nice! What did you do there?",
+            "That's nice! What did you do?"
+          ],
+          "keywords": [
+            "nice",
+            "what",
+            "did",
+            "do"
+          ],
           "hint": "💬 Try saying: “That is nice! What did you do?”",
-          "next_nodes": [{ "id": "baked", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "baked",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "ask_where",
           "meaning": "Tom asks where grandma lives.",
-          "examples": ["Where does she live?", "Where does your grandma live?", "Is it far?"],
-          "keywords": ["where", "live", "far", "grandma"],
-          "hint": "You can ask “That is nice! What did you do?”",
-          "next_nodes": [{ "id": "where_react", "weight": 100 }]
+          "examples": [
+            "Where does she live?",
+            "Where does your grandma live?",
+            "Is it far?"
+          ],
+          "keywords": [
+            "where",
+            "live",
+            "far",
+            "grandma"
+          ],
+          "hint": "💬 You can ask “That is nice! What did you do?”",
+          "next_nodes": [
+            {
+              "id": "where_react",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask about her visit: “That is nice! What did you do?”" },
-        "off_topic": { "message": "Anna visited grandma. Say “That is nice! What did you do?”" }
+        "partial": {
+          "message": "Ask about her visit: “That is nice! What did you do?”"
+        },
+        "off_topic": {
+          "message": "Anna visited grandma. Say “That is nice! What did you do?”"
+        }
       }
     },
     {
       "id": "where_react",
-      "npc": { "text": "She lives near the beach. I love her house! We did fun things.", "gender": "female" },
+      "npc": {
+        "text": "She lives near the beach. I love her house! We did fun things.",
+        "gender": "female"
+      },
       "routes": [
         {
           "intent": "ask_what",
           "meaning": "Tom asks what Anna did.",
-          "examples": ["What did you do?", "That is nice! What did you do?", "Cool! What did you do?"],
-          "keywords": ["what", "did", "do", "nice"],
+          "examples": [
+            "What did you do?",
+            "That is nice! What did you do?",
+            "Cool! What did you do?"
+          ],
+          "keywords": [
+            "what",
+            "did",
+            "do",
+            "nice"
+          ],
           "hint": "💬 Try saying: “That is nice! What did you do?”",
-          "next_nodes": [{ "id": "baked", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "baked",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask “What did you do?”" },
-        "off_topic": { "message": "Ask Anna “What did you do?”" }
+        "partial": {
+          "message": "Ask “What did you do?”"
+        },
+        "off_topic": {
+          "message": "Ask Anna “What did you do?”"
+        }
       }
     },
     {
       "id": "baked",
-      "npc": { "text": "We baked cookies together.", "gender": "female" },
-      "learning_objective": ["Ask if food was good", "Use: yum, cookies"],
+      "npc": {
+        "text": "We baked cookies together.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Ask if food was good",
+        "Use: yum, cookies"
+      ],
       "routes": [
         {
           "intent": "yum_good",
           "meaning": "Tom says yum and asks if the cookies were good.",
-          "examples": ["Yum! Were they good?", "Yummy! Were they good?", "Yum! Were the cookies good?"],
-          "keywords": ["yum", "good", "were", "cookies"],
+          "examples": [
+            "Yum! Were they good?",
+            "Yummy! Were they good?",
+            "Yum! Were the cookies good?"
+          ],
+          "keywords": [
+            "yum",
+            "good",
+            "were",
+            "cookies"
+          ],
           "hint": "💬 Try saying: “Yum! Were they good?”",
-          "next_nodes": [{ "id": "delicious", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "delicious",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "like_cookies",
           "meaning": "Tom says he loves cookies.",
-          "examples": ["I love cookies!", "Cookies are my favorite!", "I like cookies a lot."],
-          "keywords": ["love", "cookies", "favorite", "like"],
-          "hint": "You can react, or ask “Yum! Were they good?”",
-          "next_nodes": [{ "id": "cookie_react", "weight": 100 }]
+          "examples": [
+            "I love cookies!",
+            "Cookies are my favorite!",
+            "I like cookies a lot."
+          ],
+          "keywords": [
+            "love",
+            "cookies",
+            "favorite",
+            "like"
+          ],
+          "hint": "💬 You can react, or ask “Yum! Were they good?”",
+          "next_nodes": [
+            {
+              "id": "cookie_react",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask about the cookies: “Yum! Were they good?”" },
-        "off_topic": { "message": "They baked cookies. Say “Yum! Were they good?”" }
+        "partial": {
+          "message": "Ask about the cookies: “Yum! Were they good?”"
+        },
+        "off_topic": {
+          "message": "They baked cookies. Say “Yum! Were they good?”"
+        }
       }
     },
     {
       "id": "cookie_react",
-      "npc": { "text": "Me too! We made chocolate ones.", "gender": "female" },
+      "npc": {
+        "text": "Me too! We made chocolate ones.",
+        "gender": "female"
+      },
       "routes": [
         {
           "intent": "ask_good",
           "meaning": "Tom asks if the cookies were good.",
-          "examples": ["Were they good?", "Yum! Were they good?", "Did they taste good?"],
-          "keywords": ["good", "were", "taste", "yum"],
+          "examples": [
+            "Were they good?",
+            "Yum! Were they good?",
+            "Did they taste good?"
+          ],
+          "keywords": [
+            "good",
+            "were",
+            "taste",
+            "yum"
+          ],
           "hint": "💬 Try saying: “Yum! Were they good?”",
-          "next_nodes": [{ "id": "delicious", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "delicious",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask “Were they good?”" },
-        "off_topic": { "message": "Ask Anna “Were they good?”" }
+        "partial": {
+          "message": "Ask “Were they good?”"
+        },
+        "off_topic": {
+          "message": "Ask Anna “Were they good?”"
+        }
       }
     },
     {
       "id": "delicious",
-      "npc": { "text": "Yes, they were delicious.", "gender": "female" },
-      "learning_objective": ["Ask what else happened", "Use: what else"],
+      "npc": {
+        "text": "Yes, they were delicious.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Ask what else happened",
+        "Use: what else"
+      ],
       "routes": [
         {
           "intent": "what_else",
           "meaning": "Tom asks what else Anna did.",
-          "examples": ["What else did you do?", "What more did you do?", "And what else did you do?"],
-          "keywords": ["what", "else", "do", "more"],
+          "examples": [
+            "What else did you do?",
+            "What more did you do?",
+            "And what else did you do?"
+          ],
+          "keywords": [
+            "what",
+            "else",
+            "do",
+            "more"
+          ],
           "hint": "💬 Try saying: “What else did you do?”",
-          "next_nodes": [{ "id": "photos", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "photos",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "react_yum",
           "meaning": "Tom reacts to the delicious cookies.",
-          "examples": ["That sounds delicious!", "Yummy!", "I wish I could try one."],
-          "keywords": ["delicious", "yummy", "try", "wish"],
-          "hint": "You can react, or ask “What else did you do?”",
-          "next_nodes": [{ "id": "photos", "weight": 100 }]
+          "examples": [
+            "That sounds delicious!",
+            "Yummy!",
+            "I wish I could try one."
+          ],
+          "keywords": [
+            "delicious",
+            "yummy",
+            "try",
+            "wish"
+          ],
+          "hint": "💬 You can react, or ask “What else did you do?”",
+          "next_nodes": [
+            {
+              "id": "photos",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask for more: “What else did you do?”" },
-        "off_topic": { "message": "The cookies were great. Ask “What else did you do?”" }
+        "partial": {
+          "message": "Ask for more: “What else did you do?”"
+        },
+        "off_topic": {
+          "message": "The cookies were great. Ask “What else did you do?”"
+        }
       }
     },
     {
       "id": "photos",
-      "npc": { "text": "We watched old photos and she told me stories.", "gender": "female" },
-      "learning_objective": ["Ask about future plans", "Use: will, visit again"],
+      "npc": {
+        "text": "We watched old photos and she told me stories.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Ask about future plans",
+        "Use: will, visit again"
+      ],
       "routes": [
         {
           "intent": "visit_again",
           "meaning": "Tom asks if Anna will visit grandma again.",
-          "examples": ["Will you visit her again?", "Will you visit again?", "Are you going to visit her again?"],
-          "keywords": ["will", "visit", "again", "her"],
+          "examples": [
+            "Will you visit her again?",
+            "Will you visit again?",
+            "Are you going to visit her again?"
+          ],
+          "keywords": [
+            "will",
+            "visit",
+            "again",
+            "her"
+          ],
           "hint": "💬 Try saying: “Will you visit her again?”",
-          "next_nodes": [{ "id": "next_month", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "next_month",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "ask_stories",
           "meaning": "Tom asks about the stories.",
-          "examples": ["What stories did she tell?", "What kind of stories?", "Were the stories fun?"],
-          "keywords": ["stories", "tell", "kind", "fun"],
-          "hint": "You can ask more, or ask “Will you visit her again?”",
-          "next_nodes": [{ "id": "stories_react", "weight": 100 }]
+          "examples": [
+            "What stories did she tell?",
+            "What kind of stories?",
+            "Were the stories fun?"
+          ],
+          "keywords": [
+            "stories",
+            "tell",
+            "kind",
+            "fun"
+          ],
+          "hint": "💬 You can ask more, or ask “Will you visit her again?”",
+          "next_nodes": [
+            {
+              "id": "stories_react",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask about next time: “Will you visit her again?”" },
-        "off_topic": { "message": "Anna loves grandma. Ask “Will you visit her again?”" }
+        "partial": {
+          "message": "Ask about next time: “Will you visit her again?”"
+        },
+        "off_topic": {
+          "message": "Anna loves grandma. Ask “Will you visit her again?”"
+        }
       }
     },
     {
       "id": "stories_react",
-      "npc": { "text": "Stories about when she was young. They were so fun!", "gender": "female" },
+      "npc": {
+        "text": "Stories about when she was young. They were so fun!",
+        "gender": "female"
+      },
       "routes": [
         {
           "intent": "ask_again",
           "meaning": "Tom asks if Anna will visit again.",
-          "examples": ["Will you visit her again?", "Will you visit again?", "Are you visiting again?"],
-          "keywords": ["will", "visit", "again"],
+          "examples": [
+            "Will you visit her again?",
+            "Will you visit again?",
+            "Are you visiting again?"
+          ],
+          "keywords": [
+            "will",
+            "visit",
+            "again"
+          ],
           "hint": "💬 Try saying: “Will you visit her again?”",
-          "next_nodes": [{ "id": "next_month", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "next_month",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Ask “Will you visit her again?”" },
-        "off_topic": { "message": "Ask Anna “Will you visit her again?”" }
+        "partial": {
+          "message": "Ask “Will you visit her again?”"
+        },
+        "off_topic": {
+          "message": "Ask Anna “Will you visit her again?”"
+        }
       }
     },
     {
       "id": "next_month",
-      "npc": { "text": "Yes, I will visit her next month.", "gender": "female" },
-      "learning_objective": ["Send greetings to someone", "Use: say hello"],
+      "npc": {
+        "text": "Yes, I will visit her next month.",
+        "gender": "female"
+      },
+      "learning_objective": [
+        "Send greetings to someone",
+        "Use: say hello"
+      ],
       "routes": [
         {
           "intent": "say_hello",
           "meaning": "Tom asks Anna to say hello to grandma.",
-          "examples": ["Say hello to her for me!", "Say hi to her for me!", "Please say hello to her."],
-          "keywords": ["say", "hello", "hi", "for me"],
+          "examples": [
+            "Say hello to her for me!",
+            "Say hi to her for me!",
+            "Please say hello to her."
+          ],
+          "keywords": [
+            "say",
+            "hello",
+            "hi",
+            "for me"
+          ],
           "hint": "💬 Try saying: “Say hello to her for me!”",
-          "next_nodes": [{ "id": "done", "weight": 100 }]
+          "next_nodes": [
+            {
+              "id": "done",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "ask_join",
           "meaning": "Tom asks to come along.",
-          "examples": ["Can I come with you?", "Can I visit too?", "May I come next time?"],
-          "keywords": ["can", "come", "visit", "join", "too"],
-          "hint": "You can ask to join, or say “Say hello to her for me!”",
-          "next_nodes": [{ "id": "join_react", "weight": 100 }]
+          "examples": [
+            "Can I come with you?",
+            "Can I visit too?",
+            "May I come next time?"
+          ],
+          "keywords": [
+            "can",
+            "come",
+            "visit",
+            "join",
+            "too"
+          ],
+          "hint": "💬 You can ask to join, or say “Say hello to her for me!”",
+          "next_nodes": [
+            {
+              "id": "join_react",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Send greetings: “Say hello to her for me!”" },
-        "off_topic": { "message": "Anna visits next month. Say “Say hello to her for me!”" }
+        "partial": {
+          "message": "Send greetings: “Say hello to her for me!”"
+        },
+        "off_topic": {
+          "message": "Anna visits next month. Say “Say hello to her for me!”"
+        }
       }
     },
     {
       "id": "join_react",
-      "npc": { "text": "Of course! Grandma would love to meet you.", "gender": "female" },
+      "npc": {
+        "text": "Of course! Grandma would love to meet you.",
+        "gender": "female"
+      },
       "end": true
     },
     {
       "id": "done",
-      "npc": { "text": "I will! She will be happy. Thanks, Tom!", "gender": "female" },
+      "npc": {
+        "text": "I will! She will be happy. Thanks, Tom!",
+        "gender": "female"
+      },
       "end": true
     }
   ]

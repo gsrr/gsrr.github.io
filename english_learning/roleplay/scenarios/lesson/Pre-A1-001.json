@@ -11,246 +11,585 @@
   "nodes": [
     {
       "id": "greet",
-      "npc": { "text": "Hi, Anna. How are you?", "gender": "male" },
-      "learning_objective": ["Greet a friend", "Say how you feel"],
+      "npc": {
+        "text": "Hi, Anna. How are you?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Greet a friend",
+        "Say how you feel"
+      ],
       "routes": [
         {
           "intent": "feel_good",
           "meaning": "Anna says she feels good/fine and asks Tom back.",
-          "examples": ["I am good. How are you?", "I'm good, and you?", "I am fine, thank you.", "Good! How are you?", "I am great!", "I'm happy today."],
-          "keywords": ["good", "fine", "great", "happy", "okay"],
-          "hint": "Say how you feel: “I am good. How are you?”",
-          "next_nodes": [{ "id": "ask_play", "weight": 100 }]
+          "examples": [
+            "I am good. How are you?",
+            "I'm good, and you?",
+            "I am fine, thank you.",
+            "Good! How are you?",
+            "I am great!",
+            "I'm happy today."
+          ],
+          "keywords": [
+            "good",
+            "fine",
+            "great",
+            "happy",
+            "okay"
+          ],
+          "hint": "💬 Say how you feel: “I am good. How are you?”",
+          "next_nodes": [
+            {
+              "id": "ask_play",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "feel_bad",
           "meaning": "Anna says she does not feel good (tired/sad).",
-          "examples": ["I am tired.", "Not so good.", "I am sad.", "I am not good today.", "I feel bad."],
-          "keywords": ["tired", "sad", "bad", "not"],
-          "hint": "Tell Tom how you feel — try “I am good.” or “I am tired.”",
-          "next_nodes": [{ "id": "cheer", "weight": 100 }]
+          "examples": [
+            "I am tired.",
+            "Not so good.",
+            "I am sad.",
+            "I am not good today.",
+            "I feel bad."
+          ],
+          "keywords": [
+            "tired",
+            "sad",
+            "bad",
+            "not"
+          ],
+          "hint": "💬 Tell Tom how you feel — try “I am good.” or “I am tired.”",
+          "next_nodes": [
+            {
+              "id": "cheer",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Tom how you are: “I am good. How are you?”" },
-        "off_topic": { "message": "Tom said hi! Say how you feel: “I am good. How are you?”" }
+        "partial": {
+          "message": "Tell Tom how you are: “I am good. How are you?”"
+        },
+        "off_topic": {
+          "message": "Tom said hi! Say how you feel: “I am good. How are you?”"
+        }
       }
     },
     {
       "id": "cheer",
-      "npc": { "text": "Oh no! I hope you feel better. Do you want to play? It is fun!", "gender": "male" },
-      "learning_objective": ["Accept or decline an invitation"],
+      "npc": {
+        "text": "Oh no! I hope you feel better. Do you want to play? It is fun!",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Accept or decline an invitation"
+      ],
       "routes": [
         {
           "intent": "yes_play",
           "meaning": "Anna agrees to play.",
-          "examples": ["Yes, I do.", "Okay, let's play!", "Yes, that is fun.", "Sure!", "Yes, I want to play."],
-          "keywords": ["yes", "play", "okay", "sure", "fun"],
-          "hint": "Say yes to playing: “Yes, I do.”",
-          "next_nodes": [{ "id": "where", "weight": 100 }]
+          "examples": [
+            "Yes, I do.",
+            "Okay, let's play!",
+            "Yes, that is fun.",
+            "Sure!",
+            "Yes, I want to play."
+          ],
+          "keywords": [
+            "yes",
+            "play",
+            "okay",
+            "sure",
+            "fun"
+          ],
+          "hint": "💬 Say yes to playing: “Yes, I do.”",
+          "next_nodes": [
+            {
+              "id": "where",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "no_play",
           "meaning": "Anna does not want to play now.",
-          "examples": ["No, not now.", "Maybe later.", "I am too tired.", "Not today."],
-          "keywords": ["no", "not", "later", "tired"],
-          "hint": "You can say “Maybe later.” or say yes: “Yes, I do.”",
-          "next_nodes": [{ "id": "later", "weight": 100 }]
+          "examples": [
+            "No, not now.",
+            "Maybe later.",
+            "I am too tired.",
+            "Not today."
+          ],
+          "keywords": [
+            "no",
+            "not",
+            "later",
+            "tired"
+          ],
+          "hint": "💬 You can say “Maybe later.” or say yes: “Yes, I do.”",
+          "next_nodes": [
+            {
+              "id": "later",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Do you want to play? Say “Yes, I do.” or “Maybe later.”" },
-        "off_topic": { "message": "Tom asked if you want to play. Try “Yes, I do.”" }
+        "partial": {
+          "message": "Do you want to play? Say “Yes, I do.” or “Maybe later.”"
+        },
+        "off_topic": {
+          "message": "Tom asked if you want to play. Try “Yes, I do.”"
+        }
       }
     },
     {
       "id": "ask_play",
-      "npc": { "text": "I am fine, too. Do you want to play?", "gender": "male" },
-      "learning_objective": ["Accept an invitation", "Ask a follow-up question"],
+      "npc": {
+        "text": "I am fine, too. Do you want to play?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Accept an invitation",
+        "Ask a follow-up question"
+      ],
       "routes": [
         {
           "intent": "yes_where",
           "meaning": "Anna says yes and asks where they can play.",
-          "examples": ["Yes, I do. Where can we play?", "Yes! Where can we play?", "Sure, where?", "Okay, where do we play?"],
-          "keywords": ["yes", "where", "play"],
-          "hint": "Say yes and ask where: “Yes, I do. Where can we play?”",
-          "next_nodes": [{ "id": "where", "weight": 100 }]
+          "examples": [
+            "Yes, I do. Where can we play?",
+            "Yes! Where can we play?",
+            "Sure, where?",
+            "Okay, where do we play?"
+          ],
+          "keywords": [
+            "yes",
+            "where",
+            "play"
+          ],
+          "hint": "💬 Say yes and ask where: “Yes, I do. Where can we play?”",
+          "next_nodes": [
+            {
+              "id": "where",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "ask_what",
           "meaning": "Anna asks what they can play.",
-          "examples": ["What can we play?", "What do you want to play?", "What game?"],
-          "keywords": ["what", "play", "game"],
-          "hint": "You can ask “What can we play?”",
-          "next_nodes": [{ "id": "suggest_ball", "weight": 100 }]
+          "examples": [
+            "What can we play?",
+            "What do you want to play?",
+            "What game?"
+          ],
+          "keywords": [
+            "what",
+            "play",
+            "game"
+          ],
+          "hint": "💬 You can ask “What can we play?”",
+          "next_nodes": [
+            {
+              "id": "suggest_ball",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "no_play",
           "meaning": "Anna declines to play.",
-          "examples": ["No, not now.", "Maybe later.", "Not today."],
-          "keywords": ["no", "not", "later"],
-          "hint": "Say yes to keep playing: “Yes, I do.”",
-          "next_nodes": [{ "id": "later", "weight": 100 }]
+          "examples": [
+            "No, not now.",
+            "Maybe later.",
+            "Not today."
+          ],
+          "keywords": [
+            "no",
+            "not",
+            "later"
+          ],
+          "hint": "💬 Say yes to keep playing: “Yes, I do.”",
+          "next_nodes": [
+            {
+              "id": "later",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Do you want to play? Try “Yes, I do. Where can we play?”" },
-        "off_topic": { "message": "Tom wants to play. Say “Yes, I do. Where can we play?”" }
+        "partial": {
+          "message": "Do you want to play? Try “Yes, I do. Where can we play?”"
+        },
+        "off_topic": {
+          "message": "Tom wants to play. Say “Yes, I do. Where can we play?”"
+        }
       }
     },
     {
       "id": "suggest_ball",
-      "npc": { "text": "We can play with a ball. Do you like that?", "gender": "male" },
-      "learning_objective": ["Say what you like"],
+      "npc": {
+        "text": "We can play with a ball. Do you like that?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say what you like"
+      ],
       "routes": [
         {
           "intent": "yes_like",
           "meaning": "Anna likes playing with a ball.",
-          "examples": ["Yes, I like it.", "Yes, that is fun!", "I like the ball.", "Sure, let's play with the ball."],
-          "keywords": ["yes", "like", "ball", "fun"],
-          "hint": "Say you like it: “Yes, I like it.”",
-          "next_nodes": [{ "id": "where", "weight": 100 }]
+          "examples": [
+            "Yes, I like it.",
+            "Yes, that is fun!",
+            "I like the ball.",
+            "Sure, let's play with the ball."
+          ],
+          "keywords": [
+            "yes",
+            "like",
+            "ball",
+            "fun"
+          ],
+          "hint": "💬 Say you like it: “Yes, I like it.”",
+          "next_nodes": [
+            {
+              "id": "where",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "no_like",
           "meaning": "Anna does not want the ball.",
-          "examples": ["No, I don't like it.", "Not the ball.", "Can we play something else?"],
-          "keywords": ["no", "not", "else"],
-          "hint": "You can say “Yes, I like it.” or ask for something else.",
-          "next_nodes": [{ "id": "where", "weight": 100 }]
+          "examples": [
+            "No, I don't like it.",
+            "Not the ball.",
+            "Can we play something else?"
+          ],
+          "keywords": [
+            "no",
+            "not",
+            "else"
+          ],
+          "hint": "💬 You can say “Yes, I like it.” or ask for something else.",
+          "next_nodes": [
+            {
+              "id": "where",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Do you like playing with a ball? Say “Yes, I like it.”" },
-        "off_topic": { "message": "Tom said we can play with a ball. Try “Yes, I like it.”" }
+        "partial": {
+          "message": "Do you like playing with a ball? Say “Yes, I like it.”"
+        },
+        "off_topic": {
+          "message": "Tom said we can play with a ball. Try “Yes, I like it.”"
+        }
       }
     },
     {
       "id": "where",
-      "npc": { "text": "We can play in the park. Is that a good idea?", "gender": "male" },
-      "learning_objective": ["Agree with a suggestion", "Use: park, good idea"],
+      "npc": {
+        "text": "We can play in the park. Is that a good idea?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Agree with a suggestion",
+        "Use: park, good idea"
+      ],
       "routes": [
         {
           "intent": "agree",
           "meaning": "Anna agrees the park is a good idea.",
-          "examples": ["That is a good idea.", "Yes, good idea!", "The park is great.", "Okay, let's go to the park."],
-          "keywords": ["good", "idea", "park", "yes", "great"],
-          "hint": "Agree with Tom: “That is a good idea.”",
-          "next_nodes": [{ "id": "ball", "weight": 100 }]
+          "examples": [
+            "That is a good idea.",
+            "Yes, good idea!",
+            "The park is great.",
+            "Okay, let's go to the park."
+          ],
+          "keywords": [
+            "good",
+            "idea",
+            "park",
+            "yes",
+            "great"
+          ],
+          "hint": "💬 Agree with Tom: “That is a good idea.”",
+          "next_nodes": [
+            {
+              "id": "ball",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "other_place",
           "meaning": "Anna suggests a different place.",
-          "examples": ["Let's play at school.", "Can we play at home?", "How about the playground?"],
-          "keywords": ["school", "home", "playground", "beach"],
-          "hint": "You can agree — “That is a good idea.” — or name another place.",
-          "next_nodes": [{ "id": "ball", "weight": 100 }]
+          "examples": [
+            "Let's play at school.",
+            "Can we play at home?",
+            "How about the playground?"
+          ],
+          "keywords": [
+            "school",
+            "home",
+            "playground",
+            "beach"
+          ],
+          "hint": "💬 You can agree — “That is a good idea.” — or name another place.",
+          "next_nodes": [
+            {
+              "id": "ball",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tom wants the park. Say “That is a good idea.”" },
-        "off_topic": { "message": "Where should you play? Try “That is a good idea.” (the park)" }
+        "partial": {
+          "message": "Tom wants the park. Say “That is a good idea.”"
+        },
+        "off_topic": {
+          "message": "Where should you play? Try “That is a good idea.” (the park)"
+        }
       }
     },
     {
       "id": "ball",
-      "npc": { "text": "Can you bring your ball?", "gender": "male" },
-      "learning_objective": ["Answer with can / can't"],
+      "npc": {
+        "text": "Can you bring your ball?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Answer with can / can't"
+      ],
       "routes": [
         {
           "intent": "yes_bring",
           "meaning": "Anna can bring the ball.",
-          "examples": ["Yes, I can bring it.", "Yes, I can!", "Sure, I will bring my ball.", "Okay, I can bring it."],
-          "keywords": ["yes", "can", "bring", "ball"],
-          "hint": "Say you can: “Yes, I can bring it.”",
-          "next_nodes": [{ "id": "go", "weight": 100 }]
+          "examples": [
+            "Yes, I can bring it.",
+            "Yes, I can!",
+            "Sure, I will bring my ball.",
+            "Okay, I can bring it."
+          ],
+          "keywords": [
+            "yes",
+            "can",
+            "bring",
+            "ball"
+          ],
+          "hint": "💬 Say you can: “Yes, I can bring it.”",
+          "next_nodes": [
+            {
+              "id": "go",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "no_bring",
           "meaning": "Anna cannot bring the ball.",
-          "examples": ["No, I can't.", "I don't have a ball.", "Sorry, I can't bring it."],
-          "keywords": ["no", "can't", "cannot", "don't"],
-          "hint": "You can say “Yes, I can bring it.” or “No, I can't.”",
-          "next_nodes": [{ "id": "noball", "weight": 100 }]
+          "examples": [
+            "No, I can't.",
+            "I don't have a ball.",
+            "Sorry, I can't bring it."
+          ],
+          "keywords": [
+            "no",
+            "can't",
+            "cannot",
+            "don't"
+          ],
+          "hint": "💬 You can say “Yes, I can bring it.” or “No, I can't.”",
+          "next_nodes": [
+            {
+              "id": "noball",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Can you bring the ball? Say “Yes, I can bring it.”" },
-        "off_topic": { "message": "Tom asked about the ball. Try “Yes, I can bring it.”" }
+        "partial": {
+          "message": "Can you bring the ball? Say “Yes, I can bring it.”"
+        },
+        "off_topic": {
+          "message": "Tom asked about the ball. Try “Yes, I can bring it.”"
+        }
       }
     },
     {
       "id": "noball",
-      "npc": { "text": "That is okay. I can bring my ball. Let us go now!", "gender": "male" },
-      "learning_objective": ["Say you are ready"],
+      "npc": {
+        "text": "That is okay. I can bring my ball. Let us go now!",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say you are ready"
+      ],
       "routes": [
         {
           "intent": "ready",
           "meaning": "Anna is ready to go.",
-          "examples": ["Okay! I am ready.", "Yes, let's go!", "I am ready!", "Okay, let's go now."],
-          "keywords": ["okay", "ready", "go", "yes"],
-          "hint": "Say you are ready: “Okay! I am ready.”",
-          "next_nodes": [{ "id": "done", "weight": 100 }]
+          "examples": [
+            "Okay! I am ready.",
+            "Yes, let's go!",
+            "I am ready!",
+            "Okay, let's go now."
+          ],
+          "keywords": [
+            "okay",
+            "ready",
+            "go",
+            "yes"
+          ],
+          "hint": "💬 Say you are ready: “Okay! I am ready.”",
+          "next_nodes": [
+            {
+              "id": "done",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Tom you are ready: “Okay! I am ready.”" },
-        "off_topic": { "message": "Time to go! Say “Okay! I am ready.”" }
+        "partial": {
+          "message": "Tell Tom you are ready: “Okay! I am ready.”"
+        },
+        "off_topic": {
+          "message": "Time to go! Say “Okay! I am ready.”"
+        }
       }
     },
     {
       "id": "go",
-      "npc": { "text": "Great! Let us go now.", "gender": "male" },
-      "learning_objective": ["Say you are ready"],
+      "npc": {
+        "text": "Great! Let us go now.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say you are ready"
+      ],
       "routes": [
         {
           "intent": "ready",
           "meaning": "Anna is ready to go.",
-          "examples": ["Okay! I am ready.", "Yes, let's go!", "I am ready!", "Okay, I am ready to go."],
-          "keywords": ["okay", "ready", "go", "yes"],
-          "hint": "Say you are ready: “Okay! I am ready.”",
-          "next_nodes": [{ "id": "done", "weight": 100 }]
+          "examples": [
+            "Okay! I am ready.",
+            "Yes, let's go!",
+            "I am ready!",
+            "Okay, I am ready to go."
+          ],
+          "keywords": [
+            "okay",
+            "ready",
+            "go",
+            "yes"
+          ],
+          "hint": "💬 Say you are ready: “Okay! I am ready.”",
+          "next_nodes": [
+            {
+              "id": "done",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "wait",
           "meaning": "Anna needs a moment first.",
-          "examples": ["Wait one minute.", "Not yet.", "Give me a second."],
-          "keywords": ["wait", "minute", "yet", "second"],
-          "hint": "You can say “Okay! I am ready.” or “Wait one minute.”",
-          "next_nodes": [{ "id": "wait", "weight": 100 }]
+          "examples": [
+            "Wait one minute.",
+            "Not yet.",
+            "Give me a second."
+          ],
+          "keywords": [
+            "wait",
+            "minute",
+            "yet",
+            "second"
+          ],
+          "hint": "💬 You can say “Okay! I am ready.” or “Wait one minute.”",
+          "next_nodes": [
+            {
+              "id": "wait",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Are you ready? Say “Okay! I am ready.”" },
-        "off_topic": { "message": "Tom wants to go. Try “Okay! I am ready.”" }
+        "partial": {
+          "message": "Are you ready? Say “Okay! I am ready.”"
+        },
+        "off_topic": {
+          "message": "Tom wants to go. Try “Okay! I am ready.”"
+        }
       }
     },
     {
       "id": "wait",
-      "npc": { "text": "Sure, I can wait. Ready now?", "gender": "male" },
+      "npc": {
+        "text": "Sure, I can wait. Ready now?",
+        "gender": "male"
+      },
       "routes": [
         {
           "intent": "ready",
           "meaning": "Anna is ready now.",
-          "examples": ["Okay! I am ready.", "Yes, let's go!", "I am ready now!"],
-          "keywords": ["okay", "ready", "go", "yes"],
-          "hint": "Say “Okay! I am ready.”",
-          "next_nodes": [{ "id": "done", "weight": 100 }]
+          "examples": [
+            "Okay! I am ready.",
+            "Yes, let's go!",
+            "I am ready now!"
+          ],
+          "keywords": [
+            "okay",
+            "ready",
+            "go",
+            "yes"
+          ],
+          "hint": "💬 Say “Okay! I am ready.”",
+          "next_nodes": [
+            {
+              "id": "done",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Say you are ready: “Okay! I am ready.”" },
-        "off_topic": { "message": "Are you ready? Say “Okay! I am ready.”" }
+        "partial": {
+          "message": "Say you are ready: “Okay! I am ready.”"
+        },
+        "off_topic": {
+          "message": "Are you ready? Say “Okay! I am ready.”"
+        }
       }
     },
     {
       "id": "later",
-      "npc": { "text": "Okay, maybe next time. Bye, Anna!", "gender": "male" },
+      "npc": {
+        "text": "Okay, maybe next time. Bye, Anna!",
+        "gender": "male"
+      },
       "end": true
     },
     {
       "id": "done",
-      "npc": { "text": "Awesome! Let us go to the park and play. This is fun!", "gender": "male" },
+      "npc": {
+        "text": "Awesome! Let us go to the park and play. This is fun!",
+        "gender": "male"
+      },
       "end": true
     }
   ]

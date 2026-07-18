@@ -11,161 +11,388 @@
   "nodes": [
     {
       "id": "q_where",
-      "npc": { "text": "Where will we go on the school trip?", "gender": "male" },
-      "learning_objective": ["Say where you will go", "Use: will go"],
+      "npc": {
+        "text": "Where will we go on the school trip?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say where you will go",
+        "Use: will go"
+      ],
       "routes": [
         {
           "intent": "museum",
           "meaning": "Anna says they will go to the science museum.",
-          "examples": ["We will go to the science museum.", "We'll go to the science museum.", "We are going to the science museum.", "To the science museum!"],
-          "keywords": ["museum", "science", "will", "go"],
-          "hint": "Say the place: “We will go to the science museum.”",
-          "next_nodes": [{ "id": "how_get", "weight": 100 }]
+          "examples": [
+            "We will go to the science museum.",
+            "We'll go to the science museum.",
+            "We are going to the science museum.",
+            "To the science museum!"
+          ],
+          "keywords": [
+            "museum",
+            "science",
+            "will",
+            "go"
+          ],
+          "hint": "💬 Say the place: “We will go to the science museum.”",
+          "next_nodes": [
+            {
+              "id": "how_get",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "not_sure",
           "meaning": "Anna is not sure and asks Tom.",
-          "examples": ["I'm not sure. Where do you think?", "I don't know yet. Do you?", "Maybe the zoo? I'm not sure.", "Hmm, where do you think we'll go?"],
-          "keywords": ["not", "sure", "know", "think", "where"],
-          "hint": "You can guess, or say “We will go to the science museum.”",
-          "next_nodes": [{ "id": "reveal", "weight": 100 }]
+          "examples": [
+            "I'm not sure. Where do you think?",
+            "I don't know yet. Do you?",
+            "Maybe the zoo? I'm not sure.",
+            "Hmm, where do you think we'll go?"
+          ],
+          "keywords": [
+            "not",
+            "sure",
+            "know",
+            "think",
+            "where"
+          ],
+          "hint": "💬 You can guess, or say “We will go to the science museum.”",
+          "next_nodes": [
+            {
+              "id": "reveal",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Tom the place: “We will go to the science museum.”" },
-        "off_topic": { "message": "Tom asked where the trip is. Try “We will go to the science museum.”" }
+        "partial": {
+          "message": "Tell Tom the place: “We will go to the science museum.”"
+        },
+        "off_topic": {
+          "message": "Tom asked where the trip is. Try “We will go to the science museum.”"
+        }
       }
     },
     {
       "id": "reveal",
-      "npc": { "text": "I heard we will go to the science museum!", "gender": "male" },
-      "learning_objective": ["React with excitement"],
+      "npc": {
+        "text": "I heard we will go to the science museum!",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "React with excitement"
+      ],
       "routes": [
         {
           "intent": "excited",
           "meaning": "Anna reacts happily to the science museum.",
-          "examples": ["Great! I can't wait.", "Cool! The science museum sounds fun.", "Awesome! I love museums.", "Yes! We will go to the science museum."],
-          "keywords": ["great", "cool", "awesome", "museum", "wait"],
-          "hint": "React with joy: “Great! I can't wait.”",
-          "next_nodes": [{ "id": "how_get", "weight": 100 }]
+          "examples": [
+            "Great! I can't wait.",
+            "Cool! The science museum sounds fun.",
+            "Awesome! I love museums.",
+            "Yes! We will go to the science museum."
+          ],
+          "keywords": [
+            "great",
+            "cool",
+            "awesome",
+            "museum",
+            "wait"
+          ],
+          "hint": "💬 React with joy: “Great! I can't wait.”",
+          "next_nodes": [
+            {
+              "id": "how_get",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "React to the news: “Great! I can't wait.”" },
-        "off_topic": { "message": "Tom heard it's the museum. Try “Great! I can't wait.”" }
+        "partial": {
+          "message": "React to the news: “Great! I can't wait.”"
+        },
+        "off_topic": {
+          "message": "Tom heard it's the museum. Try “Great! I can't wait.”"
+        }
       }
     },
     {
       "id": "how_get",
-      "npc": { "text": "That sounds fun! How will we get there?", "gender": "male" },
-      "learning_objective": ["Say how you travel", "Use: by bus"],
+      "npc": {
+        "text": "That sounds fun! How will we get there?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say how you travel",
+        "Use: by bus"
+      ],
       "routes": [
         {
           "intent": "by_bus",
           "meaning": "Anna says they will go by bus.",
-          "examples": ["We will go by bus.", "We'll go by bus.", "We are going by bus.", "By bus!"],
-          "keywords": ["bus", "will", "go", "by"],
-          "hint": "Say how: “We will go by bus.”",
-          "next_nodes": [{ "id": "what_see", "weight": 100 }]
+          "examples": [
+            "We will go by bus.",
+            "We'll go by bus.",
+            "We are going by bus.",
+            "By bus!"
+          ],
+          "keywords": [
+            "bus",
+            "will",
+            "go",
+            "by"
+          ],
+          "hint": "💬 Say how: “We will go by bus.”",
+          "next_nodes": [
+            {
+              "id": "what_see",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "school_bus",
           "meaning": "Anna says they will take the school bus.",
-          "examples": ["We will take the school bus.", "We'll go on the school bus.", "By the big school bus.", "We will ride the bus together."],
-          "keywords": ["school", "bus", "take", "ride"],
-          "hint": "You can say “We will go by bus.”",
-          "next_nodes": [{ "id": "what_see", "weight": 100 }]
+          "examples": [
+            "We will take the school bus.",
+            "We'll go on the school bus.",
+            "By the big school bus.",
+            "We will ride the bus together."
+          ],
+          "keywords": [
+            "school",
+            "bus",
+            "take",
+            "ride"
+          ],
+          "hint": "💬 You can say “We will go by bus.”",
+          "next_nodes": [
+            {
+              "id": "what_see",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Tom how: “We will go by bus.”" },
-        "off_topic": { "message": "Tom asked how you get there. Try “We will go by bus.”" }
+        "partial": {
+          "message": "Tell Tom how: “We will go by bus.”"
+        },
+        "off_topic": {
+          "message": "Tom asked how you get there. Try “We will go by bus.”"
+        }
       }
     },
     {
       "id": "what_see",
-      "npc": { "text": "What will we see at the museum?", "gender": "male" },
-      "learning_objective": ["Say what you will see"],
+      "npc": {
+        "text": "What will we see at the museum?",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Say what you will see"
+      ],
       "routes": [
         {
           "intent": "robots_dinos",
           "meaning": "Anna says they will see robots and dinosaurs.",
-          "examples": ["We will see robots and dinosaurs.", "We'll see robots and dinosaurs.", "We are going to see robots and dinosaurs.", "Robots and dinosaurs!"],
-          "keywords": ["robots", "dinosaurs", "see", "will"],
-          "hint": "Say what you'll see: “We will see robots and dinosaurs.”",
-          "next_nodes": [{ "id": "tom_dinos", "weight": 100 }]
+          "examples": [
+            "We will see robots and dinosaurs.",
+            "We'll see robots and dinosaurs.",
+            "We are going to see robots and dinosaurs.",
+            "Robots and dinosaurs!"
+          ],
+          "keywords": [
+            "robots",
+            "dinosaurs",
+            "see",
+            "will"
+          ],
+          "hint": "💬 Say what you'll see: “We will see robots and dinosaurs.”",
+          "next_nodes": [
+            {
+              "id": "tom_dinos",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "robots_first",
           "meaning": "Anna mentions robots and other cool things.",
-          "examples": ["We will see many robots.", "We'll see robots and cool machines.", "There will be robots and dinosaurs.", "We will see big dinosaurs!"],
-          "keywords": ["robots", "dinosaurs", "machines", "see"],
-          "hint": "You can say “We will see robots and dinosaurs.”",
-          "next_nodes": [{ "id": "tom_dinos", "weight": 100 }]
+          "examples": [
+            "We will see many robots.",
+            "We'll see robots and cool machines.",
+            "There will be robots and dinosaurs.",
+            "We will see big dinosaurs!"
+          ],
+          "keywords": [
+            "robots",
+            "dinosaurs",
+            "machines",
+            "see"
+          ],
+          "hint": "💬 You can say “We will see robots and dinosaurs.”",
+          "next_nodes": [
+            {
+              "id": "tom_dinos",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Tell Tom what you'll see: “We will see robots and dinosaurs.”" },
-        "off_topic": { "message": "Tom asked what you'll see. Try “We will see robots and dinosaurs.”" }
+        "partial": {
+          "message": "Tell Tom what you'll see: “We will see robots and dinosaurs.”"
+        },
+        "off_topic": {
+          "message": "Tom asked what you'll see. Try “We will see robots and dinosaurs.”"
+        }
       }
     },
     {
       "id": "tom_dinos",
-      "npc": { "text": "I want to see the dinosaurs because they are huge.", "gender": "male" },
-      "learning_objective": ["Remind about lunch"],
+      "npc": {
+        "text": "I want to see the dinosaurs because they are huge.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "Remind about lunch"
+      ],
       "routes": [
         {
           "intent": "bring_lunch",
           "meaning": "Anna reminds Tom not to forget his lunch.",
-          "examples": ["Don't forget to bring your lunch.", "Don't forget your lunch!", "Remember to bring your lunch.", "Make sure you bring your lunch."],
-          "keywords": ["don't", "forget", "bring", "lunch"],
-          "hint": "Remind Tom: “Don't forget to bring your lunch.”",
-          "next_nodes": [{ "id": "tom_lunch", "weight": 100 }]
+          "examples": [
+            "Don't forget to bring your lunch.",
+            "Don't forget your lunch!",
+            "Remember to bring your lunch.",
+            "Make sure you bring your lunch."
+          ],
+          "keywords": [
+            "don't",
+            "forget",
+            "bring",
+            "lunch"
+          ],
+          "hint": "💬 Remind Tom: “Don't forget to bring your lunch.”",
+          "next_nodes": [
+            {
+              "id": "tom_lunch",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "me_too_lunch",
           "meaning": "Anna agrees and reminds him about lunch.",
-          "examples": ["Me too! Don't forget your lunch.", "The dinosaurs are huge! Bring your lunch too.", "I like dinosaurs too. Don't forget your lunch.", "Cool! And don't forget to bring your lunch."],
-          "keywords": ["me", "too", "huge", "forget", "lunch"],
-          "hint": "You can say “Don't forget to bring your lunch.”",
-          "next_nodes": [{ "id": "tom_lunch", "weight": 100 }]
+          "examples": [
+            "Me too! Don't forget your lunch.",
+            "The dinosaurs are huge! Bring your lunch too.",
+            "I like dinosaurs too. Don't forget your lunch.",
+            "Cool! And don't forget to bring your lunch."
+          ],
+          "keywords": [
+            "me",
+            "too",
+            "huge",
+            "forget",
+            "lunch"
+          ],
+          "hint": "💬 You can say “Don't forget to bring your lunch.”",
+          "next_nodes": [
+            {
+              "id": "tom_lunch",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "Remind Tom: “Don't forget to bring your lunch.”" },
-        "off_topic": { "message": "Tom loves the dinosaurs. Try “Don't forget to bring your lunch.”" }
+        "partial": {
+          "message": "Remind Tom: “Don't forget to bring your lunch.”"
+        },
+        "off_topic": {
+          "message": "Tom loves the dinosaurs. Try “Don't forget to bring your lunch.”"
+        }
       }
     },
     {
       "id": "tom_lunch",
-      "npc": { "text": "I will bring a sandwich and some water.", "gender": "male" },
-      "learning_objective": ["End the chat happily"],
+      "npc": {
+        "text": "I will bring a sandwich and some water.",
+        "gender": "male"
+      },
+      "learning_objective": [
+        "End the chat happily"
+      ],
       "routes": [
         {
           "intent": "great_day",
           "meaning": "Anna says it will be a great day.",
-          "examples": ["It will be a great day!", "It's going to be a great day!", "This will be a great day!", "Yes! It will be a great day."],
-          "keywords": ["great", "day", "will", "fun"],
-          "hint": "End happily: “It will be a great day!”",
-          "next_nodes": [{ "id": "done", "weight": 100 }]
+          "examples": [
+            "It will be a great day!",
+            "It's going to be a great day!",
+            "This will be a great day!",
+            "Yes! It will be a great day."
+          ],
+          "keywords": [
+            "great",
+            "day",
+            "will",
+            "fun"
+          ],
+          "hint": "💬 End happily: “It will be a great day!”",
+          "next_nodes": [
+            {
+              "id": "done",
+              "weight": 100
+            }
+          ]
         },
         {
           "intent": "good_idea_day",
           "meaning": "Anna praises the idea and says it will be a great day.",
-          "examples": ["Good idea! It will be a great day!", "Nice! It's going to be a great day.", "Perfect! It will be a great day.", "Yummy! It will be a great day."],
-          "keywords": ["good", "idea", "great", "day"],
-          "hint": "You can say “It will be a great day!”",
-          "next_nodes": [{ "id": "done", "weight": 100 }]
+          "examples": [
+            "Good idea! It will be a great day!",
+            "Nice! It's going to be a great day.",
+            "Perfect! It will be a great day.",
+            "Yummy! It will be a great day."
+          ],
+          "keywords": [
+            "good",
+            "idea",
+            "great",
+            "day"
+          ],
+          "hint": "💬 You can say “It will be a great day!”",
+          "next_nodes": [
+            {
+              "id": "done",
+              "weight": 100
+            }
+          ]
         }
       ],
       "fallback": {
-        "partial": { "message": "End the chat: “It will be a great day!”" },
-        "off_topic": { "message": "Time to finish. Try “It will be a great day!”" }
+        "partial": {
+          "message": "End the chat: “It will be a great day!”"
+        },
+        "off_topic": {
+          "message": "Time to finish. Try “It will be a great day!”"
+        }
       }
     },
     {
       "id": "done",
-      "npc": { "text": "Yes! I can't wait for our school trip. See you on the bus!", "gender": "male" },
+      "npc": {
+        "text": "Yes! I can't wait for our school trip. See you on the bus!",
+        "gender": "male"
+      },
       "end": true
     }
   ]
