@@ -3857,16 +3857,6 @@
   let pending = null;   // 挑戰中：{key, file, base(通過cnt), article, i}
   let pendingOccupy = null;   // 上完課要直接跳佔領的據點：{ file, reopen() }（取代舊的小遊戲賺點數升級卡片流程）
   let _passCounted = false;   // 本次進課是否已計過一次通過（避免總結重繪重複累加）
-  // 挑一課當「攻打/佔領」挑戰：故事線沒講完就依序給下一集，否則本等級課裡挑「通過cnt」最小的（同分隨機）
-  function pickChallenge(i) {
-    const lv = manifest.levels[i]; if (!lv) return null;
-    const arc = LEVEL_ARCS[lv.id] || [];
-    for (let k = 0; k < arc.length; k++) if (!lessonStatus(arc[k]).passed) return arc[k];
-    const arts = (lv.articles || []).slice(); if (!arts.length) return null;
-    let min = Infinity; arts.forEach(a => { const c = passCount(a.file); if (c < min) min = c; });
-    const cand = arts.filter(a => passCount(a.file) === min);
-    return cand[Math.floor(Math.random() * cand.length)];
-  }
   function regionKey(spec, p) { return (spec.file || "") + "#" + (p.id || p.getAttribute("aria-label") || ""); }
   // 領地(regionKey) → 地理名稱 快取：地圖畫出時記錄，讓「我的帝國」等處顯示地區名而非課程名（地區已不綁課程）
   let regionNames = {};
@@ -3929,7 +3919,8 @@
         const cx = bb.x + bb.width / 2, cy = bb.y + bb.height / 2;
         markerSpecs.push({ cx: cx, cy: cy, ox: cx, oy: cy, label: label, extra: extra || "" });
       }
-      // 地區 = 領地（不綁課程）：點了才動態抽一課當挑戰
+      // 每個地區固定綁一課（依序、不循環）：地區#N = 本張地圖第 N 課；超出課數的地區沒綁課
+      const lessons = spec.lessons || (lv.articles || []);
       let num = 0;
       paths.forEach(p => {
         const name = regionName(p);
@@ -3944,13 +3935,14 @@
         } else {
           num++;
           const key = regionKey(spec, p), pop = popForName(name);
+          const article = lessons[num - 1] || null;   // 地區↔課程固定對應（依序，不循環）
           rememberRegion(key, name);   // 記住地區名，供帝國清單等顯示
           p.setAttribute("class", "geo-region");
-          addTitle(p, name + " · 👥" + pop);
-          const open = () => openRegion(key, name, pop, i);
+          addTitle(p, name + " · 👥" + pop + (article ? " · 📖 " + artTitle(article) : " · (no lesson)"));
+          const open = () => openRegion(key, name, pop, i, article);
           p.addEventListener("click", open);
           marker(p, String(num));
-          regionList.push({ p: p, key: key, name: name, pop: pop, num: num, open: open });
+          regionList.push({ p: p, key: key, name: name, pop: pop, num: num, article: article, open: open });
         }
       });
       // 分散重疊的標號
@@ -3976,7 +3968,7 @@
         const btn = document.createElement("button"); btn.className = "geo-idx" + (r.drill ? " gi-drill" : "");
         btn.innerHTML = '<span class="gi-no">' + (r.drill ? "🏙️" : r.num) + '</span>' +
           '<span class="gi-tx"><span class="gi-rg">' + r.name + '</span>' +
-          '<span class="gi-ls">' + (r.drill ? "zoom in ▸" : ("👥 " + r.pop)) + '</span></span>';
+          '<span class="gi-ls">' + (r.drill ? "zoom in ▸" : ("👥 " + r.pop + (r.article ? " · 📖 " + artTitle(r.article) : ""))) + '</span></span>';
         btn.addEventListener("click", r.open);
         btn.addEventListener("mouseenter", () => r.p.classList.add("geo-hi"));
         btn.addEventListener("mouseleave", () => r.p.classList.remove("geo-hi"));
@@ -4004,7 +3996,7 @@
             if (r.idxLs) r.idxLs.innerHTML = "👥 " + r.pop + " · " + (h.avatar || "") + dispName(h.owner) + " " + aliveTroops(h.troops).map(t => TROOP[t.type].emoji + t.hp).join(" ");
           } else {
             r.p.classList.add("geo-open"); if (r.idxEl) r.idxEl.classList.add("gi-open");
-            if (r.idxLs) r.idxLs.textContent = "👥 " + r.pop + " · Open";
+            if (r.idxLs) r.idxLs.textContent = "👥 " + r.pop + " · " + (r.article ? "📖 " + artTitle(r.article) : "Open");
           }
         });
         if (banner) {
@@ -4024,8 +4016,8 @@
       .catch(() => { wrap.innerHTML = '<p class="op-hint">Could not load map ' + spec.file + '. (Needs the server or GitHub Pages.)</p>'; });
   }
 
-  // 領地面板（地區不綁課程）：自己的→重新佈署；別人的/無主的→先「當場過關」一課挑戰，過了才出兵。每次都要重新過。
-  function openRegion(key, name, pop, i) {
+  // 領地面板（每個地區綁定一課）：自己的→重新佈署；別人的/無主的→先過關它綁定的那一課，過了才出兵。每次都要重新過。
+  function openRegion(key, name, pop, i, article) {
     const h = (territory && territory.holders && territory.holders[key]) || null;
     const me = (authUser() || userName || "").toLowerCase();
     const mine = !!(h && h.owner && (h.owner || "").toLowerCase() === me);
@@ -4068,14 +4060,14 @@
       deployPanel(terr, T, { label: "🚩 Occupy", onGo: g => { myEcon.troops = Math.max(0, T - sumHp(g)); myEcon.population += pop; pending = null; claimTroops(key, g, pop, function () {}); logEvent("occupy", { region: name }); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); } });
       return;
     }
-    const ch = pickChallenge(i);
-    if (!ch) { terr.innerHTML = '<p class="op-hint">No lesson available for this level.</p>'; return; }
+    const ch = article;   // 這個地區固定綁定的課
+    if (!ch) { terr.innerHTML = '<p class="op-hint">🈳 No lesson is bound to this region yet.</p>'; return; }
     terr.innerHTML = '<p class="op-hint">🚩 Occupy this region — pass its lesson (80%+) and your troops deploy automatically:</p>' +
       '<div class="op-def" style="text-align:center">📖 <b>' + artTitle(ch) + '</b></div>' +
       '<div class="op-btns"><button id="chStudy" class="dict-play">🚩 Occupy</button></div>';
     ov.querySelector("#chStudy").addEventListener("click", () => {
       pending = { key: key, file: ch.file, base: passCount(ch.file), article: ch, i: i };
-      pendingOccupy = { file: ch.file, reopen: function () { openRegion(key, name, pop, i); } };   // 過關後直接跳回這個據點佔領
+      pendingOccupy = { file: ch.file, reopen: function () { openRegion(key, name, pop, i, article); } };   // 過關後直接跳回這個據點佔領
       closeModal(); selectArticle(ch);
     });
   }
