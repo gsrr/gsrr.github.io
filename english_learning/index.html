@@ -3017,7 +3017,7 @@
   // 把 "Tom: Hi, Anna." 這種純文字解析成 { who, gender, text }
   /* ===== Level 10：🎭 Role-play 角色扮演對話練習（電腦扮一角、你扮另一角，你的台詞用語音辨識，寬鬆比對）===== */
   let rpRec = null, rpChunks = [], rpRecording = false;
-  let rpEng = null, rpGraph = null, rpManifest = null, rpAwait = false;   // free-conversation engine state
+  let rpEng = null, rpGraph = null, rpAwait = false;   // free-conversation engine state (graph built from the lesson)
   function stopRolePlay() {
     try { if (rpRec && rpRec.state === "recording") rpRec.stop(); } catch (e) {}
     rpRecording = false; rpEng = null; rpGraph = null; try { synth.cancel(); } catch (e) {} try { stopAudio(); } catch (e) {}
@@ -3045,28 +3045,56 @@
     // 完全無法發音 → 靠保險計時器前進
   }
   /* ---- Level 10 = free-conversation role-play, driven by RP.Engine (see roleplay/) ----
-     One NPC sentence = one node. The learner answers freely (type or 🎤 speak); the
-     offline classifier picks the intent from the CURRENT node's routes only and the
-     graph branches. Every AI seam (classifier / STT / TTS) stays swappable. */
-  function rpScenarioIdFor(key) {
-    const m = rpManifest;
-    if (m && m.lesson_map && m.lesson_map[key]) return m.lesson_map[key];
-    return (m && m.default) || "restaurant";
-  }
-  function rpLoadScenario(cb) {   // resolve this lesson's scenario graph (manifest cached)
-    const go = () => {
-      const id = rpScenarioIdFor(currentArticleKey);
-      const s = (rpManifest.scenarios || []).find(x => x.id === id) || (rpManifest.scenarios || [])[0];
-      if (!s) return cb(null, "no scenario");
-      fetch("roleplay/scenarios/" + s.file, { cache: "no-cache" })
-        .then(r => r.ok ? r.json() : Promise.reject())
-        .then(g => cb(g)).catch(e => cb(null, e));
+     The graph is built at runtime from THIS lesson's own dialogue (`script`): the computer
+     speaks one character's lines, you play the other and answer in your own words. The
+     offline classifier is grounded in the learner-character's actual line + the lesson's
+     vocab, so replies that use the lesson's sentences/structures/words pass. One NPC line
+     = one node; every AI seam (classifier / STT / TTS) stays swappable. */
+  // 用「這一課自己的對話」即時建一張對話圖 → role-play 直接練本課的句子/句型/單字
+  function rpBuildLessonGraph() {
+    const lines = (script || []).filter(l => l && l.text && l.who);
+    if (lines.length < 2) return null;
+    const speakers = [];
+    lines.forEach(l => { if (speakers.indexOf(l.who) < 0) speakers.push(l.who); });
+    if (speakers.length < 2) return null;
+    const npcRole = speakers[0], youRole = speakers[1];   // 第一位先開口→電腦(NPC)；第二位→你
+    const isYou = l => l.who === youRole;
+    const vocab = ((currentArticle && currentArticle.vocab) || [])
+      .map(v => String(v.word || "").toLowerCase()).filter(Boolean);
+    const tok = s => (window.RP && RP.text) ? RP.text.tokens(s) : (s || "").toLowerCase().split(/\s+/).filter(Boolean);
+    const contentOf = t => (window.RP && RP.text) ? RP.text.contentWords(t) : t;
+
+    // 切成回合：一段電腦台詞 → 一句你的台詞
+    const turns = []; let pend = [];
+    lines.forEach(l => { if (isYou(l)) { turns.push({ npc: pend.slice(), you: l }); pend = []; } else pend.push(l); });
+    const epilogue = pend;   // 你最後一句之後，電腦還剩的台詞
+    if (!turns.length) return null;
+
+    const nodes = [];
+    turns.forEach((t, k) => {
+      const nextId = (k < turns.length - 1) ? ("turn" + (k + 1)) : (epilogue.length ? "epilogue" : "done");
+      const yl = t.you.text;
+      const keywords = Array.from(new Set(contentOf(tok(yl)).concat(vocab)));
+      const hint = "💬 Try saying: “" + yl + "”";
+      nodes.push({
+        id: "turn" + k,
+        npc: { text: t.npc.map(l => l.text).join(" ") || "…?", gender: (t.npc[0] && t.npc[0].gender) || "female" },
+        routes: [{ intent: "line" + k, meaning: yl, examples: [yl], keywords: keywords, hint: hint,
+                   next_nodes: [{ id: nextId, weight: 100 }] }],
+        fallback: { partial: { message: hint }, off_topic: { message: hint } }
+      });
+    });
+    if (epilogue.length)
+      nodes.push({ id: "epilogue", end: true, npc: { text: epilogue.map(l => l.text).join(" "), gender: epilogue[0].gender || "female" } });
+    else
+      nodes.push({ id: "done", end: true, npc: { text: "🎉 Nice conversation! You practiced this lesson well.", gender: (lines[0].gender || "female") } });
+
+    return {
+      title: (currentArticle && currentArticle.title) || "Role-play",
+      you: dispName(youRole), npc: dispName(npcRole),
+      npc_gender: (lines.find(l => !isYou(l)) || {}).gender || "female",
+      start: "turn0", max_turns: turns.length + 4, nodes: nodes
     };
-    if (rpManifest) return go();
-    fetch("roleplay/scenarios/index.json", { cache: "no-cache" })
-      .then(r => r.ok ? r.json() : Promise.reject())
-      .then(m => { rpManifest = m; go(); })
-      .catch(() => { rpManifest = { scenarios: [{ id: "restaurant", file: "restaurant.json" }], default: "restaurant" }; go(); });
   }
   function rpBubble(who, text, cls) {
     const convo = document.getElementById("rpConvo");
@@ -3091,24 +3119,35 @@
     if (!window.RP || !RP.Engine || !RP.classifiers) {   // engine scripts missing → fall back gracefully
       ctrl.innerHTML = '<p class="op-hint">Role-play engine did not load.</p>'; return;
     }
+    rpEng = null; rpAwait = false;   // 清掉上一輪殘留狀態，避免重進 Level 10 時誤用
     convo.innerHTML = ""; if (fb) { fb.className = "rp-fb"; fb.textContent = ""; } prog.textContent = "";
     if (role) role.textContent = "";
     ctrl.innerHTML = '<div class="rp-turn">Loading conversation…</div>';
-    rpLoadScenario(function (graph, err) {
-      if (err || !graph) {
-        ctrl.innerHTML = '<p class="op-hint">Couldn’t load the role-play. Open this page over <code>http://</code> (a web server), not <code>file://</code>.</p>';
-        return;
-      }
+    const key = currentArticleKey;
+    // 優先用「作者手寫、依課文加了 2~3 個分支」的每課劇本；沒有就用課文即時線性生成當後備
+    rpLoadLessonScenario(key, function (authored) {
+      if (key !== currentArticleKey) return;   // 使用者中途換課 → 放棄這次載入
+      const graph = authored || rpBuildLessonGraph();
+      if (!graph) { ctrl.innerHTML = '<p class="op-hint">This lesson has no dialogue to role-play.</p>'; return; }
       rpGraph = graph;
-      if (role) role.innerHTML = 'You are the <b>' + escapeHtml(graph.you) + '</b> 🧑 · the computer is the <b>' + escapeHtml(graph.npc) + '</b> 🧑‍🍳';
+      if (role) role.innerHTML = 'You are <b>' + escapeHtml(graph.you) + '</b> 🧑 · the computer is <b>' + escapeHtml(graph.npc) +
+        '</b> 🧑‍🍳 — answer in your own words using this lesson’s sentences';
       rpBuildInput();
+      // 分類器放寬一點（以本課台詞為準）：命中本課句子/單字就過，差一點給提示
       rpEng = new RP.Engine(graph, {
-        classifier: new RP.classifiers.local({}),
+        classifier: new RP.classifiers.local({ pass: 0.5, floor: 0.2 }),
         strategy: "weighted",
         onNode: rpOnNode, onResult: rpOnResult, onEnd: rpOnEnd,
       });
       rpEng.start();
     });
+  }
+  function rpLoadLessonScenario(key, cb) {   // roleplay/scenarios/lesson/<file>.json（斜線→'-'）；沒有就回 null
+    if (!key) return cb(null);
+    fetch("roleplay/scenarios/lesson/" + key.replace(/\//g, "-") + ".json", { cache: "no-cache" })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(g => cb(g && g.nodes && g.nodes.length ? g : null))
+      .catch(() => cb(null));
   }
   function rpOnNode(node) {                              // an NPC line became current → speak it
     rpAwait = false; rpSetInput(false); rpProg();
@@ -3121,7 +3160,7 @@
   function rpOnResult(info) {                            // a user turn was classified
     const cls = info.classification, fb = document.getElementById("rpFb");
     if (cls.result === "PASS") {                         // engine now advances → rpOnNode fires next
-      fb.className = "rp-fb pass"; fb.innerHTML = "✅ Nice — " + escapeHtml(cls.intent || "good answer");
+      fb.className = "rp-fb pass"; fb.innerHTML = "✅ Nice! That fits the lesson.";
     } else if (cls.result === "PARTIAL") {
       const hint = (cls.route && cls.route.hint) || rpFallbackMsg(info.node, "partial") || "Close! Try to finish your answer.";
       fb.className = "rp-fb partial"; fb.innerHTML = "🟡 Almost — " + escapeHtml(hint);
