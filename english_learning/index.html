@@ -3054,10 +3054,8 @@
     } else {                                          // 你的台詞：錄音辨識
       ctrl.innerHTML = '<div class="rp-turn">🎭 Your turn — read this out loud:</div>' +
         '<div class="rp-line">“' + line.text + '”</div><div class="rp-fb" id="rpFb"></div>' +
-        '<div class="op-btns"><button id="rpRec" class="attack-btn" style="background:#ef4444;font-size:16px;padding:12px 24px">🎤 Record</button>' +
-        '<button id="rpSkip" class="back-btn">Skip ▶</button></div>';
+        '<div class="op-btns"><button id="rpRec" class="attack-btn" style="background:#ef4444;font-size:16px;padding:12px 24px">🎤 Record</button></div>';
       ctrl.querySelector("#rpRec").addEventListener("click", () => rpRecordToggle(line));
-      ctrl.querySelector("#rpSkip").addEventListener("click", () => { rp.i++; rpRender(); });
     }
     convo.scrollTop = convo.scrollHeight;
   }
@@ -3089,7 +3087,7 @@
       fb.innerHTML = '<span class="rp-ok">✅ Great! (heard: “' + (transcript || "") + '”)</span>';
       setTimeout(() => { rp.i++; rpRender(); }, 950);
     } else {
-      fb.innerHTML = '<span class="rp-bad">🔁 Heard “' + (transcript || "…") + '”. Try again, or Skip ▶</span>';
+      fb.innerHTML = '<span class="rp-bad">🔁 Heard “' + (transcript || "…") + '”. Try again.</span>';
     }
   }
   function rpNoMic(fb, serverFail) {   // 無麥克風/後端 → 榮譽制：念完按鈕放行（算通過）
