@@ -1081,7 +1081,6 @@
     <div class="levels">
       <div class="levelTab active" data-level="1" data-name="Level 1 · Listen 👂"><span class="lvl">1</span><span class="emoji">👂</span></div>
       <div class="levelTab" data-level="2" data-name="Level 2 · Read Along 🎤"><span class="lvl">2</span><span class="emoji">🎤</span></div>
-      <div class="levelTab hidden" data-level="10" data-name="Level 10 · Role-play 🎭"><span class="lvl">10</span><span class="emoji">🎭</span></div>
       <div class="levelTab" data-level="3" data-name="Level 3 · Quiz ✅"><span class="lvl">3</span><span class="emoji">✅</span></div>
       <div class="levelTab" data-level="4" data-name="Level 4 · Tricky Quiz 🤔"><span class="lvl">4</span><span class="emoji">🤔</span></div>
       <div class="levelTab" data-level="5" data-name="Level 5 · Match 🖼️"><span class="lvl">5</span><span class="emoji">🖼️</span></div>
@@ -1089,6 +1088,7 @@
       <div class="levelTab hidden" data-level="7" data-name="Level 7 · WH Questions ❓"><span class="lvl">7</span><span class="emoji">❓</span></div>
       <div class="levelTab hidden" data-level="8" data-name="Level 8 · Dictation ✍️"><span class="lvl">8</span><span class="emoji">✍️</span></div>
       <div class="levelTab hidden" data-level="9" data-name="Level 9 · Fill Blank 📝"><span class="lvl">9</span><span class="emoji">📝</span></div>
+      <div class="levelTab hidden" data-level="10" data-name="Level 10 · Role-play 🎭"><span class="lvl">10</span><span class="emoji">🎭</span></div>
     </div>
     <div class="level-name" id="levelName"></div>
 
@@ -3307,7 +3307,7 @@
     const tab10 = document.querySelector('.levelTab[data-level="10"]');
     if (tab10) tab10.classList.toggle("hidden", !(script && script.length >= 2));
 
-    renumberTabs();   // 依可見順序重編分頁號碼（Role-play 排第 3）
+    renumberTabs();   // 依可見順序重編分頁號碼（Role-play 排最後一關）
 
     // 還原這篇文章已完成的關卡並更新進度條
     restoreProgress();
