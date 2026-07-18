@@ -1,0 +1,217 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in Pre-A1/013 dialogue + vocab. Learner plays Mia; computer plays Leo. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-Pre-A1-013",
+  "lesson": "Pre-A1/013",
+  "title": "013 · In the Garden",
+  "you": "Mia",
+  "npc": "Leo",
+  "npc_gender": "male",
+  "start": "garden",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "garden",
+      "npc": { "text": "Look at my garden.", "gender": "male" },
+      "learning_objective": ["React to what you see", "Use: many, flowers"],
+      "routes": [
+        {
+          "intent": "many_flowers",
+          "meaning": "Mia sees many flowers.",
+          "examples": ["Wow! I see many flowers.", "I see many flowers.", "Wow, many flowers!"],
+          "keywords": ["flowers", "many", "see"],
+          "hint": "💬 Try saying: “Wow! I see many flowers.”",
+          "next_nodes": [{ "id": "red_flower", "weight": 100 }]
+        },
+        {
+          "intent": "nice_garden",
+          "meaning": "Mia says the garden is nice.",
+          "examples": ["Nice garden!", "I like your garden.", "What a garden!"],
+          "keywords": ["garden", "like", "nice"],
+          "hint": "💬 Try saying: “Wow! I see many flowers.”",
+          "next_nodes": [{ "id": "garden_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Leo: “Wow! I see many flowers.”" },
+        "off_topic": { "message": "Look at the garden! Say “Wow! I see many flowers.”" }
+      }
+    },
+    {
+      "id": "garden_side",
+      "npc": { "text": "Thank you! Look, I have many flowers.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "many_flowers",
+          "meaning": "Mia sees many flowers.",
+          "examples": ["Wow! I see many flowers.", "I see many flowers.", "Many flowers!"],
+          "keywords": ["flowers", "many", "see"],
+          "hint": "💬 Try saying: “Wow! I see many flowers.”",
+          "next_nodes": [{ "id": "red_flower", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “Wow! I see many flowers.”" },
+        "off_topic": { "message": "So many flowers! Say “Wow! I see many flowers.”" }
+      }
+    },
+    {
+      "id": "red_flower",
+      "npc": { "text": "This flower is red.", "gender": "male" },
+      "learning_objective": ["Point something out", "Use: bee, flower"],
+      "routes": [
+        {
+          "intent": "see_bee",
+          "meaning": "Mia points at a bee on the flower.",
+          "examples": ["Look! A bee is on the flower.", "A bee is on the flower.", "Look, a bee!"],
+          "keywords": ["bee", "flower", "look"],
+          "hint": "💬 Try saying: “Look! A bee is on the flower.”",
+          "next_nodes": [{ "id": "bee", "weight": 100 }]
+        },
+        {
+          "intent": "like_red",
+          "meaning": "Mia likes the red flower.",
+          "examples": ["I like the red flower.", "Red is nice.", "The flower is pretty."],
+          "keywords": ["red", "flower", "like"],
+          "hint": "💬 Try saying: “Look! A bee is on the flower.”",
+          "next_nodes": [{ "id": "flower_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Point it out: “Look! A bee is on the flower.”" },
+        "off_topic": { "message": "Do you see the bee? Say “Look! A bee is on the flower.”" }
+      }
+    },
+    {
+      "id": "flower_side",
+      "npc": { "text": "Red is my favorite! Oh, look — a bee!", "gender": "male" },
+      "routes": [
+        {
+          "intent": "see_bee",
+          "meaning": "Mia points at a bee on the flower.",
+          "examples": ["Look! A bee is on the flower.", "A bee is on the flower.", "A bee!"],
+          "keywords": ["bee", "flower", "look"],
+          "hint": "💬 Try saying: “Look! A bee is on the flower.”",
+          "next_nodes": [{ "id": "bee", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “Look! A bee is on the flower.”" },
+        "off_topic": { "message": "There is a bee! Say “Look! A bee is on the flower.”" }
+      }
+    },
+    {
+      "id": "bee",
+      "npc": { "text": "The bee is little.", "gender": "male" },
+      "learning_objective": ["Say what you can see", "Use: tree, green"],
+      "routes": [
+        {
+          "intent": "see_tree",
+          "meaning": "Mia can see a green tree.",
+          "examples": ["I can see a green tree.", "I see a green tree.", "Look, a green tree!"],
+          "keywords": ["tree", "green", "see"],
+          "hint": "💬 Try saying: “I can see a green tree.”",
+          "next_nodes": [{ "id": "birds", "weight": 100 }]
+        },
+        {
+          "intent": "little_bee",
+          "meaning": "Mia says the bee is little.",
+          "examples": ["The bee is little!", "So little!", "A little bee."],
+          "keywords": ["little", "bee"],
+          "hint": "💬 Try saying: “I can see a green tree.”",
+          "next_nodes": [{ "id": "bee_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Leo: “I can see a green tree.”" },
+        "off_topic": { "message": "Look around! Say “I can see a green tree.”" }
+      }
+    },
+    {
+      "id": "bee_side",
+      "npc": { "text": "Yes, so little! Can you see the green tree, too?", "gender": "male" },
+      "routes": [
+        {
+          "intent": "see_tree",
+          "meaning": "Mia can see a green tree.",
+          "examples": ["I can see a green tree.", "Yes, I see a green tree.", "A green tree!"],
+          "keywords": ["tree", "green", "see"],
+          "hint": "💬 Try saying: “I can see a green tree.”",
+          "next_nodes": [{ "id": "birds", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “I can see a green tree.”" },
+        "off_topic": { "message": "Do you see the tree? Say “I can see a green tree.”" }
+      }
+    },
+    {
+      "id": "birds",
+      "npc": { "text": "Birds live in the tree.", "gender": "male" },
+      "learning_objective": ["Say something is pretty", "Use: garden, pretty"],
+      "routes": [
+        {
+          "intent": "pretty_garden",
+          "meaning": "Mia says the garden is pretty.",
+          "examples": ["The garden is pretty.", "Your garden is pretty.", "It is pretty."],
+          "keywords": ["garden", "pretty"],
+          "hint": "💬 Try saying: “The garden is pretty.”",
+          "next_nodes": [{ "id": "water", "weight": 100 }]
+        },
+        {
+          "intent": "like_birds",
+          "meaning": "Mia likes the birds.",
+          "examples": ["I like the birds.", "Birds are nice.", "I see the birds."],
+          "keywords": ["birds", "like", "see"],
+          "hint": "💬 Try saying: “The garden is pretty.”",
+          "next_nodes": [{ "id": "birds_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Leo: “The garden is pretty.”" },
+        "off_topic": { "message": "How is the garden? Say “The garden is pretty.”" }
+      }
+    },
+    {
+      "id": "birds_side",
+      "npc": { "text": "The birds sing all day! Do you like my garden?", "gender": "male" },
+      "routes": [
+        {
+          "intent": "pretty_garden",
+          "meaning": "Mia says the garden is pretty.",
+          "examples": ["The garden is pretty.", "Yes, the garden is pretty.", "It is pretty."],
+          "keywords": ["garden", "pretty"],
+          "hint": "💬 Try saying: “The garden is pretty.”",
+          "next_nodes": [{ "id": "water", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “The garden is pretty.”" },
+        "off_topic": { "message": "Is the garden pretty? Say “The garden is pretty.”" }
+      }
+    },
+    {
+      "id": "water",
+      "npc": { "text": "I water the flowers every day.", "gender": "male" },
+      "learning_objective": ["Say what you like"],
+      "routes": [
+        {
+          "intent": "like_garden",
+          "meaning": "Mia says she likes Leo's garden.",
+          "examples": ["I like your garden!", "I like your garden.", "I love your garden!"],
+          "keywords": ["garden", "like", "love"],
+          "hint": "💬 Try saying: “I like your garden!”",
+          "next_nodes": [{ "id": "close", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “I like your garden!”" },
+        "off_topic": { "message": "Tell Leo: “I like your garden!”" }
+      }
+    },
+    {
+      "id": "close",
+      "npc": { "text": "Thank you, Mia! Come again soon!", "gender": "male" },
+      "end": true
+    }
+  ]
+}

@@ -1,0 +1,243 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in A2/012 dialogue + vocab. Learner plays Ben; computer plays Sam. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-A2-012",
+  "lesson": "A2/012",
+  "title": "012 · The Football Match",
+  "you": "Ben",
+  "npc": "Sam",
+  "npc_gender": "male",
+  "start": "ready",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "ready",
+      "npc": { "text": "Are you ready for the football match?", "gender": "male" },
+      "learning_objective": ["Say you are ready and confident", "Use: win, today"],
+      "routes": [
+        {
+          "intent": "yes_win",
+          "meaning": "Ben is ready and thinks they will win.",
+          "examples": ["Yes! I think we will win today.", "Yes! I think we will win.", "Yes, we will win today!"],
+          "keywords": ["yes", "win", "today", "think"],
+          "hint": "💬 Try saying: “Yes! I think we will win today.”",
+          "next_nodes": [{ "id": "why_win", "weight": 100 }]
+        },
+        {
+          "intent": "nervous",
+          "meaning": "Ben feels a little nervous.",
+          "examples": ["I am a little nervous.", "I feel nervous.", "I am not sure."],
+          "keywords": ["nervous", "little", "not sure", "feel"],
+          "hint": "You can say “Yes! I think we will win today.”",
+          "next_nodes": [{ "id": "cheer_up", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Show you're ready: “Yes! I think we will win today.”" },
+        "off_topic": { "message": "It's match time! Say “Yes! I think we will win today.”" }
+      }
+    },
+    {
+      "id": "cheer_up",
+      "npc": { "text": "Don't worry! We are a good team. Do you think we can win?", "gender": "male" },
+      "routes": [
+        {
+          "intent": "now_yes",
+          "meaning": "Ben says yes, they will win.",
+          "examples": ["Yes! I think we will win today.", "Yes, we can win!", "Yes, I think we will win."],
+          "keywords": ["yes", "win", "can", "think"],
+          "hint": "💬 Try saying: “Yes! I think we will win today.”",
+          "next_nodes": [{ "id": "why_win", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “Yes! I think we will win today.”" },
+        "off_topic": { "message": "Tell Sam “I think we will win today.”" }
+      }
+    },
+    {
+      "id": "why_win",
+      "npc": { "text": "Why do you think we will win?", "gender": "male" },
+      "learning_objective": ["Give a reason with because", "Use: because, practiced"],
+      "routes": [
+        {
+          "intent": "practiced_hard",
+          "meaning": "Ben says because they practiced hard.",
+          "examples": ["Because we practiced very hard.", "We practiced very hard.", "Because we practiced hard."],
+          "keywords": ["because", "practiced", "hard", "practice"],
+          "hint": "💬 Try saying: “Because we practiced very hard.”",
+          "next_nodes": [{ "id": "best_player", "weight": 100 }]
+        },
+        {
+          "intent": "team_strong",
+          "meaning": "Ben says because the team is strong.",
+          "examples": ["Because our team is strong.", "Because we are a strong team.", "Our team is very good."],
+          "keywords": ["team", "strong", "good", "because"],
+          "hint": "You can say “Because we practiced very hard.”",
+          "next_nodes": [{ "id": "strong_react", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Give your reason: “Because we practiced very hard.”" },
+        "off_topic": { "message": "Sam asked why. Say “Because we practiced very hard.”" }
+      }
+    },
+    {
+      "id": "strong_react",
+      "npc": { "text": "True, we are strong! And we trained a lot, right?", "gender": "male" },
+      "routes": [
+        {
+          "intent": "yes_practiced",
+          "meaning": "Ben agrees they practiced hard.",
+          "examples": ["Yes, because we practiced very hard.", "Yes, we practiced hard.", "Because we practiced very hard."],
+          "keywords": ["practiced", "hard", "yes", "because"],
+          "hint": "💬 Try saying: “Because we practiced very hard.”",
+          "next_nodes": [{ "id": "best_player", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “Because we practiced very hard.”" },
+        "off_topic": { "message": "Tell Sam “We practiced very hard.”" }
+      }
+    },
+    {
+      "id": "best_player",
+      "npc": { "text": "Who is the best player on our team?", "gender": "male" },
+      "learning_objective": ["Compliment with a superlative", "Use: fastest, run"],
+      "routes": [
+        {
+          "intent": "you_fastest",
+          "meaning": "Ben says Sam is the best and runs the fastest.",
+          "examples": ["You are! You run the fastest.", "You! You run the fastest.", "You are! You run the fastest."],
+          "keywords": ["you", "fastest", "run", "best"],
+          "hint": "💬 Try saying: “You are! You run the fastest.”",
+          "next_nodes": [{ "id": "score_goals", "weight": 100 }]
+        },
+        {
+          "intent": "name_sam",
+          "meaning": "Ben says Sam is the best player.",
+          "examples": ["You are the best, Sam.", "I think it is you.", "You are our best player."],
+          "keywords": ["you", "best", "sam", "player"],
+          "hint": "You can add why: “You are! You run the fastest.”",
+          "next_nodes": [{ "id": "modest_react", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Praise Sam: “You are! You run the fastest.”" },
+        "off_topic": { "message": "Sam asked who's best. Say “You are! You run the fastest.”" }
+      }
+    },
+    {
+      "id": "modest_react",
+      "npc": { "text": "Me? Thanks! But you are fast too. What can I do best?", "gender": "male" },
+      "routes": [
+        {
+          "intent": "say_fast",
+          "meaning": "Ben says Sam runs the fastest.",
+          "examples": ["You run the fastest.", "You are! You run the fastest.", "You run really fast."],
+          "keywords": ["run", "fastest", "fast", "you"],
+          "hint": "💬 Try saying: “You run the fastest.”",
+          "next_nodes": [{ "id": "score_goals", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “You run the fastest.”" },
+        "off_topic": { "message": "Tell Sam “You run the fastest.”" }
+      }
+    },
+    {
+      "id": "score_goals",
+      "npc": { "text": "Thanks! You score the most goals.", "gender": "male" },
+      "learning_objective": ["Talk about teamwork with if", "Use: if, together, strong"],
+      "routes": [
+        {
+          "intent": "play_together",
+          "meaning": "Ben says if they play together they will be strong.",
+          "examples": ["If we play together, we will be strong.", "If we work together, we will be strong.", "If we play together, we will win."],
+          "keywords": ["if", "together", "strong", "play"],
+          "hint": "💬 Try saying: “If we play together, we will be strong.”",
+          "next_nodes": [{ "id": "do_best", "weight": 100 }]
+        },
+        {
+          "intent": "happy_thanks",
+          "meaning": "Ben thanks Sam for the compliment.",
+          "examples": ["Thank you! That makes me happy.", "Thanks a lot!", "That is kind of you."],
+          "keywords": ["thank", "happy", "thanks", "kind"],
+          "hint": "You can say “If we play together, we will be strong.”",
+          "next_nodes": [{ "id": "together_prompt", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Talk teamwork: “If we play together, we will be strong.”" },
+        "off_topic": { "message": "You score the goals! Say “If we play together, we will be strong.”" }
+      }
+    },
+    {
+      "id": "together_prompt",
+      "npc": { "text": "You're welcome! So how can we win the game?", "gender": "male" },
+      "routes": [
+        {
+          "intent": "together2",
+          "meaning": "Ben says they must play together.",
+          "examples": ["If we play together, we will be strong.", "If we play together, we will win.", "We must play together."],
+          "keywords": ["together", "play", "strong", "win"],
+          "hint": "💬 Try saying: “If we play together, we will be strong.”",
+          "next_nodes": [{ "id": "do_best", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “If we play together, we will be strong.”" },
+        "off_topic": { "message": "Tell Sam “If we play together, we will be strong.”" }
+      }
+    },
+    {
+      "id": "do_best",
+      "npc": { "text": "Let's do our best!", "gender": "male" },
+      "learning_objective": ["Give a team cheer", "Use: go team"],
+      "routes": [
+        {
+          "intent": "go_team",
+          "meaning": "Ben cheers for the team.",
+          "examples": ["Go team, go!", "Let's go, team!", "Go team, go!"],
+          "keywords": ["go", "team", "let's"],
+          "hint": "💬 Try saying: “Go team, go!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        },
+        {
+          "intent": "cheer_more",
+          "meaning": "Ben cheers that they can do it.",
+          "examples": ["We can do it!", "Yes, let's win!", "We will be the best!"],
+          "keywords": ["can", "do it", "win", "best"],
+          "hint": "You can cheer, or say “Go team, go!”",
+          "next_nodes": [{ "id": "cheer_react", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Cheer: “Go team, go!”" },
+        "off_topic": { "message": "Time to cheer! Say “Go team, go!”" }
+      }
+    },
+    {
+      "id": "cheer_react",
+      "npc": { "text": "That's the spirit! Now let's cheer!", "gender": "male" },
+      "routes": [
+        {
+          "intent": "go_team2",
+          "meaning": "Ben cheers for the team.",
+          "examples": ["Go team, go!", "Let's go, team!", "Go team, go!"],
+          "keywords": ["go", "team", "let's"],
+          "hint": "💬 Try saying: “Go team, go!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “Go team, go!”" },
+        "off_topic": { "message": "Cheer with Sam: “Go team, go!”" }
+      }
+    },
+    {
+      "id": "done",
+      "npc": { "text": "Go team, go! Let's win this match!", "gender": "male" },
+      "end": true
+    }
+  ]
+}

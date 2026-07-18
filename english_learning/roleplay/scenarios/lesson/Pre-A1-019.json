@@ -1,0 +1,217 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in Pre-A1/019 dialogue + vocab. Learner plays Sam; computer plays Anna. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-Pre-A1-019",
+  "lesson": "Pre-A1/019",
+  "title": "019 · Wash Your Hands",
+  "you": "Sam",
+  "npc": "Anna",
+  "npc_gender": "female",
+  "start": "dirty",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "dirty",
+      "npc": { "text": "My hands are dirty.", "gender": "female" },
+      "learning_objective": ["Give advice", "Use: wash, hands"],
+      "routes": [
+        {
+          "intent": "must_wash",
+          "meaning": "Sam says she must wash her hands.",
+          "examples": ["You must wash your hands.", "Wash your hands.", "You should wash your hands."],
+          "keywords": ["wash", "hands", "must"],
+          "hint": "💬 Try saying: “You must wash your hands.”",
+          "next_nodes": [{ "id": "soap", "weight": 100 }]
+        },
+        {
+          "intent": "eww_dirty",
+          "meaning": "Sam reacts to the dirty hands.",
+          "examples": ["Eww, dirty!", "Your hands are dirty.", "Go wash them."],
+          "keywords": ["dirty", "hands", "wash", "go"],
+          "hint": "💬 Try saying: “You must wash your hands.”",
+          "next_nodes": [{ "id": "dirty_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Anna what to do: “You must wash your hands.”" },
+        "off_topic": { "message": "Anna's hands are dirty. Try “You must wash your hands.”" }
+      }
+    },
+    {
+      "id": "dirty_reply",
+      "npc": { "text": "You are right, they are dirty. What should I do?", "gender": "female" },
+      "routes": [
+        {
+          "intent": "must_wash",
+          "meaning": "Sam says she must wash her hands.",
+          "examples": ["You must wash your hands.", "Wash your hands.", "You must wash them."],
+          "keywords": ["wash", "hands", "must"],
+          "hint": "💬 Try saying: “You must wash your hands.”",
+          "next_nodes": [{ "id": "soap", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Anna to wash: “You must wash your hands.”" },
+        "off_topic": { "message": "What should Anna do? Try “You must wash your hands.”" }
+      }
+    },
+    {
+      "id": "soap",
+      "npc": { "text": "I use soap and water.", "gender": "female" },
+      "learning_objective": ["Encourage the action"],
+      "routes": [
+        {
+          "intent": "rub",
+          "meaning": "Sam cheers her on to rub.",
+          "examples": ["Rub, rub, rub!", "Rub them!", "Rub, rub!"],
+          "keywords": ["rub"],
+          "hint": "💬 Try saying: “Rub, rub, rub!”",
+          "next_nodes": [{ "id": "clean", "weight": 100 }]
+        },
+        {
+          "intent": "good_soap",
+          "meaning": "Sam talks about the soap and water.",
+          "examples": ["Soap is good.", "Use lots of soap.", "Water and soap!"],
+          "keywords": ["soap", "water", "good", "use"],
+          "hint": "💬 Try saying: “Rub, rub, rub!”",
+          "next_nodes": [{ "id": "soap_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Cheer Anna on: “Rub, rub, rub!”" },
+        "off_topic": { "message": "Anna uses soap and water. Try “Rub, rub, rub!”" }
+      }
+    },
+    {
+      "id": "soap_reply",
+      "npc": { "text": "Yes! Soap and water. Now what do I do?", "gender": "female" },
+      "routes": [
+        {
+          "intent": "rub",
+          "meaning": "Sam cheers her on to rub.",
+          "examples": ["Rub, rub, rub!", "Rub them!", "Rub, rub!"],
+          "keywords": ["rub"],
+          "hint": "💬 Try saying: “Rub, rub, rub!”",
+          "next_nodes": [{ "id": "clean", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “Rub, rub, rub!”" },
+        "off_topic": { "message": "Help Anna wash. Try “Rub, rub, rub!”" }
+      }
+    },
+    {
+      "id": "clean",
+      "npc": { "text": "Now my hands are clean.", "gender": "female" },
+      "learning_objective": ["Praise someone"],
+      "routes": [
+        {
+          "intent": "good_job",
+          "meaning": "Sam says good job.",
+          "examples": ["Good job!", "Great job!", "Well done!"],
+          "keywords": ["good", "job", "great", "done"],
+          "hint": "💬 Try saying: “Good job!”",
+          "next_nodes": [{ "id": "before_eat", "weight": 100 }]
+        },
+        {
+          "intent": "clean_now",
+          "meaning": "Sam says the hands are clean.",
+          "examples": ["Your hands are clean!", "So clean!", "Nice and clean."],
+          "keywords": ["clean", "hands", "nice"],
+          "hint": "💬 Try saying: “Good job!”",
+          "next_nodes": [{ "id": "clean_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Praise Anna: “Good job!”" },
+        "off_topic": { "message": "Anna's hands are clean now. Try “Good job!”" }
+      }
+    },
+    {
+      "id": "clean_reply",
+      "npc": { "text": "Thank you! Clean hands feel nice.", "gender": "female" },
+      "routes": [
+        {
+          "intent": "good_job",
+          "meaning": "Sam says good job.",
+          "examples": ["Good job!", "Great job!", "Well done!"],
+          "keywords": ["good", "job", "great", "done"],
+          "hint": "💬 Try saying: “Good job!”",
+          "next_nodes": [{ "id": "before_eat", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “Good job!”" },
+        "off_topic": { "message": "Anna did it! Try “Good job!”" }
+      }
+    },
+    {
+      "id": "before_eat",
+      "npc": { "text": "We wash before we eat.", "gender": "female" },
+      "learning_objective": ["Give a reason", "Use: clean, healthy"],
+      "routes": [
+        {
+          "intent": "healthy",
+          "meaning": "Sam says clean hands are healthy.",
+          "examples": ["Clean hands are healthy.", "Clean hands keep us healthy.", "Yes, clean hands are healthy."],
+          "keywords": ["clean", "hands", "healthy"],
+          "hint": "💬 Try saying: “Clean hands are healthy.”",
+          "next_nodes": [{ "id": "towel", "weight": 100 }]
+        },
+        {
+          "intent": "yes_wash",
+          "meaning": "Sam agrees we wash before we eat.",
+          "examples": ["Yes, before we eat.", "That is smart.", "Good idea!"],
+          "keywords": ["before", "eat", "yes", "idea"],
+          "hint": "💬 Try saying: “Clean hands are healthy.”",
+          "next_nodes": [{ "id": "eat_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say why we wash: “Clean hands are healthy.”" },
+        "off_topic": { "message": "We wash before we eat. Try “Clean hands are healthy.”" }
+      }
+    },
+    {
+      "id": "eat_reply",
+      "npc": { "text": "Right! And why do we keep our hands clean?", "gender": "female" },
+      "routes": [
+        {
+          "intent": "healthy",
+          "meaning": "Sam says clean hands are healthy.",
+          "examples": ["Clean hands are healthy.", "Clean hands are healthy!", "They are healthy."],
+          "keywords": ["clean", "hands", "healthy"],
+          "hint": "💬 Try saying: “Clean hands are healthy.”",
+          "next_nodes": [{ "id": "towel", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “Clean hands are healthy.”" },
+        "off_topic": { "message": "Why keep hands clean? Try “Clean hands are healthy.”" }
+      }
+    },
+    {
+      "id": "towel",
+      "npc": { "text": "I dry my hands with a towel.", "gender": "female" },
+      "learning_objective": ["Say let us eat"],
+      "routes": [
+        {
+          "intent": "lets_eat",
+          "meaning": "Sam says now we can eat.",
+          "examples": ["Now we can eat. Yum!", "Now we can eat!", "Let us eat. Yum!", "Time to eat!"],
+          "keywords": ["eat", "yum", "now"],
+          "hint": "💬 Try saying: “Now we can eat. Yum!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Hands are dry! Say “Now we can eat. Yum!”" },
+        "off_topic": { "message": "Anna dried her hands. Try “Now we can eat. Yum!”" }
+      }
+    },
+    {
+      "id": "done",
+      "npc": { "text": "Yum! Now our hands are clean. Let us eat!", "gender": "female" },
+      "end": true
+    }
+  ]
+}

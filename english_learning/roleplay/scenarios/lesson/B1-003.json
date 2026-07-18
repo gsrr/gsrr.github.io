@@ -1,0 +1,230 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in B1/003 dialogue + vocab. Learner plays Sam; computer plays Lily. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-B1-003",
+  "lesson": "B1/003",
+  "title": "003 · My Favorite Book",
+  "you": "Sam",
+  "npc": "Lily",
+  "npc_gender": "female",
+  "start": "have_read",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "have_read",
+      "npc": { "text": "Have you read this book?", "gender": "female" },
+      "learning_objective": ["Answer a present perfect question", "Ask what something is about"],
+      "routes": [
+        {
+          "intent": "ask_about",
+          "meaning": "Sam has not read it and asks what it is about.",
+          "examples": ["No, not yet. What is it about?", "No, not yet. What's it about?", "Not yet. What is it about?", "No, I haven't. What is it about?"],
+          "keywords": ["no", "not", "yet", "what", "about", "book"],
+          "hint": "💬 Try saying: “No, not yet. What is it about?”",
+          "next_nodes": [{ "id": "about", "weight": 100 }]
+        },
+        {
+          "intent": "ask_title",
+          "meaning": "Sam asks the name of the book.",
+          "examples": ["No. What is it called?", "Not yet. What's the title?", "No, what is the name of the book?"],
+          "keywords": ["what", "called", "title", "name", "book"],
+          "hint": "You can ask “What is it called?” or “No, not yet. What is it about?”",
+          "next_nodes": [{ "id": "book_title", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Lily and ask more: “No, not yet. What is it about?”" },
+        "off_topic": { "message": "Lily asked about a book. Say “No, not yet. What is it about?”" }
+      }
+    },
+    {
+      "id": "book_title",
+      "npc": { "text": "It's a famous fantasy story. Ask me what it's about!", "gender": "female" },
+      "routes": [
+        {
+          "intent": "ask_about",
+          "meaning": "Sam asks what it is about.",
+          "examples": ["No, not yet. What is it about?", "What is it about?", "Okay, what's it about?"],
+          "keywords": ["what", "about", "story"],
+          "hint": "💬 Try saying: “No, not yet. What is it about?”",
+          "next_nodes": [{ "id": "about", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask “What is it about?”" },
+        "off_topic": { "message": "Ask Lily “What is it about?”" }
+      }
+    },
+    {
+      "id": "about",
+      "npc": { "text": "It's about a boy who discovers a magic world.", "gender": "female" },
+      "learning_objective": ["Show interest", "Ask an opinion"],
+      "routes": [
+        {
+          "intent": "ask_good",
+          "meaning": "Sam says it sounds interesting and asks if it's good.",
+          "examples": ["That sounds interesting. Is it good?", "Sounds interesting. Is it good?", "That sounds cool. Is it good?"],
+          "keywords": ["sounds", "interesting", "is", "it", "good"],
+          "hint": "💬 Try saying: “That sounds interesting. Is it good?”",
+          "next_nodes": [{ "id": "best_book", "weight": 100 }]
+        },
+        {
+          "intent": "react_magic",
+          "meaning": "Sam reacts with excitement about the magic world.",
+          "examples": ["Wow, a magic world sounds amazing!", "A magic world? That's so cool!", "I love magic stories!"],
+          "keywords": ["wow", "magic", "world", "amazing", "cool"],
+          "hint": "You can react, or ask “That sounds interesting. Is it good?”",
+          "next_nodes": [{ "id": "magic_more", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Lily's opinion: “That sounds interesting. Is it good?”" },
+        "off_topic": { "message": "Ask about the book: “That sounds interesting. Is it good?”" }
+      }
+    },
+    {
+      "id": "magic_more",
+      "npc": { "text": "Yes, there are dragons and secret doors!", "gender": "female" },
+      "routes": [
+        {
+          "intent": "ask_good",
+          "meaning": "Sam asks if the book is good.",
+          "examples": ["That sounds interesting. Is it good?", "Is it good?", "Wow! Is it good?"],
+          "keywords": ["sounds", "interesting", "is", "good", "dragon"],
+          "hint": "💬 Try saying: “That sounds interesting. Is it good?”",
+          "next_nodes": [{ "id": "best_book", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask “Is it good?”" },
+        "off_topic": { "message": "Ask Lily “Is it good?”" }
+      }
+    },
+    {
+      "id": "best_book",
+      "npc": { "text": "Yes, I think it's the best book I have ever read.", "gender": "female" },
+      "learning_objective": ["Ask for a reason"],
+      "routes": [
+        {
+          "intent": "ask_why",
+          "meaning": "Sam asks why she likes it so much.",
+          "examples": ["Why do you like it so much?", "Why do you like it?", "What makes it so good?"],
+          "keywords": ["why", "like", "so", "much"],
+          "hint": "💬 Try saying: “Why do you like it so much?”",
+          "next_nodes": [{ "id": "why_like", "weight": 100 }]
+        },
+        {
+          "intent": "ask_length",
+          "meaning": "Sam asks if the book is long.",
+          "examples": ["Is it a long book?", "How long is it?", "Is it hard to finish?"],
+          "keywords": ["long", "how", "book", "finish"],
+          "hint": "You can ask “Is it a long book?” or “Why do you like it so much?”",
+          "next_nodes": [{ "id": "book_length", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask for her reason: “Why do you like it so much?”" },
+        "off_topic": { "message": "Ask Lily “Why do you like it so much?”" }
+      }
+    },
+    {
+      "id": "book_length",
+      "npc": { "text": "It's not too long, and every page is exciting.", "gender": "female" },
+      "routes": [
+        {
+          "intent": "ask_why",
+          "meaning": "Sam asks why she likes it.",
+          "examples": ["Why do you like it so much?", "Why do you like it?", "So why do you like it so much?"],
+          "keywords": ["why", "like", "so", "much"],
+          "hint": "💬 Try saying: “Why do you like it so much?”",
+          "next_nodes": [{ "id": "why_like", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask “Why do you like it so much?”" },
+        "off_topic": { "message": "Ask Lily “Why do you like it so much?”" }
+      }
+    },
+    {
+      "id": "why_like",
+      "npc": { "text": "Because the story is exciting, although the ending is sad.", "gender": "female" },
+      "learning_objective": ["State a preference", "Agree to try something"],
+      "routes": [
+        {
+          "intent": "prefer_funny",
+          "meaning": "Sam prefers funny stories but will try this one.",
+          "examples": ["I prefer funny stories, but I will try it.", "I prefer funny stories, but I'll try it.", "I like funny stories more, but I will try it."],
+          "keywords": ["prefer", "funny", "stories", "try", "will"],
+          "hint": "💬 Try saying: “I prefer funny stories, but I will try it.”",
+          "next_nodes": [{ "id": "should_read", "weight": 100 }]
+        },
+        {
+          "intent": "ask_ending",
+          "meaning": "Sam asks about the sad ending.",
+          "examples": ["Why is the ending sad?", "Is the ending really sad?", "Does it end badly?"],
+          "keywords": ["why", "ending", "sad", "end"],
+          "hint": "You can ask “Why is the ending sad?” or say “I prefer funny stories, but I will try it.”",
+          "next_nodes": [{ "id": "ending_info", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Share what you like: “I prefer funny stories, but I will try it.”" },
+        "off_topic": { "message": "Tell Lily “I prefer funny stories, but I will try it.”" }
+      }
+    },
+    {
+      "id": "ending_info",
+      "npc": { "text": "The ending is sad, but it makes you think.", "gender": "female" },
+      "routes": [
+        {
+          "intent": "prefer_funny",
+          "meaning": "Sam prefers funny stories but will try this one.",
+          "examples": ["I prefer funny stories, but I will try it.", "I usually like funny stories, but I will try it.", "Okay, I will try it."],
+          "keywords": ["prefer", "funny", "stories", "try", "will"],
+          "hint": "💬 Try saying: “I prefer funny stories, but I will try it.”",
+          "next_nodes": [{ "id": "should_read", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “I prefer funny stories, but I will try it.”" },
+        "off_topic": { "message": "Tell Lily “I will try it.”" }
+      }
+    },
+    {
+      "id": "should_read",
+      "npc": { "text": "You should read it. I'm sure you will enjoy it.", "gender": "female" },
+      "learning_objective": ["Make a request"],
+      "routes": [
+        {
+          "intent": "borrow",
+          "meaning": "Sam asks to borrow the book.",
+          "examples": ["Okay, can I borrow it?", "Can I borrow it?", "Sure, can I borrow the book?"],
+          "keywords": ["okay", "can", "borrow", "book"],
+          "hint": "💬 Try saying: “Okay, can I borrow it?”",
+          "next_nodes": [{ "id": "end_borrow", "weight": 100 }]
+        },
+        {
+          "intent": "maybe",
+          "meaning": "Sam says he'll read it later.",
+          "examples": ["Maybe I'll read it later.", "I'll find it at the library.", "Maybe next week."],
+          "keywords": ["maybe", "later", "library", "week"],
+          "hint": "You can say “Okay, can I borrow it?” or “Maybe I'll read it later.”",
+          "next_nodes": [{ "id": "end_maybe", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask to borrow it: “Okay, can I borrow it?”" },
+        "off_topic": { "message": "Lily says you'll enjoy it. Ask “Okay, can I borrow it?”" }
+      }
+    },
+    {
+      "id": "end_borrow",
+      "npc": { "text": "Of course! Here you go. Tell me what you think!", "gender": "female" },
+      "end": true
+    },
+    {
+      "id": "end_maybe",
+      "npc": { "text": "No rush! It will be waiting for you. Happy reading!", "gender": "female" },
+      "end": true
+    }
+  ]
+}

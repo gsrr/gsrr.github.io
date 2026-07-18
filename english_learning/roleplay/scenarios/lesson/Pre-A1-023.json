@@ -1,0 +1,171 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in Pre-A1/023 dialogue + vocab. Learner plays Mia; computer plays Leo. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-Pre-A1-023",
+  "lesson": "Pre-A1/023",
+  "title": "023 · The Kite",
+  "you": "Mia",
+  "npc": "Leo",
+  "npc_gender": "male",
+  "start": "look_kite",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "look_kite",
+      "npc": { "text": "Look at my kite!", "gender": "male" },
+      "learning_objective": ["Describe an object", "Use: red, big"],
+      "routes": [
+        {
+          "intent": "describe",
+          "meaning": "Mia says the kite is red and big.",
+          "examples": ["It is red and big.", "It is red.", "The kite is big.", "It is a big red kite."],
+          "keywords": ["red", "big", "kite"],
+          "hint": "Describe the kite: “It is red and big.”",
+          "next_nodes": [{ "id": "wind_strong", "weight": 100 }]
+        },
+        {
+          "intent": "react",
+          "meaning": "Mia reacts to the cool kite.",
+          "examples": ["Wow, a kite!", "It is so cool!", "Nice kite!"],
+          "keywords": ["wow", "cool", "nice", "kite"],
+          "hint": "You can describe it — “It is red and big.” — or say “Wow, a kite!”",
+          "next_nodes": [{ "id": "kite_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Leo about his kite: “It is red and big.”" },
+        "off_topic": { "message": "Leo has a kite. Say “It is red and big.”" }
+      }
+    },
+    {
+      "id": "kite_reply",
+      "npc": { "text": "Thank you! It is red and big.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "agree",
+          "meaning": "Mia agrees about the kite.",
+          "examples": ["Yes, it is big!", "I like it!", "It is red!"],
+          "keywords": ["big", "red", "like", "yes"],
+          "hint": "Agree with Leo: “Yes, it is big!”",
+          "next_nodes": [{ "id": "wind_strong", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "The kite is red and big. Say “Yes, it is big!”" },
+        "off_topic": { "message": "Leo's kite is red and big. Say “Yes, it is big!”" }
+      }
+    },
+    {
+      "id": "wind_strong",
+      "npc": { "text": "The wind is strong today.", "gender": "male" },
+      "learning_objective": ["Say the kite flies high", "Use: wind, high"],
+      "routes": [
+        {
+          "intent": "flies_high",
+          "meaning": "Mia says the kite flies high.",
+          "examples": ["Your kite flies high!", "The kite flies high!", "It flies high!"],
+          "keywords": ["flies", "fly", "high", "kite"],
+          "hint": "Say what the kite does: “Your kite flies high!”",
+          "next_nodes": [{ "id": "up_sky", "weight": 100 }]
+        },
+        {
+          "intent": "feel_wind",
+          "meaning": "Mia talks about the strong wind.",
+          "examples": ["The wind is strong!", "I feel the wind!", "It is windy!"],
+          "keywords": ["wind", "strong", "feel", "windy"],
+          "hint": "You can say “Your kite flies high!” or “The wind is strong!”",
+          "next_nodes": [{ "id": "up_sky", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "The wind is strong. Say “Your kite flies high!”" },
+        "off_topic": { "message": "It is windy today. Say “Your kite flies high!”" }
+      }
+    },
+    {
+      "id": "up_sky",
+      "npc": { "text": "It goes up in the sky.", "gender": "male" },
+      "learning_objective": ["Ask to hold it", "Use: sky"],
+      "routes": [
+        {
+          "intent": "ask_hold",
+          "meaning": "Mia asks to hold the kite.",
+          "examples": ["Can I hold it?", "Can I hold the kite?", "May I hold it?"],
+          "keywords": ["hold", "can", "it"],
+          "hint": "Ask Leo: “Can I hold it?”",
+          "next_nodes": [{ "id": "hold_string", "weight": 100 }]
+        },
+        {
+          "intent": "so_high",
+          "meaning": "Mia says the kite is high in the sky.",
+          "examples": ["It is so high!", "Up in the sky!", "It is high!"],
+          "keywords": ["high", "sky", "up"],
+          "hint": "You can ask “Can I hold it?” or say “It is so high!”",
+          "next_nodes": [{ "id": "fly_together", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Do you want a turn? Ask “Can I hold it?”" },
+        "off_topic": { "message": "The kite is up in the sky. Ask “Can I hold it?”" }
+      }
+    },
+    {
+      "id": "hold_string",
+      "npc": { "text": "Yes, hold the string.", "gender": "male" },
+      "learning_objective": ["Say you are having fun", "Use: string, fun"],
+      "routes": [
+        {
+          "intent": "fun",
+          "meaning": "Mia says this is so much fun.",
+          "examples": ["This is so much fun!", "This is fun!", "So much fun!"],
+          "keywords": ["fun", "much", "so"],
+          "hint": "Say how you feel: “This is so much fun!”",
+          "next_nodes": [{ "id": "fly_together", "weight": 100 }]
+        },
+        {
+          "intent": "got_string",
+          "meaning": "Mia has the string.",
+          "examples": ["I have the string!", "Thank you!", "I hold the string!"],
+          "keywords": ["string", "thank", "have", "hold"],
+          "hint": "You can say “This is so much fun!” or “I have the string!”",
+          "next_nodes": [{ "id": "fly_together", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "How is it? Say “This is so much fun!”" },
+        "off_topic": { "message": "You hold the string now. Say “This is so much fun!”" }
+      }
+    },
+    {
+      "id": "fly_together",
+      "npc": { "text": "Let us fly it together.", "gender": "male" },
+      "learning_objective": ["Say what you love"],
+      "routes": [
+        {
+          "intent": "love_kites",
+          "meaning": "Mia says she loves kites.",
+          "examples": ["I love kites!", "I love kites.", "I love this kite!"],
+          "keywords": ["love", "kites", "kite"],
+          "hint": "Say how you feel: “I love kites!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        },
+        {
+          "intent": "together",
+          "meaning": "Mia agrees to fly it together.",
+          "examples": ["Yes, together!", "This is fun!", "Let us fly it!"],
+          "keywords": ["yes", "together", "fun", "fly"],
+          "hint": "You can say “I love kites!” or “Yes, together!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Fly it with Leo. Say “I love kites!”" },
+        "off_topic": { "message": "Leo wants to fly it together. Say “I love kites!”" }
+      }
+    },
+    {
+      "id": "done",
+      "npc": { "text": "Our kite flies high in the sky. So much fun!", "gender": "male" },
+      "end": true
+    }
+  ]
+}

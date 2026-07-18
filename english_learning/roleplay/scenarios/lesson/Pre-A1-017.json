@@ -1,0 +1,199 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in Pre-A1/017 dialogue + vocab. Learner plays Mia; computer plays Sam. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-Pre-A1-017",
+  "lesson": "Pre-A1/017",
+  "title": "017 · The Big Bus",
+  "you": "Mia",
+  "npc": "Sam",
+  "npc_gender": "male",
+  "start": "look_bus",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "look_bus",
+      "npc": { "text": "Look! A big bus.", "gender": "male" },
+      "learning_objective": ["Say a color", "Use: bus, yellow"],
+      "routes": [
+        {
+          "intent": "yellow",
+          "meaning": "Mia says the bus is yellow.",
+          "examples": ["The bus is yellow.", "The bus is yellow!", "It is yellow.", "Look, a yellow bus."],
+          "keywords": ["bus", "yellow"],
+          "hint": "💬 Try saying: “The bus is yellow.”",
+          "next_nodes": [{ "id": "by_bus", "weight": 100 }]
+        },
+        {
+          "intent": "wow_big",
+          "meaning": "Mia says the bus is big.",
+          "examples": ["Wow, it is big!", "So big!", "A big bus!"],
+          "keywords": ["big", "wow", "bus"],
+          "hint": "💬 Try saying: “The bus is yellow.”",
+          "next_nodes": [{ "id": "big_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say the color of the bus: “The bus is yellow.”" },
+        "off_topic": { "message": "Sam sees a big bus. Try “The bus is yellow.”" }
+      }
+    },
+    {
+      "id": "big_reply",
+      "npc": { "text": "Yes, it is very big! What color is it?", "gender": "male" },
+      "routes": [
+        {
+          "intent": "yellow",
+          "meaning": "Mia says the bus is yellow.",
+          "examples": ["The bus is yellow.", "It is yellow.", "Yellow!"],
+          "keywords": ["bus", "yellow"],
+          "hint": "💬 Try saying: “The bus is yellow.”",
+          "next_nodes": [{ "id": "by_bus", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Sam the color: “The bus is yellow.”" },
+        "off_topic": { "message": "What color is the bus? Try “The bus is yellow.”" }
+      }
+    },
+    {
+      "id": "by_bus",
+      "npc": { "text": "I go to school by bus.", "gender": "male" },
+      "learning_objective": ["Ask how many"],
+      "routes": [
+        {
+          "intent": "how_wheels",
+          "meaning": "Mia asks how many wheels the bus has.",
+          "examples": ["How many wheels does it have?", "How many wheels?", "How many wheels are there?"],
+          "keywords": ["how", "many", "wheels", "wheel"],
+          "hint": "💬 Try saying: “How many wheels does it have?”",
+          "next_nodes": [{ "id": "six", "weight": 100 }]
+        },
+        {
+          "intent": "me_too",
+          "meaning": "Mia says she goes by bus too.",
+          "examples": ["I go by bus too.", "Me too!", "I take the bus too."],
+          "keywords": ["bus", "too", "go"],
+          "hint": "💬 Try saying: “How many wheels does it have?”",
+          "next_nodes": [{ "id": "bus_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about the wheels: “How many wheels does it have?”" },
+        "off_topic": { "message": "Sam goes by bus. Try “How many wheels does it have?”" }
+      }
+    },
+    {
+      "id": "bus_reply",
+      "npc": { "text": "The bus is fun! It has many wheels.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "how_wheels",
+          "meaning": "Mia asks how many wheels.",
+          "examples": ["How many wheels does it have?", "How many wheels?", "How many?"],
+          "keywords": ["how", "many", "wheels", "wheel"],
+          "hint": "💬 Try saying: “How many wheels does it have?”",
+          "next_nodes": [{ "id": "six", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about the wheels: “How many wheels does it have?”" },
+        "off_topic": { "message": "Ask Sam a question. Try “How many wheels does it have?”" }
+      }
+    },
+    {
+      "id": "six",
+      "npc": { "text": "It has six wheels.", "gender": "male" },
+      "learning_objective": ["Describe the bus", "Use: long"],
+      "routes": [
+        {
+          "intent": "long",
+          "meaning": "Mia says the bus is very long.",
+          "examples": ["The bus is very long.", "The bus is long.", "It is very long!", "Wow, so long."],
+          "keywords": ["long", "bus", "very"],
+          "hint": "💬 Try saying: “The bus is very long.”",
+          "next_nodes": [{ "id": "window", "weight": 100 }]
+        },
+        {
+          "intent": "count",
+          "meaning": "Mia reacts to six wheels.",
+          "examples": ["Six wheels!", "That is a lot.", "Wow, six!"],
+          "keywords": ["six", "wheels", "lot", "wow"],
+          "hint": "💬 Try saying: “The bus is very long.”",
+          "next_nodes": [{ "id": "window", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Sam about the bus: “The bus is very long.”" },
+        "off_topic": { "message": "The bus has six wheels. Try “The bus is very long.”" }
+      }
+    },
+    {
+      "id": "window",
+      "npc": { "text": "I sit by the window.", "gender": "male" },
+      "learning_objective": ["Say what you like"],
+      "routes": [
+        {
+          "intent": "like_bus",
+          "meaning": "Mia says she likes the bus.",
+          "examples": ["I like the bus.", "I like the bus!", "I like this bus."],
+          "keywords": ["like", "bus"],
+          "hint": "💬 Try saying: “I like the bus.”",
+          "next_nodes": [{ "id": "fast", "weight": 100 }]
+        },
+        {
+          "intent": "window_too",
+          "meaning": "Mia talks about the window seat.",
+          "examples": ["I like the window.", "I sit by the window too.", "The window is nice."],
+          "keywords": ["window", "sit", "like"],
+          "hint": "💬 Try saying: “I like the bus.”",
+          "next_nodes": [{ "id": "window_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Sam how you feel: “I like the bus.”" },
+        "off_topic": { "message": "Sam sits by the window. Try “I like the bus.”" }
+      }
+    },
+    {
+      "id": "window_reply",
+      "npc": { "text": "The window seat is the best! Do you like the bus?", "gender": "male" },
+      "routes": [
+        {
+          "intent": "like_bus",
+          "meaning": "Mia says she likes the bus.",
+          "examples": ["I like the bus.", "Yes, I like the bus.", "I like it."],
+          "keywords": ["like", "bus", "yes"],
+          "hint": "💬 Try saying: “I like the bus.”",
+          "next_nodes": [{ "id": "fast", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “I like the bus.”" },
+        "off_topic": { "message": "Do you like the bus? Try “I like the bus.”" }
+      }
+    },
+    {
+      "id": "fast",
+      "npc": { "text": "The bus is fast.", "gender": "male" },
+      "learning_objective": ["Say let us go"],
+      "routes": [
+        {
+          "intent": "beep",
+          "meaning": "Mia says beep beep, let us go.",
+          "examples": ["Beep beep! Let us go.", "Beep beep! Let's go!", "Let us go!", "Beep beep!"],
+          "keywords": ["beep", "go", "lets", "let"],
+          "hint": "💬 Try saying: “Beep beep! Let us go.”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "The bus is fast! Say “Beep beep! Let us go.”" },
+        "off_topic": { "message": "Time to go! Try “Beep beep! Let us go.”" }
+      }
+    },
+    {
+      "id": "done",
+      "npc": { "text": "Beep beep! Off we go to school!", "gender": "male" },
+      "end": true
+    }
+  ]
+}

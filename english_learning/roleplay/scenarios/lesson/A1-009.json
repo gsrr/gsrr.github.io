@@ -1,0 +1,207 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in A1/009 dialogue + vocab. Learner plays Tom; computer plays Emma. Emma tells about the library, Tom asks the questions. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-A1-009",
+  "lesson": "A1/009",
+  "title": "009 · At the Library",
+  "you": "Tom",
+  "npc": "Emma",
+  "npc_gender": "female",
+  "start": "library",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "library",
+      "npc": { "text": "I went to the library after school.", "gender": "female" },
+      "learning_objective": ["Ask about the past", "Use: what, do"],
+      "routes": [
+        {
+          "intent": "ask_do",
+          "meaning": "Tom asks what Emma did there.",
+          "examples": ["What did you do there?", "What did you do at the library?", "What did you do?"],
+          "keywords": ["what", "do", "there", "library"],
+          "hint": "💬 Try saying: “What did you do there?”",
+          "next_nodes": [{ "id": "read_space", "weight": 100 }]
+        },
+        {
+          "intent": "react_nice",
+          "meaning": "Tom reacts that it sounds nice.",
+          "examples": ["That sounds nice!", "Cool!", "The library is nice!"],
+          "keywords": ["nice", "cool", "good", "fun"],
+          "hint": "You can ask “What did you do there?”",
+          "next_nodes": [{ "id": "nice_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about the library: “What did you do there?”" },
+        "off_topic": { "message": "Emma went to the library. Ask “What did you do there?”" }
+      }
+    },
+    {
+      "id": "nice_side",
+      "npc": { "text": "It was! I found something to read. Ask me about it!", "gender": "female" },
+      "learning_objective": ["Ask what someone did"],
+      "routes": [
+        {
+          "intent": "ask_do",
+          "meaning": "Tom asks what Emma did.",
+          "examples": ["What did you do there?", "What did you read?", "What did you do?"],
+          "keywords": ["what", "do", "read", "there"],
+          "hint": "💬 Try saying: “What did you do there?”",
+          "next_nodes": [{ "id": "read_space", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Emma: “What did you do there?”" },
+        "off_topic": { "message": "Ask Emma “What did you do there?”" }
+      }
+    },
+    {
+      "id": "read_space",
+      "npc": { "text": "I read a book about space.", "gender": "female" },
+      "learning_objective": ["Ask a follow-up", "Use: borrow, book"],
+      "routes": [
+        {
+          "intent": "ask_borrow",
+          "meaning": "Tom asks if Emma borrowed books.",
+          "examples": ["Did you borrow any books?", "Did you take any books home?", "Did you borrow books?"],
+          "keywords": ["borrow", "books", "take", "home"],
+          "hint": "💬 Try saying: “Did you borrow any books?”",
+          "next_nodes": [{ "id": "borrowed_three", "weight": 100 }]
+        },
+        {
+          "intent": "ask_space",
+          "meaning": "Tom asks about the space book.",
+          "examples": ["What was in the space book?", "What did the book say?", "Tell me about the space book."],
+          "keywords": ["space", "book", "about", "rockets"],
+          "hint": "You can ask “Did you borrow any books?”",
+          "next_nodes": [{ "id": "space_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about books: “Did you borrow any books?”" },
+        "off_topic": { "message": "Emma read a space book. Ask “Did you borrow any books?”" }
+      }
+    },
+    {
+      "id": "space_side",
+      "npc": { "text": "It had rockets and planets! I took some books home, too.", "gender": "female" },
+      "learning_objective": ["Ask if she borrowed books"],
+      "routes": [
+        {
+          "intent": "ask_borrow",
+          "meaning": "Tom asks if Emma borrowed books.",
+          "examples": ["Did you borrow any books?", "How many books did you borrow?", "Did you borrow books?"],
+          "keywords": ["borrow", "books", "many", "home"],
+          "hint": "💬 Try saying: “Did you borrow any books?”",
+          "next_nodes": [{ "id": "borrowed_three", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about books: “Did you borrow any books?”" },
+        "off_topic": { "message": "She took books home. Ask “Did you borrow any books?”" }
+      }
+    },
+    {
+      "id": "borrowed_three",
+      "npc": { "text": "Yes, I borrowed three books.", "gender": "female" },
+      "learning_objective": ["Ask about the place", "Use: quiet"],
+      "routes": [
+        {
+          "intent": "ask_quiet",
+          "meaning": "Tom asks if the library was quiet.",
+          "examples": ["Was the library quiet?", "Was it quiet?", "Was the library noisy?"],
+          "keywords": ["quiet", "library", "noisy", "loud"],
+          "hint": "💬 Try saying: “Was the library quiet?”",
+          "next_nodes": [{ "id": "very_quiet", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about the library: “Was the library quiet?”" },
+        "off_topic": { "message": "Emma borrowed three books. Ask “Was the library quiet?”" }
+      }
+    },
+    {
+      "id": "very_quiet",
+      "npc": { "text": "Yes, everyone was very quiet.", "gender": "female" },
+      "learning_objective": ["Ask about a favorite", "Use: favorite, book"],
+      "routes": [
+        {
+          "intent": "ask_favorite",
+          "meaning": "Tom asks about Emma's favorite book.",
+          "examples": ["What was your favorite book?", "Which book was your favorite?", "What book did you like best?"],
+          "keywords": ["favorite", "book", "best", "like"],
+          "hint": "💬 Try saying: “What was your favorite book?”",
+          "next_nodes": [{ "id": "planets_stars", "weight": 100 }]
+        },
+        {
+          "intent": "ask_loud",
+          "meaning": "Tom asks if anyone talked.",
+          "examples": ["Did anyone talk?", "Was it noisy at all?", "Did people make noise?"],
+          "keywords": ["talk", "noisy", "noise", "loud"],
+          "hint": "You can ask “What was your favorite book?”",
+          "next_nodes": [{ "id": "quiet_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about her book: “What was your favorite book?”" },
+        "off_topic": { "message": "It was quiet. Ask “What was your favorite book?”" }
+      }
+    },
+    {
+      "id": "quiet_side",
+      "npc": { "text": "No one talked! It was so calm. Ask me about my favorite book.", "gender": "female" },
+      "learning_objective": ["Ask about a favorite book"],
+      "routes": [
+        {
+          "intent": "ask_favorite",
+          "meaning": "Tom asks about Emma's favorite book.",
+          "examples": ["What was your favorite book?", "Which one was your favorite?", "What book did you like best?"],
+          "keywords": ["favorite", "book", "best", "one"],
+          "hint": "💬 Try saying: “What was your favorite book?”",
+          "next_nodes": [{ "id": "planets_stars", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about her book: “What was your favorite book?”" },
+        "off_topic": { "message": "Ask Emma “What was your favorite book?”" }
+      }
+    },
+    {
+      "id": "planets_stars",
+      "npc": { "text": "The one about planets and stars.", "gender": "female" },
+      "learning_objective": ["Share what you like", "Use: love, space"],
+      "routes": [
+        {
+          "intent": "say_love",
+          "meaning": "Tom says he loves space books too.",
+          "examples": ["I love space books, too!", "I love space, too!", "Me too, I like space books!"],
+          "keywords": ["love", "space", "books", "too"],
+          "hint": "💬 Try saying: “I love space books, too!”",
+          "next_nodes": [{ "id": "end_love", "weight": 100 }]
+        },
+        {
+          "intent": "ask_share",
+          "meaning": "Tom asks to read the book too.",
+          "examples": ["Can I read it too?", "Can I borrow it?", "May I read that book?"],
+          "keywords": ["read", "borrow", "share", "too"],
+          "hint": "You can say “I love space books, too!”",
+          "next_nodes": [{ "id": "end_share", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say what you like: “I love space books, too!”" },
+        "off_topic": { "message": "Emma likes planets and stars. Say “I love space books, too!”" }
+      }
+    },
+    {
+      "id": "end_love",
+      "npc": { "text": "Yay! Let's read space books together. Bye, Tom!", "gender": "female" },
+      "end": true
+    },
+    {
+      "id": "end_share",
+      "npc": { "text": "Sure! I can bring it tomorrow. See you, Tom!", "gender": "female" },
+      "end": true
+    }
+  ]
+}

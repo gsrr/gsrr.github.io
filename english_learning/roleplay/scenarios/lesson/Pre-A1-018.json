@@ -1,0 +1,199 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in Pre-A1/018 dialogue + vocab. Learner plays Leo; computer plays Emma. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-Pre-A1-018",
+  "lesson": "Pre-A1/018",
+  "title": "018 · My New Shoes",
+  "you": "Leo",
+  "npc": "Emma",
+  "npc_gender": "female",
+  "start": "new_shoes",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "new_shoes",
+      "npc": { "text": "Look at my new shoes!", "gender": "female" },
+      "learning_objective": ["Say a color", "Use: shoes, white"],
+      "routes": [
+        {
+          "intent": "white",
+          "meaning": "Leo says the shoes are white.",
+          "examples": ["Wow, they are white.", "Wow, they are white!", "They are white.", "Nice, white shoes!"],
+          "keywords": ["white", "shoes", "wow"],
+          "hint": "💬 Try saying: “Wow, they are white.”",
+          "next_nodes": [{ "id": "run_fast", "weight": 100 }]
+        },
+        {
+          "intent": "nice_shoes",
+          "meaning": "Leo says the shoes look nice.",
+          "examples": ["Nice shoes!", "They are new!", "Cool shoes!"],
+          "keywords": ["nice", "new", "cool", "shoes"],
+          "hint": "💬 Try saying: “Wow, they are white.”",
+          "next_nodes": [{ "id": "shoes_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say the color: “Wow, they are white.”" },
+        "off_topic": { "message": "Emma has new shoes. Try “Wow, they are white.”" }
+      }
+    },
+    {
+      "id": "shoes_reply",
+      "npc": { "text": "Thank you! They are white. Do you like them?", "gender": "female" },
+      "routes": [
+        {
+          "intent": "white",
+          "meaning": "Leo says the shoes are white.",
+          "examples": ["Wow, they are white.", "Yes, they are white.", "They are white!"],
+          "keywords": ["white", "shoes", "yes"],
+          "hint": "💬 Try saying: “Wow, they are white.”",
+          "next_nodes": [{ "id": "run_fast", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Emma the color: “Wow, they are white.”" },
+        "off_topic": { "message": "What color are they? Try “Wow, they are white.”" }
+      }
+    },
+    {
+      "id": "run_fast",
+      "npc": { "text": "I can run fast in them.", "gender": "female" },
+      "learning_objective": ["Ask a can-question", "Use: jump"],
+      "routes": [
+        {
+          "intent": "can_jump",
+          "meaning": "Leo asks if she can jump too.",
+          "examples": ["Can you jump too?", "Can you jump?", "Can you jump high too?"],
+          "keywords": ["jump", "can", "too"],
+          "hint": "💬 Try saying: “Can you jump too?”",
+          "next_nodes": [{ "id": "jump_high", "weight": 100 }]
+        },
+        {
+          "intent": "run_too",
+          "meaning": "Leo talks about running fast.",
+          "examples": ["I can run fast too.", "Wow, so fast!", "Let us run!"],
+          "keywords": ["run", "fast", "too"],
+          "hint": "💬 Try saying: “Can you jump too?”",
+          "next_nodes": [{ "id": "run_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Emma a question: “Can you jump too?”" },
+        "off_topic": { "message": "Emma can run fast. Try “Can you jump too?”" }
+      }
+    },
+    {
+      "id": "run_reply",
+      "npc": { "text": "Running is fun! I can do more too.", "gender": "female" },
+      "routes": [
+        {
+          "intent": "can_jump",
+          "meaning": "Leo asks if she can jump too.",
+          "examples": ["Can you jump too?", "Can you jump?", "Can you jump high?"],
+          "keywords": ["jump", "can", "too"],
+          "hint": "💬 Try saying: “Can you jump too?”",
+          "next_nodes": [{ "id": "jump_high", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask if she can jump: “Can you jump too?”" },
+        "off_topic": { "message": "Ask Emma a question. Try “Can you jump too?”" }
+      }
+    },
+    {
+      "id": "jump_high",
+      "npc": { "text": "Yes, I can jump high.", "gender": "female" },
+      "learning_objective": ["Say what you like"],
+      "routes": [
+        {
+          "intent": "like_shoes",
+          "meaning": "Leo says he likes her shoes.",
+          "examples": ["I like your shoes.", "I really like your shoes!", "Your shoes are nice."],
+          "keywords": ["like", "shoes", "your"],
+          "hint": "💬 Try saying: “I like your shoes.”",
+          "next_nodes": [{ "id": "socks", "weight": 100 }]
+        },
+        {
+          "intent": "wow_jump",
+          "meaning": "Leo reacts to the high jump.",
+          "examples": ["Wow, so high!", "You jump high!", "Cool jump!"],
+          "keywords": ["jump", "high", "wow", "cool"],
+          "hint": "💬 Try saying: “I like your shoes.”",
+          "next_nodes": [{ "id": "jump_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Emma what you think: “I like your shoes.”" },
+        "off_topic": { "message": "Emma can jump high. Try “I like your shoes.”" }
+      }
+    },
+    {
+      "id": "jump_reply",
+      "npc": { "text": "Ha ha, thank you! Do you like my shoes?", "gender": "female" },
+      "routes": [
+        {
+          "intent": "like_shoes",
+          "meaning": "Leo says he likes her shoes.",
+          "examples": ["I like your shoes.", "Yes, I like your shoes.", "I like them."],
+          "keywords": ["like", "shoes", "yes"],
+          "hint": "💬 Try saying: “I like your shoes.”",
+          "next_nodes": [{ "id": "socks", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “I like your shoes.”" },
+        "off_topic": { "message": "Do you like her shoes? Try “I like your shoes.”" }
+      }
+    },
+    {
+      "id": "socks",
+      "npc": { "text": "I wear socks with my shoes.", "gender": "female" },
+      "learning_objective": ["Talk about your own shoes", "Use: old"],
+      "routes": [
+        {
+          "intent": "old_shoes",
+          "meaning": "Leo says his shoes are old.",
+          "examples": ["My shoes are old.", "My shoes are old too.", "My old shoes."],
+          "keywords": ["shoes", "old", "my"],
+          "hint": "💬 Try saying: “My shoes are old.”",
+          "next_nodes": [{ "id": "run_together", "weight": 100 }]
+        },
+        {
+          "intent": "socks_too",
+          "meaning": "Leo talks about socks too.",
+          "examples": ["I wear socks too.", "I like socks.", "Socks are warm."],
+          "keywords": ["socks", "wear", "warm", "like"],
+          "hint": "💬 Try saying: “My shoes are old.”",
+          "next_nodes": [{ "id": "run_together", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Emma about your shoes: “My shoes are old.”" },
+        "off_topic": { "message": "Emma wears socks. What about your shoes? Try “My shoes are old.”" }
+      }
+    },
+    {
+      "id": "run_together",
+      "npc": { "text": "Let us run together.", "gender": "female" },
+      "learning_objective": ["Say you are ready"],
+      "routes": [
+        {
+          "intent": "ready",
+          "meaning": "Leo says ready, set, go.",
+          "examples": ["Okay, ready, set, go!", "Ready, set, go!", "Okay, let us go!", "Yes, let us run!"],
+          "keywords": ["ready", "set", "go", "okay"],
+          "hint": "💬 Try saying: “Okay, ready, set, go!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Get ready to run: “Okay, ready, set, go!”" },
+        "off_topic": { "message": "Emma wants to run. Try “Okay, ready, set, go!”" }
+      }
+    },
+    {
+      "id": "done",
+      "npc": { "text": "Ready, set, go! Here we run!", "gender": "female" },
+      "end": true
+    }
+  ]
+}

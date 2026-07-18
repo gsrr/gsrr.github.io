@@ -1,0 +1,171 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in Pre-A1/020 dialogue + vocab. Learner plays Tom; computer plays Mia. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-Pre-A1-020",
+  "lesson": "Pre-A1/020",
+  "title": "020 · The Little Duck",
+  "you": "Tom",
+  "npc": "Mia",
+  "npc_gender": "female",
+  "start": "look_duck",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "look_duck",
+      "npc": { "text": "Look at the little duck.", "gender": "female" },
+      "learning_objective": ["Describe an animal", "Use: yellow, small"],
+      "routes": [
+        {
+          "intent": "describe_duck",
+          "meaning": "Tom says the duck is yellow and small.",
+          "examples": ["It is yellow and small.", "It is yellow.", "The duck is small.", "It is a little yellow duck."],
+          "keywords": ["yellow", "small", "little", "duck"],
+          "hint": "Describe the duck: “It is yellow and small.”",
+          "next_nodes": [{ "id": "duck_swim", "weight": 100 }]
+        },
+        {
+          "intent": "react",
+          "meaning": "Tom reacts to the cute duck.",
+          "examples": ["It is so cute!", "Wow!", "I like it!", "I see it!"],
+          "keywords": ["cute", "wow", "like", "see", "nice"],
+          "hint": "You can describe it — “It is yellow and small.” — or say “It is so cute!”",
+          "next_nodes": [{ "id": "cute_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Mia about the duck: “It is yellow and small.”" },
+        "off_topic": { "message": "Mia sees a little duck. Say “It is yellow and small.”" }
+      }
+    },
+    {
+      "id": "cute_reply",
+      "npc": { "text": "Yes, it is cute! It is yellow and small too.", "gender": "female" },
+      "routes": [
+        {
+          "intent": "agree_look",
+          "meaning": "Tom agrees and looks at the duck.",
+          "examples": ["Yes!", "It is small.", "I see it.", "It is yellow."],
+          "keywords": ["yes", "small", "yellow", "see"],
+          "hint": "Look with Mia: “Yes, it is small!”",
+          "next_nodes": [{ "id": "duck_swim", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Agree with Mia: “Yes, it is yellow and small.”" },
+        "off_topic": { "message": "The duck is little. Say “Yes, it is small!”" }
+      }
+    },
+    {
+      "id": "duck_swim",
+      "npc": { "text": "The duck can swim.", "gender": "female" },
+      "learning_objective": ["Say where the duck swims", "Use: pond"],
+      "routes": [
+        {
+          "intent": "swims_pond",
+          "meaning": "Tom says the duck swims in the pond.",
+          "examples": ["It swims in the pond.", "The duck swims in the pond.", "It swims in water.", "In the pond."],
+          "keywords": ["swim", "swims", "pond", "water"],
+          "hint": "Say where it swims: “It swims in the pond.”",
+          "next_nodes": [{ "id": "quack", "weight": 100 }]
+        },
+        {
+          "intent": "wow_swim",
+          "meaning": "Tom is amazed the duck can swim.",
+          "examples": ["Wow, it swims!", "It can swim fast!", "The duck swims!"],
+          "keywords": ["swim", "swims", "fast", "wow"],
+          "hint": "You can say “It swims in the pond.” or “Wow, it swims!”",
+          "next_nodes": [{ "id": "quack", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Where does the duck swim? Say “It swims in the pond.”" },
+        "off_topic": { "message": "The duck can swim. Try “It swims in the pond.”" }
+      }
+    },
+    {
+      "id": "quack",
+      "npc": { "text": "Quack, quack!", "gender": "female" },
+      "learning_objective": ["Say what sound the duck makes"],
+      "routes": [
+        {
+          "intent": "say_quack",
+          "meaning": "Tom says the duck says quack.",
+          "examples": ["The duck says quack.", "It says quack.", "The duck says quack, quack."],
+          "keywords": ["quack", "says", "say", "duck"],
+          "hint": "Say the duck's sound: “The duck says quack.”",
+          "next_nodes": [{ "id": "wings", "weight": 100 }]
+        },
+        {
+          "intent": "copy_sound",
+          "meaning": "Tom copies the quack.",
+          "examples": ["Quack, quack!", "The duck is loud!", "Quack!"],
+          "keywords": ["quack", "loud"],
+          "hint": "You can say “The duck says quack.” or “Quack, quack!”",
+          "next_nodes": [{ "id": "wings", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "What does the duck say? Try “The duck says quack.”" },
+        "off_topic": { "message": "The duck goes quack! Say “The duck says quack.”" }
+      }
+    },
+    {
+      "id": "wings",
+      "npc": { "text": "The duck has two wings.", "gender": "female" },
+      "learning_objective": ["Say what the duck can do", "Use: flap, wings"],
+      "routes": [
+        {
+          "intent": "flap",
+          "meaning": "Tom says the duck can flap its wings.",
+          "examples": ["It can flap its wings.", "The duck can flap its wings.", "It flaps its wings."],
+          "keywords": ["flap", "wings", "wing", "two"],
+          "hint": "Say what it can do: “It can flap its wings.”",
+          "next_nodes": [{ "id": "like_duck", "weight": 100 }]
+        },
+        {
+          "intent": "count_wings",
+          "meaning": "Tom notices the two wings.",
+          "examples": ["Two wings!", "I see the wings.", "It has two wings."],
+          "keywords": ["two", "wings", "wing", "see"],
+          "hint": "You can say “It can flap its wings.” or “Two wings!”",
+          "next_nodes": [{ "id": "like_duck", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "What can the duck do? Try “It can flap its wings.”" },
+        "off_topic": { "message": "The duck has two wings. Say “It can flap its wings.”" }
+      }
+    },
+    {
+      "id": "like_duck",
+      "npc": { "text": "I like the little duck.", "gender": "female" },
+      "learning_objective": ["Agree and share what you like"],
+      "routes": [
+        {
+          "intent": "me_too",
+          "meaning": "Tom likes the duck too.",
+          "examples": ["Me too!", "Me too, I like it.", "I like it too."],
+          "keywords": ["me", "too", "like"],
+          "hint": "Agree with Mia: “Me too!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        },
+        {
+          "intent": "love_duck",
+          "meaning": "Tom loves the duck.",
+          "examples": ["I love the duck!", "I like it too.", "The duck is fun!"],
+          "keywords": ["love", "like", "duck", "too", "fun"],
+          "hint": "You can say “Me too!” or “I love the duck!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Mia likes the duck. Say “Me too!”" },
+        "off_topic": { "message": "Do you like the little duck? Say “Me too!”" }
+      }
+    },
+    {
+      "id": "done",
+      "npc": { "text": "The little duck is happy. Quack, quack!", "gender": "female" },
+      "end": true
+    }
+  ]
+}

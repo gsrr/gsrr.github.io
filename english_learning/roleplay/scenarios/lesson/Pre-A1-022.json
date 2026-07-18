@@ -1,0 +1,171 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in Pre-A1/022 dialogue + vocab. Learner plays Emma; computer plays Sam. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-Pre-A1-022",
+  "lesson": "Pre-A1/022",
+  "title": "022 · Ice Cream Day",
+  "you": "Emma",
+  "npc": "Sam",
+  "npc_gender": "male",
+  "start": "hot_day",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "hot_day",
+      "npc": { "text": "It is a hot day.", "gender": "male" },
+      "learning_objective": ["Make a suggestion", "Use: ice cream"],
+      "routes": [
+        {
+          "intent": "get_ice",
+          "meaning": "Emma says let us get ice cream.",
+          "examples": ["Let us get ice cream!", "Let's get ice cream!", "Let us get ice cream.", "I want ice cream!"],
+          "keywords": ["ice", "cream", "get", "let"],
+          "hint": "Make a plan: “Let us get ice cream!”",
+          "next_nodes": [{ "id": "want_choc", "weight": 100 }]
+        },
+        {
+          "intent": "agree_hot",
+          "meaning": "Emma agrees it is hot.",
+          "examples": ["Yes, it is so hot!", "I am hot.", "It is very hot!"],
+          "keywords": ["hot", "yes", "so", "very"],
+          "hint": "You can say “Let us get ice cream!” or “Yes, it is so hot!”",
+          "next_nodes": [{ "id": "agree_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "It is hot! Say “Let us get ice cream!”" },
+        "off_topic": { "message": "Sam says it is a hot day. Try “Let us get ice cream!”" }
+      }
+    },
+    {
+      "id": "agree_reply",
+      "npc": { "text": "Yes! Let us get ice cream. It is cold and sweet.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "yay",
+          "meaning": "Emma is excited for ice cream.",
+          "examples": ["Yes, ice cream!", "I want ice cream!", "Yummy!"],
+          "keywords": ["ice", "cream", "yes", "want", "yummy"],
+          "hint": "Say yes to ice cream: “Yes, ice cream!”",
+          "next_nodes": [{ "id": "want_choc", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ice cream is cold and sweet. Say “Yes, ice cream!”" },
+        "off_topic": { "message": "Sam wants ice cream too. Say “Yes, ice cream!”" }
+      }
+    },
+    {
+      "id": "want_choc",
+      "npc": { "text": "I want chocolate ice cream.", "gender": "male" },
+      "learning_objective": ["Say what flavor you want"],
+      "routes": [
+        {
+          "intent": "want_straw",
+          "meaning": "Emma wants strawberry.",
+          "examples": ["I want strawberry.", "I want strawberry ice cream.", "Strawberry for me!"],
+          "keywords": ["strawberry", "want"],
+          "hint": "Say your flavor: “I want strawberry.”",
+          "next_nodes": [{ "id": "my_cold", "weight": 100 }]
+        },
+        {
+          "intent": "want_choc_too",
+          "meaning": "Emma wants chocolate too.",
+          "examples": ["I want chocolate too!", "Me too, chocolate!", "I like chocolate!"],
+          "keywords": ["chocolate", "too", "want", "like"],
+          "hint": "You can say “I want strawberry.” or “I want chocolate too!”",
+          "next_nodes": [{ "id": "my_cold", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "What do you want? Say “I want strawberry.”" },
+        "off_topic": { "message": "Sam wants chocolate. Say “I want strawberry.”" }
+      }
+    },
+    {
+      "id": "my_cold",
+      "npc": { "text": "My ice cream is cold.", "gender": "male" },
+      "learning_objective": ["Describe your ice cream", "Use: sweet, yummy"],
+      "routes": [
+        {
+          "intent": "sweet",
+          "meaning": "Emma says hers is sweet and yummy.",
+          "examples": ["Mine is sweet and yummy.", "Mine is sweet.", "It is sweet and yummy!"],
+          "keywords": ["sweet", "yummy", "mine"],
+          "hint": "Describe yours: “Mine is sweet and yummy.”",
+          "next_nodes": [{ "id": "melting", "weight": 100 }]
+        },
+        {
+          "intent": "cold_too",
+          "meaning": "Emma says hers is cold too.",
+          "examples": ["Mine is cold too!", "It is so cold!", "Mine is cold."],
+          "keywords": ["cold", "too", "mine"],
+          "hint": "You can say “Mine is sweet and yummy.” or “Mine is cold too!”",
+          "next_nodes": [{ "id": "melting", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Describe your ice cream: “Mine is sweet and yummy.”" },
+        "off_topic": { "message": "Sam's ice cream is cold. Say “Mine is sweet and yummy.”" }
+      }
+    },
+    {
+      "id": "melting",
+      "npc": { "text": "Oh no, it is melting!", "gender": "male" },
+      "learning_objective": ["Give a quick instruction"],
+      "routes": [
+        {
+          "intent": "eat_fast",
+          "meaning": "Emma says eat it fast.",
+          "examples": ["Eat it fast!", "Eat it fast.", "Eat it quick!"],
+          "keywords": ["eat", "fast", "quick"],
+          "hint": "Tell Sam what to do: “Eat it fast!”",
+          "next_nodes": [{ "id": "love_ice", "weight": 100 }]
+        },
+        {
+          "intent": "hurry",
+          "meaning": "Emma reacts to the melting ice cream.",
+          "examples": ["Oh no!", "Eat it now!", "Hurry!"],
+          "keywords": ["oh", "no", "eat", "now", "hurry"],
+          "hint": "You can say “Eat it fast!” or “Oh no, hurry!”",
+          "next_nodes": [{ "id": "love_ice", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "It is melting! Say “Eat it fast!”" },
+        "off_topic": { "message": "The ice cream is melting. Say “Eat it fast!”" }
+      }
+    },
+    {
+      "id": "love_ice",
+      "npc": { "text": "Yum, I love ice cream.", "gender": "male" },
+      "learning_objective": ["Agree and share what you love"],
+      "routes": [
+        {
+          "intent": "me_too",
+          "meaning": "Emma loves ice cream too.",
+          "examples": ["Me too!", "Me too, I love it.", "I love it too!"],
+          "keywords": ["me", "too", "love"],
+          "hint": "Agree with Sam: “Me too!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        },
+        {
+          "intent": "yum_love",
+          "meaning": "Emma says yum and loves it.",
+          "examples": ["I love it too!", "Yum, ice cream!", "So yummy!"],
+          "keywords": ["love", "yum", "ice", "cream", "too", "yummy"],
+          "hint": "You can say “Me too!” or “Yum, ice cream!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Sam loves ice cream. Say “Me too!”" },
+        "off_topic": { "message": "Do you love ice cream? Say “Me too!”" }
+      }
+    },
+    {
+      "id": "done",
+      "npc": { "text": "Ice cream is the best on a hot day. Yum!", "gender": "male" },
+      "end": true
+    }
+  ]
+}

@@ -1,0 +1,230 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in B1/002 dialogue + vocab. Learner plays Anna; computer plays Tom. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-B1-002",
+  "lesson": "B1/002",
+  "title": "002 · Planning a Trip",
+  "you": "Anna",
+  "npc": "Tom",
+  "npc_gender": "male",
+  "start": "plan_trip",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "plan_trip",
+      "npc": { "text": "If the weather is nice, we will go to the mountains.", "gender": "male" },
+      "learning_objective": ["React to a plan", "Ask what to bring"],
+      "routes": [
+        {
+          "intent": "ask_bring",
+          "meaning": "Anna is excited and asks what they should bring.",
+          "examples": ["That sounds great! What should we bring?", "Sounds great! What should we bring?", "Nice! What should we bring?", "Cool! What do we need to bring?"],
+          "keywords": ["sounds", "great", "what", "bring", "mountains"],
+          "hint": "💬 Try saying: “That sounds great! What should we bring?”",
+          "next_nodes": [{ "id": "bring", "weight": 100 }]
+        },
+        {
+          "intent": "ask_where",
+          "meaning": "Anna asks more about the mountains.",
+          "examples": ["Which mountains will we visit?", "Where in the mountains?", "What can we do in the mountains?"],
+          "keywords": ["which", "where", "mountains", "hike"],
+          "hint": "You can ask “Which mountains will we visit?” or “What should we bring?”",
+          "next_nodes": [{ "id": "which_mountain", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Tom about the trip: “That sounds great! What should we bring?”" },
+        "off_topic": { "message": "Tom has a plan! Say “That sounds great! What should we bring?”" }
+      }
+    },
+    {
+      "id": "which_mountain",
+      "npc": { "text": "We can hike the trails near the green hills.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "ask_bring",
+          "meaning": "Anna asks what they should bring.",
+          "examples": ["That sounds great! What should we bring?", "What should we bring?", "Nice! What should we bring?"],
+          "keywords": ["sounds", "great", "what", "bring", "hike"],
+          "hint": "💬 Try saying: “That sounds great! What should we bring?”",
+          "next_nodes": [{ "id": "bring", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask “That sounds great! What should we bring?”" },
+        "off_topic": { "message": "Ask Tom “What should we bring?”" }
+      }
+    },
+    {
+      "id": "bring",
+      "npc": { "text": "We should bring water, snacks, and a map.", "gender": "male" },
+      "learning_objective": ["Ask how to travel"],
+      "routes": [
+        {
+          "intent": "ask_how_get",
+          "meaning": "Anna asks how they will get there.",
+          "examples": ["How will we get there?", "How do we get there?", "How will we travel there?"],
+          "keywords": ["how", "get", "there", "travel"],
+          "hint": "💬 Try saying: “How will we get there?”",
+          "next_nodes": [{ "id": "travel", "weight": 100 }]
+        },
+        {
+          "intent": "suggest_more",
+          "meaning": "Anna suggests bringing another item.",
+          "examples": ["We should also bring a jacket.", "Let's bring a camera too.", "Maybe we should bring sunscreen."],
+          "keywords": ["also", "bring", "jacket", "camera", "too"],
+          "hint": "You can add an idea, or ask “How will we get there?”",
+          "next_nodes": [{ "id": "extra_items", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about travel: “How will we get there?”" },
+        "off_topic": { "message": "Ask Tom “How will we get there?”" }
+      }
+    },
+    {
+      "id": "extra_items",
+      "npc": { "text": "Good thinking! Let's pack a jacket too.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "ask_how_get",
+          "meaning": "Anna asks how they will get there.",
+          "examples": ["How will we get there?", "How do we get there?", "So how will we get there?"],
+          "keywords": ["how", "get", "there", "travel"],
+          "hint": "💬 Try saying: “How will we get there?”",
+          "next_nodes": [{ "id": "travel", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask “How will we get there?”" },
+        "off_topic": { "message": "Ask Tom “How will we get there?”" }
+      }
+    },
+    {
+      "id": "travel",
+      "npc": { "text": "If we leave early, we can take the morning train.", "gender": "male" },
+      "learning_objective": ["Ask about a rainy-day plan"],
+      "routes": [
+        {
+          "intent": "ask_rain",
+          "meaning": "Anna asks what they will do if it rains.",
+          "examples": ["What will we do if it rains?", "What if it rains?", "And if it rains?"],
+          "keywords": ["what", "do", "if", "rains", "rain"],
+          "hint": "💬 Try saying: “What will we do if it rains?”",
+          "next_nodes": [{ "id": "rain", "weight": 100 }]
+        },
+        {
+          "intent": "ask_time",
+          "meaning": "Anna asks what time they should leave.",
+          "examples": ["What time should we leave?", "How early should we leave?", "When does the train go?"],
+          "keywords": ["what", "time", "when", "leave", "early", "train"],
+          "hint": "You can ask “What time should we leave?” or “What will we do if it rains?”",
+          "next_nodes": [{ "id": "leave_time", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about bad weather: “What will we do if it rains?”" },
+        "off_topic": { "message": "Ask Tom “What will we do if it rains?”" }
+      }
+    },
+    {
+      "id": "leave_time",
+      "npc": { "text": "We should leave at seven, before the station gets busy.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "ask_rain",
+          "meaning": "Anna asks what they will do if it rains.",
+          "examples": ["What will we do if it rains?", "What if it rains?", "But what will we do if it rains?"],
+          "keywords": ["what", "do", "if", "rains", "rain"],
+          "hint": "💬 Try saying: “What will we do if it rains?”",
+          "next_nodes": [{ "id": "rain", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask “What will we do if it rains?”" },
+        "off_topic": { "message": "Ask Tom “What will we do if it rains?”" }
+      }
+    },
+    {
+      "id": "rain",
+      "npc": { "text": "If it rains, we will visit a museum instead.", "gender": "male" },
+      "learning_objective": ["Agree and suggest careful planning"],
+      "routes": [
+        {
+          "intent": "agree_plan",
+          "meaning": "Anna agrees and says they should plan carefully.",
+          "examples": ["Good idea. We should plan carefully.", "Good idea! We should plan carefully.", "Nice idea. Let's plan carefully."],
+          "keywords": ["good", "idea", "plan", "carefully"],
+          "hint": "💬 Try saying: “Good idea. We should plan carefully.”",
+          "next_nodes": [{ "id": "exciting", "weight": 100 }]
+        },
+        {
+          "intent": "ask_museum",
+          "meaning": "Anna asks about the museum.",
+          "examples": ["Which museum will we visit?", "What is in the museum?", "Is the museum far?"],
+          "keywords": ["which", "what", "museum", "far"],
+          "hint": "You can ask “Which museum will we visit?” or say “Good idea. We should plan carefully.”",
+          "next_nodes": [{ "id": "museum_info", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Agree with Tom: “Good idea. We should plan carefully.”" },
+        "off_topic": { "message": "Tom has a rainy-day plan. Say “Good idea. We should plan carefully.”" }
+      }
+    },
+    {
+      "id": "museum_info",
+      "npc": { "text": "The city museum has a big dinosaur exhibit.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "agree_plan",
+          "meaning": "Anna agrees and says they should plan carefully.",
+          "examples": ["Good idea. We should plan carefully.", "We should plan carefully.", "Great. We should plan carefully."],
+          "keywords": ["good", "idea", "plan", "carefully"],
+          "hint": "💬 Try saying: “Good idea. We should plan carefully.”",
+          "next_nodes": [{ "id": "exciting", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “Good idea. We should plan carefully.”" },
+        "off_topic": { "message": "Tell Tom “We should plan carefully.”" }
+      }
+    },
+    {
+      "id": "exciting",
+      "npc": { "text": "I think it will be an exciting trip.", "gender": "male" },
+      "learning_objective": ["Show excitement"],
+      "routes": [
+        {
+          "intent": "cant_wait",
+          "meaning": "Anna can't wait for the trip.",
+          "examples": ["I can't wait!", "I can't wait for it!", "Me too, I can't wait!"],
+          "keywords": ["can't", "wait", "excited"],
+          "hint": "💬 Try saying: “I can't wait!”",
+          "next_nodes": [{ "id": "end_excited", "weight": 100 }]
+        },
+        {
+          "intent": "nervous",
+          "meaning": "Anna is a little nervous about the trip.",
+          "examples": ["I hope everything goes well.", "I'm a little nervous.", "I hope we don't forget anything."],
+          "keywords": ["hope", "nervous", "worried", "forget"],
+          "hint": "You can say “I can't wait!” or “I hope everything goes well.”",
+          "next_nodes": [{ "id": "end_reassure", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Show you're excited: “I can't wait!”" },
+        "off_topic": { "message": "Tom is excited. Say “I can't wait!”" }
+      }
+    },
+    {
+      "id": "end_excited",
+      "npc": { "text": "Me neither! Let's start packing tonight.", "gender": "male" },
+      "end": true
+    },
+    {
+      "id": "end_reassure",
+      "npc": { "text": "Don't worry, we planned it well. It will be fun!", "gender": "male" },
+      "end": true
+    }
+  ]
+}

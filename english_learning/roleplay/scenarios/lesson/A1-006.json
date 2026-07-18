@@ -1,0 +1,225 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in A1/006 dialogue + vocab. Learner plays Sam; computer plays Lily. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-A1-006",
+  "lesson": "A1/006",
+  "title": "006 · The Snowman",
+  "you": "Sam",
+  "npc": "Lily",
+  "npc_gender": "female",
+  "start": "snowed",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "snowed",
+      "npc": { "text": "It snowed last night!", "gender": "female" },
+      "learning_objective": ["Make a suggestion with let's"],
+      "routes": [
+        {
+          "intent": "make_snowman",
+          "meaning": "Sam suggests making a snowman.",
+          "examples": ["Yes! Let's make a snowman.", "Let's make a snowman!", "Yes! Let's build a snowman."],
+          "keywords": ["yes", "make", "snowman"],
+          "hint": "💬 Try saying: “Yes! Let's make a snowman.”",
+          "next_nodes": [{ "id": "body", "weight": 100 }]
+        },
+        {
+          "intent": "lets_play",
+          "meaning": "Sam wants to go play in the snow.",
+          "examples": ["Let's go play in the snow!", "Let's play outside!", "Let's go outside!"],
+          "keywords": ["play", "snow", "outside"],
+          "hint": "💬 Try saying: “Yes! Let's make a snowman.”",
+          "next_nodes": [{ "id": "play_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Make a plan: “Yes! Let's make a snowman.”" },
+        "off_topic": { "message": "It snowed! Say “Yes! Let's make a snowman.”" }
+      }
+    },
+    {
+      "id": "play_reply",
+      "npc": { "text": "Great idea! First, let's make a snowman.", "gender": "female" },
+      "routes": [
+        {
+          "intent": "ok_snowman",
+          "meaning": "Sam agrees to make a snowman.",
+          "examples": ["Let's make a snowman!", "Okay, let's make a snowman.", "Yes! A snowman!"],
+          "keywords": ["snowman", "make", "yes", "okay"],
+          "hint": "💬 Try saying: “Let's make a snowman!”",
+          "next_nodes": [{ "id": "body", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “Let's make a snowman!”" },
+        "off_topic": { "message": "First a snowman! Say “Let's make a snowman!”" }
+      }
+    },
+    {
+      "id": "body",
+      "npc": { "text": "I made a big snowball for the body.", "gender": "female" },
+      "learning_objective": ["Say what you made"],
+      "routes": [
+        {
+          "intent": "head",
+          "meaning": "Sam made a small snowball for the head.",
+          "examples": ["I made a small one for the head.", "I made a small snowball for the head.", "I made the head."],
+          "keywords": ["small", "head", "snowball", "made"],
+          "hint": "💬 Try saying: “I made a small one for the head.”",
+          "next_nodes": [{ "id": "nose", "weight": 100 }]
+        },
+        {
+          "intent": "help",
+          "meaning": "Sam offers to help.",
+          "examples": ["Can I help you?", "Let me help!", "I can help you."],
+          "keywords": ["help", "can"],
+          "hint": "💬 Try saying: “I made a small one for the head.”",
+          "next_nodes": [{ "id": "help_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Lily: “I made a small one for the head.”" },
+        "off_topic": { "message": "Lily made the body. Say “I made a small one for the head.”" }
+      }
+    },
+    {
+      "id": "help_reply",
+      "npc": { "text": "Yes, please! Let's make the head next.", "gender": "female" },
+      "routes": [
+        {
+          "intent": "head2",
+          "meaning": "Sam made a small snowball for the head.",
+          "examples": ["I made a small one for the head.", "I made the head.", "I made a small snowball for the head."],
+          "keywords": ["small", "head", "snowball", "made"],
+          "hint": "💬 Try saying: “I made a small one for the head.”",
+          "next_nodes": [{ "id": "nose", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Lily: “I made a small one for the head.”" },
+        "off_topic": { "message": "Let's make the head. Say “I made a small one for the head.”" }
+      }
+    },
+    {
+      "id": "nose",
+      "npc": { "text": "We used a carrot for the nose.", "gender": "female" },
+      "learning_objective": ["Add details to the snowman"],
+      "routes": [
+        {
+          "intent": "eyes",
+          "meaning": "Sam adds two rocks for the eyes.",
+          "examples": ["And two rocks for the eyes.", "Two rocks for the eyes.", "We used two rocks for the eyes."],
+          "keywords": ["rocks", "eyes", "two"],
+          "hint": "💬 Try saying: “And two rocks for the eyes.”",
+          "next_nodes": [{ "id": "looks_great", "weight": 100 }]
+        },
+        {
+          "intent": "what_arms",
+          "meaning": "Sam asks about the arms.",
+          "examples": ["What about the arms?", "What can we use for the arms?", "And the arms?"],
+          "keywords": ["arms", "what", "use"],
+          "hint": "💬 Try saying: “And two rocks for the eyes.”",
+          "next_nodes": [{ "id": "arms_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Add to the snowman: “And two rocks for the eyes.”" },
+        "off_topic": { "message": "The nose is a carrot. Say “And two rocks for the eyes.”" }
+      }
+    },
+    {
+      "id": "arms_reply",
+      "npc": { "text": "Good idea! We can use two sticks for the arms. Now the eyes!", "gender": "female" },
+      "routes": [
+        {
+          "intent": "eyes2",
+          "meaning": "Sam adds two rocks for the eyes.",
+          "examples": ["Two rocks for the eyes.", "And two rocks for the eyes.", "We used rocks for the eyes."],
+          "keywords": ["rocks", "eyes", "two"],
+          "hint": "💬 Try saying: “And two rocks for the eyes.”",
+          "next_nodes": [{ "id": "looks_great", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “And two rocks for the eyes.”" },
+        "off_topic": { "message": "Now the eyes! Say “And two rocks for the eyes.”" }
+      }
+    },
+    {
+      "id": "looks_great",
+      "npc": { "text": "Our snowman looks great!", "gender": "female" },
+      "learning_objective": ["Talk about the weather"],
+      "routes": [
+        {
+          "intent": "cold",
+          "meaning": "Sam says it was so cold outside.",
+          "examples": ["It was so cold outside.", "It was very cold outside.", "It is so cold outside!"],
+          "keywords": ["cold", "outside"],
+          "hint": "💬 Try saying: “It was so cold outside.”",
+          "next_nodes": [{ "id": "fun", "weight": 100 }]
+        },
+        {
+          "intent": "so_happy",
+          "meaning": "Sam loves the snowman.",
+          "examples": ["I love our snowman!", "It looks great!", "Our snowman is the best!"],
+          "keywords": ["love", "great", "best", "snowman"],
+          "hint": "💬 Try saying: “It was so cold outside.”",
+          "next_nodes": [{ "id": "fun", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Lily: “It was so cold outside.”" },
+        "off_topic": { "message": "The snowman looks great! Say “It was so cold outside.”" }
+      }
+    },
+    {
+      "id": "fun",
+      "npc": { "text": "But it was a lot of fun.", "gender": "female" },
+      "learning_objective": ["Suggest a warm drink"],
+      "routes": [
+        {
+          "intent": "cocoa",
+          "meaning": "Sam suggests drinking hot cocoa.",
+          "examples": ["Let's drink some hot cocoa now.", "Let's have some hot cocoa.", "Let's drink hot cocoa!"],
+          "keywords": ["cocoa", "drink", "hot"],
+          "hint": "💬 Try saying: “Let's drink some hot cocoa now.”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        },
+        {
+          "intent": "play_more",
+          "meaning": "Sam wants to build another snowman.",
+          "examples": ["Let's build another one!", "Let's make more snowmen!", "Can we make one more?"],
+          "keywords": ["another", "more", "build", "one"],
+          "hint": "💬 Try saying: “Let's drink some hot cocoa now.”",
+          "next_nodes": [{ "id": "more_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Suggest a drink: “Let's drink some hot cocoa now.”" },
+        "off_topic": { "message": "It was fun but cold. Say “Let's drink some hot cocoa now.”" }
+      }
+    },
+    {
+      "id": "more_reply",
+      "npc": { "text": "Ha! Maybe later. First, let's warm up.", "gender": "female" },
+      "routes": [
+        {
+          "intent": "cocoa2",
+          "meaning": "Sam suggests drinking hot cocoa.",
+          "examples": ["Let's drink some hot cocoa now.", "Let's have some hot cocoa.", "Let's drink cocoa!"],
+          "keywords": ["cocoa", "drink", "hot", "warm"],
+          "hint": "💬 Try saying: “Let's drink some hot cocoa now.”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “Let's drink some hot cocoa now.”" },
+        "off_topic": { "message": "Let's warm up. Say “Let's drink some hot cocoa now.”" }
+      }
+    },
+    {
+      "id": "done",
+      "npc": { "text": "Yes! Hot cocoa is the best. Good job today, Sam!", "gender": "female" },
+      "end": true
+    }
+  ]
+}

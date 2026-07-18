@@ -1,0 +1,156 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in Pre-A1/taipei/mrt dialogue + vocab. Learner plays Tom; computer plays Anna. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-Pre-A1-taipei-mrt",
+  "lesson": "Pre-A1/taipei/mrt",
+  "title": "Taipei · The MRT Train",
+  "you": "Tom",
+  "npc": "Anna",
+  "npc_gender": "female",
+  "start": "arrive",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "arrive",
+      "npc": { "text": "Look, Tom. Here is the MRT.", "gender": "female" },
+      "learning_objective": ["Talk about the train", "Use: train, fast"],
+      "routes": [
+        {
+          "intent": "train_fast",
+          "meaning": "Tom says the train is fast.",
+          "examples": ["Yes. The train is fast.", "The train is fast.", "Yes, it is fast!", "Wow, a fast train."],
+          "keywords": ["train", "fast", "yes"],
+          "hint": "💬 Try saying: “Yes. The train is fast.”",
+          "next_nodes": [{ "id": "sit", "weight": 100 }]
+        },
+        {
+          "intent": "excited_mrt",
+          "meaning": "Tom is excited to see the MRT.",
+          "examples": ["Wow, the MRT!", "Cool, a train!", "Look at the MRT!", "Nice train!"],
+          "keywords": ["mrt", "train", "wow", "cool"],
+          "hint": "You can say “Wow, the MRT!” or “Yes. The train is fast.”",
+          "next_nodes": [{ "id": "fast_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Anna about the train: “Yes. The train is fast.”" },
+        "off_topic": { "message": "Here is the MRT! Say “Yes. The train is fast.”" }
+      }
+    },
+    {
+      "id": "fast_reply",
+      "npc": { "text": "Yes! It is very fast. We can sit here. Come on.", "gender": "female" },
+      "learning_objective": ["Agree to sit down"],
+      "routes": [
+        {
+          "intent": "ask_where",
+          "meaning": "Tom asks where they go now.",
+          "examples": ["Where do we go now?", "Where do we go?", "Okay, where now?", "Yes. Where do we go?"],
+          "keywords": ["where", "go", "now", "sit"],
+          "hint": "💬 Try saying: “Where do we go now?”",
+          "next_nodes": [{ "id": "where", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Anna where you go: “Where do we go now?”" },
+        "off_topic": { "message": "You can sit down now. Ask “Where do we go now?”" }
+      }
+    },
+    {
+      "id": "sit",
+      "npc": { "text": "We can sit here. Come on.", "gender": "female" },
+      "learning_objective": ["Ask where you are going"],
+      "routes": [
+        {
+          "intent": "ask_where",
+          "meaning": "Tom asks where they go now.",
+          "examples": ["Where do we go now?", "Where do we go?", "Okay, where now?", "Where can we go?"],
+          "keywords": ["where", "go", "now"],
+          "hint": "💬 Try saying: “Where do we go now?”",
+          "next_nodes": [{ "id": "where", "weight": 100 }]
+        },
+        {
+          "intent": "ok_sit",
+          "meaning": "Tom agrees to sit down.",
+          "examples": ["Okay, I sit here.", "Good, let's sit.", "Okay, coming!", "Yes, I sit down."],
+          "keywords": ["okay", "sit", "yes"],
+          "hint": "You can say “Okay, I sit here.” or “Where do we go now?”",
+          "next_nodes": [{ "id": "where", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Anna: “Where do we go now?”" },
+        "off_topic": { "message": "Anna said to sit. Ask “Where do we go now?”" }
+      }
+    },
+    {
+      "id": "where",
+      "npc": { "text": "We can go to the night market.", "gender": "female" },
+      "learning_objective": ["Say you are hungry"],
+      "routes": [
+        {
+          "intent": "hungry",
+          "meaning": "Tom is happy and says he is hungry.",
+          "examples": ["Great! I am hungry.", "I am hungry!", "Yes, I am hungry.", "Great! I want food."],
+          "keywords": ["great", "hungry", "food"],
+          "hint": "💬 Try saying: “Great! I am hungry.”",
+          "next_nodes": [{ "id": "food", "weight": 100 }]
+        },
+        {
+          "intent": "yes_go",
+          "meaning": "Tom agrees to go to the night market.",
+          "examples": ["Yes, let us go!", "Okay, the night market!", "Good idea!", "Yes, I like the night market."],
+          "keywords": ["yes", "go", "market", "okay"],
+          "hint": "You can say “Yes, let us go!” or “Great! I am hungry.”",
+          "next_nodes": [{ "id": "food", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Anna how you feel: “Great! I am hungry.”" },
+        "off_topic": { "message": "You can go to the night market! Say “Great! I am hungry.”" }
+      }
+    },
+    {
+      "id": "food",
+      "npc": { "text": "Me too. I want some food.", "gender": "female" },
+      "learning_objective": ["Talk about the train", "Use: clean, quiet"],
+      "routes": [
+        {
+          "intent": "train_clean",
+          "meaning": "Tom says the train is clean and quiet.",
+          "examples": ["The train is clean and quiet.", "The train is clean.", "It is clean and quiet.", "The train is quiet."],
+          "keywords": ["train", "clean", "quiet"],
+          "hint": "💬 Try saying: “The train is clean and quiet.”",
+          "next_nodes": [{ "id": "stop", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Anna about the train: “The train is clean and quiet.”" },
+        "off_topic": { "message": "Look at the train. Say “The train is clean and quiet.”" }
+      }
+    },
+    {
+      "id": "stop",
+      "npc": { "text": "Look! This is our stop.", "gender": "female" },
+      "learning_objective": ["Say you are ready to go"],
+      "routes": [
+        {
+          "intent": "lets_go",
+          "meaning": "Tom is ready and says let us go.",
+          "examples": ["Okay! Let us go.", "Okay, let's go!", "Yes, let us go.", "Okay! I am ready."],
+          "keywords": ["okay", "go", "yes", "ready"],
+          "hint": "💬 Try saying: “Okay! Let us go.”",
+          "next_nodes": [{ "id": "bye", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "This is your stop! Say “Okay! Let us go.”" },
+        "off_topic": { "message": "Time to get off. Say “Okay! Let us go.”" }
+      }
+    },
+    {
+      "id": "bye",
+      "npc": { "text": "Here we are! Now let us find some yummy food. Come on!", "gender": "female" },
+      "end": true
+    }
+  ]
+}

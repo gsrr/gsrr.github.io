@@ -1,0 +1,207 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in A1/002 dialogue + vocab. Learner plays Anna; computer plays Tom. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-A1-002",
+  "lesson": "A1/002",
+  "title": "002 · My Weekend",
+  "you": "Anna",
+  "npc": "Tom",
+  "npc_gender": "male",
+  "start": "greet",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "greet",
+      "npc": { "text": "Hi, Anna. How was your weekend?", "gender": "male" },
+      "learning_objective": ["Talk about your weekend", "Say where you went"],
+      "routes": [
+        {
+          "intent": "went_zoo",
+          "meaning": "Anna says her weekend was great and she went to the zoo with her family.",
+          "examples": ["It was great! I went to the zoo with my family.", "It was great! I went to the zoo.", "I went to the zoo with my family."],
+          "keywords": ["great", "zoo", "family", "went"],
+          "hint": "💬 Try saying: “It was great! I went to the zoo with my family.”",
+          "next_nodes": [{ "id": "ask_animals", "weight": 100 }]
+        },
+        {
+          "intent": "zoo_short",
+          "meaning": "Anna says she went to the zoo.",
+          "examples": ["I went to the zoo.", "It was good. I went to the zoo.", "I went to the zoo with my mom."],
+          "keywords": ["zoo", "went", "good"],
+          "hint": "💬 Try saying: “It was great! I went to the zoo with my family.”",
+          "next_nodes": [{ "id": "ask_animals", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Tom about your weekend: “It was great! I went to the zoo with my family.”" },
+        "off_topic": { "message": "Tom asked about your weekend. Say “It was great! I went to the zoo with my family.”" }
+      }
+    },
+    {
+      "id": "ask_animals",
+      "npc": { "text": "Wow! What animals did you see?", "gender": "male" },
+      "learning_objective": ["Name animals", "Describe them"],
+      "routes": [
+        {
+          "intent": "lions_monkeys",
+          "meaning": "Anna saw lions and monkeys, and the monkeys were funny.",
+          "examples": ["I saw lions and monkeys. The monkeys were funny.", "I saw lions and monkeys.", "I saw monkeys. They were funny."],
+          "keywords": ["lions", "monkeys", "funny", "saw"],
+          "hint": "💬 Try saying: “I saw lions and monkeys. The monkeys were funny.”",
+          "next_nodes": [{ "id": "ask_elephants", "weight": 100 }]
+        },
+        {
+          "intent": "saw_lions",
+          "meaning": "Anna names an animal she saw.",
+          "examples": ["I saw lions.", "I saw monkeys.", "I saw many animals."],
+          "keywords": ["lions", "monkeys", "animals", "saw"],
+          "hint": "💬 Try saying: “I saw lions and monkeys. The monkeys were funny.”",
+          "next_nodes": [{ "id": "ask_elephants", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Name the animals: “I saw lions and monkeys. The monkeys were funny.”" },
+        "off_topic": { "message": "Tom asked what you saw. Say “I saw lions and monkeys. The monkeys were funny.”" }
+      }
+    },
+    {
+      "id": "ask_elephants",
+      "npc": { "text": "Did you see elephants?", "gender": "male" },
+      "learning_objective": ["Answer yes/no", "Describe with adjectives"],
+      "routes": [
+        {
+          "intent": "yes_big",
+          "meaning": "Anna saw elephants and they were very big.",
+          "examples": ["Yes, I did. They were very big.", "Yes, I did. They were big.", "Yes! The elephants were very big."],
+          "keywords": ["yes", "did", "big", "elephants"],
+          "hint": "💬 Try saying: “Yes, I did. They were very big.”",
+          "next_nodes": [{ "id": "tom_home", "weight": 100 }]
+        },
+        {
+          "intent": "no_elephants",
+          "meaning": "Anna did not see elephants.",
+          "examples": ["No, I didn't.", "No, I did not see elephants.", "No, but I want to."],
+          "keywords": ["no", "didn't", "not"],
+          "hint": "💬 Try saying: “Yes, I did. They were very big.”",
+          "next_nodes": [{ "id": "no_eleph_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Did you see elephants? Say “Yes, I did. They were very big.”" },
+        "off_topic": { "message": "Tom asked about elephants. Try “Yes, I did. They were very big.”" }
+      }
+    },
+    {
+      "id": "no_eleph_reply",
+      "npc": { "text": "That's okay! Elephants are very big. Maybe next time.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "next_time",
+          "meaning": "Anna agrees to see them next time.",
+          "examples": ["Yes, next time!", "Maybe next time.", "Okay, next time!"],
+          "keywords": ["next", "time", "okay", "yes"],
+          "hint": "💬 Try saying: “Yes, next time!”",
+          "next_nodes": [{ "id": "tom_home", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “Yes, next time!”" },
+        "off_topic": { "message": "Maybe next time. Say “Yes, next time!”" }
+      }
+    },
+    {
+      "id": "tom_home",
+      "npc": { "text": "I stayed home because it was rainy.", "gender": "male" },
+      "learning_objective": ["Ask a follow-up question"],
+      "routes": [
+        {
+          "intent": "what_do",
+          "meaning": "Anna asks what Tom did at home.",
+          "examples": ["What did you do at home?", "What did you do?", "What did you do at home then?"],
+          "keywords": ["what", "home", "do"],
+          "hint": "💬 Try saying: “What did you do at home?”",
+          "next_nodes": [{ "id": "tom_read", "weight": 100 }]
+        },
+        {
+          "intent": "why_home",
+          "meaning": "Anna asks why Tom stayed home.",
+          "examples": ["Why did you stay home?", "Why did you stay inside?", "Why did you not go out?"],
+          "keywords": ["why", "home", "stay"],
+          "hint": "💬 Try saying: “What did you do at home?”",
+          "next_nodes": [{ "id": "why_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Tom: “What did you do at home?”" },
+        "off_topic": { "message": "Tom stayed home. Ask “What did you do at home?”" }
+      }
+    },
+    {
+      "id": "why_reply",
+      "npc": { "text": "Because it rained all day! So I stayed inside.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "what_do2",
+          "meaning": "Anna asks what Tom did at home.",
+          "examples": ["What did you do at home?", "What did you do?", "What did you do inside?"],
+          "keywords": ["what", "home", "do", "inside"],
+          "hint": "💬 Try saying: “What did you do at home?”",
+          "next_nodes": [{ "id": "tom_read", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Tom: “What did you do at home?”" },
+        "off_topic": { "message": "It rained all day. Ask “What did you do at home?”" }
+      }
+    },
+    {
+      "id": "tom_read",
+      "npc": { "text": "I read books and played games.", "gender": "male" },
+      "learning_objective": ["Respond politely"],
+      "routes": [
+        {
+          "intent": "fun_too",
+          "meaning": "Anna says that sounds fun too.",
+          "examples": ["That sounds fun too!", "That sounds fun!", "That is fun too!"],
+          "keywords": ["fun", "sounds", "too"],
+          "hint": "💬 Try saying: “That sounds fun too!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        },
+        {
+          "intent": "what_games",
+          "meaning": "Anna asks what games Tom played.",
+          "examples": ["What games did you play?", "What did you play?", "Which games?"],
+          "keywords": ["what", "games", "play"],
+          "hint": "💬 Try saying: “That sounds fun too!”",
+          "next_nodes": [{ "id": "games_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Respond to Tom: “That sounds fun too!”" },
+        "off_topic": { "message": "Tom read and played games. Say “That sounds fun too!”" }
+      }
+    },
+    {
+      "id": "games_reply",
+      "npc": { "text": "I played a car game. It was so much fun!", "gender": "male" },
+      "routes": [
+        {
+          "intent": "fun_too2",
+          "meaning": "Anna says that sounds fun too.",
+          "examples": ["That sounds fun too!", "That sounds fun!", "Fun!"],
+          "keywords": ["fun", "sounds", "too"],
+          "hint": "💬 Try saying: “That sounds fun too!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “That sounds fun too!”" },
+        "off_topic": { "message": "Tom's game was fun. Say “That sounds fun too!”" }
+      }
+    },
+    {
+      "id": "done",
+      "npc": { "text": "Thanks, Anna! Let's go to the zoo together next time.", "gender": "male" },
+      "end": true
+    }
+  ]
+}

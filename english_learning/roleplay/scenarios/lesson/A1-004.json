@@ -1,0 +1,225 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in A1/004 dialogue + vocab. Learner plays Lily; computer plays Ben. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-A1-004",
+  "lesson": "A1/004",
+  "title": "004 · My Birthday Party",
+  "you": "Lily",
+  "npc": "Ben",
+  "npc_gender": "male",
+  "start": "party",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "party",
+      "npc": { "text": "I had my birthday party yesterday.", "gender": "male" },
+      "learning_objective": ["Say happy birthday", "Ask a question"],
+      "routes": [
+        {
+          "intent": "happy_bday",
+          "meaning": "Lily says happy birthday and asks if it was fun.",
+          "examples": ["Happy birthday! Was it fun?", "Happy birthday! Was the party fun?", "Happy birthday! Did you have fun?"],
+          "keywords": ["happy", "birthday", "fun"],
+          "hint": "💬 Try saying: “Happy birthday! Was it fun?”",
+          "next_nodes": [{ "id": "friends", "weight": 100 }]
+        },
+        {
+          "intent": "wow_bday",
+          "meaning": "Lily is excited and says happy birthday.",
+          "examples": ["Wow! Happy birthday!", "Happy birthday, Ben!", "That's great! Happy birthday!"],
+          "keywords": ["wow", "happy", "birthday", "great"],
+          "hint": "💬 Try saying: “Happy birthday! Was it fun?”",
+          "next_nodes": [{ "id": "wow_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Wish Ben well: “Happy birthday! Was it fun?”" },
+        "off_topic": { "message": "It was Ben's birthday! Say “Happy birthday! Was it fun?”" }
+      }
+    },
+    {
+      "id": "wow_reply",
+      "npc": { "text": "Thank you so much! It was a big party.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "fun_q",
+          "meaning": "Lily asks if the party was fun.",
+          "examples": ["Was it fun?", "Did you have fun?", "Was it a good party?"],
+          "keywords": ["fun", "good", "party"],
+          "hint": "💬 Try saying: “Was it fun?”",
+          "next_nodes": [{ "id": "friends", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Ben: “Was it fun?”" },
+        "off_topic": { "message": "It was a big party. Ask “Was it fun?”" }
+      }
+    },
+    {
+      "id": "friends",
+      "npc": { "text": "Yes, it was great. Many friends came.", "gender": "male" },
+      "learning_objective": ["Ask what someone did"],
+      "routes": [
+        {
+          "intent": "what_do",
+          "meaning": "Lily asks what Ben did.",
+          "examples": ["What did you do?", "What did you do at the party?", "What did you all do?"],
+          "keywords": ["what", "do", "party"],
+          "hint": "💬 Try saying: “What did you do?”",
+          "next_nodes": [{ "id": "games_pizza", "weight": 100 }]
+        },
+        {
+          "intent": "who_came",
+          "meaning": "Lily asks who came to the party.",
+          "examples": ["Who came?", "Who came to the party?", "Which friends came?"],
+          "keywords": ["who", "came", "friends"],
+          "hint": "💬 Try saying: “What did you do?”",
+          "next_nodes": [{ "id": "who_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Ben: “What did you do?”" },
+        "off_topic": { "message": "Many friends came. Ask “What did you do?”" }
+      }
+    },
+    {
+      "id": "who_reply",
+      "npc": { "text": "All my school friends came. It was so much fun!", "gender": "male" },
+      "routes": [
+        {
+          "intent": "what_do2",
+          "meaning": "Lily asks what they did.",
+          "examples": ["What did you do?", "What did you play?", "What did you do there?"],
+          "keywords": ["what", "do", "play"],
+          "hint": "💬 Try saying: “What did you do?”",
+          "next_nodes": [{ "id": "games_pizza", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Ben: “What did you do?”" },
+        "off_topic": { "message": "All his friends came. Ask “What did you do?”" }
+      }
+    },
+    {
+      "id": "games_pizza",
+      "npc": { "text": "We played games and ate pizza.", "gender": "male" },
+      "learning_objective": ["Ask about food"],
+      "routes": [
+        {
+          "intent": "cake_q",
+          "meaning": "Lily asks if there was a cake.",
+          "examples": ["Did you have a cake?", "Was there a cake?", "Did you have a birthday cake?"],
+          "keywords": ["cake", "have", "birthday"],
+          "hint": "💬 Try saying: “Did you have a cake?”",
+          "next_nodes": [{ "id": "cake", "weight": 100 }]
+        },
+        {
+          "intent": "like_pizza",
+          "meaning": "Lily says she loves pizza.",
+          "examples": ["I love pizza!", "Yum, I like pizza!", "Pizza is my favorite!"],
+          "keywords": ["pizza", "love", "like"],
+          "hint": "💬 Try saying: “Did you have a cake?”",
+          "next_nodes": [{ "id": "pizza_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Ben: “Did you have a cake?”" },
+        "off_topic": { "message": "They ate pizza. Ask “Did you have a cake?”" }
+      }
+    },
+    {
+      "id": "pizza_reply",
+      "npc": { "text": "Me too! We ate a lot of pizza.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "cake_q2",
+          "meaning": "Lily asks if there was a cake.",
+          "examples": ["Did you have a cake?", "Was there a cake?", "Did you eat cake?"],
+          "keywords": ["cake", "have", "eat"],
+          "hint": "💬 Try saying: “Did you have a cake?”",
+          "next_nodes": [{ "id": "cake", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Ben: “Did you have a cake?”" },
+        "off_topic": { "message": "They ate lots of pizza. Ask “Did you have a cake?”" }
+      }
+    },
+    {
+      "id": "cake",
+      "npc": { "text": "Yes, a big chocolate cake.", "gender": "male" },
+      "learning_objective": ["Ask what someone got"],
+      "routes": [
+        {
+          "intent": "what_get",
+          "meaning": "Lily asks what Ben got.",
+          "examples": ["What did you get?", "What gifts did you get?", "What did you get for your birthday?"],
+          "keywords": ["what", "get", "gifts"],
+          "hint": "💬 Try saying: “What did you get?”",
+          "next_nodes": [{ "id": "gifts", "weight": 100 }]
+        },
+        {
+          "intent": "yummy",
+          "meaning": "Lily says the cake sounds yummy.",
+          "examples": ["Yummy! I love chocolate.", "Yum! Chocolate cake!", "That sounds yummy!"],
+          "keywords": ["yummy", "chocolate", "love"],
+          "hint": "💬 Try saying: “What did you get?”",
+          "next_nodes": [{ "id": "gifts", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Ben: “What did you get?”" },
+        "off_topic": { "message": "It was a chocolate cake. Ask “What did you get?”" }
+      }
+    },
+    {
+      "id": "gifts",
+      "npc": { "text": "I got a new bike and some books.", "gender": "male" },
+      "learning_objective": ["Give a happy reaction"],
+      "routes": [
+        {
+          "intent": "lucky",
+          "meaning": "Lily says Ben is lucky.",
+          "examples": ["Wow! You are lucky.", "Wow! You are so lucky!", "Lucky you!"],
+          "keywords": ["wow", "lucky"],
+          "hint": "💬 Try saying: “Wow! You are lucky.”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        },
+        {
+          "intent": "ride_bike",
+          "meaning": "Lily asks to ride the new bike.",
+          "examples": ["Can I ride your bike?", "Can we ride your new bike?", "I want to see your bike!"],
+          "keywords": ["ride", "bike", "can"],
+          "hint": "💬 Try saying: “Wow! You are lucky.”",
+          "next_nodes": [{ "id": "bike_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "React to Ben: “Wow! You are lucky.”" },
+        "off_topic": { "message": "Ben got a bike and books. Say “Wow! You are lucky.”" }
+      }
+    },
+    {
+      "id": "bike_reply",
+      "npc": { "text": "Sure! We can ride it together this weekend.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "lucky2",
+          "meaning": "Lily says Ben is lucky.",
+          "examples": ["Wow! You are lucky.", "You are so lucky!", "Lucky you!"],
+          "keywords": ["wow", "lucky"],
+          "hint": "💬 Try saying: “Wow! You are lucky.”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "React to Ben: “Wow! You are lucky.”" },
+        "off_topic": { "message": "You can ride together! Say “Wow! You are lucky.”" }
+      }
+    },
+    {
+      "id": "done",
+      "npc": { "text": "Thanks, Lily! Come to my next party too.", "gender": "male" },
+      "end": true
+    }
+  ]
+}

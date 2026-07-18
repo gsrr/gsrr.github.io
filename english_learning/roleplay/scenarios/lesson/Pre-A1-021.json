@@ -1,0 +1,171 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in Pre-A1/021 dialogue + vocab. Learner plays Lily; computer plays Ben. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-Pre-A1-021",
+  "lesson": "Pre-A1/021",
+  "title": "021 · My Teddy Bear",
+  "you": "Lily",
+  "npc": "Ben",
+  "npc_gender": "male",
+  "start": "show_bear",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "show_bear",
+      "npc": { "text": "This is my teddy bear.", "gender": "male" },
+      "learning_objective": ["React to something nice", "Ask to hold it"],
+      "routes": [
+        {
+          "intent": "cute",
+          "meaning": "Lily says the bear is cute.",
+          "examples": ["It is so cute!", "It is cute!", "So cute!", "Your bear is cute."],
+          "keywords": ["cute", "so", "bear", "nice"],
+          "hint": "Tell Ben it is cute: “It is so cute!”",
+          "next_nodes": [{ "id": "describe_bear", "weight": 100 }]
+        },
+        {
+          "intent": "ask_hold",
+          "meaning": "Lily asks to hold the bear.",
+          "examples": ["Can I hold it?", "Can I see it?", "Can I hold the bear?"],
+          "keywords": ["hold", "see", "can"],
+          "hint": "You can say “It is so cute!” or “Can I hold it?”",
+          "next_nodes": [{ "id": "hold_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Ben about his bear: “It is so cute!”" },
+        "off_topic": { "message": "Ben has a teddy bear. Say “It is so cute!”" }
+      }
+    },
+    {
+      "id": "hold_reply",
+      "npc": { "text": "Sure! Here you go. It is soft.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "soft",
+          "meaning": "Lily says the bear is soft or thanks Ben.",
+          "examples": ["It is so soft!", "Thank you!", "It is cute!", "So soft!"],
+          "keywords": ["soft", "thank", "cute"],
+          "hint": "Say how it feels: “It is so soft!”",
+          "next_nodes": [{ "id": "describe_bear", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Ben how it feels: “It is so soft!”" },
+        "off_topic": { "message": "Ben let you hold the bear. Say “It is so soft!”" }
+      }
+    },
+    {
+      "id": "describe_bear",
+      "npc": { "text": "My bear is brown and soft.", "gender": "male" },
+      "learning_objective": ["Ask for a name", "Use: brown, soft"],
+      "routes": [
+        {
+          "intent": "ask_name",
+          "meaning": "Lily asks the bear's name.",
+          "examples": ["What is its name?", "What is the name?", "Does it have a name?", "What is his name?"],
+          "keywords": ["name", "what", "its"],
+          "hint": "Ask its name: “What is its name?”",
+          "next_nodes": [{ "id": "tell_name", "weight": 100 }]
+        },
+        {
+          "intent": "like_bear",
+          "meaning": "Lily likes the brown, soft bear.",
+          "examples": ["I like brown.", "It is so soft!", "I like it!"],
+          "keywords": ["brown", "soft", "like"],
+          "hint": "You can ask “What is its name?” or say “It is so soft!”",
+          "next_nodes": [{ "id": "tell_name", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about the bear: “What is its name?”" },
+        "off_topic": { "message": "Ben's bear is brown and soft. Ask “What is its name?”" }
+      }
+    },
+    {
+      "id": "tell_name",
+      "npc": { "text": "Its name is Fluffy.", "gender": "male" },
+      "learning_objective": ["Ask a yes/no question"],
+      "routes": [
+        {
+          "intent": "ask_sleep",
+          "meaning": "Lily asks if Ben sleeps with the bear.",
+          "examples": ["Do you sleep with it?", "Do you sleep with Fluffy?", "Do you sleep with the bear?"],
+          "keywords": ["sleep", "you", "with", "night"],
+          "hint": "Ask about bedtime: “Do you sleep with it?”",
+          "next_nodes": [{ "id": "yes_night", "weight": 100 }]
+        },
+        {
+          "intent": "nice_name",
+          "meaning": "Lily likes the name Fluffy.",
+          "examples": ["Fluffy is a nice name!", "I like Fluffy.", "That is a cute name!"],
+          "keywords": ["fluffy", "nice", "name", "like", "cute"],
+          "hint": "You can ask “Do you sleep with it?” or say “Fluffy is a nice name!”",
+          "next_nodes": [{ "id": "hug_bear", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Ben a question: “Do you sleep with it?”" },
+        "off_topic": { "message": "The bear is named Fluffy. Ask “Do you sleep with it?”" }
+      }
+    },
+    {
+      "id": "yes_night",
+      "npc": { "text": "Yes, every night.", "gender": "male" },
+      "learning_objective": ["Share that you have one too"],
+      "routes": [
+        {
+          "intent": "have_too",
+          "meaning": "Lily says she has a teddy bear too.",
+          "examples": ["I have a teddy bear too.", "I have a bear too.", "Me too, I have a teddy bear."],
+          "keywords": ["have", "teddy", "bear", "too"],
+          "hint": "Share with Ben: “I have a teddy bear too.”",
+          "next_nodes": [{ "id": "hug_bear", "weight": 100 }]
+        },
+        {
+          "intent": "nice",
+          "meaning": "Lily thinks that is nice.",
+          "examples": ["That is nice.", "Good night, Fluffy!", "So sweet!"],
+          "keywords": ["nice", "good", "night", "sweet"],
+          "hint": "You can say “I have a teddy bear too.” or “That is nice.”",
+          "next_nodes": [{ "id": "hug_bear", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Ben about you: “I have a teddy bear too.”" },
+        "off_topic": { "message": "Ben sleeps with Fluffy. Say “I have a teddy bear too.”" }
+      }
+    },
+    {
+      "id": "hug_bear",
+      "npc": { "text": "I hug my bear.", "gender": "male" },
+      "learning_objective": ["Say what you love", "Use: hug, best"],
+      "routes": [
+        {
+          "intent": "best",
+          "meaning": "Lily says teddy bears are the best.",
+          "examples": ["Teddy bears are the best!", "Teddy bears are the best.", "Bears are the best!"],
+          "keywords": ["teddy", "best", "bears"],
+          "hint": "Say how you feel: “Teddy bears are the best!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        },
+        {
+          "intent": "hug_too",
+          "meaning": "Lily hugs her bear too.",
+          "examples": ["I hug mine too!", "I love teddy bears.", "I hug my bear too!"],
+          "keywords": ["hug", "love", "teddy", "mine", "bear"],
+          "hint": "You can say “Teddy bears are the best!” or “I hug mine too!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Ben what you think: “Teddy bears are the best!”" },
+        "off_topic": { "message": "Ben hugs his bear. Say “Teddy bears are the best!”" }
+      }
+    },
+    {
+      "id": "done",
+      "npc": { "text": "Teddy bears are the best! Good night, Fluffy.", "gender": "male" },
+      "end": true
+    }
+  ]
+}

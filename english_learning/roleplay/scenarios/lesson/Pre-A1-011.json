@@ -1,0 +1,217 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in Pre-A1/011 dialogue + vocab. Learner plays Anna; computer plays Tom. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-Pre-A1-011",
+  "lesson": "Pre-A1/011",
+  "title": "011 · Rainy Day",
+  "you": "Anna",
+  "npc": "Tom",
+  "npc_gender": "male",
+  "start": "raining",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "raining",
+      "npc": { "text": "Look! It is raining.", "gender": "male" },
+      "learning_objective": ["Describe the weather", "Use: sky, grey"],
+      "routes": [
+        {
+          "intent": "sky_grey",
+          "meaning": "Anna says the sky is grey.",
+          "examples": ["Yes, the sky is grey.", "The sky is grey.", "Yes, it is grey."],
+          "keywords": ["sky", "grey", "yes"],
+          "hint": "💬 Try saying: “Yes, the sky is grey.”",
+          "next_nodes": [{ "id": "umbrella", "weight": 100 }]
+        },
+        {
+          "intent": "like_rain",
+          "meaning": "Anna is happy it is raining.",
+          "examples": ["I like the rain.", "Yay, rain!", "It is raining!"],
+          "keywords": ["rain", "like", "raining"],
+          "hint": "💬 Try saying: “Yes, the sky is grey.”",
+          "next_nodes": [{ "id": "rain_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Look up! Say “Yes, the sky is grey.”" },
+        "off_topic": { "message": "It is raining. Say “Yes, the sky is grey.”" }
+      }
+    },
+    {
+      "id": "rain_side",
+      "npc": { "text": "Ha, me too! Look, the sky is grey.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "sky_grey",
+          "meaning": "Anna says the sky is grey.",
+          "examples": ["Yes, the sky is grey.", "The sky is grey.", "It is grey."],
+          "keywords": ["sky", "grey", "yes"],
+          "hint": "💬 Try saying: “Yes, the sky is grey.”",
+          "next_nodes": [{ "id": "umbrella", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “Yes, the sky is grey.”" },
+        "off_topic": { "message": "What color is the sky? Say “Yes, the sky is grey.”" }
+      }
+    },
+    {
+      "id": "umbrella",
+      "npc": { "text": "I have my umbrella.", "gender": "male" },
+      "learning_objective": ["Say what you have", "Use: boots"],
+      "routes": [
+        {
+          "intent": "have_boots",
+          "meaning": "Anna says she has boots too.",
+          "examples": ["I have my boots, too.", "I have my boots.", "I have boots, too."],
+          "keywords": ["boots", "have", "too"],
+          "hint": "💬 Try saying: “I have my boots, too.”",
+          "next_nodes": [{ "id": "jump", "weight": 100 }]
+        },
+        {
+          "intent": "nice_umbrella",
+          "meaning": "Anna likes Tom's umbrella.",
+          "examples": ["Nice umbrella!", "I like your umbrella.", "Your umbrella is big."],
+          "keywords": ["umbrella", "like", "nice"],
+          "hint": "💬 Try saying: “I have my boots, too.”",
+          "next_nodes": [{ "id": "umb_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Tom what you have: “I have my boots, too.”" },
+        "off_topic": { "message": "Tom has an umbrella. Say “I have my boots, too.”" }
+      }
+    },
+    {
+      "id": "umb_side",
+      "npc": { "text": "Thank you! Do you have boots?", "gender": "male" },
+      "routes": [
+        {
+          "intent": "have_boots",
+          "meaning": "Anna says she has boots too.",
+          "examples": ["I have my boots, too.", "Yes, I have my boots.", "I have boots."],
+          "keywords": ["boots", "have", "too"],
+          "hint": "💬 Try saying: “I have my boots, too.”",
+          "next_nodes": [{ "id": "jump", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “I have my boots, too.”" },
+        "off_topic": { "message": "Do you have boots? Say “I have my boots, too.”" }
+      }
+    },
+    {
+      "id": "jump",
+      "npc": { "text": "We can jump in the water.", "gender": "male" },
+      "learning_objective": ["Show you are having fun", "Use: splash, jump"],
+      "routes": [
+        {
+          "intent": "splash_fun",
+          "meaning": "Anna jumps and has fun.",
+          "examples": ["Splash! This is fun.", "Splash! Fun!", "This is fun."],
+          "keywords": ["splash", "fun", "jump"],
+          "hint": "💬 Try saying: “Splash! This is fun.”",
+          "next_nodes": [{ "id": "puddle", "weight": 100 }]
+        },
+        {
+          "intent": "scared",
+          "meaning": "Anna is not sure about jumping.",
+          "examples": ["I do not want to.", "I am scared.", "No, I am wet."],
+          "keywords": ["no", "scared", "wet"],
+          "hint": "💬 Try saying: “Splash! This is fun.”",
+          "next_nodes": [{ "id": "jump_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Jump in the water! Say “Splash! This is fun.”" },
+        "off_topic": { "message": "Let us jump! Say “Splash! This is fun.”" }
+      }
+    },
+    {
+      "id": "jump_side",
+      "npc": { "text": "Come on, it is fun! Jump with me!", "gender": "male" },
+      "routes": [
+        {
+          "intent": "splash_fun",
+          "meaning": "Anna jumps and has fun.",
+          "examples": ["Splash! This is fun.", "Okay, splash!", "This is fun!"],
+          "keywords": ["splash", "fun", "jump"],
+          "hint": "💬 Try saying: “Splash! This is fun.”",
+          "next_nodes": [{ "id": "puddle", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “Splash! This is fun.”" },
+        "off_topic": { "message": "Jump with Tom! Say “Splash! This is fun.”" }
+      }
+    },
+    {
+      "id": "puddle",
+      "npc": { "text": "Look at the big puddle!", "gender": "male" },
+      "learning_objective": ["Say what you like", "Use: rainy days"],
+      "routes": [
+        {
+          "intent": "like_rainy",
+          "meaning": "Anna says she likes rainy days.",
+          "examples": ["I like rainy days.", "I like rainy days!", "I like the rain."],
+          "keywords": ["rainy", "like", "days"],
+          "hint": "💬 Try saying: “I like rainy days.”",
+          "next_nodes": [{ "id": "go_home", "weight": 100 }]
+        },
+        {
+          "intent": "big_puddle",
+          "meaning": "Anna reacts to the big puddle.",
+          "examples": ["It is big!", "Wow, a big puddle!", "The puddle is big."],
+          "keywords": ["big", "puddle"],
+          "hint": "💬 Try saying: “I like rainy days.”",
+          "next_nodes": [{ "id": "puddle_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Tom: “I like rainy days.”" },
+        "off_topic": { "message": "Do you like the rain? Say “I like rainy days.”" }
+      }
+    },
+    {
+      "id": "puddle_side",
+      "npc": { "text": "So big! Do you like rainy days?", "gender": "male" },
+      "routes": [
+        {
+          "intent": "like_rainy",
+          "meaning": "Anna says she likes rainy days.",
+          "examples": ["I like rainy days.", "Yes, I like rainy days.", "I like the rain."],
+          "keywords": ["rainy", "like", "days"],
+          "hint": "💬 Try saying: “I like rainy days.”",
+          "next_nodes": [{ "id": "go_home", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “I like rainy days.”" },
+        "off_topic": { "message": "Do you like rainy days? Say “I like rainy days.”" }
+      }
+    },
+    {
+      "id": "go_home",
+      "npc": { "text": "Let us go home now.", "gender": "male" },
+      "learning_objective": ["Agree and say how you feel", "Use: wet"],
+      "routes": [
+        {
+          "intent": "okay_wet",
+          "meaning": "Anna agrees and says she is wet.",
+          "examples": ["Okay! I am wet.", "Okay, I am wet.", "Yes, I am wet."],
+          "keywords": ["okay", "wet"],
+          "hint": "💬 Try saying: “Okay! I am wet.”",
+          "next_nodes": [{ "id": "close", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “Okay! I am wet.”" },
+        "off_topic": { "message": "Time to go home. Say “Okay! I am wet.”" }
+      }
+    },
+    {
+      "id": "close",
+      "npc": { "text": "Ha! Me too. Let us run home!", "gender": "male" },
+      "end": true
+    }
+  ]
+}

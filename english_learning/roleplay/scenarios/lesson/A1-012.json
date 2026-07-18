@@ -1,0 +1,207 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in A1/012 dialogue + vocab. Learner plays Emma; computer plays Ben. Ben tells about the beach, Emma asks the questions. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-A1-012",
+  "lesson": "A1/012",
+  "title": "012 · The Sandcastle",
+  "you": "Emma",
+  "npc": "Ben",
+  "npc_gender": "male",
+  "start": "beach",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "beach",
+      "npc": { "text": "We went to the beach on Sunday.", "gender": "male" },
+      "learning_objective": ["Ask about the past", "Use: swim, sea"],
+      "routes": [
+        {
+          "intent": "ask_swim",
+          "meaning": "Emma asks if Ben swam in the sea.",
+          "examples": ["Did you swim in the sea?", "Did you swim?", "Did you go in the water?"],
+          "keywords": ["swim", "sea", "water", "beach"],
+          "hint": "💬 Try saying: “Did you swim in the sea?”",
+          "next_nodes": [{ "id": "sandcastle", "weight": 100 }]
+        },
+        {
+          "intent": "react_love",
+          "meaning": "Emma says she loves the beach.",
+          "examples": ["I love the beach!", "The beach is fun!", "Wow, the beach!"],
+          "keywords": ["love", "beach", "fun", "wow"],
+          "hint": "You can ask “Did you swim in the sea?”",
+          "next_nodes": [{ "id": "love_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about the beach: “Did you swim in the sea?”" },
+        "off_topic": { "message": "Ben went to the beach. Ask “Did you swim in the sea?”" }
+      }
+    },
+    {
+      "id": "love_side",
+      "npc": { "text": "Me too! The water was so nice. Ask me if we went swimming!", "gender": "male" },
+      "learning_objective": ["Ask if he swam"],
+      "routes": [
+        {
+          "intent": "ask_swim",
+          "meaning": "Emma asks if Ben swam in the sea.",
+          "examples": ["Did you swim in the sea?", "Did you swim?", "So did you swim?"],
+          "keywords": ["swim", "sea", "water"],
+          "hint": "💬 Try saying: “Did you swim in the sea?”",
+          "next_nodes": [{ "id": "sandcastle", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask if he swam: “Did you swim in the sea?”" },
+        "off_topic": { "message": "Ask Ben “Did you swim in the sea?”" }
+      }
+    },
+    {
+      "id": "sandcastle",
+      "npc": { "text": "Yes, and we built a big sandcastle.", "gender": "male" },
+      "learning_objective": ["Ask about size", "Use: big"],
+      "routes": [
+        {
+          "intent": "ask_big",
+          "meaning": "Emma asks how big the sandcastle was.",
+          "examples": ["How big was it?", "Was it big?", "How big was the sandcastle?"],
+          "keywords": ["big", "how", "tall", "sandcastle"],
+          "hint": "💬 Try saying: “How big was it?”",
+          "next_nodes": [{ "id": "taller", "weight": 100 }]
+        },
+        {
+          "intent": "ask_help",
+          "meaning": "Emma asks who helped build it.",
+          "examples": ["Who built it with you?", "Who helped you?", "Did someone help you?"],
+          "keywords": ["who", "help", "built", "with"],
+          "hint": "You can ask “How big was it?”",
+          "next_nodes": [{ "id": "help_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about the castle: “How big was it?”" },
+        "off_topic": { "message": "Ben built a sandcastle. Ask “How big was it?”" }
+      }
+    },
+    {
+      "id": "help_side",
+      "npc": { "text": "My brother helped me. It got really tall, too!", "gender": "male" },
+      "learning_objective": ["Ask how big it was"],
+      "routes": [
+        {
+          "intent": "ask_big",
+          "meaning": "Emma asks how big the sandcastle was.",
+          "examples": ["How big was it?", "How tall was it?", "So how big was it?"],
+          "keywords": ["big", "tall", "how"],
+          "hint": "💬 Try saying: “How big was it?”",
+          "next_nodes": [{ "id": "taller", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask how big: “How big was it?”" },
+        "off_topic": { "message": "Ask Ben “How big was it?”" }
+      }
+    },
+    {
+      "id": "taller",
+      "npc": { "text": "It was taller than my little brother!", "gender": "male" },
+      "learning_objective": ["Ask a follow-up", "Use: find, shells"],
+      "routes": [
+        {
+          "intent": "ask_shells",
+          "meaning": "Emma asks if they found shells.",
+          "examples": ["Did you find any shells?", "Did you find shells?", "Did you see any shells?"],
+          "keywords": ["find", "shells", "any", "see"],
+          "hint": "💬 Try saying: “Did you find any shells?”",
+          "next_nodes": [{ "id": "collected", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about shells: “Did you find any shells?”" },
+        "off_topic": { "message": "The castle was tall. Ask “Did you find any shells?”" }
+      }
+    },
+    {
+      "id": "collected",
+      "npc": { "text": "Yes, we collected many shells.", "gender": "male" },
+      "learning_objective": ["Ask about the waves", "Use: waves, break"],
+      "routes": [
+        {
+          "intent": "ask_waves",
+          "meaning": "Emma asks if the waves broke the castle.",
+          "examples": ["Did the waves break your castle?", "Did the waves break it?", "Did the sea break your castle?"],
+          "keywords": ["waves", "break", "castle", "sea"],
+          "hint": "💬 Try saying: “Did the waves break your castle?”",
+          "next_nodes": [{ "id": "another_one", "weight": 100 }]
+        },
+        {
+          "intent": "ask_many",
+          "meaning": "Emma asks how many shells they found.",
+          "examples": ["How many shells?", "How many did you find?", "Did you find a lot?"],
+          "keywords": ["many", "how", "lot", "shells"],
+          "hint": "You can ask “Did the waves break your castle?”",
+          "next_nodes": [{ "id": "shells_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about the waves: “Did the waves break your castle?”" },
+        "off_topic": { "message": "They found many shells. Ask “Did the waves break your castle?”" }
+      }
+    },
+    {
+      "id": "shells_side",
+      "npc": { "text": "So many, my hands were full! Then the sea came close.", "gender": "male" },
+      "learning_objective": ["Ask if the waves broke the castle"],
+      "routes": [
+        {
+          "intent": "ask_waves",
+          "meaning": "Emma asks if the waves broke the castle.",
+          "examples": ["Did the waves break your castle?", "Did the waves break it?", "So did the waves break it?"],
+          "keywords": ["waves", "break", "castle", "sea"],
+          "hint": "💬 Try saying: “Did the waves break your castle?”",
+          "next_nodes": [{ "id": "another_one", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about the waves: “Did the waves break your castle?”" },
+        "off_topic": { "message": "The sea came close. Ask “Did the waves break your castle?”" }
+      }
+    },
+    {
+      "id": "another_one",
+      "npc": { "text": "Yes, but we laughed and built another one.", "gender": "male" },
+      "learning_objective": ["Give a closing comment"],
+      "routes": [
+        {
+          "intent": "say_best",
+          "meaning": "Emma says the beach is the best place in summer.",
+          "examples": ["The beach is the best place in summer!", "The beach is the best!", "Summer at the beach is the best!"],
+          "keywords": ["beach", "best", "summer", "place"],
+          "hint": "💬 Try saying: “The beach is the best place in summer!”",
+          "next_nodes": [{ "id": "end_best", "weight": 100 }]
+        },
+        {
+          "intent": "ask_again",
+          "meaning": "Emma asks to go to the beach together.",
+          "examples": ["Can we go together?", "Can I come next time?", "Let's go to the beach together!"],
+          "keywords": ["together", "go", "next", "come"],
+          "hint": "You can say “The beach is the best place in summer!”",
+          "next_nodes": [{ "id": "end_together", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Give a comment: “The beach is the best place in summer!”" },
+        "off_topic": { "message": "They built another castle. Say “The beach is the best place in summer!”" }
+      }
+    },
+    {
+      "id": "end_best",
+      "npc": { "text": "It really is the best! Let's go again soon. Bye, Emma!", "gender": "male" },
+      "end": true
+    },
+    {
+      "id": "end_together",
+      "npc": { "text": "Yes! Let's build a sandcastle together next time. See you, Emma!", "gender": "male" },
+      "end": true
+    }
+  ]
+}

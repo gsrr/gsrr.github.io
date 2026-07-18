@@ -1,0 +1,183 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in Pre-A1/taipei/market dialogue + vocab. Learner plays Anna; computer plays Tom. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-Pre-A1-taipei-market",
+  "lesson": "Pre-A1/taipei/market",
+  "title": "Taipei · The Night Market",
+  "you": "Anna",
+  "npc": "Tom",
+  "npc_gender": "male",
+  "start": "arrive",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "arrive",
+      "npc": { "text": "Wow! The night market is big.", "gender": "male" },
+      "learning_objective": ["Talk about the night market", "Use: smell, food"],
+      "routes": [
+        {
+          "intent": "smell_food",
+          "meaning": "Anna says she can smell the food.",
+          "examples": ["I can smell the food. Yummy!", "I smell the food!", "Yummy, the food smells good.", "I can smell yummy food."],
+          "keywords": ["smell", "food", "yummy"],
+          "hint": "💬 Try saying: “I can smell the food. Yummy!”",
+          "next_nodes": [{ "id": "noodles", "weight": 100 }]
+        },
+        {
+          "intent": "agree_big",
+          "meaning": "Anna agrees the market is big.",
+          "examples": ["Yes, it is big!", "So big!", "Wow, big market!", "It is very big."],
+          "keywords": ["big", "yes", "wow"],
+          "hint": "You can say “Yes, it is big!” or “I can smell the food. Yummy!”",
+          "next_nodes": [{ "id": "wow_more", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Tom what you smell: “I can smell the food. Yummy!”" },
+        "off_topic": { "message": "You are at the night market! Say “I can smell the food. Yummy!”" }
+      }
+    },
+    {
+      "id": "wow_more",
+      "npc": { "text": "So big! I can smell the food too. I am hungry.", "gender": "male" },
+      "learning_objective": ["Talk about food and hunger"],
+      "routes": [
+        {
+          "intent": "smell_food",
+          "meaning": "Anna says she can smell the food too.",
+          "examples": ["I can smell the food. Yummy!", "Yummy food!", "Me too, I smell the food.", "I am hungry too."],
+          "keywords": ["smell", "food", "yummy", "hungry"],
+          "hint": "💬 Try saying: “I can smell the food. Yummy!”",
+          "next_nodes": [{ "id": "noodles", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say what you smell: “I can smell the food. Yummy!”" },
+        "off_topic": { "message": "The food smells good! Say “I can smell the food. Yummy!”" }
+      }
+    },
+    {
+      "id": "noodles",
+      "npc": { "text": "I want some noodles. I am hungry.", "gender": "male" },
+      "learning_objective": ["Say what you want", "Use: drink, thirsty"],
+      "routes": [
+        {
+          "intent": "want_drink",
+          "meaning": "Anna says she wants a big drink because she is thirsty.",
+          "examples": ["I want a big drink. I am thirsty.", "I want a drink.", "I am thirsty. I want a drink.", "A big drink for me!"],
+          "keywords": ["drink", "thirsty", "big", "want"],
+          "hint": "💬 Try saying: “I want a big drink. I am thirsty.”",
+          "next_nodes": [{ "id": "game", "weight": 100 }]
+        },
+        {
+          "intent": "want_noodles_too",
+          "meaning": "Anna also wants noodles.",
+          "examples": ["I want noodles too.", "Me too! Noodles!", "I like noodles.", "I am hungry too."],
+          "keywords": ["noodles", "too", "hungry", "want"],
+          "hint": "You can say “I want noodles too.” or “I want a big drink. I am thirsty.”",
+          "next_nodes": [{ "id": "game", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Tom what you want: “I want a big drink. I am thirsty.”" },
+        "off_topic": { "message": "Tom wants noodles. What do you want? Say “I want a big drink. I am thirsty.”" }
+      }
+    },
+    {
+      "id": "game",
+      "npc": { "text": "Look! We can play a game here.", "gender": "male" },
+      "learning_objective": ["Talk about games and prizes", "Use: win, toy"],
+      "routes": [
+        {
+          "intent": "win_toy",
+          "meaning": "Anna says she can win a small toy.",
+          "examples": ["Yes! I can win a small toy.", "I can win a toy.", "Yes, a small toy!", "I want to win a toy."],
+          "keywords": ["win", "toy", "small", "yes", "game"],
+          "hint": "💬 Try saying: “Yes! I can win a small toy.”",
+          "next_nodes": [{ "id": "food_hot", "weight": 100 }]
+        },
+        {
+          "intent": "want_play",
+          "meaning": "Anna wants to play the game.",
+          "examples": ["Yes, let's play!", "I want to play the game.", "Okay, play!", "Fun! Let's play."],
+          "keywords": ["play", "yes", "game", "fun"],
+          "hint": "You can say “Yes, let's play!” or “Yes! I can win a small toy.”",
+          "next_nodes": [{ "id": "food_hot", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tom found a game. Say “Yes! I can win a small toy.”" },
+        "off_topic": { "message": "You can play a game here! Try “Yes! I can win a small toy.”" }
+      }
+    },
+    {
+      "id": "food_hot",
+      "npc": { "text": "The food is hot and good.", "gender": "male" },
+      "learning_objective": ["Say you are happy"],
+      "routes": [
+        {
+          "intent": "happy_fun",
+          "meaning": "Anna says she is happy and this is fun.",
+          "examples": ["I am happy. This is fun.", "This is fun!", "I am so happy.", "Yes, this is fun!"],
+          "keywords": ["happy", "fun", "good"],
+          "hint": "💬 Try saying: “I am happy. This is fun.”",
+          "next_nodes": [{ "id": "full", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Tom how you feel: “I am happy. This is fun.”" },
+        "off_topic": { "message": "The food is hot and good! Say “I am happy. This is fun.”" }
+      }
+    },
+    {
+      "id": "full",
+      "npc": { "text": "Now I am full. Are you full?", "gender": "male" },
+      "learning_objective": ["Answer about being full", "Say where to go next"],
+      "routes": [
+        {
+          "intent": "yes_full_park",
+          "meaning": "Anna is full and wants to go to the park next.",
+          "examples": ["Yes! Now let us go to the park.", "Yes, I am full. Let's go to the park.", "Yes! Let us go to the park.", "I am full. To the park!"],
+          "keywords": ["yes", "full", "park", "go"],
+          "hint": "💬 Try saying: “Yes! Now let us go to the park.”",
+          "next_nodes": [{ "id": "bye", "weight": 100 }]
+        },
+        {
+          "intent": "not_full",
+          "meaning": "Anna is not full yet.",
+          "examples": ["No, not yet.", "I want more food.", "No, I am still hungry.", "Not yet!"],
+          "keywords": ["no", "not", "more", "hungry"],
+          "hint": "You can say “No, not yet.” or “Yes! Now let us go to the park.”",
+          "next_nodes": [{ "id": "more_food", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Are you full? Say “Yes! Now let us go to the park.”" },
+        "off_topic": { "message": "Tom asked if you are full. Try “Yes! Now let us go to the park.”" }
+      }
+    },
+    {
+      "id": "more_food",
+      "npc": { "text": "Okay! Eat some more. Ready to go now?", "gender": "male" },
+      "learning_objective": ["Say you are ready to go"],
+      "routes": [
+        {
+          "intent": "ready_park",
+          "meaning": "Anna is ready and wants to go to the park.",
+          "examples": ["Yes! Now let us go to the park.", "Okay, I am full. Let's go!", "Yes, let us go to the park.", "I am ready. To the park!"],
+          "keywords": ["yes", "full", "park", "go", "ready"],
+          "hint": "💬 Try saying: “Yes! Now let us go to the park.”",
+          "next_nodes": [{ "id": "bye", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ready now? Say “Yes! Now let us go to the park.”" },
+        "off_topic": { "message": "Time to go. Say “Yes! Now let us go to the park.”" }
+      }
+    },
+    {
+      "id": "bye",
+      "npc": { "text": "Great! The night market was fun. Let us go to the park!", "gender": "male" },
+      "end": true
+    }
+  ]
+}

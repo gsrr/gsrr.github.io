@@ -1,0 +1,180 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in A2/005 dialogue + vocab. Learner plays Ben; computer plays Emma. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-A2-005",
+  "lesson": "A2/005",
+  "title": "005 · Healthy Habits",
+  "you": "Ben",
+  "npc": "Emma",
+  "npc_gender": "female",
+  "start": "compliment",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "compliment",
+      "npc": { "text": "You look great, Ben!", "gender": "female" },
+      "learning_objective": ["Reply to a compliment", "Use: healthy food"],
+      "routes": [
+        {
+          "intent": "thanks_healthy",
+          "meaning": "Ben thanks Emma and says he eats healthy food now.",
+          "examples": ["Thanks! I eat healthy food now.", "Thank you! I eat healthy food now.", "Thanks! I eat healthy food these days.", "Thanks a lot! I eat healthy food now."],
+          "keywords": ["thanks", "thank", "healthy", "food", "eat"],
+          "hint": "Reply to Emma: “Thanks! I eat healthy food now.”",
+          "next_nodes": [{ "id": "what_eat", "weight": 100 }]
+        },
+        {
+          "intent": "thanks_feel",
+          "meaning": "Ben thanks Emma and says he feels healthy.",
+          "examples": ["Thank you! I feel healthy now.", "Thanks! I feel really good.", "Thank you! I take care of myself now.", "Thanks! I live a healthy life now."],
+          "keywords": ["thank", "thanks", "healthy", "feel", "good"],
+          "hint": "You can say “Thanks! I eat healthy food now.”",
+          "next_nodes": [{ "id": "what_eat", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Reply to Emma: “Thanks! I eat healthy food now.”" },
+        "off_topic": { "message": "Emma gave you a compliment. Try “Thanks! I eat healthy food now.”" }
+      }
+    },
+    {
+      "id": "what_eat",
+      "npc": { "text": "What do you eat?", "gender": "female" },
+      "learning_objective": ["Say what you eat", "Use: vegetables, fruit"],
+      "routes": [
+        {
+          "intent": "veg_fruit",
+          "meaning": "Ben says he eats vegetables and fruit every day.",
+          "examples": ["I eat vegetables and fruit every day.", "I eat vegetables and fruit each day.", "I eat lots of vegetables and fruit every day.", "Every day I eat vegetables and fruit."],
+          "keywords": ["vegetables", "fruit", "eat", "every", "day"],
+          "hint": "Say your food: “I eat vegetables and fruit every day.”",
+          "next_nodes": [{ "id": "q_soda", "weight": 100 }]
+        },
+        {
+          "intent": "healthy_meals",
+          "meaning": "Ben describes his healthy meals.",
+          "examples": ["I eat a lot of vegetables.", "I eat fruit and vegetables.", "I eat healthy meals with vegetables.", "Mostly vegetables and fresh fruit."],
+          "keywords": ["vegetables", "fruit", "healthy", "eat"],
+          "hint": "You can say “I eat vegetables and fruit every day.”",
+          "next_nodes": [{ "id": "q_soda", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Emma what you eat: “I eat vegetables and fruit every day.”" },
+        "off_topic": { "message": "Emma asked what you eat. Try “I eat vegetables and fruit every day.”" }
+      }
+    },
+    {
+      "id": "q_soda",
+      "npc": { "text": "Do you drink soda?", "gender": "female" },
+      "learning_objective": ["Answer with a reason", "Use: because, bad for me"],
+      "routes": [
+        {
+          "intent": "no_water",
+          "meaning": "Ben says no; he drinks water because soda is bad for him.",
+          "examples": ["No, I drink water because soda is bad for me.", "No. I drink water because soda is bad for me.", "No, I drink water. Soda is bad for me.", "No, I only drink water because soda is bad for me."],
+          "keywords": ["no", "water", "because", "soda", "bad"],
+          "hint": "Answer with a reason: “No, I drink water because soda is bad for me.”",
+          "next_nodes": [{ "id": "good_habit", "weight": 100 }]
+        },
+        {
+          "intent": "only_water",
+          "meaning": "Ben says he only drinks water.",
+          "examples": ["No, I only drink water.", "No, I just drink water now.", "No, I drink water instead.", "No soda, only water for me."],
+          "keywords": ["no", "only", "water", "drink"],
+          "hint": "You can say “No, I drink water because soda is bad for me.”",
+          "next_nodes": [{ "id": "good_habit", "weight": 100 }]
+        },
+        {
+          "intent": "sometimes",
+          "meaning": "Ben admits he drinks a little soda sometimes.",
+          "examples": ["Sometimes, but not much.", "A little, but not often.", "Only a little sometimes.", "Not much, just a little."],
+          "keywords": ["sometimes", "little", "not", "much"],
+          "hint": "You can say “No, I drink water because soda is bad for me.”",
+          "next_nodes": [{ "id": "emma_advice", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Answer Emma: “No, I drink water because soda is bad for me.”" },
+        "off_topic": { "message": "Emma asked about soda. Try “No, I drink water because soda is bad for me.”" }
+      }
+    },
+    {
+      "id": "emma_advice",
+      "npc": { "text": "Water is better for you. Do you drink water too?", "gender": "female" },
+      "learning_objective": ["Agree and give a reason"],
+      "routes": [
+        {
+          "intent": "yes_water",
+          "meaning": "Ben says yes, he drinks water because soda is bad for him.",
+          "examples": ["Yes, I drink water because soda is bad for me.", "Yes, I drink water. Soda is bad for me.", "Yes, I drink lots of water.", "Yes, water is best because soda is bad for me."],
+          "keywords": ["yes", "water", "because", "soda", "bad"],
+          "hint": "Agree with a reason: “Yes, I drink water because soda is bad for me.”",
+          "next_nodes": [{ "id": "good_habit", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Emma: “Yes, I drink water because soda is bad for me.”" },
+        "off_topic": { "message": "Emma asked about water. Try “Yes, I drink water because soda is bad for me.”" }
+      }
+    },
+    {
+      "id": "good_habit",
+      "npc": { "text": "That is a good habit.", "gender": "female" },
+      "learning_objective": ["Add another habit", "Use: also, every morning"],
+      "routes": [
+        {
+          "intent": "also_run",
+          "meaning": "Ben says he also runs every morning.",
+          "examples": ["I also run every morning.", "I also run every morning before school.", "I run every morning too.", "And I also run every morning."],
+          "keywords": ["also", "run", "every", "morning"],
+          "hint": "Add a habit: “I also run every morning.”",
+          "next_nodes": [{ "id": "why_run", "weight": 100 }]
+        },
+        {
+          "intent": "thanks_run",
+          "meaning": "Ben thanks Emma and adds that he runs every morning.",
+          "examples": ["Thanks! I also run every morning.", "Thank you! And I run every morning.", "Thanks! I run every morning too.", "Thank you! I also go running each morning."],
+          "keywords": ["thanks", "thank", "run", "every", "morning"],
+          "hint": "You can say “I also run every morning.”",
+          "next_nodes": [{ "id": "why_run", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Add another habit: “I also run every morning.”" },
+        "off_topic": { "message": "Tell Emma more. Try “I also run every morning.”" }
+      }
+    },
+    {
+      "id": "why_run",
+      "npc": { "text": "Why do you run?", "gender": "female" },
+      "learning_objective": ["Give a reason", "Use: because, exercise"],
+      "routes": [
+        {
+          "intent": "exercise_strong",
+          "meaning": "Ben says because exercise makes him strong.",
+          "examples": ["Because exercise makes me strong.", "Because exercise makes me strong and healthy.", "Because running makes me strong.", "Because exercise keeps me strong."],
+          "keywords": ["because", "exercise", "makes", "strong"],
+          "hint": "Give your reason: “Because exercise makes me strong.”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        },
+        {
+          "intent": "want_strong",
+          "meaning": "Ben says he wants to be strong and healthy.",
+          "examples": ["Because I want to be strong and healthy.", "Because I want to stay strong.", "Because exercise is good for me.", "Because I want to be fit and strong."],
+          "keywords": ["because", "strong", "healthy", "exercise", "fit"],
+          "hint": "You can say “Because exercise makes me strong.”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Emma why: “Because exercise makes me strong.”" },
+        "off_topic": { "message": "Emma asked why you run. Try “Because exercise makes me strong.”" }
+      }
+    },
+    {
+      "id": "done",
+      "npc": { "text": "That's wonderful, Ben! I want to be healthy too. Keep it up!", "gender": "female" },
+      "end": true
+    }
+  ]
+}

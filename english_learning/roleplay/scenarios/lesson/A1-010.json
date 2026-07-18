@@ -1,0 +1,207 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in A1/010 dialogue + vocab. Learner plays Lily; computer plays Anna. Anna tells about baking a cake, Lily asks the questions. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-A1-010",
+  "lesson": "A1/010",
+  "title": "010 · Baking a Cake",
+  "you": "Lily",
+  "npc": "Anna",
+  "npc_gender": "female",
+  "start": "baked_cake",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "baked_cake",
+      "npc": { "text": "Yesterday I baked a cake with my sister.", "gender": "female" },
+      "learning_objective": ["React and ask", "Use: kind of cake"],
+      "routes": [
+        {
+          "intent": "ask_kind",
+          "meaning": "Lily reacts and asks what kind of cake.",
+          "examples": ["That sounds fun! What kind of cake?", "Fun! What kind of cake?", "What kind of cake?"],
+          "keywords": ["fun", "kind", "cake", "what"],
+          "hint": "💬 Try saying: “That sounds fun! What kind of cake?”",
+          "next_nodes": [{ "id": "strawberry", "weight": 100 }]
+        },
+        {
+          "intent": "ask_who",
+          "meaning": "Lily asks who Anna baked with.",
+          "examples": ["Who did you bake with?", "Who baked with you?", "Did your sister help?"],
+          "keywords": ["who", "sister", "with", "help"],
+          "hint": "You can say “That sounds fun! What kind of cake?”",
+          "next_nodes": [{ "id": "sister_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about the cake: “What kind of cake?”" },
+        "off_topic": { "message": "Anna baked a cake. Ask “What kind of cake?”" }
+      }
+    },
+    {
+      "id": "sister_side",
+      "npc": { "text": "With my big sister! We made something yummy. Guess what kind!", "gender": "female" },
+      "learning_objective": ["Ask what kind of cake"],
+      "routes": [
+        {
+          "intent": "ask_kind",
+          "meaning": "Lily asks what kind of cake.",
+          "examples": ["What kind of cake?", "What cake did you make?", "Which kind of cake?"],
+          "keywords": ["kind", "cake", "what", "which"],
+          "hint": "💬 Try saying: “What kind of cake?”",
+          "next_nodes": [{ "id": "strawberry", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask what kind: “What kind of cake?”" },
+        "off_topic": { "message": "Ask Anna “What kind of cake?”" }
+      }
+    },
+    {
+      "id": "strawberry",
+      "npc": { "text": "We made a strawberry cake.", "gender": "female" },
+      "learning_objective": ["Ask how", "Use: make"],
+      "routes": [
+        {
+          "intent": "ask_how",
+          "meaning": "Lily asks how Anna made it.",
+          "examples": ["How did you make it?", "How did you bake it?", "How do you make it?"],
+          "keywords": ["how", "make", "bake", "it"],
+          "hint": "💬 Try saying: “How did you make it?”",
+          "next_nodes": [{ "id": "mixed", "weight": 100 }]
+        },
+        {
+          "intent": "react_yum",
+          "meaning": "Lily says she loves strawberry.",
+          "examples": ["Yum, I love strawberry!", "Yum! Strawberry is my favorite!", "I love strawberry cake!"],
+          "keywords": ["yum", "love", "strawberry", "favorite"],
+          "hint": "You can ask “How did you make it?”",
+          "next_nodes": [{ "id": "yum_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask how she made it: “How did you make it?”" },
+        "off_topic": { "message": "It was a strawberry cake. Ask “How did you make it?”" }
+      }
+    },
+    {
+      "id": "yum_side",
+      "npc": { "text": "Me too! It was easy to make. Do you want to know how?", "gender": "female" },
+      "learning_objective": ["Ask how she made it"],
+      "routes": [
+        {
+          "intent": "ask_how",
+          "meaning": "Lily asks how Anna made it.",
+          "examples": ["How did you make it?", "Yes, how did you make it?", "How do you bake it?"],
+          "keywords": ["how", "make", "bake"],
+          "hint": "💬 Try saying: “How did you make it?”",
+          "next_nodes": [{ "id": "mixed", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask how: “How did you make it?”" },
+        "off_topic": { "message": "Ask Anna “How did you make it?”" }
+      }
+    },
+    {
+      "id": "mixed",
+      "npc": { "text": "We mixed flour, eggs, and sugar.", "gender": "female" },
+      "learning_objective": ["Ask what next", "Use: then"],
+      "routes": [
+        {
+          "intent": "ask_next",
+          "meaning": "Lily asks what they did next.",
+          "examples": ["Then what did you do?", "What did you do next?", "And then?"],
+          "keywords": ["then", "next", "after", "do"],
+          "hint": "💬 Try saying: “Then what did you do?”",
+          "next_nodes": [{ "id": "oven", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask what happened next: “Then what did you do?”" },
+        "off_topic": { "message": "They mixed flour, eggs, and sugar. Ask “Then what did you do?”" }
+      }
+    },
+    {
+      "id": "oven",
+      "npc": { "text": "We put it in the oven for an hour.", "gender": "female" },
+      "learning_objective": ["Ask about taste", "Use: taste, good"],
+      "routes": [
+        {
+          "intent": "ask_taste",
+          "meaning": "Lily asks if it tasted good.",
+          "examples": ["Did it taste good?", "Was it yummy?", "Did the cake taste good?"],
+          "keywords": ["taste", "good", "yummy", "nice"],
+          "hint": "💬 Try saying: “Did it taste good?”",
+          "next_nodes": [{ "id": "sweet_soft", "weight": 100 }]
+        },
+        {
+          "intent": "ask_time",
+          "meaning": "Lily asks how long it baked.",
+          "examples": ["How long did it bake?", "An hour? That is long!", "How long in the oven?"],
+          "keywords": ["long", "hour", "time", "oven"],
+          "hint": "You can ask “Did it taste good?”",
+          "next_nodes": [{ "id": "time_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about the taste: “Did it taste good?”" },
+        "off_topic": { "message": "It baked for an hour. Ask “Did it taste good?”" }
+      }
+    },
+    {
+      "id": "time_side",
+      "npc": { "text": "A whole hour! Then it was ready. It tasted great, too!", "gender": "female" },
+      "learning_objective": ["Ask if it tasted good"],
+      "routes": [
+        {
+          "intent": "ask_taste",
+          "meaning": "Lily asks if it tasted good.",
+          "examples": ["Did it taste good?", "Was it yummy?", "So it tasted good?"],
+          "keywords": ["taste", "good", "yummy", "nice"],
+          "hint": "💬 Try saying: “Did it taste good?”",
+          "next_nodes": [{ "id": "sweet_soft", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about the taste: “Did it taste good?”" },
+        "off_topic": { "message": "Ask Anna “Did it taste good?”" }
+      }
+    },
+    {
+      "id": "sweet_soft",
+      "npc": { "text": "Yes, it was sweet and soft.", "gender": "female" },
+      "learning_objective": ["Make a request", "Use: want, piece"],
+      "routes": [
+        {
+          "intent": "want_piece",
+          "meaning": "Lily asks for a piece of cake.",
+          "examples": ["I want a piece, please!", "Can I have a piece, please?", "May I have some cake?"],
+          "keywords": ["want", "piece", "please", "cake"],
+          "hint": "💬 Try saying: “I want a piece, please!”",
+          "next_nodes": [{ "id": "end_piece", "weight": 100 }]
+        },
+        {
+          "intent": "ask_teach",
+          "meaning": "Lily asks Anna to teach her.",
+          "examples": ["Can you teach me?", "Can we bake one together?", "Will you show me how?"],
+          "keywords": ["teach", "show", "together", "learn"],
+          "hint": "You can say “I want a piece, please!”",
+          "next_nodes": [{ "id": "end_teach", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask for some cake: “I want a piece, please!”" },
+        "off_topic": { "message": "The cake was sweet and soft. Say “I want a piece, please!”" }
+      }
+    },
+    {
+      "id": "end_piece",
+      "npc": { "text": "Ha! Here you go. Enjoy the cake, Lily!", "gender": "female" },
+      "end": true
+    },
+    {
+      "id": "end_teach",
+      "npc": { "text": "Of course! Let's bake one together soon. Bye, Lily!", "gender": "female" },
+      "end": true
+    }
+  ]
+}

@@ -1,0 +1,207 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in A1/007 dialogue + vocab. Learner plays Ben; computer plays Mia. Mia tells the story, Ben asks the questions. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-A1-007",
+  "lesson": "A1/007",
+  "title": "007 · Shopping with Mom",
+  "you": "Ben",
+  "npc": "Mia",
+  "npc_gender": "female",
+  "start": "shopping",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "shopping",
+      "npc": { "text": "I went shopping with my mom.", "gender": "female" },
+      "learning_objective": ["Ask about the past", "Use: what, buy"],
+      "routes": [
+        {
+          "intent": "ask_buy",
+          "meaning": "Ben asks what Mia bought.",
+          "examples": ["What did you buy?", "What did you get?", "What did you buy at the shop?"],
+          "keywords": ["what", "buy", "get", "shopping"],
+          "hint": "💬 Try saying: “What did you buy?”",
+          "next_nodes": [{ "id": "bought_shoes", "weight": 100 }]
+        },
+        {
+          "intent": "react_fun",
+          "meaning": "Ben reacts that shopping sounds fun.",
+          "examples": ["That sounds fun!", "That is nice!", "Fun! I like shopping."],
+          "keywords": ["fun", "nice", "cool", "like"],
+          "hint": "You can ask “What did you buy?”",
+          "next_nodes": [{ "id": "nice_time", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Mia about the shop: “What did you buy?”" },
+        "off_topic": { "message": "Mia went shopping. Ask her “What did you buy?”" }
+      }
+    },
+    {
+      "id": "nice_time",
+      "npc": { "text": "It was really fun! Can you guess what we bought?", "gender": "female" },
+      "learning_objective": ["Ask what someone bought"],
+      "routes": [
+        {
+          "intent": "ask_buy",
+          "meaning": "Ben asks what Mia bought.",
+          "examples": ["What did you buy?", "What did you get?", "Tell me, what did you buy?"],
+          "keywords": ["what", "buy", "get"],
+          "hint": "💬 Try saying: “What did you buy?”",
+          "next_nodes": [{ "id": "bought_shoes", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask what Mia bought: “What did you buy?”" },
+        "off_topic": { "message": "Mia wants you to guess. Ask “What did you buy?”" }
+      }
+    },
+    {
+      "id": "bought_shoes",
+      "npc": { "text": "We bought some new shoes.", "gender": "female" },
+      "learning_objective": ["Ask a follow-up question", "Use: anything else"],
+      "routes": [
+        {
+          "intent": "ask_else",
+          "meaning": "Ben asks if they bought anything else.",
+          "examples": ["Did you buy anything else?", "Did you get more things?", "What else did you buy?"],
+          "keywords": ["else", "more", "anything", "other"],
+          "hint": "💬 Try saying: “Did you buy anything else?”",
+          "next_nodes": [{ "id": "bought_food", "weight": 100 }]
+        },
+        {
+          "intent": "ask_color",
+          "meaning": "Ben asks about the shoes.",
+          "examples": ["What color are the shoes?", "Are the shoes nice?", "What color?"],
+          "keywords": ["color", "shoes", "nice"],
+          "hint": "You can ask “Did you buy anything else?”",
+          "next_nodes": [{ "id": "shoes_color", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask for more: “Did you buy anything else?”" },
+        "off_topic": { "message": "Mia bought shoes. Ask “Did you buy anything else?”" }
+      }
+    },
+    {
+      "id": "shoes_color",
+      "npc": { "text": "They are white and blue. We bought more things, too!", "gender": "female" },
+      "learning_objective": ["Ask if there is more"],
+      "routes": [
+        {
+          "intent": "ask_else",
+          "meaning": "Ben asks if they bought anything else.",
+          "examples": ["Did you buy anything else?", "What else did you buy?", "Did you get more?"],
+          "keywords": ["else", "more", "anything"],
+          "hint": "💬 Try saying: “Did you buy anything else?”",
+          "next_nodes": [{ "id": "bought_food", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask for more: “Did you buy anything else?”" },
+        "off_topic": { "message": "They bought more things. Ask “Did you buy anything else?”" }
+      }
+    },
+    {
+      "id": "bought_food",
+      "npc": { "text": "Yes, we bought fruit and bread.", "gender": "female" },
+      "learning_objective": ["Ask where", "Use: where, go"],
+      "routes": [
+        {
+          "intent": "ask_where",
+          "meaning": "Ben asks where Mia went.",
+          "examples": ["Where did you go?", "Where did you buy them?", "What shop did you go to?"],
+          "keywords": ["where", "go", "shop", "place"],
+          "hint": "💬 Try saying: “Where did you go?”",
+          "next_nodes": [{ "id": "supermarket", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about the place: “Where did you go?”" },
+        "off_topic": { "message": "They bought fruit and bread. Ask “Where did you go?”" }
+      }
+    },
+    {
+      "id": "supermarket",
+      "npc": { "text": "We went to the big supermarket.", "gender": "female" },
+      "learning_objective": ["Ask about the place", "Use: crowded"],
+      "routes": [
+        {
+          "intent": "ask_crowded",
+          "meaning": "Ben asks if it was crowded.",
+          "examples": ["Was it crowded?", "Were there many people?", "Was it busy?"],
+          "keywords": ["crowded", "busy", "people", "many"],
+          "hint": "💬 Try saying: “Was it crowded?”",
+          "next_nodes": [{ "id": "many_people", "weight": 100 }]
+        },
+        {
+          "intent": "ask_far",
+          "meaning": "Ben asks if the supermarket was far.",
+          "examples": ["Was it far?", "Is the supermarket far?", "Was it a long way?"],
+          "keywords": ["far", "long", "way", "supermarket"],
+          "hint": "You can ask “Was it crowded?”",
+          "next_nodes": [{ "id": "far_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about the shop: “Was it crowded?”" },
+        "off_topic": { "message": "They went to the supermarket. Ask “Was it crowded?”" }
+      }
+    },
+    {
+      "id": "far_side",
+      "npc": { "text": "Not too far. But it was very busy inside!", "gender": "female" },
+      "learning_objective": ["Ask if it was crowded"],
+      "routes": [
+        {
+          "intent": "ask_crowded",
+          "meaning": "Ben asks if it was crowded.",
+          "examples": ["Was it crowded?", "Were there many people?", "Was it busy?"],
+          "keywords": ["crowded", "busy", "people", "many"],
+          "hint": "💬 Try saying: “Was it crowded?”",
+          "next_nodes": [{ "id": "many_people", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about the shop: “Was it crowded?”" },
+        "off_topic": { "message": "The shop was busy. Ask “Was it crowded?”" }
+      }
+    },
+    {
+      "id": "many_people",
+      "npc": { "text": "Yes, there were many people.", "gender": "female" },
+      "learning_objective": ["Give a closing comment"],
+      "routes": [
+        {
+          "intent": "say_tiring",
+          "meaning": "Ben says shopping can be tiring.",
+          "examples": ["Shopping can be tiring!", "That sounds tiring.", "Wow, that is a lot of people!"],
+          "keywords": ["tiring", "tired", "lot", "shopping"],
+          "hint": "💬 Try saying: “Shopping can be tiring!”",
+          "next_nodes": [{ "id": "end_tiring", "weight": 100 }]
+        },
+        {
+          "intent": "say_nice",
+          "meaning": "Ben says Mia bought nice things.",
+          "examples": ["You bought nice things!", "You got good things!", "That is a good day!"],
+          "keywords": ["nice", "good", "things", "day"],
+          "hint": "You can say “Shopping can be tiring!”",
+          "next_nodes": [{ "id": "end_nice", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Give a comment: “Shopping can be tiring!”" },
+        "off_topic": { "message": "The shop was full. Say “Shopping can be tiring!”" }
+      }
+    },
+    {
+      "id": "end_tiring",
+      "npc": { "text": "Ha, yes! But it was a good day. See you, Ben!", "gender": "female" },
+      "end": true
+    },
+    {
+      "id": "end_nice",
+      "npc": { "text": "We did! Thanks, Ben. See you soon!", "gender": "female" },
+      "end": true
+    }
+  ]
+}

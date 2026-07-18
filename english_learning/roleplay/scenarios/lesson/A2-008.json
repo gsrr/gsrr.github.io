@@ -1,0 +1,194 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in A2/008 dialogue + vocab. Learner plays Lily; computer plays Ben. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-A2-008",
+  "lesson": "A2/008",
+  "title": "008 · Learning to Swim",
+  "you": "Lily",
+  "npc": "Ben",
+  "npc_gender": "male",
+  "start": "swim_now",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "swim_now",
+      "npc": { "text": "I can swim now!", "gender": "male" },
+      "learning_objective": ["React to good news", "Use: really, great"],
+      "routes": [
+        {
+          "intent": "react_great",
+          "meaning": "Lily is happy and surprised for Ben.",
+          "examples": ["Really? That is great!", "Wow, that is great!", "That is amazing!", "Really? That's great!"],
+          "keywords": ["really", "great", "wow", "amazing"],
+          "hint": "💬 Try saying: “Really? That is great!”",
+          "next_nodes": [{ "id": "last_year", "weight": 100 }]
+        },
+        {
+          "intent": "doubt",
+          "meaning": "Lily playfully doubts Ben.",
+          "examples": ["Really? I can't believe it!", "No way!", "Are you sure?"],
+          "keywords": ["really", "believe", "no way", "sure"],
+          "hint": "You can be surprised: “Really? That is great!”",
+          "next_nodes": [{ "id": "prove", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Show you are happy: “Really? That is great!”" },
+        "off_topic": { "message": "Ben can swim now! Say “Really? That is great!”" }
+      }
+    },
+    {
+      "id": "prove",
+      "npc": { "text": "It's true! Come to the pool and watch me.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "react_ok",
+          "meaning": "Lily is impressed and wants to see.",
+          "examples": ["Okay, that is great!", "Wow, cool!", "I want to see!"],
+          "keywords": ["okay", "great", "cool", "see"],
+          "hint": "💬 Try saying: “Okay, that is great!”",
+          "next_nodes": [{ "id": "last_year", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “Okay, that is great!”" },
+        "off_topic": { "message": "Tell Ben “That is great!”" }
+      }
+    },
+    {
+      "id": "last_year",
+      "npc": { "text": "Last year I could not swim at all.", "gender": "male" },
+      "learning_objective": ["Ask how someone learned", "Use: how, learn"],
+      "routes": [
+        {
+          "intent": "ask_how",
+          "meaning": "Lily asks how Ben learned to swim.",
+          "examples": ["How did you learn?", "How did you learn to swim?", "So how did you learn?"],
+          "keywords": ["how", "learn", "did"],
+          "hint": "💬 Try saying: “How did you learn?”",
+          "next_nodes": [{ "id": "taught", "weight": 100 }]
+        },
+        {
+          "intent": "react_wow",
+          "meaning": "Lily notices the big change.",
+          "examples": ["Wow, big change!", "That is a big change!", "You improved a lot."],
+          "keywords": ["wow", "change", "improved", "lot"],
+          "hint": "You can react, or ask “How did you learn?”",
+          "next_nodes": [{ "id": "taught", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about it: “How did you learn?”" },
+        "off_topic": { "message": "Ben couldn't swim before. Ask “How did you learn?”" }
+      }
+    },
+    {
+      "id": "taught",
+      "npc": { "text": "My dad taught me every weekend.", "gender": "male" },
+      "learning_objective": ["Ask where", "Use: where, practice"],
+      "routes": [
+        {
+          "intent": "ask_where",
+          "meaning": "Lily asks where Ben practices.",
+          "examples": ["Where do you practice?", "Where do you swim?", "Where do you practice swimming?"],
+          "keywords": ["where", "practice", "swim"],
+          "hint": "💬 Try saying: “Where do you practice?”",
+          "next_nodes": [{ "id": "pool", "weight": 100 }]
+        },
+        {
+          "intent": "ask_when",
+          "meaning": "Lily comments on the practice time.",
+          "examples": ["Every weekend?", "That is a lot of practice.", "Wow, every weekend!"],
+          "keywords": ["weekend", "lot", "practice"],
+          "hint": "You can react, or ask “Where do you practice?”",
+          "next_nodes": [{ "id": "when_react", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask where: “Where do you practice?”" },
+        "off_topic": { "message": "His dad taught him. Ask “Where do you practice?”" }
+      }
+    },
+    {
+      "id": "when_react",
+      "npc": { "text": "Yes, every Saturday and Sunday. Practice helps a lot.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "ask_where2",
+          "meaning": "Lily asks where Ben practices.",
+          "examples": ["Where do you practice?", "Where do you swim?", "Where is the pool?"],
+          "keywords": ["where", "practice", "pool"],
+          "hint": "💬 Try saying: “Where do you practice?”",
+          "next_nodes": [{ "id": "pool", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask “Where do you practice?”" },
+        "off_topic": { "message": "Ask Ben “Where do you practice?”" }
+      }
+    },
+    {
+      "id": "pool",
+      "npc": { "text": "I practice at the swimming pool.", "gender": "male" },
+      "learning_objective": ["Ask if something is difficult", "Use: difficult"],
+      "routes": [
+        {
+          "intent": "ask_hard",
+          "meaning": "Lily asks if swimming is difficult.",
+          "examples": ["Is it difficult?", "Is it hard?", "Is swimming difficult?"],
+          "keywords": ["difficult", "hard", "is it"],
+          "hint": "💬 Try saying: “Is it difficult?”",
+          "next_nodes": [{ "id": "easy_now", "weight": 100 }]
+        },
+        {
+          "intent": "react_pool",
+          "meaning": "Lily reacts to the pool.",
+          "examples": ["The pool is a good place.", "Nice, I like the pool.", "Cool, a big pool?"],
+          "keywords": ["pool", "good", "nice", "cool"],
+          "hint": "You can react, or ask “Is it difficult?”",
+          "next_nodes": [{ "id": "easy_now", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about it: “Is it difficult?”" },
+        "off_topic": { "message": "Ben swims at the pool. Ask “Is it difficult?”" }
+      }
+    },
+    {
+      "id": "easy_now",
+      "npc": { "text": "It was hard at first, but now it is easy.", "gender": "male" },
+      "learning_objective": ["Say what you want to learn", "Use: want, learn"],
+      "routes": [
+        {
+          "intent": "want_learn",
+          "meaning": "Lily says she wants to learn to swim too.",
+          "examples": ["I want to learn how to swim, too.", "I want to learn to swim, too.", "I want to swim, too."],
+          "keywords": ["want", "learn", "swim", "too"],
+          "hint": "💬 Try saying: “I want to learn how to swim, too.”",
+          "next_nodes": [{ "id": "teach_you", "weight": 100 }]
+        },
+        {
+          "intent": "ask_teach",
+          "meaning": "Lily asks Ben to teach her.",
+          "examples": ["Can you teach me?", "Will you teach me?", "Can you help me learn?"],
+          "keywords": ["teach", "help", "learn", "can"],
+          "hint": "You can ask for help, or say “I want to learn how to swim, too.”",
+          "next_nodes": [{ "id": "teach_yes", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Ben your wish: “I want to learn how to swim, too.”" },
+        "off_topic": { "message": "Swimming got easy for Ben. Say “I want to learn how to swim, too.”" }
+      }
+    },
+    {
+      "id": "teach_you",
+      "npc": { "text": "Great! I can help you. Swimming is fun!", "gender": "male" },
+      "end": true
+    },
+    {
+      "id": "teach_yes",
+      "npc": { "text": "Of course! We can start this weekend at the pool.", "gender": "male" },
+      "end": true
+    }
+  ]
+}

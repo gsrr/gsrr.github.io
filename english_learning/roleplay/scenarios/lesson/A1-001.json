@@ -1,0 +1,207 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in A1/001 dialogue + vocab. Learner plays Anna; computer plays Tom. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-A1-001",
+  "lesson": "A1/001",
+  "title": "001 · Yesterday at the Park",
+  "you": "Anna",
+  "npc": "Tom",
+  "npc_gender": "male",
+  "start": "greet",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "greet",
+      "npc": { "text": "Hi, Anna. What did you do yesterday?", "gender": "male" },
+      "learning_objective": ["Talk about the past", "Say where you went"],
+      "routes": [
+        {
+          "intent": "went_park",
+          "meaning": "Anna says she went to the park with her mom.",
+          "examples": ["I went to the park with my mom.", "I went to the park.", "I went to the park with mom yesterday."],
+          "keywords": ["park", "went", "mom"],
+          "hint": "💬 Try saying: “I went to the park with my mom.”",
+          "next_nodes": [{ "id": "sounds_fun", "weight": 100 }]
+        },
+        {
+          "intent": "went_park_alt",
+          "meaning": "Anna went to the park with someone else.",
+          "examples": ["I went to the park with my dad.", "I went outside to play.", "I went to the park with my friend."],
+          "keywords": ["park", "went", "dad", "outside"],
+          "hint": "💬 Try saying: “I went to the park with my mom.”",
+          "next_nodes": [{ "id": "sounds_fun", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Tom where you went: “I went to the park with my mom.”" },
+        "off_topic": { "message": "Tom asked about yesterday. Say “I went to the park with my mom.”" }
+      }
+    },
+    {
+      "id": "sounds_fun",
+      "npc": { "text": "That sounds fun! What did you do there?", "gender": "male" },
+      "learning_objective": ["Say what you did", "Use past tense verbs"],
+      "routes": [
+        {
+          "intent": "played_ran",
+          "meaning": "Anna played with her ball and ran on the grass.",
+          "examples": ["I played with my ball and I ran on the grass.", "I played with my ball and ran.", "I played ball and ran on the grass."],
+          "keywords": ["played", "ball", "ran", "grass"],
+          "hint": "💬 Try saying: “I played with my ball and I ran on the grass.”",
+          "next_nodes": [{ "id": "ask_tree", "weight": 100 }]
+        },
+        {
+          "intent": "played_ball",
+          "meaning": "Anna played with her ball.",
+          "examples": ["I played with my ball.", "I played ball.", "I ran on the grass."],
+          "keywords": ["played", "ball", "ran", "grass"],
+          "hint": "💬 Try saying: “I played with my ball and I ran on the grass.”",
+          "next_nodes": [{ "id": "ask_tree", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Tom what you did: “I played with my ball and I ran on the grass.”" },
+        "off_topic": { "message": "Tom wants to know what you did. Say “I played with my ball and I ran on the grass.”" }
+      }
+    },
+    {
+      "id": "ask_tree",
+      "npc": { "text": "Did you climb the big tree?", "gender": "male" },
+      "learning_objective": ["Answer yes/no about the past", "Give a reason with because"],
+      "routes": [
+        {
+          "intent": "no_tree",
+          "meaning": "Anna did not climb the tree because it was too high.",
+          "examples": ["No, I didn't, because it was too high.", "No, it was too high.", "No, I did not climb it."],
+          "keywords": ["no", "didn't", "high", "tree"],
+          "hint": "💬 Try saying: “No, I didn't, because it was too high.”",
+          "next_nodes": [{ "id": "tom_rain", "weight": 100 }]
+        },
+        {
+          "intent": "yes_tree",
+          "meaning": "Anna says she did climb the tree.",
+          "examples": ["Yes, I climbed the tree!", "Yes, I did.", "Yes, I climbed it."],
+          "keywords": ["yes", "climbed", "tree", "did"],
+          "hint": "💬 Try saying: “No, I didn't, because it was too high.”",
+          "next_nodes": [{ "id": "tree_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Did you climb the tree? Say “No, I didn't, because it was too high.”" },
+        "off_topic": { "message": "Tom asked about the big tree. Try “No, I didn't, because it was too high.”" }
+      }
+    },
+    {
+      "id": "tree_reply",
+      "npc": { "text": "Wow, you are so brave!", "gender": "male" },
+      "routes": [
+        {
+          "intent": "was_fun",
+          "meaning": "Anna says it was fun.",
+          "examples": ["That was fun!", "It was fun.", "Yes, it was fun!"],
+          "keywords": ["fun", "yes", "great"],
+          "hint": "💬 Try saying: “That was fun!”",
+          "next_nodes": [{ "id": "tom_rain", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Tom about it: “That was fun!”" },
+        "off_topic": { "message": "Say how it was: “That was fun!”" }
+      }
+    },
+    {
+      "id": "tom_rain",
+      "npc": { "text": "I went to the park too, but it started to rain.", "gender": "male" },
+      "learning_objective": ["React to news", "Ask a follow-up question"],
+      "routes": [
+        {
+          "intent": "oh_no",
+          "meaning": "Anna reacts and asks what Tom did then.",
+          "examples": ["Oh no! So what did you do then?", "Oh no! What did you do?", "So what did you do then?"],
+          "keywords": ["oh", "no", "what", "then"],
+          "hint": "💬 Try saying: “Oh no! So what did you do then?”",
+          "next_nodes": [{ "id": "tom_tv", "weight": 100 }]
+        },
+        {
+          "intent": "ask_wet",
+          "meaning": "Anna asks if Tom got wet.",
+          "examples": ["Did you get wet?", "Oh no! Did you get wet?", "Were you wet?"],
+          "keywords": ["wet", "rain", "did"],
+          "hint": "💬 Try saying: “Oh no! So what did you do then?”",
+          "next_nodes": [{ "id": "wet_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "React to Tom: “Oh no! So what did you do then?”" },
+        "off_topic": { "message": "It started to rain! Say “Oh no! So what did you do then?”" }
+      }
+    },
+    {
+      "id": "wet_reply",
+      "npc": { "text": "Yes, a little bit! I ran home fast.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "then_what",
+          "meaning": "Anna asks what Tom did then.",
+          "examples": ["What did you do then?", "So what did you do?", "And then?"],
+          "keywords": ["what", "then", "do"],
+          "hint": "💬 Try saying: “What did you do then?”",
+          "next_nodes": [{ "id": "tom_tv", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Tom: “What did you do then?”" },
+        "off_topic": { "message": "Tom ran home. Ask “What did you do then?”" }
+      }
+    },
+    {
+      "id": "tom_tv",
+      "npc": { "text": "I went home and watched TV.", "gender": "male" },
+      "learning_objective": ["Make a plan with a friend"],
+      "routes": [
+        {
+          "intent": "play_together",
+          "meaning": "Anna suggests playing together next time.",
+          "examples": ["Next time, let's play together!", "Let's play together next time!", "Next time we can play together."],
+          "keywords": ["next", "time", "play", "together"],
+          "hint": "💬 Try saying: “Next time, let's play together!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        },
+        {
+          "intent": "what_watch",
+          "meaning": "Anna asks what Tom watched.",
+          "examples": ["What did you watch?", "What was on TV?", "What did you see on TV?"],
+          "keywords": ["what", "watch", "tv"],
+          "hint": "💬 Try saying: “Next time, let's play together!”",
+          "next_nodes": [{ "id": "watch_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Make a plan: “Next time, let's play together!”" },
+        "off_topic": { "message": "Tom watched TV. Say “Next time, let's play together!”" }
+      }
+    },
+    {
+      "id": "watch_reply",
+      "npc": { "text": "I watched a fun cartoon! Next time, let's play together. Okay?", "gender": "male" },
+      "routes": [
+        {
+          "intent": "yes_together",
+          "meaning": "Anna agrees to play together next time.",
+          "examples": ["Yes, let's play together!", "Okay, let's play!", "Yes, next time!"],
+          "keywords": ["yes", "play", "together", "okay"],
+          "hint": "💬 Try saying: “Yes, let's play together!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say yes: “Yes, let's play together!”" },
+        "off_topic": { "message": "Tom wants to play next time. Say “Yes, let's play together!”" }
+      }
+    },
+    {
+      "id": "done",
+      "npc": { "text": "Yay! It's a plan. See you at the park, Anna!", "gender": "male" },
+      "end": true
+    }
+  ]
+}

@@ -1,0 +1,183 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in Pre-A1/006 dialogue + vocab. Learner plays Mia; computer plays Sam. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-Pre-A1-006",
+  "lesson": "Pre-A1/006",
+  "title": "006 · Balloons",
+  "you": "Mia",
+  "npc": "Sam",
+  "npc_gender": "male",
+  "start": "look_balloons",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "look_balloons",
+      "npc": { "text": "Look at my balloons!", "gender": "male" },
+      "learning_objective": ["Ask how many"],
+      "routes": [
+        {
+          "intent": "how_many",
+          "meaning": "Mia is excited and asks how many balloons.",
+          "examples": ["Wow! How many balloons?", "Wow! How many balloons?", "How many balloons?", "Cool! How many balloons?"],
+          "keywords": ["wow", "how", "many", "balloons"],
+          "hint": "Ask how many: “Wow! How many balloons?”",
+          "next_nodes": [{ "id": "three", "weight": 100 }]
+        },
+        {
+          "intent": "just_wow",
+          "meaning": "Mia only says wow, nice balloons.",
+          "examples": ["Wow! Nice balloons!", "Wow! Pretty balloons!", "Wow!"],
+          "keywords": ["wow", "balloons", "nice"],
+          "hint": "Nice! Now ask “How many balloons?”",
+          "next_nodes": [{ "id": "count_them", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about them: “Wow! How many balloons?”" },
+        "off_topic": { "message": "Sam has balloons! Say “Wow! How many balloons?”" }
+      }
+    },
+    {
+      "id": "count_them",
+      "npc": { "text": "Thank you! Do you want to count them?", "gender": "male" },
+      "learning_objective": ["Ask how many"],
+      "routes": [
+        {
+          "intent": "ask_many",
+          "meaning": "Mia asks how many balloons.",
+          "examples": ["How many balloons?", "How many are there?", "How many?"],
+          "keywords": ["how", "many", "balloons"],
+          "hint": "Ask “How many balloons?”",
+          "next_nodes": [{ "id": "three", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask the number: “How many balloons?”" },
+        "off_topic": { "message": "Let us count! Say “How many balloons?”" }
+      }
+    },
+    {
+      "id": "three",
+      "npc": { "text": "I have three balloons.", "gender": "male" },
+      "learning_objective": ["Say which color you like"],
+      "routes": [
+        {
+          "intent": "like_red",
+          "meaning": "Mia says she likes the red balloon.",
+          "examples": ["I like the red balloon.", "I like the red balloon!", "I like the red one.", "I like red!"],
+          "keywords": ["like", "red", "balloon"],
+          "hint": "Say which you like: “I like the red balloon.”",
+          "next_nodes": [{ "id": "like_blue", "weight": 100 }]
+        },
+        {
+          "intent": "like_other",
+          "meaning": "Mia says she likes a different color balloon.",
+          "examples": ["I like the green balloon.", "I like the blue balloon.", "I like the green one."],
+          "keywords": ["like", "green", "blue", "balloon"],
+          "hint": "You can say “I like the red balloon.” or name another color.",
+          "next_nodes": [{ "id": "like_blue", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Sam which you like: “I like the red balloon.”" },
+        "off_topic": { "message": "There are three balloons! Say “I like the red balloon.”" }
+      }
+    },
+    {
+      "id": "like_blue",
+      "npc": { "text": "I like the blue one.", "gender": "male" },
+      "learning_objective": ["Say what is big"],
+      "routes": [
+        {
+          "intent": "green_big",
+          "meaning": "Mia points out the green balloon is big.",
+          "examples": ["Look! The green balloon is big.", "The green balloon is big!", "Look, the green one is big.", "The green balloon is so big."],
+          "keywords": ["green", "balloon", "big", "look"],
+          "hint": "Say what is big: “Look! The green balloon is big.”",
+          "next_nodes": [{ "id": "can_have", "weight": 100 }]
+        },
+        {
+          "intent": "just_nice",
+          "meaning": "Mia says the blue one is nice.",
+          "examples": ["The blue one is nice!", "Blue is nice, too!", "I like blue, too!"],
+          "keywords": ["blue", "nice"],
+          "hint": "Nice! You can also say “Look! The green balloon is big.”",
+          "next_nodes": [{ "id": "can_have", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Look at the big one: “Look! The green balloon is big.”" },
+        "off_topic": { "message": "Sam likes blue! Say “Look! The green balloon is big.”" }
+      }
+    },
+    {
+      "id": "can_have",
+      "npc": { "text": "Can I have one?", "gender": "male" },
+      "learning_objective": ["Give something to a friend"],
+      "routes": [
+        {
+          "intent": "yes_here",
+          "meaning": "Mia says yes and gives Sam a balloon.",
+          "examples": ["Yes, you can. Here you are.", "Yes! Here you are.", "Sure, here you are.", "Okay, here you are."],
+          "keywords": ["yes", "here", "you"],
+          "hint": "Give one to Sam: “Yes, you can. Here you are.”",
+          "next_nodes": [{ "id": "favorite", "weight": 100 }]
+        },
+        {
+          "intent": "not_yet",
+          "meaning": "Mia says the balloons are hers.",
+          "examples": ["No, they are mine.", "Wait, they are mine.", "Not yet."],
+          "keywords": ["no", "mine", "wait"],
+          "hint": "You can share! Say “Yes, you can. Here you are.”",
+          "next_nodes": [{ "id": "please", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Share a balloon: “Yes, you can. Here you are.”" },
+        "off_topic": { "message": "Sam wants one. Say “Yes, you can. Here you are.”" }
+      }
+    },
+    {
+      "id": "please",
+      "npc": { "text": "Please? Just one balloon?", "gender": "male" },
+      "learning_objective": ["Give something to a friend"],
+      "routes": [
+        {
+          "intent": "ok_here",
+          "meaning": "Mia gives Sam a balloon.",
+          "examples": ["Yes, you can. Here you are.", "Okay, here you are.", "Here you are!"],
+          "keywords": ["yes", "here", "you"],
+          "hint": "Share the balloon: “Yes, you can. Here you are.”",
+          "next_nodes": [{ "id": "favorite", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Just one! Say “Yes, you can. Here you are.”" },
+        "off_topic": { "message": "Please share. Say “Yes, you can. Here you are.”" }
+      }
+    },
+    {
+      "id": "favorite",
+      "npc": { "text": "Thank you! Red is my favorite.", "gender": "male" },
+      "learning_objective": ["Say balloons are fun"],
+      "routes": [
+        {
+          "intent": "fun",
+          "meaning": "Mia says balloons are fun.",
+          "examples": ["Balloons are fun!", "Balloons are so fun!", "Yes! Balloons are fun.", "Balloons are fun!"],
+          "keywords": ["balloons", "fun"],
+          "hint": "Say “Balloons are fun!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say how you feel: “Balloons are fun!”" },
+        "off_topic": { "message": "Red is Sam's favorite! Say “Balloons are fun!”" }
+      }
+    },
+    {
+      "id": "done",
+      "npc": { "text": "Yes! Balloons are so much fun. Thank you!", "gender": "male" },
+      "end": true
+    }
+  ]
+}

@@ -1,0 +1,175 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in Pre-A1/004 dialogue + vocab. Learner plays Anna; computer plays Tom. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-Pre-A1-004",
+  "lesson": "Pre-A1/004",
+  "title": "004 · My Cat",
+  "you": "Anna",
+  "npc": "Tom",
+  "npc_gender": "male",
+  "start": "have_cat",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "have_cat",
+      "npc": { "text": "Look! I have a cat.", "gender": "male" },
+      "learning_objective": ["Ask for a name"],
+      "routes": [
+        {
+          "intent": "ask_name",
+          "meaning": "Anna is excited and asks the cat's name.",
+          "examples": ["Wow! What is its name?", "Wow! What is its name?", "What is its name?", "Cool! What is its name?"],
+          "keywords": ["wow", "what", "name"],
+          "hint": "Ask its name: “Wow! What is its name?”",
+          "next_nodes": [{ "id": "its_name", "weight": 100 }]
+        },
+        {
+          "intent": "ask_what",
+          "meaning": "Anna asks what the animal is.",
+          "examples": ["Wow! What is it?", "What is it?", "Wow! Is it a cat?"],
+          "keywords": ["wow", "what", "cat"],
+          "hint": "You can ask “Wow! What is its name?”",
+          "next_nodes": [{ "id": "its_a_cat", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about the cat: “Wow! What is its name?”" },
+        "off_topic": { "message": "Tom has a cat! Say “Wow! What is its name?”" }
+      }
+    },
+    {
+      "id": "its_a_cat",
+      "npc": { "text": "It is my cat! Do you want to know its name?", "gender": "male" },
+      "learning_objective": ["Ask for a name"],
+      "routes": [
+        {
+          "intent": "yes_name",
+          "meaning": "Anna asks the cat's name.",
+          "examples": ["Yes! What is its name?", "What is its name?", "Yes, what is its name?"],
+          "keywords": ["yes", "what", "name"],
+          "hint": "Ask “What is its name?”",
+          "next_nodes": [{ "id": "its_name", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask the cat's name: “What is its name?”" },
+        "off_topic": { "message": "Find out its name! Say “What is its name?”" }
+      }
+    },
+    {
+      "id": "its_name",
+      "npc": { "text": "Its name is Coco.", "gender": "male" },
+      "learning_objective": ["Say it is cute", "Ask about color"],
+      "routes": [
+        {
+          "intent": "cute_and_color",
+          "meaning": "Anna says Coco is cute and asks its color.",
+          "examples": ["Coco is so cute. What color is it?", "Coco is cute! What color is it?", "So cute! What color is it?", "Coco is so cute. What color?"],
+          "keywords": ["cute", "color", "coco"],
+          "hint": "Say it is cute and ask color: “Coco is so cute. What color is it?”",
+          "next_nodes": [{ "id": "black_white", "weight": 100 }]
+        },
+        {
+          "intent": "just_cute",
+          "meaning": "Anna only says Coco is cute.",
+          "examples": ["Coco is so cute!", "Coco is cute!", "So cute!"],
+          "keywords": ["cute", "coco"],
+          "hint": "Nice! Now ask “What color is it?”",
+          "next_nodes": [{ "id": "color_too", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about the cat: “Coco is so cute. What color is it?”" },
+        "off_topic": { "message": "The cat is Coco! Say “Coco is so cute. What color is it?”" }
+      }
+    },
+    {
+      "id": "color_too",
+      "npc": { "text": "Yes, Coco is cute! Do you see its color?", "gender": "male" },
+      "learning_objective": ["Ask about color"],
+      "routes": [
+        {
+          "intent": "ask_color2",
+          "meaning": "Anna asks what color the cat is.",
+          "examples": ["What color is it?", "What color is Coco?", "What color?"],
+          "keywords": ["what", "color"],
+          "hint": "Ask “What color is it?”",
+          "next_nodes": [{ "id": "black_white", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask the color: “What color is it?”" },
+        "off_topic": { "message": "Look at Coco. Say “What color is it?”" }
+      }
+    },
+    {
+      "id": "black_white",
+      "npc": { "text": "It is black and white.", "gender": "male" },
+      "learning_objective": ["Ask to pet the cat"],
+      "routes": [
+        {
+          "intent": "can_pet",
+          "meaning": "Anna asks if she can pet the cat.",
+          "examples": ["Can I pet the cat?", "Can I pet Coco?", "May I pet the cat?", "Can I pet it?"],
+          "keywords": ["can", "pet", "cat"],
+          "hint": "Ask to pet the cat: “Can I pet the cat?”",
+          "next_nodes": [{ "id": "yes_pet", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask to pet Coco: “Can I pet the cat?”" },
+        "off_topic": { "message": "Coco is black and white! Say “Can I pet the cat?”" }
+      }
+    },
+    {
+      "id": "yes_pet",
+      "npc": { "text": "Yes, you can. Coco likes you.", "gender": "male" },
+      "learning_objective": ["Say the cat is soft", "Say what you like"],
+      "routes": [
+        {
+          "intent": "soft_like",
+          "meaning": "Anna says the cat is soft and she likes cats.",
+          "examples": ["The cat is soft. I like cats.", "The cat is so soft. I like cats.", "It is soft! I like cats.", "The cat is soft. I love cats."],
+          "keywords": ["soft", "like", "cat", "cats"],
+          "hint": "Say how it feels and what you like: “The cat is soft. I like cats.”",
+          "next_nodes": [{ "id": "likes_play", "weight": 100 }]
+        },
+        {
+          "intent": "just_soft",
+          "meaning": "Anna only says the cat is soft.",
+          "examples": ["The cat is soft!", "It is so soft!", "Coco is soft!"],
+          "keywords": ["soft", "cat"],
+          "hint": "Nice! You can also say “I like cats.”",
+          "next_nodes": [{ "id": "likes_play", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Pet the soft cat: “The cat is soft. I like cats.”" },
+        "off_topic": { "message": "Coco likes you! Say “The cat is soft. I like cats.”" }
+      }
+    },
+    {
+      "id": "likes_play",
+      "npc": { "text": "Coco likes to play, too.", "gender": "male" },
+      "learning_objective": ["Say let us play"],
+      "routes": [
+        {
+          "intent": "lets_play",
+          "meaning": "Anna says let us play with Coco.",
+          "examples": ["Let us play with Coco!", "Let us play with Coco!", "Yes! Let us play with Coco.", "Okay, let us play with Coco!"],
+          "keywords": ["play", "coco", "let"],
+          "hint": "Say “Let us play with Coco!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Time to play! Say “Let us play with Coco!”" },
+        "off_topic": { "message": "Coco wants to play. Say “Let us play with Coco!”" }
+      }
+    },
+    {
+      "id": "done",
+      "npc": { "text": "Yay! Let us play with Coco together. This is fun!", "gender": "male" },
+      "end": true
+    }
+  ]
+}

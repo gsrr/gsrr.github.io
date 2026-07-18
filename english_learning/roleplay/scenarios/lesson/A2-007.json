@@ -1,0 +1,212 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in A2/007 dialogue + vocab. Learner plays Mia; computer plays Sam. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-A2-007",
+  "lesson": "A2/007",
+  "title": "007 · Saving Money",
+  "you": "Mia",
+  "npc": "Sam",
+  "npc_gender": "male",
+  "start": "saving",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "saving",
+      "npc": { "text": "I am saving my money.", "gender": "male" },
+      "learning_objective": ["Ask why with a reason", "Use: saving, money"],
+      "routes": [
+        {
+          "intent": "ask_why",
+          "meaning": "Mia asks why Sam is saving money.",
+          "examples": ["Why are you saving money?", "Why are you saving?", "Why do you save money?", "What are you saving for?"],
+          "keywords": ["why", "saving", "save", "money"],
+          "hint": "💬 Try saying: “Why are you saving money?”",
+          "next_nodes": [{ "id": "why", "weight": 100 }]
+        },
+        {
+          "intent": "guess_reason",
+          "meaning": "Mia guesses what Sam is saving for.",
+          "examples": ["Are you saving for a toy?", "Do you want a new game?", "Is it for a present?"],
+          "keywords": ["toy", "game", "present", "buy"],
+          "hint": "You can guess, or ask “Why are you saving money?”",
+          "next_nodes": [{ "id": "guess", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Sam his reason: “Why are you saving money?”" },
+        "off_topic": { "message": "Sam is saving money. Ask him “Why are you saving money?”" }
+      }
+    },
+    {
+      "id": "guess",
+      "npc": { "text": "Good guess! But it is not a toy. Ask me why.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "ask_why2",
+          "meaning": "Mia asks why Sam is saving.",
+          "examples": ["Why are you saving money?", "So why are you saving?", "Why then?"],
+          "keywords": ["why", "saving", "money"],
+          "hint": "💬 Try saying: “Why are you saving money?”",
+          "next_nodes": [{ "id": "why", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask him why: “Why are you saving money?”" },
+        "off_topic": { "message": "Ask Sam “Why are you saving money?”" }
+      }
+    },
+    {
+      "id": "why",
+      "npc": { "text": "Because I want to buy a new bike.", "gender": "male" },
+      "learning_objective": ["Ask about cost", "Use: bike, cost"],
+      "routes": [
+        {
+          "intent": "ask_cost",
+          "meaning": "Mia asks how much the bike costs.",
+          "examples": ["How much does the bike cost?", "How much is the bike?", "What does it cost?"],
+          "keywords": ["how much", "cost", "bike", "dollars"],
+          "hint": "💬 Try saying: “How much does the bike cost?”",
+          "next_nodes": [{ "id": "cost", "weight": 100 }]
+        },
+        {
+          "intent": "react_bike",
+          "meaning": "Mia reacts happily to the bike.",
+          "examples": ["A new bike! Cool!", "Nice, I love bikes.", "That sounds great."],
+          "keywords": ["cool", "nice", "great", "love", "bike"],
+          "hint": "You can react, or ask “How much does the bike cost?”",
+          "next_nodes": [{ "id": "bike_react", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about the price: “How much does the bike cost?”" },
+        "off_topic": { "message": "Sam wants a bike. Ask “How much does the bike cost?”" }
+      }
+    },
+    {
+      "id": "bike_react",
+      "npc": { "text": "Yes! It is a red bike. I really want it.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "ask_cost2",
+          "meaning": "Mia asks how much the bike costs.",
+          "examples": ["How much does the bike cost?", "How much is it?", "What does it cost?"],
+          "keywords": ["how much", "cost", "bike"],
+          "hint": "💬 Try saying: “How much does the bike cost?”",
+          "next_nodes": [{ "id": "cost", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask the price: “How much does the bike cost?”" },
+        "off_topic": { "message": "Ask Sam “How much does the bike cost?”" }
+      }
+    },
+    {
+      "id": "cost",
+      "npc": { "text": "It costs fifty dollars.", "gender": "male" },
+      "learning_objective": ["Ask how much someone has", "Use: dollars"],
+      "routes": [
+        {
+          "intent": "ask_have",
+          "meaning": "Mia asks how much money Sam has now.",
+          "examples": ["How much do you have now?", "How much do you have?", "How much money do you have?"],
+          "keywords": ["how much", "have", "now", "money"],
+          "hint": "💬 Try saying: “How much do you have now?”",
+          "next_nodes": [{ "id": "have", "weight": 100 }]
+        },
+        {
+          "intent": "react_expensive",
+          "meaning": "Mia says fifty dollars is a lot.",
+          "examples": ["That is a lot!", "Fifty dollars is a lot of money.", "Wow, that is expensive."],
+          "keywords": ["lot", "expensive", "much", "wow"],
+          "hint": "You can react, or ask “How much do you have now?”",
+          "next_nodes": [{ "id": "expensive", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask how much he saved: “How much do you have now?”" },
+        "off_topic": { "message": "The bike is fifty dollars. Ask “How much do you have now?”" }
+      }
+    },
+    {
+      "id": "expensive",
+      "npc": { "text": "Yes, it is a lot. That is why I save every week.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "ask_have2",
+          "meaning": "Mia asks how much money Sam has now.",
+          "examples": ["How much do you have now?", "How much do you have?", "How much money now?"],
+          "keywords": ["how much", "have", "now"],
+          "hint": "💬 Try saying: “How much do you have now?”",
+          "next_nodes": [{ "id": "have", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask him: “How much do you have now?”" },
+        "off_topic": { "message": "Ask Sam “How much do you have now?”" }
+      }
+    },
+    {
+      "id": "have",
+      "npc": { "text": "I have thirty dollars.", "gender": "male" },
+      "learning_objective": ["Do simple math out loud", "Use: more, need"],
+      "routes": [
+        {
+          "intent": "need_more",
+          "meaning": "Mia works out that Sam needs twenty more dollars.",
+          "examples": ["So you need twenty more dollars.", "You need twenty more dollars.", "So you need twenty dollars more."],
+          "keywords": ["twenty", "more", "dollars", "need"],
+          "hint": "💬 Try saying: “So you need twenty more dollars.”",
+          "next_nodes": [{ "id": "save_weeks", "weight": 100 }]
+        },
+        {
+          "intent": "encourage",
+          "meaning": "Mia cheers Sam on.",
+          "examples": ["That is a good start!", "You are almost there.", "Keep going!"],
+          "keywords": ["good", "start", "almost", "keep"],
+          "hint": "You can cheer, or say “So you need twenty more dollars.”",
+          "next_nodes": [{ "id": "save_weeks", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Do the math: “So you need twenty more dollars.”" },
+        "off_topic": { "message": "He has thirty of fifty. Say “So you need twenty more dollars.”" }
+      }
+    },
+    {
+      "id": "save_weeks",
+      "npc": { "text": "Yes. I will save for two more weeks.", "gender": "male" },
+      "learning_objective": ["Wish someone luck"],
+      "routes": [
+        {
+          "intent": "wish_luck",
+          "meaning": "Mia wishes Sam good luck.",
+          "examples": ["Good luck! I am sure you can do it.", "Good luck! You can do it.", "Good luck!"],
+          "keywords": ["good luck", "sure", "can", "do it"],
+          "hint": "💬 Try saying: “Good luck! I am sure you can do it.”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        },
+        {
+          "intent": "offer_help",
+          "meaning": "Mia offers to help Sam save.",
+          "examples": ["I can help you save.", "Do you want some help?", "I will lend you some money."],
+          "keywords": ["help", "lend", "money"],
+          "hint": "You can offer help, or say “Good luck! I am sure you can do it.”",
+          "next_nodes": [{ "id": "thanks_help", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Cheer for Sam: “Good luck! I am sure you can do it.”" },
+        "off_topic": { "message": "Sam will save two more weeks. Say “Good luck! I am sure you can do it.”" }
+      }
+    },
+    {
+      "id": "thanks_help",
+      "npc": { "text": "That is so kind! Thank you, Mia.", "gender": "male" },
+      "end": true
+    },
+    {
+      "id": "done",
+      "npc": { "text": "Thanks, Mia! I will show you my new bike soon.", "gender": "male" },
+      "end": true
+    }
+  ]
+}

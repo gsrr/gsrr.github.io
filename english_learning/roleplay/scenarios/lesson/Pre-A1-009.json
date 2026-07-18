@@ -1,0 +1,230 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in Pre-A1/009 dialogue + vocab. Learner plays Ben; computer plays Mia. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-Pre-A1-009",
+  "lesson": "Pre-A1/009",
+  "title": "009 · At the Beach",
+  "you": "Ben",
+  "npc": "Mia",
+  "npc_gender": "female",
+  "start": "sea",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "sea",
+      "npc": { "text": "Look at the sea!", "gender": "female" },
+      "learning_objective": ["Describe the sea", "Use: blue, big"],
+      "routes": [
+        {
+          "intent": "describe_sea",
+          "meaning": "Ben says the sea is blue and big.",
+          "examples": ["The sea is blue and big.", "The sea is blue.", "The sea is big and blue."],
+          "keywords": ["sea", "blue", "big"],
+          "hint": "💬 Try saying: “The sea is blue and big.”",
+          "next_nodes": [{ "id": "boat", "weight": 100 }]
+        },
+        {
+          "intent": "see_boat_early",
+          "meaning": "Ben spots a boat.",
+          "examples": ["I see a boat.", "Look, a boat!", "I can see a boat."],
+          "keywords": ["boat", "see", "look"],
+          "hint": "💬 Try saying: “The sea is blue and big.”",
+          "next_nodes": [{ "id": "boat_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Mia about the sea: “The sea is blue and big.”" },
+        "off_topic": { "message": "Look at the sea! Say “The sea is blue and big.”" }
+      }
+    },
+    {
+      "id": "boat_side",
+      "npc": { "text": "Yes, a boat! And the sea is blue and big, right?", "gender": "female" },
+      "routes": [
+        {
+          "intent": "describe_sea",
+          "meaning": "Ben says the sea is blue and big.",
+          "examples": ["Yes, the sea is blue and big.", "The sea is blue.", "The sea is big."],
+          "keywords": ["sea", "blue", "big"],
+          "hint": "💬 Try saying: “The sea is blue and big.”",
+          "next_nodes": [{ "id": "boat", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “The sea is blue and big.”" },
+        "off_topic": { "message": "Is the sea big? Say “The sea is blue and big.”" }
+      }
+    },
+    {
+      "id": "boat",
+      "npc": { "text": "I can see a boat.", "gender": "female" },
+      "learning_objective": ["Suggest playing", "Use: sand, play"],
+      "routes": [
+        {
+          "intent": "play_sand",
+          "meaning": "Ben says let us play in the sand.",
+          "examples": ["Let us play in the sand.", "Let us play in the sand!", "Let us play."],
+          "keywords": ["sand", "play", "let"],
+          "hint": "💬 Try saying: “Let us play in the sand.”",
+          "next_nodes": [{ "id": "shell", "weight": 100 }]
+        },
+        {
+          "intent": "like_boat",
+          "meaning": "Ben talks about the boat.",
+          "examples": ["I like the boat.", "The boat is big.", "Wow, a boat!"],
+          "keywords": ["boat", "like", "big"],
+          "hint": "💬 Try saying: “Let us play in the sand.”",
+          "next_nodes": [{ "id": "boat_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Let us play! Say “Let us play in the sand.”" },
+        "off_topic": { "message": "The sand is soft. Say “Let us play in the sand.”" }
+      }
+    },
+    {
+      "id": "boat_reply",
+      "npc": { "text": "The boat is nice! Now, shall we play in the sand?", "gender": "female" },
+      "routes": [
+        {
+          "intent": "play_sand",
+          "meaning": "Ben says let us play in the sand.",
+          "examples": ["Let us play in the sand.", "Yes, let us play in the sand.", "Let us play."],
+          "keywords": ["sand", "play", "let"],
+          "hint": "💬 Try saying: “Let us play in the sand.”",
+          "next_nodes": [{ "id": "shell", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “Let us play in the sand.”" },
+        "off_topic": { "message": "Let us play! Say “Let us play in the sand.”" }
+      }
+    },
+    {
+      "id": "shell",
+      "npc": { "text": "I have a little shell.", "gender": "female" },
+      "learning_objective": ["Say something is pretty", "Use: shell, pretty"],
+      "routes": [
+        {
+          "intent": "pretty_shell",
+          "meaning": "Ben says the shell is pretty.",
+          "examples": ["The shell is pretty.", "It is pretty.", "The shell is nice."],
+          "keywords": ["shell", "pretty", "nice"],
+          "hint": "💬 Try saying: “The shell is pretty.”",
+          "next_nodes": [{ "id": "swim_q", "weight": 100 }]
+        },
+        {
+          "intent": "want_shell",
+          "meaning": "Ben wants to see the shell.",
+          "examples": ["I like your shell.", "Can I see the shell?", "I want a shell, too."],
+          "keywords": ["shell", "like", "see"],
+          "hint": "💬 Try saying: “The shell is pretty.”",
+          "next_nodes": [{ "id": "shell_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Mia about the shell: “The shell is pretty.”" },
+        "off_topic": { "message": "Look at the shell. Say “The shell is pretty.”" }
+      }
+    },
+    {
+      "id": "shell_side",
+      "npc": { "text": "Here, look! The shell is pretty, right?", "gender": "female" },
+      "routes": [
+        {
+          "intent": "pretty_shell",
+          "meaning": "Ben says the shell is pretty.",
+          "examples": ["The shell is pretty.", "Yes, it is pretty.", "The shell is nice."],
+          "keywords": ["shell", "pretty", "nice"],
+          "hint": "💬 Try saying: “The shell is pretty.”",
+          "next_nodes": [{ "id": "swim_q", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “The shell is pretty.”" },
+        "off_topic": { "message": "Is the shell pretty? Say “The shell is pretty.”" }
+      }
+    },
+    {
+      "id": "swim_q",
+      "npc": { "text": "Can you swim?", "gender": "female" },
+      "learning_objective": ["Answer can / can't", "Use: swim"],
+      "routes": [
+        {
+          "intent": "yes_swim",
+          "meaning": "Ben says he can swim.",
+          "examples": ["Yes, I can swim.", "Yes, I can!", "I can swim."],
+          "keywords": ["yes", "can", "swim"],
+          "hint": "💬 Try saying: “Yes, I can swim.”",
+          "next_nodes": [{ "id": "beach_fun", "weight": 100 }]
+        },
+        {
+          "intent": "no_swim",
+          "meaning": "Ben cannot swim yet.",
+          "examples": ["No, I can not swim.", "No, I can't.", "Not yet."],
+          "keywords": ["no", "not", "can't"],
+          "hint": "💬 Try saying: “Yes, I can swim.”",
+          "next_nodes": [{ "id": "cant_swim", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Can you swim? Say “Yes, I can swim.”" },
+        "off_topic": { "message": "Mia asked about swimming. Say “Yes, I can swim.”" }
+      }
+    },
+    {
+      "id": "cant_swim",
+      "npc": { "text": "That is okay! I can help you swim.", "gender": "female" },
+      "routes": [
+        {
+          "intent": "ready",
+          "meaning": "Ben is happy to try with help.",
+          "examples": ["Okay, thank you.", "Yes, please.", "Let us swim."],
+          "keywords": ["okay", "thank", "swim", "yes"],
+          "hint": "💬 Try saying: “Yes, I can swim.”",
+          "next_nodes": [{ "id": "beach_fun", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “Okay, thank you.”" },
+        "off_topic": { "message": "Mia will help you. Say “Okay, thank you.”" }
+      }
+    },
+    {
+      "id": "beach_fun",
+      "npc": { "text": "The beach is fun!", "gender": "female" },
+      "learning_objective": ["Say what you like"],
+      "routes": [
+        {
+          "intent": "like_beach",
+          "meaning": "Ben says he likes the beach.",
+          "examples": ["I like the beach.", "I like the beach, too.", "The beach is fun."],
+          "keywords": ["beach", "like", "fun"],
+          "hint": "💬 Try saying: “I like the beach.”",
+          "next_nodes": [{ "id": "close", "weight": 100 }]
+        },
+        {
+          "intent": "go_home",
+          "meaning": "Ben is tired and wants to go home.",
+          "examples": ["Let us go home.", "I am tired.", "Time to go home."],
+          "keywords": ["home", "tired", "go"],
+          "hint": "💬 Try saying: “I like the beach.”",
+          "next_nodes": [{ "id": "bye_end", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Mia: “I like the beach.”" },
+        "off_topic": { "message": "The beach is fun! Say “I like the beach.”" }
+      }
+    },
+    {
+      "id": "close",
+      "npc": { "text": "Me too, Ben! Let us swim. Splash!", "gender": "female" },
+      "end": true
+    },
+    {
+      "id": "bye_end",
+      "npc": { "text": "Okay, Ben! Bye, beach. See you soon!", "gender": "female" },
+      "end": true
+    }
+  ]
+}

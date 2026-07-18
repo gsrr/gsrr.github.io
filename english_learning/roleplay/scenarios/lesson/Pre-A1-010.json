@@ -1,0 +1,204 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in Pre-A1/010 dialogue + vocab. Learner plays Lily; computer plays Sam. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-Pre-A1-010",
+  "lesson": "Pre-A1/010",
+  "title": "010 · My Toys",
+  "you": "Lily",
+  "npc": "Sam",
+  "npc_gender": "male",
+  "start": "show_toys",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "show_toys",
+      "npc": { "text": "Look at my toys!", "gender": "male" },
+      "learning_objective": ["React to what you see", "Use: many, toys"],
+      "routes": [
+        {
+          "intent": "many_toys",
+          "meaning": "Lily says Sam has many toys.",
+          "examples": ["Wow! You have many toys.", "You have many toys.", "Wow, many toys!"],
+          "keywords": ["toys", "many", "wow"],
+          "hint": "💬 Try saying: “Wow! You have many toys.”",
+          "next_nodes": [{ "id": "red_car", "weight": 100 }]
+        },
+        {
+          "intent": "ask_toys",
+          "meaning": "Lily asks about the toys.",
+          "examples": ["What toys?", "What is that?", "Show me your toys."],
+          "keywords": ["what", "toys", "show"],
+          "hint": "💬 Try saying: “Wow! You have many toys.”",
+          "next_nodes": [{ "id": "toys_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Sam: “Wow! You have many toys.”" },
+        "off_topic": { "message": "Look at all the toys! Say “Wow! You have many toys.”" }
+      }
+    },
+    {
+      "id": "toys_side",
+      "npc": { "text": "I have lots! Look, I have many toys.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "many_toys",
+          "meaning": "Lily says Sam has many toys.",
+          "examples": ["Wow! You have many toys.", "You have many toys.", "Many toys!"],
+          "keywords": ["toys", "many", "wow"],
+          "hint": "💬 Try saying: “Wow! You have many toys.”",
+          "next_nodes": [{ "id": "red_car", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “Wow! You have many toys.”" },
+        "off_topic": { "message": "So many toys! Say “Wow! You have many toys.”" }
+      }
+    },
+    {
+      "id": "red_car",
+      "npc": { "text": "This is my red car.", "gender": "male" },
+      "learning_objective": ["Say what you like", "Use: car, toy"],
+      "routes": [
+        {
+          "intent": "like_car",
+          "meaning": "Lily likes the toy car.",
+          "examples": ["I like your toy car.", "I like your car.", "I like the red car."],
+          "keywords": ["car", "like", "toy", "red"],
+          "hint": "💬 Try saying: “I like your toy car.”",
+          "next_nodes": [{ "id": "robot", "weight": 100 }]
+        },
+        {
+          "intent": "ask_color",
+          "meaning": "Lily talks about the car's color.",
+          "examples": ["Is it red?", "What color is it?", "A red car!"],
+          "keywords": ["red", "color", "car"],
+          "hint": "💬 Try saying: “I like your toy car.”",
+          "next_nodes": [{ "id": "car_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Sam: “I like your toy car.”" },
+        "off_topic": { "message": "It is a red car. Say “I like your toy car.”" }
+      }
+    },
+    {
+      "id": "car_side",
+      "npc": { "text": "Yes, it is red! Do you like my toy car?", "gender": "male" },
+      "routes": [
+        {
+          "intent": "like_car",
+          "meaning": "Lily likes the toy car.",
+          "examples": ["I like your toy car.", "Yes, I like your car.", "I like the red car."],
+          "keywords": ["car", "like", "toy", "red"],
+          "hint": "💬 Try saying: “I like your toy car.”",
+          "next_nodes": [{ "id": "robot", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “I like your toy car.”" },
+        "off_topic": { "message": "Do you like it? Say “I like your toy car.”" }
+      }
+    },
+    {
+      "id": "robot",
+      "npc": { "text": "This is my robot, too.", "gender": "male" },
+      "learning_objective": ["Say what you have", "Use: doll, home"],
+      "routes": [
+        {
+          "intent": "have_doll",
+          "meaning": "Lily says she has a doll at home.",
+          "examples": ["I have a doll at home.", "I have a doll.", "I have a doll, too."],
+          "keywords": ["doll", "home", "have"],
+          "hint": "💬 Try saying: “I have a doll at home.”",
+          "next_nodes": [{ "id": "play_q", "weight": 100 }]
+        },
+        {
+          "intent": "like_robot",
+          "meaning": "Lily likes the robot.",
+          "examples": ["I like your robot.", "Wow, a robot!", "The robot is cool."],
+          "keywords": ["robot", "like", "cool"],
+          "hint": "💬 Try saying: “I have a doll at home.”",
+          "next_nodes": [{ "id": "robot_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Sam about your toy: “I have a doll at home.”" },
+        "off_topic": { "message": "Do you have a toy? Say “I have a doll at home.”" }
+      }
+    },
+    {
+      "id": "robot_side",
+      "npc": { "text": "The robot is fun! Do you have a toy at home?", "gender": "male" },
+      "routes": [
+        {
+          "intent": "have_doll",
+          "meaning": "Lily says she has a doll at home.",
+          "examples": ["I have a doll at home.", "Yes, I have a doll.", "I have a doll, too."],
+          "keywords": ["doll", "home", "have"],
+          "hint": "💬 Try saying: “I have a doll at home.”",
+          "next_nodes": [{ "id": "play_q", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “I have a doll at home.”" },
+        "off_topic": { "message": "What toy do you have? Say “I have a doll at home.”" }
+      }
+    },
+    {
+      "id": "play_q",
+      "npc": { "text": "Can we play together?", "gender": "male" },
+      "learning_objective": ["Accept an invitation to play"],
+      "routes": [
+        {
+          "intent": "yes_play",
+          "meaning": "Lily says yes, let us play.",
+          "examples": ["Yes! Let us play.", "Yes, let us play.", "Okay, let us play!"],
+          "keywords": ["yes", "play", "let"],
+          "hint": "💬 Try saying: “Yes! Let us play.”",
+          "next_nodes": [{ "id": "toys_fun", "weight": 100 }]
+        },
+        {
+          "intent": "no_play",
+          "meaning": "Lily cannot play now.",
+          "examples": ["No, not now.", "Maybe later.", "I must go home."],
+          "keywords": ["no", "later", "home"],
+          "hint": "💬 Try saying: “Yes! Let us play.”",
+          "next_nodes": [{ "id": "bye_end", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say yes to Sam: “Yes! Let us play.”" },
+        "off_topic": { "message": "Sam wants to play. Say “Yes! Let us play.”" }
+      }
+    },
+    {
+      "id": "toys_fun",
+      "npc": { "text": "Toys are fun.", "gender": "male" },
+      "learning_objective": ["Say what you like"],
+      "routes": [
+        {
+          "intent": "like_toys",
+          "meaning": "Lily says she likes toys.",
+          "examples": ["I like toys!", "I like toys, too.", "Toys are fun!"],
+          "keywords": ["toys", "like", "fun"],
+          "hint": "💬 Try saying: “I like toys!”",
+          "next_nodes": [{ "id": "close", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “I like toys!”" },
+        "off_topic": { "message": "Toys are fun! Say “I like toys!”" }
+      }
+    },
+    {
+      "id": "close",
+      "npc": { "text": "Me too, Lily! Let us play now. Yay!", "gender": "male" },
+      "end": true
+    },
+    {
+      "id": "bye_end",
+      "npc": { "text": "Okay, Lily! Maybe next time. Bye!", "gender": "male" },
+      "end": true
+    }
+  ]
+}

@@ -1,0 +1,207 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in A1/003 dialogue + vocab. Learner plays Tom; computer plays Anna. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-A1-003",
+  "lesson": "A1/003",
+  "title": "003 · The Lost Cat",
+  "you": "Tom",
+  "npc": "Anna",
+  "npc_gender": "female",
+  "start": "lost",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "lost",
+      "npc": { "text": "I lost my cat yesterday.", "gender": "female" },
+      "learning_objective": ["React to news", "Ask what happened"],
+      "routes": [
+        {
+          "intent": "oh_no",
+          "meaning": "Tom reacts and asks what happened.",
+          "examples": ["Oh no! What happened?", "Oh no! What happened to her?", "Oh no! Tell me what happened."],
+          "keywords": ["oh", "no", "what", "happened"],
+          "hint": "💬 Try saying: “Oh no! What happened?”",
+          "next_nodes": [{ "id": "ran_out", "weight": 100 }]
+        },
+        {
+          "intent": "ask_ok",
+          "meaning": "Tom asks if Anna is okay.",
+          "examples": ["Oh no! Are you okay?", "Are you okay?", "Oh no! That is so sad."],
+          "keywords": ["okay", "sad", "oh", "no"],
+          "hint": "💬 Try saying: “Oh no! What happened?”",
+          "next_nodes": [{ "id": "okay_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "React to Anna: “Oh no! What happened?”" },
+        "off_topic": { "message": "Anna lost her cat. Say “Oh no! What happened?”" }
+      }
+    },
+    {
+      "id": "okay_reply",
+      "npc": { "text": "I'm a little sad. Let me tell you what happened.", "gender": "female" },
+      "routes": [
+        {
+          "intent": "what",
+          "meaning": "Tom asks what happened.",
+          "examples": ["What happened?", "So what happened?", "Tell me."],
+          "keywords": ["what", "happened", "tell"],
+          "hint": "💬 Try saying: “What happened?”",
+          "next_nodes": [{ "id": "ran_out", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Anna: “What happened?”" },
+        "off_topic": { "message": "Anna wants to tell you. Ask “What happened?”" }
+      }
+    },
+    {
+      "id": "ran_out",
+      "npc": { "text": "She ran out of the house.", "gender": "female" },
+      "learning_objective": ["Ask a follow-up question"],
+      "routes": [
+        {
+          "intent": "look_for",
+          "meaning": "Tom asks if Anna looked for the cat.",
+          "examples": ["Did you look for her?", "Did you look for the cat?", "Did you go look for her?"],
+          "keywords": ["look", "for", "did"],
+          "hint": "💬 Try saying: “Did you look for her?”",
+          "next_nodes": [{ "id": "looked", "weight": 100 }]
+        },
+        {
+          "intent": "where_go",
+          "meaning": "Tom asks where the cat went.",
+          "examples": ["Where did she go?", "Where did the cat go?", "Where did she run?"],
+          "keywords": ["where", "go", "run"],
+          "hint": "💬 Try saying: “Did you look for her?”",
+          "next_nodes": [{ "id": "where_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Anna: “Did you look for her?”" },
+        "off_topic": { "message": "The cat ran out. Ask “Did you look for her?”" }
+      }
+    },
+    {
+      "id": "where_reply",
+      "npc": { "text": "I didn't know! So I looked for her everywhere.", "gender": "female" },
+      "routes": [
+        {
+          "intent": "did_find",
+          "meaning": "Tom asks if Anna looked everywhere or found her.",
+          "examples": ["Did you look everywhere?", "Did you look for her?", "Did you find her?"],
+          "keywords": ["look", "find", "everywhere"],
+          "hint": "💬 Try saying: “Did you look everywhere?”",
+          "next_nodes": [{ "id": "looked", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Anna: “Did you look everywhere?”" },
+        "off_topic": { "message": "Anna looked for her cat. Ask “Did you look everywhere?”" }
+      }
+    },
+    {
+      "id": "looked",
+      "npc": { "text": "Yes, I looked everywhere.", "gender": "female" },
+      "learning_objective": ["Ask where"],
+      "routes": [
+        {
+          "intent": "where_find",
+          "meaning": "Tom asks where Anna found the cat.",
+          "examples": ["Where did you find her?", "Where did you find the cat?", "So where was she?"],
+          "keywords": ["where", "find", "found"],
+          "hint": "💬 Try saying: “Where did you find her?”",
+          "next_nodes": [{ "id": "found", "weight": 100 }]
+        },
+        {
+          "intent": "did_you_find",
+          "meaning": "Tom asks if Anna found the cat.",
+          "examples": ["Did you find her?", "Did you find your cat?", "So did you find her?"],
+          "keywords": ["did", "find", "found"],
+          "hint": "💬 Try saying: “Where did you find her?”",
+          "next_nodes": [{ "id": "found", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Anna: “Where did you find her?”" },
+        "off_topic": { "message": "Anna looked everywhere. Ask “Where did you find her?”" }
+      }
+    },
+    {
+      "id": "found",
+      "npc": { "text": "I found her under a tree.", "gender": "female" },
+      "learning_objective": ["Ask if someone is okay"],
+      "routes": [
+        {
+          "intent": "was_okay",
+          "meaning": "Tom asks if the cat was okay.",
+          "examples": ["Was she okay?", "Was the cat okay?", "Was she alright?"],
+          "keywords": ["was", "okay", "she"],
+          "hint": "💬 Try saying: “Was she okay?”",
+          "next_nodes": [{ "id": "hungry_happy", "weight": 100 }]
+        },
+        {
+          "intent": "poor_cat",
+          "meaning": "Tom feels sorry for the cat.",
+          "examples": ["Oh, poor cat!", "Poor kitty!", "Oh no, poor cat!"],
+          "keywords": ["poor", "cat", "kitty"],
+          "hint": "💬 Try saying: “Was she okay?”",
+          "next_nodes": [{ "id": "hungry_happy", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Anna: “Was she okay?”" },
+        "off_topic": { "message": "Anna found the cat under a tree. Ask “Was she okay?”" }
+      }
+    },
+    {
+      "id": "hungry_happy",
+      "npc": { "text": "Yes, she was hungry but happy.", "gender": "female" },
+      "learning_objective": ["Show you are glad"],
+      "routes": [
+        {
+          "intent": "glad",
+          "meaning": "Tom says he is glad Anna found her cat.",
+          "examples": ["I am glad you found her!", "I'm glad!", "I am so happy you found her!"],
+          "keywords": ["glad", "happy", "found"],
+          "hint": "💬 Try saying: “I am glad you found her!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        },
+        {
+          "intent": "feed",
+          "meaning": "Tom asks if Anna fed the cat.",
+          "examples": ["Did you feed her?", "Did you give her food?", "Is she okay now?"],
+          "keywords": ["feed", "food", "did"],
+          "hint": "💬 Try saying: “I am glad you found her!”",
+          "next_nodes": [{ "id": "feed_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Anna: “I am glad you found her!”" },
+        "off_topic": { "message": "The cat is safe now. Say “I am glad you found her!”" }
+      }
+    },
+    {
+      "id": "feed_reply",
+      "npc": { "text": "Yes! I gave her some food. Now she is happy.", "gender": "female" },
+      "routes": [
+        {
+          "intent": "glad2",
+          "meaning": "Tom says he is glad Anna found her cat.",
+          "examples": ["I am glad you found her!", "I'm glad!", "I am happy for you!"],
+          "keywords": ["glad", "happy", "found"],
+          "hint": "💬 Try saying: “I am glad you found her!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Anna: “I am glad you found her!”" },
+        "off_topic": { "message": "The cat is happy now. Say “I am glad you found her!”" }
+      }
+    },
+    {
+      "id": "done",
+      "npc": { "text": "Thank you, Tom! You are a good friend.", "gender": "female" },
+      "end": true
+    }
+  ]
+}

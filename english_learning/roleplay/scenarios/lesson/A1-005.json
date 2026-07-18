@@ -1,0 +1,207 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in A1/005 dialogue + vocab. Learner plays Anna; computer plays Tom. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-A1-005",
+  "lesson": "A1/005",
+  "title": "005 · A Day at the Farm",
+  "you": "Anna",
+  "npc": "Tom",
+  "npc_gender": "male",
+  "start": "farm",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "farm",
+      "npc": { "text": "I went to a farm last weekend.", "gender": "male" },
+      "learning_objective": ["React with interest", "Ask a question"],
+      "routes": [
+        {
+          "intent": "sounds_fun",
+          "meaning": "Anna says it sounds fun and asks what Tom saw.",
+          "examples": ["That sounds fun! What did you see?", "That sounds fun! What did you see there?", "Fun! What did you see?"],
+          "keywords": ["sounds", "fun", "what", "see"],
+          "hint": "💬 Try saying: “That sounds fun! What did you see?”",
+          "next_nodes": [{ "id": "animals", "weight": 100 }]
+        },
+        {
+          "intent": "where_farm",
+          "meaning": "Anna asks where the farm is.",
+          "examples": ["Where is the farm?", "Where is the farm?", "Where was the farm?"],
+          "keywords": ["where", "farm"],
+          "hint": "💬 Try saying: “That sounds fun! What did you see?”",
+          "next_nodes": [{ "id": "where_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "React to Tom: “That sounds fun! What did you see?”" },
+        "off_topic": { "message": "Tom went to a farm. Say “That sounds fun! What did you see?”" }
+      }
+    },
+    {
+      "id": "where_reply",
+      "npc": { "text": "It's near my grandma's house. I saw many animals!", "gender": "male" },
+      "routes": [
+        {
+          "intent": "what_see",
+          "meaning": "Anna asks what animals Tom saw.",
+          "examples": ["What did you see?", "What animals did you see?", "What was there?"],
+          "keywords": ["what", "see", "animals"],
+          "hint": "💬 Try saying: “What did you see?”",
+          "next_nodes": [{ "id": "animals", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Tom: “What did you see?”" },
+        "off_topic": { "message": "Tom saw many animals. Ask “What did you see?”" }
+      }
+    },
+    {
+      "id": "animals",
+      "npc": { "text": "I saw cows, pigs, and chickens.", "gender": "male" },
+      "learning_objective": ["Ask a yes/no question", "Talk about animals"],
+      "routes": [
+        {
+          "intent": "feed_q",
+          "meaning": "Anna asks if Tom fed the animals.",
+          "examples": ["Did you feed the animals?", "Did you feed them?", "Did you feed the farm animals?"],
+          "keywords": ["feed", "animals", "did"],
+          "hint": "💬 Try saying: “Did you feed the animals?”",
+          "next_nodes": [{ "id": "fed", "weight": 100 }]
+        },
+        {
+          "intent": "like_pigs",
+          "meaning": "Anna says she likes one of the animals.",
+          "examples": ["I like pigs!", "I love cows!", "Chickens are cute!"],
+          "keywords": ["like", "pigs", "cows", "chickens"],
+          "hint": "💬 Try saying: “Did you feed the animals?”",
+          "next_nodes": [{ "id": "pigs_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Tom: “Did you feed the animals?”" },
+        "off_topic": { "message": "Tom saw cows, pigs, and chickens. Ask “Did you feed the animals?”" }
+      }
+    },
+    {
+      "id": "pigs_reply",
+      "npc": { "text": "The pigs were so cute! I fed some animals too.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "feed_q2",
+          "meaning": "Anna asks if Tom fed the animals.",
+          "examples": ["Did you feed the animals?", "Did you feed them?", "What did you feed?"],
+          "keywords": ["feed", "animals", "fed"],
+          "hint": "💬 Try saying: “Did you feed the animals?”",
+          "next_nodes": [{ "id": "fed", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Tom: “Did you feed the animals?”" },
+        "off_topic": { "message": "Tom fed some animals. Ask “Did you feed the animals?”" }
+      }
+    },
+    {
+      "id": "fed",
+      "npc": { "text": "Yes, I fed the chickens.", "gender": "male" },
+      "learning_objective": ["Ask what animals did"],
+      "routes": [
+        {
+          "intent": "cows_q",
+          "meaning": "Anna asks what the cows did.",
+          "examples": ["What did the cows do?", "What did the cows do all day?", "And the cows?"],
+          "keywords": ["what", "cows", "do"],
+          "hint": "💬 Try saying: “What did the cows do?”",
+          "next_nodes": [{ "id": "grass", "weight": 100 }]
+        },
+        {
+          "intent": "fun_feed",
+          "meaning": "Anna says feeding chickens is fun.",
+          "examples": ["That is fun!", "Wow, that is fun!", "Cool! I like chickens."],
+          "keywords": ["fun", "cool", "chickens"],
+          "hint": "💬 Try saying: “What did the cows do?”",
+          "next_nodes": [{ "id": "grass", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Tom: “What did the cows do?”" },
+        "off_topic": { "message": "Tom fed the chickens. Ask “What did the cows do?”" }
+      }
+    },
+    {
+      "id": "grass",
+      "npc": { "text": "They ate grass all day.", "gender": "male" },
+      "learning_objective": ["Ask about riding"],
+      "routes": [
+        {
+          "intent": "horse_q",
+          "meaning": "Anna asks if Tom rode a horse.",
+          "examples": ["Did you ride a horse?", "Did you ride a horse there?", "Did you ride any animals?"],
+          "keywords": ["ride", "horse", "did"],
+          "hint": "💬 Try saying: “Did you ride a horse?”",
+          "next_nodes": [{ "id": "horse", "weight": 100 }]
+        },
+        {
+          "intent": "eat_lot",
+          "meaning": "Anna is surprised the cows ate all day.",
+          "examples": ["Wow, they eat a lot!", "That is a lot of grass!", "Wow, all day!"],
+          "keywords": ["wow", "lot", "grass"],
+          "hint": "💬 Try saying: “Did you ride a horse?”",
+          "next_nodes": [{ "id": "horse", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Tom: “Did you ride a horse?”" },
+        "off_topic": { "message": "The cows ate grass. Ask “Did you ride a horse?”" }
+      }
+    },
+    {
+      "id": "horse",
+      "npc": { "text": "Yes, I rode a brown horse.", "gender": "male" },
+      "learning_objective": ["Say what you want to do"],
+      "routes": [
+        {
+          "intent": "want_visit",
+          "meaning": "Anna says she wants to visit a farm too.",
+          "examples": ["I want to visit a farm, too!", "I want to go to a farm!", "I want to see the animals too!"],
+          "keywords": ["want", "visit", "farm", "go"],
+          "hint": "💬 Try saying: “I want to visit a farm, too!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        },
+        {
+          "intent": "fast_q",
+          "meaning": "Anna asks if the horse was fast.",
+          "examples": ["Was the horse fast?", "Was it a fast horse?", "Did the horse run fast?"],
+          "keywords": ["fast", "horse", "run"],
+          "hint": "💬 Try saying: “I want to visit a farm, too!”",
+          "next_nodes": [{ "id": "horse_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Tom: “I want to visit a farm, too!”" },
+        "off_topic": { "message": "Tom rode a brown horse. Say “I want to visit a farm, too!”" }
+      }
+    },
+    {
+      "id": "horse_reply",
+      "npc": { "text": "Yes, a little! It was a fun ride.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "want_visit2",
+          "meaning": "Anna says she wants to visit a farm too.",
+          "examples": ["I want to visit a farm, too!", "I want to go to a farm!", "I want to see the animals!"],
+          "keywords": ["want", "visit", "farm", "go"],
+          "hint": "💬 Try saying: “I want to visit a farm, too!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Tom: “I want to visit a farm, too!”" },
+        "off_topic": { "message": "The ride was fun. Say “I want to visit a farm, too!”" }
+      }
+    },
+    {
+      "id": "done",
+      "npc": { "text": "You should! Let's go to the farm together next time.", "gender": "male" },
+      "end": true
+    }
+  ]
+}

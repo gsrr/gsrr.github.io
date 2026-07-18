@@ -1,0 +1,199 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in Pre-A1/015 dialogue + vocab. Learner plays Anna; computer plays Tom. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-Pre-A1-015",
+  "lesson": "Pre-A1/015",
+  "title": "015 · My School Bag",
+  "you": "Anna",
+  "npc": "Tom",
+  "npc_gender": "male",
+  "start": "show_bag",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "show_bag",
+      "npc": { "text": "Look at my school bag.", "gender": "male" },
+      "learning_objective": ["Say a color", "Say what you like"],
+      "routes": [
+        {
+          "intent": "blue_like",
+          "meaning": "Anna says the bag is blue and she likes it.",
+          "examples": ["It is blue. I like it.", "It is blue.", "Nice, it is blue!", "I like your blue bag."],
+          "keywords": ["blue", "like", "bag"],
+          "hint": "💬 Try saying: “It is blue. I like it.”",
+          "next_nodes": [{ "id": "book", "weight": 100 }]
+        },
+        {
+          "intent": "ask_bag",
+          "meaning": "Anna asks about the new bag.",
+          "examples": ["Wow, nice bag!", "Is it new?", "What a cool bag!"],
+          "keywords": ["nice", "new", "cool", "bag", "wow"],
+          "hint": "💬 Try saying: “It is blue. I like it.”",
+          "next_nodes": [{ "id": "color_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Tom about his bag: “It is blue. I like it.”" },
+        "off_topic": { "message": "Tom is showing his school bag. Try “It is blue. I like it.”" }
+      }
+    },
+    {
+      "id": "color_reply",
+      "npc": { "text": "It is new! It is blue. Do you like it?", "gender": "male" },
+      "routes": [
+        {
+          "intent": "blue_like",
+          "meaning": "Anna says the bag is blue and she likes it.",
+          "examples": ["It is blue. I like it.", "Yes, I like it.", "I like the blue bag."],
+          "keywords": ["blue", "like", "yes", "bag"],
+          "hint": "💬 Try saying: “It is blue. I like it.”",
+          "next_nodes": [{ "id": "book", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say the color and that you like it: “It is blue. I like it.”" },
+        "off_topic": { "message": "Do you like the bag? Try “It is blue. I like it.”" }
+      }
+    },
+    {
+      "id": "book",
+      "npc": { "text": "I have a book in my bag.", "gender": "male" },
+      "learning_objective": ["Ask what else is inside"],
+      "routes": [
+        {
+          "intent": "what_else",
+          "meaning": "Anna asks what else is in the bag.",
+          "examples": ["What else is in your bag?", "What else is in the bag?", "What more do you have?"],
+          "keywords": ["what", "else", "bag", "more"],
+          "hint": "💬 Try saying: “What else is in your bag?”",
+          "next_nodes": [{ "id": "pencil", "weight": 100 }]
+        },
+        {
+          "intent": "like_book",
+          "meaning": "Anna talks about the book.",
+          "examples": ["I like books.", "A book is fun.", "I read books too."],
+          "keywords": ["book", "read", "like"],
+          "hint": "💬 Try saying: “What else is in your bag?”",
+          "next_nodes": [{ "id": "book_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Tom about his bag: “What else is in your bag?”" },
+        "off_topic": { "message": "Tom has a book. Try “What else is in your bag?”" }
+      }
+    },
+    {
+      "id": "book_reply",
+      "npc": { "text": "Yes, I like to read. Do you want to see more?", "gender": "male" },
+      "routes": [
+        {
+          "intent": "what_else",
+          "meaning": "Anna asks what else is in the bag.",
+          "examples": ["What else is in your bag?", "What else?", "What more?"],
+          "keywords": ["what", "else", "more", "bag"],
+          "hint": "💬 Try saying: “What else is in your bag?”",
+          "next_nodes": [{ "id": "pencil", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask what else is inside: “What else is in your bag?”" },
+        "off_topic": { "message": "Ask Tom about his bag. Try “What else is in your bag?”" }
+      }
+    },
+    {
+      "id": "pencil",
+      "npc": { "text": "I have a pencil and a ruler.", "gender": "male" },
+      "learning_objective": ["Ask a yes/no question"],
+      "routes": [
+        {
+          "intent": "ask_case",
+          "meaning": "Anna asks if he has a pencil case.",
+          "examples": ["Do you have a pencil case?", "Is there a pencil case?", "Do you have a case?"],
+          "keywords": ["pencil", "case", "have"],
+          "hint": "💬 Try saying: “Do you have a pencil case?”",
+          "next_nodes": [{ "id": "case", "weight": 100 }]
+        },
+        {
+          "intent": "me_too",
+          "meaning": "Anna says she has one too.",
+          "examples": ["I have a pencil too.", "I have a ruler.", "Me too!"],
+          "keywords": ["pencil", "ruler", "too", "have"],
+          "hint": "💬 Try saying: “Do you have a pencil case?”",
+          "next_nodes": [{ "id": "case", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Tom a question: “Do you have a pencil case?”" },
+        "off_topic": { "message": "Tom has a pencil and a ruler. Try “Do you have a pencil case?”" }
+      }
+    },
+    {
+      "id": "case",
+      "npc": { "text": "Yes, it is red.", "gender": "male" },
+      "learning_objective": ["Say the color of your own bag"],
+      "routes": [
+        {
+          "intent": "my_bag_green",
+          "meaning": "Anna says her bag is green.",
+          "examples": ["My bag is green.", "My bag is green!", "My school bag is green."],
+          "keywords": ["bag", "green", "my"],
+          "hint": "💬 Try saying: “My bag is green.”",
+          "next_nodes": [{ "id": "big", "weight": 100 }]
+        },
+        {
+          "intent": "nice_red",
+          "meaning": "Anna says red is nice.",
+          "examples": ["Red is nice.", "I like red.", "Cool, red!"],
+          "keywords": ["red", "nice", "like", "cool"],
+          "hint": "💬 Try saying: “My bag is green.”",
+          "next_nodes": [{ "id": "red_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Tom about your bag: “My bag is green.”" },
+        "off_topic": { "message": "Tom's case is red. What about your bag? Try “My bag is green.”" }
+      }
+    },
+    {
+      "id": "red_reply",
+      "npc": { "text": "Red is my favorite! What color is your bag?", "gender": "male" },
+      "routes": [
+        {
+          "intent": "my_bag_green",
+          "meaning": "Anna says her bag is green.",
+          "examples": ["My bag is green.", "It is green.", "My bag is green!"],
+          "keywords": ["bag", "green", "my"],
+          "hint": "💬 Try saying: “My bag is green.”",
+          "next_nodes": [{ "id": "big", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say your bag color: “My bag is green.”" },
+        "off_topic": { "message": "What color is your bag? Try “My bag is green.”" }
+      }
+    },
+    {
+      "id": "big",
+      "npc": { "text": "Your bag is big!", "gender": "male" },
+      "learning_objective": ["Say what is inside your bag"],
+      "routes": [
+        {
+          "intent": "lunch",
+          "meaning": "Anna says she puts her lunch in it.",
+          "examples": ["Yes, I put my lunch in it.", "I put my lunch in it.", "Yes, my lunch is inside."],
+          "keywords": ["lunch", "put", "in", "yes"],
+          "hint": "💬 Try saying: “Yes, I put my lunch in it.”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Tom why it is big: “Yes, I put my lunch in it.”" },
+        "off_topic": { "message": "Your bag is big! Say “Yes, I put my lunch in it.”" }
+      }
+    },
+    {
+      "id": "done",
+      "npc": { "text": "Wow, a lunch too! Let us go to school.", "gender": "male" },
+      "end": true
+    }
+  ]
+}

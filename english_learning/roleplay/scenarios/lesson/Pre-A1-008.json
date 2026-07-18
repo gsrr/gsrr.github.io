@@ -1,0 +1,225 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in Pre-A1/008 dialogue + vocab. Learner plays Leo; computer plays Emma. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-Pre-A1-008",
+  "lesson": "Pre-A1/008",
+  "title": "008 · Breakfast Time",
+  "you": "Leo",
+  "npc": "Emma",
+  "npc_gender": "female",
+  "start": "greet",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "greet",
+      "npc": { "text": "I am hungry. It is breakfast time.", "gender": "female" },
+      "learning_objective": ["Ask what someone eats", "Talk about breakfast"],
+      "routes": [
+        {
+          "intent": "ask_eat",
+          "meaning": "Leo asks Emma what she eats.",
+          "examples": ["What do you eat?", "What do you eat for breakfast?", "What is for breakfast?", "What do you have?"],
+          "keywords": ["what", "eat", "breakfast", "have"],
+          "hint": "💬 Try saying: “What do you eat?”",
+          "next_nodes": [{ "id": "eat_eggs", "weight": 100 }]
+        },
+        {
+          "intent": "me_hungry",
+          "meaning": "Leo says he is hungry, too.",
+          "examples": ["I am hungry, too.", "Me too. I am hungry.", "I am hungry."],
+          "keywords": ["hungry", "too", "me"],
+          "hint": "💬 Try saying: “What do you eat?”",
+          "next_nodes": [{ "id": "hungry_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Emma about breakfast: “What do you eat?”" },
+        "off_topic": { "message": "It is breakfast time! Ask “What do you eat?”" }
+      }
+    },
+    {
+      "id": "hungry_side",
+      "npc": { "text": "Me too! So, what do you eat?", "gender": "female" },
+      "routes": [
+        {
+          "intent": "ask_eat",
+          "meaning": "Leo asks what Emma eats.",
+          "examples": ["What do you eat?", "What do you eat for breakfast?", "What is for breakfast?"],
+          "keywords": ["what", "eat", "breakfast"],
+          "hint": "💬 Try saying: “What do you eat?”",
+          "next_nodes": [{ "id": "eat_eggs", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask her: “What do you eat?”" },
+        "off_topic": { "message": "Emma is waiting. Say “What do you eat?”" }
+      }
+    },
+    {
+      "id": "eat_eggs",
+      "npc": { "text": "I eat eggs and bread.", "gender": "female" },
+      "learning_objective": ["Say what you drink", "Use: milk, drink"],
+      "routes": [
+        {
+          "intent": "drink_milk",
+          "meaning": "Leo says he drinks milk every day.",
+          "examples": ["I drink milk every day.", "I drink milk.", "I drink milk, too."],
+          "keywords": ["milk", "drink", "day"],
+          "hint": "💬 Try saying: “I drink milk every day.”",
+          "next_nodes": [{ "id": "milk_good", "weight": 100 }]
+        },
+        {
+          "intent": "like_bread",
+          "meaning": "Leo says he likes bread too.",
+          "examples": ["I like bread.", "I eat bread, too.", "Bread is good."],
+          "keywords": ["bread", "like", "eat"],
+          "hint": "💬 Try saying: “I drink milk every day.”",
+          "next_nodes": [{ "id": "bread_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Emma what you drink: “I drink milk every day.”" },
+        "off_topic": { "message": "Emma eats eggs and bread. Say “I drink milk every day.”" }
+      }
+    },
+    {
+      "id": "bread_side",
+      "npc": { "text": "Yes, bread is yummy. Do you drink milk?", "gender": "female" },
+      "routes": [
+        {
+          "intent": "drink_milk",
+          "meaning": "Leo says he drinks milk every day.",
+          "examples": ["Yes, I drink milk every day.", "I drink milk.", "Yes, I like milk."],
+          "keywords": ["milk", "drink", "yes"],
+          "hint": "💬 Try saying: “I drink milk every day.”",
+          "next_nodes": [{ "id": "milk_good", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell her: “I drink milk every day.”" },
+        "off_topic": { "message": "Do you drink milk? Say “I drink milk every day.”" }
+      }
+    },
+    {
+      "id": "milk_good",
+      "npc": { "text": "Milk is good for you.", "gender": "female" },
+      "learning_objective": ["Ask a yes/no question", "Use: like, eggs"],
+      "routes": [
+        {
+          "intent": "ask_like_eggs",
+          "meaning": "Leo asks Emma if she likes eggs.",
+          "examples": ["Do you like eggs?", "Do you like eggs, Emma?", "Do you like the eggs?"],
+          "keywords": ["eggs", "like", "do"],
+          "hint": "💬 Try saying: “Do you like eggs?”",
+          "next_nodes": [{ "id": "like_eggs", "weight": 100 }]
+        },
+        {
+          "intent": "agree_good",
+          "meaning": "Leo agrees that milk is good.",
+          "examples": ["Yes, milk is good.", "Milk is yummy.", "I like milk."],
+          "keywords": ["milk", "good", "yes"],
+          "hint": "💬 Try saying: “Do you like eggs?”",
+          "next_nodes": [{ "id": "good_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Emma a question: “Do you like eggs?”" },
+        "off_topic": { "message": "You can ask her: “Do you like eggs?”" }
+      }
+    },
+    {
+      "id": "good_side",
+      "npc": { "text": "It is! You can ask me about the eggs.", "gender": "female" },
+      "routes": [
+        {
+          "intent": "ask_like_eggs",
+          "meaning": "Leo asks if Emma likes eggs.",
+          "examples": ["Do you like eggs?", "Do you like the eggs?", "Do you like eggs, Emma?"],
+          "keywords": ["eggs", "like", "do"],
+          "hint": "💬 Try saying: “Do you like eggs?”",
+          "next_nodes": [{ "id": "like_eggs", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask her: “Do you like eggs?”" },
+        "off_topic": { "message": "Ask Emma about the eggs: “Do you like eggs?”" }
+      }
+    },
+    {
+      "id": "like_eggs",
+      "npc": { "text": "Yes, I like eggs.", "gender": "female" },
+      "learning_objective": ["Suggest eating together"],
+      "routes": [
+        {
+          "intent": "eat_now",
+          "meaning": "Leo says let us eat breakfast.",
+          "examples": ["Let us eat breakfast.", "Let us eat.", "Let us eat now."],
+          "keywords": ["eat", "breakfast", "let"],
+          "hint": "💬 Try saying: “Let us eat breakfast.”",
+          "next_nodes": [{ "id": "yum", "weight": 100 }]
+        },
+        {
+          "intent": "me_too_like",
+          "meaning": "Leo says he likes eggs too.",
+          "examples": ["I like eggs, too.", "Me too. I like eggs.", "I like eggs."],
+          "keywords": ["eggs", "like", "too"],
+          "hint": "💬 Try saying: “Let us eat breakfast.”",
+          "next_nodes": [{ "id": "like_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Time to eat! Say “Let us eat breakfast.”" },
+        "off_topic": { "message": "You are both hungry. Say “Let us eat breakfast.”" }
+      }
+    },
+    {
+      "id": "like_side",
+      "npc": { "text": "We both like eggs! Shall we eat now?", "gender": "female" },
+      "routes": [
+        {
+          "intent": "eat_now",
+          "meaning": "Leo says let us eat breakfast.",
+          "examples": ["Let us eat breakfast.", "Yes, let us eat.", "Let us eat now."],
+          "keywords": ["eat", "breakfast", "let"],
+          "hint": "💬 Try saying: “Let us eat breakfast.”",
+          "next_nodes": [{ "id": "yum", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “Let us eat breakfast.”" },
+        "off_topic": { "message": "Let us eat! Say “Let us eat breakfast.”" }
+      }
+    },
+    {
+      "id": "yum",
+      "npc": { "text": "Yum! This is good.", "gender": "female" },
+      "learning_objective": ["Say how you feel"],
+      "routes": [
+        {
+          "intent": "happy",
+          "meaning": "Leo says he is happy now.",
+          "examples": ["I am happy now.", "I am happy.", "I am so happy."],
+          "keywords": ["happy", "now"],
+          "hint": "💬 Try saying: “I am happy now.”",
+          "next_nodes": [{ "id": "close", "weight": 100 }]
+        },
+        {
+          "intent": "full_yummy",
+          "meaning": "Leo says the food is yummy.",
+          "examples": ["This is yummy.", "I am full.", "I like it."],
+          "keywords": ["yummy", "full", "like"],
+          "hint": "💬 Try saying: “I am happy now.”",
+          "next_nodes": [{ "id": "close", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Emma how you feel: “I am happy now.”" },
+        "off_topic": { "message": "The breakfast is good! Say “I am happy now.”" }
+      }
+    },
+    {
+      "id": "close",
+      "npc": { "text": "Me too, Leo! Let us eat. Yum!", "gender": "female" },
+      "end": true
+    }
+  ]
+}

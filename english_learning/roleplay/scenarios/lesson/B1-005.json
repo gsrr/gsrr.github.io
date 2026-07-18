@@ -1,0 +1,230 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in B1/005 dialogue + vocab. Learner plays Mia; computer plays Leo. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-B1-005",
+  "lesson": "B1/005",
+  "title": "005 · A Difficult Decision",
+  "you": "Mia",
+  "npc": "Leo",
+  "npc_gender": "male",
+  "start": "decision",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "decision",
+      "npc": { "text": "I have a difficult decision to make.", "gender": "male" },
+      "learning_objective": ["Ask about a problem", "Offer help"],
+      "routes": [
+        {
+          "intent": "ask_problem",
+          "meaning": "Mia asks what the problem is.",
+          "examples": ["What's the problem?", "What is the problem?", "Oh no, what's the problem?", "What's wrong?"],
+          "keywords": ["what's", "what", "problem", "wrong"],
+          "hint": "💬 Try saying: “What's the problem?”",
+          "next_nodes": [{ "id": "two_choices", "weight": 100 }]
+        },
+        {
+          "intent": "offer_help",
+          "meaning": "Mia offers to help Leo decide.",
+          "examples": ["Maybe I can help you decide.", "I can help you if you want.", "Let me help you with it."],
+          "keywords": ["help", "can", "decide", "want"],
+          "hint": "You can offer help, or ask “What's the problem?”",
+          "next_nodes": [{ "id": "glad_help", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Leo what's wrong: “What's the problem?”" },
+        "off_topic": { "message": "Leo needs help deciding. Ask “What's the problem?”" }
+      }
+    },
+    {
+      "id": "glad_help",
+      "npc": { "text": "Thanks! Let me tell you the problem.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "ask_problem",
+          "meaning": "Mia asks what the problem is.",
+          "examples": ["What's the problem?", "Okay, what's the problem?", "So what is it?"],
+          "keywords": ["what's", "problem", "what", "tell"],
+          "hint": "💬 Try saying: “What's the problem?”",
+          "next_nodes": [{ "id": "two_choices", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask “What's the problem?”" },
+        "off_topic": { "message": "Ask Leo “What's the problem?”" }
+      }
+    },
+    {
+      "id": "two_choices",
+      "npc": { "text": "I can join the music club or the soccer team, but not both.", "gender": "male" },
+      "learning_objective": ["Ask about a preference"],
+      "routes": [
+        {
+          "intent": "ask_prefer",
+          "meaning": "Mia asks which one Leo likes more.",
+          "examples": ["Which one do you like more?", "Which do you like more?", "Which one do you prefer?"],
+          "keywords": ["which", "one", "like", "more", "prefer"],
+          "hint": "💬 Try saying: “Which one do you like more?”",
+          "next_nodes": [{ "id": "love_music", "weight": 100 }]
+        },
+        {
+          "intent": "ask_why_not_both",
+          "meaning": "Mia asks why he can't do both.",
+          "examples": ["Why can't you do both?", "Why not both?", "Can't you join both?"],
+          "keywords": ["why", "can't", "both", "not"],
+          "hint": "You can ask “Why can't you do both?” or “Which one do you like more?”",
+          "next_nodes": [{ "id": "not_both", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask about his preference: “Which one do you like more?”" },
+        "off_topic": { "message": "Leo has two choices. Ask “Which one do you like more?”" }
+      }
+    },
+    {
+      "id": "not_both",
+      "npc": { "text": "They meet at the same time, so I can only pick one.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "ask_prefer",
+          "meaning": "Mia asks which one Leo likes more.",
+          "examples": ["Which one do you like more?", "Okay, which one do you like more?", "So which do you like more?"],
+          "keywords": ["which", "one", "like", "more", "prefer"],
+          "hint": "💬 Try saying: “Which one do you like more?”",
+          "next_nodes": [{ "id": "love_music", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask “Which one do you like more?”" },
+        "off_topic": { "message": "Ask Leo “Which one do you like more?”" }
+      }
+    },
+    {
+      "id": "love_music",
+      "npc": { "text": "I love music, but soccer keeps me healthy.", "gender": "male" },
+      "learning_objective": ["Give advice with 'should'"],
+      "routes": [
+        {
+          "intent": "choose_enjoy",
+          "meaning": "Mia advises Leo to choose what he enjoys most.",
+          "examples": ["I think you should choose the one you enjoy most.", "You should choose the one you enjoy most.", "I think you should pick the one you enjoy most."],
+          "keywords": ["think", "should", "choose", "enjoy", "most"],
+          "hint": "💬 Try saying: “I think you should choose the one you enjoy most.”",
+          "next_nodes": [{ "id": "try_both_years", "weight": 100 }]
+        },
+        {
+          "intent": "suggest_soccer",
+          "meaning": "Mia points out that staying healthy matters.",
+          "examples": ["Staying healthy is important too.", "But soccer keeps you healthy.", "Health is important, though."],
+          "keywords": ["healthy", "health", "important", "soccer"],
+          "hint": "You can talk about health, or advise “I think you should choose the one you enjoy most.”",
+          "next_nodes": [{ "id": "health_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Give advice: “I think you should choose the one you enjoy most.”" },
+        "off_topic": { "message": "Help Leo decide. Say “I think you should choose the one you enjoy most.”" }
+      }
+    },
+    {
+      "id": "health_reply",
+      "npc": { "text": "That's true, staying healthy is important too.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "choose_enjoy",
+          "meaning": "Mia advises Leo to choose what he enjoys most.",
+          "examples": ["I think you should choose the one you enjoy most.", "Still, you should choose the one you enjoy most.", "You should choose the one you enjoy most."],
+          "keywords": ["think", "should", "choose", "enjoy", "most"],
+          "hint": "💬 Try saying: “I think you should choose the one you enjoy most.”",
+          "next_nodes": [{ "id": "try_both_years", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “I think you should choose the one you enjoy most.”" },
+        "off_topic": { "message": "Advise Leo “Choose the one you enjoy most.”" }
+      }
+    },
+    {
+      "id": "try_both_years",
+      "npc": { "text": "Maybe I could try music this year and soccer next year.", "gender": "male" },
+      "learning_objective": ["Praise a plan"],
+      "routes": [
+        {
+          "intent": "smart_plan",
+          "meaning": "Mia says that sounds like a smart plan.",
+          "examples": ["That sounds like a smart plan.", "That's a smart plan.", "That sounds like a really smart plan."],
+          "keywords": ["sounds", "smart", "plan", "good"],
+          "hint": "💬 Try saying: “That sounds like a smart plan.”",
+          "next_nodes": [{ "id": "choose_music", "weight": 100 }]
+        },
+        {
+          "intent": "ask_sure",
+          "meaning": "Mia checks whether he's sure about that plan.",
+          "examples": ["Are you sure that works?", "Can you really do both in two years?", "Will you have time for both?"],
+          "keywords": ["sure", "really", "works", "time", "both"],
+          "hint": "You can ask “Are you sure?” or say “That sounds like a smart plan.”",
+          "next_nodes": [{ "id": "reassure_plan", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Praise his idea: “That sounds like a smart plan.”" },
+        "off_topic": { "message": "Leo has an idea. Say “That sounds like a smart plan.”" }
+      }
+    },
+    {
+      "id": "reassure_plan",
+      "npc": { "text": "Yes, that way I don't have to give up either one.", "gender": "male" },
+      "routes": [
+        {
+          "intent": "smart_plan",
+          "meaning": "Mia says that sounds like a smart plan.",
+          "examples": ["That sounds like a smart plan.", "That's a smart plan.", "Okay, that sounds like a smart plan."],
+          "keywords": ["sounds", "smart", "plan", "good"],
+          "hint": "💬 Try saying: “That sounds like a smart plan.”",
+          "next_nodes": [{ "id": "choose_music", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “That sounds like a smart plan.”" },
+        "off_topic": { "message": "Tell Leo “That sounds like a smart plan.”" }
+      }
+    },
+    {
+      "id": "choose_music",
+      "npc": { "text": "You're right. I will choose the music club first.", "gender": "male" },
+      "learning_objective": ["Wish someone luck"],
+      "routes": [
+        {
+          "intent": "good_luck",
+          "meaning": "Mia wishes Leo good luck with his choice.",
+          "examples": ["Good luck! I'm sure you made the right choice.", "Good luck! I'm sure you made the right decision.", "Good luck! That's the right choice."],
+          "keywords": ["good", "luck", "sure", "right", "choice"],
+          "hint": "💬 Try saying: “Good luck! I'm sure you made the right choice.”",
+          "next_nodes": [{ "id": "end_thanks", "weight": 100 }]
+        },
+        {
+          "intent": "encourage_more",
+          "meaning": "Mia encourages Leo about his decision.",
+          "examples": ["You'll be great at the guitar!", "You'll have so much fun in the music club!", "I'm proud of you for deciding."],
+          "keywords": ["great", "fun", "proud", "music", "club"],
+          "hint": "You can cheer him on, or say “Good luck! I'm sure you made the right choice.”",
+          "next_nodes": [{ "id": "end_thanks2", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Wish him luck: “Good luck! I'm sure you made the right choice.”" },
+        "off_topic": { "message": "Leo decided! Say “Good luck! I'm sure you made the right choice.”" }
+      }
+    },
+    {
+      "id": "end_thanks",
+      "npc": { "text": "Thank you, Mia! I feel much better now.", "gender": "male" },
+      "end": true
+    },
+    {
+      "id": "end_thanks2",
+      "npc": { "text": "Thanks for helping me decide. You're a great friend!", "gender": "male" },
+      "end": true
+    }
+  ]
+}

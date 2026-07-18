@@ -1,0 +1,217 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in Pre-A1/012 dialogue + vocab. Learner plays Emma; computer plays Lily. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-Pre-A1-012",
+  "lesson": "Pre-A1/012",
+  "title": "012 · Happy Birthday",
+  "you": "Emma",
+  "npc": "Lily",
+  "npc_gender": "female",
+  "start": "happy_bday",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "happy_bday",
+      "npc": { "text": "Happy birthday, Emma!", "gender": "female" },
+      "learning_objective": ["Say thank you"],
+      "routes": [
+        {
+          "intent": "thank",
+          "meaning": "Emma thanks Lily.",
+          "examples": ["Thank you, Lily!", "Thank you!", "Thanks, Lily!"],
+          "keywords": ["thank", "thanks", "lily"],
+          "hint": "💬 Try saying: “Thank you, Lily!”",
+          "next_nodes": [{ "id": "cake", "weight": 100 }]
+        },
+        {
+          "intent": "excited",
+          "meaning": "Emma is excited it is her birthday.",
+          "examples": ["It is my birthday!", "I am so happy!", "Yay, my birthday!"],
+          "keywords": ["birthday", "happy", "yay"],
+          "hint": "💬 Try saying: “Thank you, Lily!”",
+          "next_nodes": [{ "id": "bday_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say thank you to Lily: “Thank you, Lily!”" },
+        "off_topic": { "message": "Lily said happy birthday! Say “Thank you, Lily!”" }
+      }
+    },
+    {
+      "id": "bday_side",
+      "npc": { "text": "Yes! It is your special day, Emma!", "gender": "female" },
+      "routes": [
+        {
+          "intent": "thank",
+          "meaning": "Emma thanks Lily.",
+          "examples": ["Thank you, Lily!", "Thank you!", "Thanks!"],
+          "keywords": ["thank", "thanks", "lily"],
+          "hint": "💬 Try saying: “Thank you, Lily!”",
+          "next_nodes": [{ "id": "cake", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “Thank you, Lily!”" },
+        "off_topic": { "message": "Be kind to Lily. Say “Thank you, Lily!”" }
+      }
+    },
+    {
+      "id": "cake",
+      "npc": { "text": "Look at the big cake.", "gender": "female" },
+      "learning_objective": ["Count what you see", "Use: candles, six"],
+      "routes": [
+        {
+          "intent": "six_candles",
+          "meaning": "Emma sees six candles.",
+          "examples": ["I see six candles.", "I see six candles!", "Six candles!"],
+          "keywords": ["candles", "six", "see"],
+          "hint": "💬 Try saying: “I see six candles.”",
+          "next_nodes": [{ "id": "gift", "weight": 100 }]
+        },
+        {
+          "intent": "big_cake",
+          "meaning": "Emma reacts to the big cake.",
+          "examples": ["Wow, big cake!", "The cake is big.", "I like the cake."],
+          "keywords": ["cake", "big", "like"],
+          "hint": "💬 Try saying: “I see six candles.”",
+          "next_nodes": [{ "id": "cake_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Count them! Say “I see six candles.”" },
+        "off_topic": { "message": "Look at the cake. Say “I see six candles.”" }
+      }
+    },
+    {
+      "id": "cake_side",
+      "npc": { "text": "It is a big cake! How many candles do you see?", "gender": "female" },
+      "routes": [
+        {
+          "intent": "six_candles",
+          "meaning": "Emma sees six candles.",
+          "examples": ["I see six candles.", "Six candles.", "I see six candles!"],
+          "keywords": ["candles", "six", "see"],
+          "hint": "💬 Try saying: “I see six candles.”",
+          "next_nodes": [{ "id": "gift", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “I see six candles.”" },
+        "off_topic": { "message": "How many candles? Say “I see six candles.”" }
+      }
+    },
+    {
+      "id": "gift",
+      "npc": { "text": "I have a gift for you.", "gender": "female" },
+      "learning_objective": ["Say thank you for a gift"],
+      "routes": [
+        {
+          "intent": "wow_thank",
+          "meaning": "Emma says wow and thank you.",
+          "examples": ["Wow! Thank you.", "Wow, thank you!", "Thank you!"],
+          "keywords": ["wow", "thank", "gift"],
+          "hint": "💬 Try saying: “Wow! Thank you.”",
+          "next_nodes": [{ "id": "sing", "weight": 100 }]
+        },
+        {
+          "intent": "ask_gift",
+          "meaning": "Emma asks about the gift.",
+          "examples": ["What is it?", "A gift for me?", "What is in it?"],
+          "keywords": ["gift", "what", "it"],
+          "hint": "💬 Try saying: “Wow! Thank you.”",
+          "next_nodes": [{ "id": "gift_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “Wow! Thank you.”" },
+        "off_topic": { "message": "Lily has a gift! Say “Wow! Thank you.”" }
+      }
+    },
+    {
+      "id": "gift_side",
+      "npc": { "text": "Open it later! Do you like your gift?", "gender": "female" },
+      "routes": [
+        {
+          "intent": "wow_thank",
+          "meaning": "Emma says wow and thank you.",
+          "examples": ["Wow! Thank you.", "Yes, thank you!", "Thank you, Lily!"],
+          "keywords": ["wow", "thank", "gift"],
+          "hint": "💬 Try saying: “Wow! Thank you.”",
+          "next_nodes": [{ "id": "sing", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “Wow! Thank you.”" },
+        "off_topic": { "message": "Do you like the gift? Say “Wow! Thank you.”" }
+      }
+    },
+    {
+      "id": "sing",
+      "npc": { "text": "Let us sing a song.", "gender": "female" },
+      "learning_objective": ["Say how you feel", "Use: happy"],
+      "routes": [
+        {
+          "intent": "so_happy",
+          "meaning": "Emma says she is so happy.",
+          "examples": ["I am so happy.", "I am so happy!", "I am very happy."],
+          "keywords": ["happy", "so"],
+          "hint": "💬 Try saying: “I am so happy.”",
+          "next_nodes": [{ "id": "wish", "weight": 100 }]
+        },
+        {
+          "intent": "lets_sing",
+          "meaning": "Emma wants to sing too.",
+          "examples": ["Yes, let us sing!", "I like to sing.", "Sing with me!"],
+          "keywords": ["sing", "song", "yes"],
+          "hint": "💬 Try saying: “I am so happy.”",
+          "next_nodes": [{ "id": "sing_side", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Lily: “I am so happy.”" },
+        "off_topic": { "message": "It is your party! Say “I am so happy.”" }
+      }
+    },
+    {
+      "id": "sing_side",
+      "npc": { "text": "La la la! Are you happy, Emma?", "gender": "female" },
+      "routes": [
+        {
+          "intent": "so_happy",
+          "meaning": "Emma says she is so happy.",
+          "examples": ["I am so happy.", "Yes, I am so happy.", "I am happy!"],
+          "keywords": ["happy", "so"],
+          "hint": "💬 Try saying: “I am so happy.”",
+          "next_nodes": [{ "id": "wish", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “I am so happy.”" },
+        "off_topic": { "message": "Are you happy? Say “I am so happy.”" }
+      }
+    },
+    {
+      "id": "wish",
+      "npc": { "text": "Make a wish, Emma!", "gender": "female" },
+      "learning_objective": ["Share your feelings"],
+      "routes": [
+        {
+          "intent": "best_day",
+          "meaning": "Emma says this is the best day.",
+          "examples": ["This is the best day!", "This is the best day.", "It is the best day!"],
+          "keywords": ["best", "day"],
+          "hint": "💬 Try saying: “This is the best day!”",
+          "next_nodes": [{ "id": "close", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Say “This is the best day!”" },
+        "off_topic": { "message": "Make a wish! Say “This is the best day!”" }
+      }
+    },
+    {
+      "id": "close",
+      "npc": { "text": "Yay! Happy birthday again, Emma!", "gender": "female" },
+      "end": true
+    }
+  ]
+}

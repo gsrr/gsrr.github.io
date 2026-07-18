@@ -1,0 +1,171 @@
+{
+  "_note": "Per-lesson role-play scenario. Grounded in Pre-A1/024 dialogue + vocab. Learner plays Ben; computer plays Anna. Each NPC node offers 2-3 branches so the same lesson language can be reached different ways. Consumed by RP.Engine + RP.classifiers.local (see roleplay/).",
+  "id": "lesson-Pre-A1-024",
+  "lesson": "Pre-A1/024",
+  "title": "024 · Feed the Fish",
+  "you": "Ben",
+  "npc": "Anna",
+  "npc_gender": "female",
+  "start": "look_fish",
+  "max_turns": 24,
+  "nodes": [
+    {
+      "id": "look_fish",
+      "npc": { "text": "Look at my fish.", "gender": "female" },
+      "learning_objective": ["Describe color", "Use: orange"],
+      "routes": [
+        {
+          "intent": "color",
+          "meaning": "Ben says the fish are orange.",
+          "examples": ["They are orange.", "The fish are orange.", "They are orange fish."],
+          "keywords": ["orange", "they", "fish"],
+          "hint": "Say the color: “They are orange.”",
+          "next_nodes": [{ "id": "three_fish", "weight": 100 }]
+        },
+        {
+          "intent": "react",
+          "meaning": "Ben reacts to the fish.",
+          "examples": ["Wow, fish!", "They are so pretty!", "I see them!"],
+          "keywords": ["wow", "pretty", "see", "fish"],
+          "hint": "You can say “They are orange.” or “They are so pretty!”",
+          "next_nodes": [{ "id": "fish_reply", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Tell Anna about the fish: “They are orange.”" },
+        "off_topic": { "message": "Anna has fish. Say “They are orange.”" }
+      }
+    },
+    {
+      "id": "fish_reply",
+      "npc": { "text": "Yes! They are orange and pretty.", "gender": "female" },
+      "routes": [
+        {
+          "intent": "agree",
+          "meaning": "Ben agrees about the fish.",
+          "examples": ["They are orange!", "I like them!", "So pretty!"],
+          "keywords": ["orange", "like", "pretty"],
+          "hint": "Agree with Anna: “They are orange!”",
+          "next_nodes": [{ "id": "three_fish", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "The fish are orange. Say “They are orange!”" },
+        "off_topic": { "message": "Anna's fish are orange. Say “They are orange!”" }
+      }
+    },
+    {
+      "id": "three_fish",
+      "npc": { "text": "I have three fish.", "gender": "female" },
+      "learning_objective": ["Ask where they live"],
+      "routes": [
+        {
+          "intent": "ask_live",
+          "meaning": "Ben asks where the fish live.",
+          "examples": ["Where do they live?", "Where do the fish live?", "Where do they stay?"],
+          "keywords": ["where", "live", "they"],
+          "hint": "Ask a question: “Where do they live?”",
+          "next_nodes": [{ "id": "in_tank", "weight": 100 }]
+        },
+        {
+          "intent": "count",
+          "meaning": "Ben reacts to three fish.",
+          "examples": ["Three fish!", "I see three.", "Wow, three!"],
+          "keywords": ["three", "see", "wow"],
+          "hint": "You can ask “Where do they live?” or say “Three fish!”",
+          "next_nodes": [{ "id": "in_tank", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Anna a question: “Where do they live?”" },
+        "off_topic": { "message": "Anna has three fish. Ask “Where do they live?”" }
+      }
+    },
+    {
+      "id": "in_tank",
+      "npc": { "text": "They live in a tank.", "gender": "female" },
+      "learning_objective": ["Say what the fish can do", "Use: swim"],
+      "routes": [
+        {
+          "intent": "can_swim",
+          "meaning": "Ben says the fish can swim.",
+          "examples": ["The fish can swim.", "They can swim.", "The fish swim!"],
+          "keywords": ["swim", "fish", "can"],
+          "hint": "Say what they do: “The fish can swim.”",
+          "next_nodes": [{ "id": "feed_time", "weight": 100 }]
+        },
+        {
+          "intent": "tank_water",
+          "meaning": "Ben talks about the tank and water.",
+          "examples": ["In a tank!", "They live in water.", "A big tank!"],
+          "keywords": ["tank", "water", "live"],
+          "hint": "You can say “The fish can swim.” or “They live in water.”",
+          "next_nodes": [{ "id": "feed_time", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "What can the fish do? Say “The fish can swim.”" },
+        "off_topic": { "message": "The fish live in a tank. Say “The fish can swim.”" }
+      }
+    },
+    {
+      "id": "feed_time",
+      "npc": { "text": "It is time to feed them.", "gender": "female" },
+      "learning_objective": ["Ask what they eat", "Use: food"],
+      "routes": [
+        {
+          "intent": "ask_eat",
+          "meaning": "Ben asks what fish eat.",
+          "examples": ["What do fish eat?", "What do they eat?", "What do the fish eat?"],
+          "keywords": ["what", "eat", "fish"],
+          "hint": "Ask about food: “What do fish eat?”",
+          "next_nodes": [{ "id": "eat_food", "weight": 100 }]
+        },
+        {
+          "intent": "help_feed",
+          "meaning": "Ben wants to help feed the fish.",
+          "examples": ["Let us feed them!", "I can feed them!", "Can I feed them?"],
+          "keywords": ["feed", "them", "can"],
+          "hint": "You can ask “What do fish eat?” or say “Let us feed them!”",
+          "next_nodes": [{ "id": "eat_food", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "Ask Anna about food: “What do fish eat?”" },
+        "off_topic": { "message": "It is time to feed the fish. Ask “What do fish eat?”" }
+      }
+    },
+    {
+      "id": "eat_food",
+      "npc": { "text": "They eat fish food.", "gender": "female" },
+      "learning_objective": ["Say how the fish feel"],
+      "routes": [
+        {
+          "intent": "happy",
+          "meaning": "Ben says the fish are happy.",
+          "examples": ["The fish are happy!", "They are happy!", "The fish are so happy!"],
+          "keywords": ["happy", "fish", "are"],
+          "hint": "Say how they feel: “The fish are happy!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        },
+        {
+          "intent": "yum_food",
+          "meaning": "Ben likes the fish food.",
+          "examples": ["Yum, fish food!", "They like the food!", "Good food!"],
+          "keywords": ["food", "like", "yum"],
+          "hint": "You can say “The fish are happy!” or “They like the food!”",
+          "next_nodes": [{ "id": "done", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "message": "How do the fish feel? Say “The fish are happy!”" },
+        "off_topic": { "message": "The fish eat their food. Say “The fish are happy!”" }
+      }
+    },
+    {
+      "id": "done",
+      "npc": { "text": "The fish are happy now. Thank you for your help!", "gender": "female" },
+      "end": true
+    }
+  ]
+}
