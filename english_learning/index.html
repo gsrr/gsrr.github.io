@@ -1767,8 +1767,8 @@
     const avg = pcts.length ? Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length) : 0;
     const passed = avg >= PASS_MARK;
     if (passed && currentArticle && !_passCounted) { _passCounted = true; bumpPassCount(currentArticle.file); }   // 通過cnt +1
-    const unlockNote = (passed && pending && currentArticle && pending.file === currentArticle.file)
-      ? '<div class="sum-pct" style="color:#7c3aed;margin-top:8px">🗺️ Territory unlocked — go back to the map and deploy your troops!</div>' : '';
+    const unlockNote = (passed && pendingOccupy && currentArticle && pendingOccupy.file === currentArticle.file)
+      ? '<div class="sum-pct" style="color:#7c3aed;margin-top:8px">🗺️ Territory unlocked — tap "🚩 Occupy the territory!" below to send in your troops!</div>' : '';
     summaryEl.innerHTML =
       '<div class="sum-title">🎉 Lesson Complete!</div>' +
       '<div class="sum-stars">' + (passed ? "🟢 Passed!" : "🔴 Keep trying!") + '</div>' +
@@ -1818,17 +1818,23 @@
       nextLevelBtn.dataset.mode = "next";
       hideLessonSummary();
     } else {
-      nextLevelBtn.textContent = "🎮 Play & Win!";
-      nextLevelBtn.dataset.mode = "game";
+      // 最後一關完成：從據點挑戰進來且整課通過 → 直接跳佔領流程；否則回課程列表。
+      //（舊「玩小遊戲賺點數升級卡片」流程已停用。）
+      const occupy = pendingOccupy && currentArticle &&
+        pendingOccupy.file === currentArticle.file && lessonStatus(currentArticle).passed;
+      nextLevelBtn.textContent = occupy ? "🚩 Occupy the territory!" : "✅ Back to lessons";
+      nextLevelBtn.dataset.mode = occupy ? "occupy" : "back";
       renderLessonSummary();   // 最後一關完成 -> 顯示整課總分
     }
     levelFinish.classList.remove("hidden");
   }
   nextLevelBtn.addEventListener("click", () => {
     levelFinish.classList.add("hidden");
-    if (nextLevelBtn.dataset.mode === "game") {
+    if (nextLevelBtn.dataset.mode === "occupy") {
       synth.cancel(); stopListenL1(); stopRecordingIfAny();
-      startPostLessonGame();
+      const po = pendingOccupy;
+      selectLevel(selLevelIdx);            // 回到地圖
+      if (po && po.reopen) po.reopen();    // 直接打開該據點的佔領面板
       return;
     }
     if (nextLevelBtn.dataset.mode === "back") {
@@ -4326,6 +4332,7 @@
   function passCount(file) { return passCntMap()[file] || 0; }
   function bumpPassCount(file) { if (!file) return; const m = passCntMap(); m[file] = (m[file] || 0) + 1; try { localStorage.setItem("passcnt:" + (userName || "guest"), JSON.stringify(m)); } catch (e) {} }
   let pending = null;   // 挑戰中：{key, file, base(通過cnt), article, i}
+  let pendingOccupy = null;   // 上完課要直接跳佔領的據點：{ file, reopen() }（取代舊的小遊戲賺點數升級卡片流程）
   let _passCounted = false;   // 本次進課是否已計過一次通過（避免總結重繪重複累加）
   // 挑一課當「攻打/佔領」挑戰：故事線沒講完就依序給下一集，否則本等級課裡挑「通過cnt」最小的（同分隨機）
   function pickChallenge(i) {
@@ -4545,7 +4552,11 @@
     terr.innerHTML = '<p class="op-hint">🚩 To take this region, pass this lesson (80%+):</p>' +
       '<div class="op-def" style="text-align:center">📖 <b>' + artTitle(ch) + '</b></div>' +
       '<div class="op-btns"><button id="chStudy" class="dict-play">📖 Study &amp; pass</button></div>';
-    ov.querySelector("#chStudy").addEventListener("click", () => { pending = { key: key, file: ch.file, base: passCount(ch.file), article: ch, i: i }; closeModal(); selectArticle(ch); });
+    ov.querySelector("#chStudy").addEventListener("click", () => {
+      pending = { key: key, file: ch.file, base: passCount(ch.file), article: ch, i: i };
+      pendingOccupy = { file: ch.file, reopen: function () { openRegion(key, name, pop, i); } };   // 過關後直接跳回這個據點佔領
+      closeModal(); selectArticle(ch);
+    });
   }
 
   function selectLevel(i) {
@@ -4779,7 +4790,7 @@
       '<div class="op-btns"><button id="opStudy" class="dict-play">📖 Study lesson</button></div><div id="opTerr"></div>' +
       '<div class="op-btns"><button id="opClose" class="back-btn">✕ Close</button></div>';
     const ov = openModal(html);
-    ov.querySelector("#opStudy").addEventListener("click", () => { closeModal(); selectArticle(a); });
+    ov.querySelector("#opStudy").addEventListener("click", () => { pendingOccupy = { file: a.file, reopen: function () { openOutpost(a); } }; closeModal(); selectArticle(a); });
     ov.querySelector("#opClose").addEventListener("click", closeModal);
     const terr = ov.querySelector("#opTerr");
     if (!authToken()) { terr.innerHTML = '<p class="op-hint">🔒 Log in to raise an army and battle for territory.</p>'; return; }
