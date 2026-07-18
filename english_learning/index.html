@@ -2998,7 +2998,29 @@
   let rp = null, rpRec = null, rpChunks = [], rpRecording = false;
   function stopRolePlay() {
     try { if (rpRec && rpRec.state === "recording") rpRec.stop(); } catch (e) {}
-    rpRecording = false; rp = null; try { synth.cancel(); } catch (e) {}
+    rpRecording = false; rp = null; try { synth.cancel(); } catch (e) {} try { stopAudio(); } catch (e) {}
+  }
+  // 電腦的台詞：念出來，念完（或估時到）就呼叫 onend 自動換下一句。附保險計時器以防 onended 沒觸發。
+  function rpSpeak(line, onend) {
+    let done = false;
+    const fire = () => { if (done) return; done = true; onend(); };
+    const words = (line.text || "").split(/\s+/).filter(Boolean).length;
+    const fallback = setTimeout(fire, 2500 + words * 450);
+    const cb = () => { clearTimeout(fallback); fire(); };
+    if (playClip(line.text, line.gender, null, cb)) return;   // 有 mp3 → 播放結束自動前進
+    try {
+      if (typeof SpeechSynthesisUtterance !== "undefined") {
+        synth.cancel();
+        const u = new SpeechSynthesisUtterance(line.text);
+        u.lang = "en-US"; u.rate = 0.85;
+        const v = line.gender === "male" ? maleVoice : femaleVoice;
+        if (v) u.voice = v;
+        u.onend = cb;
+        synth.speak(u);
+        return;
+      }
+    } catch (e) {}
+    // 完全無法發音 → 靠保險計時器前進
   }
   function rpNorm(s) { return (s || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean); }
   const RP_STOP = new Set("a an the is are am was were be been to of and or but in on at it its i you he she we they me him her them my your his our this that these those do does did will would can could should have has had not no yes so if then there here as with for".split(" "));
@@ -3043,14 +3065,13 @@
     prog.textContent = "Line " + Math.min(rp.i + 1, script.length) + " / " + script.length + "  ·  🎭 You: " + dispName(rp.you);
     if (rp.i >= script.length) return rpFinish();
     const line = script[rp.i];
-    if (line.who !== rp.you) {                       // 電腦的台詞
+    if (line.who !== rp.you) {                       // 電腦的台詞：自動念完就換下一句，不用按鈕
+      const myIdx = rp.i;
       convo.innerHTML += rpBubble(line, "active");
-      ctrl.innerHTML = '<div class="rp-turn">🔊 ' + dispName(line.who) + ' speaks…</div>' +
-        '<div class="op-btns"><button id="rpPlay" class="dict-play">🔊 Again</button><button id="rpNext" class="dict-play">Continue ▶</button></div>';
-      const play = () => { if (!playClip(line.text, line.gender)) speakQuestion(line.text); };
-      play();
-      ctrl.querySelector("#rpPlay").addEventListener("click", play);
-      ctrl.querySelector("#rpNext").addEventListener("click", () => { rp.i++; rpRender(); });
+      ctrl.innerHTML = '<div class="rp-turn">🔊 ' + dispName(line.who) + ' speaks…</div>';
+      convo.scrollTop = convo.scrollHeight;
+      rpSpeak(line, () => { if (rp && rp.i === myIdx) { rp.i++; rpRender(); } });
+      return;
     } else {                                          // 你的台詞：錄音辨識
       ctrl.innerHTML = '<div class="rp-turn">🎭 Your turn — read this out loud:</div>' +
         '<div class="rp-line">“' + line.text + '”</div><div class="rp-fb" id="rpFb"></div>' +
