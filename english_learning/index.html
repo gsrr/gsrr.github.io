@@ -521,8 +521,11 @@
   .map-node.terr-foe .terr-owner { background: #f59e0b; }    /* 橘 = 對手佔的 */
   /* 據點面板 / 卡片 / 占領對戰 */
   .modal-ov { position: fixed; inset: 0; background: rgba(15,23,42,.55); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
-  .modal-card { background: #fff; border-radius: 16px; padding: 18px; max-width: 360px; width: 100%; max-height: 86vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
-  .modal-title { margin: 0 0 10px; font-size: 18px; }
+  .modal-card { position: relative; background: #fff; border-radius: 16px; padding: 18px; max-width: 360px; width: 100%; max-height: 86vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+  .modal-x { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+    border: none; border-radius: 999px; background: #f1f5f9; color: #475569; font-size: 18px; line-height: 1; cursor: pointer; z-index: 2; }
+  .modal-x:hover { background: #e2e8f0; color: #1e293b; }
+  .modal-title { margin: 0 34px 10px 0; font-size: 18px; }
   .op-def { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 10px; font-size: 13px; margin-bottom: 10px; }
   .op-def.op-mine { background: #f0fdf4; border-color: #bbf7d0; }
   .op-card { color: #475569; font-size: 12px; }
@@ -3664,9 +3667,7 @@
       });
       html += '</div>';
     }
-    html += '<div class="op-btns"><button id="empClose" class="back-btn">✕ Close</button></div>';
-    const ov = openModal(html);
-    ov.querySelector("#empClose").addEventListener("click", closeModal);
+    openModal(html);
   }
   // 各等級對應一張真實地理地圖（沒列到的等級 fallback 用蜿蜒小徑地圖）
   // drill: { 地區id: 子地圖 } → 該地區變「容器」，點進去看子地圖（例：台北市 → 12 行政區）
@@ -3883,10 +3884,8 @@
       '<div class="op-pop">👥 Population <b>' + pop + '</b>' + (mine ? ' (yours)' : ' — added to your empire if you take it') + '</div>';
     if (h && h.owner) html += '<div class="op-def' + (mine ? ' op-mine' : '') + '">Held by ' + (h.avatar || "👦") + ' <b>' + dispName(h.owner) + '</b><br>' + garrisonHTML(h.troops) + '</div>';
     else html += '<div class="op-def">🏳️ Unclaimed region</div>';
-    html += '<div class="op-econ">⚔️ Your troops: <b>' + T + '</b></div><div id="opTerr"></div>' +
-      '<div class="op-btns"><button id="opClose" class="back-btn">✕ Close</button></div>';
+    html += '<div class="op-econ">⚔️ Your troops: <b>' + T + '</b></div><div id="opTerr"></div>';
     const ov = openModal(html);
-    ov.querySelector("#opClose").addEventListener("click", closeModal);
     const terr = ov.querySelector("#opTerr");
     const noTroops = '<p class="op-hint">⚠️ No troops right now. Your home base makes <b>' + income + '</b>/hr — come back later.</p>';
     if (!authToken()) { terr.innerHTML = '<p class="op-hint">🔒 Log in to raise an army and battle for territory.</p>'; return; }
@@ -4090,8 +4089,9 @@
   function openModal(html) {
     closeModal();
     const ov = document.createElement("div"); ov.className = "modal-ov"; ov.id = "appModal";
-    ov.innerHTML = '<div class="modal-card">' + html + '</div>';
+    ov.innerHTML = '<div class="modal-card"><button class="modal-x" aria-label="Close">✕</button>' + html + '</div>';
     ov.addEventListener("click", e => { if (e.target === ov) closeModal(); });
+    const x = ov.querySelector(".modal-x"); if (x) x.addEventListener("click", closeModal);
     document.body.appendChild(ov); return ov;
   }
   function closeModal() { const m = document.getElementById("appModal"); if (m) m.remove(); }
@@ -4154,11 +4154,9 @@
         garrisonHTML(h.troops) + '</div>';
     } else { html += '<div class="op-def">🏳️ Unclaimed region</div>'; }
     html += '<div class="op-econ">⚔️ Your troops: <b>' + T + '</b></div>' +
-      '<div class="op-btns"><button id="opStudy" class="dict-play">📖 Study lesson</button></div><div id="opTerr"></div>' +
-      '<div class="op-btns"><button id="opClose" class="back-btn">✕ Close</button></div>';
+      '<div class="op-btns"><button id="opStudy" class="dict-play">📖 Study lesson</button></div><div id="opTerr"></div>';
     const ov = openModal(html);
     ov.querySelector("#opStudy").addEventListener("click", () => { pendingOccupy = { file: a.file, reopen: function () { openOutpost(a); } }; closeModal(); selectArticle(a); });
-    ov.querySelector("#opClose").addEventListener("click", closeModal);
     const terr = ov.querySelector("#opTerr");
     if (!authToken()) { terr.innerHTML = '<p class="op-hint">🔒 Log in to raise an army and battle for territory.</p>'; return; }
     if (mine) {
