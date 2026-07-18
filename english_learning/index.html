@@ -1682,14 +1682,12 @@
     const avg = pcts.length ? Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length) : 0;
     const passed = avg >= PASS_MARK;
     if (passed && currentArticle && !_passCounted) { _passCounted = true; bumpPassCount(currentArticle.file); }   // 通過cnt +1
-    const unlockNote = (passed && pendingOccupy && currentArticle && pendingOccupy.file === currentArticle.file)
-      ? '<div class="sum-pct" style="color:#7c3aed;margin-top:8px">🗺️ Territory unlocked — tap "🚩 Occupy the territory!" below to send in your troops!</div>' : '';
     summaryEl.innerHTML =
       '<div class="sum-title">🎉 Lesson Complete!</div>' +
       '<div class="sum-stars">' + (passed ? "🟢 Passed!" : "🔴 Keep trying!") + '</div>' +
       '<div class="sum-rows">' + rows + '</div>' +
       '<div class="sum-total">Total: ' + avg + ' / 100' +
-      ' <span class="sum-pct">(need ' + PASS_MARK + ' to pass)</span></div>' + unlockNote;
+      ' <span class="sum-pct">(need ' + PASS_MARK + ' to pass)</span></div>';
     summaryEl.classList.remove("hidden");
   }
   function hideLessonSummary() { summaryEl.classList.add("hidden"); }
@@ -1733,25 +1731,25 @@
       nextLevelBtn.dataset.mode = "next";
       hideLessonSummary();
     } else {
-      // 最後一關完成：從據點挑戰進來且整課通過 → 直接跳佔領流程；否則回課程列表。
-      //（舊「玩小遊戲賺點數升級卡片」流程已停用。）
+      renderLessonSummary();   // 先結算整課總分（含通過計數 +1）
+      // 最後一關完成、整課通過、且是從據點挑戰進來的 → 直接跳回地圖開啟佔領+部署，不用再按一次按鈕。
       const occupy = pendingOccupy && currentArticle &&
         pendingOccupy.file === currentArticle.file && lessonStatus(currentArticle).passed;
-      nextLevelBtn.textContent = occupy ? "🚩 Occupy the territory!" : "✅ Back to lessons";
-      nextLevelBtn.dataset.mode = occupy ? "occupy" : "back";
-      renderLessonSummary();   // 最後一關完成 -> 顯示整課總分
+      if (occupy) {
+        const po = pendingOccupy;
+        synth.cancel(); stopListenL1(); stopRecordingIfAny();
+        hideLessonSummary();
+        selectLevel(selLevelIdx);            // 回到地圖
+        if (po && po.reopen) po.reopen();    // 直接開啟該據點的佔領+部署面板
+        return;                              // 不顯示 levelFinish 按鈕
+      }
+      nextLevelBtn.textContent = "✅ Back to lessons";
+      nextLevelBtn.dataset.mode = "back";
     }
     levelFinish.classList.remove("hidden");
   }
   nextLevelBtn.addEventListener("click", () => {
     levelFinish.classList.add("hidden");
-    if (nextLevelBtn.dataset.mode === "occupy") {
-      synth.cancel(); stopListenL1(); stopRecordingIfAny();
-      const po = pendingOccupy;
-      selectLevel(selLevelIdx);            // 回到地圖
-      if (po && po.reopen) po.reopen();    // 直接打開該據點的佔領面板
-      return;
-    }
     if (nextLevelBtn.dataset.mode === "back") {
       synth.cancel(); stopListenL1(); stopRecordingIfAny();
       selectLevel(selLevelIdx);   // 回課程列表
@@ -3922,9 +3920,9 @@
     }
     const ch = pickChallenge(i);
     if (!ch) { terr.innerHTML = '<p class="op-hint">No lesson available for this level.</p>'; return; }
-    terr.innerHTML = '<p class="op-hint">🚩 To take this region, pass this lesson (80%+):</p>' +
+    terr.innerHTML = '<p class="op-hint">🚩 Occupy this region — pass its lesson (80%+) and your troops deploy automatically:</p>' +
       '<div class="op-def" style="text-align:center">📖 <b>' + artTitle(ch) + '</b></div>' +
-      '<div class="op-btns"><button id="chStudy" class="dict-play">📖 Study &amp; pass</button></div>';
+      '<div class="op-btns"><button id="chStudy" class="dict-play">🚩 Occupy</button></div>';
     ov.querySelector("#chStudy").addEventListener("click", () => {
       pending = { key: key, file: ch.file, base: passCount(ch.file), article: ch, i: i };
       pendingOccupy = { file: ch.file, reopen: function () { openRegion(key, name, pop, i); } };   // 過關後直接跳回這個據點佔領
@@ -4172,7 +4170,7 @@
         saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); });
       } });
     } else if (!h || !h.owner) {
-      if (!passed) { terr.innerHTML = '<p class="op-hint">Study &amp; pass this lesson (80%+) to claim it.</p>'; }
+      if (!passed) { terr.innerHTML = '<p class="op-hint">🚩 Tap Study lesson above — pass it (80%+) and your troops deploy here automatically.</p>'; }
       else if (T <= 0) { terr.innerHTML = '<p class="op-hint">⚠️ No troops yet. Your home base makes <b>' + income + '</b>/hr — come back later.</p>'; }
       else {
         terr.innerHTML = '<p class="op-hint">🚩 Occupy: send troops from your pool (max ' + T + '):</p>';
