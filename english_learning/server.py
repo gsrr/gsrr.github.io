@@ -207,6 +207,34 @@ def save_econ_store(e):
     os.replace(tmp, ECON_FILE)
 
 
+# --- 全站事件牆（所有人共見）：[{ts, user, text}]，只留最近 EVENTS_MAX 筆 ---
+EVENTS_FILE = "/data/events.json"
+ev_lock = threading.Lock()
+EVENTS_MAX = 120
+
+
+def load_events():
+    try:
+        with open(EVENTS_FILE) as f:
+            e = json.load(f)
+            return e if isinstance(e, list) else []
+    except Exception:
+        return []
+
+
+def save_events(e):
+    os.makedirs(os.path.dirname(EVENTS_FILE), exist_ok=True)
+    tmp = EVENTS_FILE + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(e, f)
+    os.replace(tmp, EVENTS_FILE)
+
+
+def clean_txt(s, n=40):
+    # 移除角括號避免前端 innerHTML 被注入，並限制長度
+    return str(s or "").replace("<", "").replace(">", "").strip()[:n]
+
+
 def clampi(v, lo=0, hi=100000000):
     try:
         v = int(round(float(v)))
@@ -299,6 +327,8 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_territory()
         elif path == "/api/economy":
             self._handle_economy()
+        elif path == "/api/events":
+            self._handle_events()
         else:
             self._send({"error": "not found"}, 404)
 
@@ -331,6 +361,8 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_territory_release()
         elif path == "/api/economy/set":
             self._handle_economy_set()
+        elif path == "/api/event":
+            self._handle_event_add()
         else:
             self._send({"error": "not found"}, 404)
 
@@ -590,6 +622,43 @@ class Handler(BaseHTTPRequestHandler):
                 if isinstance(pe, dict):
                     pe["population"] = clampi(clampi(pe.get("population", 0)) - region_pop)
                     save_econ_store(es)
+        self._send({"ok": True})
+
+    # 全站事件牆：GET 取最近事件（所有人共見）
+    def _handle_events(self):
+        with ev_lock:
+            evs = load_events()
+        evs = list(reversed(evs))[:60]   # 新的在前
+        self._send({"events": evs})
+
+    # 全站事件牆：POST 記一筆（需登入）。文字由伺服器依 type 組成，避免前端注入任意內容。
+    def _handle_event_add(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        d = self._body_json()
+        typ = str(d.get("type", ""))
+        u = clean_txt(user, 24)
+        region = clean_txt(d.get("region"))
+        target = clean_txt(d.get("target"))
+        level = clean_txt(d.get("level"))
+        if typ == "occupy" and region:
+            text = "🚩 %s occupied %s" % (u, region)
+        elif typ == "attack" and region:
+            text = "⚔️ %s stormed %s%s" % (u, region, (" (was %s's)" % target if target else ""))
+        elif typ == "boss" and level:
+            text = "🐲 %s defeated the %s boss" % (u, level)
+        else:
+            self._send({"error": "bad event"}, 400)
+            return
+        ev = {"ts": int(time.time()), "user": u, "text": text}
+        with ev_lock:
+            evs = load_events()
+            evs.append(ev)
+            if len(evs) > EVENTS_MAX:
+                evs = evs[-EVENTS_MAX:]
+            save_events(evs)
         self._send({"ok": True})
 
     # 玩家經濟：GET 取得（含每日產兵）

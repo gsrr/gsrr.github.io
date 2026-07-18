@@ -526,6 +526,11 @@
     border: none; border-radius: 999px; background: #f1f5f9; color: #475569; font-size: 18px; line-height: 1; cursor: pointer; z-index: 2; }
   .modal-x:hover { background: #e2e8f0; color: #1e293b; }
   .modal-title { margin: 0 34px 10px 0; font-size: 18px; }
+  .ev-list { display: flex; flex-direction: column; gap: 6px; max-height: 60vh; overflow-y: auto; margin: 4px 0 6px; }
+  .ev-row { display: flex; align-items: baseline; gap: 8px; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; }
+  .ev-tx { flex: 1; min-width: 0; font-size: 14px; color: #1e293b; line-height: 1.3; }
+  .ev-ago { flex: 0 0 auto; font-size: 11px; color: #94a3b8; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .ev-empty { text-align: center; color: #64748b; font-size: 14px; padding: 18px 0; }
   .op-def { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 10px; font-size: 13px; margin-bottom: 10px; }
   .op-def.op-mine { background: #f0fdf4; border-color: #bbf7d0; }
   .op-card { color: #475569; font-size: 12px; }
@@ -999,6 +1004,7 @@
       <div id="energyBar" class="energy"></div>
       <div style="text-align:center;margin-bottom:14px">
         <button id="openLeaderBtn" style="background:#0ea5e9;color:#fff">🏅 Leaderboard</button>
+        <button id="openEventsBtn" style="background:#7c3aed;color:#fff">📰 Events</button>
       </div>
       <div id="levelGrid" class="pick-grid"></div>
     </div>
@@ -3537,6 +3543,7 @@
     const surv = sumHp(exam.squad);
     if (surv > 0 && myEcon) { myEcon.troops += surv; saveEconomy(function () { renderEmpire(); }); }   // 生還者撤回兵力池
     setExamPassed(lv.id);
+    logEvent("boss", { level: lv.name || lv.id });
     document.getElementById("battleQ").textContent = ""; document.getElementById("battleOpts").innerHTML = ""; document.getElementById("battleLog").textContent = "";
     const rr = document.getElementById("battleResult"); rr.classList.remove("hidden");
     rr.innerHTML = '<div class="battle-msg">🏆 Boss defeated! ' + (next ? next.name + " unlocked!" : "You are a Champion!") +
@@ -3589,6 +3596,45 @@
   }
   document.getElementById("openLeaderBtn").addEventListener("click", openLeaderboard);
   document.getElementById("backFromLeader").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
+
+  // ===== 全站事件牆（所有人共見的動態）=====
+  function escapeHtml(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+  function timeAgo(ts) {
+    const s = Math.max(0, Math.floor(Date.now() / 1000 - (ts || 0)));
+    if (s < 60) return s + "s";
+    if (s < 3600) return Math.floor(s / 60) + "m";
+    if (s < 86400) return Math.floor(s / 3600) + "h";
+    return Math.floor(s / 86400) + "d";
+  }
+  let _evTimer = null;
+  function renderEvents(list) {
+    const body = document.getElementById("evBody"); if (!body) return;
+    const evs = list || [];
+    body.innerHTML = evs.length
+      ? '<div class="ev-list">' + evs.map(e =>
+          '<div class="ev-row"><span class="ev-tx">' + escapeHtml(e.text) + '</span><span class="ev-ago">' + timeAgo(e.ts) + '</span></div>').join("") + '</div>'
+      : '<div class="ev-empty">No events yet — occupy a region to make history! 🚩</div>';
+  }
+  function fetchEvents() {
+    if (!document.getElementById("evBody")) { if (_evTimer) { clearInterval(_evTimer); _evTimer = null; } return; }   // 視窗關了就自動停
+    fetch("/api/events").then(r => r.ok ? r.json() : null)
+      .then(j => { if (j && j.events) renderEvents(j.events); })
+      .catch(() => {});
+  }
+  function openEvents() {
+    openModal('<h3 class="modal-title">📰 World Events</h3><div id="evBody"><p class="op-hint">Loading…</p></div>');
+    fetchEvents();
+    if (_evTimer) clearInterval(_evTimer);
+    _evTimer = setInterval(fetchEvents, 8000);   // 開著時每 8 秒刷新，讓大家看到最新動態
+  }
+  document.getElementById("openEventsBtn").addEventListener("click", openEvents);
+  // 記一筆全站事件（登入才記，fire-and-forget；文字由伺服器依 type 組成）
+  function logEvent(type, params) {
+    const t = authToken(); if (!t) return;
+    fetch("/api/event?token=" + encodeURIComponent(t), {
+      method: "POST", body: JSON.stringify(Object.assign({ type: type }, params || {}))
+    }).catch(() => {});
+  }
 
   // 畫面 2：課程卡片
   let _mapTo = [];
@@ -3903,7 +3949,7 @@
         const A = sumHp(squad); myEcon.troops = Math.max(0, T - A); closeModal();
         runBattle(squad, h.troops || [], dispName(h.owner), function (win, survivors) {
           myEcon.troops += sumHp(survivors);                     // 生還者一律撤回兵力池（尚未佔領）
-          if (win) releaseTerritory(key, pop, function () {});   // 打贏 → 清成無主
+          if (win) { releaseTerritory(key, pop, function () {}); logEvent("attack", { region: name, target: h.owner }); }   // 打贏 → 清成無主 + 記事件
           saveEconomy(function () { renderEmpire(); refreshMap(); });
         });
       } });
@@ -3914,7 +3960,7 @@
     if (cleared) {
       if (T <= 0) { terr.innerHTML = noTroops; return; }
       terr.innerHTML = '<p class="op-hint">✅ Challenge cleared! 🚩 Occupy — send troops (max ' + T + '):</p>';
-      deployPanel(terr, T, { label: "🚩 Occupy", onGo: g => { myEcon.troops = Math.max(0, T - sumHp(g)); myEcon.population += pop; pending = null; claimTroops(key, g, pop, function () {}); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); } });
+      deployPanel(terr, T, { label: "🚩 Occupy", onGo: g => { myEcon.troops = Math.max(0, T - sumHp(g)); myEcon.population += pop; pending = null; claimTroops(key, g, pop, function () {}); logEvent("occupy", { region: name }); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); } });
       return;
     }
     const ch = pickChallenge(i);
@@ -4174,7 +4220,7 @@
         terr.innerHTML = '<p class="op-hint">🚩 Occupy: send troops from your pool (max ' + T + '):</p>';
         deployPanel(terr, T, { label: "🚩 Occupy", onGo: g => {
           myEcon.troops = Math.max(0, T - sumHp(g)); myEcon.population += regionPop;
-          claimTroops(file, g, regionPop, function () {});
+          claimTroops(file, g, regionPop, function () {}); logEvent("occupy", { region: title });
           saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); });
         } });
       }
@@ -4187,7 +4233,7 @@
           const A = sumHp(squad); myEcon.troops = Math.max(0, T - A); closeModal();
           runBattle(squad, h.troops || [], dispName(h.owner), function (win, survivors) {
             myEcon.troops += sumHp(survivors);                          // 生還者一律撤回兵力池（尚未佔領）
-            if (win) releaseTerritory(file, regionPop, function () {});  // 打贏 → 清成無主
+            if (win) { releaseTerritory(file, regionPop, function () {}); logEvent("attack", { region: title, target: h.owner }); }  // 打贏 → 清成無主 + 記事件
             saveEconomy(function () { renderEmpire(); refreshMap(); });
           });
         } });
