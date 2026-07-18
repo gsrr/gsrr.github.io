@@ -384,7 +384,6 @@
   .bkt-cell.lose { opacity: 0.4; }
   .bkt-cell.bye { color: #cbd5e1; font-style: italic; background: #f8fafc; border-style: dashed; }
   .bkt-match.cur .bkt-cell { outline: 2px solid #f59e0b; }
-  .alloc-row small { display: block; font-size: 11px; font-weight: 400; color: #94a3b8; }
   .attack-btn { font-size: 20px; font-weight: 800; padding: 14px 30px; background: #ef4444; color: #fff; border-radius: 14px; }
   .attack-btn:active { transform: scale(0.95); }
   .attack-btn:disabled { opacity: 0.5; }
@@ -407,19 +406,6 @@
   .admin-acct-head { font-size: 15px; margin-bottom: 6px; }
   .acct-code-inline { font-size: 12px; color: #7c3aed; background: #f5f3ff; padding: 1px 7px; border-radius: 6px; margin-left: 6px; }
   .admin-date { font-size: 12px; color: #94a3b8; margin-left: 4px; }
-  /* ===== 小遊戲 ===== */
-  .game-instr { text-align: center; font-size: 16px; font-weight: 700; color: #1e293b; margin: 8px 0 2px; }
-  .game-status { text-align: center; font-size: 14px; color: #64748b; margin: 4px 0 8px; min-height: 20px; }
-  .game-grid { display: grid; gap: 8px; justify-content: center; margin: 10px auto; }
-  .game-cell { width: 68px; height: 68px; font-size: 34px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; border: 2px solid #cbd5e1; border-radius: 14px; cursor: pointer; user-select: none; }
-  .game-cell:active { transform: scale(0.92); }
-  .game-stage { position: relative; height: 300px; background: linear-gradient(#e0f2fe, #f0f9ff); border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; margin: 10px 0; }
-  .game-sprite { position: absolute; font-size: 40px; cursor: pointer; user-select: none; line-height: 1; }
-  .game-big-btn { font-size: 20px; font-weight: 800; padding: 14px 28px; background: #2563eb; color: #fff; border-radius: 14px; }
-  .flip-card { width: 62px; height: 62px; font-size: 32px; display: flex; align-items: center; justify-content: center; background: #2563eb; color: #2563eb; border-radius: 12px; cursor: pointer; }
-  .flip-card.up { background: #fff; color: #1e293b; border: 2px solid #cbd5e1; }
-  .flip-card.done { background: #bbf7d0; color: #1e293b; border: 2px solid #22c55e; }
-  .reaction-box { height: 200px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: #fff; cursor: pointer; margin: 10px 0; }
   .lb-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 10px; margin: 6px 0; background: #fff; }
   .lb-rank { font-size: 18px; width: 36px; text-align: center; font-weight: 800; }
   .lb-name { flex: 1; font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -594,66 +580,6 @@
   .op-cards { display: flex; flex-direction: column; gap: 6px; }
   .op-card-btn { text-align: left; padding: 8px 10px; border: 2px solid #c7d2fe; border-radius: 10px; background: #eef2ff; cursor: pointer; font-size: 13px; line-height: 1.3; }
   .op-card-btn:active { transform: scale(0.98); }
-  .card-list { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; margin: 8px 0; }
-  .boss-card { border: 2px solid #e2e8f0; border-radius: 12px; padding: 8px 10px; background: #fff; }
-  .boss-card.champ { border-color: #f59e0b; background: #fffbeb; }
-  .bc-head { display: flex; align-items: center; gap: 6px; font-size: 14px; margin-bottom: 6px; }
-  .bc-emo { font-size: 20px; }
-  .bc-lv { font-size: 11px; color: #64748b; margin-left: auto; }
-  .bc-star { font-size: 11px; color: #b45309; font-weight: 700; }
-  .bc-set { font-size: 11px; padding: 2px 8px; border: 1px solid #fbbf24; border-radius: 999px; background: #fff7ed; cursor: pointer; }
-  .bc-stats { display: flex; gap: 6px; }
-  .bc-plus { flex: 1; padding: 6px 4px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; cursor: pointer; font-size: 13px; font-weight: 600; }
-  .bc-plus:active { transform: scale(0.96); }
-  .cap-arena { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 14px 0; }
-  .cap-emo { font-size: 52px; }
-  .cap-vs { font-size: 18px; font-weight: 800; color: #94a3b8; }
-  .cap-log { text-align: center; font-size: 15px; font-weight: 700; min-height: 22px; margin-bottom: 8px; }
-  /* Boss 卡收藏（My Progress） */
-  .coll-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin: 6px 0 14px; }
-  .coll-card { border: 2px solid #e2e8f0; border-radius: 12px; padding: 8px 6px; text-align: center; background: #fff; }
-  .coll-card.champ { border-color: #f59e0b; background: #fffbeb; }
-  .coll-emo { font-size: 30px; line-height: 1; }
-  .coll-name { font-size: 11px; font-weight: 700; color: #1e293b; line-height: 1.15; margin: 2px 0; min-height: 26px; }
-  .coll-lv { font-size: 10px; color: #64748b; }
-  .coll-stats { display: flex; gap: 3px; margin: 5px 0; }
-  .coll-plus { flex: 1; padding: 4px 2px; border: 1px solid #cbd5e1; border-radius: 7px; background: #f8fafc; cursor: pointer; font-size: 11px; font-weight: 600; }
-  .coll-plus[disabled] { cursor: default; opacity: 0.7; border-style: dashed; }
-  .coll-plus:not([disabled]):active { transform: scale(0.95); }
-  .coll-set { width: 100%; padding: 3px; border: 1px solid #fbbf24; border-radius: 999px; background: #fff7ed; cursor: pointer; font-size: 10px; }
-  .coll-champ { font-size: 10px; font-weight: 700; color: #b45309; }
-  .coll-dep { font-size: 9px; font-weight: 700; color: #15803d; line-height: 1.2; margin-bottom: 3px; }
-  .coll-dep.idle { color: #94a3b8; font-weight: 400; }
-  .op-dep { display: block; font-size: 10px; color: #b45309; margin-top: 2px; }
-  .op-adv { color: #15803d; font-weight: 700; margin-left: 4px; }
-  .op-weak { color: #b91c1c; font-weight: 700; margin-left: 4px; }
-  .cap-el { position: absolute; bottom: -4px; right: -4px; font-size: 22px; }
-  .cap-emo { position: relative; }
-  .cap-adv { color: #15803d; } .cap-dis { color: #b91c1c; }
-  /* 屬性/稀有度邊框 */
-  .rar-c { border-color: #cbd5e1 !important; }
-  .rar-r { border-color: #3b82f6 !important; box-shadow: 0 0 0 1px #bfdbfe; }
-  .rar-e { border-color: #a855f7 !important; box-shadow: 0 0 0 2px #e9d5ff; }
-  /* 圖鑑 */
-  .dex-legend { text-align: center; font-size: 11px; color: #64748b; margin: 0 0 10px; }
-  .dex-lv { font-weight: 700; font-size: 14px; margin: 14px 0 6px; color: #334155; }
-  .dex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
-  .dex-card { position: relative; border: 2px solid #e2e8f0; border-radius: 12px; padding: 8px 4px; text-align: center; background: #fff; }
-  .dex-emo { font-size: 32px; line-height: 1; }
-  .dex-badge { position: absolute; top: 3px; right: 4px; font-size: 12px; }
-  .dex-nm { font-size: 10px; font-weight: 700; color: #1e293b; line-height: 1.1; margin-top: 3px; min-height: 24px; }
-  .dex-pw { font-size: 9px; color: #64748b; }
-  .dex-locked { background: #f1f5f9; border-style: dashed; opacity: 0.7; }
-  .dex-locked .dex-emo { filter: grayscale(1) opacity(0.5); }
-  .dex-locked .dex-nm { color: #94a3b8; }
-  .dex-stg { color: #f59e0b; }
-  .coll-evo { color: #2563eb; font-weight: 700; }
-  /* 進化動畫 */
-  .evo-arena { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 16px 0; }
-  .evo-old { font-size: 42px; opacity: 0.55; filter: grayscale(0.4); }
-  .evo-arrow { font-size: 22px; color: #94a3b8; }
-  .evo-new { font-size: 62px; animation: evoPop 0.7s ease; filter: drop-shadow(0 0 10px #fde047); }
-  @keyframes evoPop { 0% { transform: scale(0.3) rotate(-20deg); opacity: 0; } 60% { transform: scale(1.25); } 100% { transform: scale(1); opacity: 1; } }
   .energy { text-align: center; font-size: 14px; color: #334155; margin: 0 0 12px; }
   .energy-track { display: inline-block; vertical-align: middle; width: 120px; height: 10px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin: 0 8px; }
   .energy-fill { display: block; height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); }
@@ -811,10 +737,6 @@
   .lesson-row .dot.fail { background: #ef4444; }
   .lesson-row .sc { margin-left: auto; color: #94a3b8; }
 
-  /* RPG 角色養成 + Boss 戰 */
-  .hero-card { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; justify-content: center;
-    background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 14px; padding: 12px; margin-bottom: 14px; font-weight: 700; color: #3730a3; }
-  .hero-card .hero-unspent { background: #16a34a; color: #fff; border-radius: 999px; padding: 2px 10px; font-size: 12px; }
   .battle-arena { display: flex; align-items: flex-end; justify-content: space-around; gap: 10px; margin: 6px 0 14px; }
   .fighter { flex: 1; text-align: center; position: relative; }
   .fighter-emoji { font-size: 54px; line-height: 1; display: inline-block; }
@@ -843,11 +765,6 @@
   .battle-log { text-align: center; min-height: 22px; font-weight: 700; color: #2563eb; margin-bottom: 10px; }
   .battle-q { text-align: center; font-size: 18px; font-weight: 600; color: #1e293b; margin-bottom: 12px; }
   .battle-msg { text-align: center; font-size: 20px; font-weight: 800; color: #16a34a; margin-bottom: 14px; }
-  .alloc { text-align: center; margin-bottom: 8px; color: #334155; }
-  .alloc-rows { max-width: 300px; margin: 0 auto 14px; }
-  .alloc-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px dashed #cbd5e1; font-weight: 700; color: #334155; }
-  .alloc-row .alloc-val { margin-left: auto; color: #2563eb; }
-  .alloc-plus { flex: 0 0 auto; width: 44px; padding: 6px 0; }
   .battle-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
   /* ============================================================
@@ -869,11 +786,10 @@
   .shadow-progress, .quiz-progress, .status, .game-status, .acct-msg,
   .acct-switch, .dex-legend, .legend, .speed, .lesson-row, .fighter-name { color: #aebacd; }
   .name-row label, .picker label, .avatar-label, .field-label { color: #cbd5e1; }
-  .game-instr, .quiz-q, .cloze-sentence, .shadow-finish p, .battle-q,
-  .stats-h, .dex-lv, .energy, .alloc, .battle-stats { color: #f1f5f9; }
+  .quiz-q, .cloze-sentence, .shadow-finish p, .battle-q,
+  .stats-h, .energy, .battle-stats { color: #f1f5f9; }
   .lv-row .lv-nm { color: #e2e8f0; }
   .lv-row { border-bottom-color: rgba(255,255,255,.08); }
-  .alloc-row { border-bottom-color: rgba(255,255,255,.14); }
   /* 藍色重點字在深底上調亮 */
   .level-name, .learn-title, #scoreBox, #matchStatus, #roStatus,
   .battle-log, .shadow-finish p.shadow-score { color: #93c5fd; }
@@ -889,8 +805,8 @@
   /* 亮色對話泡泡維持亮底 → 強制深色字（避免亮字配亮底） */
   .line, .shadow-bubble { color: #1e293b; }
   /* 亮底面板/彈窗：補回深色字，避免繼承到卡片的亮字而看不見 */
-  .modal-card, .dash-card, .admin-acct, .boss-card, .bkt,
-  .coll-card, .dex-card, .pick-card, .stat-box, .badge { color: #1e293b; }
+  .modal-card, .dash-card, .admin-acct, .bkt,
+  .pick-card, .stat-box, .badge { color: #1e293b; }
   /* 放大各面板字體（對小朋友較好讀）*/
   .modal-card { font-size: 15px; }
   .op-hint, .op-pop, .op-econ, .dep-left { font-size: 15px; }
@@ -1081,7 +997,6 @@
       <div style="text-align:center;margin-bottom:14px">
         <button id="openLeaderBtn" style="background:#0ea5e9;color:#fff">🏅 Leaderboard</button>
       </div>
-      <div id="testGamesWrap" class="hidden" style="text-align:center;margin-bottom:14px"><button id="testGamesBtn" class="back-btn">🎮 Test Games (tester)</button></div>
       <div id="levelGrid" class="pick-grid"></div>
     </div>
 
@@ -2958,14 +2873,8 @@
   function loadProfiles() { try { return JSON.parse(localStorage.getItem("profiles") || "[]"); } catch (e) { return []; } }
   function saveProfiles(list) { try { localStorage.setItem("profiles", JSON.stringify(list)); } catch (e) {} }
 
-  // 英雄造型（每位使用者一個 emoji，當頭像 + RPG 英雄）
+  // 使用者頭像 emoji
   const AVATARS = ["🦸", "🦸‍♀️", "🧙", "🧙‍♀️", "🥷", "🧚", "🧝", "🤴", "👸", "🤖", "🐱", "🐶", "🦊", "🦁", "👦", "👧"];
-  // 壞人（Boss）名冊：依等級星級分級，每場隨機一隻
-  const VILLAINS = {
-    1: ["👾", "👻", "🦇", "🐍", "🦠", "🦞"],
-    2: ["👹", "👺", "🧟", "🦂", "🕷️", "🦹"],
-    3: ["🐉", "💀", "🦖", "🤖", "🦹‍♀️", "👿"]
-  };
   let selectedAvatar = AVATARS[0];
   function avatarKey(name) { return "avatar:" + name; }
   function avatarOf(name) { try { return localStorage.getItem(avatarKey(name)) || "👦"; } catch (e) { return "👦"; } }
@@ -3302,7 +3211,6 @@
   // 畫面 1：等級卡片
   function renderLevelGrid() {
     updateEnergy();
-    document.getElementById("testGamesWrap").classList.toggle("hidden", !adminMode);   // 測試者才看得到
     document.getElementById("guestHint").classList.toggle("hidden", !(userName === "guest"));
     const ri = readStreak(userName);
     document.getElementById("dailyBanner").innerHTML = ri.today > 0
@@ -3405,14 +3313,9 @@
         return head + rows;
       }).join("");
 
-    const h = loadHero();
-    const heroHtml = '<div class="hero-card">' + avatarOf(userName) + ' <span>LV.' + heroLevel(h) + '</span>' +
-      '<span>⚔️ ' + h.atk + '</span><span>🛡️ ' + h.def + '</span><span>🍀 ' + h.luck + '</span>' +
-      (h.unspent ? '<span class="hero-unspent">' + h.unspent + ' pts to spend</span>' : '') + '</div>';
-
     statsBody.innerHTML =
       '<p class="screen-intro">' + (userName ? 'Hi, ' + userName + ' 👋' : '') + '</p>' +
-      heroHtml + statCards + badgeHtml + levelHtml;
+      statCards + badgeHtml + levelHtml;
   }
 
   function renderDailyReport() {
@@ -3440,120 +3343,6 @@
     showScreen(screenLevel);
   });
 
-  /* ================= RPG：角色養成 + Boss 戰 ================= */
-  // ===== Boss 卡系統（取代單一英雄）：每過一課拿一張卡，過關點數加在自選的卡上 =====
-  const VILLAIN_POOL = ["👾", "👹", "👺", "🤖", "👻", "🧟", "🧛", "🐉", "🦖", "🐲", "🦂", "🦇", "🐍", "🦈", "🐙"];
-  function fileHash(file) { let h = 0, s = String(file || ""); for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
-  function villainForFile(file) { return VILLAIN_POOL[fileHash(file) % VILLAIN_POOL.length]; }
-  // 屬性（克制循環：🔥火 > 🌿草 > 💧水 > ⚡電 > 🔥）。打到被克制方 ×1.5 傷害
-  const ELEMENTS = [
-    { id: "fire",  icon: "🔥", name: "Fire",  beats: "grass" },
-    { id: "grass", icon: "🌿", name: "Grass", beats: "water" },
-    { id: "water", icon: "💧", name: "Water", beats: "elec" },
-    { id: "elec",  icon: "⚡", name: "Elec",  beats: "fire" }
-  ];
-  function elementForFile(file) { return ELEMENTS[fileHash(file) % ELEMENTS.length]; }
-  function elementById(id) { return ELEMENTS.find(e => e.id === id) || ELEMENTS[0]; }
-  function elemMult(att, def) { return (att && def && elementById(att).beats === def) ? 1.5 : 1; }
-  // 稀有度（依該課平均）：升高分可升級；給起始點數
-  const RARITY = { 1: { name: "Common", star: "⬜", cls: "rar-c", base: 0 },
-                   2: { name: "Rare",   star: "🔵", cls: "rar-r", base: 1 },
-                   3: { name: "Epic",   star: "🟣", cls: "rar-e", base: 2 } };
-  function rarityFromAvg(avg) { return avg >= 100 ? 3 : avg >= 90 ? 2 : 1; }
-  // 進化：每屬性一條 3 階進化鏈，靠等級門檻升階（造型升級 + 點數獎勵）
-  const EVO_CHAINS = { fire: ["🦎", "🐉", "🐲"], water: ["🐠", "🦈", "🐳"], grass: ["🐛", "🐍", "🦖"], elec: ["🐤", "🦇", "🦅"] };
-  const EVO_LV = [5, 10];   // LV≥5 → 第2階；LV≥10 → 第3階
-  function evoChain(cd) { return EVO_CHAINS[(cd && cd.elem)] || EVO_CHAINS.fire; }
-  function targetStage(cd) { const lv = heroLevel(cd); return lv >= EVO_LV[1] ? 3 : lv >= EVO_LV[0] ? 2 : 1; }
-  function evoEmoji(cd) { return evoChain(cd)[Math.min(Math.max(cd.stage || 1, 1), 3) - 1]; }
-  function cardsKey() { return "cards:" + (userName || "guest"); }
-  function loadCards() {
-    let c = { list: [], unspent: 0, active: null };
-    try { const raw = JSON.parse(localStorage.getItem(cardsKey()) || "null"); if (raw && Array.isArray(raw.list)) c = raw; } catch (e) {}
-    if (!c.list.length) {   // 一次性：把舊的單一英雄轉成一張 Champion 卡，進度不歸零
-      try {
-        const old = JSON.parse(localStorage.getItem("hero:" + (userName || "guest")) || "null");
-        if (old && (old.atk > 1 || old.def > 1 || old.luck > 1 || old.unspent)) {
-          c.list.push({ id: "_champion", emoji: "🦸", name: "Champion", atk: old.atk || 0, def: old.def || 0, luck: old.luck || 0 });
-          c.unspent = old.unspent || 0; c.active = "_champion";
-        }
-      } catch (e) {}
-    }
-    // 正規化：補上屬性/稀有度/進化階段，並讓既有卡片造型對齊目前等級的進化形態
-    (c.list || []).forEach(cd => {
-      if (!cd.elem) cd.elem = elementForFile(cd.id).id;
-      if (!cd.rarity) cd.rarity = 1;
-      if (!cd.stage) cd.stage = targetStage(cd);
-      if (cd.id !== "_champion") cd.emoji = evoEmoji(cd);   // Champion 保留 🦸
-    });
-    return c;
-  }
-  function saveCards(c) { try { localStorage.setItem(cardsKey(), JSON.stringify(c)); } catch (e) {} scheduleStudentSave(); }
-  function findCard(c, id) { return (c.list || []).find(x => x.id === id) || null; }
-  function cardPower(c) { return (c.atk || 0) + (c.def || 0) + (c.luck || 0); }
-  function strongestCard(c) { if (!c.list || !c.list.length) return null; return c.list.slice().sort((a, b) => cardPower(b) - cardPower(a))[0]; }
-  function activeCard(c) { c = c || loadCards(); return findCard(c, c.active) || strongestCard(c) || { id: null, emoji: "🦸", name: "No card yet", atk: 0, def: 0, luck: 0 }; }
-  function grantCard(file, title, avg) {   // 過某一課 -> 拿一張該課的 boss 卡（每課一張）
-    const c = loadCards();
-    const name = ((title || "").split("·").pop() || "").trim() || "Boss";
-    const rar = rarityFromAvg(avg || 0), el = elementForFile(file);
-    const existing = findCard(c, file);
-    if (existing) {   // 已有：若這次分數更高，升級稀有度並補足起始點數差
-      if (rar > (existing.rarity || 1)) {
-        const add = RARITY[rar].base - RARITY[existing.rarity || 1].base;
-        existing.rarity = rar;
-        if (add > 0) { existing.atk += add; existing.def += add; existing.luck += add; }
-      }
-      saveCards(c); return c;
-    }
-    const b = RARITY[rar].base;
-    const cd = { id: file, name: name, elem: el.id, rarity: rar, stage: 1, atk: b, def: b, luck: b };
-    cd.stage = targetStage(cd); cd.emoji = evoEmoji(cd);
-    c.list.push(cd);
-    if (!c.active) c.active = file;
-    saveCards(c); return c;
-  }
-  function cardElem(cd) { return elementById(cd && cd.elem); }
-  function cardRarity(cd) { return RARITY[(cd && cd.rarity) || 1]; }
-  // 加一點到某張卡；跨過等級門檻則進化（造型升級 + 各 +1 獎勵）。回傳 {card, evolved}
-  function spendPointOnCard(cardId, stat) {
-    const c = loadCards(); if (c.unspent <= 0) return null;
-    const cd = findCard(c, cardId); if (!cd) return null;
-    cd[stat] = (cd[stat] || 0) + 1; c.unspent--;
-    let evolved = null; const tgt = targetStage(cd);
-    if (tgt > (cd.stage || 1)) {                 // 進化！
-      cd.stage = tgt; cd.atk++; cd.def++; cd.luck++; cd.emoji = evoEmoji(cd); evolved = cd;
-    }
-    saveCards(c); return { card: cd, evolved: evolved };
-  }
-  function showEvolveModal(cd, after) {
-    const chain = evoChain(cd), prev = chain[Math.max(0, (cd.stage || 2) - 2)];
-    const html = '<h3 class="modal-title">✨ Evolution!</h3>' +
-      '<div class="evo-arena"><span class="evo-old">' + prev + '</span><span class="evo-arrow">➜</span><span class="evo-new">' + cd.emoji + '</span></div>' +
-      '<div class="cap-log">' + cd.name + ' evolved to Stage ' + cd.stage + '!<br>+1 ⚔️ +1 🛡️ +1 🍀</div>' +
-      '<div class="op-btns"><button id="evoOk" class="back-btn">Awesome! 🎉</button></div>';
-    const ov = openModal(html);
-    ov.querySelector("#evoOk").addEventListener("click", () => { closeModal(); if (after) after(); });
-  }
-  // 相容層：舊的 loadHero/saveHero 改成操作「目前出戰的卡」+ 共用點數池
-  function heroKey() { return "hero:" + (userName || "guest"); }
-  function loadHero() {
-    const c = loadCards(), a = activeCard(c);
-    return { atk: a.atk || 0, def: a.def || 0, luck: a.luck || 0, unspent: c.unspent || 0, _cardId: a.id, emoji: a.emoji };
-  }
-  function saveHero(h) {
-    const c = loadCards(), a = findCard(c, h._cardId) || activeCard(c);
-    if (a && a.id) { a.atk = h.atk; a.def = h.def; a.luck = h.luck; }
-    c.unspent = h.unspent || 0; saveCards(c);
-  }
-  function heroMaxHP(h) { return 20 + h.def * 5; }
-  function heroLevel(h) { return 1 + Math.floor(((h.atk || 0) + (h.def || 0) + (h.luck || 0)) / 3); }
-  function starsFromAvg(a) { return a >= 100 ? 3 : a >= 90 ? 2 : a >= 80 ? 1 : 0; }
-  // 🍀 LUCK 的兩個作用：爆擊（×2 傷害）與閃避（完全免傷）
-  function critChance(luck) { return Math.min(0.6, (luck || 0) * 0.05); }
-  function dodgeChance(luck) { return Math.min(0.5, (luck || 0) * 0.04); }
-
-  let battle = null;
   const bossEmojiEl = document.getElementById("bossEmoji");
   const heroEmojiEl = document.getElementById("heroEmoji");
   // 戰鬥動畫小工具
@@ -3594,150 +3383,9 @@
     v.forEach((emo, k) => flyProjectile(fromEl, toEl, emo, 90 + k * 105));
     setTimeout(() => { try { fxHit(toEl); } catch (e) {} if (onHit) onHit(); }, 90 + v.length * 105 + 150);
   }
-  function openBattle() {
-    if (!currentArticle) { selectLevel(selLevelIdx); return; }
-    clearGame();
-    document.getElementById("bossWrap").classList.remove("hidden");
-    document.getElementById("gameArea").classList.add("hidden");
-    document.getElementById("battleTitle").textContent = "⚔️ Boss Battle";
-    const lvStars = (manifest.levels[selLevelIdx] && manifest.levels[selLevelIdx].stars) || 1;
-    const hero = loadHero();
-    const hLv = heroLevel(hero);
-    // 敵人變強，並隨英雄等級成長（養成後仍有挑戰）
-    const bossHP = lvStars * 28 + hLv * 6;
-    const bossAtk = 2 + lvStars + Math.floor(hLv / 3);
-    battle = {
-      hero: hero,
-      heroMax: heroMaxHP(hero), heroHP: heroMaxHP(hero),
-      bossMax: bossHP, bossHP: bossHP, bossAtk: bossAtk,
-      over: false, busy: false
-    };
-    const villainTier = VILLAINS[lvStars] || VILLAINS[1];
-    bossEmojiEl.textContent = villainTier[Math.floor(Math.random() * villainTier.length)];
-    heroEmojiEl.textContent = avatarOf(userName);
-    bossEmojiEl.classList.remove("defeated"); heroEmojiEl.classList.remove("defeated");
-    const r = document.getElementById("battleResult");
-    r.classList.add("hidden"); r.innerHTML = "";
-    document.getElementById("battleLog").textContent = "";
-    renderBattleHUD();
-    renderAttackUI();
-    showScreen(screenBattle);
-  }
-  function renderBattleHUD() {
-    const h = battle.hero;
-    document.getElementById("battleStats").textContent =
-      "LV." + heroLevel(h) + "   ⚔️ " + h.atk + "   🛡️ " + h.def + "   🍀 " + h.luck;
-    document.getElementById("heroHpFill").style.width = Math.max(0, battle.heroHP / battle.heroMax * 100) + "%";
-    document.getElementById("bossHpFill").style.width = Math.max(0, battle.bossHP / battle.bossMax * 100) + "%";
-  }
-  function renderAttackUI() {
-    document.getElementById("battleQ").textContent = "Tap ⚔️ Attack to beat the boss!";
-    const opts = document.getElementById("battleOpts");
-    opts.innerHTML = "";
-    const b = document.createElement("button");
-    b.className = "opt attack-btn"; b.id = "attackBtn"; b.textContent = "⚔️ Attack!";
-    b.addEventListener("click", battleAttack);
-    opts.appendChild(b);
-  }
-  function setAttackEnabled(on) { const b = document.getElementById("attackBtn"); if (b) b.disabled = !on; }
-  function battleAttack() {
-    if (!battle || battle.over || battle.busy) return;
-    battle.busy = true;
-    setAttackEnabled(false);
-    const h = battle.hero;
-    // 傷害：基礎 + 攻擊力 + 一點隨機；幸運提高爆擊機率
-    let dmg = 4 + h.atk * 2 + Math.floor(Math.random() * 4);
-    const crit = Math.random() < critChance(h.luck);
-    if (crit) dmg *= 2;
-    battle.bossHP -= dmg;
-    fxLunge(heroEmojiEl, "r"); fxHit(bossEmojiEl); fxDmg(bossEmojiEl, dmg, crit ? "toboss crit" : "toboss");
-    document.getElementById("battleLog").textContent = "⚔️ You hit " + dmg + (crit ? " 🍀 CRIT!" : "") + "!";
-    renderBattleHUD();
-    if (battle.bossHP <= 0) { battle.over = true; setTimeout(battleWin, 750); return; }
-    setTimeout(bossAttack, 700);   // Boss 主動反擊一次
-  }
-  function bossAttack() {
-    if (!battle || battle.over) return;
-    // 🍀 閃避：靠運氣完全閃過 Boss 的攻擊
-    if (Math.random() < dodgeChance(battle.hero.luck)) {
-      fxLunge(bossEmojiEl, "l");
-      document.getElementById("battleLog").textContent = "💨 You dodged the attack! 🍀";
-    } else {
-      const dmg = Math.max(1, battle.bossAtk - battle.hero.def);
-      battle.heroHP -= dmg;
-      fxLunge(bossEmojiEl, "l"); fxHit(heroEmojiEl); fxDmg(heroEmojiEl, dmg, "tohero");
-      document.getElementById("battleLog").textContent = "👊 Boss attacks!  −" + dmg;
-      renderBattleHUD();
-      if (battle.heroHP <= 0) { battle.over = true; setTimeout(battleLose, 750); return; }
-    }
-    battle.busy = false;
-    setAttackEnabled(true);
-  }
-  function battleWin() {
-    bossEmojiEl.classList.add("defeated");
-    const r = grantReward(true);
-    const h = loadHero(); h.unspent += r.pts; saveHero(h); battle.hero = h;
-    document.getElementById("battleQ").textContent = "";
-    document.getElementById("battleOpts").innerHTML = "";
-    document.getElementById("battleLog").textContent = "";
-    renderAllocation(r.claimed ? "🏆 You defeated the boss!  (Reward already earned)"
-      : (r.pts > 0 ? "🏆 You defeated the boss!  +" + r.pts + " points!"
-        : "🏆 You defeated the boss! Score 80%+ to earn points."));
-  }
-  function battleLose() {
-    heroEmojiEl.classList.add("defeated");
-    document.getElementById("battleQ").textContent = "";
-    document.getElementById("battleOpts").innerHTML = "";
-    const r = document.getElementById("battleResult");
-    r.classList.remove("hidden");
-    r.innerHTML = '<div class="battle-msg" style="color:#b91c1c">💀 You were defeated! Try again.</div>' +
-      '<div class="battle-btns"><button id="battleRetry" class="dict-play">Try again</button>' +
-      '<button id="battleLeave" class="back-btn">Back to Lessons</button></div>';
-    document.getElementById("battleRetry").addEventListener("click", openBattle);
-    document.getElementById("battleLeave").addEventListener("click", leaveBattle);
-  }
-  // 過關獎勵分配：選一張 boss 卡，把點數加在它的 ⚔️/🛡️/🍀 上；可設定出戰卡 ⭐
-  function renderAllocation(msg) {
-    const r = document.getElementById("battleResult");
-    r.classList.remove("hidden");
-    function draw() {
-      const c = loadCards();
-      let html = '<div class="battle-msg">' + msg + '</div>' +
-        '<div class="alloc">🎴 Power up a Boss Card — points to spend: <b>' + c.unspent + '</b></div>';
-      if (!c.list.length) {
-        html += '<p class="screen-intro">Pass a lesson (80%+) to earn your first Boss Card!</p>';
-      } else {
-        html += '<div class="card-list">' + c.list.map(cd => {
-          const champ = c.active === cd.id;
-          return '<div class="boss-card' + (champ ? ' champ' : '') + '">' +
-            '<div class="bc-head"><span class="bc-emo">' + cd.emoji + '</span><b>' + cd.name + '</b>' +
-            '<span class="bc-lv">LV.' + heroLevel(cd) + '</span>' +
-            (champ ? '<span class="bc-star">⭐ Champion</span>' : '<button class="bc-set" data-id="' + cd.id + '">Set ⭐</button>') + '</div>' +
-            '<div class="bc-stats">' +
-              '<button class="bc-plus" data-id="' + cd.id + '" data-stat="atk">⚔️ ' + cd.atk + ' ＋</button>' +
-              '<button class="bc-plus" data-id="' + cd.id + '" data-stat="def">🛡️ ' + cd.def + ' ＋</button>' +
-              '<button class="bc-plus" data-id="' + cd.id + '" data-stat="luck">🍀 ' + cd.luck + ' ＋</button>' +
-            '</div></div>';
-        }).join("") + '</div>';
-      }
-      html += '<div class="battle-btns"><button id="battleDone" class="back-btn">Back to Map</button></div>';
-      r.innerHTML = html;
-      r.querySelectorAll(".bc-plus").forEach(b => b.addEventListener("click", () => {
-        const res = spendPointOnCard(b.dataset.id, b.dataset.stat); if (!res) return;
-        if (res.evolved) showEvolveModal(res.evolved, draw); else draw();
-      }));
-      r.querySelectorAll(".bc-set").forEach(b => b.addEventListener("click", () => {
-        const c2 = loadCards(); c2.active = b.dataset.id; saveCards(c2); draw();
-      }));
-      r.querySelector("#battleDone").addEventListener("click", leaveBattle);
-    }
-    draw();
-  }
-  function leaveBattle() { clearGame(); selectLevel(selLevelIdx); }
   // 戰鬥/大考/小遊戲頁的「← Back」：中途離開回到課程列表
   function quitBattle() {
     if (exam) exam.over = true;
-    if (battle) battle.over = true;
     clearGame();
     selectLevel(selLevelIdx);
   }
@@ -3907,285 +3555,10 @@
     document.getElementById("examBack").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
   }
 
-  /* ================= 過關小遊戲（10 種，隨機抽一種） ================= */
+  // Boss 戰用的計時器清理（進/離開戰鬥畫面時清乾淨）
   let _gameIvs = [], _gameTo = [];
   function clearGame() { _gameIvs.forEach(clearInterval); _gameIvs = []; _gameTo.forEach(clearTimeout); _gameTo = []; }
-  function gInterval(fn, ms) { const iv = setInterval(fn, ms); _gameIvs.push(iv); return iv; }
-  function gTimeout(fn, ms) { const t = setTimeout(fn, ms); _gameTo.push(t); return t; }
-  const ga = () => document.getElementById("gameArea");
-  function openGameScreen(title) {
-    clearGame();
-    document.getElementById("bossWrap").classList.add("hidden");
-    document.getElementById("battleTitle").textContent = title;
-    const r = document.getElementById("battleResult"); r.classList.add("hidden"); r.innerHTML = "";
-    const a = ga(); a.classList.remove("hidden"); a.innerHTML = "";
-    showScreen(screenBattle);
-    return a;
-  }
-  // 結束小遊戲 -> 依該課平均給點數 + 分配畫面（與打 Boss 一致）
-  function rewardKey(file) { return "reward:" + (userName || "guest") + ":" + file; }
-  // 每課的過關獎勵只給一次（防止重玩同一課刷點）。回傳這次實際給的點數。
-  function grantReward(win) {
-    const file = currentArticle && currentArticle.file;
-    let claimed = false;
-    try { claimed = !!file && localStorage.getItem(rewardKey(file)) === "1"; } catch (e) {}
-    if (claimed) return { pts: 0, claimed: true };
-    const avg = currentArticle ? (lessonStatus(currentArticle).avg || 0) : 0;
-    // 過關獎勵改成「可佔領該區」；不再發 Boss 卡（改用兵種系統）
-    // if (file && avg >= PASS_MARK) grantCard(file, currentArticle.title, avg);
-    const pts = starsFromAvg(avg) + ((win && avg >= PASS_MARK) ? 1 : 0);   // 贏小遊戲 +1（需通過該課）
-    if (pts > 0 && file) { try { localStorage.setItem(rewardKey(file), "1"); } catch (e) {} scheduleStudentSave(); }
-    return { pts: pts, claimed: false };
-  }
-  // 占地盤：記下這課的最佳「遊戲成績」(0–100)，要超越前一個擁有者才能搶下據點
-  function gscoreKey(file) { return "gscore:" + (userName || "guest") + ":" + file; }
-  function recordGameScore(score) {
-    const file = currentArticle && currentArticle.file; if (!file) return 0;
-    score = Math.max(0, Math.min(100, Math.round(score || 0)));
-    let cur = null; try { cur = JSON.parse(localStorage.getItem(gscoreKey(file)) || "null"); } catch (e) {}
-    if (!cur || score > (cur.s || 0)) {
-      try { localStorage.setItem(gscoreKey(file), JSON.stringify({ s: score, t: Date.now() })); } catch (e) {}
-      scheduleStudentSave();   // 上雲 -> 別人地圖上才看得到你搶了地盤
-      return score;
-    }
-    return cur.s || 0;
-  }
-  function endGame(resultMsg, win, score) {
-    clearGame();
-    if (typeof score !== "number") score = win ? 100 : 0;
-    score = Math.max(0, Math.min(100, Math.round(score)));
-    const best = recordGameScore(score);
-    const r = grantReward(win);
-    const h = loadHero(); h.unspent += r.pts; saveHero(h); battle = { hero: h };
-    ga().classList.add("hidden");
-    const head = win ? "🏆 YOU WIN! " : "💪 Good try! ";
-    const pts = r.claimed ? "  (Reward already earned — replay just for fun!)"
-      : (r.pts > 0 ? "  +" + r.pts + " points!" : "  Score 80%+ to earn points.");
-    const terr = '<div style="margin-top:6px;font-weight:700">🚩 Game score: ' + score +
-      (score >= best ? ' — your best!' : ' (best ' + best + ')') + '</div>';
-    renderAllocation(head + (resultMsg || "") + pts + terr);
-  }
-  // 占地盤用的「技術型」遊戲（純運氣的轉盤/寶箱、靠數值的 Boss 不列入，分勝負才公平）
-  const TERR_GAMES = [gameWhack, gameMemory, gameCatch, gameBubble, gameReaction, gameOddOne, gameBalloon];
-  function gameForFile(file) {   // 每課固定一種遊戲（同一課大家都玩同一個 -> 成績可直接比）
-    let h = 0; const s = String(file || "");
-    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-    return TERR_GAMES[h % TERR_GAMES.length];
-  }
-  function startPostLessonGame() {
-    if (!currentArticle) { selectLevel(selLevelIdx); return; }
-    gameForFile(currentArticle.file)();
-  }
-  // 測試者：逐一啟動每個遊戲（不必過關）
-  function openGameTest() {
-    if (!currentArticle) {   // 沒開過課 -> 借本等級第一課，讓點數/Boss 能運作
-      const lv = manifest.levels[selLevelIdx];
-      if (lv && lv.articles[0]) { currentArticle = lv.articles[0]; currentArticleKey = currentArticle.file; }
-    }
-    const games = [["⚔️ Boss", openBattle], ["🐹 Whack", gameWhack], ["🃏 Memory", gameMemory],
-      ["🌟 Catch", gameCatch], ["🫧 Bubbles", gameBubble], ["🎡 Spin", gameSpin], ["⚡ Reaction", gameReaction],
-      ["🔍 Odd One", gameOddOne], ["🎈 Balloon", gameBalloon], ["🗝️ Treasure", gameTreasure]];
-    const a = openGameScreen("🎮 Test Games");
-    a.innerHTML = '<div class="game-instr">Pick a game to test 🎮</div><div class="acct-btns" id="gtbtns" style="flex-wrap:wrap"></div>';
-    const wrap = document.getElementById("gtbtns");
-    games.forEach((g, i) => { const b = document.createElement("button"); b.className = "back-btn"; b.textContent = g[0]; b.addEventListener("click", g[1]); wrap.appendChild(b); });
-  }
-  function rnd(n) { return Math.floor(Math.random() * n); }
 
-  // 1) 打地鼠
-  function gameWhack() {
-    const a = openGameScreen("🐹 Whack-a-Mole");
-    let hits = 0, left = 15;
-    const GOAL = 8;
-    a.innerHTML = '<div class="game-instr">Hit ' + GOAL + ' moles to win! 🔨</div><div class="game-status" id="gst"></div>' +
-      '<div class="game-grid" id="gg" style="grid-template-columns:repeat(3,1fr)"></div>';
-    const gg = document.getElementById("gg"); const cells = [];
-    const HAMMER = "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><text x='2' y='32' font-size='30'>🔨</text></svg>\") 6 30, pointer";
-    gg.style.cursor = HAMMER;
-    for (let i = 0; i < 9; i++) { const c = document.createElement("div"); c.className = "game-cell"; c.style.cursor = HAMMER; gg.appendChild(c); cells.push(c); }
-    const st = () => document.getElementById("gst").textContent = "⏱ " + left + "s   🐹 " + hits + "/" + GOAL;
-    st();
-    let active = -1;
-    gInterval(() => { if (active >= 0) cells[active].textContent = ""; active = rnd(9); cells[active].textContent = "🐹"; }, 800);
-    cells.forEach((c, i) => c.addEventListener("click", () => { if (i === active && c.textContent === "🐹") { hits++; c.textContent = "💥"; active = -1; st(); } }));
-    gInterval(() => { left--; st(); if (left <= 0) endGame("You whacked " + hits + "/" + GOAL + " moles.", hits >= GOAL, hits / GOAL * 100); }, 1000);
-  }
-
-  // 2) 翻牌配對
-  function gameMemory() {
-    const a = openGameScreen("🃏 Memory Match");
-    const emo = ["🍎", "⚽", "🐱", "⭐"]; const deck = shuffle(emo.concat(emo));
-    let left = 25, first = null, lock = false, found = 0, over = false;
-    a.innerHTML = '<div class="game-instr">Match all 4 pairs before time runs out! 🃏</div><div class="game-status" id="gst"></div>' +
-      '<div class="game-grid" id="gg" style="grid-template-columns:repeat(4,1fr)"></div>';
-    const gg = document.getElementById("gg");
-    const st = () => document.getElementById("gst").textContent = "⏱ " + left + "s   Pairs: " + found + "/4";
-    st();
-    gInterval(() => { if (over) return; left--; st(); if (left <= 0) { over = true; endGame("Matched " + found + "/4 pairs.", false, found / 4 * 100); } }, 1000);
-    deck.forEach((e) => {
-      const c = document.createElement("div"); c.className = "flip-card"; c.textContent = "?"; c.dataset.e = e;
-      c.addEventListener("click", () => {
-        if (over || lock || c.classList.contains("up") || c.classList.contains("done")) return;
-        c.classList.add("up"); c.textContent = e;
-        if (!first) { first = c; return; }
-        if (first.dataset.e === e) { first.classList.add("done"); c.classList.add("done"); first = null; found++; st();
-          if (found === 4) { over = true; gTimeout(() => endGame("All pairs matched!", true, 100), 500); }
-        } else { lock = true; const f = first; first = null; gTimeout(() => { f.classList.remove("up"); f.textContent = "?"; c.classList.remove("up"); c.textContent = "?"; lock = false; }, 700); }
-      });
-      gg.appendChild(c);
-    });
-  }
-
-  // 3) 接星星
-  function gameCatch() { fallingGame("⭐", "🌟 Catch the Stars", "stars", 8); }
-  // 4) 泡泡射擊（準心瞄準 + 點擊開槍）
-  function gameBubble() {
-    const a = openGameScreen("🔫 Bubble Shooter");
-    const GOAL = 10; let score = 0, left = 15;
-    a.innerHTML = '<div class="game-instr">Aim 🎯 and tap to shoot ' + GOAL + ' bubbles! 🔫</div>' +
-      '<div class="game-status" id="gst"></div>' +
-      '<div class="game-stage" id="stage" style="cursor:crosshair">' +
-      '<div id="cross" style="position:absolute;left:50%;top:50%;font-size:34px;transform:translate(-50%,-50%);pointer-events:none">🎯</div>' +
-      '<div style="position:absolute;left:50%;bottom:2px;transform:translateX(-50%);font-size:34px;pointer-events:none">🔫</div>' +
-      '</div>';
-    const stage = document.getElementById("stage"), cross = document.getElementById("cross");
-    const st = () => document.getElementById("gst").textContent = "⏱ " + left + "s   💥 " + score + "/" + GOAL;
-    st();
-    const at = (e) => { const r = stage.getBoundingClientRect(); const p = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e; return { r: r, x: p.clientX - r.left, y: p.clientY - r.top }; };
-    function aim(e) { const a2 = at(e); cross.style.left = a2.x + "px"; cross.style.top = a2.y + "px"; }
-    stage.addEventListener("mousemove", aim);
-    stage.addEventListener("touchmove", (e) => { aim(e); e.preventDefault(); }, { passive: false });
-    const bubbles = [];
-    gInterval(() => {
-      const b = document.createElement("div"); b.className = "game-sprite"; b.textContent = "🫧";
-      b.style.left = (10 + rnd(78)) + "%"; let y = 300; b.style.top = y + "px"; stage.appendChild(b);
-      const obj = { el: b };
-      obj.rise = gInterval(() => { y -= 4; b.style.top = y + "px"; if (y < -40) { clearInterval(obj.rise); b.remove(); const k = bubbles.indexOf(obj); if (k >= 0) bubbles.splice(k, 1); } }, 40);
-      bubbles.push(obj);
-    }, 650);
-    stage.addEventListener("click", (e) => {
-      const a2 = at(e); cross.style.left = a2.x + "px"; cross.style.top = a2.y + "px";
-      let best = null, bd = 1e9;
-      bubbles.forEach(o => { const br = o.el.getBoundingClientRect(); const cx = br.left - a2.r.left + br.width / 2, cy = br.top - a2.r.top + br.height / 2; const d = Math.hypot(cx - a2.x, cy - a2.y); if (d < bd) { bd = d; best = o; } });
-      if (best && bd < 42) { best.el.textContent = "💥"; clearInterval(best.rise); const k = bubbles.indexOf(best); if (k >= 0) bubbles.splice(k, 1); gTimeout(() => best.el.remove(), 150); score++; st(); }
-    });
-    gInterval(() => { left--; st(); if (left <= 0) endGame("Shot " + score + "/" + GOAL + " bubbles.", score >= GOAL, score / GOAL * 100); }, 1000);
-  }
-  function fallingGame(emoji, title, word, goal) {
-    const a = openGameScreen(title);
-    let score = 0, left = 15;
-    a.innerHTML = '<div class="game-instr">Catch ' + goal + ' ' + word + ' to win! 👆</div><div class="game-status" id="gst"></div><div class="game-stage" id="stage"></div>';
-    const stage = document.getElementById("stage");
-    const st = () => document.getElementById("gst").textContent = "⏱ " + left + "s   ✨ " + score + "/" + goal;
-    st();
-    gInterval(() => {
-      const s = document.createElement("div"); s.className = "game-sprite"; s.textContent = emoji;
-      s.style.left = (8 + rnd(80)) + "%"; s.style.top = "-50px"; stage.appendChild(s);
-      let y = -50; const fall = gInterval(() => { y += 6; s.style.top = y + "px"; if (y > 300) { clearInterval(fall); s.remove(); } }, 40);
-      s.addEventListener("click", () => { score++; st(); clearInterval(fall); s.textContent = "✨"; gTimeout(() => s.remove(), 150); });
-    }, 700);
-    gInterval(() => { left--; st(); if (left <= 0) endGame("Caught " + score + "/" + goal + " " + word + ".", score >= goal, score / goal * 100); }, 1000);
-  }
-
-  // 5) 幸運轉盤
-  function gameSpin() {
-    const a = openGameScreen("🎡 Lucky Spin");
-    const faces = ["🎁", "🍭", "⭐", "💎", "🏆", "🍀"];
-    a.innerHTML = '<div class="game-instr">Spin and land on 🏆 to win! 🎡</div><div id="wheel" style="font-size:72px;text-align:center;margin:14px">🎡</div>' +
-      '<div style="text-align:center"><button id="spinBtn" class="game-big-btn">Spin!</button></div>';
-    const w = document.getElementById("wheel");
-    document.getElementById("spinBtn").addEventListener("click", function () {
-      this.disabled = true; let n = 0; const total = 18 + rnd(12);
-      const iv = gInterval(() => { w.textContent = faces[rnd(faces.length)]; n++; if (n >= total) { clearInterval(iv); const prize = faces[rnd(faces.length)]; w.textContent = prize; gTimeout(() => endGame("You landed on " + prize + ".", prize === "🏆"), 500); } }, 90);
-    });
-  }
-
-  // 6) 反應力
-  function gameReaction() {
-    const a = openGameScreen("⚡ Quick Tap");
-    a.innerHTML = '<div class="game-instr">Tap within 400 ms of GREEN to win! ⚡</div><div class="reaction-box" id="rb" style="background:#ef4444">Wait...</div><div class="game-status" id="gst"></div>';
-    const rb = document.getElementById("rb"); let ready = false, t0 = 0, fired = false;
-    gTimeout(() => { rb.style.background = "#22c55e"; rb.textContent = "TAP!"; ready = true; t0 = performance.now(); }, 1200 + rnd(2500));
-    rb.addEventListener("click", () => {
-      if (fired) return;
-      if (!ready) { fired = true; rb.style.background = "#ef4444"; rb.textContent = "Too early!"; endGame("Too early! 😅", false, 0); return; }
-      fired = true; const ms = Math.round(performance.now() - t0);
-      rb.textContent = ms + " ms"; endGame(ms + " ms reaction.", ms <= 400, (700 - ms) / 5.5);
-    });
-  }
-
-  // 7) 找不一樣
-  function gameOddOne() {
-    const a = openGameScreen("🔍 Odd One Out");
-    let round = 0, score = 0;
-    a.innerHTML = '<div class="game-instr">Find 4 of 5 to win! Tap the different one 🔍</div><div class="game-status" id="gst"></div><div class="game-grid" id="gg" style="grid-template-columns:repeat(4,1fr)"></div>';
-    const sets = [["🐶", "🐱"], ["🍎", "🍊"], ["⭐", "🌙"], ["🚗", "🚌"], ["😀", "😎"]];
-    function draw() {
-      const gg = document.getElementById("gg"); gg.innerHTML = "";
-      const pair = sets[rnd(sets.length)]; const odd = rnd(16);
-      document.getElementById("gst").textContent = "Round " + (round + 1) + "/5   ✔ " + score;
-      for (let i = 0; i < 16; i++) {
-        const c = document.createElement("div"); c.className = "game-cell"; c.style.width = "44px"; c.style.height = "44px"; c.style.fontSize = "24px";
-        c.textContent = i === odd ? pair[1] : pair[0];
-        c.addEventListener("click", () => {
-          if (i === odd) score++;
-          round++;
-          if (round >= 5) endGame("Found " + score + "/5.", score >= 4, score / 5 * 100); else draw();
-        });
-        gg.appendChild(c);
-      }
-    }
-    draw();
-  }
-
-  // 8) 打氣球（充過目標線、但別充到爆）
-  function gameBalloon() {
-    const a = openGameScreen("🎈 Pump It!");
-    const GOAL = 100; let size = 40, pop = 130 + rnd(60), done = false;
-    a.innerHTML = '<div class="game-instr">Pump past ' + GOAL + ', then STOP before it pops! 🎈</div><div class="game-status" id="gst"></div>' +
-      '<div style="height:190px;display:flex;align-items:center;justify-content:center"><div id="bal" style="font-size:40px">🎈</div></div>' +
-      '<div style="text-align:center"><button id="pumpBtn" class="game-big-btn">Pump</button> <button id="stopBtn" class="back-btn">Stop</button></div>';
-    const bal = document.getElementById("bal");
-    const gst = document.getElementById("gst");
-    const st = () => gst.textContent = "Size " + Math.round(size) + " (goal " + GOAL + ")";
-    st();
-    document.getElementById("pumpBtn").addEventListener("click", () => {
-      if (done) return; size += 14 + rnd(10); bal.style.fontSize = Math.min(size, 150) + "px"; st();
-      if (size >= pop) { done = true; bal.textContent = "💥"; gTimeout(() => endGame("It popped at " + Math.round(size) + "!", false, 0), 600); }
-    });
-    document.getElementById("stopBtn").addEventListener("click", () => {
-      if (done) return; done = true; endGame("You stopped at " + Math.round(size) + ".", size >= GOAL, size / pop * 100);
-    });
-  }
-
-  // 9) 選寶箱
-  function gameTreasure() {
-    const a = openGameScreen("🗝️ Pick a Treasure");
-    a.innerHTML = '<div class="game-instr">Find the 🏆 to win! Pick a box 🗝️</div><div class="game-status" id="gst"></div>' +
-      '<div class="game-grid" id="gg" style="grid-template-columns:repeat(3,1fr)"></div>';
-    const gg = document.getElementById("gg"); const prizes = shuffle(["💎", "🏆", "⭐"]);
-    let done = false;
-    for (let i = 0; i < 3; i++) {
-      const c = document.createElement("div"); c.className = "game-cell"; c.style.width = "80px"; c.style.height = "80px"; c.textContent = "📦";
-      c.addEventListener("click", () => { if (done) return; done = true; c.textContent = prizes[i]; gTimeout(() => endGame("You found " + prizes[i] + ".", prizes[i] === "🏆"), 600); });
-      gg.appendChild(c);
-    }
-  }
-
-  /* ================= 競技場 PvP：兩位使用者的英雄自動對戰 ================= */
-  function loadHeroFor(name) {   // 競技場：用該玩家最強的一張卡出戰
-    try {
-      const cc = JSON.parse(localStorage.getItem("cards:" + name) || "null");
-      if (cc && Array.isArray(cc.list) && cc.list.length) {
-        const s = cc.list.slice().sort((a, b) => ((b.atk + b.def + b.luck) - (a.atk + a.def + a.luck)))[0];
-        return { atk: s.atk || 0, def: s.def || 0, luck: s.luck || 0, unspent: 0, emoji: s.emoji };
-      }
-    } catch (e) {}
-    let h = { atk: 1, def: 1, luck: 1, unspent: 0 };
-    try { Object.assign(h, JSON.parse(localStorage.getItem("hero:" + name) || "{}")); } catch (e) {}
-    return h;
-  }
-  document.getElementById("testGamesBtn").addEventListener("click", openGameTest);
   function openLeaderboard() {
     document.getElementById("leaderBody").innerHTML = '<p class="screen-intro">Loading…</p>';
     showScreen(screenLeader);
@@ -4691,13 +4064,11 @@
         const h = territory.holders[a.file]; if (!h || !h.owner) return;
         const isMine = (h.owner || "").toLowerCase() === me; if (isMine) mine++;
         node.classList.add("terr-held", isMine ? "terr-mine" : "terr-foe");
-        const card = h.card || {}; const pw = (card.atk || 0) + (card.def || 0) + (card.luck || 0);
-        if (ico) ico.textContent = card.emoji || "👾";     // 主圖 = 防守的卡（哪一張守）
-        if (lbl) lbl.textContent = card.name || "Boss";
-        const flag = document.createElement("span");       // 右上角標：屬性 + 戰力
+        const power = sumHp(h.troops);                     // 守備兵力
+        const flag = document.createElement("span");       // 右上角標：守備兵力
         flag.className = "terr-flag";
-        flag.innerHTML = cardElem(card).icon + '<span class="terr-sc">' + pw + '</span>';
-        flag.title = (card.name || "Boss") + " · power " + pw; node.appendChild(flag);
+        flag.innerHTML = '⚔️<span class="terr-sc">' + power + '</span>';
+        flag.title = "Garrison · " + power + " troops"; node.appendChild(flag);
         const own = document.createElement("span");         // 底部名條：誰佔的（綠=你 / 橘=對手）
         own.className = "terr-owner";
         own.innerHTML = (h.avatar || "👦") + '<span class="terr-nm">' + dispName(h.owner) + '</span>';
@@ -4726,8 +4097,6 @@
     document.body.appendChild(ov); return ov;
   }
   function closeModal() { const m = document.getElementById("appModal"); if (m) m.remove(); }
-  function cardStatStr(c) { return "⚔️" + (c.atk || 0) + " 🛡️" + (c.def || 0) + " 🍀" + (c.luck || 0); }
-  function cardBadge(cd) { return cardRarity(cd).star + cardElem(cd).icon; }   // 稀有度 + 屬性
   // ===== 兵種系統：騎/弓/步/槍，攻10 防8；克制加成 =====
   const TROOPS = [
     { id: "cav",    zh: "騎兵", en: "Cavalry",  emoji: "🐎", atk: 10, def: 8 },
@@ -4926,7 +4295,6 @@
       .catch(() => { if (cb) cb(); });
   }
 
-  function myDeployMap() { return {}; }   // 舊卡片部署對照已停用（佔領改用兵種）
   function lessonTitleByFile(file) {
     let t = file;
     (manifest ? manifest.levels : []).forEach(lv => lv.articles.forEach(a => { if (a.file === file) t = a.title ? a.title.split("·").pop().trim() : a.id; }));
@@ -5057,22 +4425,18 @@
   function collectLocalState() {
     const students = {};
     loadProfiles().forEach(name => {
-      const scores = {}, progress = {}, rewards = {}, gscores = {};
+      const scores = {}, progress = {};
       (manifest ? manifest.levels : []).forEach(lv => lv.articles.forEach(a => {
         try { const s = localStorage.getItem("score:" + name + ":" + a.file); if (s) scores[a.file] = JSON.parse(s); } catch (e) {}
         try { const p = localStorage.getItem("prog:" + name + ":" + a.file); if (p) progress[a.file] = JSON.parse(p); } catch (e) {}
-        try { const w = localStorage.getItem("reward:" + name + ":" + a.file); if (w) rewards[a.file] = w; } catch (e) {}
-        try { const g = localStorage.getItem("gscore:" + name + ":" + a.file); if (g) gscores[a.file] = JSON.parse(g); } catch (e) {}
       }));
-      let hero = null, avatar = "👦", stamina = null;
-      try { hero = JSON.parse(localStorage.getItem("hero:" + name) || "null"); } catch (e) {}
+      let avatar = "👦", stamina = null;
       try { avatar = localStorage.getItem("avatar:" + name) || "👦"; } catch (e) {}
       try { stamina = JSON.parse(localStorage.getItem("stamina:" + name) || "null"); } catch (e) {}
-      let cards = null; try { cards = JSON.parse(localStorage.getItem("cards:" + name) || "null"); } catch (e) {}
       const exams = {};
       (manifest ? manifest.levels : []).forEach(lv => { try { const e = localStorage.getItem("exam:" + name + ":" + lv.id); if (e) exams[lv.id] = e; } catch (x) {} });
       let read = null; try { read = JSON.parse(localStorage.getItem("read:" + name) || "null"); } catch (e) {}
-      students[name] = { avatar: avatar, hero: hero, cards: cards, scores: scores, progress: progress, rewards: rewards, gscores: gscores, exams: exams, read: read, stamina: stamina, updated: Date.now() };
+      students[name] = { avatar: avatar, scores: scores, progress: progress, exams: exams, read: read, stamina: stamina, updated: Date.now() };
     });
     return students;
   }
@@ -5218,12 +4582,11 @@
   function fullLocalSnapshot() {
     return { profiles: loadProfiles(), userName: userName, students: collectLocalState(), stats: computeMyStats() };
   }
-  // 給排行榜用：通過課數 + 最強卡等級 + 頭像
+  // 給排行榜用：通過課數 + 頭像
   function computeMyStats() {
     let passed = 0;
     (manifest ? manifest.levels : []).forEach(lv => lv.articles.forEach(a => { if (lessonStatus(a).passed) passed++; }));
-    const best = strongestCard(loadCards());
-    return { passed: passed, level: best ? heroLevel(best) : 1, avatar: userName ? avatarOf(userName) : "👦" };
+    return { passed: passed, level: 1, avatar: userName ? avatarOf(userName) : "👦" };
   }
   // 把雲端快照寫回本機 localStorage（換裝置登入時還原）
   function restoreSnapshot(blob) {
@@ -5234,12 +4597,8 @@
       Object.keys(sts).forEach(name => {
         const st = sts[name] || {};
         if (st.avatar) localStorage.setItem("avatar:" + name, st.avatar);
-        if (st.hero) localStorage.setItem("hero:" + name, JSON.stringify(st.hero));
-        if (st.cards) localStorage.setItem("cards:" + name, JSON.stringify(st.cards));
         const sc = st.scores || {}; Object.keys(sc).forEach(f => localStorage.setItem("score:" + name + ":" + f, JSON.stringify(sc[f])));
         const pr = st.progress || {}; Object.keys(pr).forEach(f => localStorage.setItem("prog:" + name + ":" + f, JSON.stringify(pr[f])));
-        const rw = st.rewards || {}; Object.keys(rw).forEach(f => localStorage.setItem("reward:" + name + ":" + f, rw[f]));
-        const gs = st.gscores || {}; Object.keys(gs).forEach(f => localStorage.setItem("gscore:" + name + ":" + f, JSON.stringify(gs[f])));
         const ex = st.exams || {}; Object.keys(ex).forEach(id => localStorage.setItem("exam:" + name + ":" + id, ex[id]));
         if (st.read && st.read.dates) localStorage.setItem("read:" + name, JSON.stringify(st.read));
         if (st.stamina && typeof st.stamina.v === "number") localStorage.setItem("stamina:" + name, JSON.stringify(st.stamina));
