@@ -1,0 +1,216 @@
+{
+  "id": "doctor",
+  "title": "At the Doctor 🩺",
+  "level": "A1-A2",
+  "scene": "healthy",
+  "you": "Patient",
+  "npc": "Doctor",
+  "npc_gender": "male",
+  "start": "node_hello",
+  "max_turns": 40,
+  "nodes": [
+    {
+      "id": "node_hello",
+      "type": "normal",
+      "npc": { "text": "Hello, come in and sit down. What is wrong today?", "gender": "male" },
+      "context": { "scene": "healthy", "situation": "The doctor greets the patient." },
+      "learning_objective": ["Say how you feel", "Describe a problem"],
+      "routes": [
+        {
+          "intent": "describe_symptom",
+          "meaning": "The patient says they feel sick or something hurts.",
+          "examples": ["I feel sick.", "I have a headache.", "My tummy hurts.", "I don't feel well.", "I have a cough.", "I feel bad today."],
+          "keywords": ["sick", "hurt", "hurts", "headache", "cough", "cold", "fever", "pain", "well", "bad"],
+          "objective": { "label": "Describe how you feel", "markers": ["i feel", "i have", "my", "hurts", "sick", "don't feel well"] },
+          "next_nodes": [
+            { "id": "node_where", "weight": 70 },
+            { "id": "node_since_when", "weight": 30 }
+          ]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Tell me the problem. You can say 'I feel sick.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "I am the doctor. How do you feel today?" }
+      }
+    },
+
+    {
+      "id": "node_where",
+      "type": "normal",
+      "npc": { "text": "I'm sorry to hear that. Where does it hurt?", "gender": "male" },
+      "context": { "scene": "healthy", "situation": "The doctor asks where the pain is." },
+      "learning_objective": ["Name body parts", "Say where it hurts"],
+      "routes": [
+        {
+          "intent": "say_body_part",
+          "meaning": "The patient names the body part that hurts.",
+          "examples": ["My head hurts.", "My stomach.", "It's my throat.", "My tooth hurts.", "My leg.", "Here, my ear."],
+          "keywords": ["head", "stomach", "tummy", "throat", "tooth", "leg", "arm", "ear", "back", "hand", "foot"],
+          "objective": { "label": "Name a body part", "markers": ["head", "stomach", "tummy", "throat", "tooth", "leg", "arm", "ear", "back", "hand", "foot", "my"] },
+          "next_nodes": [{ "id": "node_check", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Say where it hurts. You can say 'My head hurts.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Where does it hurt? Point and tell me." }
+      }
+    },
+
+    {
+      "id": "node_since_when",
+      "type": "event",
+      "npc": { "text": "Okay. Since when have you felt like this? Since today or yesterday?", "gender": "male" },
+      "context": { "scene": "healthy", "situation": "The doctor asks how long the patient has been sick." },
+      "learning_objective": ["Talk about time (today, yesterday)"],
+      "routes": [
+        {
+          "intent": "say_time",
+          "meaning": "The patient says when it started.",
+          "examples": ["Since yesterday.", "Since this morning.", "Two days ago.", "Since today."],
+          "keywords": ["yesterday", "today", "morning", "days", "ago", "since", "night"],
+          "next_nodes": [{ "id": "node_where", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Say when it started. You can say 'Since yesterday.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "When did it start — today or yesterday?" }
+      }
+    },
+
+    {
+      "id": "node_check",
+      "type": "normal",
+      "npc": { "text": "Let me check. Open your mouth, please... Do you have a fever?", "gender": "male" },
+      "context": { "scene": "healthy", "situation": "The doctor examines the patient." },
+      "learning_objective": ["Answer yes/no questions", "Talk about symptoms"],
+      "routes": [
+        {
+          "intent": "affirm",
+          "meaning": "The patient has a fever.",
+          "examples": ["Yes, I think so.", "Yes, I feel hot.", "Yes, a little.", "Yes."],
+          "keywords": ["yes", "hot", "warm", "little"],
+          "next_nodes": [{ "id": "node_advice_fever", "weight": 100 }]
+        },
+        {
+          "intent": "decline",
+          "meaning": "The patient does not have a fever.",
+          "examples": ["No, I don't think so.", "No fever.", "No.", "I don't feel hot."],
+          "keywords": ["no", "not", "fever", "cold"],
+          "next_nodes": [{ "id": "node_advice_rest", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Do you feel hot? Say 'Yes' or 'No.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Do you have a fever? Yes or no?" }
+      }
+    },
+
+    {
+      "id": "node_advice_fever",
+      "type": "normal",
+      "npc": { "text": "You have a small fever. You should rest and drink a lot of water. Okay?", "gender": "male" },
+      "context": { "scene": "healthy", "situation": "The doctor gives advice for a fever." },
+      "learning_objective": ["Understand advice ('you should...')", "Agree"],
+      "routes": [
+        {
+          "intent": "affirm",
+          "meaning": "The patient agrees to follow the advice.",
+          "examples": ["Okay, I will.", "Yes, I understand.", "Sure, thank you.", "Okay, doctor."],
+          "keywords": ["okay", "yes", "will", "understand", "sure"],
+          "next_nodes": [{ "id": "node_medicine", "weight": 100 }]
+        },
+        {
+          "intent": "ask_question",
+          "meaning": "The patient asks a follow-up question.",
+          "examples": ["Can I go to school?", "How long will it take?", "Can I play outside?", "What can I eat?"],
+          "keywords": ["can", "how", "long", "school", "play", "eat"],
+          "next_nodes": [{ "id": "node_advice_rest", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Say 'Okay, I will.' or ask a question." },
+        "off_topic": { "stay_on_current_node": true, "message": "You should rest and drink water. Is that okay?" }
+      }
+    },
+
+    {
+      "id": "node_advice_rest",
+      "type": "normal",
+      "npc": { "text": "Good. You just need some rest. And remember to wash your hands often, okay?", "gender": "male" },
+      "context": { "scene": "healthy", "situation": "The doctor gives healthy-habit advice." },
+      "learning_objective": ["Understand healthy habits", "Agree"],
+      "routes": [
+        {
+          "intent": "affirm",
+          "meaning": "The patient agrees.",
+          "examples": ["Okay, I will.", "Yes, I understand.", "Sure, I'll wash my hands.", "Okay, doctor."],
+          "keywords": ["okay", "yes", "will", "wash", "understand"],
+          "next_nodes": [{ "id": "node_medicine", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Say 'Okay, I will.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Please rest and wash your hands, okay?" }
+      }
+    },
+
+    {
+      "id": "node_medicine",
+      "type": "event",
+      "npc": { "text": "Here is some medicine. Take it two times a day, after food. Do you understand?", "gender": "male" },
+      "context": { "scene": "healthy", "situation": "The doctor explains the medicine." },
+      "learning_objective": ["Understand instructions", "Ask to repeat"],
+      "routes": [
+        {
+          "intent": "affirm",
+          "meaning": "The patient understands the instructions.",
+          "examples": ["Yes, I understand.", "Okay, two times a day.", "Yes, thank you.", "Got it."],
+          "keywords": ["yes", "understand", "okay", "got", "times"],
+          "next_nodes": [{ "id": "node_bye", "weight": 100 }]
+        },
+        {
+          "intent": "ask_repeat",
+          "meaning": "The patient asks the doctor to repeat.",
+          "examples": ["Can you say it again?", "Sorry, one more time?", "How many times?", "I don't understand."],
+          "keywords": ["again", "repeat", "sorry", "many", "understand"],
+          "next_nodes": [{ "id": "node_repeat", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Say 'Yes, I understand.' or 'Can you say it again?'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Take the medicine two times a day. Do you understand?" }
+      }
+    },
+
+    {
+      "id": "node_repeat",
+      "type": "clarification",
+      "npc": { "text": "Of course. Take the medicine two times a day — one in the morning, one at night. Okay?", "gender": "male" },
+      "context": { "scene": "healthy", "situation": "The doctor repeats the instructions slowly." },
+      "learning_objective": ["Confirm understanding"],
+      "routes": [
+        {
+          "intent": "affirm",
+          "meaning": "The patient now understands.",
+          "examples": ["Yes, now I understand.", "Okay, thank you.", "Got it, thanks.", "Yes."],
+          "keywords": ["yes", "understand", "okay", "got", "thanks"],
+          "next_nodes": [{ "id": "node_bye", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Say 'Yes, now I understand.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Two times a day — morning and night. Okay?" }
+      }
+    },
+
+    {
+      "id": "node_bye",
+      "type": "normal",
+      "end": true,
+      "npc": { "text": "Great. Get well soon! Goodbye!", "gender": "male" },
+      "context": { "scene": "healthy", "situation": "The visit is complete." },
+      "learning_objective": [],
+      "routes": []
+    }
+  ]
+}

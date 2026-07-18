@@ -1,0 +1,551 @@
+{
+  "id": "restaurant",
+  "title": "At the Restaurant 🍔",
+  "level": "A1-A2",
+  "scene": "restaurant",
+  "you": "Customer",
+  "npc": "Waiter",
+  "npc_gender": "female",
+  "start": "node_welcome",
+  "max_turns": 40,
+  "nodes": [
+    {
+      "id": "node_welcome",
+      "type": "normal",
+      "npc": { "text": "Welcome to Tasty Bites! How many people?", "gender": "female" },
+      "context": { "scene": "restaurant", "situation": "The waiter greets the customer at the door." },
+      "learning_objective": ["Say how many people", "Numbers 1-5"],
+      "routes": [
+        {
+          "intent": "party_size",
+          "meaning": "The customer says how many people are in their group.",
+          "examples": ["Two, please.", "A table for two.", "Just me.", "Three people.", "We are four.", "For one, please.", "Just one."],
+          "keywords": ["one", "two", "three", "four", "five", "table", "people", "just", "me"],
+          "next_nodes": [{ "id": "node_seated", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "How many people are eating? You can say 'Two, please.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Let's get you a table first. How many people?" }
+      }
+    },
+
+    {
+      "id": "node_seated",
+      "type": "normal",
+      "npc": { "text": "Great! Here is your menu. What would you like to order?", "gender": "female" },
+      "context": { "scene": "restaurant", "situation": "The waiter is taking the customer's order." },
+      "learning_objective": ["Order food", "Practice 'I'd like...' / 'Can I have...?'"],
+      "routes": [
+        {
+          "intent": "order_food",
+          "meaning": "The customer orders or requests a food item.",
+          "examples": ["I'd like a hamburger.", "Can I have the pasta?", "I'll take a pizza.", "A hamburger, please.", "I'll have the chicken.", "Can I get a cheeseburger?", "I want a salad."],
+          "keywords": ["hamburger", "burger", "cheeseburger", "pasta", "pizza", "chicken", "salad", "sandwich", "fries", "steak", "soup"],
+          "objective": { "label": "Use 'I'd like' / 'Can I have' / 'I'll have'", "markers": ["i'd like", "i would like", "can i have", "can i get", "i'll have", "i will have", "i'll take", "i want", "please"] },
+          "next_nodes": [
+            { "id": "node_fries", "weight": 40 },
+            { "id": "node_sold_out", "weight": 20 },
+            { "id": "node_combo", "weight": 20 },
+            { "id": "node_clarify", "weight": 20 }
+          ]
+        },
+        {
+          "intent": "ask_recommendation",
+          "meaning": "The customer asks the waiter to recommend food.",
+          "examples": ["What do you recommend?", "What's good here?", "What should I try?", "What is popular?", "Any suggestions?"],
+          "keywords": ["recommend", "good", "popular", "suggest", "best", "special"],
+          "next_nodes": [
+            { "id": "node_recommend_burger", "weight": 50 },
+            { "id": "node_recommend_pasta", "weight": 50 }
+          ]
+        },
+        {
+          "intent": "need_more_time",
+          "meaning": "The customer says they are not ready to order yet.",
+          "examples": ["Give me a minute.", "I'm not ready yet.", "Can I have a little more time?", "I need more time.", "Not yet, please."],
+          "keywords": ["minute", "time", "ready", "wait", "moment"],
+          "next_nodes": [{ "id": "node_more_time", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "I understand you. Try ordering: 'I'd like a hamburger.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Let's talk about your order. What would you like to eat?" }
+      }
+    },
+
+    {
+      "id": "node_fries",
+      "type": "event",
+      "npc": { "text": "Sure! Would you like fries with that?", "gender": "female" },
+      "context": { "scene": "restaurant", "situation": "The waiter offers a side of fries (follow-up)." },
+      "learning_objective": ["Say yes or no politely"],
+      "routes": [
+        {
+          "intent": "affirm",
+          "meaning": "The customer agrees or says yes.",
+          "examples": ["Yes, please.", "Sure.", "Yes.", "Okay.", "That sounds good.", "Yes, I would."],
+          "keywords": ["yes", "sure", "okay", "please", "great"],
+          "next_nodes": [{ "id": "node_drink", "weight": 100 }]
+        },
+        {
+          "intent": "decline",
+          "meaning": "The customer refuses or says no.",
+          "examples": ["No, thanks.", "No.", "No fries, please.", "I'm okay.", "No thank you."],
+          "keywords": ["no", "nothing", "without"],
+          "next_nodes": [{ "id": "node_drink", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Just say 'Yes, please.' or 'No, thanks.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Would you like fries with that? Yes or no?" }
+      }
+    },
+
+    {
+      "id": "node_sold_out",
+      "type": "event",
+      "npc": { "text": "Oh, sorry! We are out of that today. Would you like something else?", "gender": "female" },
+      "context": { "scene": "restaurant", "situation": "The item is sold out (unexpected event)." },
+      "learning_objective": ["Order a different food", "Recover from a problem"],
+      "routes": [
+        {
+          "intent": "order_food",
+          "meaning": "The customer orders a different food item.",
+          "examples": ["Then I'll have the pizza.", "Can I have the pasta instead?", "Okay, a salad please.", "I'd like the chicken.", "The sandwich, please."],
+          "keywords": ["pizza", "pasta", "chicken", "salad", "sandwich", "instead", "then"],
+          "objective": { "label": "Order a food item", "markers": ["i'd like", "can i have", "i'll have", "i'll take", "i want", "please"] },
+          "next_nodes": [{ "id": "node_drink", "weight": 100 }]
+        },
+        {
+          "intent": "ask_recommendation",
+          "meaning": "The customer asks what else is available.",
+          "examples": ["What else do you have?", "What do you recommend?", "What's good?", "Any suggestions?"],
+          "keywords": ["else", "recommend", "good", "suggest"],
+          "next_nodes": [{ "id": "node_recommend_pasta", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Try again: 'Then I'll have the pizza.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "That one is sold out. What else would you like?" }
+      }
+    },
+
+    {
+      "id": "node_combo",
+      "type": "event",
+      "npc": { "text": "Would you like to make that a combo? It comes with fries and a drink.", "gender": "female" },
+      "context": { "scene": "restaurant", "situation": "The waiter upsells a combo meal (event)." },
+      "learning_objective": ["Say yes or no", "Understand an offer"],
+      "routes": [
+        {
+          "intent": "affirm",
+          "meaning": "The customer agrees to the combo.",
+          "examples": ["Yes, please.", "Sure, why not.", "Okay, a combo.", "Yes, that sounds good."],
+          "keywords": ["yes", "sure", "okay", "combo", "please"],
+          "next_nodes": [{ "id": "node_here_or_togo", "weight": 100 }]
+        },
+        {
+          "intent": "decline",
+          "meaning": "The customer declines the combo.",
+          "examples": ["No, thanks.", "No combo, please.", "Just the burger.", "No thank you."],
+          "keywords": ["no", "just", "only"],
+          "next_nodes": [{ "id": "node_drink", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "A combo has fries and a drink. Yes or no?" },
+        "off_topic": { "stay_on_current_node": true, "message": "Would you like to make it a combo? Yes or no?" }
+      }
+    },
+
+    {
+      "id": "node_clarify",
+      "type": "clarification",
+      "npc": { "text": "Sorry, did you say a cheeseburger?", "gender": "female" },
+      "context": { "scene": "restaurant", "situation": "The waiter did not hear clearly and asks to confirm (clarification event)." },
+      "learning_objective": ["Confirm or correct information"],
+      "routes": [
+        {
+          "intent": "affirm",
+          "meaning": "The customer confirms it is correct.",
+          "examples": ["Yes, a cheeseburger.", "Yes, that's right.", "Correct.", "Yes, please."],
+          "keywords": ["yes", "right", "correct", "cheeseburger"],
+          "next_nodes": [{ "id": "node_fries", "weight": 100 }]
+        },
+        {
+          "intent": "correct",
+          "meaning": "The customer says no and gives the right order.",
+          "examples": ["No, a hamburger.", "No, I said pizza.", "No, the pasta, please.", "Actually, a salad."],
+          "keywords": ["no", "actually", "hamburger", "pizza", "pasta", "salad"],
+          "next_nodes": [{ "id": "node_fries", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Say 'Yes' or tell me the right food." },
+        "off_topic": { "stay_on_current_node": true, "message": "I want to get your order right. Did you say a cheeseburger?" }
+      }
+    },
+
+    {
+      "id": "node_recommend_burger",
+      "type": "normal",
+      "npc": { "text": "Our hamburgers are very popular! Would you like to try one?", "gender": "female" },
+      "context": { "scene": "restaurant", "situation": "The waiter recommends the hamburger." },
+      "learning_objective": ["Accept or ask for another option"],
+      "routes": [
+        {
+          "intent": "affirm",
+          "meaning": "The customer agrees to try the recommended food.",
+          "examples": ["Yes, please.", "Sure, I'll take one.", "Okay, a hamburger.", "That sounds good."],
+          "keywords": ["yes", "sure", "okay", "hamburger", "please"],
+          "next_nodes": [{ "id": "node_fries", "weight": 100 }]
+        },
+        {
+          "intent": "ask_other",
+          "meaning": "The customer asks for a different recommendation.",
+          "examples": ["What else?", "Anything else?", "Do you have something different?", "No, what else is good?"],
+          "keywords": ["else", "different", "other", "no"],
+          "next_nodes": [{ "id": "node_recommend_pasta", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Say 'Yes, please.' or ask 'What else?'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Our burgers are great. Would you like to try one?" }
+      }
+    },
+
+    {
+      "id": "node_recommend_pasta",
+      "type": "normal",
+      "npc": { "text": "The pasta is also delicious. What would you like?", "gender": "female" },
+      "context": { "scene": "restaurant", "situation": "The waiter recommends the pasta." },
+      "learning_objective": ["Order food after a recommendation"],
+      "routes": [
+        {
+          "intent": "order_food",
+          "meaning": "The customer orders a food item.",
+          "examples": ["I'll have the pasta.", "Can I have the pasta?", "I'd like a burger.", "The pizza, please.", "I'll take the chicken."],
+          "keywords": ["pasta", "burger", "pizza", "chicken", "salad"],
+          "objective": { "label": "Order a food item", "markers": ["i'd like", "can i have", "i'll have", "i'll take", "i want", "please"] },
+          "next_nodes": [{ "id": "node_drink", "weight": 100 }]
+        },
+        {
+          "intent": "need_more_time",
+          "meaning": "The customer needs more time to decide.",
+          "examples": ["Give me a minute.", "I'm not ready.", "Let me think."],
+          "keywords": ["minute", "time", "ready", "think"],
+          "next_nodes": [{ "id": "node_more_time", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Try: 'I'll have the pasta.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "What would you like to eat?" }
+      }
+    },
+
+    {
+      "id": "node_more_time",
+      "type": "normal",
+      "npc": { "text": "No problem, take your time. Are you ready to order now?", "gender": "female" },
+      "context": { "scene": "restaurant", "situation": "The waiter comes back after giving time. This node can loop." },
+      "learning_objective": ["Order when ready", "Ask for more time again"],
+      "routes": [
+        {
+          "intent": "order_food",
+          "meaning": "The customer is ready and orders food.",
+          "examples": ["Yes, I'll have a burger.", "I'd like the pizza.", "Can I have the pasta?", "I'm ready. A salad, please."],
+          "keywords": ["burger", "pizza", "pasta", "salad", "chicken", "ready"],
+          "objective": { "label": "Order a food item", "markers": ["i'd like", "can i have", "i'll have", "i'll take", "i want", "please"] },
+          "next_nodes": [{ "id": "node_fries", "weight": 100 }]
+        },
+        {
+          "intent": "still_not_ready",
+          "meaning": "The customer is still not ready and needs even more time.",
+          "examples": ["Not yet.", "A little more, please.", "Still deciding.", "One more minute."],
+          "keywords": ["not", "still", "more", "minute", "yet"],
+          "next_nodes": [{ "id": "node_more_time", "weight": 100 }]
+        },
+        {
+          "intent": "ask_recommendation",
+          "meaning": "The customer asks for a recommendation.",
+          "examples": ["What do you recommend?", "What's good?", "Any ideas?"],
+          "keywords": ["recommend", "good", "ideas", "suggest"],
+          "next_nodes": [{ "id": "node_recommend_burger", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "When you're ready, say 'I'd like a burger.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Take your time. Are you ready to order?" }
+      }
+    },
+
+    {
+      "id": "node_here_or_togo",
+      "type": "event",
+      "npc": { "text": "Is that for here or to go?", "gender": "female" },
+      "context": { "scene": "restaurant", "situation": "The waiter asks about dine-in or takeaway." },
+      "learning_objective": ["Choose here or to go"],
+      "routes": [
+        {
+          "intent": "for_here",
+          "meaning": "The customer will eat in the restaurant.",
+          "examples": ["For here, please.", "Here.", "I'll eat here.", "Dine in."],
+          "keywords": ["here", "in", "dine", "stay"],
+          "next_nodes": [{ "id": "node_drink", "weight": 100 }]
+        },
+        {
+          "intent": "to_go",
+          "meaning": "The customer wants to take the food away.",
+          "examples": ["To go, please.", "Take away.", "To go.", "I'll take it with me."],
+          "keywords": ["go", "away", "takeaway", "take"],
+          "next_nodes": [{ "id": "node_drink", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Say 'For here.' or 'To go.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Is that for here or to go?" }
+      }
+    },
+
+    {
+      "id": "node_drink",
+      "type": "normal",
+      "npc": { "text": "What would you like to drink?", "gender": "female" },
+      "context": { "scene": "restaurant", "situation": "The waiter asks for a drink order." },
+      "learning_objective": ["Order a drink", "Practice 'I'd like...' / 'Can I have...?'"],
+      "routes": [
+        {
+          "intent": "order_drink",
+          "meaning": "The customer orders or requests a drink.",
+          "examples": ["Water, please.", "I'd like some water.", "Can I have a Coke?", "I'll have orange juice.", "A tea, please.", "Milk, please.", "Can I get a lemonade?"],
+          "keywords": ["water", "coke", "cola", "juice", "tea", "coffee", "milk", "lemonade", "soda", "drink"],
+          "objective": { "label": "Use 'I'd like' / 'Can I have' or name a drink", "markers": ["i'd like", "i would like", "can i have", "can i get", "i'll have", "i will have", "please", "water", "coke", "juice", "tea", "milk", "lemonade", "coffee", "soda"] },
+          "next_nodes": [
+            { "id": "node_drink_ok", "weight": 70 },
+            { "id": "node_drink_soldout", "weight": 30 }
+          ]
+        },
+        {
+          "intent": "no_drink",
+          "meaning": "The customer does not want any drink.",
+          "examples": ["Nothing, thanks.", "No drink, please.", "I'm okay.", "No thank you."],
+          "keywords": ["nothing", "no"],
+          "next_nodes": [{ "id": "node_anything_else", "weight": 100 }]
+        },
+        {
+          "intent": "express_thirst",
+          "partial": true,
+          "meaning": "The customer talks about being thirsty but does not actually order a drink.",
+          "examples": ["I'm thirsty.", "I am so thirsty.", "I need something to drink.", "I'm dry."],
+          "keywords": ["thirsty", "dry"],
+          "hint": "I understand you're thirsty! Now order a drink: 'Water, please.'"
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Try asking for a drink: 'Water, please.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Let's finish your order. What would you like to drink?" }
+      }
+    },
+
+    {
+      "id": "node_drink_ok",
+      "type": "normal",
+      "npc": { "text": "Great choice! One drink coming right up. Anything else?", "gender": "female" },
+      "context": { "scene": "restaurant", "situation": "The drink is confirmed; waiter checks for more." },
+      "learning_objective": ["Order more or finish"],
+      "routes": [
+        {
+          "intent": "order_more",
+          "meaning": "The customer wants to order more food.",
+          "examples": ["Yes, I'd like some fries.", "Can I also have a salad?", "One more burger, please."],
+          "keywords": ["also", "more", "another", "fries", "salad", "dessert"],
+          "next_nodes": [{ "id": "node_dessert_offer", "weight": 100 }]
+        },
+        {
+          "intent": "finish",
+          "meaning": "The customer is done ordering.",
+          "examples": ["No, that's all.", "That's everything.", "No, thanks.", "I'm done."],
+          "keywords": ["all", "everything", "done", "no"],
+          "next_nodes": [{ "id": "node_dessert_offer", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Order more, or say 'That's all.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Anything else, or is that all?" }
+      }
+    },
+
+    {
+      "id": "node_drink_soldout",
+      "type": "event",
+      "npc": { "text": "Sorry, we are out of that drink today. Would you like something else?", "gender": "female" },
+      "context": { "scene": "restaurant", "situation": "The drink is sold out (event)." },
+      "learning_objective": ["Choose a different drink"],
+      "routes": [
+        {
+          "intent": "order_drink",
+          "meaning": "The customer orders a different drink.",
+          "examples": ["Then water, please.", "Okay, a juice.", "Can I have tea instead?", "Milk, please."],
+          "keywords": ["water", "juice", "tea", "milk", "coffee", "lemonade", "instead"],
+          "next_nodes": [{ "id": "node_anything_else", "weight": 100 }]
+        },
+        {
+          "intent": "no_drink",
+          "meaning": "The customer decides not to have a drink.",
+          "examples": ["Nothing then.", "No drink, thanks.", "It's okay."],
+          "keywords": ["nothing", "no"],
+          "next_nodes": [{ "id": "node_anything_else", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Pick another drink: 'Water, please.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "That drink is sold out. What else would you like to drink?" }
+      }
+    },
+
+    {
+      "id": "node_dessert_offer",
+      "type": "event",
+      "npc": { "text": "Would you like some dessert? We have delicious ice cream.", "gender": "female" },
+      "context": { "scene": "restaurant", "situation": "The waiter offers dessert (optional side path)." },
+      "learning_objective": ["Accept or decline dessert"],
+      "routes": [
+        {
+          "intent": "affirm",
+          "meaning": "The customer wants dessert.",
+          "examples": ["Yes, please.", "I'd like ice cream.", "Sure, ice cream.", "Yes, some ice cream."],
+          "keywords": ["yes", "ice", "cream", "dessert", "please"],
+          "next_nodes": [{ "id": "node_dessert_yes", "weight": 100 }]
+        },
+        {
+          "intent": "decline",
+          "meaning": "The customer does not want dessert.",
+          "examples": ["No, thanks.", "No dessert.", "I'm full.", "No thank you."],
+          "keywords": ["no", "full", "nothing"],
+          "next_nodes": [{ "id": "node_anything_else", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Say 'Yes, please.' or 'No, thanks.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Would you like some ice cream for dessert?" }
+      }
+    },
+
+    {
+      "id": "node_dessert_yes",
+      "type": "normal",
+      "npc": { "text": "One ice cream coming up! Anything else?", "gender": "female" },
+      "context": { "scene": "restaurant", "situation": "Dessert confirmed." },
+      "learning_objective": ["Finish the order"],
+      "routes": [
+        {
+          "intent": "finish",
+          "meaning": "The customer is finished ordering.",
+          "examples": ["No, that's all.", "That's everything, thanks.", "I'm done.", "No more."],
+          "keywords": ["all", "everything", "done", "no", "more"],
+          "next_nodes": [{ "id": "node_anything_else", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Say 'That's all, thanks.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Anything else, or is that all?" }
+      }
+    },
+
+    {
+      "id": "node_anything_else",
+      "type": "normal",
+      "npc": { "text": "Anything else for you today?", "gender": "female" },
+      "context": { "scene": "restaurant", "situation": "The waiter checks before the bill. Can loop back to ordering." },
+      "learning_objective": ["Ask for the bill", "Order more"],
+      "routes": [
+        {
+          "intent": "ask_bill",
+          "meaning": "The customer asks for the bill or check.",
+          "examples": ["Can I have the bill, please?", "The check, please.", "How much is it?", "Can I pay now?", "Bill, please."],
+          "keywords": ["bill", "check", "pay", "much", "total", "cost"],
+          "objective": { "label": "Ask for the bill", "markers": ["bill", "check", "pay", "how much", "total"] },
+          "next_nodes": [{ "id": "node_bill", "weight": 100 }]
+        },
+        {
+          "intent": "order_more",
+          "meaning": "The customer wants to order more food.",
+          "examples": ["Yes, I'd like some fries.", "Can I have another drink?", "One more burger, please."],
+          "keywords": ["more", "another", "also", "fries", "burger", "drink"],
+          "next_nodes": [{ "id": "node_fries", "weight": 100 }]
+        },
+        {
+          "intent": "finish",
+          "meaning": "The customer is done and wants nothing more.",
+          "examples": ["No, that's all.", "That's everything.", "No, thanks.", "I'm done."],
+          "keywords": ["all", "everything", "done", "no"],
+          "next_nodes": [{ "id": "node_bill", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Ask for the bill, or order more food." },
+        "off_topic": { "stay_on_current_node": true, "message": "Anything else, or would you like the bill?" }
+      }
+    },
+
+    {
+      "id": "node_bill",
+      "type": "normal",
+      "npc": { "text": "Of course. Here is your bill. It is twelve dollars.", "gender": "female" },
+      "context": { "scene": "restaurant", "situation": "The waiter brings the bill." },
+      "learning_objective": ["Pay the bill", "Ask how to pay"],
+      "routes": [
+        {
+          "intent": "pay_card",
+          "meaning": "The customer wants to pay by card or asks if cards are accepted.",
+          "examples": ["Can I pay by card?", "Do you take cards?", "Here's my card.", "Card, please."],
+          "keywords": ["card", "credit", "visa"],
+          "next_nodes": [{ "id": "node_pay_card", "weight": 100 }]
+        },
+        {
+          "intent": "pay_cash",
+          "meaning": "The customer wants to pay with cash.",
+          "examples": ["Here is twelve dollars.", "I'll pay cash.", "Here you go.", "Cash, please."],
+          "keywords": ["cash", "dollars", "money", "here"],
+          "next_nodes": [{ "id": "node_goodbye", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "How will you pay? Try 'Can I pay by card?'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Your bill is twelve dollars. How would you like to pay?" }
+      }
+    },
+
+    {
+      "id": "node_pay_card",
+      "type": "normal",
+      "npc": { "text": "Sure, we take cards. Thank you very much!", "gender": "female" },
+      "context": { "scene": "restaurant", "situation": "Card payment accepted." },
+      "learning_objective": ["Say thank you / goodbye"],
+      "routes": [
+        {
+          "intent": "thanks",
+          "meaning": "The customer says thank you or goodbye.",
+          "examples": ["Thank you!", "Thanks a lot.", "Great, thanks.", "Thank you, bye."],
+          "keywords": ["thank", "thanks", "bye", "goodbye"],
+          "next_nodes": [{ "id": "node_goodbye", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "You can say 'Thank you!'" },
+        "off_topic": { "stay_on_current_node": true, "message": "All done! You can say 'Thank you.'" }
+      }
+    },
+
+    {
+      "id": "node_goodbye",
+      "type": "normal",
+      "end": true,
+      "npc": { "text": "Thank you for coming! Have a great day! Goodbye!", "gender": "female" },
+      "context": { "scene": "restaurant", "situation": "The conversation is complete." },
+      "learning_objective": [],
+      "routes": []
+    }
+  ]
+}

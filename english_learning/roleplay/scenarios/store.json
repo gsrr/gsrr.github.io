@@ -1,0 +1,321 @@
+{
+  "id": "store",
+  "title": "At the Store 🛒",
+  "level": "Pre-A1-A2",
+  "scene": "shopping",
+  "you": "Shopper",
+  "npc": "Shopkeeper",
+  "npc_gender": "female",
+  "start": "node_welcome",
+  "max_turns": 40,
+  "nodes": [
+    {
+      "id": "node_welcome",
+      "type": "normal",
+      "npc": { "text": "Hi! Welcome to the shop. What are you looking for today?", "gender": "female" },
+      "context": { "scene": "shopping", "situation": "The shopkeeper greets the shopper at the door." },
+      "learning_objective": ["Say what you want", "Practice 'I'm looking for...' / 'I want...'"],
+      "routes": [
+        {
+          "intent": "looking_for",
+          "meaning": "The shopper says what item they want to buy.",
+          "examples": ["I'm looking for shoes.", "I want a red hat.", "I need a new bag.", "Do you have any apples?", "I would like a toy.", "A blue shirt, please."],
+          "keywords": ["shoes", "hat", "bag", "shirt", "toy", "apple", "book", "ball", "want", "looking", "need"],
+          "objective": { "label": "Say what you want", "markers": ["i'm looking for", "i am looking for", "i want", "i need", "i'd like", "i would like", "do you have", "can i have"] },
+          "next_nodes": [
+            { "id": "node_have_it", "weight": 55 },
+            { "id": "node_soldout", "weight": 25 },
+            { "id": "node_clarify", "weight": 20 }
+          ]
+        },
+        {
+          "intent": "just_looking",
+          "meaning": "The shopper is only browsing and not buying yet.",
+          "examples": ["I'm just looking.", "Just looking, thanks.", "I'm only looking around.", "No, I'm just browsing."],
+          "keywords": ["just", "looking", "browsing", "around"],
+          "next_nodes": [{ "id": "node_browse", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Tell me what you want. You can say 'I'm looking for shoes.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "This is a shop. What would you like to buy?" }
+      }
+    },
+
+    {
+      "id": "node_browse",
+      "type": "normal",
+      "npc": { "text": "No problem, take your time. Tell me if you need any help.", "gender": "female" },
+      "context": { "scene": "shopping", "situation": "The shopper browses; the shopkeeper waits." },
+      "learning_objective": ["Ask for help", "Say what you want"],
+      "routes": [
+        {
+          "intent": "looking_for",
+          "meaning": "The shopper now says what they want.",
+          "examples": ["Okay, I want a hat.", "Do you have red shoes?", "I'm looking for a book.", "Can I see the bags?"],
+          "keywords": ["hat", "shoes", "book", "bag", "toy", "shirt", "want", "have", "see"],
+          "objective": { "label": "Say what you want", "markers": ["i want", "i'm looking for", "i need", "i'd like", "do you have", "can i see", "can i have"] },
+          "next_nodes": [{ "id": "node_have_it", "weight": 100 }]
+        },
+        {
+          "intent": "ask_help",
+          "meaning": "The shopper asks the shopkeeper for help.",
+          "examples": ["Can you help me?", "I need help, please.", "Excuse me, can you help?"],
+          "keywords": ["help", "excuse", "please"],
+          "next_nodes": [{ "id": "node_have_it", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "When you're ready, say 'I want a hat.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Take your time. What would you like to see?" }
+      }
+    },
+
+    {
+      "id": "node_have_it",
+      "type": "normal",
+      "npc": { "text": "Great choice! What color would you like?", "gender": "female" },
+      "context": { "scene": "shopping", "situation": "The shopkeeper has the item and asks about a color." },
+      "learning_objective": ["Name a color", "Make a choice"],
+      "routes": [
+        {
+          "intent": "choose_color",
+          "meaning": "The shopper names a color they want.",
+          "examples": ["Red, please.", "I like the blue one.", "The green one.", "Can I have it in yellow?", "Black, please."],
+          "keywords": ["red", "blue", "green", "yellow", "black", "white", "pink", "orange", "purple", "brown"],
+          "objective": { "label": "Name a color", "markers": ["red", "blue", "green", "yellow", "black", "white", "pink", "orange", "purple", "brown"] },
+          "next_nodes": [
+            { "id": "node_price", "weight": 70 },
+            { "id": "node_try_size", "weight": 30 }
+          ]
+        },
+        {
+          "intent": "no_preference",
+          "meaning": "The shopper does not mind which color.",
+          "examples": ["Any color is fine.", "I don't mind.", "You choose.", "Anything is okay."],
+          "keywords": ["any", "mind", "choose", "fine", "whatever"],
+          "next_nodes": [{ "id": "node_price", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Pick a color. You can say 'Red, please.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "What color would you like?" }
+      }
+    },
+
+    {
+      "id": "node_soldout",
+      "type": "event",
+      "npc": { "text": "Oh, sorry! We are out of that today. Would you like something else?", "gender": "female" },
+      "context": { "scene": "shopping", "situation": "The item is sold out (unexpected event)." },
+      "learning_objective": ["Ask for a different item", "Recover from a problem"],
+      "routes": [
+        {
+          "intent": "looking_for",
+          "meaning": "The shopper asks for a different item.",
+          "examples": ["Then I'll take the blue hat.", "Can I see a bag instead?", "Okay, some shoes please.", "I'd like a book instead."],
+          "keywords": ["hat", "bag", "shoes", "book", "toy", "shirt", "instead", "then"],
+          "objective": { "label": "Ask for an item", "markers": ["i'll take", "i want", "can i have", "can i see", "i'd like", "instead"] },
+          "next_nodes": [{ "id": "node_have_it", "weight": 100 }]
+        },
+        {
+          "intent": "ask_recommendation",
+          "meaning": "The shopper asks what else the shop has.",
+          "examples": ["What else do you have?", "What do you recommend?", "What is good?", "Any suggestions?"],
+          "keywords": ["else", "recommend", "good", "suggest"],
+          "next_nodes": [{ "id": "node_recommend", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Try again: 'Then I'll take the blue hat.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "That one is sold out. What else would you like?" }
+      }
+    },
+
+    {
+      "id": "node_recommend",
+      "type": "normal",
+      "npc": { "text": "This red bag is very popular. Would you like it?", "gender": "female" },
+      "context": { "scene": "shopping", "situation": "The shopkeeper recommends a popular item." },
+      "learning_objective": ["Accept or ask for another option"],
+      "routes": [
+        {
+          "intent": "affirm",
+          "meaning": "The shopper agrees to take the recommended item.",
+          "examples": ["Yes, please.", "Sure, I'll take it.", "Okay, that one.", "That sounds good."],
+          "keywords": ["yes", "sure", "okay", "please", "take"],
+          "next_nodes": [{ "id": "node_price", "weight": 100 }]
+        },
+        {
+          "intent": "ask_other",
+          "meaning": "The shopper asks for a different option.",
+          "examples": ["What else?", "Anything else?", "Do you have something different?", "No, what else is good?"],
+          "keywords": ["else", "different", "other", "no"],
+          "next_nodes": [{ "id": "node_browse", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Say 'Yes, please.' or ask 'What else?'" },
+        "off_topic": { "stay_on_current_node": true, "message": "This red bag is nice. Would you like it?" }
+      }
+    },
+
+    {
+      "id": "node_clarify",
+      "type": "clarification",
+      "npc": { "text": "Sorry, did you say a red hat?", "gender": "female" },
+      "context": { "scene": "shopping", "situation": "The shopkeeper did not hear clearly and asks to confirm." },
+      "learning_objective": ["Confirm or correct information"],
+      "routes": [
+        {
+          "intent": "affirm",
+          "meaning": "The shopper confirms it is correct.",
+          "examples": ["Yes, a red hat.", "Yes, that's right.", "Correct.", "Yes, please."],
+          "keywords": ["yes", "right", "correct", "hat"],
+          "next_nodes": [{ "id": "node_have_it", "weight": 100 }]
+        },
+        {
+          "intent": "correct",
+          "meaning": "The shopper says no and gives the right item.",
+          "examples": ["No, a blue bag.", "No, I said shoes.", "No, the book, please.", "Actually, a toy."],
+          "keywords": ["no", "actually", "bag", "shoes", "book", "toy"],
+          "next_nodes": [{ "id": "node_have_it", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Say 'Yes' or tell me the right thing." },
+        "off_topic": { "stay_on_current_node": true, "message": "I want to help you. Did you say a red hat?" }
+      }
+    },
+
+    {
+      "id": "node_try_size",
+      "type": "event",
+      "npc": { "text": "Here you are. Would you like to try it on?", "gender": "female" },
+      "context": { "scene": "shopping", "situation": "The shopkeeper offers to let the shopper try the item on." },
+      "learning_objective": ["Say yes or no politely"],
+      "routes": [
+        {
+          "intent": "affirm",
+          "meaning": "The shopper wants to try it on.",
+          "examples": ["Yes, please.", "Sure.", "Okay, I'll try it.", "Yes, I would."],
+          "keywords": ["yes", "sure", "okay", "try", "please"],
+          "next_nodes": [{ "id": "node_price", "weight": 100 }]
+        },
+        {
+          "intent": "decline",
+          "meaning": "The shopper does not want to try it on.",
+          "examples": ["No, thanks.", "No, it's okay.", "No need.", "No thank you."],
+          "keywords": ["no", "need", "okay"],
+          "next_nodes": [{ "id": "node_price", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Just say 'Yes, please.' or 'No, thanks.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Would you like to try it on? Yes or no?" }
+      }
+    },
+
+    {
+      "id": "node_price",
+      "type": "normal",
+      "npc": { "text": "Nice! That one is ten dollars. Would you like it?", "gender": "female" },
+      "context": { "scene": "shopping", "situation": "The shopkeeper gives the price." },
+      "learning_objective": ["Understand a price", "Decide to buy or ask about cost"],
+      "routes": [
+        {
+          "intent": "buy_it",
+          "meaning": "The shopper decides to buy the item.",
+          "examples": ["Yes, I'll take it.", "Okay, I'll buy it.", "Yes, please.", "I'll take one."],
+          "keywords": ["yes", "take", "buy", "okay", "please"],
+          "next_nodes": [{ "id": "node_pay", "weight": 100 }]
+        },
+        {
+          "intent": "ask_cheaper",
+          "meaning": "The shopper says it is expensive or asks for a lower price.",
+          "examples": ["That's expensive.", "Can it be cheaper?", "Do you have a discount?", "Too much for me."],
+          "keywords": ["expensive", "cheaper", "discount", "much", "less"],
+          "next_nodes": [{ "id": "node_discount", "weight": 100 }]
+        },
+        {
+          "intent": "ask_price",
+          "partial": true,
+          "meaning": "The shopper asks the price again but does not decide.",
+          "examples": ["How much is it?", "What's the price?", "How much?"],
+          "keywords": ["how", "much", "price", "cost"],
+          "hint": "It is ten dollars. Do you want to buy it? Say 'Yes, I'll take it.'"
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "It is ten dollars. Say 'Yes, I'll take it.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "That one is ten dollars. Would you like it?" }
+      }
+    },
+
+    {
+      "id": "node_discount",
+      "type": "event",
+      "npc": { "text": "Hmm, okay. I can give you a small discount. Nine dollars. Is that okay?", "gender": "female" },
+      "context": { "scene": "shopping", "situation": "The shopkeeper offers a small discount (event)." },
+      "learning_objective": ["Accept or decline an offer"],
+      "routes": [
+        {
+          "intent": "affirm",
+          "meaning": "The shopper accepts the discount.",
+          "examples": ["Yes, okay!", "Sure, I'll take it.", "That's good, thanks.", "Okay, deal."],
+          "keywords": ["yes", "okay", "sure", "deal", "take"],
+          "next_nodes": [{ "id": "node_pay", "weight": 100 }]
+        },
+        {
+          "intent": "decline",
+          "meaning": "The shopper still does not want it.",
+          "examples": ["No, thanks.", "Maybe later.", "No, it's still too much.", "No thank you."],
+          "keywords": ["no", "later", "much", "thanks"],
+          "next_nodes": [{ "id": "node_browse", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Nine dollars. Say 'Yes, okay!' or 'No, thanks.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "I can make it nine dollars. Is that okay?" }
+      }
+    },
+
+    {
+      "id": "node_pay",
+      "type": "normal",
+      "npc": { "text": "Great! How would you like to pay?", "gender": "female" },
+      "context": { "scene": "shopping", "situation": "The shopper pays." },
+      "learning_objective": ["Choose how to pay"],
+      "routes": [
+        {
+          "intent": "pay_cash",
+          "meaning": "The shopper pays with cash.",
+          "examples": ["Here is ten dollars.", "I'll pay cash.", "Cash, please.", "Here you go."],
+          "keywords": ["cash", "dollars", "money", "here"],
+          "next_nodes": [{ "id": "node_goodbye", "weight": 100 }]
+        },
+        {
+          "intent": "pay_card",
+          "meaning": "The shopper pays by card.",
+          "examples": ["Can I pay by card?", "Do you take cards?", "Here's my card.", "Card, please."],
+          "keywords": ["card", "credit", "visa"],
+          "next_nodes": [{ "id": "node_goodbye", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "How will you pay? Try 'Cash, please.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "How would you like to pay — cash or card?" }
+      }
+    },
+
+    {
+      "id": "node_goodbye",
+      "type": "normal",
+      "end": true,
+      "npc": { "text": "Here is your bag. Thank you for shopping with us! Goodbye!", "gender": "female" },
+      "context": { "scene": "shopping", "situation": "The conversation is complete." },
+      "learning_objective": [],
+      "routes": []
+    }
+  ]
+}

@@ -1,0 +1,311 @@
+{
+  "id": "park",
+  "title": "At the Park 🌳",
+  "level": "Pre-A1-A1",
+  "scene": "park-ball",
+  "you": "Kid",
+  "npc": "Friend",
+  "npc_gender": "male",
+  "start": "node_hi",
+  "max_turns": 40,
+  "nodes": [
+    {
+      "id": "node_hi",
+      "type": "normal",
+      "npc": { "text": "Hi! It's a sunny day at the park. How are you?", "gender": "male" },
+      "context": { "scene": "park-ball", "situation": "A friend greets you at the park." },
+      "learning_objective": ["Answer 'How are you?'", "Say a feeling"],
+      "routes": [
+        {
+          "intent": "say_feeling",
+          "meaning": "You say how you feel and greet back.",
+          "examples": ["I'm good, thanks!", "I am great!", "I'm fine, and you?", "Good! How are you?", "I'm happy today."],
+          "keywords": ["good", "great", "fine", "happy", "okay", "well"],
+          "objective": { "label": "Say how you feel", "markers": ["i'm", "i am", "good", "great", "fine", "happy", "okay", "well"] },
+          "next_nodes": [{ "id": "node_invite", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Say how you feel. You can say 'I'm good, thanks!'" },
+        "off_topic": { "stay_on_current_node": true, "message": "How are you today? Say 'I'm good!'" }
+      }
+    },
+
+    {
+      "id": "node_invite",
+      "type": "normal",
+      "npc": { "text": "Do you want to play with me?", "gender": "male" },
+      "context": { "scene": "park-ball", "situation": "The friend asks you to play." },
+      "learning_objective": ["Say yes or no", "Accept an invitation"],
+      "routes": [
+        {
+          "intent": "affirm",
+          "meaning": "You want to play.",
+          "examples": ["Yes, let's play!", "Sure!", "Yes, I do!", "Okay, let's go!"],
+          "keywords": ["yes", "sure", "okay", "play", "let's"],
+          "next_nodes": [{ "id": "node_choose", "weight": 100 }]
+        },
+        {
+          "intent": "decline",
+          "meaning": "You do not want to play now.",
+          "examples": ["No, thanks.", "Maybe later.", "Not now.", "I'm tired."],
+          "keywords": ["no", "later", "tired", "not"],
+          "next_nodes": [{ "id": "node_maybe_later", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Say 'Yes, let's play!' or 'No, thanks.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Do you want to play? Yes or no?" }
+      }
+    },
+
+    {
+      "id": "node_maybe_later",
+      "type": "normal",
+      "npc": { "text": "Okay! Would you like to sit and rest first?", "gender": "male" },
+      "context": { "scene": "park-ball", "situation": "The friend offers to rest before playing." },
+      "learning_objective": ["Change your mind", "Say yes or no"],
+      "routes": [
+        {
+          "intent": "affirm",
+          "meaning": "You are ready to play now, or you rest and then play.",
+          "examples": ["Okay, now let's play!", "Yes, I'm ready now.", "Sure, let's play.", "Okay!"],
+          "keywords": ["okay", "yes", "ready", "play", "sure"],
+          "next_nodes": [{ "id": "node_choose", "weight": 100 }]
+        },
+        {
+          "intent": "goodbye",
+          "meaning": "You want to go home.",
+          "examples": ["I want to go home.", "Bye, see you.", "I have to go.", "Goodbye."],
+          "keywords": ["home", "bye", "goodbye", "go"],
+          "next_nodes": [{ "id": "node_bye", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Say 'Okay, let's play!' or 'Bye, see you.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Would you like to rest, or go home?" }
+      }
+    },
+
+    {
+      "id": "node_choose",
+      "type": "normal",
+      "npc": { "text": "Yay! What do you want to play? We can play ball, fly a kite, or go on the slide.", "gender": "male" },
+      "context": { "scene": "park-ball", "situation": "You choose a play activity." },
+      "learning_objective": ["Make a choice", "Name an activity"],
+      "routes": [
+        {
+          "intent": "choose_ball",
+          "meaning": "You want to play with the ball.",
+          "examples": ["Let's play ball!", "I want the ball.", "Ball, please!", "Let's kick the ball."],
+          "keywords": ["ball", "kick", "throw", "catch", "soccer"],
+          "next_nodes": [{ "id": "node_ball", "weight": 100 }]
+        },
+        {
+          "intent": "choose_kite",
+          "meaning": "You want to fly the kite.",
+          "examples": ["Let's fly the kite!", "I want the kite.", "The kite, please!", "Kite!"],
+          "keywords": ["kite", "fly", "wind"],
+          "next_nodes": [{ "id": "node_kite", "weight": 100 }]
+        },
+        {
+          "intent": "choose_slide",
+          "meaning": "You want to go on the slide.",
+          "examples": ["Let's go on the slide!", "I want the slide.", "The slide!", "Slide, please."],
+          "keywords": ["slide", "climb", "playground"],
+          "next_nodes": [{ "id": "node_slide", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Pick one: ball, kite, or slide. Say 'Let's play ball!'" },
+        "off_topic": { "stay_on_current_node": true, "message": "What do you want to play — ball, kite, or slide?" }
+      }
+    },
+
+    {
+      "id": "node_ball",
+      "type": "normal",
+      "npc": { "text": "Great! Can you kick the ball to me?", "gender": "male" },
+      "context": { "scene": "park-ball", "situation": "You play ball together." },
+      "learning_objective": ["Talk about actions (kick, run, throw)"],
+      "routes": [
+        {
+          "intent": "action",
+          "meaning": "You agree and do the action.",
+          "examples": ["Okay, I kick the ball!", "Yes, catch it!", "Here it comes!", "I throw it to you."],
+          "keywords": ["kick", "throw", "catch", "here", "okay", "yes"],
+          "next_nodes": [{ "id": "node_ball_event", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Say 'Okay, I kick the ball!'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Can you kick the ball to me?" }
+      }
+    },
+
+    {
+      "id": "node_ball_event",
+      "type": "event",
+      "npc": { "text": "Oh no! The ball rolled far away. Can you run and get it?", "gender": "male" },
+      "context": { "scene": "park-ball", "situation": "The ball rolls away (unexpected event)." },
+      "learning_objective": ["Respond to a problem", "Use action verbs (run, get)"],
+      "routes": [
+        {
+          "intent": "affirm",
+          "meaning": "You agree to run and get the ball.",
+          "examples": ["Okay, I'll run!", "Yes, I can get it!", "Sure, I'm running!", "I'll go get it."],
+          "keywords": ["run", "get", "okay", "yes", "go"],
+          "next_nodes": [{ "id": "node_snack", "weight": 100 }]
+        },
+        {
+          "intent": "decline",
+          "meaning": "You are tired and do not want to run.",
+          "examples": ["I'm too tired.", "No, you get it.", "I can't run now.", "I need a rest."],
+          "keywords": ["tired", "no", "rest", "can't"],
+          "next_nodes": [{ "id": "node_snack", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Say 'Okay, I'll run!'" },
+        "off_topic": { "stay_on_current_node": true, "message": "The ball is far. Can you run and get it?" }
+      }
+    },
+
+    {
+      "id": "node_kite",
+      "type": "normal",
+      "npc": { "text": "Fun! It is windy today. Can you run fast to fly the kite?", "gender": "male" },
+      "context": { "scene": "park-ball", "situation": "You fly a kite together." },
+      "learning_objective": ["Talk about weather (windy)", "Use action verbs"],
+      "routes": [
+        {
+          "intent": "affirm",
+          "meaning": "You run to fly the kite.",
+          "examples": ["Yes, I can run fast!", "Okay, look, it's flying!", "Sure, here I go!", "Yes!"],
+          "keywords": ["yes", "run", "fast", "fly", "okay"],
+          "next_nodes": [{ "id": "node_kite_event", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Say 'Yes, I can run fast!'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Can you run fast to fly the kite?" }
+      }
+    },
+
+    {
+      "id": "node_kite_event",
+      "type": "event",
+      "npc": { "text": "Look, the kite is so high! Uh oh... it started to rain. What should we do?", "gender": "male" },
+      "context": { "scene": "park-ball", "situation": "It starts to rain (unexpected event)." },
+      "learning_objective": ["Talk about weather (rain)", "Make a suggestion"],
+      "routes": [
+        {
+          "intent": "suggest_shelter",
+          "meaning": "You suggest going under a tree or a roof.",
+          "examples": ["Let's go under the tree!", "Run to the shelter!", "Let's hide from the rain.", "Go under the roof!"],
+          "keywords": ["tree", "shelter", "roof", "under", "hide", "inside"],
+          "next_nodes": [{ "id": "node_snack", "weight": 100 }]
+        },
+        {
+          "intent": "suggest_home",
+          "meaning": "You suggest going home.",
+          "examples": ["Let's go home.", "We should go home now.", "Time to go home.", "Let's run home!"],
+          "keywords": ["home", "go", "leave"],
+          "next_nodes": [{ "id": "node_bye", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Make a plan. Say 'Let's go under the tree!'" },
+        "off_topic": { "stay_on_current_node": true, "message": "It's raining! What should we do?" }
+      }
+    },
+
+    {
+      "id": "node_slide",
+      "type": "normal",
+      "npc": { "text": "The slide is fun! Do you want to go first?", "gender": "male" },
+      "context": { "scene": "park-ball", "situation": "You take turns on the slide." },
+      "learning_objective": ["Say yes or no", "Take turns"],
+      "routes": [
+        {
+          "intent": "affirm",
+          "meaning": "You want to go first.",
+          "examples": ["Yes, me first!", "Okay, I'll go!", "Sure!", "Yes, please!"],
+          "keywords": ["yes", "first", "me", "okay", "sure"],
+          "next_nodes": [{ "id": "node_snack", "weight": 100 }]
+        },
+        {
+          "intent": "offer_other",
+          "meaning": "You let your friend go first.",
+          "examples": ["No, you go first.", "You first!", "After you.", "You can go."],
+          "keywords": ["you", "first", "after", "no"],
+          "next_nodes": [{ "id": "node_snack", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Say 'Yes, me first!' or 'You go first.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Do you want to go first on the slide?" }
+      }
+    },
+
+    {
+      "id": "node_snack",
+      "type": "normal",
+      "npc": { "text": "That was fun! I'm hungry now. Do you want a snack?", "gender": "male" },
+      "context": { "scene": "park-ball", "situation": "You take a snack break." },
+      "learning_objective": ["Say yes or no", "Talk about food"],
+      "routes": [
+        {
+          "intent": "affirm",
+          "meaning": "You want a snack.",
+          "examples": ["Yes, please!", "Sure, I'm hungry too.", "Yes, I do!", "Okay!"],
+          "keywords": ["yes", "please", "hungry", "sure", "okay"],
+          "next_nodes": [{ "id": "node_share", "weight": 100 }]
+        },
+        {
+          "intent": "decline",
+          "meaning": "You do not want a snack.",
+          "examples": ["No, thanks.", "I'm not hungry.", "No, I'm okay.", "No thank you."],
+          "keywords": ["no", "not", "hungry", "okay"],
+          "next_nodes": [{ "id": "node_bye", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Say 'Yes, please!' or 'No, thanks.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Do you want a snack? Yes or no?" }
+      }
+    },
+
+    {
+      "id": "node_share",
+      "type": "normal",
+      "npc": { "text": "I have apples and cookies. Which one do you want?", "gender": "male" },
+      "context": { "scene": "park-ball", "situation": "Your friend shares a snack." },
+      "learning_objective": ["Make a choice", "Name a food"],
+      "routes": [
+        {
+          "intent": "choose_food",
+          "meaning": "You choose a snack.",
+          "examples": ["An apple, please.", "I want a cookie.", "Can I have a cookie?", "The apple, thanks."],
+          "keywords": ["apple", "cookie", "please", "want", "have"],
+          "objective": { "label": "Ask for a snack", "markers": ["please", "i want", "can i have", "i'd like", "apple", "cookie"] },
+          "next_nodes": [{ "id": "node_bye", "weight": 100 }]
+        }
+      ],
+      "fallback": {
+        "partial": { "stay_on_current_node": true, "message": "Pick one. Say 'An apple, please.'" },
+        "off_topic": { "stay_on_current_node": true, "message": "Apple or cookie? Which one do you want?" }
+      }
+    },
+
+    {
+      "id": "node_bye",
+      "type": "normal",
+      "end": true,
+      "npc": { "text": "That was a great day! See you tomorrow. Goodbye!", "gender": "male" },
+      "context": { "scene": "park-ball", "situation": "The conversation is complete." },
+      "learning_objective": [],
+      "routes": []
+    }
+  ]
+}
