@@ -1475,8 +1475,9 @@
     hideLessonSummary();
     // 確保 Level 1 tab 可見（從測驗模式回來時它被隱藏了）
     document.querySelector('.levelTab[data-level="1"]').classList.remove("hidden");
-    // 顯示 Level 1、隱藏其他
-    [level2El, level3El, level4El, level5El, level6El, level7El, level8El, level9El].forEach(el => el.classList.add("hidden"));
+    // 顯示 Level 1、隱藏其他（含 Level 10 role-play，避免殘留上一課的對話內容）
+    stopRolePlay();
+    [level2El, level3El, level4El, level5El, level6El, level7El, level8El, level9El, level10El].forEach(el => el.classList.add("hidden"));
     level1El.classList.remove("hidden");
     onLevel1 = true;
     updateScene();
@@ -3020,7 +3021,14 @@
   let rpEng = null, rpGraph = null, rpAwait = false;   // free-conversation engine state (graph built from the lesson)
   function stopRolePlay() {
     try { if (rpRec && rpRec.state === "recording") rpRec.stop(); } catch (e) {}
-    rpRecording = false; rpEng = null; rpGraph = null; try { synth.cancel(); } catch (e) {} try { stopAudio(); } catch (e) {}
+    rpRecording = false; rpEng = null; rpGraph = null; rpAwait = false;
+    try { synth.cancel(); } catch (e) {} try { stopAudio(); } catch (e) {}
+    // 清掉畫面上殘留的對話泡泡/狀態，避免下一課看到上一課的 role-play 內容
+    const convo = document.getElementById("rpConvo"); if (convo) convo.innerHTML = "";
+    const ctrl = document.getElementById("rpControls"); if (ctrl) ctrl.innerHTML = "";
+    const prog = document.getElementById("rpProgress"); if (prog) prog.textContent = "";
+    const fb = document.getElementById("rpFb"); if (fb) { fb.className = "rp-fb"; fb.textContent = ""; }
+    const role = document.getElementById("rpRole"); if (role) role.textContent = "";
   }
   // 電腦的台詞：念出來，念完（或估時到）就呼叫 onend 自動換下一句。附保險計時器以防 onended 沒觸發。
   function rpSpeak(line, onend) {
