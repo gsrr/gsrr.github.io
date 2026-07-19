@@ -863,22 +863,37 @@
   .rp-egg { font-size: 14px; color: #fde68a; font-weight: 700; }
   .atk-proj { position: fixed; font-size: 30px; z-index: 300; pointer-events: none; will-change: transform, opacity;
     transition: transform .5s cubic-bezier(.45,0,.9,.5), opacity .5s ease-in; filter: drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
-  /* 對戰攻擊「跳出視窗」動畫：每個兵種 3 個畫面，交手時隨機選一個 */
+  /* 步兵「劍兵勇士」SVG 圖示：跟著所在文字的字級縮放，行內對齊 */
+  .troop-svg { height: 1em; width: auto; vertical-align: -0.18em; pointer-events: none; }
+  /* 對戰攻擊「跳出視窗」動畫：守方固定在左、攻方固定在右；一次只演一擊，箭頭指向被打的一方 */
   .atk-pop-wrap { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 500; pointer-events: none; }
   .atk-pop { background: rgba(255,255,255,.98); border: 3px solid #f59e0b; border-radius: 18px;
-    padding: 14px 22px; box-shadow: 0 14px 44px rgba(0,0,0,.35); min-width: 250px; animation: atkPopIn .16s ease-out; }
-  .atk-pop.out { animation: atkPopOut .18s ease-in forwards; }
-  .atk-pop-title { text-align: center; font-weight: 800; color: #b45309; font-size: 14px; margin-bottom: 8px; }
-  .atk-row { display: flex; align-items: center; gap: 8px; font-size: 26px; margin: 5px 0; }
-  .atk-row .atk-side { font-size: 13px; font-weight: 700; color: #64748b; width: 62px; }
-  .atk-row .atk-proj2 { position: static; font-size: 24px; animation: atkFly .5s ease-in both; }
-  .atk-row .atk-fx { font-size: 24px; animation: atkBurst .55s ease-out both; }
-  .atk-row .atk-dmg { margin-left: auto; font-size: 17px; font-weight: 800; color: #dc2626; }
-  .atk-row.atk-fallen { font-size: 20px; color: #94a3b8; font-weight: 700; }
+    padding: 16px 22px; box-shadow: 0 14px 44px rgba(0,0,0,.35); min-width: 320px; animation: atkPopIn .18s ease-out; }
+  .atk-pop.out { animation: atkPopOut .2s ease-in forwards; }
+  .atk-pop-title { text-align: center; font-weight: 800; font-size: 16px; margin-bottom: 12px; min-height: 20px; }
+  .atk-pop-title.def { color: #0369a1; }   /* 守方出手 → 藍 */
+  .atk-pop-title.att { color: #b91c1c; }   /* 攻方出手 → 紅 */
+  .atk-duel { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .atk-fighter { text-align: center; width: 104px; }
+  .atk-fighter .atk-face { font-size: 44px; line-height: 1; display: inline-block; }
+  .atk-fighter .atk-lbl { font-size: 12px; font-weight: 800; margin-top: 3px; }
+  .atk-fighter.def .atk-lbl { color: #0369a1; }
+  .atk-fighter.att .atk-lbl { color: #b91c1c; }
+  .atk-fighter.fallen .atk-face { filter: grayscale(1); opacity: .35; }
+  .atk-fighter.hit .atk-face { animation: atkShake .5s ease; }
+  .atk-mid { flex: 1; position: relative; height: 46px; }
+  .atk-mid .atk-fly { position: absolute; top: 8px; font-size: 28px; }
+  .atk-mid .atk-fly.r { animation: atkFlyR .5s ease-in forwards; }
+  .atk-mid .atk-fly.l { animation: atkFlyL .5s ease-in forwards; }
+  .atk-dmg2 { position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+    color: #dc2626; font-weight: 800; font-size: 22px; animation: atkDmgFloat .8s ease forwards; }
   @keyframes atkPopIn { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   @keyframes atkPopOut { to { transform: scale(.85); opacity: 0; } }
-  @keyframes atkFly { from { transform: translateX(-6px); } to { transform: translateX(30px); } }
-  @keyframes atkBurst { 0% { transform: scale(.3); opacity: 0; } 45% { opacity: 1; } 100% { transform: scale(1.7); opacity: 0; } }
+  @keyframes atkFlyR { 0% { left: 0; opacity: 0; } 15% { opacity: 1; } 100% { left: calc(100% - 26px); opacity: .35; } }
+  @keyframes atkFlyL { 0% { left: calc(100% - 26px); opacity: 0; } 15% { opacity: 1; } 100% { left: 0; opacity: .35; } }
+  @keyframes atkShake { 0%,100% { transform: translateX(0) rotate(0); } 20% { transform: translateX(-5px) rotate(-8deg); }
+    40% { transform: translateX(5px) rotate(8deg); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
+  @keyframes atkDmgFloat { 0% { opacity: 0; transform: translate(-50%, 8px); } 25% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -24px); } }
   .hidden { display: none !important; }
 </style>
 </head>
@@ -3569,24 +3584,81 @@
     const s = BATTLE_SCENES[type] || BATTLE_SCENES.inf;
     return s[Math.floor(Math.random() * s.length)];   // 3 個畫面隨機挑一個
   }
-  // 交手時跳出一個小視窗，播放守方(先攻)與攻方各自隨機挑到的攻擊畫面，播完自動關閉並回呼
+  // 步兵(inf)畫成「劍兵勇士」風格的原創 SVG：戴盔(紅羽)、藍戰袍、雙手持大劍。height:1em → 跟著各處字級縮放。
+  const CHAMPION_SVG =
+    '<svg class="troop-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Champion swordsman">' +
+      '<g stroke="#1f2937" stroke-width="1" stroke-linejoin="round">' +
+        '<polygon points="23,1 25.4,3.6 24,16.5 22,16.5 20.6,3.6" fill="#eef2f7"/>' +
+        '<line x1="23" y1="3.6" x2="23" y2="15.5" stroke="#b6c2d1" stroke-width="0.7"/>' +
+        '<rect x="18.1" y="16" width="9.8" height="2.8" rx="1.2" fill="#f59e0b"/>' +
+        '<rect x="22.2" y="18.6" width="1.6" height="5" fill="#7c3aed" stroke="none"/>' +
+        '<circle cx="23" cy="24" r="1.5" fill="#f59e0b"/>' +
+      '</g>' +
+      '<g stroke="#1f2937" stroke-width="1" stroke-linejoin="round">' +
+        '<rect x="9" y="24" width="3.2" height="6.2" rx="0.6" fill="#334155"/>' +
+        '<rect x="14" y="24" width="3.2" height="6.2" rx="0.6" fill="#334155"/>' +
+        '<path d="M7.6 14 h11.4 v11 h-11.4 z" fill="#2563eb"/>' +
+        '<rect x="7.6" y="20.8" width="11.4" height="2.2" fill="#7c3aed" stroke="none"/>' +
+        '<rect x="6" y="12.6" width="14.6" height="3.4" rx="1.7" fill="#9ca3af"/>' +
+        '<rect x="16.8" y="17.4" width="6.6" height="2.7" rx="1.35" fill="#9ca3af"/>' +
+        '<rect x="16.8" y="20.6" width="6.6" height="2.6" rx="1.3" fill="#9ca3af"/>' +
+        '<circle cx="13.3" cy="8.4" r="4.5" fill="#cbd5e1"/>' +
+        '<rect x="9.2" y="7.5" width="8.2" height="1.9" fill="#1f2937" stroke="none"/>' +
+        '<path d="M13.3 3.9 q3.6 -3 4.6 1.4 q-2.3 -1.2 -4.6 0z" fill="#dc2626"/>' +
+      '</g>' +
+    '</svg>';
+  // 兵種圖示：步兵回傳劍兵勇士 SVG，其餘回傳原本 emoji。只用在 innerHTML 場合。
+  function troopIcon(type) { return type === "inf" ? CHAMPION_SVG : (TROOP[type] ? TROOP[type].emoji : ""); }
+  // 交手時跳出視窗，一次只演「一擊」，慢慢演清楚是誰打誰：
+  //   守方固定在左、攻方固定在右；先演守方(先攻)射向右邊的攻方，停一下，再演攻方反擊射回左邊守方。
   function atkPopup(info, cb) {
     const ds = battleScene(info.dType), as = battleScene(info.aType);
-    const row = (side, emoji, sc, dmg) =>
-      '<div class="atk-row"><span class="atk-side">' + side + '</span>' + emoji +
-      '<span class="atk-proj2">' + sc.proj + '</span><span class="atk-fx">' + sc.fx + '</span>' +
-      '<b class="atk-dmg">-' + dmg + '</b></div>';
-    let rows = row("🛡️ Defender", TROOP[info.dType].emoji, ds, info.dmgDA);
-    rows += info.atkAlive
-      ? row("🗡️ Attacker", TROOP[info.aType].emoji, as, info.dmgAD)
-      : '<div class="atk-row atk-fallen"><span class="atk-side">🗡️ Attacker</span>' + TROOP[info.aType].emoji + ' ☠️ down!</div>';
     const wrap = document.createElement("div");
     wrap.className = "atk-pop-wrap";
-    wrap.innerHTML = '<div class="atk-pop"><div class="atk-pop-title">🛡️ ' + ds.name + ' — defender strikes first!</div>' + rows + '</div>';
+    wrap.innerHTML =
+      '<div class="atk-pop">' +
+        '<div class="atk-pop-title" id="atkTitle"></div>' +
+        '<div class="atk-duel">' +
+          '<div class="atk-fighter def" id="atkDef"><span class="atk-face">' + troopIcon(info.dType) + '</span><div class="atk-lbl">🛡️ Defender</div></div>' +
+          '<div class="atk-mid" id="atkMid"></div>' +
+          '<div class="atk-fighter att" id="atkAtt"><span class="atk-face">' + troopIcon(info.aType) + '</span><div class="atk-lbl">🗡️ Attacker</div></div>' +
+        '</div>' +
+      '</div>';
     document.body.appendChild(wrap);
-    const pop = wrap.firstChild;
-    setTimeout(() => { try { pop.classList.add("out"); } catch (e) {} }, 470);
-    setTimeout(() => { if (wrap.parentNode) wrap.remove(); if (cb) cb(); }, 660);
+    const pop = wrap.firstChild, titleEl = wrap.querySelector("#atkTitle"), midEl = wrap.querySelector("#atkMid"),
+          defEl = wrap.querySelector("#atkDef"), attEl = wrap.querySelector("#atkAtt");
+    // 演一擊：strikerSide='def'→往右打攻方 / 'att'→往左打守方；命中後被打的一方晃動並冒傷害數字
+    function strike(strikerSide, sc, dmg, then) {
+      if (!wrap.isConnected) return;
+      const toRight = strikerSide === "def", targetEl = toRight ? attEl : defEl;
+      titleEl.className = "atk-pop-title " + strikerSide;
+      titleEl.innerHTML = toRight
+        ? "🛡️ Defender " + troopIcon(info.dType) + " ➡️ hits Attacker · " + sc.name
+        : "🗡️ Attacker " + troopIcon(info.aType) + " ⬅️ hits Defender · " + sc.name;
+      midEl.innerHTML = '<span class="atk-fly ' + (toRight ? "r" : "l") + '">' + sc.proj + "</span>";
+      setTimeout(() => {                                   // 投射物飛到 → 命中
+        if (!wrap.isConnected) return;
+        targetEl.classList.add("hit");
+        const d = document.createElement("div"); d.className = "atk-dmg2"; d.textContent = "-" + dmg; targetEl.appendChild(d);
+        setTimeout(() => { targetEl.classList.remove("hit"); if (d.parentNode) d.remove(); }, 750);
+      }, 520);
+      setTimeout(then, 1150);                              // 這一擊演完（含停頓）再進下一步
+    }
+    function finish() {
+      if (!wrap.isConnected) { if (cb) cb(); return; }
+      pop.classList.add("out");
+      setTimeout(() => { if (wrap.parentNode) wrap.remove(); if (cb) cb(); }, 220);
+    }
+    strike("def", ds, info.dmgDA, () => {                  // 守方先攻
+      if (!wrap.isConnected) return;
+      if (info.atkAlive) { strike("att", as, info.dmgAD, finish); }   // 攻方還活著 → 反擊
+      else {
+        titleEl.className = "atk-pop-title att";
+        titleEl.innerHTML = "🗡️ Attacker " + troopIcon(info.aType) + " ☠️ down — no counter!";
+        attEl.classList.add("fallen");
+        setTimeout(finish, 900);
+      }
+    });
   }
   // 戰鬥/大考/小遊戲頁的「← Back」：中途離開回到課程列表
   function quitBattle() {
@@ -3638,7 +3710,7 @@
   function faIdx(arr) { let i = 0; while (i < arr.length && arr[i].hp <= 0) i++; return i; }
   function examUnitHTML(u, cur) {
     const pct = u.max ? Math.max(0, Math.round(u.hp / u.max * 100)) : 0;
-    return '<div class="bt-unit' + (u.hp <= 0 ? " dead" : "") + (cur ? " cur" : "") + '"><div class="bt-emo">' + TROOP[u.type].emoji + '</div>' +
+    return '<div class="bt-unit' + (u.hp <= 0 ? " dead" : "") + (cur ? " cur" : "") + '"><div class="bt-emo">' + troopIcon(u.type) + '</div>' +
       '<div class="bt-hpbar"><span class="bt-hpfill" style="width:' + pct + '%"></span></div><div class="bt-hp">' + Math.max(0, Math.round(u.hp)) + '</div></div>';
   }
   function examSideHTML(arr, front) {
@@ -3720,14 +3792,14 @@
       const closeA = (a.type !== "archer" && d.type === "archer") ? 0.1 * exam.engage : 0;
       const dmg = troopHit(a, d, closeA); d.hp -= dmg;
       playTroopAttack(a.type, heroEmojiEl, bossEmojiEl, "r", () => fxDmg(bossEmojiEl, dmg, "toboss"));
-      document.getElementById("battleLog").textContent = "✅ " + TROOP[a.type].emoji + " strikes " + TROOP[d.type].emoji + " −" + dmg +
+      document.getElementById("battleLog").innerHTML = "✅ " + troopIcon(a.type) + " strikes " + troopIcon(d.type) + " −" + dmg +
         (atkBonus(a.type, d.type) > 1 ? " ✨counter!" : "");
     } else {
       btn.classList.add("wrong");
       const closeD = (d.type !== "archer" && a.type === "archer") ? 0.1 * exam.engage : 0;
       const dmg = troopHit(d, a, closeD); a.hp -= dmg;
       playTroopAttack("boss", bossEmojiEl, heroEmojiEl, "l", () => fxDmg(heroEmojiEl, dmg, "tohero"));
-      document.getElementById("battleLog").textContent = "❌ Wrong! Boss " + TROOP[d.type].emoji + " strikes " + TROOP[a.type].emoji + " −" + dmg +
+      document.getElementById("battleLog").innerHTML = "❌ Wrong! Boss " + troopIcon(d.type) + " strikes " + troopIcon(a.type) + " −" + dmg +
         (atkBonus(d.type, a.type) > 1 ? " ⚠️counter" : "");
     }
     examRender();
@@ -4090,7 +4162,7 @@
           if (h && h.owner) {
             const isMine = (h.owner || "").toLowerCase() === me;
             r.p.classList.add(isMine ? "geo-mine" : "geo-foe"); if (r.idxEl) r.idxEl.classList.add(isMine ? "gi-mine" : "gi-foe"); if (isMine) mine++;
-            if (r.idxLs) r.idxLs.innerHTML = "👥 " + r.pop + " · " + (h.avatar || "") + dispName(h.owner) + " " + aliveTroops(h.troops).map(t => TROOP[t.type].emoji + t.hp).join(" ");
+            if (r.idxLs) r.idxLs.innerHTML = "👥 " + r.pop + " · " + (h.avatar || "") + dispName(h.owner) + " " + aliveTroops(h.troops).map(t => troopIcon(t.type) + t.hp).join(" ");
           } else {
             r.p.classList.add("geo-open"); if (r.idxEl) r.idxEl.classList.add("gi-open");
             if (r.idxLs) r.idxLs.textContent = "👥 " + r.pop + " · " + (r.article ? "📖 " + artTitle(r.article) : "Open");
@@ -4377,7 +4449,7 @@
   function garrisonHTML(troops) {
     const al = aliveTroops(troops);
     if (!al.length) return '<span class="op-card">— no garrison —</span>';
-    return '<span class="op-card">' + al.map(t => TROOP[t.type].emoji + '<b>' + t.hp + '</b>').join(" &nbsp; ") + '</span>';
+    return '<span class="op-card">' + al.map(t => troopIcon(t.type) + '<b>' + t.hp + '</b>').join(" &nbsp; ") + '</span>';
   }
 
   function openOutpost(a) {
@@ -4454,8 +4526,8 @@
       if (!foeTypes.length) return "";
       const strong = [], weak = [];
       foeTypes.forEach(ft => { if (atkBonus(ty, ft) > 1 && strong.indexOf(ft) < 0) strong.push(ft); if (atkBonus(ft, ty) > 1 && weak.indexOf(ft) < 0) weak.push(ft); });
-      return (strong.length ? '<span class="adv-s">▲' + strong.map(f => TROOP[f].emoji).join("") + '</span>' : '') +
-        (weak.length ? '<span class="adv-w">▼' + weak.map(f => TROOP[f].emoji).join("") + '</span>' : '');
+      return (strong.length ? '<span class="adv-s">▲' + strong.map(f => troopIcon(f)).join("") + '</span>' : '') +
+        (weak.length ? '<span class="adv-w">▼' + weak.map(f => troopIcon(f)).join("") + '</span>' : '');
     }
     const helpHtml = opts.help || ('<b>Counters</b> (beats →): 🔱→🐎 · 🐎→🏹 · 🏹→🔱🛡️ &nbsp; 🏹 <b>shoots first</b>.<br>' +
       'More troops on a card = more damage. 🏠 Your home base makes new troops every day.');
@@ -4472,7 +4544,7 @@
       rowsEl.innerHTML = "";
       slots.forEach((o, idx) => {
         const row = document.createElement("div"); row.className = "dep-row";
-        const picks = TROOPS.map(t => '<button class="dep-ty' + (t.id === o.type ? " sel" : "") + '" data-ty="' + t.id + '" title="' + t.zh + '">' + t.emoji + '</button>').join("");
+        const picks = TROOPS.map(t => '<button class="dep-ty' + (t.id === o.type ? " sel" : "") + '" data-ty="' + t.id + '" title="' + t.zh + '">' + troopIcon(t.id) + '</button>').join("");
         row.innerHTML = '<span class="dep-slot">' + (idx + 1) + '</span><span class="dep-type">' + picks + '</span>' +
           '<input type="range" class="dep-hp" min="0" max="' + budget + '" value="' + o.hp + '"><span class="dep-val">' + o.hp + '</span>' +
           '<span class="dep-adv">' + advText(o.type) + '</span>';
@@ -4560,7 +4632,7 @@
     const attEl = ov.querySelector("#btAtt"), defEl = ov.querySelector("#btDef"), logEl = ov.querySelector("#btLog");
     function unitHTML(u, cur) {
       const pct = u.max ? Math.max(0, Math.round(u.hp / u.max * 100)) : 0;
-      return '<div class="bt-unit' + (u.hp <= 0 ? " dead" : "") + (cur ? " cur" : "") + '"><div class="bt-emo">' + TROOP[u.type].emoji + '</div>' +
+      return '<div class="bt-unit' + (u.hp <= 0 ? " dead" : "") + (cur ? " cur" : "") + '"><div class="bt-emo">' + troopIcon(u.type) + '</div>' +
         '<div class="bt-hpbar"><span class="bt-hpfill" style="width:' + pct + '%"></span></div><div class="bt-hp">' + Math.max(0, Math.round(u.hp)) + '</div></div>';
     }
     function render() {
@@ -4594,7 +4666,7 @@
       const atkAlive = a.hp > 0;
       if (atkAlive) { dmgAD = troopHit(a, d, closeA); d.hp -= dmgAD; }
       const closeNote = (closeA || closeD) ? " 逼近+" + Math.round((closeA || closeD) * 100) + "%" : "";
-      logEl.textContent = TROOP[a.type].emoji + "×" + Math.round(preA) + " ⚔ " + TROOP[d.type].emoji + "×" + Math.round(preD) +
+      logEl.innerHTML = troopIcon(a.type) + "×" + Math.round(preA) + " ⚔ " + troopIcon(d.type) + "×" + Math.round(preD) +
         " → −" + dmgAD + " / −" + dmgDA + note + closeNote +
         (atkBonus(a.type, d.type) > 1 ? " ✨你剋制!" : (atkBonus(d.type, a.type) > 1 ? " ⚠️被剋制" : ""));
       // 跳出攻擊動畫視窗（守方 d 先攻、攻方 a 反擊），每個兵種 3 個畫面隨機挑一個
