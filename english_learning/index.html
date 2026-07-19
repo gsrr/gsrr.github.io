@@ -863,6 +863,22 @@
   .rp-egg { font-size: 14px; color: #fde68a; font-weight: 700; }
   .atk-proj { position: fixed; font-size: 30px; z-index: 300; pointer-events: none; will-change: transform, opacity;
     transition: transform .5s cubic-bezier(.45,0,.9,.5), opacity .5s ease-in; filter: drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
+  /* 對戰攻擊「跳出視窗」動畫：每個兵種 3 個畫面，交手時隨機選一個 */
+  .atk-pop-wrap { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 500; pointer-events: none; }
+  .atk-pop { background: rgba(255,255,255,.98); border: 3px solid #f59e0b; border-radius: 18px;
+    padding: 14px 22px; box-shadow: 0 14px 44px rgba(0,0,0,.35); min-width: 250px; animation: atkPopIn .16s ease-out; }
+  .atk-pop.out { animation: atkPopOut .18s ease-in forwards; }
+  .atk-pop-title { text-align: center; font-weight: 800; color: #b45309; font-size: 14px; margin-bottom: 8px; }
+  .atk-row { display: flex; align-items: center; gap: 8px; font-size: 26px; margin: 5px 0; }
+  .atk-row .atk-side { font-size: 13px; font-weight: 700; color: #64748b; width: 62px; }
+  .atk-row .atk-proj2 { position: static; font-size: 24px; animation: atkFly .5s ease-in both; }
+  .atk-row .atk-fx { font-size: 24px; animation: atkBurst .55s ease-out both; }
+  .atk-row .atk-dmg { margin-left: auto; font-size: 17px; font-weight: 800; color: #dc2626; }
+  .atk-row.atk-fallen { font-size: 20px; color: #94a3b8; font-weight: 700; }
+  @keyframes atkPopIn { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  @keyframes atkPopOut { to { transform: scale(.85); opacity: 0; } }
+  @keyframes atkFly { from { transform: translateX(-6px); } to { transform: translateX(30px); } }
+  @keyframes atkBurst { 0% { transform: scale(.3); opacity: 0; } 45% { opacity: 1; } 100% { transform: scale(1.7); opacity: 0; } }
   .hidden { display: none !important; }
 </style>
 </head>
@@ -3542,6 +3558,36 @@
     v.forEach((emo, k) => flyProjectile(fromEl, toEl, emo, 90 + k * 105));
     setTimeout(() => { try { fxHit(toEl); } catch (e) {} if (onHit) onHit(); }, 90 + v.length * 105 + 150);
   }
+  // 對戰攻擊「跳出視窗」動畫用：每個兵種 3 個畫面（投射物 / 爆點 / 招式名），交手時隨機選一個
+  const BATTLE_SCENES = {
+    cav:    [ { proj: "💨", fx: "💥", name: "Cavalry charge" }, { proj: "🗡️", fx: "💫", name: "Mounted slash" }, { proj: "⚡", fx: "💢", name: "Sudden raid" } ],
+    archer: [ { proj: "➶", fx: "🎯", name: "Volley" },         { proj: "🔥", fx: "💥", name: "Fire arrows" },  { proj: "➷", fx: "✦", name: "Precise shot" } ],
+    inf:    [ { proj: "⚔️", fx: "💥", name: "Shield press" },   { proj: "🗡️", fx: "💢", name: "Blade combo" },  { proj: "👊", fx: "💫", name: "Bash" } ],
+    spear:  [ { proj: "➤", fx: "💥", name: "Thrust" },          { proj: "🔱", fx: "✦", name: "Spear wall" },    { proj: "⚡", fx: "💢", name: "Pierce" } ]
+  };
+  function battleScene(type) {
+    const s = BATTLE_SCENES[type] || BATTLE_SCENES.inf;
+    return s[Math.floor(Math.random() * s.length)];   // 3 個畫面隨機挑一個
+  }
+  // 交手時跳出一個小視窗，播放守方(先攻)與攻方各自隨機挑到的攻擊畫面，播完自動關閉並回呼
+  function atkPopup(info, cb) {
+    const ds = battleScene(info.dType), as = battleScene(info.aType);
+    const row = (side, emoji, sc, dmg) =>
+      '<div class="atk-row"><span class="atk-side">' + side + '</span>' + emoji +
+      '<span class="atk-proj2">' + sc.proj + '</span><span class="atk-fx">' + sc.fx + '</span>' +
+      '<b class="atk-dmg">-' + dmg + '</b></div>';
+    let rows = row("🛡️ Defender", TROOP[info.dType].emoji, ds, info.dmgDA);
+    rows += info.atkAlive
+      ? row("🗡️ Attacker", TROOP[info.aType].emoji, as, info.dmgAD)
+      : '<div class="atk-row atk-fallen"><span class="atk-side">🗡️ Attacker</span>' + TROOP[info.aType].emoji + ' ☠️ down!</div>';
+    const wrap = document.createElement("div");
+    wrap.className = "atk-pop-wrap";
+    wrap.innerHTML = '<div class="atk-pop"><div class="atk-pop-title">🛡️ ' + ds.name + ' — defender strikes first!</div>' + rows + '</div>';
+    document.body.appendChild(wrap);
+    const pop = wrap.firstChild;
+    setTimeout(() => { try { pop.classList.add("out"); } catch (e) {} }, 470);
+    setTimeout(() => { if (wrap.parentNode) wrap.remove(); if (cb) cb(); }, 660);
+  }
   // 戰鬥/大考/小遊戲頁的「← Back」：中途離開回到課程列表
   function quitBattle() {
     if (exam) exam.over = true;
@@ -4532,9 +4578,11 @@
       const sa = att.reduce((s, u) => s + Math.max(0, u.hp), 0), sd = def.reduce((s, u) => s + Math.max(0, u.hp), 0);
       return sa > sd;                                   // 回合上限：比殘餘兵力，平手守方保住
     }
-    const iv = setInterval(() => {
+    // 一回合一步：算傷害 → 跳出攻擊動畫視窗 → 播完再繼續下一步（用遞迴 setTimeout 取代固定 interval）
+    function step() {
+      if (!ov.isConnected) return;                     // 使用者中途關掉戰鬥視窗 → 停止
       const ai = fa(att, 0), di = fa(def, 0);
-      if (ai >= att.length || di >= def.length || round++ > 16) { clearInterval(iv); return end(decideWin(), round > 16 ? "⏱ 時間到！以殘餘兵力定勝負" : null); }
+      if (ai >= att.length || di >= def.length || round++ > 16) { return end(decideWin(), round > 16 ? "⏱ 時間到！以殘餘兵力定勝負" : null); }
       if (ai === lastAi && di === lastDi) engage++; else { engage = 1; lastAi = ai; lastDi = di; }   // 同一對纏鬥回合數
       const a = att[ai], d = def[di], preA = a.hp, preD = d.hp;
       // 非弓兵攻擊弓兵：每回合累加 10% 攻擊（逼近）
@@ -4543,14 +4591,21 @@
       // 防守方有先攻權：每次交手守方(d)先出手；攻方單位若當場被打死就無法還手。
       let dmgAD = 0, dmgDA = 0, note = " 🛡️守方先攻";
       dmgDA = troopHit(d, a, closeD); a.hp -= dmgDA;
-      if (a.hp > 0) { dmgAD = troopHit(a, d, closeA); d.hp -= dmgAD; }
+      const atkAlive = a.hp > 0;
+      if (atkAlive) { dmgAD = troopHit(a, d, closeA); d.hp -= dmgAD; }
       const closeNote = (closeA || closeD) ? " 逼近+" + Math.round((closeA || closeD) * 100) + "%" : "";
       logEl.textContent = TROOP[a.type].emoji + "×" + Math.round(preA) + " ⚔ " + TROOP[d.type].emoji + "×" + Math.round(preD) +
         " → −" + dmgAD + " / −" + dmgDA + note + closeNote +
         (atkBonus(a.type, d.type) > 1 ? " ✨你剋制!" : (atkBonus(d.type, a.type) > 1 ? " ⚠️被剋制" : ""));
-      render();
-      if (fa(att, 0) >= att.length || fa(def, 0) >= def.length) { clearInterval(iv); end(decideWin(), null); }
-    }, 600);
+      // 跳出攻擊動畫視窗（守方 d 先攻、攻方 a 反擊），每個兵種 3 個畫面隨機挑一個
+      atkPopup({ dType: d.type, aType: a.type, dmgDA: dmgDA, dmgAD: dmgAD, atkAlive: atkAlive }, () => {
+        if (!ov.isConnected) return;
+        render();
+        if (fa(att, 0) >= att.length || fa(def, 0) >= def.length) return end(decideWin(), null);
+        step();
+      });
+    }
+    step();
 
     function end(w, msg) {
       render();
