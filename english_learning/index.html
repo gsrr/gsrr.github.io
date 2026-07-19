@@ -3845,7 +3845,10 @@
       if (h && h.owner && (h.owner || "").toLowerCase() === me) mine.push({ file: f, h: h });
     });
     let garTotal = 0; mine.forEach(m => garTotal += sumHp(m.h.troops));
-    const inc = e.income != null ? e.income : Math.round(e.population * 0.1);
+    const homeInc = e.income != null ? e.income : Math.round(e.population * 0.1);
+    // 每個領地每小時依人口自動補 10% 到「自己的駐軍」；總成長 = 家鄉自由兵 + 各領地駐軍成長
+    const regionInc = mine.reduce((s, m) => s + Math.round((m.h.pop || 0) * 0.1), 0);
+    const inc = homeInc + regionInc;
     let html = '<h3 class="modal-title">🏰 My Empire</h3>' +
       '<div class="emp-stats">' +
       '<div><span>👥</span><b>' + e.population + '</b><small>population</small></div>' +
@@ -3853,7 +3856,8 @@
       '<div><span>🛡️</span><b>' + garTotal + '</b><small>garrisoned</small></div>' +
       '<div><span>📈</span><b>+' + inc + '</b><small>troops/hr</small></div>' +
       '</div>' +
-      '<div class="emp-note">🏠 Home base is safe — lose a battle and your survivors retreat here.</div>';
+      '<div class="emp-note">🏠 Home base is safe — lose a battle and your survivors retreat here.<br>' +
+      '🛡️ Each region grows its own garrison by <b>+' + regionInc + '</b>/hr (10% of its population).</div>';
     if (!mine.length) {
       html += '<p class="op-hint" style="text-align:center">No regions yet. Pass a lesson, then occupy its region on the map!</p>';
     } else {
@@ -4104,7 +4108,8 @@
     if (cleared) {
       if (T <= 0) { terr.innerHTML = noTroops; return; }
       terr.innerHTML = '<p class="op-hint">✅ Challenge cleared! 🚩 Occupy — send troops (max ' + T + '):</p>';
-      deployPanel(terr, T, { label: "🚩 Occupy", onGo: g => { myEcon.troops = Math.max(0, T - sumHp(g)); myEcon.population += pop; pending = null; claimTroops(key, g, pop, function () {}); logEvent("occupy", { region: name }); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); } });
+      // 佔領不再把該區人口灌進家鄉兵力池；該區人口改為每小時自動補進「該區駐軍」(server region_grow)
+      deployPanel(terr, T, { label: "🚩 Occupy", onGo: g => { myEcon.troops = Math.max(0, T - sumHp(g)); pending = null; claimTroops(key, g, pop, function () {}); logEvent("occupy", { region: name }); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); } });
       return;
     }
     const ch = article;   // 這個地區固定綁定的課
@@ -4363,7 +4368,8 @@
       else {
         terr.innerHTML = '<p class="op-hint">🚩 Occupy: send troops from your pool (max ' + T + '):</p>';
         deployPanel(terr, T, { label: "🚩 Occupy", onGo: g => {
-          myEcon.troops = Math.max(0, T - sumHp(g)); myEcon.population += regionPop;
+          // 佔領不再灌人口回家鄉；該區人口每小時自動補進「該區駐軍」(server region_grow)
+          myEcon.troops = Math.max(0, T - sumHp(g));
           claimTroops(file, g, regionPop, function () {}); logEvent("occupy", { region: title });
           saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); });
         } });

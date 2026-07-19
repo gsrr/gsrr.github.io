@@ -264,6 +264,37 @@ def econ_get(store, user, now):
     return e
 
 
+# 各領地自己補兵：每過一小時，該區依人口生 10% 兵，直接加進「該區守備軍」（分攤到現有兵種）。
+# 這樣佔領的每個領地會自動長大自己的駐軍，而不是全部灌回玩家的自由兵力池。
+def region_grow(h, now):
+    if not isinstance(h, dict):
+        return h
+    pop = clampi(h.get("pop", 0))
+    troops = h.get("troops") or []
+    last = h.get("lastGrow", now)
+    try:
+        last = float(last)
+    except Exception:
+        last = now
+    hours = int((now - last) // GROW_SECONDS)
+    if hours > 0:
+        grow = hours * int(round(pop * 0.10)) if pop > 0 else 0
+        if grow > 0:
+            alive = [t for t in troops if isinstance(t, dict) and int(t.get("hp", 0) or 0) > 0]
+            target = alive or [t for t in troops if isinstance(t, dict)]
+            if not target:                       # 守軍全空 → 開一個步兵格接收成長
+                troops = [{"type": "inf", "hp": 0}]
+                h["troops"] = troops
+                target = troops
+            per, rem = divmod(grow, len(target))
+            for i, t in enumerate(target):
+                add = per + (1 if i < rem else 0)
+                t["hp"] = max(0, min(100000, int(t.get("hp", 0) or 0) + add))
+        last = last + hours * GROW_SECONDS
+    h["lastGrow"] = last
+    return h
+
+
 def hash_pw(password, salt):
     return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), bytes.fromhex(salt), 100000).hex()
 
@@ -548,8 +579,14 @@ class Handler(BaseHTTPRequestHandler):
     TROOP_TYPES = ("cav", "archer", "inf", "spear")
 
     def _handle_territory(self):
+        now = time.time()
         with terr_lock:
             store = load_territory_store()
+            for f, h in store.items():           # 讀取時順便替各領地補算自己的駐軍成長
+                if isinstance(h, dict) and h.get("owner"):
+                    region_grow(h, now)
+            if store:
+                save_territory_store(store)
         holders, counts = {}, {}
         for f, h in store.items():
             if not isinstance(h, dict):
@@ -588,7 +625,7 @@ class Handler(BaseHTTPRequestHandler):
         with terr_lock:
             store = load_territory_store()
             store[f] = {"owner": user, "avatar": str(d.get("avatar", "👦"))[:8],
-                        "troops": troops, "pop": region_pop}
+                        "troops": troops, "pop": region_pop, "lastGrow": time.time()}
             save_territory_store(store)
         self._send({"ok": True})
 
@@ -604,24 +641,13 @@ class Handler(BaseHTTPRequestHandler):
         if not f:
             self._send({"error": "missing file"}, 400)
             return
-        region_pop = int(d.get("pop", 0) or 0)
-        prev_owner = None
         with terr_lock:
             store = load_territory_store()
-            prev = store.get(f)
-            if isinstance(prev, dict):
-                prev_owner = prev.get("owner")
             if f in store:
-                del store[f]           # 清空守備 → 恢復無主
+                del store[f]           # 清空守備 → 恢復無主（該區的駐軍/成長隨之消失）
                 save_territory_store(store)
-        # 前主人失去該區 → 扣人口（離線也算）
-        if prev_owner and prev_owner != user and region_pop > 0:
-            with econ_lock:
-                es = load_econ_store()
-                pe = es.get(prev_owner)
-                if isinstance(pe, dict):
-                    pe["population"] = clampi(clampi(pe.get("population", 0)) - region_pop)
-                    save_econ_store(es)
+        # 領地的兵力現在長在「該區駐軍」而不是玩家人口池，失去領地即失去其駐軍，
+        # 不再另外扣前主人的家鄉人口。
         self._send({"ok": True})
 
     # 全站事件牆：GET 取最近事件（所有人共見）
