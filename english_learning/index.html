@@ -4506,7 +4506,7 @@
     const def = shuffled(aliveTroops(defTroops)).map(u => ({ type: u.type, hp: u.hp, max: u.hp }));
     function fa(arr, from) { while (from < arr.length && arr[from].hp <= 0) from++; return from; }
     const html = '<h3 class="modal-title">⚔️ Battle for the region</h3>' +
-      '<div class="bt-vs">🛡️ ' + foeName + ' (defender · random order)</div><div class="bt-side" id="btDef"></div>' +
+      '<div class="bt-vs">🛡️ ' + foeName + ' (defender · random order · strikes first)</div><div class="bt-side" id="btDef"></div>' +
       '<div class="bt-log" id="btLog">Armies clash!</div>' +
       '<div class="bt-side" id="btAtt"></div><div class="bt-vs">🗡️ You (attacker)</div>' +
       '<div class="op-btns" id="btBtns"></div>';
@@ -4540,18 +4540,10 @@
       // 非弓兵攻擊弓兵：每回合累加 10% 攻擊（逼近）
       const closeA = (a.type !== "archer" && d.type === "archer") ? 0.1 * engage : 0;
       const closeD = (d.type !== "archer" && a.type === "archer") ? 0.1 * engage : 0;
-      const aArch = a.type === "archer", dArch = d.type === "archer";   // 只有弓兵有先攻權
-      let dmgAD = 0, dmgDA = 0, note = "";
-      if (aArch && !dArch) {                       // 攻方弓兵先攻
-        dmgAD = troopHit(a, d, closeA); d.hp -= dmgAD; note = " 🏹你先攻";
-        if (d.hp > 0) { dmgDA = troopHit(d, a, closeD); a.hp -= dmgDA; }
-      } else if (dArch && !aArch) {                // 守方弓兵先攻
-        dmgDA = troopHit(d, a, closeD); a.hp -= dmgDA; note = " 🏹敵先攻";
-        if (a.hp > 0) { dmgAD = troopHit(a, d, closeA); d.hp -= dmgAD; }
-      } else {                                     // 同時出手
-        dmgAD = troopHit(a, d, closeA); dmgDA = troopHit(d, a, closeD);
-        d.hp -= dmgAD; a.hp -= dmgDA;
-      }
+      // 防守方有先攻權：每次交手守方(d)先出手；攻方單位若當場被打死就無法還手。
+      let dmgAD = 0, dmgDA = 0, note = " 🛡️守方先攻";
+      dmgDA = troopHit(d, a, closeD); a.hp -= dmgDA;
+      if (a.hp > 0) { dmgAD = troopHit(a, d, closeA); d.hp -= dmgAD; }
       const closeNote = (closeA || closeD) ? " 逼近+" + Math.round((closeA || closeD) * 100) + "%" : "";
       logEl.textContent = TROOP[a.type].emoji + "×" + Math.round(preA) + " ⚔ " + TROOP[d.type].emoji + "×" + Math.round(preD) +
         " → −" + dmgAD + " / −" + dmgDA + note + closeNote +
