@@ -869,7 +869,10 @@
   /* 攻擊動畫靠螢幕底部，戰鬥視窗釘在上方 → 兩者同時看得到，不互相遮蓋 */
   .atk-pop-wrap { position: fixed; inset: 0; display: flex; align-items: flex-end; justify-content: center; z-index: 500; pointer-events: none; padding: 0 12px 18px; }
   .modal-ov.bt-modal { align-items: flex-start; padding-top: 14px; }
-  .modal-ov.bt-modal .modal-card { max-height: 60vh; }
+  .modal-ov.bt-modal .modal-card { max-width: 460px; max-height: 68vh; padding: 22px; }
+  .modal-ov.bt-modal .bt-unit { width: 74px; }
+  .modal-ov.bt-modal .bt-emo { font-size: 40px; }
+  .modal-ov.bt-modal .bt-log { font-size: 16px; }
   .atk-pop { background: rgba(255,255,255,.98); border: 3px solid #f59e0b; border-radius: 18px;
     padding: 16px 22px; box-shadow: 0 14px 44px rgba(0,0,0,.35); min-width: 320px; animation: atkPopIn .18s ease-out; }
   .atk-pop.out { animation: atkPopOut .2s ease-in forwards; }
