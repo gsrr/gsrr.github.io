@@ -891,12 +891,25 @@
   .atk-mid .atk-fly { position: absolute; top: 8px; font-size: 28px; }
   .atk-mid .atk-fly.r { animation: atkFlyR .5s ease-in forwards; }
   .atk-mid .atk-fly.l { animation: atkFlyL .5s ease-in forwards; }
+  /* 近戰(步兵/槍兵)：整個人一邊前進一邊揮武器；刀光在被打的那一側閃現 */
+  .atk-face.lunge-r { animation: atkLungeR .9s ease; }
+  .atk-face.lunge-l { animation: atkLungeL .9s ease; }
+  .atk-mid .atk-slash { position: absolute; top: 4px; font-size: 30px; opacity: 0; }
+  .atk-mid .atk-slash.r { right: 2px; animation: atkSlash .5s ease-out .4s; }
+  .atk-mid .atk-slash.l { left: 2px; animation: atkSlash .5s ease-out .4s; }
   .atk-dmg2 { position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
     color: #dc2626; font-weight: 800; font-size: 22px; animation: atkDmgFloat .8s ease forwards; }
   @keyframes atkPopIn { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   @keyframes atkPopOut { to { transform: scale(.85); opacity: 0; } }
   @keyframes atkFlyR { 0% { left: 0; opacity: 0; } 15% { opacity: 1; } 100% { left: calc(100% - 26px); opacity: .35; } }
   @keyframes atkFlyL { 0% { left: calc(100% - 26px); opacity: 0; } 15% { opacity: 1; } 100% { left: 0; opacity: .35; } }
+  /* 守方(左)向右前進揮砍 */
+  @keyframes atkLungeR { 0% { transform: translateX(0) rotate(0); } 32% { transform: translateX(44px) rotate(-9deg); }
+    56% { transform: translateX(56px) rotate(20deg); } 72% { transform: translateX(46px) rotate(4deg); } 100% { transform: translateX(0) rotate(0); } }
+  /* 攻方(右)向左前進揮砍 */
+  @keyframes atkLungeL { 0% { transform: translateX(0) rotate(0); } 32% { transform: translateX(-44px) rotate(9deg); }
+    56% { transform: translateX(-56px) rotate(-20deg); } 72% { transform: translateX(-46px) rotate(-4deg); } 100% { transform: translateX(0) rotate(0); } }
+  @keyframes atkSlash { 0% { opacity: 0; transform: rotate(-45deg) scale(.5); } 40% { opacity: 1; } 100% { opacity: 0; transform: rotate(40deg) scale(1.35); } }
   @keyframes atkShake { 0%,100% { transform: translateX(0) rotate(0); } 20% { transform: translateX(-5px) rotate(-8deg); }
     40% { transform: translateX(5px) rotate(8deg); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
   @keyframes atkDmgFloat { 0% { opacity: 0; transform: translate(-50%, 8px); } 25% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -24px); } }
@@ -3659,11 +3672,20 @@
     function strike(strikerSide, sc, dmg, then) {
       if (!wrap.isConnected) return;
       const toRight = strikerSide === "def", targetEl = toRight ? attEl : defEl;
+      const strikerEl = toRight ? defEl : attEl, strikerType = toRight ? info.dType : info.aType;
+      const melee = strikerType === "inf" || strikerType === "spear";   // 步兵/槍兵：前進揮砍，不用投射物
       titleEl.className = "atk-pop-title " + strikerSide;
       titleEl.innerHTML = toRight
         ? "🛡️ Defender " + troopIcon(info.dType) + " ➡️ hits Attacker · " + sc.name
         : "🗡️ Attacker " + troopIcon(info.aType) + " ⬅️ hits Defender · " + sc.name;
-      midEl.innerHTML = '<span class="atk-fly ' + (toRight ? "r" : "l") + '">' + sc.proj + "</span>";
+      if (melee) {
+        const face = strikerEl.querySelector(".atk-face");
+        if (face) { face.classList.add(toRight ? "lunge-r" : "lunge-l");
+          setTimeout(() => { if (face) face.classList.remove("lunge-r", "lunge-l"); }, 900); }
+        midEl.innerHTML = '<span class="atk-slash ' + (toRight ? "r" : "l") + '">' + (sc.proj || "⚔️") + "</span>";
+      } else {
+        midEl.innerHTML = '<span class="atk-fly ' + (toRight ? "r" : "l") + '">' + sc.proj + "</span>";
+      }
       setTimeout(() => {                                   // 投射物飛到 → 命中
         if (!wrap.isConnected) return;
         targetEl.classList.add("hit");
