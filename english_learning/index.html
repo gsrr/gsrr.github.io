@@ -903,13 +903,15 @@
   @keyframes atkPopOut { to { transform: scale(.85); opacity: 0; } }
   @keyframes atkFlyR { 0% { left: 0; opacity: 0; } 15% { opacity: 1; } 100% { left: calc(100% - 26px); opacity: .35; } }
   @keyframes atkFlyL { 0% { left: calc(100% - 26px); opacity: 0; } 15% { opacity: 1; } 100% { left: 0; opacity: .35; } }
-  /* 守方(左)向右前進揮砍 */
-  @keyframes atkLungeR { 0% { transform: translateX(0) rotate(0); } 32% { transform: translateX(44px) rotate(-9deg); }
-    56% { transform: translateX(56px) rotate(20deg); } 72% { transform: translateX(46px) rotate(4deg); } 100% { transform: translateX(0) rotate(0); } }
-  /* 攻方(右)向左前進揮砍 */
-  @keyframes atkLungeL { 0% { transform: translateX(0) rotate(0); } 32% { transform: translateX(-44px) rotate(9deg); }
-    56% { transform: translateX(-56px) rotate(-20deg); } 72% { transform: translateX(-46px) rotate(-4deg); } 100% { transform: translateX(0) rotate(0); } }
-  @keyframes atkSlash { 0% { opacity: 0; transform: rotate(-45deg) scale(.5); } 40% { opacity: 1; } 100% { opacity: 0; transform: rotate(40deg) scale(1.35); } }
+  /* 守方(左)：先拉刀蓄力→衝上前揮砍→退回 */
+  @keyframes atkLungeR { 0% { transform: translateX(0) rotate(0); } 20% { transform: translateX(-12px) rotate(-16deg); }
+    48% { transform: translateX(78px) rotate(24deg); } 60% { transform: translateX(72px) rotate(10deg); }
+    80% { transform: translateX(20px) rotate(2deg); } 100% { transform: translateX(0) rotate(0); } }
+  /* 攻方(右)：先拉刀蓄力→衝上前揮砍→退回 */
+  @keyframes atkLungeL { 0% { transform: translateX(0) rotate(0); } 20% { transform: translateX(12px) rotate(16deg); }
+    48% { transform: translateX(-78px) rotate(-24deg); } 60% { transform: translateX(-72px) rotate(-10deg); }
+    80% { transform: translateX(-20px) rotate(-2deg); } 100% { transform: translateX(0) rotate(0); } }
+  @keyframes atkSlash { 0% { opacity: 0; transform: rotate(-55deg) scale(.4); } 45% { opacity: 1; } 100% { opacity: 0; transform: rotate(45deg) scale(1.5); } }
   @keyframes atkShake { 0%,100% { transform: translateX(0) rotate(0); } 20% { transform: translateX(-5px) rotate(-8deg); }
     40% { transform: translateX(5px) rotate(8deg); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
   @keyframes atkDmgFloat { 0% { opacity: 0; transform: translate(-50%, 8px); } 25% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -24px); } }
