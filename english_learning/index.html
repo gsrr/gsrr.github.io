@@ -3613,8 +3613,30 @@
         '<path d="M13.3 3.9 q3.6 -3 4.6 1.4 q-2.3 -1.2 -4.6 0z" fill="#dc2626"/>' +
       '</g>' +
     '</svg>';
-  // 兵種圖示：步兵回傳劍兵勇士 SVG，其餘回傳原本 emoji。只用在 innerHTML 場合。
-  function troopIcon(type) { return type === "inf" ? CHAMPION_SVG : (TROOP[type] ? TROOP[type].emoji : ""); }
+  // 槍兵(spear)畫成「世紀帝國 長槍兵(Pikeman)」風格的原創 SVG：戴盔(紅羽)、綠戰袍、斜握一支長槍(葉形槍頭)。
+  const PIKEMAN_SVG =
+    '<svg class="troop-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Pikeman">' +
+      '<g stroke="#1f2937" stroke-width="1" stroke-linejoin="round">' +
+        '<polygon points="21.6,30.5 23,30.5 27.2,3.5 25.8,3.5" fill="#a16207"/>' +   // 長槍木柄
+        '<rect x="25.3" y="4.5" width="2.5" height="1.9" rx="0.4" fill="#9ca3af"/>' +  // 槍頭套環
+        '<path d="M26.5 0.4 L28.4 4.4 L26.5 6.7 L24.9 4.4 Z" fill="#e5e7eb"/>' +        // 葉形槍頭
+        '<line x1="26.5" y1="1.7" x2="26.5" y2="5.6" stroke="#b6c2d1" stroke-width="0.6"/>' +
+      '</g>' +
+      '<g stroke="#1f2937" stroke-width="1" stroke-linejoin="round">' +
+        '<rect x="9" y="24" width="3.2" height="6.2" rx="0.6" fill="#334155"/>' +
+        '<rect x="14" y="24" width="3.2" height="6.2" rx="0.6" fill="#334155"/>' +
+        '<path d="M7.6 14 h11.4 v11 h-11.4 z" fill="#15803d"/>' +                       // 綠戰袍
+        '<rect x="7.6" y="20.8" width="11.4" height="2.2" fill="#a16207" stroke="none"/>' +
+        '<rect x="6" y="12.6" width="14.6" height="3.4" rx="1.7" fill="#9ca3af"/>' +
+        '<rect x="16.8" y="16.6" width="7" height="2.7" rx="1.35" fill="#9ca3af"/>' +   // 前臂握槍
+        '<rect x="16.8" y="19.8" width="7" height="2.6" rx="1.3" fill="#9ca3af"/>' +
+        '<circle cx="13.3" cy="8.4" r="4.5" fill="#cbd5e1"/>' +
+        '<rect x="9.2" y="7.5" width="8.2" height="1.9" fill="#1f2937" stroke="none"/>' +
+        '<path d="M13.3 3.9 q3.6 -3 4.6 1.4 q-2.3 -1.2 -4.6 0z" fill="#dc2626"/>' +      // 紅羽
+      '</g>' +
+    '</svg>';
+  // 兵種圖示：步兵→劍兵勇士 SVG、槍兵→長槍兵 SVG，其餘回傳原本 emoji。只用在 innerHTML 場合。
+  function troopIcon(type) { return type === "inf" ? CHAMPION_SVG : type === "spear" ? PIKEMAN_SVG : (TROOP[type] ? TROOP[type].emoji : ""); }
   // 交手時跳出視窗，一次只演「一擊」，慢慢演清楚是誰打誰：
   //   守方固定在左、攻方固定在右；先演守方(先攻)射向右邊的攻方，停一下，再演攻方反擊射回左邊守方。
   function atkPopup(info, cb) {
