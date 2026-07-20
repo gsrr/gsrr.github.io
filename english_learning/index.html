@@ -531,9 +531,9 @@
   .ev-tx { flex: 1; min-width: 0; font-size: 14px; color: #1e293b; line-height: 1.3; }
   .ev-ago { flex: 0 0 auto; font-size: 11px; color: #94a3b8; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .ev-empty { text-align: center; color: #64748b; font-size: 14px; padding: 18px 0; }
-  .op-def { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 10px; font-size: 13px; margin-bottom: 10px; }
+  .op-def { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 10px; font-size: 16px; margin-bottom: 10px; }
   .op-def.op-mine { background: #f0fdf4; border-color: #bbf7d0; }
-  .op-card { color: #475569; font-size: 12px; }
+  .op-card { color: #475569; font-size: 18px; }
   .op-hint { font-size: 13px; color: #475569; margin: 10px 0 6px; }
   /* 兵種部署 + 對戰（彈窗白底，深色字）*/
   .op-pop { text-align: center; font-size: 13px; color: #334155; margin: -4px 0 10px; }
@@ -552,11 +552,11 @@
   .dep-val { width: 40px; text-align: right; font-weight: 800; color: #2563eb; }
   .op-econ { text-align: center; font-size: 13px; color: #334155; margin: 2px 0 8px; }
   .dep-type { display: flex; gap: 3px; }
-  .dep-ty { font-size: 16px; padding: 2px 5px; border: 1px solid #cbd5e1; border-radius: 7px; background: #f1f5f9; cursor: pointer; opacity: .45; }
+  .dep-ty { font-size: 26px; padding: 3px 7px; border: 1px solid #cbd5e1; border-radius: 7px; background: #f1f5f9; cursor: pointer; opacity: .45; }
   .dep-ty.sel { opacity: 1; border-color: #2563eb; background: #eff6ff; }
   .dep-help-btn { font-size: 12px; font-weight: 700; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 1px 7px; cursor: pointer; }
   .dep-help { font-size: 12.5px; line-height: 1.5; color: #334155; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 10px; margin: 0 0 8px; }
-  .dep-adv { font-size: 12px; font-weight: 800; white-space: nowrap; margin-left: 2px; }
+  .dep-adv { font-size: 16px; font-weight: 800; white-space: nowrap; margin-left: 2px; }
   .dep-adv .adv-s { color: #16a34a; margin-left: 3px; }
   .dep-adv .adv-w { color: #dc2626; margin-left: 3px; }
   .empire-bar { max-width: 440px; margin: 0 auto 8px; padding: 6px 12px; border-radius: 10px;
@@ -818,7 +818,7 @@
   /* 放大各面板字體（對小朋友較好讀）*/
   .modal-card { font-size: 15px; }
   .op-hint, .op-pop, .op-econ, .dep-left { font-size: 15px; }
-  .op-card { font-size: 13px; }
+  .op-card { font-size: 18px; }
   .op-card-btn { font-size: 15px; }
   .dep-slot { font-size: 14px; }
   .dep-val { font-size: 17px; }
@@ -864,7 +864,7 @@
   .atk-proj { position: fixed; font-size: 30px; z-index: 300; pointer-events: none; will-change: transform, opacity;
     transition: transform .5s cubic-bezier(.45,0,.9,.5), opacity .5s ease-in; filter: drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
   /* 步兵「劍兵勇士」SVG 圖示：跟著所在文字的字級縮放，行內對齊 */
-  .troop-svg { height: 1em; width: auto; vertical-align: -0.18em; pointer-events: none; }
+  .troop-svg { height: 1.35em; width: auto; vertical-align: -0.32em; pointer-events: none; }
   /* 對戰攻擊「跳出視窗」動畫：守方固定在左、攻方固定在右；一次只演一擊，箭頭指向被打的一方 */
   /* 攻擊動畫靠螢幕底部，戰鬥視窗釘在上方 → 兩者同時看得到，不互相遮蓋 */
   .atk-pop-wrap { position: fixed; inset: 0; display: flex; align-items: flex-end; justify-content: center; z-index: 500; pointer-events: none; padding: 0 12px 18px; }
