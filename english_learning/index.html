@@ -866,7 +866,10 @@
   /* 步兵「劍兵勇士」SVG 圖示：跟著所在文字的字級縮放，行內對齊 */
   .troop-svg { height: 1em; width: auto; vertical-align: -0.18em; pointer-events: none; }
   /* 對戰攻擊「跳出視窗」動畫：守方固定在左、攻方固定在右；一次只演一擊，箭頭指向被打的一方 */
-  .atk-pop-wrap { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 500; pointer-events: none; }
+  /* 攻擊動畫靠螢幕底部，戰鬥視窗釘在上方 → 兩者同時看得到，不互相遮蓋 */
+  .atk-pop-wrap { position: fixed; inset: 0; display: flex; align-items: flex-end; justify-content: center; z-index: 500; pointer-events: none; padding: 0 12px 18px; }
+  .modal-ov.bt-modal { align-items: flex-start; padding-top: 14px; }
+  .modal-ov.bt-modal .modal-card { max-height: 60vh; }
   .atk-pop { background: rgba(255,255,255,.98); border: 3px solid #f59e0b; border-radius: 18px;
     padding: 16px 22px; box-shadow: 0 14px 44px rgba(0,0,0,.35); min-width: 320px; animation: atkPopIn .18s ease-out; }
   .atk-pop.out { animation: atkPopOut .2s ease-in forwards; }
@@ -4629,6 +4632,7 @@
       '<div class="bt-side" id="btAtt"></div><div class="bt-vs">🗡️ You (attacker)</div>' +
       '<div class="op-btns" id="btBtns"></div>';
     const ov = openModal(html);
+    ov.classList.add("bt-modal");   // 戰鬥視窗釘上方，讓底部攻擊動畫不會蓋住它
     const attEl = ov.querySelector("#btAtt"), defEl = ov.querySelector("#btDef"), logEl = ov.querySelector("#btLog");
     function unitHTML(u, cur) {
       const pct = u.max ? Math.max(0, Math.round(u.hp / u.max * 100)) : 0;
