@@ -4019,7 +4019,7 @@
     const evs = list || [];
     body.innerHTML = evs.length
       ? '<div class="ev-list">' + evs.map(e =>
-          '<div class="ev-row' + (e.user === "電腦 AI 帝國" ? " ev-bot" : "") + '"><span class="ev-tx">' + escapeHtml(e.text) + '</span><span class="ev-ago">' + timeAgo(e.ts) + '</span></div>').join("") + '</div>'
+          '<div class="ev-row' + (isAiOwner(e.user) ? " ev-bot" : "") + '"><span class="ev-tx">' + escapeHtml(e.text) + '</span><span class="ev-ago">' + timeAgo(e.ts) + '</span></div>').join("") + '</div>'
       : '<div class="ev-empty">No events yet — occupy a region to make history! 🚩</div>';
   }
   function fetchEvents() {
@@ -4051,14 +4051,16 @@
   // 占地盤：每個據點歸目前「遊戲成績」最高（同分比最近達成）的玩家所有
   let territory = null;
   function dispName(n) { return (n || "").replace(/^@/, ""); }
-  // 每個佔領者一個固定、好認的顏色：你＝綠、電腦AI＝橘，其餘玩家依名字配一個獨立色（同一個人到哪張地圖都同色）
-  const TERR_AI_OWNER = "電腦 AI 帝國";
+  // 每個佔領者一個固定、好認的顏色：你＝綠、AI Empire＝橘，其餘玩家依名字配一個獨立色（同一個人到哪張地圖都同色）
+  const TERR_AI_OWNER = "AI Empire";
+  const TERR_AI_LEGACY = "電腦 AI 帝國";                 // 舊中文名：仍相容尚未被伺服器換掉的舊資料
+  function isAiOwner(n) { return n === TERR_AI_OWNER || n === TERR_AI_LEGACY; }
   const OWNER_PALETTE = ["#e11d48", "#db2777", "#c026d3", "#0891b2", "#4f46e5", "#0d9488", "#ca8a04", "#0369a1", "#9f1239", "#a16207", "#155e75", "#7e22ce"];
   function ownerHash(s) { let h = 0; s = (s || ""); for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
   function ownerColor(name, me) {
     const n = (name || ""); const low = n.toLowerCase();
     if (me && low === me) return "#16a34a";        // 你＝綠
-    if (n === TERR_AI_OWNER) return "#f97316";      // 電腦 AI＝橘（和事件牆一致）
+    if (isAiOwner(n)) return "#f97316";             // AI Empire＝橘（和事件牆一致）
     return OWNER_PALETTE[ownerHash(low) % OWNER_PALETTE.length];
   }
   // 幫一張地圖上所有出現的擁有者配色：先用名字雜湊挑色，撞色時線性探測，確保同一張地圖上人人不同色
@@ -4068,7 +4070,7 @@
       const low = (n || "").toLowerCase();
       if (out[low] !== undefined) return;
       let c = ownerColor(n, me);
-      if (low === me || n === TERR_AI_OWNER) { out[low] = c; used[c] = true; return; }   // 保留色不參與探測
+      if (low === me || isAiOwner(n)) { out[low] = c; used[c] = true; return; }   // 保留色不參與探測
       let idx = ownerHash(low) % OWNER_PALETTE.length;
       for (let k = 0; k < OWNER_PALETTE.length; k++) { const cc = OWNER_PALETTE[(idx + k) % OWNER_PALETTE.length]; if (!used[cc]) { c = cc; break; } }
       out[low] = c; used[c] = true;

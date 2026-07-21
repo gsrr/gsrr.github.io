@@ -169,7 +169,12 @@ def load_territory_store():
     try:
         with open(TERR_FILE) as f:
             t = json.load(f)
-            return t if isinstance(t, dict) else {}
+            if not isinstance(t, dict):
+                return {}
+            for h in t.values():                       # 把舊的中文 AI 名字就地換成英文
+                if isinstance(h, dict) and h.get("owner") == AI_OWNER_LEGACY:
+                    h["owner"] = AI_OWNER
+            return t
     except Exception:
         return {}
 
@@ -217,7 +222,15 @@ def load_events():
     try:
         with open(EVENTS_FILE) as f:
             e = json.load(f)
-            return e if isinstance(e, list) else []
+            if not isinstance(e, list):
+                return []
+            for ev in e:                               # 舊事件裡的中文 AI 名字改成英文
+                if isinstance(ev, dict):
+                    if ev.get("user") == AI_OWNER_LEGACY:
+                        ev["user"] = AI_OWNER
+                    if isinstance(ev.get("text"), str) and AI_OWNER_LEGACY in ev["text"]:
+                        ev["text"] = ev["text"].replace(AI_OWNER_LEGACY, AI_OWNER)
+            return e
     except Exception:
         return []
 
@@ -313,7 +326,8 @@ def region_grow(h, now):
 # ================= 電腦 AI 帝國：伺服器背景自動擴張 / 攻擊 =================
 # 一個常駐執行緒，每隔 20–30 分鐘出手一次：攻打某位玩家的領地，或佔領一塊(曾被佔過而現為無主的)領地。
 # 戰鬥用「兵力 × 兵種克制」估算勝負(守方有先攻/主場加成)，兵力規模隨玩家平均駐軍成長。
-AI_OWNER = "電腦 AI 帝國"
+AI_OWNER = "AI Empire"
+AI_OWNER_LEGACY = "電腦 AI 帝國"   # 舊名：讀檔時把既有資料一併改成英文，UI 不會殘留中文
 AI_AVATAR = "🤖"
 AI_TICK_MIN = 20 * 60
 AI_TICK_MAX = 30 * 60
