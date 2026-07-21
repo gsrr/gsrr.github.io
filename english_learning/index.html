@@ -530,6 +530,9 @@
   .ev-row { display: flex; align-items: baseline; gap: 8px; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; }
   .ev-tx { flex: 1; min-width: 0; font-size: 14px; color: #1e293b; line-height: 1.3; }
   .ev-ago { flex: 0 0 auto; font-size: 11px; color: #94a3b8; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  /* 電腦 AI 帝國的事件：琥珀底色 + 左側機器人強調條,和玩家事件區隔 */
+  .ev-row.ev-bot { background: #fff7ed; border-color: #fdba74; border-left: 4px solid #f97316; }
+  .ev-row.ev-bot .ev-tx { color: #9a3412; font-weight: 700; }
   .ev-empty { text-align: center; color: #64748b; font-size: 14px; padding: 18px 0; }
   .op-def { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 10px; font-size: 16px; margin-bottom: 10px; }
   .op-def.op-mine { background: #f0fdf4; border-color: #bbf7d0; }
@@ -3998,7 +4001,7 @@
     const evs = list || [];
     body.innerHTML = evs.length
       ? '<div class="ev-list">' + evs.map(e =>
-          '<div class="ev-row"><span class="ev-tx">' + escapeHtml(e.text) + '</span><span class="ev-ago">' + timeAgo(e.ts) + '</span></div>').join("") + '</div>'
+          '<div class="ev-row' + (e.user === "電腦 AI 帝國" ? " ev-bot" : "") + '"><span class="ev-tx">' + escapeHtml(e.text) + '</span><span class="ev-ago">' + timeAgo(e.ts) + '</span></div>').join("") + '</div>'
       : '<div class="ev-empty">No events yet — occupy a region to make history! 🚩</div>';
   }
   function fetchEvents() {
