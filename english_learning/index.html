@@ -461,6 +461,13 @@
   .geo-legend .gl::before { content: ""; width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
   .gl-mine::before { background: #16a34a; } .gl-foe::before { background: #f59e0b; }
   .gl-open::before { background: #60a5fa; } .gl-todo::before { background: #cbd5e1; }
+  /* 「誰佔了什麼」圖例：每位擁有者一枚色塊＋頭像＋名字＋佔領數 */
+  .geo-owners { display: flex; flex-wrap: wrap; gap: 6px 10px; justify-content: center; margin: 2px 0 2px; font-size: 12px; }
+  .geo-owners:empty { display: none; }
+  .go-owner { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); color: #e8edf5; white-space: nowrap; }
+  .go-owner .go-sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; box-shadow: 0 0 0 1px rgba(0,0,0,.25); }
+  .go-owner b { color: #fff; }
   .geo-extra { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 12px; }
   .geo-extra-btn { padding: 6px 10px; border-radius: 10px; font-size: 13px; font-weight: 700;
     border: 2px solid rgba(255,255,255,.2); background: rgba(255,255,255,.08); color: #e8edf5; cursor: pointer; }
@@ -4044,6 +4051,30 @@
   // 占地盤：每個據點歸目前「遊戲成績」最高（同分比最近達成）的玩家所有
   let territory = null;
   function dispName(n) { return (n || "").replace(/^@/, ""); }
+  // 每個佔領者一個固定、好認的顏色：你＝綠、電腦AI＝橘，其餘玩家依名字配一個獨立色（同一個人到哪張地圖都同色）
+  const TERR_AI_OWNER = "電腦 AI 帝國";
+  const OWNER_PALETTE = ["#e11d48", "#db2777", "#c026d3", "#0891b2", "#4f46e5", "#0d9488", "#ca8a04", "#0369a1", "#9f1239", "#a16207", "#155e75", "#7e22ce"];
+  function ownerHash(s) { let h = 0; s = (s || ""); for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
+  function ownerColor(name, me) {
+    const n = (name || ""); const low = n.toLowerCase();
+    if (me && low === me) return "#16a34a";        // 你＝綠
+    if (n === TERR_AI_OWNER) return "#f97316";      // 電腦 AI＝橘（和事件牆一致）
+    return OWNER_PALETTE[ownerHash(low) % OWNER_PALETTE.length];
+  }
+  // 幫一張地圖上所有出現的擁有者配色：先用名字雜湊挑色，撞色時線性探測，確保同一張地圖上人人不同色
+  function ownerColorMap(names, me) {
+    const used = {}, out = {};
+    (names || []).forEach(n => {
+      const low = (n || "").toLowerCase();
+      if (out[low] !== undefined) return;
+      let c = ownerColor(n, me);
+      if (low === me || n === TERR_AI_OWNER) { out[low] = c; used[c] = true; return; }   // 保留色不參與探測
+      let idx = ownerHash(low) % OWNER_PALETTE.length;
+      for (let k = 0; k < OWNER_PALETTE.length; k++) { const cc = OWNER_PALETTE[(idx + k) % OWNER_PALETTE.length]; if (!used[cc]) { c = cc; break; } }
+      out[low] = c; used[c] = true;
+    });
+    return out;
+  }
   function loadTerritory(cb) {
     fetch("/api/territory").then(r => r.json()).then(j => { if (j && j.holders) territory = j; if (cb) cb(); }).catch(() => { if (cb) cb(); });
   }
@@ -4258,9 +4289,11 @@
       markerSpecs.forEach(s => { if (Math.hypot(s.cx - s.ox, s.cy - s.oy) > rMark * 1.3) { const ln = document.createElementNS(NSU, "line"); ln.setAttribute("x1", s.ox); ln.setAttribute("y1", s.oy); ln.setAttribute("x2", s.cx); ln.setAttribute("y2", s.cy); ln.setAttribute("class", "geo-leader"); mg.appendChild(ln); } });
       markerSpecs.forEach(s => { const c = document.createElementNS(NSU, "circle"); c.setAttribute("cx", s.cx); c.setAttribute("cy", s.cy); c.setAttribute("r", rMark); c.setAttribute("class", "geo-marker-c" + s.extra); const tx = document.createElementNS(NSU, "text"); tx.setAttribute("x", s.cx); tx.setAttribute("y", s.cy); tx.setAttribute("font-size", rMark * 1.05); tx.setAttribute("class", "geo-marker-t"); tx.textContent = s.label; mg.appendChild(c); mg.appendChild(tx); });
       const legend = document.createElement("div"); legend.className = "geo-legend";
-      legend.innerHTML = '<span class="gl gl-mine">You</span><span class="gl gl-foe">Rival</span><span class="gl gl-open">Open</span>' +
+      legend.innerHTML = '<span class="gl gl-mine">You</span><span class="gl gl-open">Open</span>' +
         (Object.keys(drill).length ? '<span class="gl gl-drill">Zoom in</span>' : '');
       wrap.appendChild(legend);
+      // 誰佔了誰：這張地圖上每位擁有者一列（色塊＋頭像＋名字＋佔幾塊），colorize() 每次刷新
+      const owners = document.createElement("div"); owners.className = "geo-owners"; wrap.appendChild(owners);
       // 對照清單：領地名 + 人口 + 守軍（滑過 highlight，點擊開領地面板）
       const idx = document.createElement("div"); idx.className = "geo-index";
       regionList.forEach(r => {
@@ -4284,20 +4317,38 @@
       }
       function colorize() {
         const me = (authUser() || userName || "").toLowerCase(); let mine = 0;
+        // 先蒐集這張地圖上所有擁有者 → 配色（同一張地圖上人人不同色）
+        const holders = (territory && territory.holders) || {};
+        const present = [], seen = {}, stats = {};
+        regionList.forEach(r => { if (r.drill || !r.key) return; const h = holders[r.key]; if (!h || !h.owner) return;
+          const low = h.owner.toLowerCase(); if (!seen[low]) { seen[low] = 1; present.push(h.owner); }
+          const s = stats[low] || (stats[low] = { name: h.owner, avatar: h.avatar, n: 0 }); s.n++; if (h.avatar) s.avatar = h.avatar; });
+        const cmap = ownerColorMap(present, me);
         regionList.forEach(r => {
           if (r.drill || !r.p) return;
-          ["geo-mine", "geo-foe", "geo-open"].forEach(c => r.p.classList.remove(c));
-          if (r.idxEl) ["gi-mine", "gi-foe", "gi-open"].forEach(c => r.idxEl.classList.remove(c));
-          const h = territory && territory.holders && territory.holders[r.key];
+          ["geo-mine", "geo-open"].forEach(c => r.p.classList.remove(c));
+          r.p.style.removeProperty("fill");
+          const dot = r.idxEl && r.idxEl.querySelector(".gi-no");
+          if (r.idxEl) ["gi-mine", "gi-open"].forEach(c => r.idxEl.classList.remove(c));
+          if (dot) dot.style.removeProperty("background");
+          const h = holders[r.key];
           if (h && h.owner) {
             const isMine = (h.owner || "").toLowerCase() === me;
-            r.p.classList.add(isMine ? "geo-mine" : "geo-foe"); if (r.idxEl) r.idxEl.classList.add(isMine ? "gi-mine" : "gi-foe"); if (isMine) mine++;
+            const col = cmap[(h.owner || "").toLowerCase()];
+            if (isMine) { r.p.classList.add("geo-mine"); if (r.idxEl) r.idxEl.classList.add("gi-mine"); mine++; }
+            else { r.p.style.setProperty("fill", col, "important"); if (dot) dot.style.background = col; }
             if (r.idxLs) r.idxLs.innerHTML = "👥 " + r.pop + " · " + (h.avatar || "") + dispName(h.owner) + " " + aliveTroops(h.troops).map(t => troopIcon(t.type) + t.hp).join(" ");
           } else {
             r.p.classList.add("geo-open"); if (r.idxEl) r.idxEl.classList.add("gi-open");
             if (r.idxLs) r.idxLs.textContent = "👥 " + r.pop + " · " + (r.article ? "📖 " + artTitle(r.article) : "Open");
           }
         });
+        // 刷新「誰佔了什麼」圖例：每位擁有者一枚色塊＋頭像＋名字＋佔領數（你排最前）
+        owners.innerHTML = present
+          .map(n => stats[n.toLowerCase()])
+          .sort((a, b) => (a.name.toLowerCase() === me ? -1 : b.name.toLowerCase() === me ? 1 : b.n - a.n))
+          .map(s => '<span class="go-owner"><span class="go-sw" style="background:' + cmap[s.name.toLowerCase()] + '"></span>' +
+            (s.avatar || "") + (s.name.toLowerCase() === me ? "You" : dispName(s.name)) + ' <b>' + s.n + '</b></span>').join("");
         if (banner) {
           const counts = (territory && territory.counts) || {}; let top = null;
           Object.keys(counts).forEach(n => { if (!top || counts[n] > counts[top]) top = n; });
@@ -4492,6 +4543,11 @@
       if (!territory || !territory.holders) { banner.style.display = "none"; return; }
       const me = (authUser() || userName || "").toLowerCase();
       let mine = 0;
+      // 這張地圖上出現的擁有者 → 配色（同人同色、彼此不撞色）
+      const present = [], seen = {};
+      lv.articles.forEach(a => { const h = territory.holders[a.file]; if (!h || !h.owner) return;
+        const low = h.owner.toLowerCase(); if (!seen[low]) { seen[low] = 1; present.push(h.owner); } });
+      const cmap = ownerColorMap(present, me);
       lv.articles.forEach(a => {
         const node = fileNodes[a.file]; if (!node) return;
         const ico = node.querySelector(".map-ico"), lbl = node.querySelector(".map-lbl");
@@ -4500,18 +4556,22 @@
         const old = node.querySelector(".terr-flag"); if (old) old.remove();
         const oldOwn = node.querySelector(".terr-owner"); if (oldOwn) oldOwn.remove();
         node.classList.remove("terr-mine", "terr-foe", "terr-held");
+        node.style.removeProperty("border-color"); node.style.removeProperty("box-shadow");
         if (ico && ico.dataset.orig != null) ico.textContent = ico.dataset.orig;   // 先還原（此函式會被呼叫兩次）
         if (lbl && lbl.dataset.orig != null) lbl.textContent = lbl.dataset.orig;
         const h = territory.holders[a.file]; if (!h || !h.owner) return;
         const isMine = (h.owner || "").toLowerCase() === me; if (isMine) mine++;
+        const col = cmap[(h.owner || "").toLowerCase()];
         node.classList.add("terr-held", isMine ? "terr-mine" : "terr-foe");
+        if (!isMine) { node.style.borderColor = col; node.style.boxShadow = "0 0 0 2px " + col + "55, 0 2px 5px rgba(0,0,0,.15)"; }
         const power = sumHp(h.troops);                     // 守備兵力
         const flag = document.createElement("span");       // 右上角標：守備兵力
         flag.className = "terr-flag";
         flag.innerHTML = '⚔️<span class="terr-sc">' + power + '</span>';
         flag.title = "Garrison · " + power + " troops"; node.appendChild(flag);
-        const own = document.createElement("span");         // 底部名條：誰佔的（綠=你 / 橘=對手）
+        const own = document.createElement("span");         // 底部名條：誰佔的（每位擁有者一個固定色）
         own.className = "terr-owner";
+        if (!isMine) own.style.background = col;
         own.innerHTML = (h.avatar || "👦") + '<span class="terr-nm">' + dispName(h.owner) + '</span>';
         own.title = (isMine ? "You hold" : dispName(h.owner) + " holds") + " this outpost"; node.appendChild(own);
       });
