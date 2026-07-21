@@ -7,7 +7,7 @@
    計數存於 /data/visits.json（docker volume）。
    STT 用 faster-whisper（開源、免費、CPU 可跑）；缺套件/ffmpeg 時回傳錯誤、不影響計數。
 """
-import json, os, threading, tempfile, subprocess, hashlib, secrets, time
+import json, os, threading, tempfile, subprocess, hashlib, secrets, time, random
 from urllib.parse import urlparse, parse_qs
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -293,6 +293,211 @@ def region_grow(h, now):
         last = last + hours * GROW_SECONDS
     h["lastGrow"] = last
     return h
+
+
+# ================= 電腦 AI 帝國：伺服器背景自動擴張 / 攻擊 =================
+# 一個常駐執行緒，每隔 20–30 分鐘出手一次：攻打某位玩家的領地，或佔領一塊(曾被佔過而現為無主的)領地。
+# 戰鬥用「兵力 × 兵種克制」估算勝負(守方有先攻/主場加成)，兵力規模隨玩家平均駐軍成長。
+AI_OWNER = "電腦 AI 帝國"
+AI_AVATAR = "🤖"
+AI_TICK_MIN = 20 * 60
+AI_TICK_MAX = 30 * 60
+TROOP_KINDS = ("cav", "archer", "inf", "spear")
+TERR_CATALOG = "/data/territory_catalog.json"   # 從真人佔領學到的 {regionKey: pop}
+
+
+def load_catalog():
+    try:
+        with open(TERR_CATALOG) as f:
+            c = json.load(f)
+            return c if isinstance(c, dict) else {}
+    except Exception:
+        return {}
+
+
+def save_catalog(c):
+    os.makedirs(os.path.dirname(TERR_CATALOG), exist_ok=True)
+    tmp = TERR_CATALOG + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(c, f)
+    os.replace(tmp, TERR_CATALOG)
+
+
+def _atk_bonus(at, df):        # 攻方 at 打守方 df 的攻擊倍率（對齊前端 atkBonus）
+    if at == "spear" and df == "cav":
+        return 1.2
+    if at == "cav" and df == "archer":
+        return 1.1
+    if at == "archer" and df in ("spear", "inf"):
+        return 1.2
+    return 1.0
+
+
+def _def_bonus(df, at):        # 守方 df 面對攻方 at 的防守倍率（對齊前端 defBonus）
+    if df == "cav" and at == "archer":
+        return 1.1
+    return 1.0
+
+
+def _alive(troops):            # -> [(type, hp)]，只留活著且合法兵種
+    out = []
+    for t in (troops or []):
+        if not isinstance(t, dict):
+            continue
+        ty = str(t.get("type", ""))
+        hp = int(t.get("hp", 0) or 0)
+        if ty in TROOP_KINDS and hp > 0:
+            out.append((ty, hp))
+    return out
+
+
+def _mix(force):               # 兵種占比（依 hp 加權）
+    tot = sum(hp for _, hp in force) or 1
+    m = {}
+    for ty, hp in force:
+        m[ty] = m.get(ty, 0) + hp / tot
+    return m
+
+
+def _force_power(force, enemy):
+    # 兵力 × 對「敵方兵種組成」的加權克制倍率
+    em = _mix(enemy)
+    p = 0.0
+    for ty, hp in force:
+        if em:
+            mult = sum(frac * _atk_bonus(ty, ety) / _def_bonus(ety, ty) for ety, frac in em.items())
+        else:
+            mult = 1.0
+        p += hp * (mult or 1.0)
+    return p
+
+
+def _ai_make_army(total):      # 把 total 兵力隨機拆成 2–4 種兵
+    total = max(4, int(total))
+    kinds = random.sample(list(TROOP_KINDS), random.randint(2, 4))
+    weights = [random.random() + 0.25 for _ in kinds]
+    s = sum(weights) or 1
+    army, used = [], 0
+    for i, k in enumerate(kinds):
+        remaining_slots = len(kinds) - 1 - i
+        if remaining_slots == 0:
+            hp = total - used
+        else:
+            hp = int(round(total * weights[i] / s))
+            hp = max(1, min(hp, total - used - remaining_slots))
+        used += hp
+        army.append({"type": k, "hp": max(1, hp)})
+    return army
+
+
+def _ai_reference(store):       # AI 兵力規模：參考當前玩家領地的平均駐軍（隨玩家成長）
+    vals = []
+    for f, h in store.items():
+        if isinstance(h, dict) and h.get("owner") and h.get("owner") != AI_OWNER:
+            vals.append(sum(hp for _, hp in _alive(h.get("troops"))))
+    base = (sum(vals) / len(vals)) if vals else 80
+    return max(40, min(4000, base))
+
+
+def _region_display(key):       # 從 store key 生一個看得懂的名字給事件牆用
+    k = key.split("#")[-1] if "#" in key else key
+    k = k.split("/")[-1]
+    k = k.rsplit(".", 1)[0]
+    return clean_txt(k.replace("_", " ").replace("-", " ").strip() or "a region", 40)
+
+
+def _ai_log_event(kind, region, victim=None):
+    if kind == "occupy":
+        text = "🤖 %s occupied %s" % (AI_OWNER, region)
+    elif kind == "attack_win":
+        text = "🤖 %s stormed %s%s" % (AI_OWNER, region, (" (was %s's)" % victim if victim else ""))
+    elif kind == "attack_fail":
+        text = "🛡️ %s repelled the 🤖 %s attack on %s" % (victim or "Defenders", AI_OWNER, region)
+    else:
+        return
+    ev = {"ts": int(time.time()), "user": AI_OWNER, "text": clean_txt(text, 120)}
+    with ev_lock:
+        evs = load_events()
+        evs.append(ev)
+        if len(evs) > EVENTS_MAX:
+            evs = evs[-EVENTS_MAX:]
+        save_events(evs)
+
+
+def ai_move():
+    now = time.time()
+    logged = None
+    with terr_lock:
+        store = load_territory_store()
+        for f, h in store.items():                 # 先補算所有領地的駐軍成長（AI 也吃這規則）
+            if isinstance(h, dict) and h.get("owner"):
+                region_grow(h, now)
+        ref = _ai_reference(store)
+        owned = set(store.keys())
+        player_regions = [f for f, h in store.items()
+                          if isinstance(h, dict) and h.get("owner") and h.get("owner") != AI_OWNER]
+        cat = load_catalog()
+        unowned_known = [k for k in cat.keys() if k not in owned]
+
+        choices = []
+        if player_regions:
+            choices.append("attack")
+        if unowned_known:
+            choices.append("occupy")
+        if not choices:
+            return None                            # 還沒有任何可打/可佔的目標（catalog 為空且無玩家）
+
+        if "attack" in choices and "occupy" in choices:
+            act = "attack" if random.random() < 0.6 else "occupy"
+        else:
+            act = choices[0]
+
+        if act == "occupy":
+            key = random.choice(unowned_known)
+            pop = clampi(cat.get(key, 100))
+            army = _ai_make_army(max(8, int(ref * random.uniform(0.6, 1.0))))
+            store[key] = {"owner": AI_OWNER, "avatar": AI_AVATAR,
+                          "troops": army, "pop": pop, "lastGrow": now}
+            save_territory_store(store)
+            logged = ("occupy", _region_display(key), None)
+        else:
+            key = random.choice(player_regions)
+            h = store[key]
+            victim = h.get("owner")
+            defender = _alive(h.get("troops"))
+            army = _ai_make_army(max(8, int(ref * random.uniform(0.9, 1.5))))
+            atk_tuples = [(t["type"], t["hp"]) for t in army]
+            ap = _force_power(atk_tuples, defender) * random.uniform(0.85, 1.15)
+            dp = _force_power(defender, atk_tuples) * 1.10 * random.uniform(0.85, 1.15)   # 守方先攻/主場
+            region = _region_display(key)
+            if ap > dp:                            # AI 打贏 → 直接接管（存活兵力隨戰損縮減）
+                surv_frac = max(0.2, min(0.9, 1 - dp / (ap + 1)))
+                surv = [{"type": t["type"], "hp": max(1, int(t["hp"] * surv_frac))} for t in army]
+                store[key] = {"owner": AI_OWNER, "avatar": AI_AVATAR, "troops": surv,
+                              "pop": clampi(h.get("pop", cat.get(key, 100))), "lastGrow": now}
+                save_territory_store(store)
+                logged = ("attack_win", region, victim)
+            else:                                  # AI 落敗 → 守軍受創但守住
+                dmg = min(0.6, ap / (dp + 1) * 0.5)
+                for t in (h.get("troops") or []):
+                    if isinstance(t, dict):
+                        t["hp"] = max(0, int(int(t.get("hp", 0) or 0) * (1 - dmg)))
+                save_territory_store(store)
+                logged = ("attack_fail", region, victim)
+
+    if logged:
+        _ai_log_event(*logged)
+    return logged
+
+
+def ai_loop():
+    time.sleep(60)                                 # 開機後稍等，避免和啟動流程搶鎖
+    while True:
+        try:
+            ai_move()
+        except Exception:
+            pass
+        time.sleep(random.randint(AI_TICK_MIN, AI_TICK_MAX))
 
 
 def hash_pw(password, salt):
@@ -627,6 +832,11 @@ class Handler(BaseHTTPRequestHandler):
             store[f] = {"owner": user, "avatar": str(d.get("avatar", "👦"))[:8],
                         "troops": troops, "pop": region_pop, "lastGrow": time.time()}
             save_territory_store(store)
+            if region_pop > 0:                       # 讓電腦 AI 學到「這塊地存在 + 人口」，日後可佔領
+                cat = load_catalog()
+                if cat.get(f) != region_pop:
+                    cat[f] = region_pop
+                    save_catalog(cat)
         self._send({"ok": True})
 
     # 攻方打贏「有主」據點後呼叫：把該據點清成「無主」，前主人扣掉該區人口。
@@ -724,4 +934,5 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     migrate_accounts()      # 舊版單檔結構 -> 拆檔（只跑一次有效果）
+    threading.Thread(target=ai_loop, daemon=True).start()   # 電腦 AI 帝國：背景自動擴張/攻擊
     ThreadingHTTPServer(("127.0.0.1", 5000), Handler).serve_forever()

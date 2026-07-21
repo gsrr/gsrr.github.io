@@ -3957,6 +3957,18 @@
     const L = (data && data.leaders) || [];
     if (!L.length) { el.innerHTML = '<p class="screen-intro">No players yet.</p>'; return; }
     const counts = (terr && terr.counts) || {};
+    const holders = (terr && terr.holders) || {};
+    // 把「持有領地但不在帳號排行(例如🤖電腦AI)」的擁有者也補進排行榜：人口=其領地人口總和
+    const botPop = {}, botAva = {};
+    Object.keys(holders).forEach(f => {
+      const h = holders[f]; if (!h || !h.owner) return;
+      botPop[h.owner] = (botPop[h.owner] || 0) + (h.pop || 0);
+      if (h.avatar) botAva[h.owner] = h.avatar;
+    });
+    Object.keys(counts).forEach(n => {
+      if (!L.some(p => (p.name || "").toLowerCase() === n.toLowerCase()))
+        L.push({ name: n, avatar: botAva[n] || "🤖", population: botPop[n] || 0, regions: counts[n] });
+    });
     L.forEach(p => { if (p.regions == null) p.regions = counts[p.name] || 0; if (p.population == null) p.population = 100; });
     L.sort((a, b) => (b.population - a.population) || (b.regions - a.regions) || a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
     const me = (authUser() || "").toLowerCase();
