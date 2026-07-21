@@ -538,6 +538,17 @@
   .op-def.op-mine { background: #f0fdf4; border-color: #bbf7d0; }
   .op-card { color: #475569; font-size: 18px; }
   .op-hint { font-size: 13px; color: #475569; margin: 10px 0 6px; }
+  /* 領地建設面板：兵工廠 + 科技研發 */
+  .bld-box { margin-top: 12px; border-top: 2px dashed #e2e8f0; padding-top: 10px; }
+  .bld-gold { font-size: 16px; font-weight: 800; color: #b45309; margin-bottom: 8px; }
+  .bld-gold .bld-inc { font-size: 12px; font-weight: 600; color: #92929c; }
+  .bld-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; }
+  .bld-nm { font-size: 15px; font-weight: 700; color: #1e293b; }
+  .bld-nm small { font-weight: 600; color: #16a34a; }
+  .bld-btn { font-size: 13px; font-weight: 800; padding: 6px 12px; border: none; border-radius: 9px; background: #f59e0b; color: #fff; cursor: pointer; white-space: nowrap; }
+  .bld-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .bld-done { font-size: 13px; font-weight: 800; color: #16a34a; }
+  .tech-badge { font-size: 13px; font-weight: 800; color: #b45309; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 1px 6px; white-space: nowrap; }
   /* 兵種部署 + 對戰（彈窗白底，深色字）*/
   .op-pop { text-align: center; font-size: 13px; color: #334155; margin: -4px 0 10px; }
   .dep-left { text-align: center; font-size: 13px; font-weight: 700; color: #334155; margin: 0 0 6px; }
@@ -4313,7 +4324,7 @@
     const T = (myEcon && myEcon.troops) || 0, income = (myEcon && myEcon.income != null) ? myEcon.income : 10;
     let html = '<h3 class="modal-title">🏰 ' + name + '</h3>' +
       '<div class="op-pop">👥 Population <b>' + pop + '</b>' + (mine ? ' (yours)' : ' — added to your empire if you take it') + '</div>';
-    if (h && h.owner) html += '<div class="op-def' + (mine ? ' op-mine' : '') + '">Held by ' + (h.avatar || "👦") + ' <b>' + dispName(h.owner) + '</b><br>' + garrisonHTML(h.troops) + '</div>';
+    if (h && h.owner) html += '<div class="op-def' + (mine ? ' op-mine' : '') + '">Held by ' + (h.avatar || "👦") + ' <b>' + dispName(h.owner) + '</b>' + techBadge(h.tech) + '<br>' + garrisonHTML(h.troops) + '</div>';
     else html += '<div class="op-def">🏳️ Unclaimed region</div>';
     html += '<div class="op-econ">⚔️ Your troops: <b>' + T + '</b></div><div id="opTerr"></div>';
     const ov = openModal(html);
@@ -4324,6 +4335,7 @@
       const oldTot = sumHp(h.troops), budget = T + oldTot;
       terr.innerHTML = '<p class="op-hint">✅ Yours. Re-deploy garrison (pool + current = ' + budget + '):</p>';
       deployPanel(terr, budget, { init: h.troops, label: "🚩 Deploy", onGo: g => { myEcon.troops = Math.max(0, T + oldTot - sumHp(g)); claimTroops(key, g, pop, function () {}); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); } });
+      buildingsPanel(terr, key, h, function () { closeModal(); openRegion(key, name, pop, i, article); });
       return;
     }
     if (enemy) {
@@ -4336,7 +4348,7 @@
           myEcon.troops += sumHp(survivors);                     // 生還者一律撤回兵力池（尚未佔領）
           if (win) { releaseTerritory(key, pop, function () {}); logEvent("attack", { region: name, target: h.owner }); }   // 打贏 → 清成無主 + 記事件
           saveEconomy(function () { renderEmpire(); refreshMap(); });
-        });
+        }, h.tech);
       } });
       return;
     }
@@ -4570,6 +4582,11 @@
     if (!al.length) return '<span class="op-card">— no garrison —</span>';
     return '<span class="op-card">' + al.map(t => troopIcon(t.type) + '<b>' + t.hp + '</b>').join(" &nbsp; ") + '</span>';
   }
+  // 兵工廠科技徽章：顯示該區守軍的鍛造/鎧甲等級（讓攻方事先看見）
+  function techBadge(tech) {
+    if (!tech || (!tech.atk && !tech.def)) return "";
+    return ' <span class="tech-badge">🏭' + (tech.atk ? " ⚔️+" + tech.atk : "") + (tech.def ? " 🛡️+" + tech.def : "") + '</span>';
+  }
 
   function openOutpost(a) {
     const file = a.file, passed = lessonStatus(a).passed;
@@ -4582,7 +4599,7 @@
     let html = '<h3 class="modal-title">🏰 ' + title + '</h3>' +
       '<div class="op-pop">👥 Region population <b>' + regionPop + '</b>' + (mine ? ' (in your empire)' : ' — added to your empire if you take it') + '</div>';
     if (h && h.owner) {
-      html += '<div class="op-def' + (mine ? ' op-mine' : '') + '">Held by ' + (h.avatar || "👦") + ' <b>' + dispName(h.owner) + '</b><br>' +
+      html += '<div class="op-def' + (mine ? ' op-mine' : '') + '">Held by ' + (h.avatar || "👦") + ' <b>' + dispName(h.owner) + '</b>' + techBadge(h.tech) + '<br>' +
         garrisonHTML(h.troops) + '</div>';
     } else { html += '<div class="op-def">🏳️ Unclaimed region</div>'; }
     html += '<div class="op-econ">⚔️ Your troops: <b>' + T + '</b></div>' +
@@ -4599,6 +4616,7 @@
         claimTroops(file, g, regionPop, function () {});
         saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); });
       } });
+      buildingsPanel(terr, file, h, function () { closeModal(); openOutpost(a); });
     } else if (!h || !h.owner) {
       if (!passed) { terr.innerHTML = '<p class="op-hint">🚩 Tap Study lesson above — pass it (80%+) and your troops deploy here automatically.</p>'; }
       else if (T <= 0) { terr.innerHTML = '<p class="op-hint">⚠️ No troops yet. Your home base makes <b>' + income + '</b>/hr — come back later.</p>'; }
@@ -4622,7 +4640,7 @@
             myEcon.troops += sumHp(survivors);                          // 生還者一律撤回兵力池（尚未佔領）
             if (win) { releaseTerritory(file, regionPop, function () {}); logEvent("attack", { region: title, target: h.owner }); }  // 打贏 → 清成無主 + 記事件
             saveEconomy(function () { renderEmpire(); refreshMap(); });
-          });
+          }, h.tech);
         } });
       }
     }
@@ -4713,6 +4731,54 @@
       });
   }
 
+  // ===== 領地建設：兵工廠 + 科技（鍛造+攻 / 鎧甲+防），用該區金幣研發（需與 server 常數一致）=====
+  const BUILD_COST = { armory: 50 };
+  const TECH_COST = { atk: [80, 160, 280], def: [80, 160, 280] };
+  const TECH_MAX = 3;
+  function terrPost(path, body, cb) {
+    const t = authToken();
+    if (!t) { alert("Log in first."); if (cb) cb(null); return; }
+    fetch(path + "?token=" + encodeURIComponent(t), { method: "POST", body: JSON.stringify(body) })
+      .then(r => r.json().catch(() => ({})).then(j => ({ ok: r.ok, j: j })))
+      .then(res => {
+        if (!res.ok) { alert("Failed: " + ((res.j && res.j.error) || "unknown")); if (cb) cb(null); return; }
+        loadTerritory(() => { if (cb) cb(res.j); });
+      })
+      .catch(() => { alert("Couldn't reach the territory server (is the container up?)."); if (cb) cb(null); });
+  }
+  function terrBuild(key, building, cb) { terrPost("/api/territory/build", { file: key, building: building }, cb); }
+  function terrResearch(key, track, cb) { terrPost("/api/territory/research", { file: key, track: track }, cb); }
+  // 你自己領地的「建設面板」：顯示金幣、蓋兵工廠、研發鍛造/鎧甲。onChange 讓外層重畫。
+  function buildingsPanel(container, key, h, onChange) {
+    const gold = (h && h.gold) || 0, inc = (h && h.income != null) ? h.income : Math.round(((h && h.pop) || 0) * 0.10);
+    const builds = (h && h.buildings) || {}, tech = (h && h.tech) || {};
+    const box = document.createElement("div"); box.className = "bld-box";
+    let html = '<div class="bld-gold">🪙 <b>' + gold + '</b> gold <span class="bld-inc">(+' + inc + '/hr)</span></div>';
+    if (!builds.armory) {
+      const cost = BUILD_COST.armory, can = gold >= cost;
+      html += '<div class="bld-row"><span class="bld-nm">🏭 Armory</span>' +
+        '<button class="bld-btn" data-act="build" ' + (can ? "" : "disabled") + '>Build · ' + cost + '🪙</button></div>' +
+        '<p class="op-hint">Build an armory to research 鍛造 (+attack) & 鎧甲 (+armor) for this region\'s garrison.</p>';
+    } else {
+      html += '<div class="bld-row"><span class="bld-nm">🏭 Armory</span><span class="bld-done">✓ built</span></div>';
+      [["atk", "⚔️ Forging", "attack"], ["def", "🛡️ Armor", "armor"]].forEach(([tk, label]) => {
+        const lvl = tech[tk] || 0, maxed = lvl >= TECH_MAX;
+        const cost = maxed ? 0 : TECH_COST[tk][lvl], can = !maxed && gold >= cost;
+        html += '<div class="bld-row"><span class="bld-nm">' + label + ' <b>Lv ' + lvl + '/' + TECH_MAX + '</b> <small>(+' + (lvl * 10) + '%)</small></span>' +
+          (maxed ? '<span class="bld-done">MAX</span>'
+                 : '<button class="bld-btn" data-track="' + tk + '" ' + (can ? "" : "disabled") + '>Research · ' + cost + '🪙</button>') +
+          '</div>';
+      });
+    }
+    box.innerHTML = html;
+    const bb = box.querySelector('[data-act="build"]');
+    if (bb) bb.addEventListener("click", () => { bb.disabled = true; terrBuild(key, "armory", () => onChange && onChange()); });
+    box.querySelectorAll('[data-track]').forEach(btn => btn.addEventListener("click", () => {
+      btn.disabled = true; terrResearch(key, btn.dataset.track, () => onChange && onChange());
+    }));
+    container.appendChild(box);
+  }
+
   // 打贏「有主」據點後：把它清成無主（前主人扣人口），不直接取得所有權——之後走過關→佔領流程。
   function releaseTerritory(file, pop, cb) {
     const t = authToken();
@@ -4731,19 +4797,25 @@
   }
   function shuffled(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
 
-  // 單擊基礎傷害（攻×(克制加成+額外) − 防×加成，最低 1）
-  function baseHit(A, D, extraAtk) { return Math.max(1, Math.round(TROOP[A.type].atk * (atkBonus(A.type, D.type) + (extraAtk || 0)) - TROOP[D.type].def * defBonus(D.type, A.type))); }
+  // 單擊基礎傷害（攻×(克制加成+額外攻) − 防×(克制加成+額外防)，最低 1）。額外攻/防用於兵工廠科技(鍛造/鎧甲)
+  function baseHit(A, D, extraAtk, extraDef) { return Math.max(1, Math.round(TROOP[A.type].atk * (atkBonus(A.type, D.type) + (extraAtk || 0)) - TROOP[D.type].def * (defBonus(D.type, A.type) + (extraDef || 0)))); }
   // 實際扣血 = 基礎 × 出手方當前兵力 ÷ 係數（÷12 讓對戰持續數回合，最低 1）
   const DMG_SCALE = 12;
-  function troopHit(A, D, extraAtk) { return Math.max(1, Math.round(baseHit(A, D, extraAtk) * A.hp / DMG_SCALE)); }
+  function troopHit(A, D, extraAtk, extraDef) { return Math.max(1, Math.round(baseHit(A, D, extraAtk, extraDef) * A.hp / DMG_SCALE)); }
+  // 兵工廠科技：每級 +10%（鍛造→攻、鎧甲→防）。只惠及「該領地守軍」
+  function techAtk(tech) { return 0.10 * ((tech && tech.atk) || 0); }
+  function techDef(tech) { return 0.10 * ((tech && tech.def) || 0); }
   // 4v4 對戰：攻方(玩家排序) vs 守方(電腦亂序)。每回合當前兩張卡「同時出手」，
   //   傷害 = 基礎 × 該卡回合開始時的兵力 → 同時扣血；陣亡換下一張，一方無兵即敗（同歸於盡則守方保住）。
-  function runBattle(attTroops, defTroops, foeName, onResult) {
+  function runBattle(attTroops, defTroops, foeName, onResult, defTech) {
     const att = aliveTroops(attTroops).map(u => ({ type: u.type, hp: u.hp, max: u.hp }));
     const def = shuffled(aliveTroops(defTroops)).map(u => ({ type: u.type, hp: u.hp, max: u.hp }));
+    const dForge = techAtk(defTech), dArmor = techDef(defTech);   // 守軍兵工廠科技加成
+    const techNote = (defTech && (defTech.atk || defTech.def))
+      ? ' 🏭' + (defTech.atk ? '⚔️+' + defTech.atk : '') + (defTech.def ? '🛡️+' + defTech.def : '') : '';
     function fa(arr, from) { while (from < arr.length && arr[from].hp <= 0) from++; return from; }
     const html = '<h3 class="modal-title">⚔️ Battle for the region</h3>' +
-      '<div class="bt-vs">🛡️ ' + foeName + ' (defender · random order · strikes first)</div><div class="bt-side" id="btDef"></div>' +
+      '<div class="bt-vs">🛡️ ' + foeName + techNote + ' (defender · random order · strikes first)</div><div class="bt-side" id="btDef"></div>' +
       '<div class="bt-log" id="btLog">Armies clash!</div>' +
       '<div class="bt-side" id="btAtt"></div><div class="bt-vs">🗡️ You (attacker)</div>' +
       '<div class="op-btns" id="btBtns"></div>';
@@ -4782,9 +4854,9 @@
       const closeD = (d.type !== "archer" && a.type === "archer") ? 0.1 * engage : 0;
       // 防守方有先攻權：每次交手守方(d)先出手；攻方單位若當場被打死就無法還手。
       let dmgAD = 0, dmgDA = 0, note = " 🛡️守方先攻";
-      dmgDA = troopHit(d, a, closeD); a.hp -= dmgDA;
+      dmgDA = troopHit(d, a, closeD + dForge, 0); a.hp -= dmgDA;    // 守方(d)出手：鍛造+攻
       const atkAlive = a.hp > 0;
-      if (atkAlive) { dmgAD = troopHit(a, d, closeA); d.hp -= dmgAD; }
+      if (atkAlive) { dmgAD = troopHit(a, d, closeA, dArmor); d.hp -= dmgAD; }   // 攻方打守方：守方鎧甲+防
       const closeNote = (closeA || closeD) ? " 逼近+" + Math.round((closeA || closeD) * 100) + "%" : "";
       logEl.innerHTML = troopIcon(a.type) + "×" + Math.round(preA) + " ⚔ " + troopIcon(d.type) + "×" + Math.round(preD) +
         " → −" + dmgAD + " / −" + dmgDA + note + closeNote +

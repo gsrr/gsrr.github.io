@@ -264,8 +264,21 @@ def econ_get(store, user, now):
     return e
 
 
-# 各領地自己補兵：每過一小時，該區依人口生 10% 兵，直接加進「該區守備軍」（分攤到現有兵種）。
-# 這樣佔領的每個領地會自動長大自己的駐軍，而不是全部灌回玩家的自由兵力池。
+# ---- 領地建設：兵工廠(armory) + 科技樹(鍛造+攻 / 鎧甲+防)，用「金幣」研發 ----
+# 金幣：每塊領地依人口每小時產金，累積在該區(h["gold"])。研發即時完成、只惠及該區守軍。
+GOLD_RATE = 0.10                                   # 每小時金幣 = round(pop * GOLD_RATE)
+BUILD_COST = {"armory": 50}                        # 蓋建築的金幣花費
+TECH_TRACKS = ("atk", "def")                       # 鍛造(+攻) / 鎧甲(+防)
+TECH_COST = {"atk": [80, 160, 280], "def": [80, 160, 280]}   # 第 1/2/3 級花費
+TECH_MAX = 3
+
+
+def region_gold_income(h):
+    return int(round(clampi(h.get("pop", 0)) * GOLD_RATE))
+
+
+# 各領地自己補兵：每過一小時，該區依人口生 10% 兵，直接加進「該區守備軍」（分攤到現有兵種），
+# 同時依人口每小時產出金幣(累積在該區，供蓋兵工廠/研發科技用)。
 def region_grow(h, now):
     if not isinstance(h, dict):
         return h
@@ -278,6 +291,8 @@ def region_grow(h, now):
         last = now
     hours = int((now - last) // GROW_SECONDS)
     if hours > 0:
+        if pop > 0:                                # 金幣累積
+            h["gold"] = clampi(h.get("gold", 0)) + hours * region_gold_income(h)
         grow = hours * int(round(pop * 0.10)) if pop > 0 else 0
         if grow > 0:
             alive = [t for t in troops if isinstance(t, dict) and int(t.get("hp", 0) or 0) > 0]
@@ -467,8 +482,11 @@ def ai_move():
             defender = _alive(h.get("troops"))
             army = _ai_make_army(max(8, int(ref * random.uniform(0.9, 1.5))))
             atk_tuples = [(t["type"], t["hp"]) for t in army]
-            ap = _force_power(atk_tuples, defender) * random.uniform(0.85, 1.15)
-            dp = _force_power(defender, atk_tuples) * 1.10 * random.uniform(0.85, 1.15)   # 守方先攻/主場
+            tech = h.get("tech") or {}                                   # 守軍的兵工廠科技
+            forge = 1 + 0.10 * clampi(tech.get("atk", 0))               # 鍛造 → 守方反擊更痛
+            armor = 1 + 0.08 * clampi(tech.get("def", 0))               # 鎧甲 → AI 打進去的傷害變小
+            ap = _force_power(atk_tuples, defender) / armor * random.uniform(0.85, 1.15)
+            dp = _force_power(defender, atk_tuples) * forge * 1.10 * random.uniform(0.85, 1.15)   # 守方先攻/主場
             region = _region_display(key)
             if ap > dp:                            # AI 打贏 → 直接接管（存活兵力隨戰損縮減）
                 surv_frac = max(0.2, min(0.9, 1 - dp / (ap + 1)))
@@ -595,6 +613,10 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_territory_claim()
         elif path == "/api/territory/release":
             self._handle_territory_release()
+        elif path == "/api/territory/build":
+            self._handle_territory_build()
+        elif path == "/api/territory/research":
+            self._handle_territory_research()
         elif path == "/api/economy/set":
             self._handle_economy_set()
         elif path == "/api/event":
@@ -798,7 +820,9 @@ class Handler(BaseHTTPRequestHandler):
                 continue
             owner = h.get("owner")
             holders[f] = {"owner": owner, "avatar": h.get("avatar", "👦"),
-                          "troops": h.get("troops") or [], "pop": h.get("pop")}
+                          "troops": h.get("troops") or [], "pop": h.get("pop"),
+                          "gold": clampi(h.get("gold", 0)), "income": region_gold_income(h),
+                          "buildings": h.get("buildings") or {}, "tech": h.get("tech") or {}}
             if owner:
                 counts[owner] = counts.get(owner, 0) + 1
         self._send({"holders": holders, "counts": counts})
@@ -829,8 +853,14 @@ class Handler(BaseHTTPRequestHandler):
         # 因此這裡不會有前主人可扣（扣人口在 release 時就處理過了）。
         with terr_lock:
             store = load_territory_store()
+            prev = store.get(f) if isinstance(store.get(f), dict) else {}
+            keep = {}
+            if prev.get("owner") == user:                # 重新部署自己的守軍 → 保留該區金幣/建築/科技
+                region_grow(prev, time.time())
+                keep = {"gold": clampi(prev.get("gold", 0)),
+                        "buildings": prev.get("buildings") or {}, "tech": prev.get("tech") or {}}
             store[f] = {"owner": user, "avatar": str(d.get("avatar", "👦"))[:8],
-                        "troops": troops, "pop": region_pop, "lastGrow": time.time()}
+                        "troops": troops, "pop": region_pop, "lastGrow": time.time(), **keep}
             save_territory_store(store)
             if region_pop > 0:                       # 讓電腦 AI 學到「這塊地存在 + 人口」，日後可佔領
                 cat = load_catalog()
@@ -859,6 +889,76 @@ class Handler(BaseHTTPRequestHandler):
         # 領地的兵力現在長在「該區駐軍」而不是玩家人口池，失去領地即失去其駐軍，
         # 不再另外扣前主人的家鄉人口。
         self._send({"ok": True})
+
+    # 蓋建築（目前：兵工廠 armory）：需為該領地擁有者，扣該區金幣。
+    def _handle_territory_build(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        d = self._body_json()
+        f = (d.get("file") or "").strip()
+        building = str(d.get("building", ""))
+        if building not in BUILD_COST:
+            self._send({"error": "unknown building"}, 400)
+            return
+        with terr_lock:
+            store = load_territory_store()
+            h = store.get(f)
+            if not isinstance(h, dict) or h.get("owner") != user:
+                self._send({"error": "not your region"}, 403)
+                return
+            region_grow(h, time.time())            # 先結算金幣/駐軍
+            builds = h.get("buildings") or {}
+            if builds.get(building):
+                self._send({"error": "already built"}, 400)
+                return
+            cost = BUILD_COST[building]
+            if clampi(h.get("gold", 0)) < cost:
+                self._send({"error": "not enough gold", "gold": clampi(h.get("gold", 0)), "cost": cost}, 400)
+                return
+            h["gold"] = clampi(h.get("gold", 0)) - cost
+            builds[building] = True
+            h["buildings"] = builds
+            save_territory_store(store)
+            self._send({"ok": True, "gold": h["gold"], "buildings": builds})
+
+    # 在兵工廠研發科技（track = atk 鍛造 / def 鎧甲），即時完成、只惠及該區守軍。
+    def _handle_territory_research(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        d = self._body_json()
+        f = (d.get("file") or "").strip()
+        track = str(d.get("track", ""))
+        if track not in TECH_TRACKS:
+            self._send({"error": "unknown track"}, 400)
+            return
+        with terr_lock:
+            store = load_territory_store()
+            h = store.get(f)
+            if not isinstance(h, dict) or h.get("owner") != user:
+                self._send({"error": "not your region"}, 403)
+                return
+            region_grow(h, time.time())
+            if not (h.get("buildings") or {}).get("armory"):
+                self._send({"error": "need armory"}, 400)
+                return
+            tech = h.get("tech") or {}
+            lvl = clampi(tech.get(track, 0))
+            if lvl >= TECH_MAX:
+                self._send({"error": "maxed"}, 400)
+                return
+            cost = TECH_COST[track][lvl]            # 下一級花費
+            if clampi(h.get("gold", 0)) < cost:
+                self._send({"error": "not enough gold", "gold": clampi(h.get("gold", 0)), "cost": cost}, 400)
+                return
+            h["gold"] = clampi(h.get("gold", 0)) - cost
+            tech[track] = lvl + 1
+            h["tech"] = tech
+            save_territory_store(store)
+            self._send({"ok": True, "gold": h["gold"], "tech": tech})
 
     # 全站事件牆：GET 取最近事件（所有人共見）
     def _handle_events(self):
