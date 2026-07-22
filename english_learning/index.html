@@ -452,6 +452,10 @@
   .geo-foe    { fill: #f59e0b !important; }   /* 對手佔的 */
   .geo-open   { fill: #60a5fa !important; }   /* 已通過、可佔領 */
   .geo-todo   { fill: #cbd5e1 !important; }   /* 尚未通過 */
+  /* 實景地形底圖(geo-photo)：地區半透明→透出底下的山川，佔領以色塊淡淡疊上 */
+  .geo-photo .geo-region { fill: transparent !important; fill-opacity: .5; }
+  .geo-photo .geo-open   { fill: transparent !important; }   /* 未佔領→只顯示地形 */
+  .geo-photo .geo-mine   { fill: #16a34a !important; }
   .geo-locked { fill: #8fa1b3 !important; opacity: .4; }   /* 沒對應課、上鎖 */
   .geo-marker-c { fill: rgba(0,0,0,.28); pointer-events: none; }
   .geo-marker-t { fill: #fff; font-weight: 800; text-anchor: middle; dominant-baseline: central;
@@ -4177,6 +4181,7 @@
   // drill: { 地區id: 子地圖 } → 該地區變「容器」，點進去看子地圖（例：台北市 → 12 行政區）
   const GEO_MAPS = {
     "Pre-A1": { file: "maps/taiwan.svg", label: "Taiwan 台灣 🗺️",
+                terrainImg: "maps/taiwan-terrain.png", imgBox: { x: .485, y: .235, w: .415, h: .735 },   // 依 refer/taiwan.jpg 去背的實景地形
                 drill: { "taipei-city": { file: "maps/taiwan-taipei.svg", label: "Taipei 台北 🗺️", viewBox: "0 0 350 461" } } },
     "A1":     { file: "maps/china.svg",  label: "China 中國 🗺️", viewBox: "0 0 1000 850", region: id => /^p[A-Z]{2}$/.test(id),
                 names: { pBJ:"Beijing 北京", pTJ:"Tianjin 天津", pSH:"Shanghai 上海", pCQ:"Chongqing 重慶",
@@ -4191,20 +4196,6 @@
   };
   // 地形風景（山🏔️/森林🌲/河流），依現實位置近似擺放。座標為 viewBox 的比例(0~1)，畫成裝飾層(不吃點擊)。
   const TERRAIN = {
-    "maps/taiwan.svg": {   // 台灣（依 refer/taiwan.jpg）：中央山脈沿島脊、八大水系(淡水/蘭陽/大甲/立霧/濁水/秀姑巒/曾文/高屏)
-      size: 26,
-      mountains: [ {x:.74,y:.34},{x:.72,y:.40},{x:.69,y:.44},{x:.75,y:.45},{x:.70,y:.49},{x:.73,y:.53},{x:.68,y:.57},
-                   {x:.72,y:.60},{x:.66,y:.63},{x:.71,y:.655},{x:.745,y:.675},{x:.67,y:.71},{x:.71,y:.735},{x:.69,y:.79},{x:.71,y:.84} ],
-      forests:   [ {x:.80,y:.43},{x:.81,y:.56},{x:.79,y:.67},{x:.63,y:.50},{x:.64,y:.66} ],
-      rivers:    [ [ {x:.775,y:.35},{x:.76,y:.315},{x:.75,y:.295} ],                                  // 淡水河 (北)
-                   [ {x:.75,y:.375},{x:.79,y:.39},{x:.82,y:.40} ],                                    // 蘭陽溪 (東北)
-                   [ {x:.72,y:.44},{x:.63,y:.455},{x:.57,y:.465},{x:.55,y:.47} ],                     // 大甲溪 (西)
-                   [ {x:.755,y:.47},{x:.81,y:.48},{x:.85,y:.487} ],                                   // 立霧溪 (東)
-                   [ {x:.71,y:.55},{x:.63,y:.57},{x:.57,y:.588},{x:.53,y:.598},{x:.52,y:.603} ],      // 濁水溪 (西·最長)
-                   [ {x:.72,y:.63},{x:.78,y:.648},{x:.835,y:.66} ],                                   // 秀姑巒溪 (東)
-                   [ {x:.68,y:.72},{x:.61,y:.738},{x:.565,y:.75} ],                                   // 曾文溪 (西南)
-                   [ {x:.70,y:.77},{x:.66,y:.805},{x:.635,y:.835} ] ]                                 // 高屏溪 (南)
-    },
     "maps/china.svg": {   // 中國：喜馬拉雅/天山、黃河「几」字大彎、長江、東北與雲南森林
       size: 30,
       mountains: [ {x:.16,y:.22},{x:.24,y:.24},
@@ -4345,8 +4336,18 @@
       const paths = Array.prototype.filter.call(svg.querySelectorAll("path"), p => isRegion(p.id, p));
       const drill = spec.drill || {};
       const mg = document.createElementNS(NSU, "g"); mg.setAttribute("class", "geo-markers"); svg.appendChild(mg);
-      const tg = buildTerrainLayer(svg, spec); if (tg) svg.insertBefore(tg, mg);   // 地形風景層(地區之上、標號之下)
       const vb = (svg.getAttribute("viewBox") || "0 0 1000 1000").split(/\s+/).map(Number);
+      if (spec.terrainImg && spec.imgBox) {          // 實景地形圖(去背)墊在最底層：地區改半透明→terrain 透出、佔領上色
+        svg.classList.add("geo-photo");
+        const b = spec.imgBox, im = document.createElementNS(NSU, "image");
+        im.setAttribute("href", spec.terrainImg); im.setAttributeNS("http://www.w3.org/1999/xlink", "href", spec.terrainImg);
+        im.setAttribute("x", (b.x * vb[2]).toFixed(1)); im.setAttribute("y", (b.y * vb[3]).toFixed(1));
+        im.setAttribute("width", (b.w * vb[2]).toFixed(1)); im.setAttribute("height", (b.h * vb[3]).toFixed(1));
+        im.setAttribute("preserveAspectRatio", "none"); im.style.pointerEvents = "none";
+        svg.insertBefore(im, svg.firstChild);
+      } else {
+        const tg = buildTerrainLayer(svg, spec); if (tg) svg.insertBefore(tg, mg);   // emoji 地形層(地區之上、標號之下)
+      }
       const rMark = Math.max(7, Math.min(vb[2], vb[3]) * 0.02);
       const regionList = [], markerSpecs = [];
       function regionName(p) { return spec.names ? (spec.names[p.id] || p.id) : (p.getAttribute("aria-label") || p.id); }
