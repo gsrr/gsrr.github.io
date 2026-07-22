@@ -4189,40 +4189,27 @@
     "A2":     { file: "maps/world.svg",  label: "World 世界 🗺️" },
     "B1":     { file: "maps/world.svg",  label: "World 世界 🗺️" }
   };
-  // 地形風景（山🏔️/森林🌲/河流），依現實位置近似擺放。座標為 viewBox 的比例(0~1)，畫成裝飾層(不吃點擊)。
+  // 地形風景（山🏔️/森林🌲），依現實位置近似擺放。座標為 viewBox 的比例(0~1)，畫成裝飾層(不吃點擊)。
   const TERRAIN = {
-    "maps/taiwan.svg": {   // 台灣（依 refer/taiwan.jpg）：中央山脈沿島脊、八大水系(淡水/蘭陽/大甲/立霧/濁水/秀姑巒/曾文/高屏)
+    "maps/taiwan.svg": {   // 台灣（依 refer/taiwan.jpg）：中央山脈沿島脊
       size: 26,
       mountains: [ {x:.74,y:.34},{x:.72,y:.40},{x:.69,y:.44},{x:.75,y:.45},{x:.70,y:.49},{x:.73,y:.53},{x:.68,y:.57},
                    {x:.72,y:.60},{x:.66,y:.63},{x:.71,y:.655},{x:.745,y:.675},{x:.67,y:.71},{x:.71,y:.735},{x:.69,y:.79},{x:.71,y:.84} ],
-      forests:   [ {x:.80,y:.43},{x:.81,y:.56},{x:.79,y:.67},{x:.63,y:.50},{x:.64,y:.66} ],
-      rivers:    [ [ {x:.775,y:.35},{x:.76,y:.315},{x:.75,y:.295} ],                                  // 淡水河 (北)
-                   [ {x:.75,y:.375},{x:.79,y:.39},{x:.82,y:.40} ],                                    // 蘭陽溪 (東北)
-                   [ {x:.72,y:.44},{x:.63,y:.455},{x:.57,y:.465},{x:.55,y:.47} ],                     // 大甲溪 (西)
-                   [ {x:.755,y:.47},{x:.81,y:.48},{x:.85,y:.487} ],                                   // 立霧溪 (東)
-                   [ {x:.71,y:.55},{x:.63,y:.57},{x:.57,y:.588},{x:.53,y:.598},{x:.52,y:.603} ],      // 濁水溪 (西·最長)
-                   [ {x:.72,y:.63},{x:.78,y:.648},{x:.835,y:.66} ],                                   // 秀姑巒溪 (東)
-                   [ {x:.68,y:.72},{x:.61,y:.738},{x:.565,y:.75} ],                                   // 曾文溪 (西南)
-                   [ {x:.70,y:.77},{x:.66,y:.805},{x:.635,y:.835} ] ]                                 // 高屏溪 (南)
+      forests:   [ {x:.80,y:.43},{x:.81,y:.56},{x:.79,y:.67},{x:.63,y:.50},{x:.64,y:.66} ]
     },
-    "maps/china.svg": {   // 中國：喜馬拉雅/天山、黃河「几」字大彎、長江、東北與雲南森林
+    "maps/china.svg": {   // 中國：喜馬拉雅/天山、東北與雲南森林
       size: 30,
       mountains: [ {x:.16,y:.22},{x:.24,y:.24},
                    {x:.16,y:.54},{x:.22,y:.58},{x:.28,y:.60},{x:.34,y:.57},
                    {x:.30,y:.44},{x:.40,y:.46} ],
-      forests:   [ {x:.82,y:.16},{x:.87,y:.20},{x:.90,y:.26},{x:.34,y:.66},{x:.40,y:.68} ],
-      rivers:    [ [ {x:.34,y:.52},{x:.42,y:.44},{x:.50,y:.36},{x:.56,y:.40},{x:.52,y:.47},{x:.60,y:.46},{x:.70,y:.44},{x:.80,y:.44} ],
-                   [ {x:.30,y:.58},{x:.40,y:.60},{x:.50,y:.60},{x:.58,y:.56},{x:.68,y:.58},{x:.78,y:.55},{x:.87,y:.53} ] ]
+      forests:   [ {x:.82,y:.16},{x:.87,y:.20},{x:.90,y:.26},{x:.34,y:.66},{x:.40,y:.68} ]
     },
-    "maps/world.svg": {   // 世界：洛磯/安地斯/阿爾卑斯/喜馬拉雅、亞馬遜/尼羅/密西西比河、各大森林帶
+    "maps/world.svg": {   // 世界：洛磯/安地斯/阿爾卑斯/喜馬拉雅、各大森林帶
       size: 22,
       mountains: [ {x:.14,y:.30},{x:.15,y:.38},
                    {x:.25,y:.66},{x:.26,y:.74},{x:.27,y:.82},
                    {x:.50,y:.40},{x:.71,y:.48},{x:.75,y:.47} ],
-      forests:   [ {x:.19,y:.22},{x:.30,y:.63},{x:.33,y:.65},{x:.54,y:.66},{x:.74,y:.24},{x:.80,y:.24},{x:.79,y:.58} ],
-      rivers:    [ [ {x:.28,y:.63},{x:.32,y:.64},{x:.36,y:.63} ],
-                   [ {x:.565,y:.62},{x:.57,y:.55},{x:.565,y:.48} ],
-                   [ {x:.20,y:.32},{x:.21,y:.40},{x:.22,y:.46} ] ]
+      forests:   [ {x:.19,y:.22},{x:.30,y:.63},{x:.33,y:.65},{x:.54,y:.66},{x:.74,y:.24},{x:.80,y:.24},{x:.79,y:.58} ]
     }
   };
   // 建一層裝飾地形（山/森林 emoji + 河流藍線），插在地區之上、標號之下；不接收點擊
@@ -4232,37 +4219,6 @@
     const vb = (svg.getAttribute("viewBox") || "0 0 1000 1000").split(/\s+/).map(Number);
     const w = vb[2], h = vb[3], sz = T.size || Math.min(w, h) * 0.03;
     const g = document.createElementNS(NSU, "g"); g.setAttribute("class", "geo-terrain"); g.style.pointerEvents = "none";
-    // 河流：Catmull-Rom 平滑 + 由源頭(細)往出海口(粗)漸寬的填色水帶(較像 Google Map 的水系)
-    const wEnd = Math.min(w, h) * 0.013, wStart = wEnd * 0.30;
-    function catmull(p0, p1, p2, p3, t) {
-      const t2 = t * t, t3 = t2 * t;
-      return { x: 0.5 * (2*p1.x + (-p0.x+p2.x)*t + (2*p0.x-5*p1.x+4*p2.x-p3.x)*t2 + (-p0.x+3*p1.x-3*p2.x+p3.x)*t3),
-               y: 0.5 * (2*p1.y + (-p0.y+p2.y)*t + (2*p0.y-5*p1.y+4*p2.y-p3.y)*t2 + (-p0.y+3*p1.y-3*p2.y+p3.y)*t3) };
-    }
-    (T.rivers || []).forEach(ptsF => {
-      if (!ptsF || ptsF.length < 2) return;
-      const P = ptsF.map(p => ({ x: p.x * w, y: p.y * h })), S = [], SEG = 18;
-      for (let i = 0; i < P.length - 1; i++) {
-        const p0 = P[i-1] || P[i], p1 = P[i], p2 = P[i+1], p3 = P[i+2] || P[i+1];
-        for (let t = 0; t < SEG; t++) S.push(catmull(p0, p1, p2, p3, t / SEG));
-      }
-      S.push(P[P.length - 1]);
-      const n = S.length, Lp = [], Rp = [];
-      for (let i = 0; i < n; i++) {
-        const a = S[Math.max(0, i-1)], b = S[Math.min(n-1, i+1)];
-        let dx = b.x - a.x, dy = b.y - a.y; const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
-        const nx = -dy, ny = dx, wid = (wStart + (wEnd - wStart) * (i / (n-1))) / 2;
-        Lp.push({ x: S[i].x + nx*wid, y: S[i].y + ny*wid });
-        Rp.push({ x: S[i].x - nx*wid, y: S[i].y - ny*wid });
-      }
-      let d = "M " + Lp[0].x.toFixed(1) + " " + Lp[0].y.toFixed(1);
-      for (let i = 1; i < n; i++) d += " L " + Lp[i].x.toFixed(1) + " " + Lp[i].y.toFixed(1);
-      for (let i = n-1; i >= 0; i--) d += " L " + Rp[i].x.toFixed(1) + " " + Rp[i].y.toFixed(1);
-      d += " Z";
-      const path = document.createElementNS(NSU, "path"); path.setAttribute("d", d);
-      path.style.fill = "#6fa8dc"; path.style.stroke = "none"; path.style.opacity = ".9";
-      g.appendChild(path);
-    });
     function glyph(m, ch) {
       const t = document.createElementNS(NSU, "text");
       t.setAttribute("x", (m.x * w).toFixed(1)); t.setAttribute("y", (m.y * h).toFixed(1));
