@@ -4189,6 +4189,61 @@
     "A2":     { file: "maps/world.svg",  label: "World 世界 🗺️" },
     "B1":     { file: "maps/world.svg",  label: "World 世界 🗺️" }
   };
+  // 地形風景（山🏔️/森林🌲/河流），依現實位置近似擺放。座標為 viewBox 的比例(0~1)，畫成裝飾層(不吃點擊)。
+  const TERRAIN = {
+    "maps/taiwan.svg": {   // 台灣：中央山脈沿島脊南北向、森林在山區、幾條大河向西流入海
+      size: 32,
+      mountains: [ {x:.77,y:.30},{x:.79,y:.38},{x:.80,y:.46},{x:.79,y:.54},{x:.78,y:.62},{x:.80,y:.70},{x:.78,y:.78} ],
+      forests:   [ {x:.72,y:.34},{x:.73,y:.50},{x:.72,y:.66},{x:.84,y:.44},{x:.83,y:.60} ],
+      rivers:    [ [ {x:.78,y:.44},{x:.68,y:.46},{x:.60,y:.47},{x:.55,y:.48} ],
+                   [ {x:.79,y:.66},{x:.70,y:.69},{x:.62,y:.72},{x:.58,y:.74} ] ]
+    },
+    "maps/china.svg": {   // 中國：喜馬拉雅/天山、黃河「几」字大彎、長江、東北與雲南森林
+      size: 30,
+      mountains: [ {x:.16,y:.22},{x:.24,y:.24},
+                   {x:.16,y:.54},{x:.22,y:.58},{x:.28,y:.60},{x:.34,y:.57},
+                   {x:.30,y:.44},{x:.40,y:.46} ],
+      forests:   [ {x:.82,y:.16},{x:.87,y:.20},{x:.90,y:.26},{x:.34,y:.66},{x:.40,y:.68} ],
+      rivers:    [ [ {x:.34,y:.52},{x:.42,y:.44},{x:.50,y:.36},{x:.56,y:.40},{x:.52,y:.47},{x:.60,y:.46},{x:.70,y:.44},{x:.80,y:.44} ],
+                   [ {x:.30,y:.58},{x:.40,y:.60},{x:.50,y:.60},{x:.58,y:.56},{x:.68,y:.58},{x:.78,y:.55},{x:.87,y:.53} ] ]
+    },
+    "maps/world.svg": {   // 世界：洛磯/安地斯/阿爾卑斯/喜馬拉雅、亞馬遜/尼羅/密西西比河、各大森林帶
+      size: 22,
+      mountains: [ {x:.14,y:.30},{x:.15,y:.38},
+                   {x:.25,y:.66},{x:.26,y:.74},{x:.27,y:.82},
+                   {x:.50,y:.40},{x:.71,y:.48},{x:.75,y:.47} ],
+      forests:   [ {x:.19,y:.22},{x:.30,y:.63},{x:.33,y:.65},{x:.54,y:.66},{x:.74,y:.24},{x:.80,y:.24},{x:.79,y:.58} ],
+      rivers:    [ [ {x:.28,y:.63},{x:.32,y:.64},{x:.36,y:.63} ],
+                   [ {x:.565,y:.62},{x:.57,y:.55},{x:.565,y:.48} ],
+                   [ {x:.20,y:.32},{x:.21,y:.40},{x:.22,y:.46} ] ]
+    }
+  };
+  // 建一層裝飾地形（山/森林 emoji + 河流藍線），插在地區之上、標號之下；不接收點擊
+  function buildTerrainLayer(svg, spec) {
+    const T = TERRAIN[spec.file]; if (!T) return null;
+    const NSU = "http://www.w3.org/2000/svg";
+    const vb = (svg.getAttribute("viewBox") || "0 0 1000 1000").split(/\s+/).map(Number);
+    const w = vb[2], h = vb[3], sz = T.size || Math.min(w, h) * 0.03;
+    const g = document.createElementNS(NSU, "g"); g.setAttribute("class", "geo-terrain"); g.style.pointerEvents = "none";
+    (T.rivers || []).forEach(pts => {
+      if (!pts || pts.length < 2) return;
+      let d = "M " + (pts[0].x * w).toFixed(1) + " " + (pts[0].y * h).toFixed(1);
+      for (let k = 1; k < pts.length; k++) d += " L " + (pts[k].x * w).toFixed(1) + " " + (pts[k].y * h).toFixed(1);
+      const path = document.createElementNS(NSU, "path"); path.setAttribute("d", d);
+      path.style.fill = "none"; path.style.stroke = "#3b82f6"; path.style.strokeWidth = "3";
+      path.style.strokeLinecap = "round"; path.style.strokeLinejoin = "round"; path.style.opacity = ".85";
+      g.appendChild(path);
+    });
+    function glyph(m, ch) {
+      const t = document.createElementNS(NSU, "text");
+      t.setAttribute("x", (m.x * w).toFixed(1)); t.setAttribute("y", (m.y * h).toFixed(1));
+      t.setAttribute("text-anchor", "middle"); t.setAttribute("dominant-baseline", "central");
+      t.setAttribute("font-size", sz); t.style.opacity = ".92"; t.textContent = ch; g.appendChild(t);
+    }
+    (T.forests || []).forEach(m => glyph(m, "🌲"));
+    (T.mountains || []).forEach(m => glyph(m, "🏔️"));
+    return g;
+  }
   const geoCache = {};
   function fetchMap(file) {
     return geoCache[file] ? Promise.resolve(geoCache[file])
@@ -4261,6 +4316,7 @@
       const paths = Array.prototype.filter.call(svg.querySelectorAll("path"), p => isRegion(p.id, p));
       const drill = spec.drill || {};
       const mg = document.createElementNS(NSU, "g"); mg.setAttribute("class", "geo-markers"); svg.appendChild(mg);
+      const tg = buildTerrainLayer(svg, spec); if (tg) svg.insertBefore(tg, mg);   // 地形風景層(地區之上、標號之下)
       const vb = (svg.getAttribute("viewBox") || "0 0 1000 1000").split(/\s+/).map(Number);
       const rMark = Math.max(7, Math.min(vb[2], vb[3]) * 0.02);
       const regionList = [], markerSpecs = [];
