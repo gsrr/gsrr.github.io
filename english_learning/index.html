@@ -576,6 +576,8 @@
   .bld-btn { font-size: 13px; font-weight: 800; padding: 6px 12px; border: none; border-radius: 9px; background: #f59e0b; color: #fff; cursor: pointer; white-space: nowrap; }
   .bld-btn:disabled { opacity: .4; cursor: not-allowed; }
   .bld-done { font-size: 13px; font-weight: 800; color: #16a34a; }
+  .bld-row.bld-sub { padding-left: 14px; }
+  .bld-row.bld-sub .bld-nm { font-weight: 600; color: #475569; }
   .tech-badge { font-size: 13px; font-weight: 800; color: #b45309; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 1px 6px; white-space: nowrap; }
   /* 該領地各兵種實際數值表 */
   .bld-stats-h { margin-top: 10px; font-size: 13px; font-weight: 800; color: #334155; }
@@ -4985,9 +4987,11 @@
   }
 
   // ===== 領地建設：兵工廠 + 科技（鍛造+攻 / 鎧甲+防），用玩家的「統一金幣池」研發（需與 server 常數一致）=====
-  const BUILD_COST = { armory: 50 };
+  const BUILD_COST = { armory: 50, barracks: 60, archery: 80, stable: 120 };
   const TECH_COST = { atk: [80, 160, 280], def: [80, 160, 280] };
   const TECH_MAX = 3;
+  const UNIT_COST = { inf: 2, spear: 3, archer: 4, cav: 5 };   // 每名兵金幣成本(需與 server 一致)
+  const RECRUIT_BATCH = 10;
   function terrPost(path, body, cb) {
     const t = authToken();
     if (!t) { alert("Log in first."); if (cb) cb(null); return; }
@@ -5002,22 +5006,24 @@
   }
   function terrBuild(key, building, cb) { terrPost("/api/territory/build", { file: key, building: building }, cb); }
   function terrResearch(key, track, cb) { terrPost("/api/territory/research", { file: key, track: track }, cb); }
-  // 你自己領地的「建設面板」：顯示金幣、蓋兵工廠、研發鍛造/鎧甲。onChange 讓外層重畫。
+  function terrRecruit(key, unit, qty, cb) { terrPost("/api/territory/recruit", { file: key, unit: unit, qty: qty }, cb); }
+  // 你自己領地的「建設面板」：金幣、兵工廠(科技)、生產建築(招募)、以及該區兵種實際數值。onChange 讓外層重畫。
   function buildingsPanel(container, key, h, onChange) {
     const gold = (myEcon && myEcon.gold) || 0;                                  // 玩家統一金幣池
     const goldInc = (myEcon && myEcon.goldIncome != null) ? myEcon.goldIncome : 0;
     const rInc = (h && h.income != null) ? h.income : Math.round(((h && h.pop) || 0) * 0.10);
     const builds = (h && h.buildings) || {}, tech = (h && h.tech) || {};
     const box = document.createElement("div"); box.className = "bld-box";
+    const buildRow = (nm, b) => { const cost = BUILD_COST[b], can = gold >= cost;
+      return '<div class="bld-row"><span class="bld-nm">' + nm + '</span><button class="bld-btn" data-build="' + b + '" ' + (can ? "" : "disabled") + '>Build · ' + cost + '🪙</button></div>'; };
     let html = '<div class="bld-gold">🪙 <b>' + gold + '</b> gold <span class="bld-inc">(empire +' + goldInc + '/hr · this region +' + rInc + ')</span></div>';
+    // 兵工廠 + 科技
     if (!builds.armory) {
-      const cost = BUILD_COST.armory, can = gold >= cost;
-      html += '<div class="bld-row"><span class="bld-nm">🏭 Armory</span>' +
-        '<button class="bld-btn" data-act="build" ' + (can ? "" : "disabled") + '>Build · ' + cost + '🪙</button></div>' +
-        '<p class="op-hint">Build an armory to research 鍛造 (+attack) & 鎧甲 (+armor) for this region\'s garrison.</p>';
+      html += buildRow("🏭 Armory", "armory") +
+        '<p class="op-hint">Armory unlocks Forging (+attack) & Armor (+armor) research for this region.</p>';
     } else {
       html += '<div class="bld-row"><span class="bld-nm">🏭 Armory</span><span class="bld-done">✓ built</span></div>';
-      [["atk", "⚔️ Forging", "attack"], ["def", "🛡️ Armor", "armor"]].forEach(([tk, label]) => {
+      [["atk", "⚔️ Forging"], ["def", "🛡️ Armor"]].forEach(([tk, label]) => {
         const lvl = tech[tk] || 0, maxed = lvl >= TECH_MAX;
         const cost = maxed ? 0 : TECH_COST[tk][lvl], can = !maxed && gold >= cost;
         html += '<div class="bld-row"><span class="bld-nm">' + label + ' <b>Lv ' + lvl + '/' + TECH_MAX + '</b> <small>(+' + (lvl * 10) + '%)</small></span>' +
@@ -5026,6 +5032,18 @@
           '</div>';
       });
     }
+    // 生產建築：軍營(步/槍)、射箭場(弓)、馬廄(騎) → 招募加進該區守軍
+    html += '<div class="bld-stats-h">🏗️ Production — recruit into this garrison</div>';
+    [["barracks", "🏛️ Barracks", ["inf", "spear"]], ["archery", "🎯 Archery Range", ["archer"]], ["stable", "🐴 Stable", ["cav"]]].forEach(function (p) {
+      const b = p[0], nm = p[1], units = p[2];
+      if (!builds[b]) { html += buildRow(nm, b); return; }
+      html += '<div class="bld-row"><span class="bld-nm">' + nm + '</span><span class="bld-done">✓ built</span></div>';
+      units.forEach(u => {
+        const cost = RECRUIT_BATCH * UNIT_COST[u], can = gold >= cost;
+        html += '<div class="bld-row bld-sub"><span class="bld-nm">' + troopIcon(u) + ' ' + TROOP[u].en + '</span>' +
+          '<button class="bld-btn" data-unit="' + u + '" ' + (can ? "" : "disabled") + '>Recruit ×' + RECRUIT_BATCH + ' · ' + cost + '🪙</button></div>';
+      });
+    });
     // 該領地每個兵種的「實際數值」：攻/防 = 基礎 × (1 + 該區科技加成)，另標各兵種剋制對象
     const fmt = n => Number.isInteger(n) ? n : Math.round(n * 10) / 10;
     const aMul = 1 + techAtk(tech), dMul = 1 + techDef(tech);
@@ -5043,10 +5061,14 @@
     });
     html += '</div>';
     box.innerHTML = html;
-    const bb = box.querySelector('[data-act="build"]');
-    if (bb) bb.addEventListener("click", () => { bb.disabled = true; terrBuild(key, "armory", () => onChange && onChange()); });
+    box.querySelectorAll('[data-build]').forEach(btn => btn.addEventListener("click", () => {
+      btn.disabled = true; terrBuild(key, btn.dataset.build, () => onChange && onChange());
+    }));
     box.querySelectorAll('[data-track]').forEach(btn => btn.addEventListener("click", () => {
       btn.disabled = true; terrResearch(key, btn.dataset.track, () => onChange && onChange());
+    }));
+    box.querySelectorAll('[data-unit]').forEach(btn => btn.addEventListener("click", () => {
+      btn.disabled = true; terrRecruit(key, btn.dataset.unit, RECRUIT_BATCH, () => onChange && onChange());
     }));
     container.appendChild(box);
   }

@@ -293,10 +293,15 @@ def user_region_pop(tstore, user):
 # ---- 領地建設：兵工廠(armory) + 科技樹(鍛造+攻 / 鎧甲+防)，用「金幣」研發 ----
 # 金幣：每塊領地依人口每小時產金，累積在該區(h["gold"])。研發即時完成、只惠及該區守軍。
 GOLD_RATE = 0.10                                   # 每小時金幣 = round(pop * GOLD_RATE)
-BUILD_COST = {"armory": 50}                        # 蓋建築的金幣花費
+# 蓋建築的金幣花費：兵工廠(科技) + 三種生產建築
+BUILD_COST = {"armory": 50, "barracks": 60, "archery": 80, "stable": 120}
 TECH_TRACKS = ("atk", "def")                       # 鍛造(+攻) / 鎧甲(+防)
 TECH_COST = {"atk": [80, 160, 280], "def": [80, 160, 280]}   # 第 1/2/3 級花費
 TECH_MAX = 3
+# 招募：每名兵的金幣成本、該兵種需要哪棟建築、每次招募的數量(加進該領地守軍)
+UNIT_COST = {"inf": 2, "spear": 3, "archer": 4, "cav": 5}
+UNIT_BUILDING = {"inf": "barracks", "spear": "barracks", "archer": "archery", "cav": "stable"}
+RECRUIT_BATCH = 10
 
 
 # 該領地每小時「上繳」給擁有者的金幣(= 人口 × GOLD_RATE)。領地本身不再存金幣、也不再自動長兵。
@@ -613,6 +618,8 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_territory_build()
         elif path == "/api/territory/research":
             self._handle_territory_research()
+        elif path == "/api/territory/recruit":
+            self._handle_territory_recruit()
         elif path == "/api/economy/set":
             self._handle_economy_set()
         elif path == "/api/event":
@@ -957,6 +964,50 @@ class Handler(BaseHTTPRequestHandler):
             h["tech"] = tech
             save_territory_store(store)
         self._send({"ok": True, "gold": newgold, "tech": tech})
+
+    # 招募：在該領地用玩家的統一金幣池生產部隊，加進該區守軍(需先蓋對應建築)。
+    def _handle_territory_recruit(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        d = self._body_json()
+        f = (d.get("file") or "").strip()
+        unit = str(d.get("unit", ""))
+        if unit not in UNIT_COST:
+            self._send({"error": "unknown unit"}, 400)
+            return
+        qty = clampi(d.get("qty", RECRUIT_BATCH), 1, 100000)
+        cost = qty * UNIT_COST[unit]
+        need = UNIT_BUILDING[unit]
+        with terr_lock:
+            store = load_territory_store()
+            h = store.get(f)
+            if not isinstance(h, dict) or h.get("owner") != user:
+                self._send({"error": "not your region"}, 403)
+                return
+            if not (h.get("buildings") or {}).get(need):
+                self._send({"error": "need " + need}, 400)
+                return
+            region_pop = user_region_pop(store, user)
+            with econ_lock:                        # 從玩家的統一金幣池扣款
+                estore = load_econ_store()
+                e = econ_get(estore, user, time.time(), region_pop)
+                if clampi(e.get("gold", 0)) < cost:
+                    self._send({"error": "not enough gold", "gold": clampi(e.get("gold", 0)), "cost": cost}, 400)
+                    return
+                e["gold"] = clampi(e.get("gold", 0)) - cost
+                save_econ_store(estore)
+                newgold = e["gold"]
+            troops = h.get("troops") or []          # 併進同兵種，否則新增一格
+            slot = next((t for t in troops if isinstance(t, dict) and t.get("type") == unit), None)
+            if slot:
+                slot["hp"] = clampi(slot.get("hp", 0)) + qty
+            else:
+                troops.append({"type": unit, "hp": qty})
+            h["troops"] = troops
+            save_territory_store(store)
+        self._send({"ok": True, "gold": newgold, "troops": h["troops"]})
 
     # 全站事件牆：GET 取最近事件（所有人共見）
     def _handle_events(self):
