@@ -4225,13 +4225,35 @@
     const vb = (svg.getAttribute("viewBox") || "0 0 1000 1000").split(/\s+/).map(Number);
     const w = vb[2], h = vb[3], sz = T.size || Math.min(w, h) * 0.03;
     const g = document.createElementNS(NSU, "g"); g.setAttribute("class", "geo-terrain"); g.style.pointerEvents = "none";
-    (T.rivers || []).forEach(pts => {
-      if (!pts || pts.length < 2) return;
-      let d = "M " + (pts[0].x * w).toFixed(1) + " " + (pts[0].y * h).toFixed(1);
-      for (let k = 1; k < pts.length; k++) d += " L " + (pts[k].x * w).toFixed(1) + " " + (pts[k].y * h).toFixed(1);
+    // 河流：Catmull-Rom 平滑 + 由源頭(細)往出海口(粗)漸寬的填色水帶(較像 Google Map 的水系)
+    const wEnd = Math.min(w, h) * 0.013, wStart = wEnd * 0.30;
+    function catmull(p0, p1, p2, p3, t) {
+      const t2 = t * t, t3 = t2 * t;
+      return { x: 0.5 * (2*p1.x + (-p0.x+p2.x)*t + (2*p0.x-5*p1.x+4*p2.x-p3.x)*t2 + (-p0.x+3*p1.x-3*p2.x+p3.x)*t3),
+               y: 0.5 * (2*p1.y + (-p0.y+p2.y)*t + (2*p0.y-5*p1.y+4*p2.y-p3.y)*t2 + (-p0.y+3*p1.y-3*p2.y+p3.y)*t3) };
+    }
+    (T.rivers || []).forEach(ptsF => {
+      if (!ptsF || ptsF.length < 2) return;
+      const P = ptsF.map(p => ({ x: p.x * w, y: p.y * h })), S = [], SEG = 18;
+      for (let i = 0; i < P.length - 1; i++) {
+        const p0 = P[i-1] || P[i], p1 = P[i], p2 = P[i+1], p3 = P[i+2] || P[i+1];
+        for (let t = 0; t < SEG; t++) S.push(catmull(p0, p1, p2, p3, t / SEG));
+      }
+      S.push(P[P.length - 1]);
+      const n = S.length, Lp = [], Rp = [];
+      for (let i = 0; i < n; i++) {
+        const a = S[Math.max(0, i-1)], b = S[Math.min(n-1, i+1)];
+        let dx = b.x - a.x, dy = b.y - a.y; const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
+        const nx = -dy, ny = dx, wid = (wStart + (wEnd - wStart) * (i / (n-1))) / 2;
+        Lp.push({ x: S[i].x + nx*wid, y: S[i].y + ny*wid });
+        Rp.push({ x: S[i].x - nx*wid, y: S[i].y - ny*wid });
+      }
+      let d = "M " + Lp[0].x.toFixed(1) + " " + Lp[0].y.toFixed(1);
+      for (let i = 1; i < n; i++) d += " L " + Lp[i].x.toFixed(1) + " " + Lp[i].y.toFixed(1);
+      for (let i = n-1; i >= 0; i--) d += " L " + Rp[i].x.toFixed(1) + " " + Rp[i].y.toFixed(1);
+      d += " Z";
       const path = document.createElementNS(NSU, "path"); path.setAttribute("d", d);
-      path.style.fill = "none"; path.style.stroke = "#3b82f6"; path.style.strokeWidth = "3";
-      path.style.strokeLinecap = "round"; path.style.strokeLinejoin = "round"; path.style.opacity = ".85";
+      path.style.fill = "#6fa8dc"; path.style.stroke = "none"; path.style.opacity = ".9";
       g.appendChild(path);
     });
     function glyph(m, ch) {
