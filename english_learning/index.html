@@ -577,6 +577,16 @@
   .bld-btn:disabled { opacity: .4; cursor: not-allowed; }
   .bld-done { font-size: 13px; font-weight: 800; color: #16a34a; }
   .tech-badge { font-size: 13px; font-weight: 800; color: #b45309; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 1px 6px; white-space: nowrap; }
+  /* 該領地各兵種實際數值表 */
+  .bld-stats-h { margin-top: 10px; font-size: 13px; font-weight: 800; color: #334155; }
+  .bld-stats-h small { font-weight: 700; color: #b45309; }
+  .bs-tbl { margin-top: 5px; display: flex; flex-direction: column; gap: 3px; }
+  .bs-row { display: flex; align-items: center; gap: 8px; font-size: 14px; padding: 3px 6px; border-radius: 8px; background: #f8fafc; }
+  .bs-ty { flex: 1 1 auto; font-weight: 700; color: #1e293b; white-space: nowrap; }
+  .bs-n { flex: 0 0 auto; font-weight: 800; color: #334155; font-variant-numeric: tabular-nums; }
+  .bs-adv { flex: 0 0 auto; font-size: 12px; font-weight: 800; min-width: 44px; text-align: right; }
+  .bs-adv .adv-s { color: #16a34a; margin-left: 3px; }
+  .bs-adv .adv-w { color: #dc2626; margin-left: 3px; }
   /* 兵種部署 + 對戰（彈窗白底，深色字）*/
   .op-pop { text-align: center; font-size: 13px; color: #334155; margin: -4px 0 10px; }
   .dep-left { text-align: center; font-size: 13px; font-weight: 700; color: #334155; margin: 0 0 6px; }
@@ -5016,6 +5026,22 @@
           '</div>';
       });
     }
+    // 該領地每個兵種的「實際數值」：攻/防 = 基礎 × (1 + 該區科技加成)，另標各兵種剋制對象
+    const fmt = n => Number.isInteger(n) ? n : Math.round(n * 10) / 10;
+    const aMul = 1 + techAtk(tech), dMul = 1 + techDef(tech);
+    html += '<div class="bld-stats-h">📊 Troop stats in this region' +
+      ((tech.atk || tech.def) ? ' <small>(⚔️+' + (tech.atk || 0) * 10 + '% · 🛡️+' + (tech.def || 0) * 10 + '%)</small>' : '') + '</div>';
+    html += '<div class="bs-tbl">';
+    TROOPS.forEach(t => {
+      const atkE = fmt(t.atk * aMul), defE = fmt(t.def * dMul);
+      const strong = TROOPS.filter(f => atkBonus(t.id, f.id) > 1).map(f => troopIcon(f.id)).join("");
+      const weak = TROOPS.filter(f => atkBonus(f.id, t.id) > 1).map(f => troopIcon(f.id)).join("");
+      html += '<div class="bs-row"><span class="bs-ty">' + troopIcon(t.id) + ' ' + t.en + '</span>' +
+        '<span class="bs-n">⚔️ ' + atkE + '</span><span class="bs-n">🛡️ ' + defE + '</span>' +
+        '<span class="bs-adv">' + (strong ? '<span class="adv-s">▲' + strong + '</span>' : '') +
+        (weak ? '<span class="adv-w">▼' + weak + '</span>' : '') + '</span></div>';
+    });
+    html += '</div>';
     box.innerHTML = html;
     const bb = box.querySelector('[data-act="build"]');
     if (bb) bb.addEventListener("click", () => { bb.disabled = true; terrBuild(key, "armory", () => onChange && onChange()); });
