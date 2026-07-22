@@ -3910,8 +3910,7 @@
     host.innerHTML = '<div class="bt-vs">🐲 Boss army (' + B + ')</div>' + examSideHTML(bossSquad, -1);
     document.getElementById("battleLog").textContent = "Pick your squad, then charge the boss!";
     if (T <= 0) {
-      const income = Math.round(((myEcon && myEcon.population) || 0) * 0.10);
-      host.innerHTML += '<p class="op-hint">⚠️ No troops to fight with. Your home base makes <b>' + income + '</b>/hr — conquer regions & come back.</p>';
+      host.innerHTML += '<p class="op-hint">⚠️ No troops to fight with — win battles or redeploy a garrison to free some up.</p>';
       return;
     }
     const box = document.createElement("div");
@@ -4115,8 +4114,9 @@
   function loadTerritory(cb) {
     fetch("/api/territory").then(r => r.json()).then(j => { if (j && j.holders) territory = j; if (cb) cb(); }).catch(() => { if (cb) cb(); });
   }
-  // ===== 玩家經濟：人口(population，每天生 10% 兵力) + 兵力(troops，打仗用) =====
-  let myEcon = null;   // {population, troops, income}
+  // ===== 玩家經濟：人口(population) + 兵力(troops，打仗用) + 金幣(gold，統一資源) =====
+  //   兵力不再自動成長；金幣每小時由(家鄉+所有領地人口)統一匯入，用來蓋建築/研發科技。
+  let myEcon = null;   // {population, troops, gold, goldIncome}
   function sumHp(arr) { return (arr || []).reduce((s, t) => s + (t && t.hp > 0 ? t.hp : 0), 0); }
   function loadEconomy(cb) {
     const t = authToken();
@@ -4129,7 +4129,7 @@
     if (!t || !myEcon) { if (cb) cb(); return; }
     myEcon.population = Math.max(0, Math.round(myEcon.population)); myEcon.troops = Math.max(0, Math.round(myEcon.troops));
     fetch("/api/economy/set?token=" + encodeURIComponent(t), { method: "POST", body: JSON.stringify({ population: myEcon.population, troops: myEcon.troops }) })
-      .then(r => r.ok ? r.json() : null).then(j => { if (j && j.population != null) { myEcon.population = j.population; myEcon.troops = j.troops; } if (cb) cb(); }).catch(() => { if (cb) cb(); });
+      .then(r => r.ok ? r.json() : null).then(j => { if (j && j.population != null) { myEcon.population = j.population; myEcon.troops = j.troops; if (j.gold != null) myEcon.gold = j.gold; } if (cb) cb(); }).catch(() => { if (cb) cb(); });
   }
   function renderEmpire() {
     let bar = document.getElementById("empireBar");
@@ -4139,8 +4139,8 @@
       anchor.parentNode.insertBefore(bar, anchor);
     }
     if (!authToken()) { bar.style.display = "none"; return; }
-    const e = myEcon || { population: 0, troops: 0, income: 0 };
-    bar.innerHTML = '🏠 <b>Home base</b> · 👥 Pop <b>' + e.population + '</b> · ⚔️ Troops <b>' + e.troops + '</b> <span class="emp-inc">(+' + (e.income != null ? e.income : Math.round(e.population * 0.1)) + '/hr)</span> <span class="emp-more">details ▸</span>';
+    const e = myEcon || { population: 0, troops: 0, gold: 0, goldIncome: 0 };
+    bar.innerHTML = '🏠 <b>Home base</b> · 👥 Pop <b>' + e.population + '</b> · ⚔️ Troops <b>' + e.troops + '</b> · 🪙 Gold <b>' + (e.gold || 0) + '</b> <span class="emp-inc">(+' + (e.goldIncome || 0) + '/hr)</span> <span class="emp-more">details ▸</span>';
     bar.style.display = "block"; bar.style.cursor = "pointer";
     bar.onclick = openEmpire;
   }
@@ -4152,7 +4152,7 @@
   }
   function renderEmpireModal() {
     const me = (authUser() || userName || "").toLowerCase();
-    const e = myEcon || { population: 0, troops: 0, income: 0 };
+    const e = myEcon || { population: 0, troops: 0, gold: 0, goldIncome: 0 };
     const mine = [];
     if (territory && territory.holders) Object.keys(territory.holders).forEach(f => {
       const h = territory.holders[f];
@@ -4161,29 +4161,26 @@
       if (h && h.owner && (h.owner || "").toLowerCase() === me) mine.push({ file: f, h: h });
     });
     let garTotal = 0; mine.forEach(m => garTotal += sumHp(m.h.troops));
-    const homeInc = e.income != null ? e.income : Math.round(e.population * 0.1);
-    // 每個領地每小時依人口自動補 10% 到「自己的駐軍」；總成長 = 家鄉自由兵 + 各領地駐軍成長
-    const regionInc = mine.reduce((s, m) => s + Math.round((m.h.pop || 0) * 0.1), 0);
-    const inc = homeInc + regionInc;
+    const gold = (e.gold || 0), goldInc = (e.goldIncome != null) ? e.goldIncome : Math.round(e.population * 0.1);
     let html = '<h3 class="modal-title">🏰 My Empire</h3>' +
       '<div class="emp-stats">' +
       '<div><span>👥</span><b>' + e.population + '</b><small>population</small></div>' +
       '<div><span>⚔️</span><b>' + e.troops + '</b><small>free troops</small></div>' +
       '<div><span>🛡️</span><b>' + garTotal + '</b><small>garrisoned</small></div>' +
-      '<div><span>📈</span><b>+' + inc + '</b><small>troops/hr</small></div>' +
+      '<div><span>🪙</span><b>' + gold + '</b><small>gold (+' + goldInc + '/hr)</small></div>' +
       '</div>' +
       '<div class="emp-note">🏠 Home base is safe — lose a battle and your survivors retreat here.<br>' +
-      '🛡️ Each region grows its own garrison by <b>+' + regionInc + '</b>/hr (10% of its population).</div>';
+      '🪙 Every region remits gold to you (10% of its population/hr) — spend it on buildings & research.</div>';
     if (!mine.length) {
       html += '<p class="op-hint" style="text-align:center">No regions yet. Pass a lesson, then occupy its region on the map!</p>';
     } else {
       mine.sort((a, b) => (b.h.pop || 0) - (a.h.pop || 0));
       html += '<div class="stats-h">🚩 Regions (' + mine.length + ') — tap one to manage</div><div class="emp-list">';
       mine.forEach(m => {
-        const i = levelIdxForKey(m.file), gold = (m.h.gold != null) ? m.h.gold : 0;
+        const i = levelIdxForKey(m.file), rInc = (m.h.income != null) ? m.h.income : Math.round((m.h.pop || 0) * 0.1);
         html += '<button class="emp-row emp-row-btn" data-key="' + encodeURIComponent(m.file) + '" data-i="' + i + '" data-pop="' + (m.h.pop || 0) + '">' +
           '<div class="emp-rg"><b>' + regionDisplayName(m.file) + '</b>' + techBadge(m.h.tech) +
-          '<span class="emp-pop">👥 ' + (m.h.pop || 0) + ' · 🪙 ' + gold + '</span></div>' +
+          '<span class="emp-pop">👥 ' + (m.h.pop || 0) + ' · 🪙 +' + rInc + '/hr</span></div>' +
           '<div class="emp-gar">' + garrisonHTML(m.h.troops) + '<span class="emp-manage">Manage ▸</span></div></button>';
       });
       html += '</div>';
@@ -4568,7 +4565,7 @@
     const me = (authUser() || userName || "").toLowerCase();
     const mine = !!(h && h.owner && (h.owner || "").toLowerCase() === me);
     const enemy = !!(h && h.owner) && !mine;
-    const T = (myEcon && myEcon.troops) || 0, income = (myEcon && myEcon.income != null) ? myEcon.income : 10;
+    const T = (myEcon && myEcon.troops) || 0;
     let html = '<h3 class="modal-title">🏰 ' + name + '</h3>' +
       '<div class="op-pop">👥 Population <b>' + pop + '</b>' + (mine ? ' (yours)' : ' — added to your empire if you take it') + '</div>';
     if (h && h.owner) html += '<div class="op-def' + (mine ? ' op-mine' : '') + '">Held by ' + (h.avatar || "👦") + ' <b>' + dispName(h.owner) + '</b>' + techBadge(h.tech) + '<br>' + garrisonHTML(h.troops) + '</div>';
@@ -4576,7 +4573,7 @@
     html += '<div class="op-econ">⚔️ Your troops: <b>' + T + '</b></div><div id="opTerr"></div>';
     const ov = openModal(html);
     const terr = ov.querySelector("#opTerr");
-    const noTroops = '<p class="op-hint">⚠️ No troops right now. Your home base makes <b>' + income + '</b>/hr — come back later.</p>';
+    const noTroops = '<p class="op-hint">⚠️ No troops right now — win a battle or redeploy a garrison to free some up.</p>';
     if (!authToken()) { terr.innerHTML = '<p class="op-hint">🔒 Log in to raise an army and battle for territory.</p>'; return; }
     if (mine) {
       const oldTot = sumHp(h.troops), budget = T + oldTot;
@@ -4851,7 +4848,7 @@
     const mine = !!(h && h.owner && (h.owner || "").toLowerCase() === me);
     const title = a.title ? a.title.split("·").pop().trim() : a.id;
     const regionPop = popOf(a);
-    const T = (myEcon && myEcon.troops) || 0, income = (myEcon && myEcon.income != null) ? myEcon.income : 10;
+    const T = (myEcon && myEcon.troops) || 0;
     let html = '<h3 class="modal-title">🏰 ' + title + '</h3>' +
       '<div class="op-pop">👥 Region population <b>' + regionPop + '</b>' + (mine ? ' (in your empire)' : ' — added to your empire if you take it') + '</div>';
     if (h && h.owner) {
@@ -4875,7 +4872,7 @@
       buildingsPanel(terr, file, h, function () { closeModal(); openOutpost(a); });
     } else if (!h || !h.owner) {
       if (!passed) { terr.innerHTML = '<p class="op-hint">🚩 Tap Study lesson above — pass it (80%+) and your troops deploy here automatically.</p>'; }
-      else if (T <= 0) { terr.innerHTML = '<p class="op-hint">⚠️ No troops yet. Your home base makes <b>' + income + '</b>/hr — come back later.</p>'; }
+      else if (T <= 0) { terr.innerHTML = '<p class="op-hint">⚠️ No troops yet — win a battle or redeploy a garrison to free some up.</p>'; }
       else {
         terr.innerHTML = '<p class="op-hint">🚩 Occupy: send troops from your pool (max ' + T + '):</p>';
         deployPanel(terr, T, { label: "🚩 Occupy", onGo: g => {
@@ -4887,7 +4884,7 @@
       }
     } else {
       // 有主：先攻打（不需先過關）。打贏 → 該區恢復「無主」，之後走過關→佔領流程才真正佔領。
-      if (T <= 0) { terr.innerHTML = '<p class="op-hint">⚠️ No troops to attack with. Home base makes <b>' + income + '</b>/hr — wait and grow.</p>'; }
+      if (T <= 0) { terr.innerHTML = '<p class="op-hint">⚠️ No troops to attack with — redeploy a garrison or win a battle first.</p>'; }
       else {
         terr.innerHTML = '<p class="op-hint">⚔️ Attack! Pick 4 cards (any types, e.g. all archers) & split your troops (max ' + T + '):</p>';
         deployPanel(terr, T, { attack: true, foe: h.troops || [], label: "⚔️ Attack", onGo: squad => {
@@ -4923,7 +4920,7 @@
         (weak.length ? '<span class="adv-w">▼' + weak.map(f => troopIcon(f)).join("") + '</span>' : '');
     }
     const helpHtml = opts.help || ('<b>Counters</b> (beats →): 🔱→🐎 · 🐎→🏹 · 🏹→🔱🛡️ &nbsp; 🏹 <b>shoots first</b>.<br>' +
-      'More troops on a card = more damage. 🏠 Your home base makes new troops every day.');
+      'More troops on a card = more damage.');
     wrap.innerHTML = '<p class="dep-left">Troops left: <span class="dep-l">0</span> / ' + budget +
       ' <button type="button" class="dep-help-btn">❓ How</button></p>' +
       '<div class="dep-help" style="display:none">' + helpHtml + '</div>' +
@@ -4987,7 +4984,7 @@
       });
   }
 
-  // ===== 領地建設：兵工廠 + 科技（鍛造+攻 / 鎧甲+防），用該區金幣研發（需與 server 常數一致）=====
+  // ===== 領地建設：兵工廠 + 科技（鍛造+攻 / 鎧甲+防），用玩家的「統一金幣池」研發（需與 server 常數一致）=====
   const BUILD_COST = { armory: 50 };
   const TECH_COST = { atk: [80, 160, 280], def: [80, 160, 280] };
   const TECH_MAX = 3;
@@ -4998,7 +4995,8 @@
       .then(r => r.json().catch(() => ({})).then(j => ({ ok: r.ok, j: j })))
       .then(res => {
         if (!res.ok) { alert("Failed: " + ((res.j && res.j.error) || "unknown")); if (cb) cb(null); return; }
-        loadTerritory(() => { if (cb) cb(res.j); });
+        if (res.j && res.j.gold != null && myEcon) myEcon.gold = res.j.gold;   // 扣款後同步金幣
+        loadEconomy(() => loadTerritory(() => { if (cb) cb(res.j); }));         // 刷新金幣池 + 領地
       })
       .catch(() => { alert("Couldn't reach the territory server (is the container up?)."); if (cb) cb(null); });
   }
@@ -5006,10 +5004,12 @@
   function terrResearch(key, track, cb) { terrPost("/api/territory/research", { file: key, track: track }, cb); }
   // 你自己領地的「建設面板」：顯示金幣、蓋兵工廠、研發鍛造/鎧甲。onChange 讓外層重畫。
   function buildingsPanel(container, key, h, onChange) {
-    const gold = (h && h.gold) || 0, inc = (h && h.income != null) ? h.income : Math.round(((h && h.pop) || 0) * 0.10);
+    const gold = (myEcon && myEcon.gold) || 0;                                  // 玩家統一金幣池
+    const goldInc = (myEcon && myEcon.goldIncome != null) ? myEcon.goldIncome : 0;
+    const rInc = (h && h.income != null) ? h.income : Math.round(((h && h.pop) || 0) * 0.10);
     const builds = (h && h.buildings) || {}, tech = (h && h.tech) || {};
     const box = document.createElement("div"); box.className = "bld-box";
-    let html = '<div class="bld-gold">🪙 <b>' + gold + '</b> gold <span class="bld-inc">(+' + inc + '/hr)</span></div>';
+    let html = '<div class="bld-gold">🪙 <b>' + gold + '</b> gold <span class="bld-inc">(empire +' + goldInc + '/hr · this region +' + rInc + ')</span></div>';
     if (!builds.armory) {
       const cost = BUILD_COST.armory, can = gold >= cost;
       html += '<div class="bld-row"><span class="bld-nm">🏭 Armory</span>' +
