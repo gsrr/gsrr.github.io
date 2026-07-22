@@ -4927,7 +4927,7 @@
       rowsEl.innerHTML = "";
       slots.forEach((o, idx) => {
         const row = document.createElement("div"); row.className = "dep-row";
-        const picks = TROOPS.map(t => '<button class="dep-ty' + (t.id === o.type ? " sel" : "") + '" data-ty="' + t.id + '" title="' + t.zh + '">' + troopIcon(t.id) + '</button>').join("");
+        const picks = TROOPS.map(t => '<button class="dep-ty' + (t.id === o.type ? " sel" : "") + '" data-ty="' + t.id + '" title="' + t.en + '">' + troopIcon(t.id) + '</button>').join("");
         row.innerHTML = '<span class="dep-slot">' + (idx + 1) + '</span><span class="dep-type">' + picks + '</span>' +
           '<input type="range" class="dep-hp" min="0" max="' + budget + '" value="' + o.hp + '"><span class="dep-val">' + o.hp + '</span>' +
           '<span class="dep-adv">' + advText(o.type) + '</span>';
@@ -5099,14 +5099,14 @@
       const closeA = (a.type !== "archer" && d.type === "archer") ? 0.1 * engage : 0;
       const closeD = (d.type !== "archer" && a.type === "archer") ? 0.1 * engage : 0;
       // 防守方有先攻權：每次交手守方(d)先出手；攻方單位若當場被打死就無法還手。
-      let dmgAD = 0, dmgDA = 0, note = " 🛡️守方先攻";
+      let dmgAD = 0, dmgDA = 0, note = " 🛡️ Defender strikes first";
       dmgDA = troopHit(d, a, closeD + dForge, 0); a.hp -= dmgDA;    // 守方(d)出手：鍛造+攻
       const atkAlive = a.hp > 0;
       if (atkAlive) { dmgAD = troopHit(a, d, closeA, dArmor); d.hp -= dmgAD; }   // 攻方打守方：守方鎧甲+防
-      const closeNote = (closeA || closeD) ? " 逼近+" + Math.round((closeA || closeD) * 100) + "%" : "";
+      const closeNote = (closeA || closeD) ? " closing +" + Math.round((closeA || closeD) * 100) + "%" : "";
       logEl.innerHTML = troopIcon(a.type) + "×" + Math.round(preA) + " ⚔ " + troopIcon(d.type) + "×" + Math.round(preD) +
         " → −" + dmgAD + " / −" + dmgDA + note + closeNote +
-        (atkBonus(a.type, d.type) > 1 ? " ✨你剋制!" : (atkBonus(d.type, a.type) > 1 ? " ⚠️被剋制" : ""));
+        (atkBonus(a.type, d.type) > 1 ? " ✨ You counter!" : (atkBonus(d.type, a.type) > 1 ? " ⚠️ Countered!" : ""));
       // 跳出攻擊動畫視窗（守方 d 先攻、攻方 a 反擊），每個兵種 3 個畫面隨機挑一個
       atkPopup({ dType: d.type, aType: a.type, dmgDA: dmgDA, dmgAD: dmgAD, atkAlive: atkAlive }, () => {
         if (!ov.isConnected) return;
