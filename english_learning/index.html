@@ -468,6 +468,27 @@
     background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); color: #e8edf5; white-space: nowrap; }
   .go-owner .go-sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; box-shadow: 0 0 0 1px rgba(0,0,0,.25); }
   .go-owner b { color: #fff; }
+  /* 地圖事件回放：在真正的地圖上依時間重播占領/攻擊 */
+  .geo-replay-btn { display: block; margin: 10px auto 0; padding: 7px 18px; border-radius: 10px; font-size: 13px; font-weight: 700;
+    cursor: pointer; background: #1e293b; color: #e8edf5; border: 1px solid rgba(255,255,255,.16); }
+  .geo-replay-btn:hover { background: #334155; }
+  .geo-replay { margin-top: 10px; padding: 11px 13px; border-radius: 12px; background: rgba(15,23,42,.6); border: 1px solid rgba(255,255,255,.16); color: #e8edf5; }
+  .geo-replay .rp-top { display: flex; align-items: center; gap: 8px; }
+  .geo-replay .rp-cap { font-size: 14px; font-weight: 700; min-height: 20px; display: flex; align-items: center; gap: 7px; min-width: 0; flex: 1; }
+  .geo-replay .rp-cap .rp-tx { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .geo-replay .rp-clock { font-size: 12px; color: #aebacd; font-variant-numeric: tabular-nums; white-space: nowrap; flex: 0 0 auto; }
+  .geo-replay .rp-x { flex: 0 0 auto; width: 26px; height: 26px; border: none; border-radius: 999px; cursor: pointer;
+    background: rgba(255,255,255,.12); color: #e8edf5; font-size: 15px; line-height: 1; }
+  .geo-replay .rp-x:hover { background: rgba(255,255,255,.24); }
+  .geo-replay input[type=range] { width: 100%; margin: 9px 0 7px; accent-color: #38bdf8; }
+  .geo-replay .rp-ctrls { display: flex; align-items: center; gap: 8px; }
+  .geo-replay .rp-ctrls button { padding: 6px 13px; border: none; border-radius: 8px; cursor: pointer;
+    background: rgba(255,255,255,.12); color: #e8edf5; font-size: 15px; font-weight: 700; }
+  .geo-replay .rp-ctrls button:hover { background: rgba(255,255,255,.24); }
+  .geo-replay .rp-step { font-size: 12px; color: #aebacd; margin-left: auto; font-variant-numeric: tabular-nums; }
+  .geo-rp-neutral { fill: #94a3b8 !important; opacity: .5; }
+  .geo-region.geo-rp-active { stroke: #fff !important; stroke-width: 2.6 !important; animation: rpPulse 1s ease-in-out infinite; }
+  @keyframes rpPulse { 0%, 100% { filter: brightness(1.05) drop-shadow(0 0 3px #fff); } 50% { filter: brightness(1.32) drop-shadow(0 0 10px #fff); } }
   .geo-extra { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 12px; }
   .geo-extra-btn { padding: 6px 10px; border-radius: 10px; font-size: 13px; font-weight: 700;
     border: 2px solid rgba(255,255,255,.2); background: rgba(255,255,255,.08); color: #e8edf5; cursor: pointer; }
@@ -4317,6 +4338,106 @@
         bBtn.addEventListener("click", () => startLevelExam(i));
         bossWrap.appendChild(bBtn); wrap.appendChild(bossWrap);
       }
+      // ====== 地圖事件回放：把這張地圖上發生過的占領/攻擊，依時間在真正的地圖上重播 ======
+      const replayBtn = document.createElement("button");
+      replayBtn.className = "geo-replay-btn"; replayBtn.innerHTML = "🎬 Replay history";
+      wrap.appendChild(replayBtn);
+      let rp = null;                                   // 進行中的回放狀態（只允許一個）
+      function fmtWhen(ts) { const d = new Date((ts || 0) * 1000);
+        return d.toLocaleDateString() + " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
+      function eventRegion(ev) {                       // 把一筆事件對應到這張地圖的某一塊（先用 key，舊事件退回用名字）
+        if (ev.key) { const r = regionList.find(r => !r.drill && r.key === ev.key); if (r) return r; }
+        const nm = (ev.region || "").toLowerCase();
+        if (nm) { const r = regionList.find(r => !r.drill && (r.name || "").toLowerCase() === nm); if (r) return r; }
+        return null;
+      }
+      function buildSteps(events) {                    // 篩出屬於本圖、可定位的事件，依時間排序
+        const steps = [];
+        (events || []).forEach(ev => {
+          const r = eventRegion(ev); if (!r) return;
+          const type = ev.type || (/(stormed|storm)/i.test(ev.text || "") ? "attack" : "occupy");
+          if (type === "boss") return;
+          steps.push({ r: r, ts: ev.ts || 0, type: type,
+            owner: ev.owner || ev.user || "", victim: ev.victim || "", text: ev.text || "" });
+        });
+        steps.sort((a, b) => a.ts - b.ts);
+        return steps;
+      }
+      function rpResetMap() {                           // 回到「歷史開始前」：整張圖轉灰
+        regionList.forEach(r => { if (r.drill || !r.p) return;
+          r.p.classList.remove("geo-mine", "geo-open", "geo-rp-active");
+          r.p.style.removeProperty("fill"); r.p.classList.add("geo-rp-neutral"); });
+      }
+      function rpColorOf(s) { const n = (s.type === "defend" ? s.victim : s.owner) || ""; return rp.cmap[n.toLowerCase()]; }
+      function rpRenderUpTo(i) {                        // 重畫到第 i 步（含）：把 0..i 依序上色，最後一步發亮
+        rpResetMap();
+        for (let k = 0; k <= i; k++) { const s = rp.steps[k]; if (!s) continue;
+          const col = rpColorOf(s); s.r.p.classList.remove("geo-rp-neutral");
+          if (col) s.r.p.style.setProperty("fill", col, "important"); }
+        const cur = rp.steps[i];
+        if (cur) { cur.r.p.classList.remove("geo-rp-neutral"); cur.r.p.classList.add("geo-rp-active"); }
+      }
+      function rpShow(i) {
+        const s = rp.steps[i], col = s ? (rpColorOf(s) || "#64748b") : "#64748b";
+        rp.cap.innerHTML = s ? ('<span class="go-sw" style="background:' + col + '"></span><span class="rp-tx">' + escapeHtml(s.text) + '</span>') : "";
+        rp.clock.textContent = s ? fmtWhen(s.ts) : "";
+        rp.step.textContent = (i + 1) + " / " + rp.steps.length;
+        rp.slider.value = i;
+      }
+      function rpPause() { if (rp && rp.timer) { clearTimeout(rp.timer); rp.timer = null; } if (rp) rp.playing = false; if (rp) rp.playBtn.textContent = "▶"; }
+      function rpSchedule() { rp.timer = setTimeout(() => { if (rp && rp.playing) rpAdvance(); }, 1500 / rp.speed); }
+      function rpAdvance() {
+        if (rp.idx >= rp.steps.length - 1) { rpPause(); return; }   // 播到最後停住
+        rp.idx++; rpRenderUpTo(rp.idx); rpShow(rp.idx); rpSchedule();
+      }
+      function rpPlay() { if (!rp) return; rp.playing = true; rp.playBtn.textContent = "⏸";
+        if (rp.idx >= rp.steps.length - 1) rp.idx = -1;             // 播完再按 → 從頭
+        rpAdvance();
+      }
+      function rpGoto(i) { rpPause(); rp.idx = Math.max(0, Math.min(rp.steps.length - 1, i)); rpRenderUpTo(rp.idx); rpShow(rp.idx); }
+      function rpClose() {
+        rpPause();
+        regionList.forEach(r => { if (r.p) r.p.classList.remove("geo-rp-neutral", "geo-rp-active"); });
+        if (svg) svg.style.pointerEvents = "";
+        if (rp && rp.panel) rp.panel.remove();
+        rp = null; replayBtn.style.display = "";
+        colorize();                                    // 還原到目前真實佔領狀態
+      }
+      function runReplay(steps) {
+        const me = (authUser() || userName || "").toLowerCase();
+        const names = []; steps.forEach(s => { [s.owner, s.victim].forEach(n => { if (n && names.indexOf(n) < 0) names.push(n); }); });
+        const cmap = ownerColorMap(names, me);
+        const panel = document.createElement("div"); panel.className = "geo-replay";
+        panel.innerHTML =
+          '<div class="rp-top"><div class="rp-cap"></div><span class="rp-clock"></span><button class="rp-x" title="Close replay">✕</button></div>' +
+          '<input type="range" min="0" max="' + (steps.length - 1) + '" step="1" value="0">' +
+          '<div class="rp-ctrls"><button class="rp-first" title="Restart">⏮</button><button class="rp-play" title="Play/Pause">⏸</button>' +
+          '<button class="rp-next" title="Next">⏭</button><button class="rp-speed" title="Speed">1×</button>' +
+          '<span class="rp-step"></span></div>';
+        wrap.appendChild(panel); replayBtn.style.display = "none";
+        if (svg) svg.style.pointerEvents = "none";      // 回放時停用地區點擊，避免誤觸
+        rp = { steps: steps, cmap: cmap, idx: -1, speed: 1, playing: false, timer: null, panel: panel,
+          cap: panel.querySelector(".rp-cap"), clock: panel.querySelector(".rp-clock"),
+          step: panel.querySelector(".rp-step"), slider: panel.querySelector("input"),
+          playBtn: panel.querySelector(".rp-play") };
+        panel.querySelector(".rp-x").addEventListener("click", rpClose);
+        panel.querySelector(".rp-first").addEventListener("click", () => rpGoto(0));
+        panel.querySelector(".rp-next").addEventListener("click", () => rpGoto(rp.idx + 1));
+        rp.playBtn.addEventListener("click", () => { if (rp.playing) rpPause(); else rpPlay(); });
+        const spBtn = panel.querySelector(".rp-speed");
+        spBtn.addEventListener("click", () => { rp.speed = rp.speed >= 4 ? 1 : rp.speed * 2; spBtn.textContent = rp.speed + "×"; });
+        rp.slider.addEventListener("input", () => rpGoto(parseInt(rp.slider.value, 10) || 0));
+        rpResetMap(); rpPlay();                          // 一打開就自動從頭播
+      }
+      replayBtn.addEventListener("click", () => {
+        replayBtn.disabled = true;
+        fetch("/api/events").then(r => r.ok ? r.json() : null).then(j => {
+          replayBtn.disabled = false;
+          const steps = buildSteps((j && j.events) || []);
+          if (!steps.length) { replayBtn.innerHTML = "🎬 No history on this map yet"; setTimeout(() => replayBtn.innerHTML = "🎬 Replay history", 1800); return; }
+          runReplay(steps);
+        }).catch(() => { replayBtn.disabled = false; });
+      });
       function colorize() {
         const me = (authUser() || userName || "").toLowerCase(); let mine = 0;
         // 先蒐集這張地圖上所有擁有者 → 配色（同一張地圖上人人不同色）
@@ -4399,7 +4520,7 @@
         const A = sumHp(squad); myEcon.troops = Math.max(0, T - A); closeModal();
         runBattle(squad, h.troops || [], dispName(h.owner), function (win, survivors) {
           myEcon.troops += sumHp(survivors);                     // 生還者一律撤回兵力池（尚未佔領）
-          if (win) { releaseTerritory(key, pop, function () {}); logEvent("attack", { region: name, target: h.owner }); }   // 打贏 → 清成無主 + 記事件
+          if (win) { releaseTerritory(key, pop, function () {}); logEvent("attack", { region: name, target: h.owner, key: key }); }   // 打贏 → 清成無主 + 記事件
           saveEconomy(function () { renderEmpire(); refreshMap(); });
         }, h.tech);
       } });
@@ -4411,7 +4532,7 @@
       if (T <= 0) { terr.innerHTML = noTroops; return; }
       terr.innerHTML = '<p class="op-hint">✅ Challenge cleared! 🚩 Occupy — send troops (max ' + T + '):</p>';
       // 佔領不再把該區人口灌進家鄉兵力池；該區人口改為每小時自動補進「該區駐軍」(server region_grow)
-      deployPanel(terr, T, { label: "🚩 Occupy", onGo: g => { myEcon.troops = Math.max(0, T - sumHp(g)); pending = null; claimTroops(key, g, pop, function () {}); logEvent("occupy", { region: name }); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); } });
+      deployPanel(terr, T, { label: "🚩 Occupy", onGo: g => { myEcon.troops = Math.max(0, T - sumHp(g)); pending = null; claimTroops(key, g, pop, function () {}); logEvent("occupy", { region: name, key: key }); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); } });
       return;
     }
     const ch = article;   // 這個地區固定綁定的課
@@ -4687,7 +4808,7 @@
         deployPanel(terr, T, { label: "🚩 Occupy", onGo: g => {
           // 佔領不再灌人口回家鄉；該區人口每小時自動補進「該區駐軍」(server region_grow)
           myEcon.troops = Math.max(0, T - sumHp(g));
-          claimTroops(file, g, regionPop, function () {}); logEvent("occupy", { region: title });
+          claimTroops(file, g, regionPop, function () {}); logEvent("occupy", { region: title, key: file });
           saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); });
         } });
       }
@@ -4700,7 +4821,7 @@
           const A = sumHp(squad); myEcon.troops = Math.max(0, T - A); closeModal();
           runBattle(squad, h.troops || [], dispName(h.owner), function (win, survivors) {
             myEcon.troops += sumHp(survivors);                          // 生還者一律撤回兵力池（尚未佔領）
-            if (win) { releaseTerritory(file, regionPop, function () {}); logEvent("attack", { region: title, target: h.owner }); }  // 打贏 → 清成無主 + 記事件
+            if (win) { releaseTerritory(file, regionPop, function () {}); logEvent("attack", { region: title, target: h.owner, key: file }); }  // 打贏 → 清成無主 + 記事件
             saveEconomy(function () { renderEmpire(); refreshMap(); });
           }, h.tech);
         } });
