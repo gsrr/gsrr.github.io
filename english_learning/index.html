@@ -613,9 +613,13 @@
   .emp-note { font-size: 12px; color: #475569; text-align: center; margin-bottom: 10px; }
   .emp-list { display: flex; flex-direction: column; gap: 6px; max-height: 42vh; overflow-y: auto; margin-bottom: 10px; }
   .emp-row { border: 1px solid #e2e8f0; border-radius: 10px; padding: 7px 10px; }
+  .emp-row-btn { display: block; width: 100%; text-align: left; background: #fff; cursor: pointer; transition: background .12s, border-color .12s; }
+  .emp-row-btn:hover { background: #eff6ff; border-color: #93c5fd; }
+  .emp-row-btn:active { transform: scale(0.99); }
   .emp-rg { font-size: 13px; color: #1e293b; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .emp-pop { color: #7c3aed; font-weight: 700; white-space: nowrap; }
-  .emp-gar { margin-top: 3px; }
+  .emp-gar { margin-top: 3px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .emp-manage { font-size: 12px; font-weight: 800; color: #2563eb; white-space: nowrap; }
   .bt-side { display: flex; gap: 6px; justify-content: center; margin: 6px 0; }
   .bt-unit { width: 56px; text-align: center; padding: 4px 2px; border-radius: 10px; }
   .bt-unit.cur { background: #fef9c3; outline: 2px solid #f59e0b; }
@@ -4164,14 +4168,32 @@
       html += '<p class="op-hint" style="text-align:center">No regions yet. Pass a lesson, then occupy its region on the map!</p>';
     } else {
       mine.sort((a, b) => (b.h.pop || 0) - (a.h.pop || 0));
-      html += '<div class="stats-h">🚩 Regions (' + mine.length + ')</div><div class="emp-list">';
+      html += '<div class="stats-h">🚩 Regions (' + mine.length + ') — tap one to manage</div><div class="emp-list">';
       mine.forEach(m => {
-        html += '<div class="emp-row"><div class="emp-rg"><b>' + regionDisplayName(m.file) + '</b><span class="emp-pop">👥 ' + (m.h.pop || 0) + '</span></div>' +
-          '<div class="emp-gar">' + garrisonHTML(m.h.troops) + '</div></div>';
+        const i = levelIdxForKey(m.file), gold = (m.h.gold != null) ? m.h.gold : 0;
+        html += '<button class="emp-row emp-row-btn" data-key="' + encodeURIComponent(m.file) + '" data-i="' + i + '" data-pop="' + (m.h.pop || 0) + '">' +
+          '<div class="emp-rg"><b>' + regionDisplayName(m.file) + '</b>' + techBadge(m.h.tech) +
+          '<span class="emp-pop">👥 ' + (m.h.pop || 0) + ' · 🪙 ' + gold + '</span></div>' +
+          '<div class="emp-gar">' + garrisonHTML(m.h.troops) + '<span class="emp-manage">Manage ▸</span></div></button>';
       });
       html += '</div>';
     }
-    openModal(html);
+    const ov = openModal(html);
+    ov.querySelectorAll(".emp-row-btn").forEach(btn => btn.addEventListener("click", () => {
+      const key = decodeURIComponent(btn.dataset.key);
+      openRegion(key, regionDisplayName(key), parseInt(btn.dataset.pop, 10) || 0, parseInt(btn.dataset.i, 10) || selLevelIdx, null);
+    }));
+  }
+  // 由領地 key(檔名#id) 找出它屬於哪個等級的地圖(給 openRegion / refreshMap 用)
+  function levelIdxForKey(key) {
+    const file = String(key).split("#")[0];
+    const levels = manifest ? manifest.levels : [];
+    for (let k = 0; k < levels.length; k++) {
+      const s = GEO_MAPS[levels[k].id]; if (!s) continue;
+      if (s.file === file) return k;
+      if (s.drill && Object.keys(s.drill).some(d => s.drill[d].file === file)) return k;
+    }
+    return selLevelIdx;
   }
   // 各等級對應一張真實地理地圖（沒列到的等級 fallback 用蜿蜒小徑地圖）
   // drill: { 地區id: 子地圖 } → 該地區變「容器」，點進去看子地圖（例：台北市 → 12 行政區）
