@@ -580,6 +580,26 @@
   .bld-row.bld-sub .bld-nm { font-weight: 600; color: #475569; }
   .cs-inp { width: 68px; font-size: 13px; padding: 3px 5px; border: 1px solid #cbd5e1; border-radius: 6px; }
   .tech-badge { font-size: 13px; font-weight: 800; color: #b45309; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 1px 6px; white-space: nowrap; }
+  /* 世紀帝國式建築圖示網格：點圖示 → 開該建築的科技/徵兵視窗 */
+  .bld-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin-top: 6px; }
+  .bld-card { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 6px 8px; border: 2px solid #e2e8f0; border-radius: 12px; background: #f8fafc; cursor: pointer; text-align: center; transition: transform .08s, box-shadow .08s, border-color .08s; }
+  .bld-card:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.08); border-color: #f59e0b; }
+  .bld-card:disabled { opacity: .45; cursor: not-allowed; }
+  .bld-card.built { border-color: #86efac; background: #f0fdf4; }
+  .bld-card.locked { border-style: dashed; background: #fff; }
+  .bld-ico { font-size: 34px; line-height: 1; }
+  .bld-ico svg { width: 34px; height: 34px; }
+  .bld-nm2 { font-size: 12px; font-weight: 800; color: #1e293b; }
+  .bld-chk { color: #16a34a; }
+  .bld-sub2 { font-size: 11px; font-weight: 700; color: #b45309; display: flex; align-items: center; gap: 2px; flex-wrap: wrap; justify-content: center; }
+  .bld-sub2 svg { width: 15px; height: 15px; }
+  /* 徵兵/研發視窗內的單位卡 */
+  .unit-card { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; margin-bottom: 8px; }
+  .unit-ico { font-size: 26px; flex: 0 0 auto; } .unit-ico svg { width: 28px; height: 28px; }
+  .unit-info { flex: 1 1 auto; min-width: 0; }
+  .unit-nm { font-size: 14px; font-weight: 800; color: #1e293b; }
+  .unit-stat { font-size: 12px; font-weight: 700; color: #475569; }
+  .unit-stat .adv-s { color: #16a34a; } .unit-stat .adv-w { color: #dc2626; }
   /* 該領地各兵種實際數值表 */
   .bld-stats-h { margin-top: 10px; font-size: 13px; font-weight: 800; color: #334155; }
   .bld-stats-h small { font-weight: 700; color: #b45309; }
@@ -4145,7 +4165,7 @@
     }
     if (!authToken()) { bar.style.display = "none"; return; }
     const e = myEcon || { population: 0, troops: 0, gold: 0, goldIncome: 0 };
-    bar.innerHTML = '🏠 <b>Home base</b> · 👥 Pop <b>' + e.population + '</b> · ⚔️ Troops <b>' + e.troops + '</b> · 🪙 Gold <b>' + (e.gold || 0) + '</b> <span class="emp-inc">(+' + (e.goldIncome || 0) + '/hr)</span> <span class="emp-more">details ▸</span>';
+    bar.innerHTML = '🏠 <b>Home base</b> · 👥 Pop <b>' + e.population + '</b> <span class="emp-inc">(+10%/hr)</span> · ⚔️ Troops <b>' + e.troops + '</b> · 🪙 Gold <b>' + (e.gold || 0) + '</b> <span class="emp-inc">(+' + (e.goldIncome || 0) + '/hr)</span> <span class="emp-more">details ▸</span>';
     bar.style.display = "block"; bar.style.cursor = "pointer";
     bar.onclick = openEmpire;
   }
@@ -4175,7 +4195,8 @@
       '<div><span>🪙</span><b>' + gold + '</b><small>gold (+' + goldInc + '/hr)</small></div>' +
       '</div>' +
       '<div class="emp-note">🏠 Home base is safe — lose a battle and your survivors retreat here.<br>' +
-      '🪙 Every region remits gold to you (10% of its population/hr) — spend it on buildings & research.</div>' +
+      '👥 Population grows +10%/hr at home and in every region. 🪙 Each region remits gold (10% of its people/hr).<br>' +
+      '🎖️ Recruiting turns people into troops (1 person = 1 soldier), so it shrinks that place\'s population.</div>' +
       '<button class="emp-row emp-row-btn" id="empHome"><div class="emp-rg"><b>🏠 Home Base</b>' + techBadge(e.tech) +
       '<span class="emp-pop">👥 ' + e.population + ' · ⚔️ ' + e.troops + '</span></div>' +
       '<div class="emp-gar"><span class="op-card" style="color:#64748b">Build · recruit into your army · research</span><span class="emp-manage">Manage ▸</span></div></button>';
@@ -4206,8 +4227,8 @@
     if (!authToken()) return;
     const e = myEcon || {};
     const html = '<h3 class="modal-title">🏠 Home Base</h3>' +
-      '<div class="op-def op-mine">👥 Population <b>' + (e.population || 0) + '</b> · ⚔️ Free troops <b>' + (e.troops || 0) + '</b><br>' +
-      '<span class="op-card" style="color:#64748b">Recruit here to grow your army pool. Research buffs the troops you attack with.</span></div>' +
+      '<div class="op-def op-mine">👥 Population <b>' + (e.population || 0) + '</b> <small>(+10%/hr)</small> · ⚔️ Free troops <b>' + (e.troops || 0) + '</b><br>' +
+      '<span class="op-card" style="color:#64748b">Recruiting turns people into troops (locked to type). Research buffs the troops you attack with.</span></div>' +
       '<div id="homeTerr"></div>';
     const ov = openModal(html);
     const host = ov.querySelector("#homeTerr");
@@ -4600,8 +4621,9 @@
     const mine = !!(h && h.owner && (h.owner || "").toLowerCase() === me);
     const enemy = !!(h && h.owner) && !mine;
     const T = (myEcon && myEcon.troops) || 0;
+    const livePop = (mine && h && h.pop != null) ? h.pop : pop;   // 已佔領：顯示伺服器最新人口(徵兵/成長會變)
     let html = '<h3 class="modal-title">🏰 ' + name + '</h3>' +
-      '<div class="op-pop">👥 Population <b>' + pop + '</b>' + (mine ? ' (yours)' : ' — added to your empire if you take it') + '</div>';
+      '<div class="op-pop">👥 Population <b>' + livePop + '</b>' + (mine ? ' (yours · +10%/hr, recruiting draws from it)' : ' — added to your empire if you take it') + '</div>';
     if (h && h.owner) html += '<div class="op-def' + (mine ? ' op-mine' : '') + '">Held by ' + (h.avatar || "👦") + ' <b>' + dispName(h.owner) + '</b>' + techBadge(h.tech) + '<br>' + (mine ? garrisonHTML(h.troops) : '<span class="op-card">🛡️ Garrison unknown (enemy)</span>') + '</div>';
     else html += '<div class="op-def">🏳️ Unclaimed region</div>';
     html += '<div class="op-econ">⚔️ Your troops: <b>' + T + '</b></div><div id="opTerr"></div>';
@@ -4886,8 +4908,9 @@
     const title = a.title ? a.title.split("·").pop().trim() : a.id;
     const regionPop = popOf(a);
     const T = (myEcon && myEcon.troops) || 0;
+    const shownPop = (mine && h && h.pop != null) ? h.pop : regionPop;   // 已佔領顯示伺服器最新人口
     let html = '<h3 class="modal-title">🏰 ' + title + '</h3>' +
-      '<div class="op-pop">👥 Region population <b>' + regionPop + '</b>' + (mine ? ' (in your empire)' : ' — added to your empire if you take it') + '</div>';
+      '<div class="op-pop">👥 Region population <b>' + shownPop + '</b>' + (mine ? ' (in your empire · +10%/hr, recruiting draws from it)' : ' — added to your empire if you take it') + '</div>';
     if (h && h.owner) {
       html += '<div class="op-def' + (mine ? ' op-mine' : '') + '">Held by ' + (h.avatar || "👦") + ' <b>' + dispName(h.owner) + '</b>' + techBadge(h.tech) + '<br>' +
         (mine ? garrisonHTML(h.troops) : '<span class="op-card">🛡️ Garrison unknown (enemy)</span>') + '</div>';
@@ -5059,91 +5082,142 @@
     fetch("/api/territory/attack-result?token=" + encodeURIComponent(t), { method: "POST", body: JSON.stringify({ file: key, win: !!win }) })
       .then(r => r.ok ? r.json() : null).then(j => { if (j && j.gold != null && myEcon) { myEcon.gold = j.gold; renderEmpire(); } }).catch(() => {});
   }
-  // 你自己領地的「建設面板」：金幣、兵工廠(科技)、生產建築(招募)、以及該區兵種實際數值。onChange 讓外層重畫。
+  // 世紀帝國式建築目錄：每棟建築一個圖示；tech=兵工廠(研發)、prod=生產建築(徵兵，兵種鎖定)
+  const BUILDINGS = [
+    { id: "armory",   icon: "🏭", name: "Armory",        kind: "tech" },
+    { id: "barracks", icon: "🏛️", name: "Barracks",      kind: "prod", units: ["inf", "spear"] },
+    { id: "archery",  icon: "🎯", name: "Archery Range", kind: "prod", units: ["archer"] },
+    { id: "stable",   icon: "🐴", name: "Stable",        kind: "prod", units: ["cav"] }
+  ];
+  const fmtN = n => Number.isInteger(n) ? n : Math.round(n * 10) / 10;
+  // 取得某領地/家鄉「當前」的管理狀態（讀快取；terrPost 每次動作後都會刷新 myEcon/territory）
+  function manageState(key) {
+    const e = myEcon || {};
+    const gold = e.gold || 0, goldInc = (e.goldIncome != null) ? e.goldIncome : 0;
+    if (key === HOME_KEY) {
+      return { home: true, gold: gold, goldInc: goldInc, pop: e.population || 0,
+        h: { buildings: e.buildings || {}, tech: e.tech || {}, pop: e.population || 0 },
+        conscript: !!e.conscript, conscriptBudget: e.conscriptBudget || 0 };
+    }
+    const h = (territory && territory.holders && territory.holders[key]) || { buildings: {}, tech: {}, pop: 0 };
+    return { home: false, gold: gold, goldInc: goldInc, pop: h.pop || 0, h: h,
+      conscript: !!h.conscript, conscriptBudget: h.conscriptBudget || 0 };
+  }
+  function producibleUnits(builds) {
+    let u = [];
+    if (builds.barracks) u = u.concat(["inf", "spear"]);
+    if (builds.archery) u.push("archer");
+    if (builds.stable) u.push("cav");
+    return u;
+  }
+  // 你自己領地/家鄉的「建設面板」：世紀帝國式建築圖示網格。點圖示 → 開該建築的科技/徵兵視窗。onChange = 回到管理視窗。
   function buildingsPanel(container, key, h, onChange) {
-    const home = key === HOME_KEY;
-    const gold = (myEcon && myEcon.gold) || 0;                                  // 玩家統一金幣池
-    const goldInc = (myEcon && myEcon.goldIncome != null) ? myEcon.goldIncome : 0;
-    const rInc = (h && h.income != null) ? h.income : Math.round(((h && h.pop) || 0) * 0.10);
-    const builds = (h && h.buildings) || {}, tech = (h && h.tech) || {};
+    const st = manageState(key);
+    const builds = st.h.buildings || {}, tech = st.h.tech || {};
     const box = document.createElement("div"); box.className = "bld-box";
-    const buildRow = (nm, b) => { const cost = BUILD_COST[b], can = gold >= cost;
-      return '<div class="bld-row"><span class="bld-nm">' + nm + '</span><button class="bld-btn" data-build="' + b + '" ' + (can ? "" : "disabled") + '>Build · ' + cost + '🪙</button></div>'; };
-    let html = '<div class="bld-gold">🪙 <b>' + gold + '</b> gold <span class="bld-inc">(empire +' + goldInc + '/hr' + (home ? '' : ' · this region +' + rInc) + ')</span></div>';
-    // 兵工廠 + 科技
-    if (!builds.armory) {
-      html += buildRow("🏭 Armory", "armory") +
-        '<p class="op-hint">Armory unlocks Forging (+attack) & Armor (+armor)' + (home ? ' for your attacking army.' : " for this region's garrison.") + '</p>';
-    } else {
-      html += '<div class="bld-row"><span class="bld-nm">🏭 Armory</span><span class="bld-done">✓ built</span></div>';
-      [["atk", "⚔️ Forging"], ["def", "🛡️ Armor"]].forEach(([tk, label]) => {
-        const lvl = tech[tk] || 0, maxed = lvl >= TECH_MAX;
-        const cost = maxed ? 0 : TECH_COST[tk][lvl], can = !maxed && gold >= cost;
-        html += '<div class="bld-row"><span class="bld-nm">' + label + ' <b>Lv ' + lvl + '/' + TECH_MAX + '</b> <small>(+' + (lvl * 10) + '%)</small></span>' +
-          (maxed ? '<span class="bld-done">MAX</span>'
-                 : '<button class="bld-btn" data-track="' + tk + '" ' + (can ? "" : "disabled") + '>Research · ' + cost + '🪙</button>') +
-          '</div>';
-      });
-    }
-    // 生產建築：軍營(步/槍)、射箭場(弓)、馬廄(騎) → 招募加進該區守軍(家鄉→自由兵力池)
-    html += '<div class="bld-stats-h">🏗️ Production — recruit into ' + (home ? 'your troop pool' : 'this garrison') + '</div>';
-    [["barracks", "🏛️ Barracks", ["inf", "spear"]], ["archery", "🎯 Archery Range", ["archer"]], ["stable", "🐴 Stable", ["cav"]]].forEach(function (p) {
-      const b = p[0], nm = p[1], units = p[2];
-      if (!builds[b]) { html += buildRow(nm, b); return; }
-      html += '<div class="bld-row"><span class="bld-nm">' + nm + '</span><span class="bld-done">✓ built</span></div>';
-      units.forEach(u => {
-        const cost = RECRUIT_BATCH * UNIT_COST[u], can = gold >= cost;
-        html += '<div class="bld-row bld-sub"><span class="bld-nm">' + troopIcon(u) + ' ' + TROOP[u].en + '</span>' +
-          '<button class="bld-btn" data-unit="' + u + '" ' + (can ? "" : "disabled") + '>Recruit ×' + RECRUIT_BATCH + ' · ' + cost + '🪙</button></div>';
-      });
+    let html = '<div class="bld-gold">🪙 <b>' + st.gold + '</b> gold <span class="bld-inc">(+' + st.goldInc + '/hr)</span>' +
+      ' &nbsp; 👥 <b>' + st.pop + '</b> people <span class="bld-inc">(+10%/hr)</span></div>' +
+      '<p class="op-hint">Tap a building. Recruiting turns 👥 people into troops (1 person = 1 soldier) — each type is locked, a knight stays a knight.</p>' +
+      '<div class="bld-grid">';
+    BUILDINGS.forEach(function (b) {
+      const built = !!builds[b.id], cost = BUILD_COST[b.id];
+      let sub;
+      if (!built) sub = 'Build · ' + cost + '🪙';
+      else if (b.kind === "tech") sub = '⚔️Lv' + (tech.atk || 0) + ' 🛡️Lv' + (tech.def || 0);
+      else sub = b.units.map(u => troopIcon(u)).join("");
+      const dis = (!built && st.gold < cost) ? " disabled" : "";
+      html += '<button class="bld-card ' + (built ? "built" : "locked") + '" data-b="' + b.id + '"' + dis + '>' +
+        '<span class="bld-ico">' + b.icon + '</span>' +
+        '<span class="bld-nm2">' + b.name + (built ? ' <span class="bld-chk">✓</span>' : '') + '</span>' +
+        '<span class="bld-sub2">' + sub + '</span></button>';
     });
-    // 徵兵制：每小時自動花預算金幣買兵(平均分配到已蓋的生產兵種)。需先蓋至少一個生產建築。
-    const builtUnits = [];
-    if (builds.barracks) builtUnits.push("inf", "spear");
-    if (builds.archery) builtUnits.push("archer");
-    if (builds.stable) builtUnits.push("cav");
-    if (builtUnits.length) {
-      const csOn = home ? !!(myEcon && myEcon.conscript) : !!(h && h.conscript);
-      const csBud = home ? ((myEcon && myEcon.conscriptBudget) || 0) : ((h && h.conscriptBudget) || 0);
-      html += '<div class="bld-stats-h">🎖️ Conscription — auto-recruit each hour</div>';
-      html += '<div class="bld-row"><label class="bld-nm"><input type="checkbox" id="csOn"' + (csOn ? " checked" : "") + '> Enabled</label>' +
-        '<span>💰 <input type="number" id="csBud" value="' + csBud + '" min="0" step="10" class="cs-inp"> 🪙/hr <button class="bld-btn" id="csSave">Save</button></span></div>';
-      html += '<p class="op-hint">Each hour spends up to the budget from your gold pool, split evenly across ' +
-        builtUnits.map(u => troopIcon(u)).join("") + ' (into ' + (home ? "your troop pool" : "this garrison") + ").</p>";
-    }
-    // 該領地每個兵種的「實際數值」：攻/防 = 基礎 × (1 + 該區科技加成)，另標各兵種剋制對象
-    const fmt = n => Number.isInteger(n) ? n : Math.round(n * 10) / 10;
-    const aMul = 1 + techAtk(tech), dMul = 1 + techDef(tech);
-    html += '<div class="bld-stats-h">📊 ' + (home ? 'Your attacking army stats' : 'Troop stats in this region') +
-      ((tech.atk || tech.def) ? ' <small>(⚔️+' + (tech.atk || 0) * 10 + '% · 🛡️+' + (tech.def || 0) * 10 + '%)</small>' : '') + '</div>';
-    html += '<div class="bs-tbl">';
-    TROOPS.forEach(t => {
-      const atkE = fmt(t.atk * aMul), defE = fmt(t.def * dMul);
-      const strong = TROOPS.filter(f => atkBonus(t.id, f.id) > 1).map(f => troopIcon(f.id)).join("");
-      const weak = TROOPS.filter(f => atkBonus(f.id, t.id) > 1).map(f => troopIcon(f.id)).join("");
-      html += '<div class="bs-row"><span class="bs-ty">' + troopIcon(t.id) + ' ' + t.en + '</span>' +
-        '<span class="bs-n">⚔️ ' + atkE + '</span><span class="bs-n">🛡️ ' + defE + '</span>' +
-        '<span class="bs-adv">' + (strong ? '<span class="adv-s">▲' + strong + '</span>' : '') +
-        (weak ? '<span class="adv-w">▼' + weak + '</span>' : '') + '</span></div>';
-    });
+    // 徵兵制卡（自動每小時徵兵）——蓋了至少一棟生產建築才出現
+    const canConscript = producibleUnits(builds).length > 0;
+    html += '<button class="bld-card ' + (canConscript ? (st.conscript ? "built" : "") : "locked") + '" data-b="__conscript"' +
+      (canConscript ? "" : " disabled") + '>' +
+      '<span class="bld-ico">🎖️</span><span class="bld-nm2">Conscription' + (st.conscript ? ' <span class="bld-chk">ON</span>' : '') + '</span>' +
+      '<span class="bld-sub2">' + (canConscript ? (st.conscript ? st.conscriptBudget + '🪙/hr' : 'auto-recruit') : 'need a building') + '</span></button>';
     html += '</div>';
     box.innerHTML = html;
-    box.querySelectorAll('[data-build]').forEach(btn => btn.addEventListener("click", () => {
-      btn.disabled = true; terrBuild(key, btn.dataset.build, () => onChange && onChange());
-    }));
-    box.querySelectorAll('[data-track]').forEach(btn => btn.addEventListener("click", () => {
-      btn.disabled = true; terrResearch(key, btn.dataset.track, () => onChange && onChange());
-    }));
-    box.querySelectorAll('[data-unit]').forEach(btn => btn.addEventListener("click", () => {
-      btn.disabled = true; terrRecruit(key, btn.dataset.unit, RECRUIT_BATCH, () => onChange && onChange());
-    }));
-    const csSave = box.querySelector("#csSave");
-    if (csSave) csSave.addEventListener("click", () => {
-      const on = box.querySelector("#csOn").checked;
-      const budget = Math.max(0, parseInt(box.querySelector("#csBud").value, 10) || 0);
-      csSave.disabled = true; terrConscript(key, on, budget, () => onChange && onChange());
+    box.querySelectorAll('[data-b]').forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const id = btn.dataset.b;
+        if (id === "__conscript") { openConscriptDetail(key, onChange); return; }
+        if (!builds[id]) { btn.disabled = true; terrBuild(key, id, () => onChange && onChange()); }
+        else openBuildingDetail(key, id, onChange);
+      });
     });
     container.appendChild(box);
+  }
+  // 兵工廠：研發鍛造(+攻)/鎧甲(+防)。生產建築：徵兵(每兵種一張卡，兵種鎖定)。back → 回到管理視窗。
+  function openBuildingDetail(key, buildingId, reopenManage) {
+    const b = BUILDINGS.find(x => x.id === buildingId);
+    const st = manageState(key);
+    const builds = st.h.buildings || {}, tech = st.h.tech || {};
+    if (!b || !builds[buildingId]) { if (reopenManage) reopenManage(); return; }
+    const reopen = () => openBuildingDetail(key, buildingId, reopenManage);
+    let html = '<h3 class="modal-title">' + b.icon + ' ' + b.name + '</h3>' +
+      '<div class="bld-gold">🪙 <b>' + st.gold + '</b> gold &nbsp; 👥 <b>' + st.pop + '</b> people</div>';
+    if (b.kind === "tech") {
+      html += '<p class="op-hint">Research buffs ' + (st.home ? 'the army you attack with' : "this region's garrison") + ' (+10% per level).</p>';
+      [["atk", "⚔️ Forging", "attack"], ["def", "🛡️ Armor", "armor"]].forEach(([tk, label]) => {
+        const lvl = tech[tk] || 0, maxed = lvl >= TECH_MAX;
+        const cost = maxed ? 0 : TECH_COST[tk][lvl], can = !maxed && st.gold >= cost;
+        html += '<div class="bld-row"><span class="bld-nm">' + label + ' <b>Lv ' + lvl + '/' + TECH_MAX + '</b> <small>(+' + (lvl * 10) + '% ' + tk + ')</small></span>' +
+          (maxed ? '<span class="bld-done">MAX</span>'
+                 : '<button class="bld-btn" data-track="' + tk + '"' + (can ? "" : " disabled") + '>Research · ' + cost + '🪙</button>') + '</div>';
+      });
+    } else {
+      const target = st.home ? "your troop pool" : "this garrison";
+      html += '<p class="op-hint">Recruit into ' + target + ' — costs 🪙 gold + 👥 people. Troops are locked to their type.</p>';
+      const aMul = 1 + techAtk(tech), dMul = 1 + techDef(tech);
+      b.units.forEach(u => {
+        const cost = RECRUIT_BATCH * UNIT_COST[u];
+        const atkE = fmtN(TROOP[u].atk * aMul), defE = fmtN(TROOP[u].def * dMul);
+        const strong = TROOPS.filter(f => atkBonus(u, f.id) > 1).map(f => troopIcon(f.id)).join("");
+        const weak = TROOPS.filter(f => atkBonus(f.id, u) > 1).map(f => troopIcon(f.id)).join("");
+        const can = st.gold >= cost && st.pop >= RECRUIT_BATCH;
+        html += '<div class="unit-card"><span class="unit-ico">' + troopIcon(u) + '</span>' +
+          '<span class="unit-info"><span class="unit-nm">' + TROOP[u].en + '</span>' +
+          '<span class="unit-stat">⚔️' + atkE + ' 🛡️' + defE +
+          (strong ? ' <span class="adv-s">▲' + strong + '</span>' : '') +
+          (weak ? ' <span class="adv-w">▼' + weak + '</span>' : '') + '</span></span>' +
+          '<button class="bld-btn" data-unit="' + u + '"' + (can ? "" : " disabled") + '>Recruit ×' + RECRUIT_BATCH + '<br>' + cost + '🪙 · ' + RECRUIT_BATCH + '👥</button></div>';
+      });
+      if (st.pop < RECRUIT_BATCH)
+        html += '<p class="op-hint">⚠️ Not enough people to recruit a batch of ' + RECRUIT_BATCH + ' (have ' + st.pop + '). Population grows +10%/hr.</p>';
+    }
+    html += '<div class="op-btns"><button id="bdBack" class="back-btn">◀ Back</button></div>';
+    const ov = openModal(html);
+    ov.querySelector("#bdBack").addEventListener("click", () => { if (reopenManage) reopenManage(); });
+    ov.querySelectorAll('[data-track]').forEach(btn => btn.addEventListener("click", () => {
+      btn.disabled = true; terrResearch(key, btn.dataset.track, reopen);
+    }));
+    ov.querySelectorAll('[data-unit]').forEach(btn => btn.addEventListener("click", () => {
+      btn.disabled = true; terrRecruit(key, btn.dataset.unit, RECRUIT_BATCH, reopen);
+    }));
+  }
+  // 徵兵制視窗：開/關 + 每小時金幣預算。每小時從金幣池+人口自動徵兵(平均分到已蓋兵種)。
+  function openConscriptDetail(key, reopenManage) {
+    const st = manageState(key);
+    const units = producibleUnits(st.h.buildings || {});
+    if (!units.length) { if (reopenManage) reopenManage(); return; }
+    const target = st.home ? "your troop pool" : "this garrison";
+    let html = '<h3 class="modal-title">🎖️ Conscription</h3>' +
+      '<div class="bld-gold">🪙 <b>' + st.gold + '</b> gold &nbsp; 👥 <b>' + st.pop + '</b> people</div>' +
+      '<p class="op-hint">Each hour, auto-recruit into ' + target + ' — spends up to the budget from your gold pool and draws people, split evenly across ' +
+      units.map(u => troopIcon(u)).join(" ") + '. If gold or people fall short that hour, it skips.</p>' +
+      '<div class="bld-row"><label class="bld-nm"><input type="checkbox" id="csOn"' + (st.conscript ? " checked" : "") + '> Enabled</label>' +
+      '<span>💰 <input type="number" id="csBud" value="' + st.conscriptBudget + '" min="0" step="10" class="cs-inp"> 🪙/hr</span></div>' +
+      '<div class="op-btns"><button id="csSave" class="bld-btn">Save</button><button id="bdBack" class="back-btn">◀ Back</button></div>';
+    const ov = openModal(html);
+    ov.querySelector("#bdBack").addEventListener("click", () => { if (reopenManage) reopenManage(); });
+    ov.querySelector("#csSave").addEventListener("click", () => {
+      const on = ov.querySelector("#csOn").checked;
+      const budget = Math.max(0, parseInt(ov.querySelector("#csBud").value, 10) || 0);
+      ov.querySelector("#csSave").disabled = true;
+      terrConscript(key, on, budget, () => openConscriptDetail(key, reopenManage));
+    });
   }
 
   // 打贏「有主」據點後：把它清成無主（前主人扣人口），不直接取得所有權——之後走過關→佔領流程。

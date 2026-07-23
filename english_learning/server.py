@@ -190,7 +190,9 @@ def save_territory_store(t):
 # --- 玩家經濟（每位玩家：人口 population + 兵力 troops + 上次成長時間）---
 ECON_FILE = "/data/economy.json"
 econ_lock = threading.Lock()
-GROW_SECONDS = 3600   # 兵力成長結算間隔：每小時
+GROW_SECONDS = 3600   # 成長結算間隔：每小時
+POP_GROWTH = 0.10     # 人口每小時 +10%（家鄉與各領地各自成長；徵兵時要扣人口）
+ECON_MAX_CATCHUP = 72 # 一次最多補算 72 小時，避免長時間停機後人口/金幣暴衝
 ECON_START_POP = 100
 ECON_START_TROOPS = 100
 
@@ -276,9 +278,11 @@ def econ_get(store, user, now, region_pop=0):
         last = now                                  # 舊帳號首次改用金幣制 → 從現在起算，不回溯灌金幣
     hours = int((now - last) // GROW_SECONDS)
     if hours > 0:
-        income = int(round((pop + clampi(region_pop)) * GOLD_RATE))
-        gold = clampi(gold + hours * income)
-        last = last + hours * GROW_SECONDS
+        rp = clampi(region_pop)
+        for _ in range(min(hours, ECON_MAX_CATCHUP)):   # 每小時：先依當前人口產金，人口再 +POP_GROWTH
+            gold = clampi(gold + int(round((pop + rp) * GOLD_RATE)))
+            pop = clampi(round(pop * (1 + POP_GROWTH)))
+        last = last + hours * GROW_SECONDS               # 時鐘照實推進（即使成長被 catch-up 上限截斷）
     e["population"], e["troops"], e["gold"], e["lastGold"] = pop, troops, gold, last
     if not isinstance(e.get("passcnt"), dict):       # 每課通過次數(佔領解鎖用)——改由後端統一保存
         e["passcnt"] = {}
@@ -579,6 +583,22 @@ def _as_float(v, default):
         return default
 
 
+def grow_region_pop(h, now):
+    # 領地人口每小時 +POP_GROWTH（背景成長，和金幣一樣用時間戳補算）。回傳是否有變動。
+    last = _as_float(h.get("lastPop"), now)
+    hours = int((now - last) // GROW_SECONDS)
+    if hours <= 0:
+        if "lastPop" not in h:                # 首見這塊領地 → 從現在起算，不回溯灌人口
+            h["lastPop"] = now
+            return True
+        return False
+    pop = clampi(h.get("pop", 0))
+    for _ in range(min(hours, ECON_MAX_CATCHUP)):
+        pop = clampi(round(pop * (1 + POP_GROWTH)))
+    h["pop"], h["lastPop"] = pop, last + hours * GROW_SECONDS
+    return True
+
+
 def conscript_tick():
     now = time.time()
     with terr_lock:
@@ -586,9 +606,13 @@ def conscript_tick():
         with econ_lock:
             estore = load_econ_store()
             t_dirty = e_dirty = False
-            # 1) 各領地徵兵 → 加進該區守軍，花該區擁有者的統一金幣池
+            # 1) 各領地：人口每小時 +10%（背景成長）＋ 徵兵 → 加進該區守軍(扣該區人口)、花擁有者金幣池
             for f, h in store.items():
-                if not (isinstance(h, dict) and h.get("conscript") and h.get("owner") and h.get("owner") != AI_OWNER):
+                if not (isinstance(h, dict) and h.get("owner") and h.get("owner") != AI_OWNER):
+                    continue
+                if grow_region_pop(h, now):             # 每塊領地人口每小時 +POP_GROWTH
+                    t_dirty = True
+                if not h.get("conscript"):
                     continue
                 budget = clampi(h.get("conscriptBudget", 0))
                 units = _producible_units(h.get("buildings"))
@@ -606,12 +630,16 @@ def conscript_tick():
                     bought, cost = _conscript_buy(units, budget)
                     if cost <= 0:
                         break
+                    n_troops = sum(bought.values())
+                    if n_troops > clampi(h.get("pop", 0)):  # 人口不夠徵這麼多兵 → 這小時不做事
+                        break
                     for u, n in bought.items():
                         slot = next((t for t in troops if isinstance(t, dict) and t.get("type") == u), None)
                         if slot:
                             slot["hp"] = clampi(slot.get("hp", 0)) + n
                         else:
                             troops.append({"type": u, "hp": n})
+                    h["pop"] = clampi(h.get("pop", 0)) - n_troops   # 徵兵扣該領地人口
                     e["gold"] = clampi(e.get("gold", 0)) - cost
                     e_dirty = True
                 h["troops"] = troops
@@ -637,7 +665,11 @@ def conscript_tick():
                     bought, cost = _conscript_buy(units, budget)
                     if cost <= 0:
                         break
-                    e["troops"] = clampi(e.get("troops", 0)) + sum(bought.values())
+                    n_troops = sum(bought.values())
+                    if n_troops > clampi(e.get("population", 0)):  # 家鄉人口不夠 → 這小時不做事
+                        break
+                    e["troops"] = clampi(e.get("troops", 0)) + n_troops
+                    e["population"] = clampi(e.get("population", 0)) - n_troops   # 徵兵扣家鄉人口
                     e["gold"] = clampi(e.get("gold", 0)) - cost
                     e_dirty = True
                 e["lastConscript"] = last + hours * GROW_SECONDS
@@ -1005,8 +1037,11 @@ class Handler(BaseHTTPRequestHandler):
             store = load_territory_store()
             prev = store.get(f) if isinstance(store.get(f), dict) else {}
             keep = {}
-            if prev.get("owner") == user:                # 重新部署自己的守軍 → 保留該區建築/科技
+            if prev.get("owner") == user:                # 重新部署自己的守軍 → 保留建築/科技/人口/徵兵設定(人口伺服器管理，不被前端覆蓋)
                 keep = {"buildings": prev.get("buildings") or {}, "tech": prev.get("tech") or {}}
+                for k in ("pop", "lastPop", "conscript", "conscriptBudget", "lastConscript"):
+                    if k in prev:
+                        keep[k] = prev[k]
             store[f] = {"owner": user, "avatar": str(d.get("avatar", "👦"))[:8],
                         "troops": troops, "pop": region_pop, **keep}
             save_territory_store(store)
@@ -1188,11 +1223,15 @@ class Handler(BaseHTTPRequestHandler):
                 if clampi(e.get("gold", 0)) < cost:
                     self._send({"error": "not enough gold", "gold": clampi(e.get("gold", 0)), "cost": cost}, 400)
                     return
+                if clampi(e.get("population", 0)) < qty:   # 徵兵要有足夠人口（1 兵 = 1 人口）
+                    self._send({"error": "not enough population", "population": clampi(e.get("population", 0)), "need": qty}, 400)
+                    return
                 e["gold"] = clampi(e.get("gold", 0)) - cost
+                e["population"] = clampi(e.get("population", 0)) - qty   # 徵兵扣家鄉人口
                 e["troops"] = clampi(e.get("troops", 0)) + qty
                 save_econ_store(estore)
-                newgold, newtroops = e["gold"], e["troops"]
-            self._send({"ok": True, "gold": newgold, "troops": newtroops})
+                newgold, newtroops, newpop = e["gold"], e["troops"], e["population"]
+            self._send({"ok": True, "gold": newgold, "troops": newtroops, "population": newpop})
             return
         with terr_lock:
             store = load_territory_store()
@@ -1202,6 +1241,9 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if not (h.get("buildings") or {}).get(need):
                 self._send({"error": "need " + need}, 400)
+                return
+            if clampi(h.get("pop", 0)) < qty:       # 徵兵要有足夠人口（1 兵 = 1 人口）
+                self._send({"error": "not enough population", "population": clampi(h.get("pop", 0)), "need": qty}, 400)
                 return
             region_pop = user_region_pop(store, user)
             with econ_lock:                        # 從玩家的統一金幣池扣款
@@ -1213,6 +1255,7 @@ class Handler(BaseHTTPRequestHandler):
                 e["gold"] = clampi(e.get("gold", 0)) - cost
                 save_econ_store(estore)
                 newgold = e["gold"]
+            h["pop"] = clampi(h.get("pop", 0)) - qty   # 徵兵扣該領地人口
             troops = h.get("troops") or []          # 併進同兵種，否則新增一格
             slot = next((t for t in troops if isinstance(t, dict) and t.get("type") == unit), None)
             if slot:
@@ -1221,7 +1264,7 @@ class Handler(BaseHTTPRequestHandler):
                 troops.append({"type": unit, "hp": qty})
             h["troops"] = troops
             save_territory_store(store)
-        self._send({"ok": True, "gold": newgold, "troops": h["troops"]})
+        self._send({"ok": True, "gold": newgold, "troops": h["troops"], "population": h["pop"]})
 
     # 設定徵兵制：開/關 + 每小時預算(金幣)。之後由 conscript_loop 每小時自動買兵。
     def _handle_territory_conscript(self):
@@ -1382,8 +1425,7 @@ class Handler(BaseHTTPRequestHandler):
         with econ_lock:
             store = load_econ_store()
             e = econ_get(store, user, time.time(), region_pop)
-            if "population" in d:
-                e["population"] = clampi(d.get("population"))
+            # 人口改為伺服器管理（每小時 +10% 成長、徵兵扣人口）→ 前端不再直接設定 population
             if "troops" in d:
                 e["troops"] = clampi(d.get("troops"))
             save_econ_store(store)
