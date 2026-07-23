@@ -546,6 +546,114 @@ def ai_loop():
         time.sleep(random.randint(AI_TICK_MIN, AI_TICK_MAX))
 
 
+# ================= 徵兵制：領地每小時自動花預算金幣買兵(平均分配到各生產兵種) =================
+CONSCRIPT_MAX_CATCHUP = 24                          # 一次最多補算 24 小時，避免長時間停機後暴衝
+
+
+def _producible_units(buildings):                  # 依已蓋的生產建築 → 可生產的兵種
+    b = buildings or {}
+    u = []
+    if b.get("barracks"): u += ["inf", "spear"]
+    if b.get("archery"):  u += ["archer"]
+    if b.get("stable"):   u += ["cav"]
+    return u
+
+
+def _conscript_buy(units, spend):                  # 把 spend 金幣平均分配到各兵種，回傳 {兵種:數量}, 實際花費
+    if not units or spend <= 0:
+        return {}, 0
+    per = spend // len(units)
+    bought, cost = {}, 0
+    for u in units:
+        n = per // UNIT_COST[u]
+        if n > 0:
+            bought[u] = n
+            cost += n * UNIT_COST[u]
+    return bought, cost
+
+
+def _as_float(v, default):
+    try:
+        return float(v)
+    except Exception:
+        return default
+
+
+def conscript_tick():
+    now = time.time()
+    with terr_lock:
+        store = load_territory_store()
+        with econ_lock:
+            estore = load_econ_store()
+            t_dirty = e_dirty = False
+            # 1) 各領地徵兵 → 加進該區守軍，花該區擁有者的統一金幣池
+            for f, h in store.items():
+                if not (isinstance(h, dict) and h.get("conscript") and h.get("owner") and h.get("owner") != AI_OWNER):
+                    continue
+                budget = clampi(h.get("conscriptBudget", 0))
+                units = _producible_units(h.get("buildings"))
+                if budget <= 0 or not units:
+                    continue
+                e = econ_get(estore, h["owner"], now, user_region_pop(store, h["owner"]))
+                last = _as_float(h.get("lastConscript"), now)
+                hours = min(int((now - last) // GROW_SECONDS), CONSCRIPT_MAX_CATCHUP)
+                if hours <= 0:
+                    continue
+                troops = h.get("troops") or []
+                for _ in range(hours):
+                    bought, cost = _conscript_buy(units, min(budget, clampi(e.get("gold", 0))))
+                    if cost <= 0:
+                        break
+                    for u, n in bought.items():
+                        slot = next((t for t in troops if isinstance(t, dict) and t.get("type") == u), None)
+                        if slot:
+                            slot["hp"] = clampi(slot.get("hp", 0)) + n
+                        else:
+                            troops.append({"type": u, "hp": n})
+                    e["gold"] = clampi(e.get("gold", 0)) - cost
+                    e_dirty = True
+                h["troops"] = troops
+                h["lastConscript"] = last + hours * GROW_SECONDS
+                t_dirty = True
+            # 2) 家鄉基地徵兵 → 加進自由兵力池(economy troops)
+            for user in list(estore.keys()):
+                e = estore.get(user)
+                if not (isinstance(e, dict) and e.get("conscript")):
+                    continue
+                budget = clampi(e.get("conscriptBudget", 0))
+                units = _producible_units(e.get("buildings"))
+                if budget <= 0 or not units:
+                    continue
+                e = econ_get(estore, user, now, user_region_pop(store, user))
+                last = _as_float(e.get("lastConscript"), now)
+                hours = min(int((now - last) // GROW_SECONDS), CONSCRIPT_MAX_CATCHUP)
+                if hours <= 0:
+                    continue
+                for _ in range(hours):
+                    bought, cost = _conscript_buy(units, min(budget, clampi(e.get("gold", 0))))
+                    if cost <= 0:
+                        break
+                    e["troops"] = clampi(e.get("troops", 0)) + sum(bought.values())
+                    e["gold"] = clampi(e.get("gold", 0)) - cost
+                    e_dirty = True
+                e["lastConscript"] = last + hours * GROW_SECONDS
+                e_dirty = True
+            if e_dirty:
+                save_econ_store(estore)
+        if t_dirty:
+            save_territory_store(store)
+
+
+def conscript_loop():
+    time.sleep(120)
+    while True:
+        try:
+            conscript_tick()
+        except Exception:
+            pass
+        time.sleep(300)                            # 每 5 分鐘檢查一次，依「過了幾小時」補算
+
+
 def hash_pw(password, salt):
     return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), bytes.fromhex(salt), 100000).hex()
 
@@ -651,6 +759,8 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_territory_engage()
         elif path == "/api/territory/attack-result":
             self._handle_territory_attack_result()
+        elif path == "/api/territory/conscript":
+            self._handle_territory_conscript()
         elif path == "/api/economy/set":
             self._handle_economy_set()
         elif path == "/api/economy/pass":
@@ -856,7 +966,8 @@ class Handler(BaseHTTPRequestHandler):
                 holders[f] = {"owner": owner, "avatar": h.get("avatar", "👦"),
                               "troops": h.get("troops") or [], "pop": h.get("pop"),
                               "income": region_gold_income(h),
-                              "buildings": h.get("buildings") or {}, "tech": h.get("tech") or {}, "mine": True}
+                              "buildings": h.get("buildings") or {}, "tech": h.get("tech") or {}, "mine": True,
+                              "conscript": bool(h.get("conscript")), "conscriptBudget": clampi(h.get("conscriptBudget", 0))}
             else:                                   # 別人/AI 的領地：不透露兵力、兵種、科技
                 holders[f] = {"owner": owner, "avatar": h.get("avatar", "👦"),
                               "pop": h.get("pop"), "hidden": True}
@@ -1108,6 +1219,35 @@ class Handler(BaseHTTPRequestHandler):
             save_territory_store(store)
         self._send({"ok": True, "gold": newgold, "troops": h["troops"]})
 
+    # 設定徵兵制：開/關 + 每小時預算(金幣)。之後由 conscript_loop 每小時自動買兵。
+    def _handle_territory_conscript(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        d = self._body_json()
+        f = (d.get("file") or "").strip()
+        on = bool(d.get("on"))
+        budget = clampi(d.get("budget", 0), 0, 1000000)
+        now = time.time()
+        if f == HOME_KEY:                          # 家鄉基地
+            with econ_lock:
+                estore = load_econ_store()
+                e = econ_get(estore, user, now, 0)
+                e["conscript"], e["conscriptBudget"], e["lastConscript"] = on, budget, now
+                save_econ_store(estore)
+            self._send({"ok": True, "conscript": on, "conscriptBudget": budget})
+            return
+        with terr_lock:
+            store = load_territory_store()
+            h = store.get(f)
+            if not isinstance(h, dict) or h.get("owner") != user:
+                self._send({"error": "not your region"}, 403)
+                return
+            h["conscript"], h["conscriptBudget"], h["lastConscript"] = on, budget, now
+            save_territory_store(store)
+        self._send({"ok": True, "conscript": on, "conscriptBudget": budget})
+
     # 開戰時才揭露某領地的守軍/科技(戰霧：平時看不到，出兵攻打當下才給前端跑對戰用)
     def _handle_territory_engage(self):
         user = token_user(self._token())
@@ -1198,9 +1338,11 @@ class Handler(BaseHTTPRequestHandler):
             save_econ_store(store)
             pop, troops, gold, passcnt = e["population"], e["troops"], e["gold"], e["passcnt"]
             buildings, tech = e["buildings"], e["tech"]
+            conscript, cbudget = bool(e.get("conscript")), clampi(e.get("conscriptBudget", 0))
         income = int(round((pop + region_pop) * GOLD_RATE))   # 金幣/小時 = (家鄉+領地人口) × 比例
         self._send({"population": pop, "troops": troops, "gold": gold, "goldIncome": income,
-                    "passcnt": passcnt, "buildings": buildings, "tech": tech})
+                    "passcnt": passcnt, "buildings": buildings, "tech": tech,
+                    "conscript": conscript, "conscriptBudget": cbudget})
 
     # 記錄「通過一課」→ 該課通過次數 +1（佔領解鎖用，後端統一保存、跨裝置一致）
     def _handle_economy_pass(self):
@@ -1251,4 +1393,5 @@ class Handler(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     migrate_accounts()      # 舊版單檔結構 -> 拆檔（只跑一次有效果）
     threading.Thread(target=ai_loop, daemon=True).start()   # 電腦 AI 帝國：背景自動擴張/攻擊
+    threading.Thread(target=conscript_loop, daemon=True).start()   # 徵兵制：每小時自動買兵
     ThreadingHTTPServer(("127.0.0.1", 5000), Handler).serve_forever()

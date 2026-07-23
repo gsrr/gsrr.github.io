@@ -578,6 +578,7 @@
   .bld-done { font-size: 13px; font-weight: 800; color: #16a34a; }
   .bld-row.bld-sub { padding-left: 14px; }
   .bld-row.bld-sub .bld-nm { font-weight: 600; color: #475569; }
+  .cs-inp { width: 68px; font-size: 13px; padding: 3px 5px; border: 1px solid #cbd5e1; border-radius: 6px; }
   .tech-badge { font-size: 13px; font-weight: 800; color: #b45309; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 1px 6px; white-space: nowrap; }
   /* 該領地各兵種實際數值表 */
   .bld-stats-h { margin-top: 10px; font-size: 13px; font-weight: 800; color: #334155; }
@@ -5045,6 +5046,7 @@
   function terrBuild(key, building, cb) { terrPost("/api/territory/build", { file: key, building: building }, cb); }
   function terrResearch(key, track, cb) { terrPost("/api/territory/research", { file: key, track: track }, cb); }
   function terrRecruit(key, unit, qty, cb) { terrPost("/api/territory/recruit", { file: key, unit: unit, qty: qty }, cb); }
+  function terrConscript(key, on, budget, cb) { terrPost("/api/territory/conscript", { file: key, on: !!on, budget: budget }, cb); }
   // 開戰才向後端揭露守軍(戰霧)；回傳 {troops, tech}
   function terrEngage(key, cb) {
     const t = authToken(); if (!t) { cb({ troops: [] }); return; }
@@ -5095,6 +5097,20 @@
           '<button class="bld-btn" data-unit="' + u + '" ' + (can ? "" : "disabled") + '>Recruit ×' + RECRUIT_BATCH + ' · ' + cost + '🪙</button></div>';
       });
     });
+    // 徵兵制：每小時自動花預算金幣買兵(平均分配到已蓋的生產兵種)。需先蓋至少一個生產建築。
+    const builtUnits = [];
+    if (builds.barracks) builtUnits.push("inf", "spear");
+    if (builds.archery) builtUnits.push("archer");
+    if (builds.stable) builtUnits.push("cav");
+    if (builtUnits.length) {
+      const csOn = home ? !!(myEcon && myEcon.conscript) : !!(h && h.conscript);
+      const csBud = home ? ((myEcon && myEcon.conscriptBudget) || 0) : ((h && h.conscriptBudget) || 0);
+      html += '<div class="bld-stats-h">🎖️ Conscription — auto-recruit each hour</div>';
+      html += '<div class="bld-row"><label class="bld-nm"><input type="checkbox" id="csOn"' + (csOn ? " checked" : "") + '> Enabled</label>' +
+        '<span>💰 <input type="number" id="csBud" value="' + csBud + '" min="0" step="10" class="cs-inp"> 🪙/hr <button class="bld-btn" id="csSave">Save</button></span></div>';
+      html += '<p class="op-hint">Each hour spends up to the budget from your gold pool, split evenly across ' +
+        builtUnits.map(u => troopIcon(u)).join("") + ' (into ' + (home ? "your troop pool" : "this garrison") + ").</p>";
+    }
     // 該領地每個兵種的「實際數值」：攻/防 = 基礎 × (1 + 該區科技加成)，另標各兵種剋制對象
     const fmt = n => Number.isInteger(n) ? n : Math.round(n * 10) / 10;
     const aMul = 1 + techAtk(tech), dMul = 1 + techDef(tech);
@@ -5121,6 +5137,12 @@
     box.querySelectorAll('[data-unit]').forEach(btn => btn.addEventListener("click", () => {
       btn.disabled = true; terrRecruit(key, btn.dataset.unit, RECRUIT_BATCH, () => onChange && onChange());
     }));
+    const csSave = box.querySelector("#csSave");
+    if (csSave) csSave.addEventListener("click", () => {
+      const on = box.querySelector("#csOn").checked;
+      const budget = Math.max(0, parseInt(box.querySelector("#csBud").value, 10) || 0);
+      csSave.disabled = true; terrConscript(key, on, budget, () => onChange && onChange());
+    });
     container.appendChild(box);
   }
 
