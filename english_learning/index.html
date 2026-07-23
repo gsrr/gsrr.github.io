@@ -593,13 +593,10 @@
   .bld-chk { color: #16a34a; }
   .bld-sub2 { font-size: 11px; font-weight: 700; color: #b45309; display: flex; align-items: center; gap: 2px; flex-wrap: wrap; justify-content: center; }
   .bld-sub2 svg { width: 15px; height: 15px; }
-  /* 徵兵/研發視窗內的單位卡 */
-  .unit-card { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; margin-bottom: 8px; }
-  .unit-ico { font-size: 26px; flex: 0 0 auto; } .unit-ico svg { width: 28px; height: 28px; }
-  .unit-info { flex: 1 1 auto; min-width: 0; }
-  .unit-nm { font-size: 14px; font-weight: 800; color: #1e293b; }
-  .unit-stat { font-size: 12px; font-weight: 700; color: #475569; }
-  .unit-stat .adv-s { color: #16a34a; } .unit-stat .adv-w { color: #dc2626; }
+  .bld-sub2 .adv-s { color: #16a34a; } .bld-sub2 .adv-w { color: #dc2626; }
+  .bld-cost { margin-top: 2px; font-size: 11px; font-weight: 800; color: #fff; background: #f59e0b; border-radius: 8px; padding: 2px 7px; white-space: nowrap; }
+  .bld-card:disabled .bld-cost { background: #94a3b8; }
+  .bld-card.maxed .bld-cost { background: #16a34a; }
   /* 該領地各兵種實際數值表 */
   .bld-stats-h { margin-top: 10px; font-size: 13px; font-weight: 800; color: #334155; }
   .bld-stats-h small { font-weight: 700; color: #b45309; }
@@ -5159,31 +5156,38 @@
     let html = '<h3 class="modal-title">' + b.icon + ' ' + b.name + '</h3>' +
       '<div class="bld-gold">🪙 <b>' + st.gold + '</b> gold &nbsp; 👥 <b>' + st.pop + '</b> people</div>';
     if (b.kind === "tech") {
-      html += '<p class="op-hint">Research buffs ' + (st.home ? 'the army you attack with' : "this region's garrison") + ' (+10% per level).</p>';
-      [["atk", "⚔️ Forging", "attack"], ["def", "🛡️ Armor", "armor"]].forEach(([tk, label]) => {
+      html += '<p class="op-hint">Research buffs ' + (st.home ? 'the army you attack with' : "this region's garrison") + ' (+10% per level). Tap a tech to research.</p>';
+      html += '<div class="bld-grid">';
+      [["atk", "⚔️", "Forging"], ["def", "🛡️", "Armor"]].forEach(([tk, ico, label]) => {
         const lvl = tech[tk] || 0, maxed = lvl >= TECH_MAX;
         const cost = maxed ? 0 : TECH_COST[tk][lvl], can = !maxed && st.gold >= cost;
-        html += '<div class="bld-row"><span class="bld-nm">' + label + ' <b>Lv ' + lvl + '/' + TECH_MAX + '</b> <small>(+' + (lvl * 10) + '% ' + tk + ')</small></span>' +
-          (maxed ? '<span class="bld-done">MAX</span>'
-                 : '<button class="bld-btn" data-track="' + tk + '"' + (can ? "" : " disabled") + '>Research · ' + cost + '🪙</button>') + '</div>';
+        html += '<button class="bld-card built' + (maxed ? " maxed" : "") + '" data-track="' + tk + '"' + (can ? "" : " disabled") + '>' +
+          '<span class="bld-ico">' + ico + '</span>' +
+          '<span class="bld-nm2">' + label + ' Lv' + lvl + '/' + TECH_MAX + '</span>' +
+          '<span class="bld-sub2">+' + (lvl * 10) + '% ' + tk + '</span>' +
+          '<span class="bld-cost">' + (maxed ? 'MAX' : 'Research ' + cost + '🪙') + '</span></button>';
       });
+      html += '</div>';
     } else {
       const target = st.home ? "your troop pool" : "this garrison";
-      html += '<p class="op-hint">Recruit into ' + target + ' — costs 🪙 gold + 👥 people. Troops are locked to their type.</p>';
+      html += '<p class="op-hint">Recruit into ' + target + ' — costs 🪙 gold + 👥 people. Troops are locked to their type. Tap a unit to recruit ×' + RECRUIT_BATCH + '.</p>';
       const aMul = 1 + techAtk(tech), dMul = 1 + techDef(tech);
+      html += '<div class="bld-grid">';
       b.units.forEach(u => {
         const cost = RECRUIT_BATCH * UNIT_COST[u];
         const atkE = fmtN(TROOP[u].atk * aMul), defE = fmtN(TROOP[u].def * dMul);
         const strong = TROOPS.filter(f => atkBonus(u, f.id) > 1).map(f => troopIcon(f.id)).join("");
         const weak = TROOPS.filter(f => atkBonus(f.id, u) > 1).map(f => troopIcon(f.id)).join("");
         const can = st.gold >= cost && st.pop >= RECRUIT_BATCH;
-        html += '<div class="unit-card"><span class="unit-ico">' + troopIcon(u) + '</span>' +
-          '<span class="unit-info"><span class="unit-nm">' + TROOP[u].en + '</span>' +
-          '<span class="unit-stat">⚔️' + atkE + ' 🛡️' + defE +
+        html += '<button class="bld-card built" data-unit="' + u + '"' + (can ? "" : " disabled") + '>' +
+          '<span class="bld-ico">' + troopIcon(u) + '</span>' +
+          '<span class="bld-nm2">' + TROOP[u].en + '</span>' +
+          '<span class="bld-sub2">⚔️' + atkE + ' 🛡️' + defE +
           (strong ? ' <span class="adv-s">▲' + strong + '</span>' : '') +
-          (weak ? ' <span class="adv-w">▼' + weak + '</span>' : '') + '</span></span>' +
-          '<button class="bld-btn" data-unit="' + u + '"' + (can ? "" : " disabled") + '>Recruit ×' + RECRUIT_BATCH + '<br>' + cost + '🪙 · ' + RECRUIT_BATCH + '👥</button></div>';
+          (weak ? ' <span class="adv-w">▼' + weak + '</span>' : '') + '</span>' +
+          '<span class="bld-cost">×' + RECRUIT_BATCH + ' · ' + cost + '🪙 · ' + RECRUIT_BATCH + '👥</span></button>';
       });
+      html += '</div>';
       if (st.pop < RECRUIT_BATCH)
         html += '<p class="op-hint">⚠️ Not enough people to recruit a batch of ' + RECRUIT_BATCH + ' (have ' + st.pop + '). Population grows +10%/hr.</p>';
     }
