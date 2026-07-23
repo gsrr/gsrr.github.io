@@ -280,6 +280,8 @@ def econ_get(store, user, now, region_pop=0):
         gold = clampi(gold + hours * income)
         last = last + hours * GROW_SECONDS
     e["population"], e["troops"], e["gold"], e["lastGold"] = pop, troops, gold, last
+    if not isinstance(e.get("passcnt"), dict):       # 每課通過次數(佔領解鎖用)——改由後端統一保存
+        e["passcnt"] = {}
     e.pop("lastGrow", None)                          # 移除舊的兵力成長時間戳
     return e
 
@@ -622,6 +624,8 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_territory_recruit()
         elif path == "/api/economy/set":
             self._handle_economy_set()
+        elif path == "/api/economy/pass":
+            self._handle_economy_pass()
         elif path == "/api/event":
             self._handle_event_add()
         else:
@@ -1062,9 +1066,30 @@ class Handler(BaseHTTPRequestHandler):
             store = load_econ_store()
             e = econ_get(store, user, time.time(), region_pop)
             save_econ_store(store)
-            pop, troops, gold = e["population"], e["troops"], e["gold"]
+            pop, troops, gold, passcnt = e["population"], e["troops"], e["gold"], e["passcnt"]
         income = int(round((pop + region_pop) * GOLD_RATE))   # 金幣/小時 = (家鄉+領地人口) × 比例
-        self._send({"population": pop, "troops": troops, "gold": gold, "goldIncome": income})
+        self._send({"population": pop, "troops": troops, "gold": gold, "goldIncome": income, "passcnt": passcnt})
+
+    # 記錄「通過一課」→ 該課通過次數 +1（佔領解鎖用，後端統一保存、跨裝置一致）
+    def _handle_economy_pass(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        f = (self._body_json().get("file") or "").strip()
+        if not f:
+            self._send({"error": "missing file"}, 400)
+            return
+        with terr_lock:
+            region_pop = user_region_pop(load_territory_store(), user)
+        with econ_lock:
+            store = load_econ_store()
+            e = econ_get(store, user, time.time(), region_pop)
+            pc = e["passcnt"]
+            pc[f] = clampi(pc.get(f, 0)) + 1
+            save_econ_store(store)
+            cnt = pc[f]
+        self._send({"ok": True, "file": f, "count": cnt})
 
     # 玩家經濟：POST 設定（pilot：信任前端戰果，僅夾範圍）
     def _handle_economy_set(self):

@@ -4275,9 +4275,18 @@
     ]
   };
   function artTitle(a) { return a && a.title ? a.title.split("·").pop().trim() : (a ? a.id : ""); }
-  function passCntMap() { try { return JSON.parse(localStorage.getItem("passcnt:" + (userName || "guest")) || "{}") || {}; } catch (e) { return {}; } }
+  // 每課通過次數(佔領解鎖用)改由後端統一保存(存在玩家經濟 myEcon.passcnt)，跨裝置一致、不易作弊
+  function passCntMap() { return (myEcon && myEcon.passcnt) || {}; }
   function passCount(file) { return passCntMap()[file] || 0; }
-  function bumpPassCount(file) { if (!file) return; const m = passCntMap(); m[file] = (m[file] || 0) + 1; try { localStorage.setItem("passcnt:" + (userName || "guest"), JSON.stringify(m)); } catch (e) {} }
+  function bumpPassCount(file) {
+    if (!file) return;
+    const t = authToken(); if (!t) return;   // 未登入者不佔領，不需計數
+    if (myEcon) { myEcon.passcnt = myEcon.passcnt || {}; myEcon.passcnt[file] = (myEcon.passcnt[file] || 0) + 1; }   // 先樂觀更新，讓佔領判定即時可用
+    fetch("/api/economy/pass?token=" + encodeURIComponent(t), { method: "POST", body: JSON.stringify({ file: file }) })
+      .then(r => r.ok ? r.json() : null)
+      .then(j => { if (j && j.count != null && myEcon) { myEcon.passcnt = myEcon.passcnt || {}; myEcon.passcnt[j.file] = j.count; } })
+      .catch(() => {});
+  }
   let pending = null;   // 挑戰中：{key, file, base(通過cnt), article, i}
   let pendingOccupy = null;   // 上完課要直接跳佔領的據點：{ file, reopen() }（取代舊的小遊戲賺點數升級卡片流程）
   let _passCounted = false;   // 本次進課是否已計過一次通過（避免總結重繪重複累加）
