@@ -601,7 +601,9 @@ def conscript_tick():
                     continue
                 troops = h.get("troops") or []
                 for _ in range(hours):
-                    bought, cost = _conscript_buy(units, min(budget, clampi(e.get("gold", 0))))
+                    if clampi(e.get("gold", 0)) < budget:   # 金幣不夠整筆預算 → 這小時不做事
+                        break
+                    bought, cost = _conscript_buy(units, budget)
                     if cost <= 0:
                         break
                     for u, n in bought.items():
@@ -630,7 +632,9 @@ def conscript_tick():
                 if hours <= 0:
                     continue
                 for _ in range(hours):
-                    bought, cost = _conscript_buy(units, min(budget, clampi(e.get("gold", 0))))
+                    if clampi(e.get("gold", 0)) < budget:   # 金幣不夠整筆預算 → 這小時不做事
+                        break
+                    bought, cost = _conscript_buy(units, budget)
                     if cost <= 0:
                         break
                     e["troops"] = clampi(e.get("troops", 0)) + sum(bought.values())
