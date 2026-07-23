@@ -282,6 +282,10 @@ def econ_get(store, user, now, region_pop=0):
     e["population"], e["troops"], e["gold"], e["lastGold"] = pop, troops, gold, last
     if not isinstance(e.get("passcnt"), dict):       # 每課通過次數(佔領解鎖用)——改由後端統一保存
         e["passcnt"] = {}
+    if not isinstance(e.get("buildings"), dict):     # 家鄉基地的建築(蓋在自己的預設領地)
+        e["buildings"] = {}
+    if not isinstance(e.get("tech"), dict):          # 家鄉科技 → 加成你派出去的攻擊軍
+        e["tech"] = {}
     e.pop("lastGrow", None)                          # 移除舊的兵力成長時間戳
     return e
 
@@ -321,6 +325,8 @@ TECH_MAX = 3
 UNIT_COST = {"inf": 2, "spear": 3, "archer": 4, "cav": 5}
 UNIT_BUILDING = {"inf": "barracks", "spear": "barracks", "archer": "archery", "cav": "stable"}
 RECRUIT_BATCH = 10
+# 家鄉基地(預設領地)的特殊 key：蓋建築/研發存在玩家經濟裡；招募加進「自由兵力池」；科技加成你的攻擊軍。
+HOME_KEY = "@home"
 
 
 # 該領地每小時「上繳」給擁有者的金幣(= 人口 × GOLD_RATE)。領地本身不再存金幣、也不再自動長兵。
@@ -930,6 +936,25 @@ class Handler(BaseHTTPRequestHandler):
             self._send({"error": "unknown building"}, 400)
             return
         cost = BUILD_COST[building]
+        if f == HOME_KEY:                          # 家鄉基地：建築存在玩家經濟裡
+            with terr_lock:
+                region_pop = user_region_pop(load_territory_store(), user)
+            with econ_lock:
+                estore = load_econ_store()
+                e = econ_get(estore, user, time.time(), region_pop)
+                builds = e["buildings"]
+                if builds.get(building):
+                    self._send({"error": "already built"}, 400)
+                    return
+                if clampi(e.get("gold", 0)) < cost:
+                    self._send({"error": "not enough gold", "gold": clampi(e.get("gold", 0)), "cost": cost}, 400)
+                    return
+                e["gold"] = clampi(e.get("gold", 0)) - cost
+                builds[building] = True
+                save_econ_store(estore)
+                newgold = e["gold"]
+            self._send({"ok": True, "gold": newgold, "buildings": builds})
+            return
         with terr_lock:                            # terr 外層、econ 內層(全站一致的鎖順序)
             store = load_territory_store()
             h = store.get(f)
@@ -966,6 +991,30 @@ class Handler(BaseHTTPRequestHandler):
         track = str(d.get("track", ""))
         if track not in TECH_TRACKS:
             self._send({"error": "unknown track"}, 400)
+            return
+        if f == HOME_KEY:                          # 家鄉科技：研發存在玩家經濟裡(加成攻擊軍)
+            with terr_lock:
+                region_pop = user_region_pop(load_territory_store(), user)
+            with econ_lock:
+                estore = load_econ_store()
+                e = econ_get(estore, user, time.time(), region_pop)
+                if not e["buildings"].get("armory"):
+                    self._send({"error": "need armory"}, 400)
+                    return
+                tech = e["tech"]
+                lvl = clampi(tech.get(track, 0))
+                if lvl >= TECH_MAX:
+                    self._send({"error": "maxed"}, 400)
+                    return
+                cost = TECH_COST[track][lvl]
+                if clampi(e.get("gold", 0)) < cost:
+                    self._send({"error": "not enough gold", "gold": clampi(e.get("gold", 0)), "cost": cost}, 400)
+                    return
+                e["gold"] = clampi(e.get("gold", 0)) - cost
+                tech[track] = lvl + 1
+                save_econ_store(estore)
+                newgold = e["gold"]
+            self._send({"ok": True, "gold": newgold, "tech": tech})
             return
         with terr_lock:
             store = load_territory_store()
@@ -1012,6 +1061,24 @@ class Handler(BaseHTTPRequestHandler):
         qty = clampi(d.get("qty", RECRUIT_BATCH), 1, 100000)
         cost = qty * UNIT_COST[unit]
         need = UNIT_BUILDING[unit]
+        if f == HOME_KEY:                          # 家鄉招募 → 加進「自由兵力池」(economy troops)
+            with terr_lock:
+                region_pop = user_region_pop(load_territory_store(), user)
+            with econ_lock:
+                estore = load_econ_store()
+                e = econ_get(estore, user, time.time(), region_pop)
+                if not e["buildings"].get(need):
+                    self._send({"error": "need " + need}, 400)
+                    return
+                if clampi(e.get("gold", 0)) < cost:
+                    self._send({"error": "not enough gold", "gold": clampi(e.get("gold", 0)), "cost": cost}, 400)
+                    return
+                e["gold"] = clampi(e.get("gold", 0)) - cost
+                e["troops"] = clampi(e.get("troops", 0)) + qty
+                save_econ_store(estore)
+                newgold, newtroops = e["gold"], e["troops"]
+            self._send({"ok": True, "gold": newgold, "troops": newtroops})
+            return
         with terr_lock:
             store = load_territory_store()
             h = store.get(f)
@@ -1130,8 +1197,10 @@ class Handler(BaseHTTPRequestHandler):
             e = econ_get(store, user, time.time(), region_pop)
             save_econ_store(store)
             pop, troops, gold, passcnt = e["population"], e["troops"], e["gold"], e["passcnt"]
+            buildings, tech = e["buildings"], e["tech"]
         income = int(round((pop + region_pop) * GOLD_RATE))   # 金幣/小時 = (家鄉+領地人口) × 比例
-        self._send({"population": pop, "troops": troops, "gold": gold, "goldIncome": income, "passcnt": passcnt})
+        self._send({"population": pop, "troops": troops, "gold": gold, "goldIncome": income,
+                    "passcnt": passcnt, "buildings": buildings, "tech": tech})
 
     # 記錄「通過一課」→ 該課通過次數 +1（佔領解鎖用，後端統一保存、跨裝置一致）
     def _handle_economy_pass(self):
