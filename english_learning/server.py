@@ -286,6 +286,20 @@ def econ_get(store, user, now, region_pop=0):
     return e
 
 
+# 幫某玩家的金幣池加/扣值(delta 可負，最低 0)，回傳新金幣。給戰鬥獎懲用。
+def econ_add_gold(user, delta):
+    if not user or delta == 0:
+        return None
+    with terr_lock:
+        rp = user_region_pop(load_territory_store(), user)
+    with econ_lock:
+        store = load_econ_store()
+        e = econ_get(store, user, time.time(), rp)
+        e["gold"] = clampi(e.get("gold", 0) + delta)
+        save_econ_store(store)
+        return e["gold"]
+
+
 # 某玩家名下所有領地的人口總和（給金幣收入計算用）
 def user_region_pop(tstore, user):
     return sum(clampi(h.get("pop", 0)) for h in tstore.values()
@@ -295,6 +309,9 @@ def user_region_pop(tstore, user):
 # ---- 領地建設：兵工廠(armory) + 科技樹(鍛造+攻 / 鎧甲+防)，用「金幣」研發 ----
 # 金幣：每塊領地依人口每小時產金，累積在該區(h["gold"])。研發即時完成、只惠及該區守軍。
 GOLD_RATE = 0.10                                   # 每小時金幣 = round(pop * GOLD_RATE)
+PASS_GOLD = 100                                     # 通過一課 +100 金幣
+DEFEND_GOLD = 50                                    # 防守成功 +50 金幣
+ATTACK_FAIL_GOLD = 50                               # 攻打失敗 −50 金幣
 # 蓋建築的金幣花費：兵工廠(科技) + 三種生產建築
 BUILD_COST = {"armory": 50, "barracks": 60, "archery": 80, "stable": 120}
 TECH_TRACKS = ("atk", "def")                       # 鍛造(+攻) / 鎧甲(+防)
@@ -508,6 +525,8 @@ def ai_move():
 
     if logged:
         _ai_log_event(*logged)
+        if logged[0] == "attack_fail" and logged[2] and logged[2] != AI_OWNER:
+            econ_add_gold(logged[2], DEFEND_GOLD)      # 玩家成功擋下 AI → 防守成功 +50
     return logged
 
 
@@ -622,6 +641,10 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_territory_research()
         elif path == "/api/territory/recruit":
             self._handle_territory_recruit()
+        elif path == "/api/territory/engage":
+            self._handle_territory_engage()
+        elif path == "/api/territory/attack-result":
+            self._handle_territory_attack_result()
         elif path == "/api/economy/set":
             self._handle_economy_set()
         elif path == "/api/economy/pass":
@@ -813,6 +836,7 @@ class Handler(BaseHTTPRequestHandler):
     TROOP_TYPES = ("cav", "archer", "inf", "spear")
 
     def _handle_territory(self):
+        me = token_user(self._token())              # 戰霧：只有自己的領地才看得到守軍/科技
         with terr_lock:
             store = load_territory_store()
         holders, counts = {}, {}
@@ -820,12 +844,16 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(h, dict):
                 continue
             owner = h.get("owner")
-            holders[f] = {"owner": owner, "avatar": h.get("avatar", "👦"),
-                          "troops": h.get("troops") or [], "pop": h.get("pop"),
-                          "income": region_gold_income(h),   # 該區每小時上繳給擁有者的金幣
-                          "buildings": h.get("buildings") or {}, "tech": h.get("tech") or {}}
             if owner:
                 counts[owner] = counts.get(owner, 0) + 1
+            if owner and owner == me:               # 自己的領地：完整資訊
+                holders[f] = {"owner": owner, "avatar": h.get("avatar", "👦"),
+                              "troops": h.get("troops") or [], "pop": h.get("pop"),
+                              "income": region_gold_income(h),
+                              "buildings": h.get("buildings") or {}, "tech": h.get("tech") or {}, "mine": True}
+            else:                                   # 別人/AI 的領地：不透露兵力、兵種、科技
+                holders[f] = {"owner": owner, "avatar": h.get("avatar", "👦"),
+                              "pop": h.get("pop"), "hidden": True}
         self._send({"holders": holders, "counts": counts})
 
     # 攻方在前端用兵種打贏（或佔領空據點）後呼叫，存下新的守備軍（pilot：信任前端結果）
@@ -1013,6 +1041,41 @@ class Handler(BaseHTTPRequestHandler):
             save_territory_store(store)
         self._send({"ok": True, "gold": newgold, "troops": h["troops"]})
 
+    # 開戰時才揭露某領地的守軍/科技(戰霧：平時看不到，出兵攻打當下才給前端跑對戰用)
+    def _handle_territory_engage(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        f = (self._body_json().get("file") or "").strip()
+        with terr_lock:
+            store = load_territory_store()
+            h = store.get(f)
+        if not isinstance(h, dict) or not h.get("owner"):
+            self._send({"troops": [], "tech": {}})
+            return
+        self._send({"owner": h.get("owner"), "troops": h.get("troops") or [], "tech": h.get("tech") or {}})
+
+    # 攻打結果的金幣獎懲(前端跑完對戰後回報)：攻打失敗→攻方 −50、守方 +50；成功不變
+    def _handle_territory_attack_result(self):
+        user = token_user(self._token())          # 攻方
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        d = self._body_json()
+        f = (d.get("file") or "").strip()
+        win = bool(d.get("win"))
+        with terr_lock:
+            store = load_territory_store()
+            h = store.get(f)
+            defender = h.get("owner") if isinstance(h, dict) else None
+        newgold = None
+        if not win:                               # 攻打失敗
+            newgold = econ_add_gold(user, -ATTACK_FAIL_GOLD)
+            if defender and defender != user and defender != AI_OWNER:
+                econ_add_gold(defender, DEFEND_GOLD)   # 守方防守成功
+        self._send({"ok": True, "gold": newgold})
+
     # 全站事件牆：GET 取最近事件（所有人共見）
     def _handle_events(self):
         with ev_lock:
@@ -1087,9 +1150,10 @@ class Handler(BaseHTTPRequestHandler):
             e = econ_get(store, user, time.time(), region_pop)
             pc = e["passcnt"]
             pc[f] = clampi(pc.get(f, 0)) + 1
+            e["gold"] = clampi(e.get("gold", 0) + PASS_GOLD)   # 通過一課 +100 金幣
             save_econ_store(store)
-            cnt = pc[f]
-        self._send({"ok": True, "file": f, "count": cnt})
+            cnt, gold = pc[f], e["gold"]
+        self._send({"ok": True, "file": f, "count": cnt, "gold": gold})
 
     # 玩家經濟：POST 設定（pilot：信任前端戰果，僅夾範圍）
     def _handle_economy_set(self):

@@ -4114,7 +4114,9 @@
     return out;
   }
   function loadTerritory(cb) {
-    fetch("/api/territory").then(r => r.json()).then(j => { if (j && j.holders) territory = j; if (cb) cb(); }).catch(() => { if (cb) cb(); });
+    const t = authToken();   // 帶 token → 伺服器才知道哪些是你的領地(戰霧：別人的守軍不回傳)
+    fetch("/api/territory" + (t ? "?token=" + encodeURIComponent(t) : ""))
+      .then(r => r.json()).then(j => { if (j && j.holders) territory = j; if (cb) cb(); }).catch(() => { if (cb) cb(); });
   }
   // ===== 玩家經濟：人口(population) + 兵力(troops，打仗用) + 金幣(gold，統一資源) =====
   //   兵力不再自動成長；金幣每小時由(家鄉+所有領地人口)統一匯入，用來蓋建築/研發科技。
@@ -4284,7 +4286,7 @@
     if (myEcon) { myEcon.passcnt = myEcon.passcnt || {}; myEcon.passcnt[file] = (myEcon.passcnt[file] || 0) + 1; }   // 先樂觀更新，讓佔領判定即時可用
     fetch("/api/economy/pass?token=" + encodeURIComponent(t), { method: "POST", body: JSON.stringify({ file: file }) })
       .then(r => r.ok ? r.json() : null)
-      .then(j => { if (j && j.count != null && myEcon) { myEcon.passcnt = myEcon.passcnt || {}; myEcon.passcnt[j.file] = j.count; } })
+      .then(j => { if (j && j.count != null && myEcon) { myEcon.passcnt = myEcon.passcnt || {}; myEcon.passcnt[j.file] = j.count; if (j.gold != null) myEcon.gold = j.gold; renderEmpire(); } })   // 通過一課 +100 金幣
       .catch(() => {});
   }
   let pending = null;   // 挑戰中：{key, file, base(通過cnt), article, i}
@@ -4541,7 +4543,9 @@
             const col = cmap[(h.owner || "").toLowerCase()];
             if (isMine) { r.p.classList.add("geo-mine"); if (r.idxEl) r.idxEl.classList.add("gi-mine"); mine++; }
             else { r.p.style.setProperty("fill", col, "important"); if (dot) dot.style.background = col; }
-            if (r.idxLs) r.idxLs.innerHTML = "👥 " + r.pop + " · " + (h.avatar || "") + dispName(h.owner) + " " + aliveTroops(h.troops).map(t => troopIcon(t.type) + t.hp).join(" ");
+            // 戰霧：只有自己的領地看得到守軍組成，別人的只顯示擁有者
+            const garTxt = isMine ? (" " + aliveTroops(h.troops).map(t => troopIcon(t.type) + t.hp).join(" ")) : " 🛡️❓";
+            if (r.idxLs) r.idxLs.innerHTML = "👥 " + r.pop + " · " + (h.avatar || "") + dispName(h.owner) + garTxt;
           } else {
             r.p.classList.add("geo-open"); if (r.idxEl) r.idxEl.classList.add("gi-open");
             if (r.idxLs) r.idxLs.textContent = "👥 " + r.pop + " · " + (r.article ? "📖 " + artTitle(r.article) : "Open");
@@ -4579,7 +4583,7 @@
     const T = (myEcon && myEcon.troops) || 0;
     let html = '<h3 class="modal-title">🏰 ' + name + '</h3>' +
       '<div class="op-pop">👥 Population <b>' + pop + '</b>' + (mine ? ' (yours)' : ' — added to your empire if you take it') + '</div>';
-    if (h && h.owner) html += '<div class="op-def' + (mine ? ' op-mine' : '') + '">Held by ' + (h.avatar || "👦") + ' <b>' + dispName(h.owner) + '</b>' + techBadge(h.tech) + '<br>' + garrisonHTML(h.troops) + '</div>';
+    if (h && h.owner) html += '<div class="op-def' + (mine ? ' op-mine' : '') + '">Held by ' + (h.avatar || "👦") + ' <b>' + dispName(h.owner) + '</b>' + techBadge(h.tech) + '<br>' + (mine ? garrisonHTML(h.troops) : '<span class="op-card">🛡️ Garrison unknown (enemy)</span>') + '</div>';
     else html += '<div class="op-def">🏳️ Unclaimed region</div>';
     html += '<div class="op-econ">⚔️ Your troops: <b>' + T + '</b></div><div id="opTerr"></div>';
     const ov = openModal(html);
@@ -4596,14 +4600,17 @@
     if (enemy) {
       // 有主：先攻打。打贏 → 該區恢復「無主」，之後再走過關→佔領流程才真正佔領。
       if (T <= 0) { terr.innerHTML = noTroops; return; }
-      terr.innerHTML = '<p class="op-hint">⚔️ Attack ' + dispName(h.owner) + ' — pick 4 cards & split troops (max ' + T + '):</p>';
-      deployPanel(terr, T, { attack: true, foe: h.troops || [], label: "⚔️ Attack", onGo: squad => {
+      terr.innerHTML = '<p class="op-hint">⚔️ Attack ' + dispName(h.owner) + " — you can't scout the garrison. Pick 4 cards & split troops (max " + T + '):</p>';
+      deployPanel(terr, T, { attack: true, foe: [], label: "⚔️ Attack", onGo: squad => {
         const A = sumHp(squad); myEcon.troops = Math.max(0, T - A); closeModal();
-        runBattle(squad, h.troops || [], dispName(h.owner), function (win, survivors) {
-          myEcon.troops += sumHp(survivors);                     // 生還者一律撤回兵力池（尚未佔領）
-          if (win) { releaseTerritory(key, pop, function () {}); logEvent("attack", { region: name, target: h.owner, key: key }); }   // 打贏 → 清成無主 + 記事件
-          saveEconomy(function () { renderEmpire(); refreshMap(); });
-        }, h.tech);
+        terrEngage(key, function (foe) {   // 開戰才揭露守軍(戰霧)
+          runBattle(squad, (foe && foe.troops) || [], dispName(h.owner), function (win, survivors) {
+            myEcon.troops += sumHp(survivors);                     // 生還者一律撤回兵力池（尚未佔領）
+            terrAttackResult(key, win);                            // 失敗 −50 / 守方 +50
+            if (win) { releaseTerritory(key, pop, function () {}); logEvent("attack", { region: name, target: h.owner, key: key }); }   // 打贏 → 清成無主 + 記事件
+            saveEconomy(function () { renderEmpire(); refreshMap(); });
+          }, (foe && foe.tech) || null);
+        });
       } });
       return;
     }
@@ -4768,11 +4775,11 @@
         const col = cmap[(h.owner || "").toLowerCase()];
         node.classList.add("terr-held", isMine ? "terr-mine" : "terr-foe");
         if (!isMine) { node.style.borderColor = col; node.style.boxShadow = "0 0 0 2px " + col + "55, 0 2px 5px rgba(0,0,0,.15)"; }
-        const power = sumHp(h.troops);                     // 守備兵力
-        const flag = document.createElement("span");       // 右上角標：守備兵力
+        const flag = document.createElement("span");       // 右上角標：守備兵力(戰霧：只顯示自己的)
         flag.className = "terr-flag";
-        flag.innerHTML = '⚔️<span class="terr-sc">' + power + '</span>';
-        flag.title = "Garrison · " + power + " troops"; node.appendChild(flag);
+        if (isMine) { const power = sumHp(h.troops); flag.innerHTML = '⚔️<span class="terr-sc">' + power + '</span>'; flag.title = "Garrison · " + power + " troops"; }
+        else { flag.innerHTML = '⚔️<span class="terr-sc">?</span>'; flag.title = "Enemy garrison — unknown"; }
+        node.appendChild(flag);
         const own = document.createElement("span");         // 底部名條：誰佔的（每位擁有者一個固定色）
         own.className = "terr-owner";
         if (!isMine) own.style.background = col;
@@ -4864,7 +4871,7 @@
       '<div class="op-pop">👥 Region population <b>' + regionPop + '</b>' + (mine ? ' (in your empire)' : ' — added to your empire if you take it') + '</div>';
     if (h && h.owner) {
       html += '<div class="op-def' + (mine ? ' op-mine' : '') + '">Held by ' + (h.avatar || "👦") + ' <b>' + dispName(h.owner) + '</b>' + techBadge(h.tech) + '<br>' +
-        garrisonHTML(h.troops) + '</div>';
+        (mine ? garrisonHTML(h.troops) : '<span class="op-card">🛡️ Garrison unknown (enemy)</span>') + '</div>';
     } else { html += '<div class="op-def">🏳️ Unclaimed region</div>'; }
     html += '<div class="op-econ">⚔️ Your troops: <b>' + T + '</b></div>' +
       '<div class="op-btns"><button id="opStudy" class="dict-play">📖 Study lesson</button></div><div id="opTerr"></div>';
@@ -4897,14 +4904,17 @@
       // 有主：先攻打（不需先過關）。打贏 → 該區恢復「無主」，之後走過關→佔領流程才真正佔領。
       if (T <= 0) { terr.innerHTML = '<p class="op-hint">⚠️ No troops to attack with — redeploy a garrison or win a battle first.</p>'; }
       else {
-        terr.innerHTML = '<p class="op-hint">⚔️ Attack! Pick 4 cards (any types, e.g. all archers) & split your troops (max ' + T + '):</p>';
-        deployPanel(terr, T, { attack: true, foe: h.troops || [], label: "⚔️ Attack", onGo: squad => {
+        terr.innerHTML = '<p class="op-hint">⚔️ Attack! You can\'t scout the garrison. Pick 4 cards & split your troops (max ' + T + '):</p>';
+        deployPanel(terr, T, { attack: true, foe: [], label: "⚔️ Attack", onGo: squad => {
           const A = sumHp(squad); myEcon.troops = Math.max(0, T - A); closeModal();
-          runBattle(squad, h.troops || [], dispName(h.owner), function (win, survivors) {
-            myEcon.troops += sumHp(survivors);                          // 生還者一律撤回兵力池（尚未佔領）
-            if (win) { releaseTerritory(file, regionPop, function () {}); logEvent("attack", { region: title, target: h.owner, key: file }); }  // 打贏 → 清成無主 + 記事件
-            saveEconomy(function () { renderEmpire(); refreshMap(); });
-          }, h.tech);
+          terrEngage(file, function (foe) {   // 開戰才揭露守軍(戰霧)
+            runBattle(squad, (foe && foe.troops) || [], dispName(h.owner), function (win, survivors) {
+              myEcon.troops += sumHp(survivors);                          // 生還者一律撤回兵力池（尚未佔領）
+              terrAttackResult(file, win);                                // 失敗 −50 / 守方 +50
+              if (win) { releaseTerritory(file, regionPop, function () {}); logEvent("attack", { region: title, target: h.owner, key: file }); }  // 打贏 → 清成無主 + 記事件
+              saveEconomy(function () { renderEmpire(); refreshMap(); });
+            }, (foe && foe.tech) || null);
+          });
         } });
       }
     }
@@ -5016,6 +5026,18 @@
   function terrBuild(key, building, cb) { terrPost("/api/territory/build", { file: key, building: building }, cb); }
   function terrResearch(key, track, cb) { terrPost("/api/territory/research", { file: key, track: track }, cb); }
   function terrRecruit(key, unit, qty, cb) { terrPost("/api/territory/recruit", { file: key, unit: unit, qty: qty }, cb); }
+  // 開戰才向後端揭露守軍(戰霧)；回傳 {troops, tech}
+  function terrEngage(key, cb) {
+    const t = authToken(); if (!t) { cb({ troops: [] }); return; }
+    fetch("/api/territory/engage?token=" + encodeURIComponent(t), { method: "POST", body: JSON.stringify({ file: key }) })
+      .then(r => r.ok ? r.json() : null).then(j => cb(j || { troops: [] })).catch(() => cb({ troops: [] }));
+  }
+  // 回報攻打結果 → 金幣獎懲(失敗攻方 −50、守方 +50)
+  function terrAttackResult(key, win) {
+    const t = authToken(); if (!t) return;
+    fetch("/api/territory/attack-result?token=" + encodeURIComponent(t), { method: "POST", body: JSON.stringify({ file: key, win: !!win }) })
+      .then(r => r.ok ? r.json() : null).then(j => { if (j && j.gold != null && myEcon) { myEcon.gold = j.gold; renderEmpire(); } }).catch(() => {});
+  }
   // 你自己領地的「建設面板」：金幣、兵工廠(科技)、生產建築(招募)、以及該區兵種實際數值。onChange 讓外層重畫。
   function buildingsPanel(container, key, h, onChange) {
     const gold = (myEcon && myEcon.gold) || 0;                                  // 玩家統一金幣池
