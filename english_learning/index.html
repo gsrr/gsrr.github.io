@@ -624,6 +624,8 @@
   .dep-nm { flex: 0 0 64px; font-weight: 700; font-size: 13px; color: #1e293b; line-height: 1.1; }
   .dep-nm small { display: block; font-size: 10px; color: #94a3b8; font-weight: 600; }
   .dep-hp { flex: 1; min-width: 40px; }
+  .dep-ty2 { flex: 0 0 96px; font-weight: 700; font-size: 14px; color: #1e293b; white-space: nowrap; }
+  .dep-max { width: 40px; font-size: 12px; color: #94a3b8; font-weight: 700; }
   .dep-val { width: 40px; text-align: right; font-weight: 800; color: #2563eb; }
   .op-econ { text-align: center; font-size: 13px; color: #334155; margin: 2px 0 8px; }
   .dep-type { display: flex; gap: 3px; }
@@ -3923,7 +3925,7 @@
     document.getElementById("battleLog").textContent = "Loading…";
     showScreen(screenBattle);
     await new Promise(res => loadEconomy(res));
-    const T = Math.max(0, (myEcon && myEcon.troops) || 0);   // 你出戰的兵力（從兵力池扣）
+    const T = poolTotal();   // 你出戰的兵力（從兵力池扣，分兵種）
     const B = await mapPopSum(spec);                         // Boss 兵力總量 = 地圖人口總和
     const pool = await buildExamPool(lv);
     if (pool.length < 1) { document.getElementById("battleLog").textContent = "No questions for this level."; return; }
@@ -3938,11 +3940,11 @@
     }
     const box = document.createElement("div");
     host.appendChild(box);
-    deployPanel(box, T, { attack: true, foe: bossSquad, label: "⚔️ Charge the Boss",
+    deployPanel(box, poolAvail(), { attack: true, foe: bossSquad, label: "⚔️ Charge the Boss",
       help: '<b>Counters</b> (beats →): 🔱→🐎 · 🐎→🏹 · 🏹→🔱🛡️.<br>' +
-        'Answer <b>correctly</b> → your front troop attacks the boss; <b>wrong</b> → the boss attacks you. More troops on a card = more damage.',
+        'Answer <b>correctly</b> → your front troop attacks the boss; <b>wrong</b> → the boss attacks you. More troops = more damage.',
       onGo: squad => {
-      myEcon.troops = Math.max(0, T - sumHp(squad));   // 出戰即扣兵力
+      poolSpend(squad);   // 出戰即扣兵力(分兵種)
       saveEconomy(function () { renderEmpire(); });
       const my = squad.map(u => ({ type: u.type, hp: u.hp, max: u.hp }));
       exam = { pool: pool, qi: 0, boss: bossSquad, squad: my,
@@ -3993,7 +3995,7 @@
     bossEmojiEl.classList.add("defeated");
     const lv = manifest.levels[exam.levelIdx], next = exam.next;
     const surv = sumHp(exam.squad);
-    if (surv > 0 && myEcon) { myEcon.troops += surv; saveEconomy(function () { renderEmpire(); }); }   // 生還者撤回兵力池
+    if (surv > 0 && myEcon) { poolAdd(exam.squad.filter(u => u.hp > 0)); saveEconomy(function () { renderEmpire(); }); }   // 生還者(分兵種)撤回兵力池
     setExamPassed(lv.id);
     logEvent("boss", { level: lv.name || lv.id });
     document.getElementById("battleQ").textContent = ""; document.getElementById("battleOpts").innerHTML = ""; document.getElementById("battleLog").textContent = "";
@@ -4006,7 +4008,7 @@
   function examLose() {
     heroEmojiEl.classList.add("defeated");
     const surv = sumHp(exam.squad);
-    if (surv > 0 && myEcon) { myEcon.troops += surv; saveEconomy(function () { renderEmpire(); }); }
+    if (surv > 0 && myEcon) { poolAdd(exam.squad.filter(u => u.hp > 0)); saveEconomy(function () { renderEmpire(); }); }
     document.getElementById("battleQ").textContent = ""; document.getElementById("battleOpts").innerHTML = ""; document.getElementById("battleLog").textContent = "";
     const rr = document.getElementById("battleResult"); rr.classList.remove("hidden");
     rr.innerHTML = '<div class="battle-msg" style="color:#b91c1c">💀 Your army fell! Conquer more regions (bigger army) & study the lessons, then retry.</div>' +
@@ -4152,10 +4154,20 @@
   function saveEconomy(cb) {
     const t = authToken();
     if (!t || !myEcon) { if (cb) cb(); return; }
-    myEcon.population = Math.max(0, Math.round(myEcon.population)); myEcon.troops = Math.max(0, Math.round(myEcon.troops));
-    fetch("/api/economy/set?token=" + encodeURIComponent(t), { method: "POST", body: JSON.stringify({ population: myEcon.population, troops: myEcon.troops }) })
-      .then(r => r.ok ? r.json() : null).then(j => { if (j && j.population != null) { myEcon.population = j.population; myEcon.troops = j.troops; if (j.gold != null) myEcon.gold = j.gold; } if (cb) cb(); }).catch(() => { if (cb) cb(); });
+    const pool = poolObj();
+    fetch("/api/economy/set?token=" + encodeURIComponent(t), { method: "POST", body: JSON.stringify({ troops: pool }) })
+      .then(r => r.ok ? r.json() : null).then(j => { if (j && j.troops != null) { myEcon.troops = j.troops; if (j.gold != null) myEcon.gold = j.gold; } if (cb) cb(); }).catch(() => { if (cb) cb(); });
   }
+  // 兵力池改成「分兵種」：myEcon.troops = {cav,archer,inf,spear}
+  function poolObj() { if (myEcon) { if (!myEcon.troops || typeof myEcon.troops !== "object") myEcon.troops = {}; return myEcon.troops; } return {}; }
+  function poolTotal() { const p = poolObj(); return TROOPS.reduce((a, t) => a + (p[t.id] || 0), 0); }
+  function poolAvail() { const p = poolObj(), a = {}; TROOPS.forEach(t => a[t.id] = p[t.id] || 0); return a; }
+  function poolSpend(squad) { const p = poolObj(); (squad || []).forEach(s => { p[s.type] = Math.max(0, (p[s.type] || 0) - s.hp); }); }
+  function poolAdd(list) { const p = poolObj(); (list || []).forEach(s => { p[s.type] = (p[s.type] || 0) + (s.hp || 0); }); }
+  function poolBreakdown() { const p = poolObj(); return TROOPS.filter(t => (p[t.id] || 0) > 0).map(t => troopIcon(t.id) + (p[t.id] || 0)).join(" ") || "—"; }
+  // 重新佈署可用量 = 兵力池 + 該區現有守軍(各兵種相加)
+  function poolPlusGarrison(list) { const a = poolAvail(); (list || []).forEach(t => { if (t.hp > 0) a[t.type] = (a[t.type] || 0) + t.hp; }); return a; }
+  function squadByType(g) { const m = {}; (g || []).forEach(x => m[x.type] = (m[x.type] || 0) + x.hp); return m; }
   function renderEmpire() {
     let bar = document.getElementById("empireBar");
     if (!bar) {
@@ -4164,8 +4176,8 @@
       anchor.parentNode.insertBefore(bar, anchor);
     }
     if (!authToken()) { bar.style.display = "none"; return; }
-    const e = myEcon || { population: 0, troops: 0, gold: 0, goldIncome: 0 };
-    bar.innerHTML = '🏠 <b>Home base</b> · 👥 Pop <b>' + e.population + '</b> <span class="emp-inc">(+10%/hr)</span> · ⚔️ Troops <b>' + e.troops + '</b> · 🪙 Gold <b>' + (e.gold || 0) + '</b> <span class="emp-inc">(+' + (e.goldIncome || 0) + '/hr)</span> <span class="emp-more">details ▸</span>';
+    const e = myEcon || { population: 0, gold: 0, goldIncome: 0 };
+    bar.innerHTML = '🏠 <b>Home base</b> · 👥 Pop <b>' + e.population + '</b> <span class="emp-inc">(+10%/hr)</span> · ⚔️ Troops <b>' + poolTotal() + '</b> <span class="emp-inc">' + poolBreakdown() + '</span> · 🪙 Gold <b>' + (e.gold || 0) + '</b> <span class="emp-inc">(+' + (e.goldIncome || 0) + '/hr)</span> <span class="emp-more">details ▸</span>';
     bar.style.display = "block"; bar.style.cursor = "pointer";
     bar.onclick = openEmpire;
   }
@@ -4194,13 +4206,13 @@
     let html = '<h3 class="modal-title">🏰 My Empire' + helpIco(empTip) + '</h3>' +
       '<div class="emp-stats">' +
       '<div><span>👥</span><b>' + e.population + '</b><small>population</small></div>' +
-      '<div><span>⚔️</span><b>' + e.troops + '</b><small>free troops</small></div>' +
+      '<div><span>⚔️</span><b>' + poolTotal() + '</b><small>free troops</small></div>' +
       '<div><span>🛡️</span><b>' + garTotal + '</b><small>garrisoned</small></div>' +
       '<div><span>🪙</span><b>' + gold + '</b><small>gold (+' + goldInc + '/hr)</small></div>' +
       '</div>' +
       '<button class="emp-row emp-row-btn" id="empHome"><div class="emp-rg"><b>🏠 Home Base</b>' + techBadge(e.tech) +
-      '<span class="emp-pop">👥 ' + e.population + ' · ⚔️ ' + e.troops + '</span></div>' +
-      '<div class="emp-gar"><span class="op-card" style="color:#64748b">Build · recruit into your army · research</span><span class="emp-manage">Manage ▸</span></div></button>';
+      '<span class="emp-pop">👥 ' + e.population + '</span></div>' +
+      '<div class="emp-gar"><span class="op-card">⚔️ ' + poolBreakdown() + '</span><span class="emp-manage">Manage ▸</span></div></button>';
     if (!mine.length) {
       html += '<p class="op-hint" style="text-align:center">No regions yet. Pass a lesson, then occupy its region on the map!</p>';
     } else {
@@ -4230,7 +4242,7 @@
     const e = myEcon || {};
     const html = '<h3 class="modal-title">🏠 Home Base' +
       helpIco("Recruiting turns people into troops (locked to type). Research buffs the troops you attack with.") + '</h3>' +
-      '<div class="op-def op-mine">👥 Population <b>' + (e.population || 0) + '</b> <small>(+10%/hr)</small> · ⚔️ Free troops <b>' + (e.troops || 0) + '</b></div>' +
+      '<div class="op-def op-mine">👥 Population <b>' + (e.population || 0) + '</b> <small>(+10%/hr)</small><br>⚔️ Free troops <b>' + poolTotal() + '</b> ' + poolBreakdown() + '</div>' +
       '<div id="homeTerr"></div>';
     const ov = openModal(html);
     wireHelp(ov);
@@ -4623,7 +4635,7 @@
     const me = (authUser() || userName || "").toLowerCase();
     const mine = !!(h && h.owner && (h.owner || "").toLowerCase() === me);
     const enemy = !!(h && h.owner) && !mine;
-    const T = (myEcon && myEcon.troops) || 0;
+    const T = poolTotal();
     const livePop = (mine && h && h.pop != null) ? h.pop : pop;   // 已佔領：顯示伺服器最新人口(徵兵/成長會變)
     let html = '<h3 class="modal-title">🏰 ' + name + '</h3>' +
       '<div class="op-pop">👥 Population <b>' + livePop + '</b>' + (mine ? ' (yours · +10%/hr, recruiting draws from it)' : ' — added to your empire if you take it') + '</div>';
@@ -4635,21 +4647,25 @@
     const noTroops = '<p class="op-hint">⚠️ No troops right now — win a battle or redeploy a garrison to free some up.</p>';
     if (!authToken()) { terr.innerHTML = '<p class="op-hint">🔒 Log in to raise an army and battle for territory.</p>'; return; }
     if (mine) {
-      const oldTot = sumHp(h.troops), budget = T + oldTot;
-      terr.innerHTML = '<p class="op-hint">✅ Yours. Re-deploy garrison (pool + current = ' + budget + '):</p>';
-      deployPanel(terr, budget, { init: h.troops, label: "🚩 Deploy", onGo: g => { myEcon.troops = Math.max(0, T + oldTot - sumHp(g)); claimTroops(key, g, pop, function () {}); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); } });
+      const avail = poolPlusGarrison(h.troops);
+      terr.innerHTML = '<p class="op-hint">✅ Yours. Re-deploy garrison (drag each troop type; the rest stays in your pool):</p>';
+      deployPanel(terr, avail, { init: h.troops, label: "🚩 Deploy", allowEmpty: true, onGo: g => {
+        const gm = squadByType(g), p = poolObj();
+        TROOPS.forEach(t => { p[t.id] = Math.max(0, (avail[t.id] || 0) - (gm[t.id] || 0)); });   // 沒派出的留在兵力池
+        claimTroops(key, g, pop, function () {}); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); });
+      } });
       buildingsPanel(terr, key, h, function () { closeModal(); openRegion(key, name, pop, i, article); });
       return;
     }
     if (enemy) {
       // 有主：先攻打。打贏 → 該區恢復「無主」，之後再走過關→佔領流程才真正佔領。
       if (T <= 0) { terr.innerHTML = noTroops; return; }
-      terr.innerHTML = '<p class="op-hint">⚔️ Attack ' + dispName(h.owner) + " — you can't scout the garrison. Pick 4 cards & split troops (max " + T + '):</p>';
-      deployPanel(terr, T, { attack: true, foe: [], label: "⚔️ Attack", onGo: squad => {
-        const A = sumHp(squad); myEcon.troops = Math.max(0, T - A); closeModal();
+      terr.innerHTML = '<p class="op-hint">⚔️ Attack ' + dispName(h.owner) + " — you can't scout the garrison. Assign troops by type:</p>";
+      deployPanel(terr, poolAvail(), { attack: true, foe: [], label: "⚔️ Attack", onGo: squad => {
+        poolSpend(squad); closeModal();
         terrEngage(key, function (foe) {   // 開戰才揭露守軍(戰霧)
           runBattle(squad, (foe && foe.troops) || [], dispName(h.owner), function (win, survivors) {
-            myEcon.troops += sumHp(survivors);                     // 生還者一律撤回兵力池（尚未佔領）
+            poolAdd(survivors);                                   // 生還者(分兵種)撤回兵力池（尚未佔領）
             terrAttackResult(key, win);                            // 失敗 −50 / 守方 +50
             if (win) { releaseTerritory(key, pop, function () {}); logEvent("attack", { region: name, target: h.owner, key: key }); }   // 打贏 → 清成無主 + 記事件
             saveEconomy(function () { renderEmpire(); refreshMap(); });
@@ -4662,9 +4678,8 @@
     const cleared = pending && pending.key === key && passCount(pending.file) > pending.base;
     if (cleared) {
       if (T <= 0) { terr.innerHTML = noTroops; return; }
-      terr.innerHTML = '<p class="op-hint">✅ Challenge cleared! 🚩 Occupy — send troops (max ' + T + '):</p>';
-      // 佔領不再把該區人口灌進家鄉兵力池；該區人口改為每小時自動補進「該區駐軍」(server region_grow)
-      deployPanel(terr, T, { label: "🚩 Occupy", onGo: g => { myEcon.troops = Math.max(0, T - sumHp(g)); pending = null; claimTroops(key, g, pop, function () {}); logEvent("occupy", { region: name, key: key }); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); } });
+      terr.innerHTML = '<p class="op-hint">✅ Challenge cleared! 🚩 Occupy — assign troops by type:</p>';
+      deployPanel(terr, poolAvail(), { label: "🚩 Occupy", onGo: g => { poolSpend(g); pending = null; claimTroops(key, g, pop, function () {}); logEvent("occupy", { region: name, key: key }); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); } });
       return;
     }
     const ch = article;   // 這個地區固定綁定的課
@@ -4910,7 +4925,7 @@
     const mine = !!(h && h.owner && (h.owner || "").toLowerCase() === me);
     const title = a.title ? a.title.split("·").pop().trim() : a.id;
     const regionPop = popOf(a);
-    const T = (myEcon && myEcon.troops) || 0;
+    const T = poolTotal();
     const shownPop = (mine && h && h.pop != null) ? h.pop : regionPop;   // 已佔領顯示伺服器最新人口
     let html = '<h3 class="modal-title">🏰 ' + title + '</h3>' +
       '<div class="op-pop">👥 Region population <b>' + shownPop + '</b>' + (mine ? ' (in your empire · +10%/hr, recruiting draws from it)' : ' — added to your empire if you take it') + '</div>';
@@ -4925,36 +4940,36 @@
     const terr = ov.querySelector("#opTerr");
     if (!authToken()) { terr.innerHTML = '<p class="op-hint">🔒 Log in to raise an army and battle for territory.</p>'; return; }
     if (mine) {
-      const oldTot = sumHp(h.troops), budget = T + oldTot;
-      terr.innerHTML = '<p class="op-hint">✅ Yours. Re-deploy garrison (pool + current = ' + budget + '):</p>';
-      deployPanel(terr, budget, { init: h.troops, label: "🚩 Deploy", onGo: g => {
-        myEcon.troops = Math.max(0, T + oldTot - sumHp(g));
+      const avail = poolPlusGarrison(h.troops);
+      terr.innerHTML = '<p class="op-hint">✅ Yours. Re-deploy garrison (the rest stays in your pool):</p>';
+      deployPanel(terr, avail, { init: h.troops, label: "🚩 Deploy", allowEmpty: true, onGo: g => {
+        const gm = squadByType(g), p = poolObj();
+        TROOPS.forEach(t => { p[t.id] = Math.max(0, (avail[t.id] || 0) - (gm[t.id] || 0)); });
         claimTroops(file, g, regionPop, function () {});
         saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); });
       } });
       buildingsPanel(terr, file, h, function () { closeModal(); openOutpost(a); });
     } else if (!h || !h.owner) {
       if (!passed) { terr.innerHTML = '<p class="op-hint">🚩 Tap Study lesson above — pass it (80%+) and your troops deploy here automatically.</p>'; }
-      else if (T <= 0) { terr.innerHTML = '<p class="op-hint">⚠️ No troops yet — win a battle or redeploy a garrison to free some up.</p>'; }
+      else if (T <= 0) { terr.innerHTML = '<p class="op-hint">⚠️ No troops yet — recruit or redeploy to free some up.</p>'; }
       else {
-        terr.innerHTML = '<p class="op-hint">🚩 Occupy: send troops from your pool (max ' + T + '):</p>';
-        deployPanel(terr, T, { label: "🚩 Occupy", onGo: g => {
-          // 佔領不再灌人口回家鄉；該區人口每小時自動補進「該區駐軍」(server region_grow)
-          myEcon.troops = Math.max(0, T - sumHp(g));
+        terr.innerHTML = '<p class="op-hint">🚩 Occupy: assign troops by type:</p>';
+        deployPanel(terr, poolAvail(), { label: "🚩 Occupy", onGo: g => {
+          poolSpend(g);
           claimTroops(file, g, regionPop, function () {}); logEvent("occupy", { region: title, key: file });
           saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); });
         } });
       }
     } else {
       // 有主：先攻打（不需先過關）。打贏 → 該區恢復「無主」，之後走過關→佔領流程才真正佔領。
-      if (T <= 0) { terr.innerHTML = '<p class="op-hint">⚠️ No troops to attack with — redeploy a garrison or win a battle first.</p>'; }
+      if (T <= 0) { terr.innerHTML = '<p class="op-hint">⚠️ No troops to attack with — recruit or redeploy first.</p>'; }
       else {
-        terr.innerHTML = '<p class="op-hint">⚔️ Attack! You can\'t scout the garrison. Pick 4 cards & split your troops (max ' + T + '):</p>';
-        deployPanel(terr, T, { attack: true, foe: [], label: "⚔️ Attack", onGo: squad => {
-          const A = sumHp(squad); myEcon.troops = Math.max(0, T - A); closeModal();
+        terr.innerHTML = '<p class="op-hint">⚔️ Attack! You can\'t scout the garrison. Assign troops by type:</p>';
+        deployPanel(terr, poolAvail(), { attack: true, foe: [], label: "⚔️ Attack", onGo: squad => {
+          poolSpend(squad); closeModal();
           terrEngage(file, function (foe) {   // 開戰才揭露守軍(戰霧)
             runBattle(squad, (foe && foe.troops) || [], dispName(h.owner), function (win, survivors) {
-              myEcon.troops += sumHp(survivors);                          // 生還者一律撤回兵力池（尚未佔領）
+              poolAdd(survivors);                                        // 生還者(分兵種)撤回兵力池（尚未佔領）
               terrAttackResult(file, win);                                // 失敗 −50 / 守方 +50
               if (win) { releaseTerritory(file, regionPop, function () {}); logEvent("attack", { region: title, target: h.owner, key: file }); }  // 打贏 → 清成無主 + 記事件
               saveEconomy(function () { renderEmpire(); refreshMap(); });
@@ -4967,15 +4982,14 @@
 
   // 部署面板：4 張牌，每張可自選兵種（可重複，例如四張全弓兵）+ 分配兵力 HP（總和 ≤ 兵力預算）。
   //   attack 時：牌 1→4 的順序 = 出戰順序。
-  function deployPanel(root, budget, opts) {
+  // 分兵種指派面板：avail = {兵種:可用數}。每個兵種一列，滑桿 0..可用數；送出 = 各兵種選的數量。
+  function deployPanel(root, avail, opts) {
     opts = opts || {};
-    const init = (opts.init && opts.init.length) ? opts.init : null;
-    const base = Math.floor(budget / 4);
-    const slots = [];
-    for (let i = 0; i < 4; i++) {
-      if (init && init[i]) slots.push({ type: init[i].type, hp: Math.min(init[i].hp, budget) });
-      else slots.push({ type: TROOPS[i % 4].id, hp: base + (i === 0 ? budget - base * 4 : 0) });
-    }
+    avail = avail || {};
+    const initMap = {}; (opts.init || []).forEach(x => initMap[x.type] = (initMap[x.type] || 0) + x.hp);
+    const types = TROOPS.map(t => t.id).filter(ty => (avail[ty] || 0) > 0);
+    const amt = {};
+    types.forEach(ty => amt[ty] = opts.init ? Math.min(initMap[ty] || 0, avail[ty]) : (avail[ty] || 0));
     const wrap = document.createElement("div"); wrap.className = "dep";
     const foeTypes = (opts.foe || []).map(t => t.type);
     function advText(ty) {                       // 該兵種對守軍的克制提示
@@ -4985,9 +4999,12 @@
       return (strong.length ? '<span class="adv-s">▲' + strong.map(f => troopIcon(f)).join("") + '</span>' : '') +
         (weak.length ? '<span class="adv-w">▼' + weak.map(f => troopIcon(f)).join("") + '</span>' : '');
     }
-    const helpHtml = opts.help || ('<b>Counters</b> (beats →): 🔱→🐎 · 🐎→🏹 · 🏹→🔱🛡️ &nbsp; 🏹 <b>shoots first</b>.<br>' +
-      'More troops on a card = more damage.');
-    wrap.innerHTML = '<p class="dep-left">Troops left: <span class="dep-l">0</span> / ' + budget +
+    if (!types.length) {
+      wrap.innerHTML = '<p class="op-hint">⚠️ No troops to deploy. Recruit some first.</p>';
+      root.appendChild(wrap); return;
+    }
+    const helpHtml = opts.help || ('<b>Counters</b> (beats →): 🔱→🐎 · 🐎→🏹 · 🏹→🔱🛡️ &nbsp; 🏹 <b>shoots first</b>. Assign each troop type below.');
+    wrap.innerHTML = '<p class="dep-left">Assigned: <span class="dep-l">0</span>' +
       ' <button type="button" class="dep-help-btn">❓ How</button></p>' +
       '<div class="dep-help" style="display:none">' + helpHtml + '</div>' +
       '<div class="dep-rows"></div>' +
@@ -4995,37 +5012,23 @@
     const rowsEl = wrap.querySelector(".dep-rows"), leftEl = wrap.querySelector(".dep-l"), goBtn = wrap.querySelector(".dep-go");
     const helpBox = wrap.querySelector(".dep-help"), helpBtn = wrap.querySelector(".dep-help-btn");
     helpBtn.addEventListener("click", () => { helpBox.style.display = helpBox.style.display === "none" ? "block" : "none"; });
-    try { if (!localStorage.getItem("troopHelpSeen")) { helpBox.style.display = "block"; localStorage.setItem("troopHelpSeen", "1"); } } catch (e) {}
-    function render() {
-      rowsEl.innerHTML = "";
-      slots.forEach((o, idx) => {
-        const row = document.createElement("div"); row.className = "dep-row";
-        const picks = TROOPS.map(t => '<button class="dep-ty' + (t.id === o.type ? " sel" : "") + '" data-ty="' + t.id + '" title="' + t.en + '">' + troopIcon(t.id) + '</button>').join("");
-        row.innerHTML = '<span class="dep-slot">' + (idx + 1) + '</span><span class="dep-type">' + picks + '</span>' +
-          '<input type="range" class="dep-hp" min="0" max="' + budget + '" value="' + o.hp + '"><span class="dep-val">' + o.hp + '</span>' +
-          '<span class="dep-adv">' + advText(o.type) + '</span>';
-        const range = row.querySelector(".dep-hp"), val = row.querySelector(".dep-val"), advEl = row.querySelector(".dep-adv");
-        range.addEventListener("input", () => {
-          let v = parseInt(range.value, 10) || 0;
-          const others = slots.reduce((s, x, j) => s + (j === idx ? 0 : x.hp), 0);
-          if (v + others > budget) { v = budget - others; range.value = v; }   // 夾住不超過兵力
-          o.hp = v; val.textContent = v; sync();
-        });
-        row.querySelectorAll(".dep-ty").forEach(b => b.addEventListener("click", () => {
-          o.type = b.dataset.ty; row.querySelectorAll(".dep-ty").forEach(x => x.classList.toggle("sel", x.dataset.ty === o.type));
-          advEl.innerHTML = advText(o.type);
-        }));
-        rowsEl.appendChild(row);
-      });
-      sync();
-    }
+    types.forEach(ty => {
+      const row = document.createElement("div"); row.className = "dep-row";
+      row.innerHTML = '<span class="dep-ty2">' + troopIcon(ty) + ' ' + TROOP[ty].en + '</span>' +
+        '<input type="range" class="dep-hp" min="0" max="' + avail[ty] + '" value="' + amt[ty] + '">' +
+        '<span class="dep-val">' + amt[ty] + '</span><span class="dep-max">/' + avail[ty] + '</span>' +
+        '<span class="dep-adv">' + advText(ty) + '</span>';
+      const range = row.querySelector(".dep-hp"), val = row.querySelector(".dep-val");
+      range.addEventListener("input", () => { amt[ty] = parseInt(range.value, 10) || 0; val.textContent = amt[ty]; sync(); });
+      rowsEl.appendChild(row);
+    });
     function sync() {
-      const sum = slots.reduce((s, x) => s + x.hp, 0);
-      leftEl.textContent = budget - sum;
-      goBtn.disabled = sum <= 0 || sum > budget;
+      const sum = types.reduce((s, ty) => s + amt[ty], 0);
+      leftEl.textContent = sum;
+      goBtn.disabled = opts.allowEmpty ? false : sum <= 0;
     }
-    goBtn.addEventListener("click", () => opts.onGo(slots.filter(o => o.hp > 0).map(o => ({ type: o.type, hp: o.hp }))));
-    render();
+    goBtn.addEventListener("click", () => opts.onGo(types.filter(ty => amt[ty] > 0).map(ty => ({ type: ty, hp: amt[ty] }))));
+    sync();
     root.appendChild(wrap);
   }
 

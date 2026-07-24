@@ -195,6 +195,22 @@ POP_GROWTH = 0.10     # 人口每小時 +10%（家鄉與各領地各自成長；
 ECON_MAX_CATCHUP = 72 # 一次最多補算 72 小時，避免長時間停機後人口/金幣暴衝
 ECON_START_POP = 100
 ECON_START_TROOPS = 100
+TROOP_ALL = ("cav", "archer", "inf", "spear")   # 兵力池分兵種保存的順序
+
+
+def _norm_troops(v):
+    # 兵力池改成「分兵種」保存：{cav,archer,inf,spear}。舊資料是單一數字 → 平均拆成四種(餘數給步兵)。
+    if isinstance(v, dict):
+        return {k: clampi(v.get(k, 0)) for k in TROOP_ALL}
+    n = clampi(v)
+    per = n // 4
+    d = {k: per for k in TROOP_ALL}
+    d["inf"] += n - per * 4
+    return d
+
+
+def troops_total(t):
+    return sum(clampi(v) for v in (t or {}).values()) if isinstance(t, dict) else clampi(t)
 
 
 def load_econ_store():
@@ -264,10 +280,9 @@ def clampi(v, lo=0, hi=100000000):
 def econ_get(store, user, now, region_pop=0):
     e = store.get(user)
     if not isinstance(e, dict):
-        e = {"population": ECON_START_POP, "troops": ECON_START_TROOPS, "gold": 0, "lastGold": now}
+        e = {"population": ECON_START_POP, "troops": _norm_troops(ECON_START_TROOPS), "gold": 0, "lastGold": now}
         store[user] = e
     pop = clampi(e.get("population", ECON_START_POP))
-    troops = clampi(e.get("troops", 0))
     gold = clampi(e.get("gold", 0))
     if "lastGold" in e:
         try:
@@ -283,7 +298,8 @@ def econ_get(store, user, now, region_pop=0):
             gold = clampi(gold + int(round((pop + rp) * GOLD_RATE)))
             pop = clampi(round(pop * (1 + POP_GROWTH)))
         last = last + hours * GROW_SECONDS               # 時鐘照實推進（即使成長被 catch-up 上限截斷）
-    e["population"], e["troops"], e["gold"], e["lastGold"] = pop, troops, gold, last
+    e["population"], e["gold"], e["lastGold"] = pop, gold, last
+    e["troops"] = _norm_troops(e.get("troops", 0))   # 兵力池分兵種保存(舊的單一數字會自動轉)
     if not isinstance(e.get("passcnt"), dict):       # 每課通過次數(佔領解鎖用)——改由後端統一保存
         e["passcnt"] = {}
     if not isinstance(e.get("buildings"), dict):     # 家鄉基地的建築(蓋在自己的預設領地)
@@ -668,7 +684,8 @@ def conscript_tick():
                     n_troops = sum(bought.values())
                     if n_troops > clampi(e.get("population", 0)):  # 家鄉人口不夠 → 這小時不做事
                         break
-                    e["troops"] = clampi(e.get("troops", 0)) + n_troops
+                    for u, n in bought.items():                    # 分兵種加進兵力池
+                        e["troops"][u] = clampi(e["troops"].get(u, 0)) + n
                     e["population"] = clampi(e.get("population", 0)) - n_troops   # 徵兵扣家鄉人口
                     e["gold"] = clampi(e.get("gold", 0)) - cost
                     e_dirty = True
@@ -1228,7 +1245,7 @@ class Handler(BaseHTTPRequestHandler):
                     return
                 e["gold"] = clampi(e.get("gold", 0)) - cost
                 e["population"] = clampi(e.get("population", 0)) - qty   # 徵兵扣家鄉人口
-                e["troops"] = clampi(e.get("troops", 0)) + qty
+                e["troops"][unit] = clampi(e["troops"].get(unit, 0)) + qty   # 加進該兵種
                 save_econ_store(estore)
                 newgold, newtroops, newpop = e["gold"], e["troops"], e["population"]
             self._send({"ok": True, "gold": newgold, "troops": newtroops, "population": newpop})
@@ -1387,7 +1404,8 @@ class Handler(BaseHTTPRequestHandler):
             buildings, tech = e["buildings"], e["tech"]
             conscript, cbudget = bool(e.get("conscript")), clampi(e.get("conscriptBudget", 0))
         income = int(round((pop + region_pop) * GOLD_RATE))   # 金幣/小時 = (家鄉+領地人口) × 比例
-        self._send({"population": pop, "troops": troops, "gold": gold, "goldIncome": income,
+        self._send({"population": pop, "troops": troops, "troopsTotal": troops_total(troops),
+                    "gold": gold, "goldIncome": income,
                     "passcnt": passcnt, "buildings": buildings, "tech": tech,
                     "conscript": conscript, "conscriptBudget": cbudget})
 
@@ -1427,10 +1445,10 @@ class Handler(BaseHTTPRequestHandler):
             e = econ_get(store, user, time.time(), region_pop)
             # 人口改為伺服器管理（每小時 +10% 成長、徵兵扣人口）→ 前端不再直接設定 population
             if "troops" in d:
-                e["troops"] = clampi(d.get("troops"))
+                e["troops"] = _norm_troops(d.get("troops"))   # 前端回傳分兵種的兵力池
             save_econ_store(store)
             pop, troops, gold = e["population"], e["troops"], e["gold"]
-        self._send({"ok": True, "population": pop, "troops": troops, "gold": gold})
+        self._send({"ok": True, "population": pop, "troops": troops, "troopsTotal": troops_total(troops), "gold": gold})
 
     def log_message(self, *args):
         pass  # 安靜
