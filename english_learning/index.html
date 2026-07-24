@@ -598,6 +598,9 @@
   .bld-card:disabled .bld-cost { background: #94a3b8; }
   .bld-card.maxed .bld-cost { background: #16a34a; }
   /* 該領地各兵種實際數值表 */
+  .help-i { cursor: pointer; color: #94a3b8; font-weight: 800; font-size: 14px; margin-left: 5px; user-select: none; }
+  .help-i:hover { color: #2563eb; }
+  .help-tip { font-size: 12.5px; color: #475569; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; padding: 7px 10px; margin: 6px 0; line-height: 1.45; }
   .bld-stats-h { margin-top: 10px; font-size: 13px; font-weight: 800; color: #334155; }
   .bld-stats-h small { font-weight: 700; color: #b45309; }
   .bs-tbl { margin-top: 5px; display: flex; flex-direction: column; gap: 3px; }
@@ -5108,13 +5111,28 @@
     return u;
   }
   // 你自己領地/家鄉的「建設面板」：世紀帝國式建築圖示網格。點圖示 → 開該建築的科技/徵兵視窗。onChange = 回到管理視窗。
+  // 說明改成小小的 ⓘ 註解：點一下(或滑過)才展開，不佔版面
+  function helpIco(text) {
+    const t = String(text).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+    return ' <span class="help-i" title="' + t + '" data-tip="' + t + '">ⓘ</span>';
+  }
+  function wireHelp(root) {
+    root.querySelectorAll(".help-i").forEach(el => el.addEventListener("click", e => {
+      e.stopPropagation();
+      const host = el.closest("h3, .bld-gold") || el.parentElement;
+      const nx = host.nextElementSibling;
+      if (nx && nx.classList.contains("help-tip")) { nx.remove(); return; }
+      const tip = document.createElement("div"); tip.className = "help-tip"; tip.textContent = el.dataset.tip;
+      host.parentNode.insertBefore(tip, host.nextSibling);
+    }));
+  }
   function buildingsPanel(container, key, h, onChange) {
     const st = manageState(key);
     const builds = st.h.buildings || {}, tech = st.h.tech || {};
     const box = document.createElement("div"); box.className = "bld-box";
     let html = '<div class="bld-gold">🪙 <b>' + st.gold + '</b> gold <span class="bld-inc">(+' + st.goldInc + '/hr)</span>' +
-      ' &nbsp; 👥 <b>' + st.pop + '</b> people <span class="bld-inc">(+10%/hr)</span></div>' +
-      '<p class="op-hint">Tap a building. Recruiting turns 👥 people into troops (1 person = 1 soldier) — each type is locked, a knight stays a knight.</p>' +
+      ' &nbsp; 👥 <b>' + st.pop + '</b> people <span class="bld-inc">(+10%/hr)</span>' +
+      helpIco("Tap a building to build/use it. Recruiting turns 👥 people into troops (1 person = 1 soldier). Each troop type is locked — a knight stays a knight.") + '</div>' +
       '<div class="bld-grid">';
     BUILDINGS.forEach(function (b) {
       const built = !!builds[b.id], cost = BUILD_COST[b.id];
@@ -5136,6 +5154,7 @@
       '<span class="bld-sub2">' + (canConscript ? (st.conscript ? st.conscriptBudget + '🪙/hr' : 'auto-recruit') : 'need a building') + '</span></button>';
     html += '</div>';
     box.innerHTML = html;
+    wireHelp(box);
     box.querySelectorAll('[data-b]').forEach(function (btn) {
       btn.addEventListener("click", function () {
         const id = btn.dataset.b;
@@ -5153,10 +5172,13 @@
     const builds = st.h.buildings || {}, tech = st.h.tech || {};
     if (!b || !builds[buildingId]) { if (reopenManage) reopenManage(); return; }
     const reopen = () => openBuildingDetail(key, buildingId, reopenManage);
-    let html = '<h3 class="modal-title">' + b.icon + ' ' + b.name + '</h3>' +
+    const target = st.home ? "your troop pool" : "this garrison";
+    const tip = b.kind === "tech"
+      ? ("Research buffs " + (st.home ? "the army you attack with" : "this region's garrison") + " (+10% per level). Tap a tech to research.")
+      : ("Recruit into " + target + " — costs 🪙 gold + 👥 people. Troops are locked to their type. Tap a unit to recruit ×" + RECRUIT_BATCH + ".");
+    let html = '<h3 class="modal-title">' + b.icon + ' ' + b.name + helpIco(tip) + '</h3>' +
       '<div class="bld-gold">🪙 <b>' + st.gold + '</b> gold &nbsp; 👥 <b>' + st.pop + '</b> people</div>';
     if (b.kind === "tech") {
-      html += '<p class="op-hint">Research buffs ' + (st.home ? 'the army you attack with' : "this region's garrison") + ' (+10% per level). Tap a tech to research.</p>';
       html += '<div class="bld-grid">';
       [["atk", "⚔️", "Forging"], ["def", "🛡️", "Armor"]].forEach(([tk, ico, label]) => {
         const lvl = tech[tk] || 0, maxed = lvl >= TECH_MAX;
@@ -5169,8 +5191,6 @@
       });
       html += '</div>';
     } else {
-      const target = st.home ? "your troop pool" : "this garrison";
-      html += '<p class="op-hint">Recruit into ' + target + ' — costs 🪙 gold + 👥 people. Troops are locked to their type. Tap a unit to recruit ×' + RECRUIT_BATCH + '.</p>';
       const aMul = 1 + techAtk(tech), dMul = 1 + techDef(tech);
       html += '<div class="bld-grid">';
       b.units.forEach(u => {
@@ -5193,6 +5213,7 @@
     }
     html += '<div class="op-btns"><button id="bdBack" class="back-btn">◀ Back</button></div>';
     const ov = openModal(html);
+    wireHelp(ov);
     ov.querySelector("#bdBack").addEventListener("click", () => { if (reopenManage) reopenManage(); });
     ov.querySelectorAll('[data-track]').forEach(btn => btn.addEventListener("click", () => {
       btn.disabled = true; terrResearch(key, btn.dataset.track, reopen);
@@ -5207,14 +5228,15 @@
     const units = producibleUnits(st.h.buildings || {});
     if (!units.length) { if (reopenManage) reopenManage(); return; }
     const target = st.home ? "your troop pool" : "this garrison";
-    let html = '<h3 class="modal-title">🎖️ Conscription</h3>' +
+    const csTip = "Each hour, auto-recruit into " + target + " — spends up to the budget from your gold pool and draws people, split evenly across " +
+      units.map(u => TROOP[u].en).join(" / ") + ". If gold or people fall short that hour, it skips.";
+    let html = '<h3 class="modal-title">🎖️ Conscription' + helpIco(csTip) + '</h3>' +
       '<div class="bld-gold">🪙 <b>' + st.gold + '</b> gold &nbsp; 👥 <b>' + st.pop + '</b> people</div>' +
-      '<p class="op-hint">Each hour, auto-recruit into ' + target + ' — spends up to the budget from your gold pool and draws people, split evenly across ' +
-      units.map(u => troopIcon(u)).join(" ") + '. If gold or people fall short that hour, it skips.</p>' +
       '<div class="bld-row"><label class="bld-nm"><input type="checkbox" id="csOn"' + (st.conscript ? " checked" : "") + '> Enabled</label>' +
       '<span>💰 <input type="number" id="csBud" value="' + st.conscriptBudget + '" min="0" step="10" class="cs-inp"> 🪙/hr</span></div>' +
       '<div class="op-btns"><button id="csSave" class="bld-btn">Save</button><button id="bdBack" class="back-btn">◀ Back</button></div>';
     const ov = openModal(html);
+    wireHelp(ov);
     ov.querySelector("#bdBack").addEventListener("click", () => { if (reopenManage) reopenManage(); });
     ov.querySelector("#csSave").addEventListener("click", () => {
       const on = ov.querySelector("#csOn").checked;
