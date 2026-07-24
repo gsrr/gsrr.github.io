@@ -4187,16 +4187,17 @@
     });
     let garTotal = 0; mine.forEach(m => garTotal += sumHp(m.h.troops));
     const gold = (e.gold || 0), goldInc = (e.goldIncome != null) ? e.goldIncome : Math.round(e.population * 0.1);
-    let html = '<h3 class="modal-title">🏰 My Empire</h3>' +
+    const empTip = "🏠 Home base is safe — lose a battle and survivors retreat here. " +
+      "👥 Population grows +10%/hr at home and in every region. " +
+      "🪙 Each region remits gold (10% of its people/hr). " +
+      "🎖️ Recruiting turns people into troops (1 person = 1 soldier), so it shrinks that place's population.";
+    let html = '<h3 class="modal-title">🏰 My Empire' + helpIco(empTip) + '</h3>' +
       '<div class="emp-stats">' +
       '<div><span>👥</span><b>' + e.population + '</b><small>population</small></div>' +
       '<div><span>⚔️</span><b>' + e.troops + '</b><small>free troops</small></div>' +
       '<div><span>🛡️</span><b>' + garTotal + '</b><small>garrisoned</small></div>' +
       '<div><span>🪙</span><b>' + gold + '</b><small>gold (+' + goldInc + '/hr)</small></div>' +
       '</div>' +
-      '<div class="emp-note">🏠 Home base is safe — lose a battle and your survivors retreat here.<br>' +
-      '👥 Population grows +10%/hr at home and in every region. 🪙 Each region remits gold (10% of its people/hr).<br>' +
-      '🎖️ Recruiting turns people into troops (1 person = 1 soldier), so it shrinks that place\'s population.</div>' +
       '<button class="emp-row emp-row-btn" id="empHome"><div class="emp-rg"><b>🏠 Home Base</b>' + techBadge(e.tech) +
       '<span class="emp-pop">👥 ' + e.population + ' · ⚔️ ' + e.troops + '</span></div>' +
       '<div class="emp-gar"><span class="op-card" style="color:#64748b">Build · recruit into your army · research</span><span class="emp-manage">Manage ▸</span></div></button>';
@@ -4215,6 +4216,7 @@
       html += '</div>';
     }
     const ov = openModal(html);
+    wireHelp(ov);
     const homeBtn = ov.querySelector("#empHome");
     if (homeBtn) homeBtn.addEventListener("click", openHomeBase);
     ov.querySelectorAll(".emp-row-btn[data-key]").forEach(btn => btn.addEventListener("click", () => {
@@ -4226,11 +4228,12 @@
   function openHomeBase() {
     if (!authToken()) return;
     const e = myEcon || {};
-    const html = '<h3 class="modal-title">🏠 Home Base</h3>' +
-      '<div class="op-def op-mine">👥 Population <b>' + (e.population || 0) + '</b> <small>(+10%/hr)</small> · ⚔️ Free troops <b>' + (e.troops || 0) + '</b><br>' +
-      '<span class="op-card" style="color:#64748b">Recruiting turns people into troops (locked to type). Research buffs the troops you attack with.</span></div>' +
+    const html = '<h3 class="modal-title">🏠 Home Base' +
+      helpIco("Recruiting turns people into troops (locked to type). Research buffs the troops you attack with.") + '</h3>' +
+      '<div class="op-def op-mine">👥 Population <b>' + (e.population || 0) + '</b> <small>(+10%/hr)</small> · ⚔️ Free troops <b>' + (e.troops || 0) + '</b></div>' +
       '<div id="homeTerr"></div>';
     const ov = openModal(html);
+    wireHelp(ov);
     const host = ov.querySelector("#homeTerr");
     const pseudoH = { buildings: e.buildings || {}, tech: e.tech || {}, pop: e.population || 0, income: Math.round((e.population || 0) * 0.10) };
     buildingsPanel(host, HOME_KEY, pseudoH, function () { openHomeBase(); });
