@@ -525,7 +525,14 @@ def ai_move():
             h = store[key]
             victim = h.get("owner")
             defender = _alive(h.get("troops"))
-            army = _ai_make_army(max(8, int(ref * random.uniform(0.9, 1.5))))
+            # AI 從「自己最強的駐軍」出兵(有限兵力)——打輸會真的損失，玩家守得住就能把 AI 拖垮
+            ai_bases = [(bf, bh) for bf, bh in store.items()
+                        if isinstance(bh, dict) and bh.get("owner") == AI_OWNER
+                        and sum(clampi(x.get("hp", 0)) for x in (bh.get("troops") or [])) > 0]
+            if not ai_bases:
+                return None                        # AI 手上沒有可用兵力 → 這回合先不攻擊(靠佔領慢慢累積)
+            base_f, base_h = max(ai_bases, key=lambda kv: sum(clampi(x.get("hp", 0)) for x in kv[1]["troops"]))
+            army = [{"type": t, "hp": hp} for t, hp in _alive(base_h.get("troops"))]   # 傾巢而出
             atk_tuples = [(t["type"], t["hp"]) for t in army]
             tech = h.get("tech") or {}                                   # 守軍的兵工廠科技
             forge = 1 + 0.10 * clampi(tech.get("atk", 0))               # 鍛造 → 守方反擊更痛
@@ -535,15 +542,17 @@ def ai_move():
             region = _region_display(key)
             atk_force = sum(t["hp"] for t in army)                       # 攻城軍力
             def_force = sum(hp for _, hp in defender)                    # 守城軍力
-            if ap > dp:                            # AI 打贏 → 直接接管（存活兵力隨戰損縮減）
+            if ap > dp:                            # AI 打贏 → 存活主力「移防」到打下的地；原基地清空
                 surv_frac = max(0.2, min(0.9, 1 - dp / (ap + 1)))
                 surv = [{"type": t["type"], "hp": max(1, int(t["hp"] * surv_frac))} for t in army]
+                base_h["troops"] = []              # 主力調離 → 原本的 AI 領地變空(玩家可趁虛而入)
                 store[key] = {"owner": AI_OWNER, "avatar": AI_AVATAR, "troops": surv,
                               "pop": clampi(h.get("pop", cat.get(key, 100)))}
                 save_territory_store(store)
                 logged = ("attack_win", region, victim, key, atk_force, def_force)
-            else:                                  # AI 落敗 → 守軍受創但守住
-                dmg = min(0.6, ap / (dp + 1) * 0.5)
+            else:                                  # AI 落敗 → 出征軍全滅(基地清空)、AI 真的變少；守方只受小損
+                base_h["troops"] = []              # AI 出征的主力被殲滅
+                dmg = min(0.25, ap / (dp + 1) * 0.25)   # 守方打贏只受小損(不再被打到見骨)
                 for t in (h.get("troops") or []):
                     if isinstance(t, dict):
                         t["hp"] = max(0, int(int(t.get("hp", 0) or 0) * (1 - dmg)))
