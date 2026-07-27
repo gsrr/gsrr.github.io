@@ -362,6 +362,14 @@ AI_TICK_MIN = 20 * 60
 AI_TICK_MAX = 30 * 60
 TROOP_KINDS = ("cav", "archer", "inf", "spear")
 TERR_CATALOG = "/data/territory_catalog.json"   # 從真人佔領學到的 {regionKey: pop}
+# AI 有自己的「家鄉基地」(存在 economy.json 的 AI_OWNER 帳下，off-map、玩家打不到)：
+# 人口→每小時金幣、金幣→自動招募補兵。難度越高，預設人口與金幣越多(→ 收入更高、軍隊更快更大)。
+AI_DIFFICULTY = os.environ.get("AI_DIFFICULTY", "normal").lower()
+AI_DIFF = {
+    "easy":   {"pop": 120,  "gold": 300},
+    "normal": {"pop": 400,  "gold": 1500},
+    "hard":   {"pop": 1000, "gold": 8000},
+}
 
 
 def load_catalog():
@@ -430,33 +438,6 @@ def _force_power(force, enemy):
     return p
 
 
-def _ai_make_army(total):      # 把 total 兵力隨機拆成 2–4 種兵
-    total = max(4, int(total))
-    kinds = random.sample(list(TROOP_KINDS), random.randint(2, 4))
-    weights = [random.random() + 0.25 for _ in kinds]
-    s = sum(weights) or 1
-    army, used = [], 0
-    for i, k in enumerate(kinds):
-        remaining_slots = len(kinds) - 1 - i
-        if remaining_slots == 0:
-            hp = total - used
-        else:
-            hp = int(round(total * weights[i] / s))
-            hp = max(1, min(hp, total - used - remaining_slots))
-        used += hp
-        army.append({"type": k, "hp": max(1, hp)})
-    return army
-
-
-def _ai_reference(store):       # AI 兵力規模：參考當前玩家領地的平均駐軍（隨玩家成長）
-    vals = []
-    for f, h in store.items():
-        if isinstance(h, dict) and h.get("owner") and h.get("owner") != AI_OWNER:
-            vals.append(sum(hp for _, hp in _alive(h.get("troops"))))
-    base = (sum(vals) / len(vals)) if vals else 80
-    return max(40, min(4000, base))
-
-
 def _region_display(key):       # 從 store key 生一個看得懂的名字給事件牆用
     k = key.split("#")[-1] if "#" in key else key
     k = k.split("/")[-1]
@@ -489,75 +470,92 @@ def _ai_log_event(kind, region, victim=None, key=None, atk=0, dfn=0):
         save_events(evs)
 
 
+# AI 家鄉基地經濟：依難度種下人口/金幣，之後跟玩家一樣每小時產金(人口 + AI 領地人口)。
+def ai_econ(estore, now, tstore):
+    if not isinstance(estore.get(AI_OWNER), dict):
+        diff = AI_DIFF.get(AI_DIFFICULTY, AI_DIFF["normal"])
+        estore[AI_OWNER] = {"population": diff["pop"], "gold": diff["gold"],
+                            "lastGold": now, "troops": _norm_troops(0)}
+    return econ_get(estore, AI_OWNER, now, user_region_pop(tstore, AI_OWNER))
+
+
+# AI 補兵：把金幣全部拿去買一批平均分配的部隊，加進 AI 兵力池。
+def _ai_recruit(ae):
+    gold = clampi(ae.get("gold", 0))
+    if gold <= 0:
+        return
+    per = gold // len(TROOP_ALL)
+    spent = 0
+    for u in TROOP_ALL:
+        n = per // UNIT_COST[u]
+        if n > 0:
+            ae["troops"][u] = clampi(ae["troops"].get(u, 0)) + n
+            spent += n * UNIT_COST[u]
+    ae["gold"] = clampi(gold - spent)
+
+
 def ai_move():
     logged = None
     with terr_lock:
         store = load_territory_store()
-        ref = _ai_reference(store)
-        owned = set(store.keys())
-        player_regions = [f for f, h in store.items()
-                          if isinstance(h, dict) and h.get("owner") and h.get("owner") != AI_OWNER]
-        cat = load_catalog()
-        unowned_known = [k for k in cat.keys() if k not in owned]
+        with econ_lock:
+            estore = load_econ_store()
+            ae = ai_econ(estore, time.time(), store)   # 家鄉基地：累積金幣(off-map，玩家打不到)
+            _ai_recruit(ae)                            # 金幣 → 招募補兵到 AI 兵力池
+            pool = ae["troops"]
+            army = [{"type": t, "hp": clampi(pool.get(t, 0))} for t in TROOP_ALL if clampi(pool.get(t, 0)) > 0]
+            pool_total = sum(t["hp"] for t in army)
 
-        choices = []
-        if player_regions:
-            choices.append("attack")
-        if unowned_known:
-            choices.append("occupy")
-        if not choices:
-            return None                            # 還沒有任何可打/可佔的目標（catalog 為空且無玩家）
+            owned = set(store.keys())
+            player_regions = [f for f, h in store.items()
+                              if isinstance(h, dict) and h.get("owner") and h.get("owner") != AI_OWNER]
+            cat = load_catalog()
+            unowned_known = [k for k in cat.keys() if k not in owned]
 
-        if "attack" in choices and "occupy" in choices:
-            act = "attack" if random.random() < 0.6 else "occupy"
-        else:
-            act = choices[0]
-
-        if act == "occupy":
-            key = random.choice(unowned_known)
-            pop = clampi(cat.get(key, 100))
-            army = _ai_make_army(max(8, int(ref * random.uniform(0.6, 1.0))))
-            store[key] = {"owner": AI_OWNER, "avatar": AI_AVATAR, "troops": army, "pop": pop}
-            save_territory_store(store)
-            logged = ("occupy", _region_display(key), None, key)
-        else:
-            key = random.choice(player_regions)
-            h = store[key]
-            victim = h.get("owner")
-            defender = _alive(h.get("troops"))
-            # AI 從「自己最強的駐軍」出兵(有限兵力)——打輸會真的損失，玩家守得住就能把 AI 拖垮
-            ai_bases = [(bf, bh) for bf, bh in store.items()
-                        if isinstance(bh, dict) and bh.get("owner") == AI_OWNER
-                        and sum(clampi(x.get("hp", 0)) for x in (bh.get("troops") or [])) > 0]
-            if not ai_bases:
-                return None                        # AI 手上沒有可用兵力 → 這回合先不攻擊(靠佔領慢慢累積)
-            base_f, base_h = max(ai_bases, key=lambda kv: sum(clampi(x.get("hp", 0)) for x in kv[1]["troops"]))
-            army = [{"type": t, "hp": hp} for t, hp in _alive(base_h.get("troops"))]   # 傾巢而出
+            choices = []
+            if player_regions:
+                choices.append("attack")
+            if unowned_known:
+                choices.append("occupy")
+            if pool_total < 8 or not choices:         # 兵力還不夠 / 沒目標 → 這回合只補兵、存錢
+                save_econ_store(estore)
+                return None
+            act = ("attack" if random.random() < 0.6 else "occupy") if len(choices) == 2 else choices[0]
             atk_tuples = [(t["type"], t["hp"]) for t in army]
-            tech = h.get("tech") or {}                                   # 守軍的兵工廠科技
-            forge = 1 + 0.10 * clampi(tech.get("atk", 0))               # 鍛造 → 守方反擊更痛
-            armor = 1 + 0.08 * clampi(tech.get("def", 0))               # 鎧甲 → AI 打進去的傷害變小
-            ap = _force_power(atk_tuples, defender) / armor * random.uniform(0.85, 1.15)
-            dp = _force_power(defender, atk_tuples) * forge * 1.10 * random.uniform(0.85, 1.15)   # 守方先攻/主場
-            region = _region_display(key)
-            atk_force = sum(t["hp"] for t in army)                       # 攻城軍力
-            def_force = sum(hp for _, hp in defender)                    # 守城軍力
-            if ap > dp:                            # AI 打贏 → 存活主力「移防」到打下的地；原基地清空
-                surv_frac = max(0.2, min(0.9, 1 - dp / (ap + 1)))
-                surv = [{"type": t["type"], "hp": max(1, int(t["hp"] * surv_frac))} for t in army]
-                base_h["troops"] = []              # 主力調離 → 原本的 AI 領地變空(玩家可趁虛而入)
-                store[key] = {"owner": AI_OWNER, "avatar": AI_AVATAR, "troops": surv,
-                              "pop": clampi(h.get("pop", cat.get(key, 100)))}
-                save_territory_store(store)
-                logged = ("attack_win", region, victim, key, atk_force, def_force)
-            else:                                  # AI 落敗 → 出征軍全滅(基地清空)、AI 真的變少；守方只受小損
-                base_h["troops"] = []              # AI 出征的主力被殲滅
-                dmg = min(0.25, ap / (dp + 1) * 0.25)   # 守方打贏只受小損(不再被打到見骨)
-                for t in (h.get("troops") or []):
-                    if isinstance(t, dict):
-                        t["hp"] = max(0, int(int(t.get("hp", 0) or 0) * (1 - dmg)))
-                save_territory_store(store)
-                logged = ("attack_fail", region, victim, key, atk_force, def_force)
+
+            if act == "occupy":
+                key = random.choice(unowned_known)
+                store[key] = {"owner": AI_OWNER, "avatar": AI_AVATAR, "troops": army,
+                              "pop": clampi(cat.get(key, 100))}
+                ae["troops"] = _norm_troops(0)         # 兵力池派出去當駐軍 → 清空(靠金幣再補)
+                logged = ("occupy", _region_display(key), None, key)
+            else:
+                key = random.choice(player_regions)
+                h = store[key]
+                victim = h.get("owner")
+                defender = _alive(h.get("troops"))
+                tech = h.get("tech") or {}
+                forge = 1 + 0.10 * clampi(tech.get("atk", 0))
+                armor = 1 + 0.08 * clampi(tech.get("def", 0))
+                ap = _force_power(atk_tuples, defender) / armor * random.uniform(0.85, 1.15)
+                dp = _force_power(defender, atk_tuples) * forge * 1.10 * random.uniform(0.85, 1.15)
+                region = _region_display(key)
+                atk_force, def_force = pool_total, sum(hp for _, hp in defender)
+                if ap > dp:                            # AI 贏 → 存活主力進駐打下的地
+                    surv_frac = max(0.2, min(0.9, 1 - dp / (ap + 1)))
+                    surv = [{"type": t["type"], "hp": max(1, int(t["hp"] * surv_frac))} for t in army]
+                    store[key] = {"owner": AI_OWNER, "avatar": AI_AVATAR, "troops": surv,
+                                  "pop": clampi(h.get("pop", cat.get(key, 100)))}
+                    logged = ("attack_win", region, victim, key, atk_force, def_force)
+                else:                                  # AI 輸 → 出征兵力池全滅；守方只受小損
+                    dmg = min(0.25, ap / (dp + 1) * 0.25)
+                    for t in (h.get("troops") or []):
+                        if isinstance(t, dict):
+                            t["hp"] = max(0, int(int(t.get("hp", 0) or 0) * (1 - dmg)))
+                    logged = ("attack_fail", region, victim, key, atk_force, def_force)
+                ae["troops"] = _norm_troops(0)         # 出征即從兵力池扣光(勝→已移防；敗→全滅)
+            save_econ_store(estore)
+        save_territory_store(store)
 
     if logged:
         _ai_log_event(*logged)
