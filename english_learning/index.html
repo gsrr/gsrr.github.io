@@ -4191,11 +4191,22 @@
     });
   }
   function createRoom(box) {
-    const t = authToken(); if (!t) return;
+    const t = authToken(); if (!t) { alert("Log in first."); return; }
     box = box || document.getElementById("lobbyMine");
+    const btn = box.querySelector(".lobby-create"); if (btn) { btn.disabled = true; btn.textContent = "Creating…"; }
     fetch("/api/room/create?token=" + encodeURIComponent(t), { method: "POST", body: "{}" })
-      .then(r => r.ok ? r.json() : null).then(j => { if (j && j.ok) renderMyRoom(box, j.room); })
-      .catch(() => alert("Server not available."));
+      .then(r => r.json().catch(() => ({})).then(j => ({ ok: r.ok, status: r.status, j: j })))
+      .then(o => {
+        if (!o.ok || !o.j.ok) {
+          if (btn) { btn.disabled = false; btn.textContent = "➕ Create a room"; }
+          alert(o.status === 404
+            ? "Server is out of date (no /api/room/create). Rebuild it:\ndocker compose up -d --build"
+            : "Create failed (" + o.status + "): " + ((o.j && o.j.error) || "unknown"));
+          return;
+        }
+        renderMyRoom(box, o.j.room);
+      })
+      .catch(() => { if (btn) { btn.disabled = false; btn.textContent = "➕ Create a room"; } alert("Couldn't reach the server (is the container up?)."); });
   }
   // 我建立的房間：顯示代碼 + 設定(總人數/AI/難度/地圖+課程/起始資源) + 開始 / 停止 / 進入
   function renderMyRoom(box, r) {
