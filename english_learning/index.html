@@ -606,6 +606,12 @@
   .room-grid label { display: flex; flex-direction: column; font-size: 12px; color: #aebacd; font-weight: 700; gap: 3px; }
   .room-grid input, .room-grid select { font-size: 14px; padding: 5px 6px; border-radius: 8px; border: 1px solid #475569; background: #1e293b; color: #fff; }
   .room-setup .op-hint { color: #94a3b8; }
+  .room-join { display: flex; gap: 8px; margin: 4px 0 6px; }
+  .room-join input { flex: 1; font-size: 15px; padding: 9px 10px; border-radius: 10px; border: 1px solid #cbd5e1; }
+  .room-card { display: block; width: 100%; text-align: left; background: #0f172a; color: #e8edf5; border: 1px solid #334155; border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; position: relative; }
+  .room-card-h { font-size: 16px; font-weight: 800; }
+  .room-card-sub { font-size: 13px; color: #aebacd; margin-top: 3px; }
+  .room-card-go { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #f87171; font-weight: 800; font-size: 14px; }
   .help-i { cursor: pointer; color: #94a3b8; font-weight: 800; font-size: 14px; margin-left: 5px; user-select: none; }
   .help-i:hover { color: #2563eb; }
   .help-tip { font-size: 12.5px; color: #475569; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; padding: 7px 10px; margin: 6px 0; line-height: 1.45; }
@@ -1162,10 +1168,26 @@
       <div id="dailyBanner" class="daily-banner"></div>
       <div id="energyBar" class="energy"></div>
       <div style="text-align:center;margin-bottom:14px">
+        <button id="openRoomsBtn" style="background:#ef4444;color:#fff">🎮 Competition Rooms</button>
         <button id="openLeaderBtn" style="background:#0ea5e9;color:#fff">🏅 Leaderboard</button>
         <button id="openEventsBtn" style="background:#7c3aed;color:#fff">📰 Events</button>
       </div>
       <div id="levelGrid" class="pick-grid"></div>
+    </div>
+
+    <!-- 畫面 1r：競賽房間清單（學生用班級碼加入老師開的房間） -->
+    <div id="screenRooms" class="hidden">
+      <div class="learn-top">
+        <button class="back-btn" id="backFromRooms">← Levels</button>
+        <span class="learn-title">🎮 Competition Rooms</span>
+      </div>
+      <p class="screen-intro">Join your teacher's room with the class code, then battle for territory! ⚔️</p>
+      <div class="room-join">
+        <input id="roomJoinCode" type="text" placeholder="Class code (e.g. K7QX2)" autocomplete="off" maxlength="12" style="text-transform:uppercase">
+        <button id="roomJoinBtn" class="dict-play">Join</button>
+      </div>
+      <div id="roomJoinMsg" class="acct-msg"></div>
+      <div id="roomsList"></div>
     </div>
 
     <!-- 畫面 1b：學習歷程 / 成就 -->
@@ -3002,6 +3024,7 @@
   const screenRole    = document.getElementById("screenRole");
   const screenProfile = document.getElementById("screenProfile");
   const screenLevel   = document.getElementById("screenLevel");
+  const screenRooms   = document.getElementById("screenRooms");
   const screenProfileStats = document.getElementById("screenProfileStats");
   const screenArticle = document.getElementById("screenArticle");
   const screenLearn   = document.getElementById("screenLearn");
@@ -3149,10 +3172,10 @@
   userNameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") addProfile(); });
 
   function showScreen(el) {
-    [screenLanding, screenRole, screenProfile, screenStudentAcct, screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle, screenTeacher, screenAdmin, screenLeader].forEach(s => s.classList.add("hidden"));
+    [screenLanding, screenRole, screenProfile, screenStudentAcct, screenLevel, screenRooms, screenProfileStats, screenArticle, screenLearn, screenBattle, screenTeacher, screenAdmin, screenLeader].forEach(s => s.classList.add("hidden"));
     el.classList.remove("hidden");
     // 右上角區（使用者鈕 + 匯出）：只在學生 app 內的畫面顯示
-    const inApp = [screenLevel, screenProfileStats, screenArticle, screenLearn, screenBattle].indexOf(el) !== -1;
+    const inApp = [screenLevel, screenRooms, screenProfileStats, screenArticle, screenLearn, screenBattle].indexOf(el) !== -1;
     const teacherView = (el === screenTeacher && !!authToken());   // 老師面板也用右上角顯示名字+登出
     topRight.classList.toggle("hidden", !((userName && inApp) || teacherView));
   }
@@ -3511,6 +3534,7 @@
 
   // 畫面 1：等級卡片
   function renderLevelGrid() {
+    roomCode = "";                                 // 回到等級清單 = 離開競賽房間（單機/沙盒世界）
     updateEnergy();
     document.getElementById("guestHint").classList.toggle("hidden", !(userName === "guest"));
     const ri = readStreak(userName);
@@ -4036,7 +4060,7 @@
     studentSave(() => {   // 先把自己的最新進度上傳，排行才即時（沒登入也會直接 fetch）
       Promise.all([
         fetch("/api/leaderboard").then(r => r.json()).catch(() => null),
-        fetch("/api/territory").then(r => r.json()).catch(() => null)
+        fetch(withRoom("/api/territory")).then(r => r.json()).catch(() => null)
       ]).then(([lb, terr]) => { if (terr && terr.holders) territory = terr; renderLeaderboard(lb, terr); })
         .catch(() => { document.getElementById("leaderBody").innerHTML = '<p class="screen-intro">Server not available (needs the server).</p>'; });
     });
@@ -4092,7 +4116,7 @@
   }
   function fetchEvents() {
     if (!document.getElementById("evBody")) { if (_evTimer) { clearInterval(_evTimer); _evTimer = null; } return; }   // 視窗關了就自動停
-    fetch("/api/events").then(r => r.ok ? r.json() : null)
+    fetch(withRoom("/api/events")).then(r => r.ok ? r.json() : null)
       .then(j => { if (j && j.events) renderEvents(j.events); })
       .catch(() => {});
   }
@@ -4103,12 +4127,71 @@
     _evTimer = setInterval(fetchEvents, 8000);   // 開著時每 8 秒刷新，讓大家看到最新動態
   }
   document.getElementById("openEventsBtn").addEventListener("click", openEvents);
+  document.getElementById("openRoomsBtn").addEventListener("click", openRooms);
+  document.getElementById("backFromRooms").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
+  document.getElementById("roomJoinBtn").addEventListener("click", joinRoomByCode);
   // 記一筆全站事件（登入才記，fire-and-forget；文字由伺服器依 type 組成）
   function logEvent(type, params) {
     const t = authToken(); if (!t) return;
-    fetch("/api/event?token=" + encodeURIComponent(t), {
+    fetch(withRoom("/api/event?token=" + encodeURIComponent(t)), {
       method: "POST", body: JSON.stringify(Object.assign({ type: type }, params || {}))
     }).catch(() => {});
+  }
+
+  // ===== 競賽房間：學生用班級碼加入老師開的房間，進去就照該房間的世界競爭 =====
+  const MAP_LABELS = { "Pre-A1": "Taiwan 台灣", "A1": "China 中國", "A2": "World 世界" };
+  function mapLabel(id) { return MAP_LABELS[id] || id || "?"; }
+  function openRooms() {
+    document.getElementById("roomJoinMsg").textContent = "";
+    document.getElementById("roomJoinCode").value = "";
+    document.getElementById("roomsList").innerHTML = '<p class="op-hint">Loading…</p>';
+    showScreen(screenRooms);
+    loadRoomsList();
+  }
+  function loadRoomsList() {
+    const t = authToken();
+    if (!t) { document.getElementById("roomsList").innerHTML = '<p class="op-hint">Log in to join a room.</p>'; return; }
+    fetch("/api/rooms?token=" + encodeURIComponent(t)).then(r => r.ok ? r.json() : null)
+      .then(j => renderRoomsList((j && j.rooms) || []))
+      .catch(() => { document.getElementById("roomsList").innerHTML = '<p class="op-hint">Server not available.</p>'; });
+  }
+  function renderRoomsList(rooms) {
+    const box = document.getElementById("roomsList");
+    if (!rooms.length) { box.innerHTML = '<div class="ev-empty">No rooms yet — enter a class code above to join one. 🎟️</div>'; return; }
+    box.innerHTML = rooms.map(function (r) {
+      const full = r.players >= r.maxStudents;
+      return '<button class="room-card" data-code="' + escapeHtml(r.code) + '" data-map="' + escapeHtml(r.map) + '">' +
+        '<div class="room-card-h"><b>' + escapeHtml(mapLabel(r.map)) + '</b>' + (r.isHost ? ' <span class="room-live">HOST</span>' : '') + '</div>' +
+        '<div class="room-card-sub">🎟️ ' + escapeHtml(r.code) + ' · 👥 ' + r.players + '/' + r.maxStudents + ' · 🤖 ' + r.ais + ' AI</div>' +
+        '<span class="room-card-go">Enter ▸</span></button>';
+    }).join("");
+    Array.prototype.forEach.call(box.querySelectorAll(".room-card"), function (btn) {
+      btn.addEventListener("click", function () { enterRoom(btn.getAttribute("data-code"), btn.getAttribute("data-map")); });
+    });
+  }
+  function joinRoomByCode() {
+    const code = (document.getElementById("roomJoinCode").value || "").trim().toUpperCase();
+    const msg = document.getElementById("roomJoinMsg");
+    const t = authToken();
+    if (!t) { msg.textContent = "Log in first."; return; }
+    if (!code) { msg.textContent = "Enter a class code."; return; }
+    msg.textContent = "Joining…";
+    fetch("/api/room/join?token=" + encodeURIComponent(t), { method: "POST", body: JSON.stringify({ code: code }) })
+      .then(r => r.json().then(j => ({ ok: r.ok, j: j })))
+      .then(o => {
+        if (!o.ok || !o.j.ok) { msg.textContent = (o.j && o.j.error) || "Could not join."; return; }
+        msg.textContent = "Joined " + code + " ✓";
+        enterRoom(o.j.code, o.j.map);
+      })
+      .catch(() => { msg.textContent = "Server not available."; });
+  }
+  // 進入某房間：記住 roomCode，之後所有世界 API 都帶這個房間 → 開該房間指定的地圖
+  function enterRoom(code, mapId) {
+    roomCode = (code || "").toUpperCase();
+    territory = null; myEcon = null;                       // 換房間 → 清掉上一房的世界快取
+    const idx = (manifest && manifest.levels) ? manifest.levels.findIndex(l => l.id === mapId) : -1;
+    if (idx < 0) { alert("This room's map isn't available."); return; }
+    selectLevel(idx);
   }
 
   // 畫面 2：課程卡片
@@ -4123,10 +4206,16 @@
   const TERR_AI_OWNER = "AI Empire";
   const TERR_AI_LEGACY = "電腦 AI 帝國";                 // 舊中文名：仍相容尚未被伺服器換掉的舊資料
   let roomInfo = null;                                   // /api/room：地圖、AI 名單、起始資源、人數上限…
+  let roomCode = "";                                     // 目前所在房間(老師的班級碼)；空=尚未進房
+  // 把目前房間(?room=)接到任何「世界」API 上，讓後端讀到正確的房間世界
+  function withRoom(url) {
+    if (!roomCode) return url;
+    return url + (url.indexOf("?") >= 0 ? "&" : "?") + "room=" + encodeURIComponent(roomCode);
+  }
   let aiNamesSet = new Set([TERR_AI_OWNER, TERR_AI_LEGACY]);
   function isAiOwner(n) { return aiNamesSet.has(n) || n === TERR_AI_OWNER || n === TERR_AI_LEGACY; }
   function loadRoom(cb) {
-    fetch("/api/room").then(r => r.ok ? r.json() : null).then(j => {
+    fetch(withRoom("/api/room")).then(r => r.ok ? r.json() : null).then(j => {
       if (j) { roomInfo = j; aiNamesSet = new Set([TERR_AI_OWNER, TERR_AI_LEGACY].concat(j.aiNames || [])); }
       if (cb) cb(j);
     }).catch(() => { if (cb) cb(null); });
@@ -4155,7 +4244,7 @@
   }
   function loadTerritory(cb) {
     const t = authToken();   // 帶 token → 伺服器才知道哪些是你的領地(戰霧：別人的守軍不回傳)
-    fetch("/api/territory" + (t ? "?token=" + encodeURIComponent(t) : ""))
+    fetch(withRoom("/api/territory" + (t ? "?token=" + encodeURIComponent(t) : "")))
       .then(r => r.json()).then(j => { if (j && j.holders) territory = j; if (cb) cb(); }).catch(() => { if (cb) cb(); });
   }
   // ===== 玩家經濟：人口(population) + 兵力(troops，打仗用) + 金幣(gold，統一資源) =====
@@ -4166,7 +4255,7 @@
   function loadEconomy(cb) {
     const t = authToken();
     if (!t) { myEcon = null; if (cb) cb(); return; }
-    fetch("/api/economy?token=" + encodeURIComponent(t))
+    fetch(withRoom("/api/economy?token=" + encodeURIComponent(t)))
       .then(r => r.json().catch(() => null).then(j => ({ ok: r.ok, j: j })))
       .then(res => {
         if (res.ok && res.j && res.j.population != null) { myEcon = res.j; roomFull = false; }
@@ -4178,7 +4267,7 @@
     const t = authToken();
     if (!t || !myEcon) { if (cb) cb(); return; }
     const pool = poolObj();
-    fetch("/api/economy/set?token=" + encodeURIComponent(t), { method: "POST", body: JSON.stringify({ troops: pool }) })
+    fetch(withRoom("/api/economy/set?token=" + encodeURIComponent(t)), { method: "POST", body: JSON.stringify({ troops: pool }) })
       .then(r => r.ok ? r.json() : null).then(j => { if (j && j.troops != null) { myEcon.troops = j.troops; if (j.gold != null) myEcon.gold = j.gold; } if (cb) cb(); }).catch(() => { if (cb) cb(); });
   }
   // 兵力池改成「分兵種」：myEcon.troops = {cav,archer,inf,spear}
@@ -4362,7 +4451,7 @@
     if (!file) return;
     const t = authToken(); if (!t) return;   // 未登入者不佔領，不需計數
     if (myEcon) { myEcon.passcnt = myEcon.passcnt || {}; myEcon.passcnt[file] = (myEcon.passcnt[file] || 0) + 1; }   // 先樂觀更新，讓佔領判定即時可用
-    fetch("/api/economy/pass?token=" + encodeURIComponent(t), { method: "POST", body: JSON.stringify({ file: file }) })
+    fetch(withRoom("/api/economy/pass?token=" + encodeURIComponent(t)), { method: "POST", body: JSON.stringify({ file: file }) })
       .then(r => r.ok ? r.json() : null)
       .then(j => { if (j && j.count != null && myEcon) { myEcon.passcnt = myEcon.passcnt || {}; myEcon.passcnt[j.file] = j.count; if (j.gold != null) myEcon.gold = j.gold; renderEmpire(); } })   // 通過一課 +100 金幣
       .catch(() => {});
@@ -4593,7 +4682,7 @@
       }
       replayBtn.addEventListener("click", () => {
         replayBtn.disabled = true;
-        fetch("/api/events").then(r => r.ok ? r.json() : null).then(j => {
+        fetch(withRoom("/api/events")).then(r => r.ok ? r.json() : null).then(j => {
           replayBtn.disabled = false;
           const steps = buildSteps((j && j.events) || []);
           if (!steps.length) { replayBtn.innerHTML = "🎬 No history on this map yet"; setTimeout(() => replayBtn.innerHTML = "🎬 Replay history", 1800); return; }
@@ -5065,7 +5154,7 @@
   function claimTroops(file, troops, pop, cb) {
     const t = authToken();
     if (!t) { alert("Log in to deploy troops."); if (cb) cb(); return; }
-    fetch("/api/territory/claim?token=" + encodeURIComponent(t), {
+    fetch(withRoom("/api/territory/claim?token=" + encodeURIComponent(t)), {
       method: "POST", body: JSON.stringify({ file: file, avatar: avatarOf(userName), pop: pop, troops: troops })
     }).then(r => {
         if (r.status === 401 || r.status === 403) return { __auth: true };   // token 失效（server 重啟會清空）
@@ -5093,7 +5182,7 @@
   function terrPost(path, body, cb) {
     const t = authToken();
     if (!t) { alert("Log in first."); if (cb) cb(null); return; }
-    fetch(path + "?token=" + encodeURIComponent(t), { method: "POST", body: JSON.stringify(body) })
+    fetch(withRoom(path + "?token=" + encodeURIComponent(t)), { method: "POST", body: JSON.stringify(body) })
       .then(r => r.json().catch(() => ({})).then(j => ({ ok: r.ok, j: j })))
       .then(res => {
         if (!res.ok) { alert("Failed: " + ((res.j && res.j.error) || "unknown")); if (cb) cb(null); return; }
@@ -5109,13 +5198,13 @@
   // 開戰才向後端揭露守軍(戰霧)；回傳 {troops, tech}
   function terrEngage(key, cb) {
     const t = authToken(); if (!t) { cb({ troops: [] }); return; }
-    fetch("/api/territory/engage?token=" + encodeURIComponent(t), { method: "POST", body: JSON.stringify({ file: key }) })
+    fetch(withRoom("/api/territory/engage?token=" + encodeURIComponent(t)), { method: "POST", body: JSON.stringify({ file: key }) })
       .then(r => r.ok ? r.json() : null).then(j => cb(j || { troops: [] })).catch(() => cb({ troops: [] }));
   }
   // 回報攻打結果 → 金幣獎懲(失敗攻方 −50、守方 +50)
   function terrAttackResult(key, win) {
     const t = authToken(); if (!t) return;
-    fetch("/api/territory/attack-result?token=" + encodeURIComponent(t), { method: "POST", body: JSON.stringify({ file: key, win: !!win }) })
+    fetch(withRoom("/api/territory/attack-result?token=" + encodeURIComponent(t)), { method: "POST", body: JSON.stringify({ file: key, win: !!win }) })
       .then(r => r.ok ? r.json() : null).then(j => { if (j && j.gold != null && myEcon) { myEcon.gold = j.gold; renderEmpire(); } }).catch(() => {});
   }
   // 世紀帝國式建築目錄：每棟建築一個圖示；tech=兵工廠(研發)、prod=生產建築(徵兵，兵種鎖定)
@@ -5284,7 +5373,7 @@
   function releaseTerritory(file, pop, cb) {
     const t = authToken();
     if (!t) { if (cb) cb(); return; }
-    fetch("/api/territory/release?token=" + encodeURIComponent(t), {
+    fetch(withRoom("/api/territory/release?token=" + encodeURIComponent(t)), {
       method: "POST", body: JSON.stringify({ file: file, pop: pop })
     }).then(r => r.ok ? r.json() : null)
       .then(() => { loadTerritory(() => { if (cb) cb(); }); })
@@ -5508,13 +5597,18 @@
     const token = acctToken(); if (!token) return;
     renderRoomSetup();
     fetch("/api/dashboard?token=" + encodeURIComponent(token)).then(r => r.json()).then(data => {
-      if (data && data.code) { try { localStorage.setItem("auth:code", data.code); } catch (e) {} setAcctCode(data.code); }
+      if (data && data.code) {
+        try { localStorage.setItem("auth:code", data.code); } catch (e) {}
+        setAcctCode(data.code);
+        renderRoomSetup();                         // 拿到班級碼後再刷一次，房間面板才對到自己的房間
+      }
       renderDashboard(data);
     }).catch(() => {});
   }
   // 老師開房面板：選地圖 / AI 數量+難度 / 學生起始資源 / 人數上限 → 開始(重置世界+生成 AI)
   function renderRoomSetup() {
     const host = document.getElementById("roomSetup"); if (!host) return;
+    roomCode = (localStorage.getItem("auth:code") || "").toUpperCase();   // 老師的房間 = 自己的班級碼
     loadRoom(function (r) {
       r = r || {};
       const maps = [["Pre-A1", "Taiwan 台灣"], ["A1", "China 中國"], ["A2", "World 世界"]];
