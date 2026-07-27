@@ -4662,12 +4662,15 @@
       if (T <= 0) { terr.innerHTML = noTroops; return; }
       terr.innerHTML = '<p class="op-hint">⚔️ Attack ' + dispName(h.owner) + " — you can't scout the garrison. Assign troops by type:</p>";
       deployPanel(terr, poolAvail(), { attack: true, foe: [], label: "⚔️ Attack", onGo: squad => {
+        const atkForce = sumHp(squad);
         poolSpend(squad); closeModal();
         terrEngage(key, function (foe) {   // 開戰才揭露守軍(戰霧)
+          const defForce = sumHp((foe && foe.troops) || []);
           runBattle(squad, (foe && foe.troops) || [], dispName(h.owner), function (win, survivors) {
             poolAdd(survivors);                                   // 生還者(分兵種)撤回兵力池（尚未佔領）
             terrAttackResult(key, win);                            // 失敗 −50 / 守方 +50
-            if (win) { releaseTerritory(key, pop, function () {}); logEvent("attack", { region: name, target: h.owner, key: key }); }   // 打贏 → 清成無主 + 記事件
+            if (win) releaseTerritory(key, pop, function () {});   // 打贏 → 清成無主
+            logEvent("attack", { region: name, target: h.owner, key: key, atk: atkForce, def: defForce, win: win });   // 記事件(含攻/守軍力)
             saveEconomy(function () { renderEmpire(); refreshMap(); });
           }, (foe && foe.tech) || null);
         });
@@ -4966,12 +4969,15 @@
       else {
         terr.innerHTML = '<p class="op-hint">⚔️ Attack! You can\'t scout the garrison. Assign troops by type:</p>';
         deployPanel(terr, poolAvail(), { attack: true, foe: [], label: "⚔️ Attack", onGo: squad => {
+          const atkForce = sumHp(squad);
           poolSpend(squad); closeModal();
           terrEngage(file, function (foe) {   // 開戰才揭露守軍(戰霧)
+            const defForce = sumHp((foe && foe.troops) || []);
             runBattle(squad, (foe && foe.troops) || [], dispName(h.owner), function (win, survivors) {
               poolAdd(survivors);                                        // 生還者(分兵種)撤回兵力池（尚未佔領）
               terrAttackResult(file, win);                                // 失敗 −50 / 守方 +50
-              if (win) { releaseTerritory(file, regionPop, function () {}); logEvent("attack", { region: title, target: h.owner, key: file }); }  // 打贏 → 清成無主 + 記事件
+              if (win) releaseTerritory(file, regionPop, function () {});   // 打贏 → 清成無主
+              logEvent("attack", { region: title, target: h.owner, key: file, atk: atkForce, def: defForce, win: win });   // 記事件(含攻/守軍力)
               saveEconomy(function () { renderEmpire(); refreshMap(); });
             }, (foe && foe.tech) || null);
           });

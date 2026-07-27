@@ -464,15 +464,16 @@ def _region_display(key):       # 從 store key 生一個看得懂的名字給�
     return clean_txt(k.replace("_", " ").replace("-", " ").strip() or "a region", 40)
 
 
-def _ai_log_event(kind, region, victim=None, key=None):
+def _ai_log_event(kind, region, victim=None, key=None, atk=0, dfn=0):
+    forces = " · 🗡️%d vs 🛡️%d" % (clampi(atk), clampi(dfn)) if (atk or dfn) else ""
     if kind == "occupy":
         text = "🤖 %s occupied %s" % (AI_OWNER, region)
         etype = "occupy"
     elif kind == "attack_win":
-        text = "🤖 %s stormed %s%s" % (AI_OWNER, region, (" (was %s's)" % victim if victim else ""))
+        text = "🤖 %s stormed %s%s%s" % (AI_OWNER, region, (" (was %s's)" % victim if victim else ""), forces)
         etype = "attack"
     elif kind == "attack_fail":
-        text = "🛡️ %s repelled the 🤖 %s attack on %s" % (victim or "Defenders", AI_OWNER, region)
+        text = "🛡️ %s repelled the 🤖 %s attack on %s%s" % (victim or "Defenders", AI_OWNER, region, forces)
         etype = "defend"
     else:
         return
@@ -532,20 +533,22 @@ def ai_move():
             ap = _force_power(atk_tuples, defender) / armor * random.uniform(0.85, 1.15)
             dp = _force_power(defender, atk_tuples) * forge * 1.10 * random.uniform(0.85, 1.15)   # 守方先攻/主場
             region = _region_display(key)
+            atk_force = sum(t["hp"] for t in army)                       # 攻城軍力
+            def_force = sum(hp for _, hp in defender)                    # 守城軍力
             if ap > dp:                            # AI 打贏 → 直接接管（存活兵力隨戰損縮減）
                 surv_frac = max(0.2, min(0.9, 1 - dp / (ap + 1)))
                 surv = [{"type": t["type"], "hp": max(1, int(t["hp"] * surv_frac))} for t in army]
                 store[key] = {"owner": AI_OWNER, "avatar": AI_AVATAR, "troops": surv,
                               "pop": clampi(h.get("pop", cat.get(key, 100)))}
                 save_territory_store(store)
-                logged = ("attack_win", region, victim, key)
+                logged = ("attack_win", region, victim, key, atk_force, def_force)
             else:                                  # AI 落敗 → 守軍受創但守住
                 dmg = min(0.6, ap / (dp + 1) * 0.5)
                 for t in (h.get("troops") or []):
                     if isinstance(t, dict):
                         t["hp"] = max(0, int(int(t.get("hp", 0) or 0) * (1 - dmg)))
                 save_territory_store(store)
-                logged = ("attack_fail", region, victim, key)
+                logged = ("attack_fail", region, victim, key, atk_force, def_force)
 
     if logged:
         _ai_log_event(*logged)
@@ -1331,10 +1334,16 @@ class Handler(BaseHTTPRequestHandler):
         target = clean_txt(d.get("target"))
         level = clean_txt(d.get("level"))
         key = clean_txt(d.get("key"), 120)
+        atk = clampi(d.get("atk", 0))                 # 攻城軍力
+        dfn = clampi(d.get("def", 0))                 # 守城軍力
+        forces = " · 🗡️%d vs 🛡️%d" % (atk, dfn) if (atk or dfn) else ""
         if typ == "occupy" and region:
             text = "🚩 %s occupied %s" % (u, region)
         elif typ == "attack" and region:
-            text = "⚔️ %s stormed %s%s" % (u, region, (" (was %s's)" % target if target else ""))
+            if d.get("win"):
+                text = "⚔️ %s stormed %s%s%s" % (u, region, (" (was %s's)" % target if target else ""), forces)
+            else:
+                text = "🛡️ %s's attack on %s was repelled%s" % (u, region, forces)
         elif typ == "boss" and level:
             text = "🐲 %s defeated the %s boss" % (u, level)
         else:
