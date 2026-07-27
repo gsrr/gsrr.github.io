@@ -4146,6 +4146,11 @@
   const MAP_LABELS = {}; ROOM_MAPS.forEach(m => MAP_LABELS[m[0]] = m[1]);
   const COURSE_LABELS = {}; ROOM_MAPS.forEach(m => COURSE_LABELS[m[0]] = m[2]);
   function mapLabel(id) { return MAP_LABELS[id] || id || "?"; }
+  const ROOM_MAX_PLAYERS = 8;                            // 房間總人數(含 AI)上限，對齊後端
+  // 起始資源三檔(對齊後端 RES_PRESETS)：pop / gold / troops
+  const RES_KEYS = ["low", "medium", "high"];
+  const RES_PRESETS = { low: { pop: 100, gold: 300, troops: 60 }, medium: { pop: 150, gold: 500, troops: 100 }, high: { pop: 250, gold: 1000, troops: 180 } };
+  function resLabel(k) { const p = RES_PRESETS[k]; return k.charAt(0).toUpperCase() + k.slice(1) + " · 👥" + p.pop + " 🪙" + p.gold + " ⚔️" + p.troops; }
   function openRooms() {
     document.getElementById("lobbyMine").innerHTML = '<p class="op-hint">Loading…</p>';
     document.getElementById("roomsList").innerHTML = "";
@@ -4218,14 +4223,12 @@
       '<div class="room-h">🎮 Your Room <span class="room-code-chip">🎟️ ' + escapeHtml(r.code || "") + '</span> ' +
         (started ? '<span class="room-live">● LIVE · ' + (r.players || 0) + '/' + (r.maxStudents || 0) + ' · ' + escapeHtml(r.map || "") + '</span>' : '<span class="room-off">setting up…</span>') + '</div>' +
       '<div class="room-grid">' +
-      '<label>Total players (incl. AI)<input type="number" id="rmCap" min="1" max="200" value="' + (r.capacity != null ? r.capacity : 10) + '"></label>' +
-      '<label># AIs<input type="number" id="rmNai" min="0" max="16" value="' + (r.ais != null ? r.ais : 1) + '"></label>' +
+      '<label>Total players (incl. AI)<input type="number" id="rmCap" min="1" max="' + ROOM_MAX_PLAYERS + '" value="' + Math.min(ROOM_MAX_PLAYERS, (r.capacity != null ? r.capacity : ROOM_MAX_PLAYERS)) + '"></label>' +
+      '<label># AIs<input type="number" id="rmNai" min="0" max="' + (ROOM_MAX_PLAYERS - 1) + '" value="' + (r.ais != null ? r.ais : 1) + '"></label>' +
       '<label>AI difficulty<select id="rmDiff">' + ["easy", "normal", "hard"].map(v => '<option value="' + v + '"' + ((r.difficulty || "normal") === v ? " selected" : "") + '>' + v.charAt(0).toUpperCase() + v.slice(1) + '</option>').join("") + '</select></label>' +
+      '<label>Resources<select id="rmRes">' + RES_KEYS.map(k => '<option value="' + k + '"' + ((r.resources || "medium") === k ? " selected" : "") + '>' + resLabel(k) + '</option>').join("") + '</select></label>' +
       '<label>Map<select id="rmMap">' + mapOpts + '</select></label>' +
       '<label>Course<select id="rmCourse">' + courseOpts + '</select></label>' +
-      '<label>Start 🪙<input type="number" id="rmGold" min="0" value="' + (r.startGold != null ? r.startGold : 500) + '"></label>' +
-      '<label>Start 👥<input type="number" id="rmPop" min="0" value="' + (r.startPop != null ? r.startPop : 150) + '"></label>' +
-      '<label>Start ⚔️<input type="number" id="rmTroops" min="0" value="' + (r.startTroops != null ? r.startTroops : 100) + '"></label>' +
       '</div>' +
       '<div class="acct-btns"><button id="rmStart" class="dict-play">' + (started ? '🔄 Restart / apply' : '🚀 Start') + '</button>' +
         (started ? ' <button id="rmEnter" style="background:#16a34a;color:#fff">▶ Enter</button> <button id="rmStop" class="back-btn">■ Stop</button>' : '') + '</div>' +
@@ -4235,14 +4238,13 @@
     mapSel.addEventListener("change", () => { courseSel.value = mapSel.value; });
     courseSel.addEventListener("change", () => { mapSel.value = courseSel.value; });
     box.querySelector("#rmStart").addEventListener("click", function () {
+      const cap = Math.max(1, Math.min(ROOM_MAX_PLAYERS, parseInt(box.querySelector("#rmCap").value, 10) || ROOM_MAX_PLAYERS));
       const body = {
-        capacity: parseInt(box.querySelector("#rmCap").value, 10) || 10,
-        aiCount: Math.max(0, Math.min(16, parseInt(box.querySelector("#rmNai").value, 10) || 0)),
+        capacity: cap,
+        aiCount: Math.max(0, Math.min(cap - 1, parseInt(box.querySelector("#rmNai").value, 10) || 0)),
         difficulty: box.querySelector("#rmDiff").value,
         map: box.querySelector("#rmMap").value,
-        startGold: parseInt(box.querySelector("#rmGold").value, 10) || 0,
-        startPop: parseInt(box.querySelector("#rmPop").value, 10) || 0,
-        startTroops: parseInt(box.querySelector("#rmTroops").value, 10) || 0
+        resources: box.querySelector("#rmRes").value
       };
       if (started && !confirm("Restart this room? It RESETS everyone's territory & resources.")) return;
       fetch("/api/room/start?token=" + encodeURIComponent(authToken()), { method: "POST", body: JSON.stringify(body) })

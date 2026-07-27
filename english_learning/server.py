@@ -422,11 +422,26 @@ room_lock = threading.Lock()
 ROOM_DEFAULTS = {
     "map": "Pre-A1",                       # 競爭用的地圖(等級 id)＝匹配的課程
     "ais": [{"name": "AI 1", "difficulty": "normal"}],
-    "capacity": 10,                        # 房間總人數(含 AI)；真人上限 = capacity - len(ais)
+    "capacity": 8,                         # 房間總人數(含 AI)；真人上限 = capacity - len(ais)
     "startPop": 150, "startGold": 500, "startTroops": 100,
     "maxStudents": 40, "members": [], "host": "", "started": False, "startedAt": 0,
 }
 ROOM_CODE_LEN = 5
+ROOM_MAX_PLAYERS = 8                        # 房間總人數(含 AI)上限
+# 起始資源用三檔預設(pop, gold, troops)取代逐項數字
+RES_PRESETS = {
+    "low":    (100, 300, 60),
+    "medium": (150, 500, 100),
+    "high":   (250, 1000, 180),
+}
+RES_DEFAULT = "medium"
+
+
+def res_from_values(pop, gold, troops):
+    for name, (p, g, t) in RES_PRESETS.items():
+        if (clampi(pop), clampi(gold), clampi(troops)) == (p, g, t):
+            return name
+    return RES_DEFAULT
 
 
 def load_room(code=None):
@@ -1604,11 +1619,12 @@ class Handler(BaseHTTPRequestHandler):
             "joined": (user in (r.get("members") or [])),
             "players": len(r.get("members") or []),
             "ais": len(ais), "difficulty": (ais[0].get("difficulty") if ais else "normal"),
-            "capacity": clampi(r.get("capacity", 10), 1, 500),
+            "capacity": clampi(r.get("capacity", ROOM_MAX_PLAYERS), 1, ROOM_MAX_PLAYERS),
             "maxStudents": clampi(r.get("maxStudents", 40), 1, 500),
             "startPop": clampi(r.get("startPop", ECON_START_POP)),
             "startGold": clampi(r.get("startGold", 0)),
             "startTroops": clampi(r.get("startTroops", ECON_START_TROOPS)),
+            "resources": r.get("resources") or res_from_values(r.get("startPop", 0), r.get("startGold", 0), r.get("startTroops", 0)),
         }
 
     # 單一房間狀態：任何人可讀(要知道地圖/是否開始/人數)。room 由 ?room= 決定。
@@ -1699,29 +1715,30 @@ class Handler(BaseHTTPRequestHandler):
                 code = gen_room_code()
             set_room(code)
             d = self._body_json()
-            # AI：接受 ais 清單，或 aiCount + difficulty
+            capacity = clampi(d.get("capacity", ROOM_MAX_PLAYERS), 1, ROOM_MAX_PLAYERS)  # 總人數(含 AI)最高 8
+            # AI：接受 ais 清單，或 aiCount + difficulty。至少保留 1 個真人席 → AI ≤ capacity-1
             diff = str(d.get("difficulty", "normal")).lower()
             if diff not in AI_DIFF:
                 diff = "normal"
             if isinstance(d.get("ais"), list):
-                n_ai = len(d["ais"])
-                ais = []
-                for i, a in enumerate(d["ais"][:16]):
+                diffs = []
+                for a in d["ais"]:
                     ad = str((a or {}).get("difficulty", diff)).lower()
-                    if ad not in AI_DIFF:
-                        ad = diff
-                    ais.append({"name": "AI " + str(i + 1), "difficulty": ad})
+                    diffs.append(ad if ad in AI_DIFF else diff)
             else:
-                n_ai = clampi(d.get("aiCount", 1), 0, 16)
-                ais = [{"name": "AI " + str(i + 1), "difficulty": diff} for i in range(n_ai)]
-            capacity = clampi(d.get("capacity", 10), 1, 500)
+                diffs = [diff] * clampi(d.get("aiCount", 1), 0, ROOM_MAX_PLAYERS)
+            diffs = diffs[:max(0, capacity - 1)]
+            ais = [{"name": "AI " + str(i + 1), "difficulty": diffs[i]} for i in range(len(diffs))]
             max_students = max(1, capacity - len(ais))     # 真人上限 = 總人數 − AI 數
+            # 起始資源：low / medium / high 三檔
+            res = str(d.get("resources", "")).lower()
+            if res not in RES_PRESETS:
+                res = RES_DEFAULT
+            pop, gold, troops = RES_PRESETS[res]
             r = {
                 "map": clean_txt(d.get("map") or "Pre-A1", 16),
                 "ais": ais, "capacity": capacity,
-                "startPop": clampi(d.get("startPop", 150), 0, 100000),
-                "startGold": clampi(d.get("startGold", 500), 0, 100000000),
-                "startTroops": clampi(d.get("startTroops", 100), 0, 100000),
+                "resources": res, "startPop": pop, "startGold": gold, "startTroops": troops,
                 "maxStudents": max_students,
                 "members": [], "host": user, "started": True, "startedAt": int(time.time()),
             }
