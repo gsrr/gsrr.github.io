@@ -279,7 +279,10 @@ def clampi(v, lo=0, hi=100000000):
 def econ_get(store, user, now, region_pop=0):
     e = store.get(user)
     if not isinstance(e, dict):
-        e = {"population": ECON_START_POP, "troops": _norm_troops(ECON_START_TROOPS), "gold": 0, "lastGold": now}
+        rm = load_room()                       # 新玩家開局資源 = 房間設定的起始資源
+        e = {"population": clampi(rm.get("startPop", ECON_START_POP)),
+             "troops": _norm_troops(clampi(rm.get("startTroops", ECON_START_TROOPS))),
+             "gold": clampi(rm.get("startGold", 0)), "lastGold": now}
         store[user] = e
     pop = clampi(e.get("population", ECON_START_POP))
     gold = clampi(e.get("gold", 0))
@@ -371,6 +374,67 @@ AI_DIFF = {
     "hard":   {"pop": 1000, "gold": 8000},
 }
 
+# ================= 房間(一局)：老師開房設定 → 學生加入競爭 =================
+# 一台部署共用「一個房間」(單一世界)。老師設定：地圖、幾個 AI(各難度)、學生起始資源、上限人數。
+# 按「開始」→ 重置世界(領地/經濟/事件)、依設定生成 AI、之後學生加入就照設定發起始資源。
+ROOM_FILE = "/data/room.json"
+room_lock = threading.Lock()
+DEFAULT_ROOM = {
+    "map": "Pre-A1",                       # 競爭用的地圖(等級 id)
+    "ais": [{"name": "AI Empire", "difficulty": "normal"}],
+    "startPop": 150, "startGold": 500, "startTroops": 100,
+    "maxStudents": 40, "members": [], "host": "", "started": False, "startedAt": 0,
+}
+
+
+def load_room():
+    try:
+        with open(ROOM_FILE) as f:
+            r = json.load(f)
+        if not isinstance(r, dict):
+            r = {}
+    except Exception:
+        r = {}
+    out = dict(DEFAULT_ROOM)
+    out.update(r)
+    if not isinstance(out.get("ais"), list) or not out["ais"]:
+        out["ais"] = [dict(a) for a in DEFAULT_ROOM["ais"]]
+    if not isinstance(out.get("members"), list):
+        out["members"] = []
+    return out
+
+
+def save_room(r):
+    os.makedirs(os.path.dirname(ROOM_FILE), exist_ok=True)
+    tmp = ROOM_FILE + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(r, f)
+    os.replace(tmp, ROOM_FILE)
+
+
+def room_ai_names(r=None):
+    r = r or load_room()
+    return set(a.get("name") for a in (r.get("ais") or []) if a.get("name"))
+
+
+# 學生加入名額控管：回傳是否可進場(已是成員/主持人=可；額滿=不可，否則登記為成員)
+def room_admit(user):
+    with room_lock:
+        r = load_room()
+        if not r.get("started"):
+            return True                        # 沒有進行中的房間 → 一律放行
+        if user == r.get("host") or user in room_ai_names(r):
+            return True
+        members = r.get("members") or []
+        if user in members:
+            return True
+        if len(members) >= clampi(r.get("maxStudents", 40), 1, 500):
+            return False
+        members.append(user)
+        r["members"] = members
+        save_room(r)
+        return True
+
 
 def load_catalog():
     try:
@@ -445,23 +509,23 @@ def _region_display(key):       # 從 store key 生一個看得懂的名字給�
     return clean_txt(k.replace("_", " ").replace("-", " ").strip() or "a region", 40)
 
 
-def _ai_log_event(kind, region, victim=None, key=None, atk=0, dfn=0):
+def _ai_log_event(ai_name, kind, region, victim=None, key=None, atk=0, dfn=0):
     forces = " · 🗡️%d vs 🛡️%d" % (clampi(atk), clampi(dfn)) if (atk or dfn) else ""
     if kind == "occupy":
-        text = "🤖 %s occupied %s" % (AI_OWNER, region)
+        text = "🤖 %s occupied %s" % (ai_name, region)
         etype = "occupy"
     elif kind == "attack_win":
-        text = "🤖 %s stormed %s%s%s" % (AI_OWNER, region, (" (was %s's)" % victim if victim else ""), forces)
+        text = "🤖 %s stormed %s%s%s" % (ai_name, region, (" (was %s's)" % victim if victim else ""), forces)
         etype = "attack"
     elif kind == "attack_fail":
-        text = "🛡️ %s repelled the 🤖 %s attack on %s%s" % (victim or "Defenders", AI_OWNER, region, forces)
+        text = "🛡️ %s repelled the 🤖 %s attack on %s%s" % (victim or "Defenders", ai_name, region, forces)
         etype = "defend"
     else:
         return
     # 除了給人看的 text，另存結構化欄位讓前端能把事件定位到地圖某一塊並依時間回放
-    ev = {"ts": int(time.time()), "user": AI_OWNER, "text": clean_txt(text, 120),
+    ev = {"ts": int(time.time()), "user": ai_name, "text": clean_txt(text, 120),
           "type": etype, "key": key or "", "region": region,
-          "owner": AI_OWNER, "victim": victim or ""}
+          "owner": ai_name, "victim": victim or ""}
     with ev_lock:
         evs = load_events()
         evs.append(ev)
@@ -471,12 +535,12 @@ def _ai_log_event(kind, region, victim=None, key=None, atk=0, dfn=0):
 
 
 # AI 家鄉基地經濟：依難度種下人口/金幣，之後跟玩家一樣每小時產金(人口 + AI 領地人口)。
-def ai_econ(estore, now, tstore):
-    if not isinstance(estore.get(AI_OWNER), dict):
-        diff = AI_DIFF.get(AI_DIFFICULTY, AI_DIFF["normal"])
-        estore[AI_OWNER] = {"population": diff["pop"], "gold": diff["gold"],
-                            "lastGold": now, "troops": _norm_troops(0)}
-    return econ_get(estore, AI_OWNER, now, user_region_pop(tstore, AI_OWNER))
+def ai_econ(estore, now, tstore, name, difficulty):
+    if not isinstance(estore.get(name), dict):
+        diff = AI_DIFF.get(difficulty, AI_DIFF["normal"])
+        estore[name] = {"population": diff["pop"], "gold": diff["gold"],
+                        "lastGold": now, "troops": _norm_troops(0)}
+    return econ_get(estore, name, now, user_region_pop(tstore, name))
 
 
 # AI 補兵：把金幣全部拿去買一批平均分配的部隊，加進 AI 兵力池。
@@ -494,21 +558,22 @@ def _ai_recruit(ae):
     ae["gold"] = clampi(gold - spent)
 
 
-def ai_move():
+def ai_move(ai_name=AI_OWNER, difficulty=AI_DIFFICULTY, ai_names=None):
+    ai_names = ai_names or {ai_name}
     logged = None
     with terr_lock:
         store = load_territory_store()
         with econ_lock:
             estore = load_econ_store()
-            ae = ai_econ(estore, time.time(), store)   # 家鄉基地：累積金幣(off-map，玩家打不到)
+            ae = ai_econ(estore, time.time(), store, ai_name, difficulty)   # 家鄉基地：累積金幣(off-map，玩家打不到)
             _ai_recruit(ae)                            # 金幣 → 招募補兵到 AI 兵力池
             pool = ae["troops"]
             army = [{"type": t, "hp": clampi(pool.get(t, 0))} for t in TROOP_ALL if clampi(pool.get(t, 0)) > 0]
             pool_total = sum(t["hp"] for t in army)
 
             owned = set(store.keys())
-            player_regions = [f for f, h in store.items()
-                              if isinstance(h, dict) and h.get("owner") and h.get("owner") != AI_OWNER]
+            player_regions = [f for f, h in store.items()      # 只打「非 AI」的領地
+                              if isinstance(h, dict) and h.get("owner") and h.get("owner") not in ai_names]
             cat = load_catalog()
             unowned_known = [k for k in cat.keys() if k not in owned]
 
@@ -525,7 +590,7 @@ def ai_move():
 
             if act == "occupy":
                 key = random.choice(unowned_known)
-                store[key] = {"owner": AI_OWNER, "avatar": AI_AVATAR, "troops": army,
+                store[key] = {"owner": ai_name, "avatar": AI_AVATAR, "troops": army,
                               "pop": clampi(cat.get(key, 100))}
                 ae["troops"] = _norm_troops(0)         # 兵力池派出去當駐軍 → 清空(靠金幣再補)
                 logged = ("occupy", _region_display(key), None, key)
@@ -544,7 +609,7 @@ def ai_move():
                 if ap > dp:                            # AI 贏 → 存活主力進駐打下的地
                     surv_frac = max(0.2, min(0.9, 1 - dp / (ap + 1)))
                     surv = [{"type": t["type"], "hp": max(1, int(t["hp"] * surv_frac))} for t in army]
-                    store[key] = {"owner": AI_OWNER, "avatar": AI_AVATAR, "troops": surv,
+                    store[key] = {"owner": ai_name, "avatar": AI_AVATAR, "troops": surv,
                                   "pop": clampi(h.get("pop", cat.get(key, 100)))}
                     logged = ("attack_win", region, victim, key, atk_force, def_force)
                 else:                                  # AI 輸 → 出征兵力池全滅；守方只受小損
@@ -558,8 +623,8 @@ def ai_move():
         save_territory_store(store)
 
     if logged:
-        _ai_log_event(*logged)
-        if logged[0] == "attack_fail" and logged[2] and logged[2] != AI_OWNER:
+        _ai_log_event(ai_name, *logged)
+        if logged[0] == "attack_fail" and logged[2] and logged[2] not in ai_names:
             econ_add_gold(logged[2], DEFEND_GOLD)      # 玩家成功擋下 AI → 防守成功 +50
     return logged
 
@@ -568,7 +633,15 @@ def ai_loop():
     time.sleep(60)                                 # 開機後稍等，避免和啟動流程搶鎖
     while True:
         try:
-            ai_move()
+            room = load_room()
+            ais = room.get("ais") or []
+            names = room_ai_names(room)
+            if room.get("started") and ais:
+                for a in ais:                      # 房間裡每個 AI 各出手一次
+                    try:
+                        ai_move(a.get("name") or AI_OWNER, a.get("difficulty", "normal"), names)
+                    except Exception:
+                        pass
         except Exception:
             pass
         time.sleep(random.randint(AI_TICK_MIN, AI_TICK_MAX))
@@ -754,6 +827,8 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_economy()
         elif path == "/api/events":
             self._handle_events()
+        elif path == "/api/room":
+            self._handle_room()
         else:
             self._send({"error": "not found"}, 404)
 
@@ -800,6 +875,10 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_economy_set()
         elif path == "/api/economy/pass":
             self._handle_economy_pass()
+        elif path == "/api/room/start":
+            self._handle_room_start()
+        elif path == "/api/room/stop":
+            self._handle_room_stop()
         elif path == "/api/event":
             self._handle_event_add()
         else:
@@ -988,6 +1067,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def _handle_territory(self):
         me = token_user(self._token())              # 戰霧：只有自己的領地才看得到守軍/科技
+        ai_names = room_ai_names()
         with terr_lock:
             store = load_territory_store()
         holders, counts = {}, {}
@@ -1005,7 +1085,7 @@ class Handler(BaseHTTPRequestHandler):
                               "conscript": bool(h.get("conscript")), "conscriptBudget": clampi(h.get("conscriptBudget", 0))}
             else:                                   # 別人/AI 的領地：不透露兵力、兵種、科技
                 holders[f] = {"owner": owner, "avatar": h.get("avatar", "👦"),
-                              "pop": h.get("pop"), "hidden": True}
+                              "pop": h.get("pop"), "hidden": True, "ai": owner in ai_names}
         self._send({"holders": holders, "counts": counts})
 
     # 攻方在前端用兵種打贏（或佔領空據點）後呼叫，存下新的守備軍（pilot：信任前端結果）
@@ -1374,6 +1454,9 @@ class Handler(BaseHTTPRequestHandler):
         if not user:
             self._send({"error": "Not logged in"}, 401)
             return
+        if not room_admit(user):                   # 房間人數已滿 → 不能加入
+            self._send({"error": "room full", "roomFull": True}, 403)
+            return
         with terr_lock:
             region_pop = user_region_pop(load_territory_store(), user)
         with econ_lock:
@@ -1429,6 +1512,67 @@ class Handler(BaseHTTPRequestHandler):
             save_econ_store(store)
             pop, troops, gold = e["population"], e["troops"], e["gold"]
         self._send({"ok": True, "population": pop, "troops": troops, "troopsTotal": troops_total(troops), "gold": gold})
+
+    # 房間狀態：任何人可讀(學生要知道地圖/是否開始/人數)
+    def _handle_room(self):
+        r = load_room()
+        self._send({"map": r.get("map"), "started": bool(r.get("started")),
+                    "ais": [{"name": a.get("name"), "difficulty": a.get("difficulty")} for a in (r.get("ais") or [])],
+                    "aiNames": sorted(room_ai_names(r)),
+                    "startPop": clampi(r.get("startPop", ECON_START_POP)),
+                    "startGold": clampi(r.get("startGold", 0)),
+                    "startTroops": clampi(r.get("startTroops", ECON_START_TROOPS)),
+                    "maxStudents": clampi(r.get("maxStudents", 40), 1, 500),
+                    "members": len(r.get("members") or []), "host": r.get("host", "")})
+
+    # 老師開房/開始一局：存設定 + 重置世界(領地/經濟/事件) + 依難度生成 AI。需登入。
+    def _handle_room_start(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        d = self._body_json()
+        # 整理 AI 清單(每個 {name,difficulty})，上限 8 個
+        ais = []
+        for i, a in enumerate((d.get("ais") or [])[:8]):
+            diff = str((a or {}).get("difficulty", "normal")).lower()
+            if diff not in AI_DIFF:
+                diff = "normal"
+            nm = clean_txt((a or {}).get("name") or ("AI " + str(i + 1)), 24) or ("AI " + str(i + 1))
+            ais.append({"name": nm, "difficulty": diff})
+        if not ais:
+            ais = [{"name": "AI Empire", "difficulty": "normal"}]
+        r = {
+            "map": clean_txt(d.get("map") or "Pre-A1", 16),
+            "ais": ais,
+            "startPop": clampi(d.get("startPop", 150), 0, 100000),
+            "startGold": clampi(d.get("startGold", 500), 0, 100000000),
+            "startTroops": clampi(d.get("startTroops", 100), 0, 100000),
+            "maxStudents": clampi(d.get("maxStudents", 40), 1, 500),
+            "members": [], "host": user, "started": True, "startedAt": int(time.time()),
+        }
+        with room_lock:
+            save_room(r)
+        # 重置世界：清空領地、經濟(學生下次進來會依新設定重發)、事件牆(catalog 保留，AI 才知道有哪些地可佔)
+        with terr_lock:
+            save_territory_store({})
+        with econ_lock:
+            save_econ_store({})
+        with ev_lock:
+            save_events([])
+        self._send({"ok": True, "room": r})
+
+    # 結束一局(停止 AI 行動)。需登入。
+    def _handle_room_stop(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        with room_lock:
+            r = load_room()
+            r["started"] = False
+            save_room(r)
+        self._send({"ok": True})
 
     def log_message(self, *args):
         pass  # 安靜

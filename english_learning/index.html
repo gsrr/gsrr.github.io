@@ -598,6 +598,14 @@
   .bld-card:disabled .bld-cost { background: #94a3b8; }
   .bld-card.maxed .bld-cost { background: #16a34a; }
   /* 該領地各兵種實際數值表 */
+  .room-setup { background: #0f172a; border: 1px solid #334155; border-radius: 14px; padding: 12px 14px; margin: 10px 0; color: #e8edf5; }
+  .room-h { font-weight: 800; font-size: 15px; margin-bottom: 8px; }
+  .room-live { color: #4ade80; font-size: 12px; font-weight: 700; }
+  .room-off { color: #94a3b8; font-size: 12px; font-weight: 700; }
+  .room-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; }
+  .room-grid label { display: flex; flex-direction: column; font-size: 12px; color: #aebacd; font-weight: 700; gap: 3px; }
+  .room-grid input, .room-grid select { font-size: 14px; padding: 5px 6px; border-radius: 8px; border: 1px solid #475569; background: #1e293b; color: #fff; }
+  .room-setup .op-hint { color: #94a3b8; }
   .help-i { cursor: pointer; color: #94a3b8; font-weight: 800; font-size: 14px; margin-left: 5px; user-select: none; }
   .help-i:hover { color: #2563eb; }
   .help-tip { font-size: 12.5px; color: #475569; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; padding: 7px 10px; margin: 6px 0; line-height: 1.45; }
@@ -1115,6 +1123,7 @@
       </div>
       <div id="acctPanel" class="hidden">
         <div id="acctCode" class="acct-code"></div>
+        <div id="roomSetup" class="room-setup"></div>
         <div class="acct-btns">
           <button id="acctRefreshBtn" class="back-btn">↻ Refresh</button>
         </div>
@@ -4113,7 +4122,15 @@
   // 每個佔領者一個固定、好認的顏色：你＝綠、AI Empire＝橘，其餘玩家依名字配一個獨立色（同一個人到哪張地圖都同色）
   const TERR_AI_OWNER = "AI Empire";
   const TERR_AI_LEGACY = "電腦 AI 帝國";                 // 舊中文名：仍相容尚未被伺服器換掉的舊資料
-  function isAiOwner(n) { return n === TERR_AI_OWNER || n === TERR_AI_LEGACY; }
+  let roomInfo = null;                                   // /api/room：地圖、AI 名單、起始資源、人數上限…
+  let aiNamesSet = new Set([TERR_AI_OWNER, TERR_AI_LEGACY]);
+  function isAiOwner(n) { return aiNamesSet.has(n) || n === TERR_AI_OWNER || n === TERR_AI_LEGACY; }
+  function loadRoom(cb) {
+    fetch("/api/room").then(r => r.ok ? r.json() : null).then(j => {
+      if (j) { roomInfo = j; aiNamesSet = new Set([TERR_AI_OWNER, TERR_AI_LEGACY].concat(j.aiNames || [])); }
+      if (cb) cb(j);
+    }).catch(() => { if (cb) cb(null); });
+  }
   const OWNER_PALETTE = ["#e11d48", "#db2777", "#c026d3", "#0891b2", "#4f46e5", "#0d9488", "#ca8a04", "#0369a1", "#9f1239", "#a16207", "#155e75", "#7e22ce"];
   function ownerHash(s) { let h = 0; s = (s || ""); for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
   function ownerColor(name, me) {
@@ -4145,11 +4162,17 @@
   //   兵力不再自動成長；金幣每小時由(家鄉+所有領地人口)統一匯入，用來蓋建築/研發科技。
   let myEcon = null;   // {population, troops, gold, goldIncome}
   function sumHp(arr) { return (arr || []).reduce((s, t) => s + (t && t.hp > 0 ? t.hp : 0), 0); }
+  let roomFull = false;
   function loadEconomy(cb) {
     const t = authToken();
     if (!t) { myEcon = null; if (cb) cb(); return; }
-    fetch("/api/economy?token=" + encodeURIComponent(t)).then(r => r.ok ? r.json() : null)
-      .then(j => { if (j && j.population != null) myEcon = j; if (cb) cb(); }).catch(() => { if (cb) cb(); });
+    fetch("/api/economy?token=" + encodeURIComponent(t))
+      .then(r => r.json().catch(() => null).then(j => ({ ok: r.ok, j: j })))
+      .then(res => {
+        if (res.ok && res.j && res.j.population != null) { myEcon = res.j; roomFull = false; }
+        else if (res.j && res.j.roomFull) { roomFull = true; }
+        if (cb) cb();
+      }).catch(() => { if (cb) cb(); });
   }
   function saveEconomy(cb) {
     const t = authToken();
@@ -4367,6 +4390,7 @@
     if (!banner) { banner = document.createElement("div"); banner.id = "terrBanner"; banner.className = "terr-banner"; articleGrid.parentNode.insertBefore(banner, articleGrid); }
     document.getElementById("examWrap").classList.add("hidden");
     showScreen(screenArticle);
+    loadRoom();                           // 抓房間設定(AI 名單 → 上色/排行判定)
     renderEmpire();                       // 先用快取畫「我的帝國」列
     loadEconomy(renderEmpire);            // 再抓最新（含每日產兵）
     drawGeo(spec, null, i, lv);
@@ -5482,10 +5506,52 @@
   }
   function loadDashboard() {
     const token = acctToken(); if (!token) return;
+    renderRoomSetup();
     fetch("/api/dashboard?token=" + encodeURIComponent(token)).then(r => r.json()).then(data => {
       if (data && data.code) { try { localStorage.setItem("auth:code", data.code); } catch (e) {} setAcctCode(data.code); }
       renderDashboard(data);
     }).catch(() => {});
+  }
+  // 老師開房面板：選地圖 / AI 數量+難度 / 學生起始資源 / 人數上限 → 開始(重置世界+生成 AI)
+  function renderRoomSetup() {
+    const host = document.getElementById("roomSetup"); if (!host) return;
+    loadRoom(function (r) {
+      r = r || {};
+      const maps = [["Pre-A1", "Taiwan 台灣"], ["A1", "China 中國"], ["A2", "World 世界"]];
+      const mapOpts = maps.map(m => '<option value="' + m[0] + '"' + ((r.map || "Pre-A1") === m[0] ? " selected" : "") + '>' + m[1] + '</option>').join("");
+      const nAI = (r.ais && r.ais.length != null) ? r.ais.length : 2;
+      const diff = (r.ais && r.ais[0] && r.ais[0].difficulty) || "normal";
+      const dOpt = v => '<option value="' + v + '"' + (diff === v ? " selected" : "") + '>' + v.charAt(0).toUpperCase() + v.slice(1) + '</option>';
+      host.innerHTML = '<div class="room-h">🎮 Competition Room ' +
+        (r.started ? '<span class="room-live">● LIVE · ' + (r.members || 0) + '/' + (r.maxStudents || 40) + ' players · ' + (r.map || "") + '</span>' : '<span class="room-off">not started</span>') + '</div>' +
+        '<div class="room-grid">' +
+        '<label>Map<select id="rmMap">' + mapOpts + '</select></label>' +
+        '<label># AIs<input type="number" id="rmNai" min="0" max="8" value="' + nAI + '"></label>' +
+        '<label>AI level<select id="rmDiff">' + dOpt("easy") + dOpt("normal") + dOpt("hard") + '</select></label>' +
+        '<label>Max students<input type="number" id="rmMax" min="1" max="200" value="' + (r.maxStudents || 40) + '"></label>' +
+        '<label>Start 👥<input type="number" id="rmPop" min="0" value="' + (r.startPop != null ? r.startPop : 150) + '"></label>' +
+        '<label>Start 🪙<input type="number" id="rmGold" min="0" value="' + (r.startGold != null ? r.startGold : 500) + '"></label>' +
+        '<label>Start ⚔️<input type="number" id="rmTroops" min="0" value="' + (r.startTroops != null ? r.startTroops : 100) + '"></label>' +
+        '</div>' +
+        '<div class="acct-btns"><button id="rmStart" class="dict-play">🚀 Start / Reset room</button>' + (r.started ? ' <button id="rmStop" class="back-btn">■ Stop</button>' : '') + '</div>' +
+        '<p class="op-hint">Starting resets the world (all regions & resources cleared) and spawns the AIs. Students join with your class code and receive the start resources.</p>';
+      host.querySelector("#rmStart").addEventListener("click", function () {
+        const n = Math.max(0, Math.min(8, parseInt(host.querySelector("#rmNai").value, 10) || 0));
+        const dd = host.querySelector("#rmDiff").value;
+        const ais = []; for (let k = 0; k < n; k++) ais.push({ name: "AI " + (k + 1), difficulty: dd });
+        const body = { map: host.querySelector("#rmMap").value, ais: ais,
+          startPop: parseInt(host.querySelector("#rmPop").value, 10) || 0,
+          startGold: parseInt(host.querySelector("#rmGold").value, 10) || 0,
+          startTroops: parseInt(host.querySelector("#rmTroops").value, 10) || 0,
+          maxStudents: parseInt(host.querySelector("#rmMax").value, 10) || 40 };
+        if (!confirm("Start a new match? This RESETS everyone's territory & resources.")) return;
+        fetch("/api/room/start?token=" + encodeURIComponent(acctToken()), { method: "POST", body: JSON.stringify(body) })
+          .then(r => r.ok ? r.json() : null).then(j => { if (j && j.ok) { alert("Room started on " + body.map + " with " + n + " AI(s)."); renderRoomSetup(); } else alert("Failed to start room."); })
+          .catch(() => alert("Server error."));
+      });
+      const stop = host.querySelector("#rmStop");
+      if (stop) stop.addEventListener("click", function () { fetch("/api/room/stop?token=" + encodeURIComponent(acctToken()), { method: "POST" }).then(() => renderRoomSetup()); });
+    });
   }
   // 把一份 students map 畫成卡片 HTML（老師後台與總管後台共用）
   function studentCardsHTML(students) {
