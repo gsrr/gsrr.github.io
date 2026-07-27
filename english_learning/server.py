@@ -190,9 +190,8 @@ def save_territory_store(t):
 # --- 玩家經濟（每位玩家：人口 population + 兵力 troops + 上次成長時間）---
 ECON_FILE = "/data/economy.json"
 econ_lock = threading.Lock()
-GROW_SECONDS = 3600   # 成長結算間隔：每小時
-POP_GROWTH = 0.10     # 人口每小時 +10%（家鄉與各領地各自成長；徵兵時要扣人口）
-ECON_MAX_CATCHUP = 72 # 一次最多補算 72 小時，避免長時間停機後人口/金幣暴衝
+GROW_SECONDS = 3600   # 金幣結算間隔：每小時
+ECON_MAX_CATCHUP = 72 # 一次最多補算 72 小時，避免長時間停機後金幣暴衝
 ECON_START_POP = 100
 ECON_START_TROOPS = 100
 TROOP_ALL = ("cav", "archer", "inf", "spear")   # 兵力池分兵種保存的順序
@@ -294,10 +293,9 @@ def econ_get(store, user, now, region_pop=0):
     hours = int((now - last) // GROW_SECONDS)
     if hours > 0:
         rp = clampi(region_pop)
-        for _ in range(min(hours, ECON_MAX_CATCHUP)):   # 每小時：先依當前人口產金，人口再 +POP_GROWTH
-            gold = clampi(gold + int(round((pop + rp) * GOLD_RATE)))
-            pop = clampi(round(pop * (1 + POP_GROWTH)))
-        last = last + hours * GROW_SECONDS               # 時鐘照實推進（即使成長被 catch-up 上限截斷）
+        # 只累積金幣：每小時 (家鄉人口 + 領地人口) × GOLD_RATE。人口不再自動成長。
+        gold = clampi(gold + min(hours, ECON_MAX_CATCHUP) * int(round((pop + rp) * GOLD_RATE)))
+        last = last + hours * GROW_SECONDS               # 時鐘照實推進（即使被 catch-up 上限截斷）
     e["population"], e["gold"], e["lastGold"] = pop, gold, last
     e["troops"] = _norm_troops(e.get("troops", 0))   # 兵力池分兵種保存(舊的單一數字會自動轉)
     if not isinstance(e.get("passcnt"), dict):       # 每課通過次數(佔領解鎖用)——改由後端統一保存
@@ -333,7 +331,7 @@ def user_region_pop(tstore, user):
 # ---- 領地建設：兵工廠(armory) + 科技樹(鍛造+攻 / 鎧甲+防)，用「金幣」研發 ----
 # 金幣：每塊領地依人口每小時產金，累積在該區(h["gold"])。研發即時完成、只惠及該區守軍。
 GOLD_RATE = 0.10                                   # 每小時金幣 = round(pop * GOLD_RATE)
-PASS_GOLD = 100                                     # 通過一課 +100 金幣
+PASS_GOLD = 10000                                   # 通過一課 +10000 金幣（重賞上課）
 DEFEND_GOLD = 50                                    # 防守成功 +50 金幣
 ATTACK_FAIL_GOLD = 50                               # 攻打失敗 −50 金幣
 # 蓋建築的金幣花費：兵工廠(科技) + 三種生產建築
@@ -599,22 +597,6 @@ def _as_float(v, default):
         return default
 
 
-def grow_region_pop(h, now):
-    # 領地人口每小時 +POP_GROWTH（背景成長，和金幣一樣用時間戳補算）。回傳是否有變動。
-    last = _as_float(h.get("lastPop"), now)
-    hours = int((now - last) // GROW_SECONDS)
-    if hours <= 0:
-        if "lastPop" not in h:                # 首見這塊領地 → 從現在起算，不回溯灌人口
-            h["lastPop"] = now
-            return True
-        return False
-    pop = clampi(h.get("pop", 0))
-    for _ in range(min(hours, ECON_MAX_CATCHUP)):
-        pop = clampi(round(pop * (1 + POP_GROWTH)))
-    h["pop"], h["lastPop"] = pop, last + hours * GROW_SECONDS
-    return True
-
-
 def conscript_tick():
     now = time.time()
     with terr_lock:
@@ -622,12 +604,10 @@ def conscript_tick():
         with econ_lock:
             estore = load_econ_store()
             t_dirty = e_dirty = False
-            # 1) 各領地：人口每小時 +10%（背景成長）＋ 徵兵 → 加進該區守軍(扣該區人口)、花擁有者金幣池
+            # 1) 各領地徵兵 → 加進該區守軍(扣該區人口)、花擁有者金幣池。人口不再自動成長。
             for f, h in store.items():
                 if not (isinstance(h, dict) and h.get("owner") and h.get("owner") != AI_OWNER):
                     continue
-                if grow_region_pop(h, now):             # 每塊領地人口每小時 +POP_GROWTH
-                    t_dirty = True
                 if not h.get("conscript"):
                     continue
                 budget = clampi(h.get("conscriptBudget", 0))

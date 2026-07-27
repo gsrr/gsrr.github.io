@@ -4177,7 +4177,7 @@
     }
     if (!authToken()) { bar.style.display = "none"; return; }
     const e = myEcon || { population: 0, gold: 0, goldIncome: 0 };
-    bar.innerHTML = '🏠 <b>Home base</b> · 👥 Pop <b>' + e.population + '</b> <span class="emp-inc">(+10%/hr)</span> · ⚔️ Troops <b>' + poolTotal() + '</b> <span class="emp-inc">' + poolBreakdown() + '</span> · 🪙 Gold <b>' + (e.gold || 0) + '</b> <span class="emp-inc">(+' + (e.goldIncome || 0) + '/hr)</span> <span class="emp-more">details ▸</span>';
+    bar.innerHTML = '🏠 <b>Home base</b> · 👥 Pop <b>' + e.population + '</b> · ⚔️ Troops <b>' + poolTotal() + '</b> <span class="emp-inc">' + poolBreakdown() + '</span> · 🪙 Gold <b>' + (e.gold || 0) + '</b> <span class="emp-inc">(+' + (e.goldIncome || 0) + '/hr)</span> <span class="emp-more">details ▸</span>';
     bar.style.display = "block"; bar.style.cursor = "pointer";
     bar.onclick = openEmpire;
   }
@@ -4200,7 +4200,7 @@
     let garTotal = 0; mine.forEach(m => garTotal += sumHp(m.h.troops));
     const gold = (e.gold || 0), goldInc = (e.goldIncome != null) ? e.goldIncome : Math.round(e.population * 0.1);
     const empTip = "🏠 Home base is safe — lose a battle and survivors retreat here. " +
-      "👥 Population grows +10%/hr at home and in every region. " +
+      "👥 Population is spent when you recruit (1 person = 1 soldier). " +
       "🪙 Each region remits gold (10% of its people/hr). " +
       "🎖️ Recruiting turns people into troops (1 person = 1 soldier), so it shrinks that place's population.";
     let html = '<h3 class="modal-title">🏰 My Empire' + helpIco(empTip) + '</h3>' +
@@ -4242,7 +4242,7 @@
     const e = myEcon || {};
     const html = '<h3 class="modal-title">🏠 Home Base' +
       helpIco("Recruiting turns people into troops (locked to type). Research buffs the troops you attack with.") + '</h3>' +
-      '<div class="op-def op-mine">👥 Population <b>' + (e.population || 0) + '</b> <small>(+10%/hr)</small><br>⚔️ Free troops <b>' + poolTotal() + '</b> ' + poolBreakdown() + '</div>' +
+      '<div class="op-def op-mine">👥 Population <b>' + (e.population || 0) + '</b><br>⚔️ Free troops <b>' + poolTotal() + '</b> ' + poolBreakdown() + '</div>' +
       '<div id="homeTerr"></div>';
     const ov = openModal(html);
     wireHelp(ov);
@@ -4638,7 +4638,7 @@
     const T = poolTotal();
     const livePop = (mine && h && h.pop != null) ? h.pop : pop;   // 已佔領：顯示伺服器最新人口(徵兵/成長會變)
     let html = '<h3 class="modal-title">🏰 ' + name + '</h3>' +
-      '<div class="op-pop">👥 Population <b>' + livePop + '</b>' + (mine ? ' (yours · +10%/hr, recruiting draws from it)' : ' — added to your empire if you take it') + '</div>';
+      '<div class="op-pop">👥 Population <b>' + livePop + '</b>' + (mine ? ' (yours · recruiting draws from it)' : ' — added to your empire if you take it') + '</div>';
     if (h && h.owner) html += '<div class="op-def' + (mine ? ' op-mine' : '') + '">Held by ' + (h.avatar || "👦") + ' <b>' + dispName(h.owner) + '</b>' + techBadge(h.tech) + '<br>' + (mine ? garrisonHTML(h.troops) : '<span class="op-card">🛡️ Garrison unknown (enemy)</span>') + '</div>';
     else html += '<div class="op-def">🏳️ Unclaimed region</div>';
     html += '<div class="op-econ">⚔️ Your troops: <b>' + T + '</b></div><div id="opTerr"></div>';
@@ -4928,7 +4928,7 @@
     const T = poolTotal();
     const shownPop = (mine && h && h.pop != null) ? h.pop : regionPop;   // 已佔領顯示伺服器最新人口
     let html = '<h3 class="modal-title">🏰 ' + title + '</h3>' +
-      '<div class="op-pop">👥 Region population <b>' + shownPop + '</b>' + (mine ? ' (in your empire · +10%/hr, recruiting draws from it)' : ' — added to your empire if you take it') + '</div>';
+      '<div class="op-pop">👥 Region population <b>' + shownPop + '</b>' + (mine ? ' (in your empire · recruiting draws from it)' : ' — added to your empire if you take it') + '</div>';
     if (h && h.owner) {
       html += '<div class="op-def' + (mine ? ' op-mine' : '') + '">Held by ' + (h.avatar || "👦") + ' <b>' + dispName(h.owner) + '</b>' + techBadge(h.tech) + '<br>' +
         (mine ? garrisonHTML(h.troops) : '<span class="op-card">🛡️ Garrison unknown (enemy)</span>') + '</div>';
@@ -5137,7 +5137,7 @@
     const builds = st.h.buildings || {}, tech = st.h.tech || {};
     const box = document.createElement("div"); box.className = "bld-box";
     let html = '<div class="bld-gold">🪙 <b>' + st.gold + '</b> gold <span class="bld-inc">(+' + st.goldInc + '/hr)</span>' +
-      ' &nbsp; 👥 <b>' + st.pop + '</b> people <span class="bld-inc">(+10%/hr)</span>' +
+      ' &nbsp; 👥 <b>' + st.pop + '</b> people' +
       helpIco("Tap a building to build/use it. Recruiting turns 👥 people into troops (1 person = 1 soldier). Each troop type is locked — a knight stays a knight.") + '</div>' +
       '<div class="bld-grid">';
     BUILDINGS.forEach(function (b) {
@@ -5215,7 +5215,7 @@
       });
       html += '</div>';
       if (st.pop < RECRUIT_BATCH)
-        html += '<p class="op-hint">⚠️ Not enough people to recruit a batch of ' + RECRUIT_BATCH + ' (have ' + st.pop + '). Population grows +10%/hr.</p>';
+        html += '<p class="op-hint">⚠️ Not enough people to recruit a batch of ' + RECRUIT_BATCH + ' (have ' + st.pop + ').</p>';
     }
     html += '<div class="op-btns"><button id="bdBack" class="back-btn">◀ Back</button></div>';
     const ov = openModal(html);
