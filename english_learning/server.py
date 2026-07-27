@@ -420,11 +420,13 @@ AI_DIFF = {
 # 按「開始」→ 重置世界(領地/經濟/事件)、依設定生成 AI、之後學生加入就照設定發起始資源。
 room_lock = threading.Lock()
 ROOM_DEFAULTS = {
-    "map": "Pre-A1",                       # 競爭用的地圖(等級 id)
-    "ais": [{"name": "AI Empire", "difficulty": "normal"}],
+    "map": "Pre-A1",                       # 競爭用的地圖(等級 id)＝匹配的課程
+    "ais": [{"name": "AI 1", "difficulty": "normal"}],
+    "capacity": 10,                        # 房間總人數(含 AI)；真人上限 = capacity - len(ais)
     "startPop": 150, "startGold": 500, "startTroops": 100,
     "maxStudents": 40, "members": [], "host": "", "started": False, "startedAt": 0,
 }
+ROOM_CODE_LEN = 5
 
 
 def load_room(code=None):
@@ -451,6 +453,27 @@ def save_room(r, code=None):
     with open(tmp, "w") as f:
         json.dump(r, f)
     os.replace(tmp, p)
+
+
+def gen_room_code():
+    existing = set(list_rooms())
+    while True:
+        code = "".join(secrets.choice(CODE_ALPHABET) for _ in range(ROOM_CODE_LEN))
+        if code not in existing:
+            return code
+
+
+def find_user_room(user):
+    # 回傳這位使用者建立(host)的房間代碼(一人一間)；找不到回 None。不更動 caller 的目前房間。
+    keep = current_room()
+    try:
+        for code in list_rooms():
+            set_room(code)
+            if load_room().get("host") == user:
+                return code
+        return None
+    finally:
+        set_room(keep)
 
 
 def room_ai_names(r=None):
@@ -934,6 +957,8 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_room_start()
         elif path == "/api/room/stop":
             self._handle_room_stop()
+        elif path == "/api/room/create":
+            self._handle_room_create()
         elif path == "/api/room/join":
             self._handle_room_join()
         elif path == "/api/event":
@@ -1570,50 +1595,71 @@ class Handler(BaseHTTPRequestHandler):
             pop, troops, gold = e["population"], e["troops"], e["gold"]
         self._send({"ok": True, "population": pop, "troops": troops, "troopsTotal": troops_total(troops), "gold": gold})
 
-    def _my_code(self, user):
-        # 每位使用者都有一組班級碼；老師的班級碼就是他房間的 id
-        db = load_accounts()
-        return ((db["users"].get(user) or {}).get("code") or "").upper()
+    def _room_view(self, code, r, user):
+        # 給前端(大廳/面板)的房間摘要
+        ais = r.get("ais") or []
+        return {
+            "code": code, "map": r.get("map"), "started": bool(r.get("started")),
+            "host": r.get("host", ""), "isHost": (r.get("host", "") == user),
+            "joined": (user in (r.get("members") or [])),
+            "players": len(r.get("members") or []),
+            "ais": len(ais), "difficulty": (ais[0].get("difficulty") if ais else "normal"),
+            "capacity": clampi(r.get("capacity", 10), 1, 500),
+            "maxStudents": clampi(r.get("maxStudents", 40), 1, 500),
+            "startPop": clampi(r.get("startPop", ECON_START_POP)),
+            "startGold": clampi(r.get("startGold", 0)),
+            "startTroops": clampi(r.get("startTroops", ECON_START_TROOPS)),
+        }
 
-    # 房間狀態：任何人可讀(學生要知道地圖/是否開始/人數)。room 由 ?room= 決定。
+    # 單一房間狀態：任何人可讀(要知道地圖/是否開始/人數)。room 由 ?room= 決定。
     def _handle_room(self):
+        user = token_user(self._token())
         r = load_room()
-        self._send({"code": current_room(), "map": r.get("map"), "started": bool(r.get("started")),
-                    "ais": [{"name": a.get("name"), "difficulty": a.get("difficulty")} for a in (r.get("ais") or [])],
-                    "aiNames": sorted(room_ai_names(r)),
-                    "startPop": clampi(r.get("startPop", ECON_START_POP)),
-                    "startGold": clampi(r.get("startGold", 0)),
-                    "startTroops": clampi(r.get("startTroops", ECON_START_TROOPS)),
-                    "maxStudents": clampi(r.get("maxStudents", 40), 1, 500),
-                    "members": len(r.get("members") or []), "host": r.get("host", "")})
+        v = self._room_view(current_room(), r, user)
+        v["aiNames"] = sorted(room_ai_names(r))
+        v["aiList"] = [{"name": a.get("name"), "difficulty": a.get("difficulty")} for a in (r.get("ais") or [])]
+        self._send(v)
 
-    # 學生的房間清單：掃描所有房間，回傳「自己是成員或主持」且進行中的房間。需登入。
+    # 大廳：列出所有進行中的房間 + 自己建立的房間(即使還沒開始，才能繼續設定)。需登入。
     def _handle_rooms_list(self):
         user = token_user(self._token())
         if not user:
             self._send({"error": "Not logged in"}, 401)
             return
-        db = load_accounts()
-        mine = self._my_code(user)
-        out = []
+        out, mine = [], None
         for code in list_rooms():
             set_room(code)
             r = load_room()
-            if not r.get("started"):
-                continue
-            host = r.get("host", "")
-            if user != host and user not in (r.get("members") or []):
-                continue
-            out.append({
-                "code": code, "map": r.get("map"),
-                "host": host, "isHost": (code == mine),
-                "players": len(r.get("members") or []),
-                "maxStudents": clampi(r.get("maxStudents", 40), 1, 500),
-                "ais": len(r.get("ais") or []),
-            })
-        self._send({"rooms": out})
+            is_host = (r.get("host", "") == user)
+            if not r.get("started") and not is_host:
+                continue                            # 別人還沒開始的房間先不顯示(還沒得加入)
+            v = self._room_view(code, r, user)
+            if is_host:
+                mine = v
+            out.append(v)
+        self._send({"rooms": out, "mine": mine})
 
-    # 學生用班級碼加入某個房間。需登入。
+    # 建立房間：隨機 hash 代碼、host=自己。一人一間 → 已有就回傳原本那間。需登入。
+    def _handle_room_create(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        existing = find_user_room(user)
+        if existing:
+            set_room(existing)
+            self._send({"ok": True, "code": existing, "room": self._room_view(existing, load_room(), user), "existing": True})
+            return
+        with room_lock:
+            code = gen_room_code()
+            set_room(code)
+            r = dict(ROOM_DEFAULTS)
+            r.update({"ais": [dict(a) for a in ROOM_DEFAULTS["ais"]], "members": [],
+                      "host": user, "started": False, "startedAt": 0})
+            save_room(r)
+        self._send({"ok": True, "code": code, "room": self._room_view(code, r, user), "existing": False})
+
+    # 加入某個房間(用房間 hash 代碼)。需登入。
     def _handle_room_join(self):
         user = token_user(self._token())
         if not user:
@@ -1623,15 +1669,13 @@ class Handler(BaseHTTPRequestHandler):
         code = ((parse_qs(urlparse(self.path).query).get("room", [""]) or [""])[0]
                 or (parse_qs(urlparse(self.path).query).get("code", [""]) or [""])[0]
                 or d.get("code") or d.get("room") or "").strip().upper()
-        db = load_accounts()
-        host = db["codes"].get(code)
-        if not code or not host:
-            self._send({"error": "Class code not found"}, 404)
+        if not code or code not in set(list_rooms()):
+            self._send({"error": "Room not found"}, 404)
             return
         set_room(code)
         r = load_room()
         if not r.get("started"):
-            self._send({"error": "That class has no active room yet"}, 409)
+            self._send({"error": "That room hasn't started yet"}, 409)
             return
         if not room_admit(user):
             self._send({"error": "Room is full", "roomFull": True}, 403)
@@ -1641,58 +1685,66 @@ class Handler(BaseHTTPRequestHandler):
             store = load_econ_store()
             econ_get(store, user, time.time())
             save_econ_store(store)
-        self._send({"ok": True, "code": code, "map": r.get("map"), "host": host})
+        self._send({"ok": True, "code": code, "map": r.get("map"), "host": r.get("host", "")})
 
-    # 老師開房/開始一局：存設定 + 重置世界(領地/經濟/事件) + 依難度生成 AI。需登入。
-    # 房間 id = 老師自己的班級碼。
+    # 開始一局：把設定存到自己建立的房間 + 重置該房世界(領地/經濟/事件)。沒房就先建一間。需登入。
     def _handle_room_start(self):
         user = token_user(self._token())
         if not user:
             self._send({"error": "Not logged in"}, 401)
             return
-        code = self._my_code(user)
-        if not code:
-            self._send({"error": "No class code"}, 400)
-            return
-        set_room(code)
-        d = self._body_json()
-        # 整理 AI 清單(每個 {name,difficulty})，上限 8 個
-        ais = []
-        for i, a in enumerate((d.get("ais") or [])[:8]):
-            diff = str((a or {}).get("difficulty", "normal")).lower()
+        code = find_user_room(user)
+        with room_lock:
+            if not code:
+                code = gen_room_code()
+            set_room(code)
+            d = self._body_json()
+            # AI：接受 ais 清單，或 aiCount + difficulty
+            diff = str(d.get("difficulty", "normal")).lower()
             if diff not in AI_DIFF:
                 diff = "normal"
-            nm = clean_txt((a or {}).get("name") or ("AI " + str(i + 1)), 24) or ("AI " + str(i + 1))
-            ais.append({"name": nm, "difficulty": diff})
-        if not ais:
-            ais = [{"name": "AI Empire", "difficulty": "normal"}]
-        r = {
-            "map": clean_txt(d.get("map") or "Pre-A1", 16),
-            "ais": ais,
-            "startPop": clampi(d.get("startPop", 150), 0, 100000),
-            "startGold": clampi(d.get("startGold", 500), 0, 100000000),
-            "startTroops": clampi(d.get("startTroops", 100), 0, 100000),
-            "maxStudents": clampi(d.get("maxStudents", 40), 1, 500),
-            "members": [], "host": user, "started": True, "startedAt": int(time.time()),
-        }
-        with room_lock:
+            if isinstance(d.get("ais"), list):
+                n_ai = len(d["ais"])
+                ais = []
+                for i, a in enumerate(d["ais"][:16]):
+                    ad = str((a or {}).get("difficulty", diff)).lower()
+                    if ad not in AI_DIFF:
+                        ad = diff
+                    ais.append({"name": "AI " + str(i + 1), "difficulty": ad})
+            else:
+                n_ai = clampi(d.get("aiCount", 1), 0, 16)
+                ais = [{"name": "AI " + str(i + 1), "difficulty": diff} for i in range(n_ai)]
+            capacity = clampi(d.get("capacity", 10), 1, 500)
+            max_students = max(1, capacity - len(ais))     # 真人上限 = 總人數 − AI 數
+            r = {
+                "map": clean_txt(d.get("map") or "Pre-A1", 16),
+                "ais": ais, "capacity": capacity,
+                "startPop": clampi(d.get("startPop", 150), 0, 100000),
+                "startGold": clampi(d.get("startGold", 500), 0, 100000000),
+                "startTroops": clampi(d.get("startTroops", 100), 0, 100000),
+                "maxStudents": max_students,
+                "members": [], "host": user, "started": True, "startedAt": int(time.time()),
+            }
             save_room(r)
-        # 重置世界：清空領地、經濟(學生下次進來會依新設定重發)、事件牆(catalog 保留，AI 才知道有哪些地可佔)
+        # 重置世界：清空領地、經濟(玩家下次進來會依新設定重發)、事件牆(catalog 保留)
         with terr_lock:
             save_territory_store({})
         with econ_lock:
             save_econ_store({})
         with ev_lock:
             save_events([])
-        self._send({"ok": True, "code": code, "room": r})
+        self._send({"ok": True, "code": code, "room": self._room_view(code, r, user)})
 
-    # 結束一局(停止 AI 行動)。需登入。房間 id = 老師自己的班級碼。
+    # 結束一局(停止 AI 行動)。需登入。作用在自己建立的房間。
     def _handle_room_stop(self):
         user = token_user(self._token())
         if not user:
             self._send({"error": "Not logged in"}, 401)
             return
-        code = self._my_code(user)
+        code = find_user_room(user)
+        if not code:
+            self._send({"error": "You have no room"}, 404)
+            return
         set_room(code)
         with room_lock:
             r = load_room()

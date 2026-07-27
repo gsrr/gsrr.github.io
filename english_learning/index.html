@@ -606,12 +606,14 @@
   .room-grid label { display: flex; flex-direction: column; font-size: 12px; color: #aebacd; font-weight: 700; gap: 3px; }
   .room-grid input, .room-grid select { font-size: 14px; padding: 5px 6px; border-radius: 8px; border: 1px solid #475569; background: #1e293b; color: #fff; }
   .room-setup .op-hint { color: #94a3b8; }
-  .room-join { display: flex; gap: 8px; margin: 4px 0 6px; }
-  .room-join input { flex: 1; font-size: 15px; padding: 9px 10px; border-radius: 10px; border: 1px solid #cbd5e1; }
+  .room-code-chip { font-size: 12px; font-weight: 800; color: #fde68a; background: #422006; border: 1px solid #a16207; border-radius: 8px; padding: 1px 7px; letter-spacing: 1px; }
   .room-card { display: block; width: 100%; text-align: left; background: #0f172a; color: #e8edf5; border: 1px solid #334155; border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; position: relative; }
   .room-card-h { font-size: 16px; font-weight: 800; }
-  .room-card-sub { font-size: 13px; color: #aebacd; margin-top: 3px; }
+  .room-card-h .op-hint { font-size: 12px; color: #94a3b8; font-weight: 600; }
+  .room-card-sub { font-size: 13px; color: #aebacd; margin-top: 3px; padding-right: 54px; }
   .room-card-go { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #f87171; font-weight: 800; font-size: 14px; }
+  .room-card-full { opacity: .55; }
+  .room-card-full .room-card-go { color: #94a3b8; }
   .help-i { cursor: pointer; color: #94a3b8; font-weight: 800; font-size: 14px; margin-left: 5px; user-select: none; }
   .help-i:hover { color: #2563eb; }
   .help-tip { font-size: 12.5px; color: #475569; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; padding: 7px 10px; margin: 6px 0; line-height: 1.45; }
@@ -1175,18 +1177,15 @@
       <div id="levelGrid" class="pick-grid"></div>
     </div>
 
-    <!-- 畫面 1r：競賽房間清單（學生用班級碼加入老師開的房間） -->
+    <!-- 畫面 1r：遊戲大廳（建立自己的房間，或加入別人開的房間） -->
     <div id="screenRooms" class="hidden">
       <div class="learn-top">
         <button class="back-btn" id="backFromRooms">← Levels</button>
-        <span class="learn-title">🎮 Competition Rooms</span>
+        <span class="learn-title">🎮 Game Lobby</span>
       </div>
-      <p class="screen-intro">Join your teacher's room with the class code, then battle for territory! ⚔️</p>
-      <div class="room-join">
-        <input id="roomJoinCode" type="text" placeholder="Class code (e.g. K7QX2)" autocomplete="off" maxlength="12" style="text-transform:uppercase">
-        <button id="roomJoinBtn" class="dict-play">Join</button>
-      </div>
-      <div id="roomJoinMsg" class="acct-msg"></div>
+      <p class="screen-intro">Create your own room or join one, then battle for territory! ⚔️</p>
+      <div id="lobbyMine"></div>
+      <div class="stats-h" style="margin:10px 0 6px">🌐 All rooms</div>
       <div id="roomsList"></div>
     </div>
 
@@ -4129,7 +4128,6 @@
   document.getElementById("openEventsBtn").addEventListener("click", openEvents);
   document.getElementById("openRoomsBtn").addEventListener("click", openRooms);
   document.getElementById("backFromRooms").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
-  document.getElementById("roomJoinBtn").addEventListener("click", joinRoomByCode);
   // 記一筆全站事件（登入才記，fire-and-forget；文字由伺服器依 type 組成）
   function logEvent(type, params) {
     const t = authToken(); if (!t) return;
@@ -4138,52 +4136,119 @@
     }).catch(() => {});
   }
 
-  // ===== 競賽房間：學生用班級碼加入老師開的房間，進去就照該房間的世界競爭 =====
-  const MAP_LABELS = { "Pre-A1": "Taiwan 台灣", "A1": "China 中國", "A2": "World 世界" };
+  // ===== 遊戲大廳：建立自己的房間(隨機 hash 代碼)，或加入別人的房間 =====
+  //   地圖與課程是 1:1 對應(Pre-A1→台灣、A1→中國、A2→世界)；房間就照該地圖/課程競爭。
+  const ROOM_MAPS = [["Pre-A1", "🇹🇼 Taiwan 台灣", "Pre-A1"], ["A1", "🇨🇳 China 中國", "A1"], ["A2", "🌍 World 世界", "A2"]];
+  const MAP_LABELS = {}; ROOM_MAPS.forEach(m => MAP_LABELS[m[0]] = m[1]);
+  const COURSE_LABELS = {}; ROOM_MAPS.forEach(m => COURSE_LABELS[m[0]] = m[2]);
   function mapLabel(id) { return MAP_LABELS[id] || id || "?"; }
   function openRooms() {
-    document.getElementById("roomJoinMsg").textContent = "";
-    document.getElementById("roomJoinCode").value = "";
-    document.getElementById("roomsList").innerHTML = '<p class="op-hint">Loading…</p>';
+    document.getElementById("lobbyMine").innerHTML = '<p class="op-hint">Loading…</p>';
+    document.getElementById("roomsList").innerHTML = "";
     showScreen(screenRooms);
-    loadRoomsList();
+    loadLobby();
   }
-  function loadRoomsList() {
+  function loadLobby() {
     const t = authToken();
-    if (!t) { document.getElementById("roomsList").innerHTML = '<p class="op-hint">Log in to join a room.</p>'; return; }
+    if (!t) { document.getElementById("lobbyMine").innerHTML = '<p class="op-hint">Log in to play.</p>'; return; }
     fetch("/api/rooms?token=" + encodeURIComponent(t)).then(r => r.ok ? r.json() : null)
-      .then(j => renderRoomsList((j && j.rooms) || []))
-      .catch(() => { document.getElementById("roomsList").innerHTML = '<p class="op-hint">Server not available.</p>'; });
+      .then(j => renderLobby(j || { rooms: [], mine: null }))
+      .catch(() => { document.getElementById("lobbyMine").innerHTML = '<p class="op-hint">Server not available.</p>'; });
   }
-  function renderRoomsList(rooms) {
+  function renderCreate(box) {
+    box.innerHTML = '<div class="room-setup"><div class="room-h">🏗️ Your room</div>' +
+      '<p class="op-hint" style="margin:0 0 8px">You don\'t have a room yet. Create one, pick the AIs, map &amp; course, then start!</p>' +
+      '<button class="dict-play lobby-create">➕ Create a room</button></div>';
+    box.querySelector(".lobby-create").addEventListener("click", () => createRoom(box));
+  }
+  // 重新抓自己那間房 → 畫成設定面板(或建立按鈕)。給大廳與老師後台共用。
+  function refreshMyRoom(box) {
+    const t = authToken(); if (!t) return;
+    fetch("/api/rooms?token=" + encodeURIComponent(t)).then(r => r.ok ? r.json() : null)
+      .then(j => { j = j || {}; if (j.mine) renderMyRoom(box, j.mine); else renderCreate(box); })
+      .catch(() => {});
+  }
+  function renderLobby(data) {
+    const mineBox = document.getElementById("lobbyMine");
+    if (data.mine) renderMyRoom(mineBox, data.mine); else renderCreate(mineBox);
+    // 所有房間(排除自己那間，避免重複；自己的在上面)
     const box = document.getElementById("roomsList");
-    if (!rooms.length) { box.innerHTML = '<div class="ev-empty">No rooms yet — enter a class code above to join one. 🎟️</div>'; return; }
-    box.innerHTML = rooms.map(function (r) {
+    const others = (data.rooms || []).filter(r => !r.isHost && r.started);
+    if (!others.length) { box.innerHTML = '<div class="ev-empty">No other rooms running right now. 🕊️</div>'; return; }
+    box.innerHTML = others.map(function (r) {
       const full = r.players >= r.maxStudents;
-      return '<button class="room-card" data-code="' + escapeHtml(r.code) + '" data-map="' + escapeHtml(r.map) + '">' +
-        '<div class="room-card-h"><b>' + escapeHtml(mapLabel(r.map)) + '</b>' + (r.isHost ? ' <span class="room-live">HOST</span>' : '') + '</div>' +
-        '<div class="room-card-sub">🎟️ ' + escapeHtml(r.code) + ' · 👥 ' + r.players + '/' + r.maxStudents + ' · 🤖 ' + r.ais + ' AI</div>' +
-        '<span class="room-card-go">Enter ▸</span></button>';
+      return '<button class="room-card' + (full && !r.joined ? " room-card-full" : "") + '" data-code="' + escapeHtml(r.code) + '" data-map="' + escapeHtml(r.map) + '"' + (full && !r.joined ? " disabled" : "") + '>' +
+        '<div class="room-card-h"><b>' + escapeHtml(mapLabel(r.map)) + '</b> <span class="op-hint">· ' + escapeHtml(COURSE_LABELS[r.map] || r.map) + '</span>' + (r.joined ? ' <span class="room-live">JOINED</span>' : '') + '</div>' +
+        '<div class="room-card-sub">🎟️ ' + escapeHtml(r.code) + ' · 👤 ' + escapeHtml(dispName(r.host)) + ' · 👥 ' + r.players + '/' + r.maxStudents + ' · 🤖 ' + r.ais + ' AI</div>' +
+        '<span class="room-card-go">' + (full && !r.joined ? 'FULL' : 'Enter ▸') + '</span></button>';
     }).join("");
-    Array.prototype.forEach.call(box.querySelectorAll(".room-card"), function (btn) {
-      btn.addEventListener("click", function () { enterRoom(btn.getAttribute("data-code"), btn.getAttribute("data-map")); });
+    Array.prototype.forEach.call(box.querySelectorAll(".room-card:not([disabled])"), function (btn) {
+      btn.addEventListener("click", function () { joinAndEnter(btn.getAttribute("data-code"), btn.getAttribute("data-map")); });
     });
   }
-  function joinRoomByCode() {
-    const code = (document.getElementById("roomJoinCode").value || "").trim().toUpperCase();
-    const msg = document.getElementById("roomJoinMsg");
-    const t = authToken();
-    if (!t) { msg.textContent = "Log in first."; return; }
-    if (!code) { msg.textContent = "Enter a class code."; return; }
-    msg.textContent = "Joining…";
+  function createRoom(box) {
+    const t = authToken(); if (!t) return;
+    box = box || document.getElementById("lobbyMine");
+    fetch("/api/room/create?token=" + encodeURIComponent(t), { method: "POST", body: "{}" })
+      .then(r => r.ok ? r.json() : null).then(j => { if (j && j.ok) renderMyRoom(box, j.room); })
+      .catch(() => alert("Server not available."));
+  }
+  // 我建立的房間：顯示代碼 + 設定(總人數/AI/難度/地圖+課程/起始資源) + 開始 / 停止 / 進入
+  function renderMyRoom(box, r) {
+    r = r || {};
+    const started = !!r.started;
+    const mapOpts = ROOM_MAPS.map(m => '<option value="' + m[0] + '"' + ((r.map || "Pre-A1") === m[0] ? " selected" : "") + '>' + m[1] + '</option>').join("");
+    const courseOpts = ROOM_MAPS.map(m => '<option value="' + m[0] + '"' + ((r.map || "Pre-A1") === m[0] ? " selected" : "") + '>' + m[2] + '</option>').join("");
+    box.innerHTML = '<div class="room-setup">' +
+      '<div class="room-h">🎮 Your Room <span class="room-code-chip">🎟️ ' + escapeHtml(r.code || "") + '</span> ' +
+        (started ? '<span class="room-live">● LIVE · ' + (r.players || 0) + '/' + (r.maxStudents || 0) + ' · ' + escapeHtml(r.map || "") + '</span>' : '<span class="room-off">setting up…</span>') + '</div>' +
+      '<div class="room-grid">' +
+      '<label>Total players (incl. AI)<input type="number" id="rmCap" min="1" max="200" value="' + (r.capacity != null ? r.capacity : 10) + '"></label>' +
+      '<label># AIs<input type="number" id="rmNai" min="0" max="16" value="' + (r.ais != null ? r.ais : 1) + '"></label>' +
+      '<label>AI difficulty<select id="rmDiff">' + ["easy", "normal", "hard"].map(v => '<option value="' + v + '"' + ((r.difficulty || "normal") === v ? " selected" : "") + '>' + v.charAt(0).toUpperCase() + v.slice(1) + '</option>').join("") + '</select></label>' +
+      '<label>Map<select id="rmMap">' + mapOpts + '</select></label>' +
+      '<label>Course<select id="rmCourse">' + courseOpts + '</select></label>' +
+      '<label>Start 🪙<input type="number" id="rmGold" min="0" value="' + (r.startGold != null ? r.startGold : 500) + '"></label>' +
+      '<label>Start 👥<input type="number" id="rmPop" min="0" value="' + (r.startPop != null ? r.startPop : 150) + '"></label>' +
+      '<label>Start ⚔️<input type="number" id="rmTroops" min="0" value="' + (r.startTroops != null ? r.startTroops : 100) + '"></label>' +
+      '</div>' +
+      '<div class="acct-btns"><button id="rmStart" class="dict-play">' + (started ? '🔄 Restart / apply' : '🚀 Start') + '</button>' +
+        (started ? ' <button id="rmEnter" style="background:#16a34a;color:#fff">▶ Enter</button> <button id="rmStop" class="back-btn">■ Stop</button>' : '') + '</div>' +
+      '<p class="op-hint">Total players includes the AIs (human seats = total − AIs). Starting resets this room\'s world.</p></div>';
+    // 地圖 ↔ 課程 連動（1:1）
+    const mapSel = box.querySelector("#rmMap"), courseSel = box.querySelector("#rmCourse");
+    mapSel.addEventListener("change", () => { courseSel.value = mapSel.value; });
+    courseSel.addEventListener("change", () => { mapSel.value = courseSel.value; });
+    box.querySelector("#rmStart").addEventListener("click", function () {
+      const body = {
+        capacity: parseInt(box.querySelector("#rmCap").value, 10) || 10,
+        aiCount: Math.max(0, Math.min(16, parseInt(box.querySelector("#rmNai").value, 10) || 0)),
+        difficulty: box.querySelector("#rmDiff").value,
+        map: box.querySelector("#rmMap").value,
+        startGold: parseInt(box.querySelector("#rmGold").value, 10) || 0,
+        startPop: parseInt(box.querySelector("#rmPop").value, 10) || 0,
+        startTroops: parseInt(box.querySelector("#rmTroops").value, 10) || 0
+      };
+      if (started && !confirm("Restart this room? It RESETS everyone's territory & resources.")) return;
+      fetch("/api/room/start?token=" + encodeURIComponent(authToken()), { method: "POST", body: JSON.stringify(body) })
+        .then(r => r.ok ? r.json() : null).then(j => { if (j && j.ok) renderMyRoom(box, j.room); else alert("Failed to start room."); })
+        .catch(() => alert("Server error."));
+    });
+    const enter = box.querySelector("#rmEnter");
+    if (enter) enter.addEventListener("click", () => enterRoom(r.code, r.map));
+    const stop = box.querySelector("#rmStop");
+    if (stop) stop.addEventListener("click", function () {
+      fetch("/api/room/stop?token=" + encodeURIComponent(authToken()), { method: "POST", body: "{}" })
+        .then(r => r.ok ? r.json() : null).then(() => refreshMyRoom(box));
+    });
+  }
+  // 加入房間 → 成功就進場
+  function joinAndEnter(code, mapId) {
+    const t = authToken(); if (!t) return;
     fetch("/api/room/join?token=" + encodeURIComponent(t), { method: "POST", body: JSON.stringify({ code: code }) })
       .then(r => r.json().then(j => ({ ok: r.ok, j: j })))
-      .then(o => {
-        if (!o.ok || !o.j.ok) { msg.textContent = (o.j && o.j.error) || "Could not join."; return; }
-        msg.textContent = "Joined " + code + " ✓";
-        enterRoom(o.j.code, o.j.map);
-      })
-      .catch(() => { msg.textContent = "Server not available."; });
+      .then(o => { if (!o.ok || !o.j.ok) { alert((o.j && o.j.error) || "Could not join."); return; } enterRoom(o.j.code, o.j.map); })
+      .catch(() => alert("Server not available."));
   }
   // 進入某房間：記住 roomCode，之後所有世界 API 都帶這個房間 → 開該房間指定的地圖
   function enterRoom(code, mapId) {
@@ -5605,47 +5670,10 @@
       renderDashboard(data);
     }).catch(() => {});
   }
-  // 老師開房面板：選地圖 / AI 數量+難度 / 學生起始資源 / 人數上限 → 開始(重置世界+生成 AI)
+  // 老師後台的房間面板：用和大廳一樣的「我的房間」模型(一人一間、隨機代碼)
   function renderRoomSetup() {
     const host = document.getElementById("roomSetup"); if (!host) return;
-    roomCode = (localStorage.getItem("auth:code") || "").toUpperCase();   // 老師的房間 = 自己的班級碼
-    loadRoom(function (r) {
-      r = r || {};
-      const maps = [["Pre-A1", "Taiwan 台灣"], ["A1", "China 中國"], ["A2", "World 世界"]];
-      const mapOpts = maps.map(m => '<option value="' + m[0] + '"' + ((r.map || "Pre-A1") === m[0] ? " selected" : "") + '>' + m[1] + '</option>').join("");
-      const nAI = (r.ais && r.ais.length != null) ? r.ais.length : 2;
-      const diff = (r.ais && r.ais[0] && r.ais[0].difficulty) || "normal";
-      const dOpt = v => '<option value="' + v + '"' + (diff === v ? " selected" : "") + '>' + v.charAt(0).toUpperCase() + v.slice(1) + '</option>';
-      host.innerHTML = '<div class="room-h">🎮 Competition Room ' +
-        (r.started ? '<span class="room-live">● LIVE · ' + (r.members || 0) + '/' + (r.maxStudents || 40) + ' players · ' + (r.map || "") + '</span>' : '<span class="room-off">not started</span>') + '</div>' +
-        '<div class="room-grid">' +
-        '<label>Map<select id="rmMap">' + mapOpts + '</select></label>' +
-        '<label># AIs<input type="number" id="rmNai" min="0" max="8" value="' + nAI + '"></label>' +
-        '<label>AI level<select id="rmDiff">' + dOpt("easy") + dOpt("normal") + dOpt("hard") + '</select></label>' +
-        '<label>Max students<input type="number" id="rmMax" min="1" max="200" value="' + (r.maxStudents || 40) + '"></label>' +
-        '<label>Start 👥<input type="number" id="rmPop" min="0" value="' + (r.startPop != null ? r.startPop : 150) + '"></label>' +
-        '<label>Start 🪙<input type="number" id="rmGold" min="0" value="' + (r.startGold != null ? r.startGold : 500) + '"></label>' +
-        '<label>Start ⚔️<input type="number" id="rmTroops" min="0" value="' + (r.startTroops != null ? r.startTroops : 100) + '"></label>' +
-        '</div>' +
-        '<div class="acct-btns"><button id="rmStart" class="dict-play">🚀 Start / Reset room</button>' + (r.started ? ' <button id="rmStop" class="back-btn">■ Stop</button>' : '') + '</div>' +
-        '<p class="op-hint">Starting resets the world (all regions & resources cleared) and spawns the AIs. Students join with your class code and receive the start resources.</p>';
-      host.querySelector("#rmStart").addEventListener("click", function () {
-        const n = Math.max(0, Math.min(8, parseInt(host.querySelector("#rmNai").value, 10) || 0));
-        const dd = host.querySelector("#rmDiff").value;
-        const ais = []; for (let k = 0; k < n; k++) ais.push({ name: "AI " + (k + 1), difficulty: dd });
-        const body = { map: host.querySelector("#rmMap").value, ais: ais,
-          startPop: parseInt(host.querySelector("#rmPop").value, 10) || 0,
-          startGold: parseInt(host.querySelector("#rmGold").value, 10) || 0,
-          startTroops: parseInt(host.querySelector("#rmTroops").value, 10) || 0,
-          maxStudents: parseInt(host.querySelector("#rmMax").value, 10) || 40 };
-        if (!confirm("Start a new match? This RESETS everyone's territory & resources.")) return;
-        fetch("/api/room/start?token=" + encodeURIComponent(acctToken()), { method: "POST", body: JSON.stringify(body) })
-          .then(r => r.ok ? r.json() : null).then(j => { if (j && j.ok) { alert("Room started on " + body.map + " with " + n + " AI(s)."); renderRoomSetup(); } else alert("Failed to start room."); })
-          .catch(() => alert("Server error."));
-      });
-      const stop = host.querySelector("#rmStop");
-      if (stop) stop.addEventListener("click", function () { fetch("/api/room/stop?token=" + encodeURIComponent(acctToken()), { method: "POST" }).then(() => renderRoomSetup()); });
-    });
+    refreshMyRoom(host);
   }
   // 把一份 students map 畫成卡片 HTML（老師後台與總管後台共用）
   function studentCardsHTML(students) {
