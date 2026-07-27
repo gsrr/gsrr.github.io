@@ -1180,10 +1180,13 @@
     <!-- 畫面 1r：遊戲大廳（建立自己的房間，或加入別人開的房間） -->
     <div id="screenRooms" class="hidden">
       <div class="learn-top">
-        <button class="back-btn" id="backFromRooms">← Levels</button>
+        <button class="back-btn" id="backFromRooms">🏠 Home</button>
         <span class="learn-title">🎮 Game Lobby</span>
       </div>
       <p class="screen-intro">Create your own room or join one, then battle for territory! ⚔️</p>
+      <div style="text-align:center;margin-bottom:12px">
+        <button id="lobbyLevelsBtn" style="background:#0ea5e9;color:#fff">📚 Solo practice (levels)</button>
+      </div>
       <div id="lobbyMine"></div>
       <div class="stats-h" style="margin:10px 0 6px">🌐 All rooms</div>
       <div id="roomsList"></div>
@@ -4127,7 +4130,8 @@
   }
   document.getElementById("openEventsBtn").addEventListener("click", openEvents);
   document.getElementById("openRoomsBtn").addEventListener("click", openRooms);
-  document.getElementById("backFromRooms").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
+  document.getElementById("backFromRooms").addEventListener("click", () => showScreen(screenRole));
+  document.getElementById("lobbyLevelsBtn").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
   // 記一筆全站事件（登入才記，fire-and-forget；文字由伺服器依 type 組成）
   function logEvent(type, params) {
     const t = authToken(); if (!t) return;
@@ -5730,9 +5734,14 @@
   }
   document.getElementById("joinBtn").addEventListener("click", joinClass);
   document.getElementById("studentRoleBtn").addEventListener("click", () => {
-    // 已登入 -> 直接進 app（學生入口）；否則回 My Account 登入
+    // 已登入 -> 直接進遊戲大廳（先看/建房間）；否則回 My Account 登入
     const u = authUser();
-    if (authToken() && u) { selectProfile(u); return; }
+    if (authToken() && u) {
+      userName = u; try { localStorage.setItem("userName", u); } catch (e) {}
+      updateGreeting();
+      openRooms();
+      return;
+    }
     openStudentAcct();
   });
   document.getElementById("teacherRoleBtn").addEventListener("click", openTeacher);
