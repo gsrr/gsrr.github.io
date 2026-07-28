@@ -454,6 +454,8 @@
   .geo-todo   { fill: #cbd5e1 !important; }   /* 尚未通過 */
   .geo-locked { fill: #8fa1b3 !important; opacity: .4; }   /* 沒對應課、上鎖 */
   .geo-marker-c { fill: rgba(0,0,0,.28); pointer-events: none; }
+  .geo-marker-pill { fill: rgba(15,23,42,.72); stroke: rgba(255,255,255,.55); stroke-width: 1; vector-effect: non-scaling-stroke; pointer-events: none; }
+  .geo-marker-pill.geo-marker-drill { fill: rgba(88,28,135,.9); }
   .geo-marker-t { fill: #fff; font-weight: 800; text-anchor: middle; dominant-baseline: central;
     paint-order: stroke; stroke: rgba(0,0,0,.4); stroke-width: 2px; pointer-events: none; }
   .geo-legend { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 12px 0 2px; font-size: 12px; }
@@ -606,10 +608,15 @@
   .room-grid label { display: flex; flex-direction: column; font-size: 12px; color: #aebacd; font-weight: 700; gap: 3px; }
   .room-grid input, .room-grid select { font-size: 14px; padding: 5px 6px; border-radius: 8px; border: 1px solid #475569; background: #1e293b; color: #fff; }
   .room-setup .op-hint { color: #94a3b8; }
-  .world-cta { display: block; width: 100%; border: none; border-radius: 16px; padding: 16px; margin-bottom: 12px; font-size: 20px; font-weight: 800; color: #fff; background: linear-gradient(135deg, #2563eb, #0891b2); box-shadow: 0 4px 14px rgba(37,99,235,.35); }
-  .world-sub { display: block; font-size: 12px; font-weight: 600; opacity: .9; margin-top: 2px; }
-  .hub-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
-  .hub-btns button { font-size: 15px; padding: 11px 0; border: none; border-radius: 12px; font-weight: 700; }
+  .hub-banner { display: block; width: 100%; border: none; border-radius: 16px; padding: 18px 18px; margin-bottom: 12px; font-size: 20px; font-weight: 800; color: #fff; text-align: left; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+  .hub-banner:active { transform: scale(.985); }
+  .banner-world { background: linear-gradient(135deg, #2563eb, #0891b2); }
+  .banner-create { background: linear-gradient(135deg, #7c3aed, #db2777); }
+  .banner-join { background: linear-gradient(135deg, #ea580c, #f59e0b); }
+  .hub-sub { display: block; font-size: 12.5px; font-weight: 600; opacity: .92; margin-top: 3px; }
+  .hub-links { display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: center; margin-top: 14px; }
+  .hub-links a { color: #64748b; font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none; }
+  .hub-links a:hover { color: #2563eb; text-decoration: underline; }
   .room-join { display: flex; gap: 8px; margin: 10px 0 4px; }
   .room-join input { flex: 1; font-size: 15px; padding: 9px 10px; border-radius: 10px; border: 1px solid #cbd5e1; }
   .room-code-chip { font-size: 12px; font-weight: 800; color: #fde68a; background: #422006; border: 1px solid #a16207; border-radius: 8px; padding: 1px 7px; letter-spacing: 1px; }
@@ -1183,23 +1190,17 @@
       <div id="levelGrid" class="pick-grid"></div>
     </div>
 
-    <!-- 畫面 1r：大廳 Hub（全域世界 / 自己的私人房 / 用代碼加入 / 練習 / 統計） -->
+    <!-- 畫面 1r：大廳 Hub（登入後只有三個 banner：進入世界 / 建立私人房 / 加入房間） -->
     <div id="screenRooms" class="hidden">
       <div class="learn-top">
         <span class="learn-title" id="hubTitle">🎮 Lobby</span>
       </div>
-      <button id="enterWorldBtn" class="world-cta">🌍 Enter the World <span id="worldSub" class="world-sub"></span></button>
-      <div id="lobbyMine"></div>
-      <div class="room-join">
-        <input id="roomJoinCode" type="text" placeholder="Friend's room code" autocomplete="off" maxlength="8" style="text-transform:uppercase">
-        <button id="roomJoinBtn" class="dict-play">🎟️ Join</button>
-      </div>
-      <div id="roomJoinMsg" class="acct-msg"></div>
-      <div class="hub-btns">
-        <button id="lobbyLevelsBtn" style="background:#0ea5e9;color:#fff">📚 Practice</button>
-        <button id="hubStatsBtn" style="background:#0d9488;color:#fff">📊 Stats</button>
-        <button id="hubLeaderBtn" style="background:#f59e0b;color:#fff">🏅 Leaderboard</button>
-        <button id="hubEventsBtn" style="background:#7c3aed;color:#fff">📰 Events</button>
+      <button id="enterWorldBtn" class="hub-banner banner-world">🌍 Enter the World<small id="worldSub" class="hub-sub"></small></button>
+      <button id="createRoomBtn" class="hub-banner banner-create">🏗️ Create private room<small class="hub-sub">Your own map &amp; AIs · invite by code</small></button>
+      <button id="joinRoomBtn" class="hub-banner banner-join">🎟️ Join room<small class="hub-sub">Enter a friend's room code</small></button>
+      <div id="hubPanel"></div>
+      <div class="hub-links">
+        <a id="lobbyLevelsBtn">📚 Practice</a><a id="hubStatsBtn">📊 Stats</a><a id="hubLeaderBtn">🏅 Leaderboard</a><a id="hubEventsBtn">📰 Events</a>
       </div>
     </div>
 
@@ -4143,7 +4144,8 @@
   document.getElementById("openRoomsBtn").addEventListener("click", openRooms);
   document.getElementById("lobbyLevelsBtn").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
   document.getElementById("enterWorldBtn").addEventListener("click", enterWorld);
-  document.getElementById("roomJoinBtn").addEventListener("click", joinByCode);
+  document.getElementById("createRoomBtn").addEventListener("click", openMyRoom);
+  document.getElementById("joinRoomBtn").addEventListener("click", openJoin);
   document.getElementById("hubStatsBtn").addEventListener("click", openTeacher);
   document.getElementById("hubLeaderBtn").addEventListener("click", openLeaderboard);
   document.getElementById("hubEventsBtn").addEventListener("click", openEvents);
@@ -4168,48 +4170,49 @@
   function resLabel(k) { const p = RES_PRESETS[k]; return k.charAt(0).toUpperCase() + k.slice(1) + " · 👥" + p.pop + " 🪙" + p.gold + " ⚔️" + p.troops; }
   function openRooms() {
     document.getElementById("hubTitle").textContent = "🎮 " + (dispName(authUser()) || "Lobby");
-    document.getElementById("lobbyMine").innerHTML = '<p class="op-hint">Loading…</p>';
     document.getElementById("worldSub").textContent = "";
-    document.getElementById("roomJoinMsg").textContent = "";
-    document.getElementById("roomJoinCode").value = "";
+    document.getElementById("hubPanel").innerHTML = "";
     showScreen(screenRooms);
     loadLobby();
   }
   function loadLobby() {
     const t = authToken();
-    if (!t) { document.getElementById("lobbyMine").innerHTML = '<p class="op-hint">Log in to play.</p>'; return; }
+    if (!t) { document.getElementById("worldSub").textContent = "log in to play"; return; }
     fetch("/api/rooms?token=" + encodeURIComponent(t)).then(r => r.ok ? r.json() : null)
       .then(j => renderLobby(j || {}))
-      .catch(() => { document.getElementById("lobbyMine").innerHTML = '<p class="op-hint">Server not available.</p>'; });
-  }
-  function renderCreate(box) {
-    box.innerHTML = '<div class="room-setup"><div class="room-h">🏗️ Your private room</div>' +
-      '<p class="op-hint" style="margin:0 0 8px">Open a private room, set the AIs, map &amp; resources, then share its code with friends to play together.</p>' +
-      '<button class="dict-play lobby-create">➕ Create a private room</button></div>';
-    box.querySelector(".lobby-create").addEventListener("click", () => createRoom(box));
-  }
-  // 重新抓自己那間房 → 畫成設定面板(或建立按鈕)。給大廳與後台共用。
-  function refreshMyRoom(box) {
-    const t = authToken(); if (!t) return;
-    fetch("/api/rooms?token=" + encodeURIComponent(t)).then(r => r.ok ? r.json() : null)
-      .then(j => { j = j || {}; if (j.mine) renderMyRoom(box, j.mine); else renderCreate(box); })
       .catch(() => {});
   }
   function renderLobby(data) {
     const g = data.global || {};
-    document.getElementById("worldSub").textContent = "🗺️ " + mapLabel(g.map || "A2") + " · 👥 " + (g.players || 0) + " · 🤖 " + (g.ais || 0) + " AI" + (data.current === "GLOBAL" ? " · you're here" : "");
-    const mineBox = document.getElementById("lobbyMine");
-    if (data.mine) renderMyRoom(mineBox, data.mine); else renderCreate(mineBox);
+    document.getElementById("worldSub").textContent = "🗺️ " + mapLabel(g.map || "A2") + " · 👥 " + (g.players || 0) + " playing · 🤖 " + (g.ais || 0) + " AI" + (data.current === "GLOBAL" ? " · you're here ✓" : "");
+  }
+  // 「建立私人房」banner → 有房就顯示設定面板，沒有就直接建立一間再設定。也給老師後台重用。
+  function refreshMyRoom(box) {
+    const t = authToken(); if (!t) { alert("Log in first."); return; }
+    box.innerHTML = '<p class="op-hint">Loading…</p>';
+    fetch("/api/rooms?token=" + encodeURIComponent(t)).then(r => r.ok ? r.json() : null)
+      .then(j => { j = j || {}; if (j.mine) renderMyRoom(box, j.mine); else createRoom(box); })
+      .catch(() => { box.innerHTML = '<p class="op-hint">Server not available.</p>'; });
+  }
+  function openMyRoom() { refreshMyRoom(document.getElementById("hubPanel")); }
+  // 「加入房間」banner → 顯示輸入代碼列
+  function openJoin() {
+    const box = document.getElementById("hubPanel");
+    box.innerHTML = '<div class="room-join"><input id="roomJoinCode" type="text" placeholder="Friend\'s room code" autocomplete="off" maxlength="8" style="text-transform:uppercase"><button id="roomJoinBtn" class="dict-play">🎟️ Join</button></div><div id="roomJoinMsg" class="acct-msg"></div>';
+    box.querySelector("#roomJoinBtn").addEventListener("click", joinByCode);
+    const inp = box.querySelector("#roomJoinCode");
+    inp.focus();
+    inp.addEventListener("keydown", e => { if (e.key === "Enter") joinByCode(); });
   }
   function createRoom(box) {
     const t = authToken(); if (!t) { alert("Log in first."); return; }
-    box = box || document.getElementById("lobbyMine");
-    const btn = box.querySelector(".lobby-create"); if (btn) { btn.disabled = true; btn.textContent = "Creating…"; }
+    box = box || document.getElementById("hubPanel");
+    box.innerHTML = '<p class="op-hint">Creating…</p>';
     fetch("/api/room/create?token=" + encodeURIComponent(t), { method: "POST", body: "{}" })
       .then(r => r.json().catch(() => ({})).then(j => ({ ok: r.ok, status: r.status, j: j })))
       .then(o => {
         if (!o.ok || !o.j.ok) {
-          if (btn) { btn.disabled = false; btn.textContent = "➕ Create a room"; }
+          box.innerHTML = "";
           alert(o.status === 404
             ? "Server is out of date (no /api/room/create). Rebuild it:\ndocker compose up -d --build"
             : "Create failed (" + o.status + "): " + ((o.j && o.j.error) || "unknown"));
@@ -4217,7 +4220,7 @@
         }
         renderMyRoom(box, o.j.room);
       })
-      .catch(() => { if (btn) { btn.disabled = false; btn.textContent = "➕ Create a room"; } alert("Couldn't reach the server (is the container up?)."); });
+      .catch(() => { box.innerHTML = ""; alert("Couldn't reach the server (is the container up?)."); });
   }
   // 我建立的房間：顯示代碼 + 設定(總人數/AI/難度/地圖+課程/起始資源) + 開始 / 停止 / 進入
   function renderMyRoom(box, r) {
@@ -4440,7 +4443,7 @@
     if (homeBtn) homeBtn.addEventListener("click", openHomeBase);
     ov.querySelectorAll(".emp-row-btn[data-key]").forEach(btn => btn.addEventListener("click", () => {
       const key = decodeURIComponent(btn.dataset.key);
-      openRegion(key, regionDisplayName(key), parseInt(btn.dataset.pop, 10) || 0, parseInt(btn.dataset.i, 10) || selLevelIdx, null);
+      openRegion(key, regionDisplayName(key), parseInt(btn.dataset.pop, 10) || 0, parseInt(btn.dataset.i, 10) || selLevelIdx);
     }));
   }
   // 家鄉基地(預設領地)管理：蓋建築、招募進兵力池、研發加成攻擊軍的科技
@@ -4618,30 +4621,28 @@
         const cx = bb.x + bb.width / 2, cy = bb.y + bb.height / 2;
         markerSpecs.push({ cx: cx, cy: cy, ox: cx, oy: cy, label: label, extra: extra || "" });
       }
-      // 每個地區固定綁一課（依序、不循環）：地區#N = 本張地圖第 N 課；超出課數的地區沒綁課
-      const lessons = spec.lessons || (lv.articles || []);
+      // 地區不再固定綁課：佔領時才隨機挑一課（全域世界則不分等級）。地圖只顯示地區名稱。
       let num = 0;
       paths.forEach(p => {
         const name = regionName(p);
-        if (drill[p.id]) {                       // 可下鑽的容器（點進更多領地）
+        if (drill[p.id]) {                       // 可下鑽的容器（點進去看子地區，像台北市那樣）
           const sub = drill[p.id];
           p.setAttribute("class", "geo-region geo-drill");
           addTitle(p, name + " — zoom in ▸");
           const open = () => drawGeo(sub, () => renderGeoMap(i, spec), i, lv);
           p.addEventListener("click", open);
-          marker(p, "🏙️", " geo-marker-drill");
+          marker(p, name, " geo-marker-drill");
           regionList.push({ p: p, drill: true, name: name, open: open });
         } else {
           num++;
           const key = regionKey(spec, p), pop = popForName(name);
-          const article = lessons[num - 1] || null;   // 地區↔課程固定對應（依序，不循環）
           rememberRegion(key, name);   // 記住地區名，供帝國清單等顯示
           p.setAttribute("class", "geo-region");
-          addTitle(p, name + " · 👥" + pop + (article ? " · 📖 " + artTitle(article) : " · (no lesson)"));
-          const open = () => openRegion(key, name, pop, i, article);
+          addTitle(p, name + " · 👥" + pop);
+          const open = () => openRegion(key, name, pop, i);
           p.addEventListener("click", open);
-          marker(p, String(num));
-          regionList.push({ p: p, key: key, name: name, pop: pop, num: num, article: article, open: open });
+          marker(p, name);
+          regionList.push({ p: p, key: key, name: name, pop: pop, num: num, open: open });
         }
       });
       // 分散重疊的標號
@@ -4656,7 +4657,20 @@
         if (!moved) break;
       }
       markerSpecs.forEach(s => { if (Math.hypot(s.cx - s.ox, s.cy - s.oy) > rMark * 1.3) { const ln = document.createElementNS(NSU, "line"); ln.setAttribute("x1", s.ox); ln.setAttribute("y1", s.oy); ln.setAttribute("x2", s.cx); ln.setAttribute("y2", s.cy); ln.setAttribute("class", "geo-leader"); mg.appendChild(ln); } });
-      markerSpecs.forEach(s => { const c = document.createElementNS(NSU, "circle"); c.setAttribute("cx", s.cx); c.setAttribute("cy", s.cy); c.setAttribute("r", rMark); c.setAttribute("class", "geo-marker-c" + s.extra); const tx = document.createElementNS(NSU, "text"); tx.setAttribute("x", s.cx); tx.setAttribute("y", s.cy); tx.setAttribute("font-size", rMark * 1.05); tx.setAttribute("class", "geo-marker-t"); tx.textContent = s.label; mg.appendChild(c); mg.appendChild(tx); });
+      // 只顯示地區名稱：用一顆圓角膠囊(pill)當底、上面寫名字（可下鑽的地區前面加 🏙️）
+      const fs = rMark * 0.92;
+      markerSpecs.forEach(s => {
+        const label = (s.extra.indexOf("drill") >= 0 ? "🏙️ " : "") + s.label;
+        const w = label.length * fs * 0.62 + fs * 0.9, hh = fs * 1.7;
+        const rect = document.createElementNS(NSU, "rect");
+        rect.setAttribute("x", s.cx - w / 2); rect.setAttribute("y", s.cy - hh / 2);
+        rect.setAttribute("width", w); rect.setAttribute("height", hh);
+        rect.setAttribute("rx", hh / 2); rect.setAttribute("class", "geo-marker-pill" + s.extra);
+        const tx = document.createElementNS(NSU, "text");
+        tx.setAttribute("x", s.cx); tx.setAttribute("y", s.cy); tx.setAttribute("font-size", fs);
+        tx.setAttribute("class", "geo-marker-t"); tx.textContent = label;
+        mg.appendChild(rect); mg.appendChild(tx);
+      });
       const legend = document.createElement("div"); legend.className = "geo-legend";
       legend.innerHTML = '<span class="gl gl-mine">You</span><span class="gl gl-open">Open</span>' +
         (Object.keys(drill).length ? '<span class="gl gl-drill">Zoom in</span>' : '');
@@ -4667,9 +4681,9 @@
       const idx = document.createElement("div"); idx.className = "geo-index";
       regionList.forEach(r => {
         const btn = document.createElement("button"); btn.className = "geo-idx" + (r.drill ? " gi-drill" : "");
-        btn.innerHTML = '<span class="gi-no">' + (r.drill ? "🏙️" : r.num) + '</span>' +
+        btn.innerHTML = '<span class="gi-no">' + (r.drill ? "🏙️" : "📍") + '</span>' +
           '<span class="gi-tx"><span class="gi-rg">' + r.name + '</span>' +
-          '<span class="gi-ls">' + (r.drill ? "zoom in ▸" : ("👥 " + r.pop + (r.article ? " · 📖 " + artTitle(r.article) : ""))) + '</span></span>';
+          '<span class="gi-ls">' + (r.drill ? "zoom in ▸" : ("👥 " + r.pop)) + '</span></span>';
         btn.addEventListener("click", r.open);
         btn.addEventListener("mouseenter", () => r.p.classList.add("geo-hi"));
         btn.addEventListener("mouseleave", () => r.p.classList.remove("geo-hi"));
@@ -4811,7 +4825,7 @@
             if (r.idxLs) r.idxLs.innerHTML = "👥 " + r.pop + " · " + (h.avatar || "") + dispName(h.owner) + garTxt;
           } else {
             r.p.classList.add("geo-open"); if (r.idxEl) r.idxEl.classList.add("gi-open");
-            if (r.idxLs) r.idxLs.textContent = "👥 " + r.pop + " · " + (r.article ? "📖 " + artTitle(r.article) : "Open");
+            if (r.idxLs) r.idxLs.textContent = "👥 " + r.pop + " · Open";
           }
         });
         // 刷新「誰佔了什麼」圖例：每位擁有者一枚色塊＋頭像＋名字＋佔領數（你排最前）
@@ -4837,8 +4851,20 @@
       .catch(() => { wrap.innerHTML = '<p class="op-hint">Could not load map ' + spec.file + '. (Needs the server or GitHub Pages.)</p>'; });
   }
 
-  // 領地面板（每個地區綁定一課）：自己的→重新佈署；別人的/無主的→先過關它綁定的那一課，過了才出兵。每次都要重新過。
-  function openRegion(key, name, pop, i, article) {
+  // 佔領時可用的課程池：全域世界 → 所有等級的課；其他(私人房/練習) → 該地圖對應等級的課
+  function lessonPool(i) {
+    if (roomCode === "GLOBAL") {
+      const all = [];
+      (manifest.levels || []).forEach(l => (l.articles || []).forEach(a => all.push(a)));
+      return all;
+    }
+    const lv = (manifest.levels || [])[i];
+    return (lv && lv.articles) || [];
+  }
+  function randomLesson(i) { const p = lessonPool(i); return p.length ? p[Math.floor(Math.random() * p.length)] : null; }
+
+  // 領地面板：自己的→重新佈署；別人的→先攻打；無主的→佔領時隨機給一課，過了才出兵。每次都要重新過。
+  function openRegion(key, name, pop, i) {
     const h = (territory && territory.holders && territory.holders[key]) || null;
     const me = (authUser() || userName || "").toLowerCase();
     const mine = !!(h && h.owner && (h.owner || "").toLowerCase() === me);
@@ -4862,7 +4888,7 @@
         TROOPS.forEach(t => { p[t.id] = Math.max(0, (avail[t.id] || 0) - (gm[t.id] || 0)); });   // 沒派出的留在兵力池
         claimTroops(key, g, pop, function () {}); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); });
       } });
-      buildingsPanel(terr, key, h, function () { closeModal(); openRegion(key, name, pop, i, article); });
+      buildingsPanel(terr, key, h, function () { closeModal(); openRegion(key, name, pop, i); });
       return;
     }
     if (enemy) {
@@ -4893,14 +4919,15 @@
       deployPanel(terr, poolAvail(), { label: "🚩 Occupy", onGo: g => { poolSpend(g); pending = null; claimTroops(key, g, pop, function () {}); logEvent("occupy", { region: name, key: key }); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); } });
       return;
     }
-    const ch = article;   // 這個地區固定綁定的課
-    if (!ch) { terr.innerHTML = '<p class="op-hint">🈳 No lesson is bound to this region yet.</p>'; return; }
-    terr.innerHTML = '<p class="op-hint">🚩 Occupy this region — pass its lesson (80%+) and your troops deploy automatically:</p>' +
-      '<div class="op-def" style="text-align:center">📖 <b>' + artTitle(ch) + '</b></div>' +
-      '<div class="op-btns"><button id="chStudy" class="dict-play">🚩 Occupy</button></div>';
+    // 無主：佔領時隨機挑一課（全域世界不分等級），過關才出兵佔領。
+    terr.innerHTML = '<p class="op-hint">🚩 Occupy this region — pass a random lesson (80%+) and your troops deploy automatically:</p>' +
+      '<div class="op-def" style="text-align:center">🎲 A random lesson will be picked for you' + (roomCode === "GLOBAL" ? " (any level)" : "") + '</div>' +
+      '<div class="op-btns"><button id="chStudy" class="dict-play">🎲 Occupy</button></div>';
     ov.querySelector("#chStudy").addEventListener("click", () => {
+      const ch = randomLesson(i);
+      if (!ch) { alert("No lessons available for this map."); return; }
       pending = { key: key, file: ch.file, base: passCount(ch.file), article: ch, i: i };
-      pendingOccupy = { file: ch.file, reopen: function () { openRegion(key, name, pop, i, article); } };   // 過關後直接跳回這個據點佔領
+      pendingOccupy = { file: ch.file, reopen: function () { openRegion(key, name, pop, i); } };   // 過關後直接跳回這個據點佔領
       closeModal(); selectArticle(ch);
     });
   }
