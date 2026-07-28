@@ -606,6 +606,12 @@
   .room-grid label { display: flex; flex-direction: column; font-size: 12px; color: #aebacd; font-weight: 700; gap: 3px; }
   .room-grid input, .room-grid select { font-size: 14px; padding: 5px 6px; border-radius: 8px; border: 1px solid #475569; background: #1e293b; color: #fff; }
   .room-setup .op-hint { color: #94a3b8; }
+  .world-cta { display: block; width: 100%; border: none; border-radius: 16px; padding: 16px; margin-bottom: 12px; font-size: 20px; font-weight: 800; color: #fff; background: linear-gradient(135deg, #2563eb, #0891b2); box-shadow: 0 4px 14px rgba(37,99,235,.35); }
+  .world-sub { display: block; font-size: 12px; font-weight: 600; opacity: .9; margin-top: 2px; }
+  .hub-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .hub-btns button { font-size: 15px; padding: 11px 0; border: none; border-radius: 12px; font-weight: 700; }
+  .room-join { display: flex; gap: 8px; margin: 10px 0 4px; }
+  .room-join input { flex: 1; font-size: 15px; padding: 9px 10px; border-radius: 10px; border: 1px solid #cbd5e1; }
   .room-code-chip { font-size: 12px; font-weight: 800; color: #fde68a; background: #422006; border: 1px solid #a16207; border-radius: 8px; padding: 1px 7px; letter-spacing: 1px; }
   .room-card { display: block; width: 100%; text-align: left; background: #0f172a; color: #e8edf5; border: 1px solid #334155; border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; position: relative; }
   .room-card-h { font-size: 16px; font-weight: 800; }
@@ -1177,19 +1183,24 @@
       <div id="levelGrid" class="pick-grid"></div>
     </div>
 
-    <!-- 畫面 1r：遊戲大廳（建立自己的房間，或加入別人開的房間） -->
+    <!-- 畫面 1r：大廳 Hub（全域世界 / 自己的私人房 / 用代碼加入 / 練習 / 統計） -->
     <div id="screenRooms" class="hidden">
       <div class="learn-top">
-        <button class="back-btn" id="backFromRooms">🏠 Home</button>
-        <span class="learn-title">🎮 Game Lobby</span>
+        <span class="learn-title" id="hubTitle">🎮 Lobby</span>
       </div>
-      <p class="screen-intro">Create your own room or join one, then battle for territory! ⚔️</p>
-      <div style="text-align:center;margin-bottom:12px">
-        <button id="lobbyLevelsBtn" style="background:#0ea5e9;color:#fff">📚 Solo practice (levels)</button>
-      </div>
+      <button id="enterWorldBtn" class="world-cta">🌍 Enter the World <span id="worldSub" class="world-sub"></span></button>
       <div id="lobbyMine"></div>
-      <div class="stats-h" style="margin:10px 0 6px">🌐 All rooms</div>
-      <div id="roomsList"></div>
+      <div class="room-join">
+        <input id="roomJoinCode" type="text" placeholder="Friend's room code" autocomplete="off" maxlength="8" style="text-transform:uppercase">
+        <button id="roomJoinBtn" class="dict-play">🎟️ Join</button>
+      </div>
+      <div id="roomJoinMsg" class="acct-msg"></div>
+      <div class="hub-btns">
+        <button id="lobbyLevelsBtn" style="background:#0ea5e9;color:#fff">📚 Practice</button>
+        <button id="hubStatsBtn" style="background:#0d9488;color:#fff">📊 Stats</button>
+        <button id="hubLeaderBtn" style="background:#f59e0b;color:#fff">🏅 Leaderboard</button>
+        <button id="hubEventsBtn" style="background:#7c3aed;color:#fff">📰 Events</button>
+      </div>
     </div>
 
     <!-- 畫面 1b：學習歷程 / 成就 -->
@@ -4130,8 +4141,12 @@
   }
   document.getElementById("openEventsBtn").addEventListener("click", openEvents);
   document.getElementById("openRoomsBtn").addEventListener("click", openRooms);
-  document.getElementById("backFromRooms").addEventListener("click", () => showScreen(screenRole));
   document.getElementById("lobbyLevelsBtn").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
+  document.getElementById("enterWorldBtn").addEventListener("click", enterWorld);
+  document.getElementById("roomJoinBtn").addEventListener("click", joinByCode);
+  document.getElementById("hubStatsBtn").addEventListener("click", openTeacher);
+  document.getElementById("hubLeaderBtn").addEventListener("click", openLeaderboard);
+  document.getElementById("hubEventsBtn").addEventListener("click", openEvents);
   // 記一筆全站事件（登入才記，fire-and-forget；文字由伺服器依 type 組成）
   function logEvent(type, params) {
     const t = authToken(); if (!t) return;
@@ -4152,8 +4167,11 @@
   const RES_PRESETS = { low: { pop: 100, gold: 300, troops: 60 }, medium: { pop: 150, gold: 500, troops: 100 }, high: { pop: 250, gold: 1000, troops: 180 } };
   function resLabel(k) { const p = RES_PRESETS[k]; return k.charAt(0).toUpperCase() + k.slice(1) + " · 👥" + p.pop + " 🪙" + p.gold + " ⚔️" + p.troops; }
   function openRooms() {
+    document.getElementById("hubTitle").textContent = "🎮 " + (dispName(authUser()) || "Lobby");
     document.getElementById("lobbyMine").innerHTML = '<p class="op-hint">Loading…</p>';
-    document.getElementById("roomsList").innerHTML = "";
+    document.getElementById("worldSub").textContent = "";
+    document.getElementById("roomJoinMsg").textContent = "";
+    document.getElementById("roomJoinCode").value = "";
     showScreen(screenRooms);
     loadLobby();
   }
@@ -4161,16 +4179,16 @@
     const t = authToken();
     if (!t) { document.getElementById("lobbyMine").innerHTML = '<p class="op-hint">Log in to play.</p>'; return; }
     fetch("/api/rooms?token=" + encodeURIComponent(t)).then(r => r.ok ? r.json() : null)
-      .then(j => renderLobby(j || { rooms: [], mine: null }))
+      .then(j => renderLobby(j || {}))
       .catch(() => { document.getElementById("lobbyMine").innerHTML = '<p class="op-hint">Server not available.</p>'; });
   }
   function renderCreate(box) {
-    box.innerHTML = '<div class="room-setup"><div class="room-h">🏗️ Your room</div>' +
-      '<p class="op-hint" style="margin:0 0 8px">You don\'t have a room yet. Create one, pick the AIs, map &amp; course, then start!</p>' +
-      '<button class="dict-play lobby-create">➕ Create a room</button></div>';
+    box.innerHTML = '<div class="room-setup"><div class="room-h">🏗️ Your private room</div>' +
+      '<p class="op-hint" style="margin:0 0 8px">Open a private room, set the AIs, map &amp; resources, then share its code with friends to play together.</p>' +
+      '<button class="dict-play lobby-create">➕ Create a private room</button></div>';
     box.querySelector(".lobby-create").addEventListener("click", () => createRoom(box));
   }
-  // 重新抓自己那間房 → 畫成設定面板(或建立按鈕)。給大廳與老師後台共用。
+  // 重新抓自己那間房 → 畫成設定面板(或建立按鈕)。給大廳與後台共用。
   function refreshMyRoom(box) {
     const t = authToken(); if (!t) return;
     fetch("/api/rooms?token=" + encodeURIComponent(t)).then(r => r.ok ? r.json() : null)
@@ -4178,22 +4196,10 @@
       .catch(() => {});
   }
   function renderLobby(data) {
+    const g = data.global || {};
+    document.getElementById("worldSub").textContent = "🗺️ " + mapLabel(g.map || "A2") + " · 👥 " + (g.players || 0) + " · 🤖 " + (g.ais || 0) + " AI" + (data.current === "GLOBAL" ? " · you're here" : "");
     const mineBox = document.getElementById("lobbyMine");
     if (data.mine) renderMyRoom(mineBox, data.mine); else renderCreate(mineBox);
-    // 所有房間(排除自己那間，避免重複；自己的在上面)
-    const box = document.getElementById("roomsList");
-    const others = (data.rooms || []).filter(r => !r.isHost && r.started);
-    if (!others.length) { box.innerHTML = '<div class="ev-empty">No other rooms running right now. 🕊️</div>'; return; }
-    box.innerHTML = others.map(function (r) {
-      const full = r.players >= r.maxStudents;
-      return '<button class="room-card' + (full && !r.joined ? " room-card-full" : "") + '" data-code="' + escapeHtml(r.code) + '" data-map="' + escapeHtml(r.map) + '"' + (full && !r.joined ? " disabled" : "") + '>' +
-        '<div class="room-card-h"><b>' + escapeHtml(mapLabel(r.map)) + '</b> <span class="op-hint">· ' + escapeHtml(COURSE_LABELS[r.map] || r.map) + '</span>' + (r.joined ? ' <span class="room-live">JOINED</span>' : '') + '</div>' +
-        '<div class="room-card-sub">🎟️ ' + escapeHtml(r.code) + ' · 👤 ' + escapeHtml(dispName(r.host)) + ' · 👥 ' + r.players + '/' + r.maxStudents + ' · 🤖 ' + r.ais + ' AI</div>' +
-        '<span class="room-card-go">' + (full && !r.joined ? 'FULL' : 'Enter ▸') + '</span></button>';
-    }).join("");
-    Array.prototype.forEach.call(box.querySelectorAll(".room-card:not([disabled])"), function (btn) {
-      btn.addEventListener("click", function () { joinAndEnter(btn.getAttribute("data-code"), btn.getAttribute("data-map")); });
-    });
   }
   function createRoom(box) {
     const t = authToken(); if (!t) { alert("Log in first."); return; }
@@ -4252,28 +4258,35 @@
         .catch(() => alert("Server error."));
     });
     const enter = box.querySelector("#rmEnter");
-    if (enter) enter.addEventListener("click", () => enterRoom(r.code, r.map));
+    if (enter) enter.addEventListener("click", () => enterRoom(r.code));
     const stop = box.querySelector("#rmStop");
     if (stop) stop.addEventListener("click", function () {
       fetch("/api/room/stop?token=" + encodeURIComponent(authToken()), { method: "POST", body: "{}" })
         .then(r => r.ok ? r.json() : null).then(() => refreshMyRoom(box));
     });
   }
-  // 加入房間 → 成功就進場
-  function joinAndEnter(code, mapId) {
-    const t = authToken(); if (!t) return;
-    fetch("/api/room/join?token=" + encodeURIComponent(t), { method: "POST", body: JSON.stringify({ code: code }) })
-      .then(r => r.json().then(j => ({ ok: r.ok, j: j })))
-      .then(o => { if (!o.ok || !o.j.ok) { alert((o.j && o.j.error) || "Could not join."); return; } enterRoom(o.j.code, o.j.map); })
-      .catch(() => alert("Server not available."));
+  function enterWorld() { enterRoom("GLOBAL"); }          // 進入常駐的全域世界
+  function joinByCode() {
+    const code = (document.getElementById("roomJoinCode").value || "").trim().toUpperCase();
+    const msg = document.getElementById("roomJoinMsg");
+    if (!code) { msg.textContent = "Enter a room code."; return; }
+    msg.textContent = "Joining…";
+    enterRoom(code, function (err) { if (err) msg.textContent = err; });
   }
-  // 進入某房間：記住 roomCode，之後所有世界 API 都帶這個房間 → 開該房間指定的地圖
-  function enterRoom(code, mapId) {
-    roomCode = (code || "").toUpperCase();
-    territory = null; myEcon = null;                       // 換房間 → 清掉上一房的世界快取
-    const idx = (manifest && manifest.levels) ? manifest.levels.findIndex(l => l.id === mapId) : -1;
-    if (idx < 0) { alert("This room's map isn't available."); return; }
-    selectLevel(idx);
+  // 進入某房間(全域 GLOBAL 或私人房代碼)：先跟後端登記為「目前所在房間」，再開該房地圖。
+  function enterRoom(code, onErr) {
+    const t = authToken(); if (!t) { alert("Log in first."); return; }
+    fetch("/api/room/enter?token=" + encodeURIComponent(t), { method: "POST", body: JSON.stringify({ room: code }) })
+      .then(r => r.json().catch(() => ({})).then(j => ({ ok: r.ok, j: j })))
+      .then(o => {
+        if (!o.ok || !o.j.ok) { const e = (o.j && o.j.error) || "Could not enter room."; if (onErr) onErr(e); else alert(e); return; }
+        roomCode = (o.j.code || "").toUpperCase();
+        territory = null; myEcon = null;                   // 換房間 → 清掉上一房的世界快取
+        const idx = (manifest && manifest.levels) ? manifest.levels.findIndex(l => l.id === o.j.map) : -1;
+        if (idx < 0) { alert("This room's map isn't available."); return; }
+        selectLevel(idx);
+      })
+      .catch(() => { const e = "Server not available."; if (onErr) onErr(e); else alert(e); });
   }
 
   // 畫面 2：課程卡片
@@ -5568,7 +5581,7 @@
     showScreen(screenLearn);
   }
 
-  document.getElementById("backToProfile").addEventListener("click", () => showScreen(screenRole));
+  document.getElementById("backToProfile").addEventListener("click", () => { if (authToken() && authUser()) openRooms(); else showScreen(screenLanding); });
   document.getElementById("backToLevels").addEventListener("click", () => {
     synth.cancel(); stopListenL1(); stopRecordingIfAny();
     renderLevelGrid();
@@ -5759,7 +5772,7 @@
   });
   document.getElementById("teacherRoleBtn").addEventListener("click", openTeacher);
   document.getElementById("backToRole").addEventListener("click", () => showScreen(screenRole));
-  document.getElementById("backFromTeacher").addEventListener("click", () => showScreen(screenRole));
+  document.getElementById("backFromTeacher").addEventListener("click", () => { if (authToken() && authUser()) openRooms(); else showScreen(screenLanding); });
   document.getElementById("acctLoginBtn").addEventListener("click", () => acctAuth("login"));
   document.getElementById("acctRegisterBtn").addEventListener("click", () => acctAuth("register"));
   document.getElementById("acctRefreshBtn").addEventListener("click", loadDashboard);
@@ -5861,7 +5874,9 @@
         if (o.j.data) restoreSnapshot(o.j.data);                       // 還原雲端進度（新帳號為空）
         saveProfiles([user]);                                          // 帳號即唯一使用者
         if (!localStorage.getItem("avatar:" + user)) setAvatar(user, selectedAvatar);
-        showScreen(screenRole);                                        // 登入/建帳後 -> 選 Student / Teacher 入口
+        userName = user; try { localStorage.setItem("userName", user); } catch (e) {}
+        updateGreeting();
+        openRooms();                                                   // 登入後直接進大廳(不分老師/學生)
       })
       .catch(() => { msg.textContent = "Server not available (needs the server)."; });
   }
@@ -5906,9 +5921,12 @@
       return;
     }
     renderProfiles();
-    // 已登入 -> 直接選 Student / Teacher 入口；否則顯示著陸頁（可免登入試玩）
-    if (authToken() && authUser()) showScreen(screenRole);
-    else showScreen(screenLanding);
+    // 已登入 -> 直接進大廳(不分身分)；否則顯示著陸頁（可免登入試玩）
+    if (authToken() && authUser()) {
+      userName = authUser(); try { localStorage.setItem("userName", userName); } catch (e) {}
+      updateGreeting();
+      openRooms();
+    } else showScreen(screenLanding);
   }
 
   initLessons();

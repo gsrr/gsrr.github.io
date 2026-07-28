@@ -172,6 +172,24 @@ def save_accounts(db):
     os.replace(tmp, ACCT)
 
 
+# --- 玩家目前所在的房間(單一)：存在帳號上，一次只在一個房間裡活動 ---
+def get_user_room(user):
+    if not user:
+        return ""
+    return ((load_accounts()["users"].get(user) or {}).get("room") or "").upper()
+
+
+def set_user_room(user, code):
+    if not user:
+        return
+    with acct_lock:
+        db = load_accounts()
+        u = db["users"].get(user)
+        if u is not None:
+            u["room"] = (code or "").upper()
+            save_accounts(db)
+
+
 # --- 進度檔（每位使用者一檔，檔名用使用者名雜湊避免特殊字元）---
 def _prog_path(user):
     h = hashlib.sha1(user.encode("utf-8")).hexdigest()[:20]
@@ -427,7 +445,12 @@ ROOM_DEFAULTS = {
     "maxStudents": 40, "members": [], "host": "", "started": False, "startedAt": 0,
 }
 ROOM_CODE_LEN = 5
-ROOM_MAX_PLAYERS = 8                        # 房間總人數(含 AI)上限
+ROOM_MAX_PLAYERS = 8                        # 私人房間總人數(含 AI)上限
+# 全域世界：常駐、世界地圖、不分等級、人人可進、玩家不能重置/停止
+GLOBAL_ROOM = "GLOBAL"
+GLOBAL_MAP = os.environ.get("GLOBAL_MAP", "A2")          # 世界地圖(A2)
+GLOBAL_AIS = clampi(os.environ.get("GLOBAL_AIS") or 3, 0, 16)
+GLOBAL_AI_DIFF = os.environ.get("GLOBAL_AI_DIFF", "normal")
 # 起始資源用三檔預設(pop, gold, troops)取代逐項數字
 RES_PRESETS = {
     "low":    (100, 300, 60),
@@ -474,8 +497,35 @@ def gen_room_code():
     existing = set(list_rooms())
     while True:
         code = "".join(secrets.choice(CODE_ALPHABET) for _ in range(ROOM_CODE_LEN))
-        if code not in existing:
+        if code not in existing and code != GLOBAL_ROOM:
             return code
+
+
+def is_global(code):
+    return (code or "").upper() == GLOBAL_ROOM
+
+
+def ensure_global_room():
+    # 常駐世界：不存在就建立(世界地圖、幾個預設 AI、無人數上限、沒有 host、永遠 started)
+    keep = current_room()
+    try:
+        set_room(GLOBAL_ROOM)
+        r = load_room()
+        if r.get("started") and r.get("map") and os.path.isfile(room_path("room.json")):
+            return
+        diff = GLOBAL_AI_DIFF if GLOBAL_AI_DIFF in AI_DIFF else "normal"
+        r = dict(ROOM_DEFAULTS)
+        r.update({
+            "map": GLOBAL_MAP,
+            "ais": [{"name": "AI " + str(i + 1), "difficulty": diff} for i in range(GLOBAL_AIS)],
+            "capacity": 100000, "maxStudents": 100000,
+            "startPop": RES_PRESETS[RES_DEFAULT][0], "startGold": RES_PRESETS[RES_DEFAULT][1],
+            "startTroops": RES_PRESETS[RES_DEFAULT][2], "resources": RES_DEFAULT,
+            "members": [], "host": "", "started": True, "startedAt": int(time.time()),
+        })
+        save_room(r)
+    finally:
+        set_room(keep)
 
 
 def find_user_room(user):
@@ -974,8 +1024,10 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_room_stop()
         elif path == "/api/room/create":
             self._handle_room_create()
-        elif path == "/api/room/join":
-            self._handle_room_join()
+        elif path == "/api/room/enter" or path == "/api/room/join":
+            self._handle_room_enter()
+        elif path == "/api/room/leave":
+            self._handle_room_leave()
         elif path == "/api/event":
             self._handle_event_add()
         else:
@@ -1636,24 +1688,22 @@ class Handler(BaseHTTPRequestHandler):
         v["aiList"] = [{"name": a.get("name"), "difficulty": a.get("difficulty")} for a in (r.get("ais") or [])]
         self._send(v)
 
-    # 大廳：列出所有進行中的房間 + 自己建立的房間(即使還沒開始，才能繼續設定)。需登入。
+    # 大廳資料：全域世界摘要 + 自己建立的私人房 + 目前所在房間。私人房不公開列出(靠代碼加入)。需登入。
     def _handle_rooms_list(self):
         user = token_user(self._token())
         if not user:
             self._send({"error": "Not logged in"}, 401)
             return
-        out, mine = [], None
-        for code in list_rooms():
-            set_room(code)
-            r = load_room()
-            is_host = (r.get("host", "") == user)
-            if not r.get("started") and not is_host:
-                continue                            # 別人還沒開始的房間先不顯示(還沒得加入)
-            v = self._room_view(code, r, user)
-            if is_host:
-                mine = v
-            out.append(v)
-        self._send({"rooms": out, "mine": mine})
+        keep = current_room()
+        set_room(GLOBAL_ROOM)
+        gview = self._room_view(GLOBAL_ROOM, load_room(), user)
+        mine = None
+        mycode = find_user_room(user)
+        if mycode:
+            set_room(mycode)
+            mine = self._room_view(mycode, load_room(), user)
+        set_room(keep)
+        self._send({"global": gview, "mine": mine, "current": get_user_room(user)})
 
     # 建立房間：隨機 hash 代碼、host=自己。一人一間 → 已有就回傳原本那間。需登入。
     def _handle_room_create(self):
@@ -1675,8 +1725,9 @@ class Handler(BaseHTTPRequestHandler):
             save_room(r)
         self._send({"ok": True, "code": code, "room": self._room_view(code, r, user), "existing": False})
 
-    # 加入某個房間(用房間 hash 代碼)。需登入。
-    def _handle_room_join(self):
+    # 進入某房間：全域世界 GLOBAL 或私人房代碼。設為「目前所在房間」(一次只在一個)，首次進場發起始資源；
+    # 之前待過的房間會被凍結保留(不清空)，回去可續玩。需登入。
+    def _handle_room_enter(self):
         user = token_user(self._token())
         if not user:
             self._send({"error": "Not logged in"}, 401)
@@ -1685,23 +1736,37 @@ class Handler(BaseHTTPRequestHandler):
         code = ((parse_qs(urlparse(self.path).query).get("room", [""]) or [""])[0]
                 or (parse_qs(urlparse(self.path).query).get("code", [""]) or [""])[0]
                 or d.get("code") or d.get("room") or "").strip().upper()
-        if not code or code not in set(list_rooms()):
+        if is_global(code):
+            code = GLOBAL_ROOM
+            ensure_global_room()
+        elif not code or code not in set(list_rooms()):
             self._send({"error": "Room not found"}, 404)
             return
         set_room(code)
         r = load_room()
-        if not r.get("started"):
+        if not is_global(code) and not r.get("started"):
             self._send({"error": "That room hasn't started yet"}, 409)
             return
         if not room_admit(user):
             self._send({"error": "Room is full", "roomFull": True}, 403)
             return
-        # 進場即依房間設定發放起始資源(econ_get 會種新玩家)
+        # 首次進場即依房間設定發放起始資源(econ_get 會種新玩家；老玩家沿用凍結的資料)
         with econ_lock:
             store = load_econ_store()
             econ_get(store, user, time.time())
             save_econ_store(store)
-        self._send({"ok": True, "code": code, "map": r.get("map"), "host": r.get("host", "")})
+        set_user_room(user, code)                  # 記錄「目前所在房間」(單一)
+        self._send({"ok": True, "code": code, "map": r.get("map"),
+                    "host": r.get("host", ""), "global": is_global(code)})
+
+    # 離開競賽房間 → 回大廳/練習模式(不在任何房間)。凍結保留原房資料。需登入。
+    def _handle_room_leave(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        set_user_room(user, "")
+        self._send({"ok": True})
 
     # 開始一局：把設定存到自己建立的房間 + 重置該房世界(領地/經濟/事件)。沒房就先建一間。需登入。
     def _handle_room_start(self):
@@ -1775,6 +1840,7 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     migrate_accounts()      # 舊版單檔結構 -> 拆檔（只跑一次有效果）
+    ensure_global_room()    # 常駐世界(全域房間)：不存在就建立
     threading.Thread(target=ai_loop, daemon=True).start()   # 電腦 AI 帝國：背景自動擴張/攻擊
     threading.Thread(target=conscript_loop, daemon=True).start()   # 徵兵制：每小時自動買兵
     ThreadingHTTPServer(("127.0.0.1", 5000), Handler).serve_forever()
