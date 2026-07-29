@@ -5433,23 +5433,31 @@
         } });
       }
     } else {
-      // 有主：先攻打（不需先過關）。打贏 → 該區恢復「無主」，之後走過關→佔領流程才真正佔領。
+      // 有主：先攻打（不需先過關）。後端權威地判定 → 打贏該區清成無主，之後走過關→佔領流程才真正佔領。
       if (T <= 0) { terr.innerHTML = '<p class="op-hint">⚠️ No troops to attack with — recruit or redeploy first.</p>'; }
       else {
         terr.innerHTML = '<p class="op-hint">⚔️ Attack! You can\'t scout the garrison. Assign troops by type:</p>';
         deployPanel(terr, poolAvail(), { attack: true, foe: [], label: "⚔️ Attack", onGo: squad => {
           const atkForce = sumHp(squad);
-          poolSpend(squad); closeModal();
-          terrEngage(file, function (foe) {   // 開戰才揭露守軍(戰霧)
-            const defForce = sumHp((foe && foe.troops) || []);
-            runBattle(squad, (foe && foe.troops) || [], dispName(h.owner), function (win, survivors) {
-              poolAdd(survivors);                                        // 生還者(分兵種)撤回兵力池（尚未佔領）
-              terrAttackResult(file, win);                                // 失敗 −50 / 守方 +50
-              if (win) releaseTerritory(file, regionPop, function () {});   // 打贏 → 清成無主
-              logEvent("attack", { region: title, target: h.owner, key: file, atk: atkForce, def: defForce, win: win });   // 記事件(含攻/守軍力)
-              saveEconomy(function () { renderEmpire(); refreshMap(); });
-            }, (foe && foe.tech) || null);
-          });
+          closeModal();
+          // 後端權威：出征兵交給 /api/territory/attack，勝負/傷亡/生還/金幣/所有權皆由後端決定。
+          // 前端只用回傳的 defenderOrder 重播動畫(非權威)，結束後重新載入伺服器狀態。(與地理地圖 openRegion 同一條路徑)
+          const t = authToken(); if (!t) { alert("Log in first."); return; }
+          fetch(withRoom("/api/territory/attack?token=" + encodeURIComponent(t)),
+            { method: "POST", body: JSON.stringify({ file: file, squad: squad }) })
+            .then(r => r.json().catch(() => ({})).then(j => ({ ok: r.ok, j: j })))
+            .then(o => {
+              if (!o.ok || !o.j.ok) { alert("Attack failed: " + ((o.j && o.j.error) || "unknown")); loadEconomy(function () { loadTerritory(function () { renderEmpire(); refreshMap(); }); }); return; }
+              const res = o.j, order = res.defenderOrder || [], defForce = sumHp(order);
+              const finish = function () {
+                logEvent("attack", { region: title, target: res.defender || h.owner, key: file, atk: atkForce, def: defForce, win: res.attackerWon });
+                if (res.gold != null && myEcon) myEcon.gold = res.gold;
+                loadEconomy(function () { loadTerritory(function () { renderEmpire(); refreshMap(); }); });
+              };
+              // 重播後端已判定的戰鬥(server 的 defenderOrder + defenderTech → 動畫與結果一致，preOrdered=true)
+              runBattle(squad, order, dispName(res.defender || h.owner), finish, res.defenderTech || (h && h.tech) || null, true);
+            })
+            .catch(function () { alert("Couldn't reach the server."); });
         } });
       }
     }
@@ -5551,14 +5559,17 @@
   function terrResearch(key, track, cb) { terrPost("/api/territory/research", { file: key, track: track }, cb); }
   function terrRecruit(key, unit, qty, cb) { terrPost("/api/territory/recruit", { file: key, unit: unit, qty: qty }, cb); }
   function terrConscript(key, on, budget, cb) { terrPost("/api/territory/conscript", { file: key, on: !!on, budget: budget }, cb); }
-  // 開戰才向後端揭露守軍(戰霧)；回傳 {troops, tech}
-  function terrEngage(key, cb) {
+  // LEGACY / UNUSED (Phase 2A): the client-authoritative attack chain (terrEngage → client runBattle →
+  // terrAttackResult / releaseTerritory) has been retired. ALL territory combat now goes through the
+  // server-authoritative POST /api/territory/attack (see openRegion + openOutpost). These three helpers
+  // are kept only so any stray old caller degrades gracefully; the backend endpoints they hit are now
+  // non-authoritative (engage/attack-result) or owner-only (release) and cannot forge a battle outcome.
+  function terrEngage(key, cb) {   // legacy fog-of-war reveal (read-only; no longer on any reachable path)
     const t = authToken(); if (!t) { cb({ troops: [] }); return; }
     fetch(withRoom("/api/territory/engage?token=" + encodeURIComponent(t)), { method: "POST", body: JSON.stringify({ file: key }) })
       .then(r => r.ok ? r.json() : null).then(j => cb(j || { troops: [] })).catch(() => cb({ troops: [] }));
   }
-  // 回報攻打結果 → 金幣獎懲(失敗攻方 −50、守方 +50)
-  function terrAttackResult(key, win) {
+  function terrAttackResult(key, win) {   // legacy no-op on the server (kept only for old-client tolerance)
     const t = authToken(); if (!t) return;
     fetch(withRoom("/api/territory/attack-result?token=" + encodeURIComponent(t)), { method: "POST", body: JSON.stringify({ file: key, win: !!win }) })
       .then(r => r.ok ? r.json() : null).then(j => { if (j && j.gold != null && myEcon) { myEcon.gold = j.gold; renderEmpire(); } }).catch(() => {});
@@ -5726,6 +5737,9 @@
   }
 
   // 打贏「有主」據點後：把它清成無主（前主人扣人口），不直接取得所有權——之後走過關→佔領流程。
+  // LEGACY / UNUSED (Phase 2A): winning an attack now neutralizes the region on the server inside
+  // /api/territory/attack. The backend restricts /release to the region's OWNER (self-abandon only),
+  // so this can no longer neutralize an enemy territory even if called directly.
   function releaseTerritory(file, pop, cb) {
     const t = authToken();
     if (!t) { if (cb) cb(); return; }

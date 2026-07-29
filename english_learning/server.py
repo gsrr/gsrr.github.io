@@ -14,7 +14,8 @@ try:                                   # 正規領地目錄(唯讀權威)：身�
     from territory_catalog import catalog as terr_catalog
 except Exception:
     terr_catalog = None
-from game import conquest as game_conquest, config as game_config, economy as game_economy   # 核心遊戲領域
+from game import (conquest as game_conquest, config as game_config, economy as game_economy,   # 核心遊戲領域
+                  recruitment as game_recruit, technology as game_tech)
 
 # 房間地圖(等級 id) -> 主 canonical mapId。子地圖(下鑽)改由 world-data/maps.json 的 childMaps 提供。
 LEVEL_PRIMARY_MAP = {"Pre-A1": "taiwan", "A1": "china", "A2": "world", "B1": "world"}
@@ -620,25 +621,11 @@ def save_catalog(c):
     os.replace(tmp, TERR_CATALOG)
 
 
-def _atk_bonus(at, df):        # 攻方 at 打守方 df 的攻擊倍率（對齊前端 atkBonus）
-    if at == "spear" and df == "cav":
-        return 1.2
-    if at == "cav" and df == "archer":
-        return 1.1
-    if at == "archer" and df in ("spear", "inf"):
-        return 1.2
-    return 1.0
-
-
-def _def_bonus(df, at):        # 守方 df 面對攻方 at 的防守倍率（對齊前端 defBonus）
-    if df == "cav" and at == "archer":
-        return 1.1
-    return 1.0
-
-
 # NOTE (Phase 2A): the legacy aggregate "_force_power / _mix / _alive" AI battle formula was
-# RETIRED. The AI now resolves battles through the one canonical engine (game.battle via
-# game.conquest.resolve_attack), the same rules as player battles.
+# RETIRED, and the old server-local counter tables "_atk_bonus / _def_bonus" were REMOVED — they
+# were no longer authoritative or referenced. The single source of truth for unit counters is now
+# game.config.atk_bonus / game.config.def_bonus, consumed by the one canonical engine
+# (game.battle via game.conquest.resolve_attack) for BOTH player and AI battles.
 
 
 def _region_display(key):       # 從 store key 生一個看得懂的名字給事件牆用
@@ -1300,10 +1287,14 @@ class Handler(BaseHTTPRequestHandler):
             hp = int(t.get("hp", 0) or 0)
             troops.append({"type": ty, "hp": max(0, min(100000, hp))})
         region_pop = clampi(cpop)          # 人口以目錄為權威(不信任 client 的 pop)
-        # 佔領只發生在「無主」據點：有主據點要先打贏 → /territory/release 清成無主，才能佔領。
+        # 佔領只發生在「無主」據點：有主據點要先打贏(/api/territory/attack 後端權威地清成無主)才能佔領。
+        # 後端強制此規則 → client 不能用 /claim 直接奪取敵方領地(繞過戰鬥)。只能佔無主或重部署自己的。
         with terr_lock:
             store = load_territory_store()
             prev = store.get(f) if isinstance(store.get(f), dict) else {}
+            if prev.get("owner") and prev.get("owner") != user:   # 有主且非本人 → 必須先攻打
+                self._send({"error": "Territory is held — attack it first", "reason": "held"}, 403)
+                return
             keep = {}
             if prev.get("owner") == user:                # 重新部署自己的守軍 → 保留建築/科技/人口/徵兵設定
                 keep = {"buildings": prev.get("buildings") or {}, "tech": prev.get("tech") or {}}
@@ -1321,6 +1312,9 @@ class Handler(BaseHTTPRequestHandler):
 
     # 攻方打贏「有主」據點後呼叫：把該據點清成「無主」，前主人扣掉該區人口。
     # 攻方不會馬上取得所有權——之後要走「過關→佔領」流程才真正佔領。
+    # LEGACY (Phase 2A): winning an attack now neutralizes the region AUTHORITATIVELY inside
+    # /api/territory/attack. /release is retired from the combat path and is restricted to the
+    # region's OWNER (self-abandon) — a client can NEVER neutralize an ENEMY territory via /release.
     def _handle_territory_release(self):
         user = token_user(self._token())
         if not user:
@@ -1333,12 +1327,17 @@ class Handler(BaseHTTPRequestHandler):
             return
         with terr_lock:
             store = load_territory_store()
-            if f in store:
-                del store[f]           # 清空守備 → 恢復無主（該區的駐軍/成長隨之消失）
-                save_territory_store(store)
-        # 領地的兵力現在長在「該區駐軍」而不是玩家人口池，失去領地即失去其駐軍，
-        # 不再另外扣前主人的家鄉人口。
-        self._send({"ok": True})
+            h = store.get(f)
+            if not isinstance(h, dict) or not h.get("owner"):
+                self._send({"ok": True, "released": False})       # 已無主 → 冪等，無事可做
+                return
+            if h.get("owner") != user:                            # 只能放棄自己的領地，不能清空敵方
+                self._send({"error": "not your region", "reason": "not_owner"}, 403)
+                return
+            del store[f]           # 放棄自家守備 → 恢復無主（該區的駐軍/成長隨之消失）
+            save_territory_store(store)
+        # 領地的兵力現在長在「該區駐軍」而不是玩家人口池，失去領地即失去其駐軍。
+        self._send({"ok": True, "released": True})
 
     # 蓋建築（目前：兵工廠 armory）：需為該領地擁有者，扣該區金幣。
     def _handle_territory_build(self):
@@ -1409,26 +1408,27 @@ class Handler(BaseHTTPRequestHandler):
         if track not in TECH_TRACKS:
             self._send({"error": "unknown track"}, 400)
             return
+        def _tech_reject(reason, gold, cost):   # 把 game.technology 的原因翻回既有的 HTTP 回應(行為不變)
+            if reason == "need_armory":
+                self._send({"error": "need armory"}, 400)
+            elif reason == "maxed":
+                self._send({"error": "maxed"}, 400)
+            else:
+                self._send({"error": "not enough gold", "gold": clampi(gold), "cost": cost}, 400)
         if f == HOME_KEY:                          # 家鄉科技：研發存在玩家經濟裡(加成攻擊軍)
             with terr_lock:
                 region_pop = user_region_pop(load_territory_store(), user)
             with econ_lock:
                 estore = load_econ_store()
                 e = econ_get(estore, user, time.time(), region_pop)
-                if not e["buildings"].get("armory"):
-                    self._send({"error": "need armory"}, 400)
-                    return
                 tech = e["tech"]
-                lvl = clampi(tech.get(track, 0))
-                if lvl >= TECH_MAX:
-                    self._send({"error": "maxed"}, 400)
-                    return
-                cost = TECH_COST[track][lvl]
-                if clampi(e.get("gold", 0)) < cost:
-                    self._send({"error": "not enough gold", "gold": clampi(e.get("gold", 0)), "cost": cost}, 400)
+                ok, cost, nxt, reason = game_tech.can_research(track, tech.get(track, 0), e.get("gold", 0),
+                                                               has_armory=bool(e["buildings"].get("armory")))
+                if not ok:
+                    _tech_reject(reason, e.get("gold", 0), cost)
                     return
                 e["gold"] = clampi(e.get("gold", 0)) - cost
-                tech[track] = lvl + 1
+                tech[track] = nxt
                 save_econ_store(estore)
                 newgold = e["gold"]
             self._send({"ok": True, "gold": newgold, "tech": tech})
@@ -1439,26 +1439,20 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(h, dict) or h.get("owner") != user:
                 self._send({"error": "not your region"}, 403)
                 return
-            if not (h.get("buildings") or {}).get("armory"):
-                self._send({"error": "need armory"}, 400)
-                return
             tech = h.get("tech") or {}
-            lvl = clampi(tech.get(track, 0))
-            if lvl >= TECH_MAX:
-                self._send({"error": "maxed"}, 400)
-                return
-            cost = TECH_COST[track][lvl]            # 下一級花費
             region_pop = user_region_pop(store, user)
             with econ_lock:                        # 從玩家的統一金幣池扣款
                 estore = load_econ_store()
                 e = econ_get(estore, user, time.time(), region_pop)
-                if clampi(e.get("gold", 0)) < cost:
-                    self._send({"error": "not enough gold", "gold": clampi(e.get("gold", 0)), "cost": cost}, 400)
+                ok, cost, nxt, reason = game_tech.can_research(track, tech.get(track, 0), e.get("gold", 0),
+                                                               has_armory=bool((h.get("buildings") or {}).get("armory")))
+                if not ok:
+                    _tech_reject(reason, e.get("gold", 0), cost)
                     return
                 e["gold"] = clampi(e.get("gold", 0)) - cost
                 save_econ_store(estore)
                 newgold = e["gold"]
-            tech[track] = lvl + 1
+            tech[track] = nxt
             h["tech"] = tech
             save_territory_store(store)
         self._send({"ok": True, "gold": newgold, "tech": tech})
@@ -1472,23 +1466,28 @@ class Handler(BaseHTTPRequestHandler):
         d = self._body_json()
         f = self._canon(d.get("file")) or (d.get("file") or "").strip()   # canonical 領地 id(相容 legacy)
         unit = str(d.get("unit", ""))
-        if unit not in UNIT_COST:
+        if unit not in game_config.UNIT_COST:
             self._send({"error": "unknown unit"}, 400)
             return
         qty = clampi(d.get("qty", RECRUIT_BATCH), 1, 100000)
-        cost = qty * UNIT_COST[unit]
-        need = UNIT_BUILDING[unit]
+        need = game_recruit.building_for(unit)
+
+        def _recruit_reject(reason, gold, cost):   # game.recruitment 原因 → 既有 HTTP 回應(行為不變)
+            if reason and reason.startswith("need_"):
+                self._send({"error": "need " + need}, 400)
+            elif reason == "not_your_region":
+                self._send({"error": "not your region"}, 403)
+            else:
+                self._send({"error": "not enough gold", "gold": clampi(gold), "cost": cost}, 400)
         if f == HOME_KEY:                          # 家鄉招募 → 加進「自由兵力池」(economy troops)
             with terr_lock:
                 region_pop = user_region_pop(load_territory_store(), user)
             with econ_lock:
                 estore = load_econ_store()
                 e = econ_get(estore, user, time.time(), region_pop)
-                if not e["buildings"].get(need):
-                    self._send({"error": "need " + need}, 400)
-                    return
-                if clampi(e.get("gold", 0)) < cost:
-                    self._send({"error": "not enough gold", "gold": clampi(e.get("gold", 0)), "cost": cost}, 400)
+                ok, cost, reason = game_recruit.can_recruit(unit, qty, e.get("gold", 0), bool(e["buildings"].get(need)))
+                if not ok:
+                    _recruit_reject(reason, e.get("gold", 0), cost)
                     return
                 e["gold"] = clampi(e.get("gold", 0)) - cost   # 招募只花金幣，不再扣人口
                 e["troops"][unit] = clampi(e["troops"].get(unit, 0)) + qty   # 加進該兵種
@@ -1499,18 +1498,15 @@ class Handler(BaseHTTPRequestHandler):
         with terr_lock:
             store = load_territory_store()
             h = store.get(f)
-            if not isinstance(h, dict) or h.get("owner") != user:
-                self._send({"error": "not your region"}, 403)
-                return
-            if not (h.get("buildings") or {}).get(need):
-                self._send({"error": "need " + need}, 400)
-                return
-            region_pop = user_region_pop(store, user)
+            owns = isinstance(h, dict) and h.get("owner") == user
+            has_bld = bool((h or {}).get("buildings", {}).get(need)) if isinstance(h, dict) else False
+            region_pop = user_region_pop(store, user) if isinstance(h, dict) else 0
             with econ_lock:                        # 從玩家的統一金幣池扣款
                 estore = load_econ_store()
                 e = econ_get(estore, user, time.time(), region_pop)
-                if clampi(e.get("gold", 0)) < cost:
-                    self._send({"error": "not enough gold", "gold": clampi(e.get("gold", 0)), "cost": cost}, 400)
+                ok, cost, reason = game_recruit.can_recruit(unit, qty, e.get("gold", 0), has_bld, owns_territory=owns)
+                if not ok:
+                    _recruit_reject(reason, e.get("gold", 0), cost)
                     return
                 e["gold"] = clampi(e.get("gold", 0)) - cost   # 招募只花金幣，不再扣人口
                 save_econ_store(estore)
@@ -1554,7 +1550,10 @@ class Handler(BaseHTTPRequestHandler):
             save_territory_store(store)
         self._send({"ok": True, "conscript": on, "conscriptBudget": budget})
 
-    # 開戰時才揭露某領地的守軍/科技(戰霧：平時看不到，出兵攻打當下才給前端跑對戰用)
+    # LEGACY / READ-ONLY (Phase 2A): the server-authoritative /api/territory/attack returns the
+    # defender order+tech itself, so the combat path no longer needs this pre-battle reveal. Kept as a
+    # READ-ONLY endpoint (it mutates nothing) — it cannot create an authority bypass. No reachable
+    # flow calls it after the openOutpost migration.
     def _handle_territory_engage(self):
         user = token_user(self._token())
         if not user:
@@ -1570,25 +1569,16 @@ class Handler(BaseHTTPRequestHandler):
             return
         self._send({"owner": h.get("owner"), "troops": h.get("troops") or [], "tech": h.get("tech") or {}})
 
-    # 攻打結果的金幣獎懲(前端跑完對戰後回報)：攻打失敗→攻方 −50、守方 +50；成功不變
+    # LEGACY / RETIRED (Phase 2A): battle gold (attacker −ATTACK_FAIL_GOLD / defender +DEFEND_GOLD) is
+    # now applied AUTHORITATIVELY inside /api/territory/attack. This endpoint no longer mutates any
+    # gold/reward and cannot forge a battle outcome. Kept as a non-authoritative no-op purely so a
+    # stray old client does not error (it used to read `gold`, which is now simply omitted).
     def _handle_territory_attack_result(self):
-        user = token_user(self._token())          # 攻方
+        user = token_user(self._token())
         if not user:
             self._send({"error": "Not logged in"}, 401)
             return
-        d = self._body_json()
-        f = self._canon(d.get("file")) or (d.get("file") or "").strip()   # canonical 領地 id(相容 legacy)
-        win = bool(d.get("win"))
-        with terr_lock:
-            store = load_territory_store()
-            h = store.get(f)
-            defender = h.get("owner") if isinstance(h, dict) else None
-        newgold = None
-        if not win:                               # 攻打失敗
-            newgold = econ_add_gold(user, -ATTACK_FAIL_GOLD)
-            if defender and defender != user and defender != AI_OWNER:
-                econ_add_gold(defender, DEFEND_GOLD)   # 守方防守成功
-        self._send({"ok": True, "gold": newgold})
+        self._send({"ok": True, "legacy": True})   # 不再更動任何金幣/所有權/兵力
 
     # 攻打有主據點：後端權威地跑「正規戰鬥引擎」(game.battle，等同前端 runBattle 規則)。
     # 前端只送出「投入哪些兵(squad)」，勝負/傷亡/生還由後端決定 → 前端動畫僅為重播/預覽。
