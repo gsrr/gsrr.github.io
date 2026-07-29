@@ -15,8 +15,22 @@ try:                                   # 正規領地目錄(唯讀權威)：身�
 except Exception:
     terr_catalog = None
 
-# 房間地圖(等級 id) -> 允許的 canonical mapId(含下鑽子地圖)。對齊前端 GEO_MAPS 的拓撲。
-LEVEL_TO_MAPS = {"Pre-A1": ["taiwan", "taipei"], "A1": ["china"], "A2": ["world"], "B1": ["world"]}
+# 房間地圖(等級 id) -> 主 canonical mapId。子地圖(下鑽)改由 world-data/maps.json 的 childMaps 提供。
+LEVEL_PRIMARY_MAP = {"Pre-A1": "taiwan", "A1": "china", "A2": "world", "B1": "world"}
+
+
+def allowed_maps_for_level(level):
+    """房間某等級允許認領的 mapId 清單 = 主地圖 + 其子地圖(childMaps)。未知等級 -> None(不限制)。"""
+    prim = LEVEL_PRIMARY_MAP.get(level or "")
+    if not prim:
+        return None
+    maps = [prim]
+    if terr_catalog:
+        try:
+            maps += terr_catalog.child_maps(prim)
+        except Exception:
+            pass
+    return maps
 
 
 def canonize_keys(d):
@@ -1304,7 +1318,7 @@ class Handler(BaseHTTPRequestHandler):
         if not terr_catalog or not terr_catalog.is_canonical(f):
             self._send({"error": "Territory not in catalog", "reason": "not_in_catalog"}, 400)
             return
-        allowed = LEVEL_TO_MAPS.get((load_room().get("map") or ""))
+        allowed = allowed_maps_for_level(load_room().get("map") or "")
         if allowed is not None and terr_catalog.map_of(f) not in allowed:
             self._send({"error": "Territory is not on this room's map", "reason": "wrong_map"}, 400)
             return

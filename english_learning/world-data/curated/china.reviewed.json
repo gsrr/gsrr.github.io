@@ -1,0 +1,8 @@
+{
+  "map": "china",
+  "base": "geometry",
+  "provenance": "SVG geometry candidates (china.svg has no transforms), human-reviewed: island/strait sea false-positives removed. Land borders only.",
+  "isolate": ["china:pTW", "china:pHI"],
+  "remove": [["china:pMO", "china:pHK"]],
+  "add": []
+}

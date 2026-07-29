@@ -109,8 +109,18 @@ def main():
             if rc in region_codes:
                 err("%s: duplicate regionCode '%s' within map %s" % (tid, rc, m["id"]))
             region_codes.add(rc)
-            if t.get("adjacentTerritoryIds"):
-                err("%s: adjacencyTerritoryIds must be empty in this phase" % tid)
+            adj = t.get("adjacentTerritoryIds") or []
+            if adj != sorted(adj):
+                err("%s: adjacentTerritoryIds must be sorted deterministically" % tid)
+            if len(adj) != len(set(adj)):
+                err("%s: duplicate neighbor in adjacentTerritoryIds" % tid)
+            for nb in adj:
+                if nb == tid:
+                    err("%s: self-adjacency" % tid)
+                if "#" in nb or "/" in nb:
+                    err("%s: non-canonical neighbor id %r (legacy/SVG key)" % (tid, nb))
+                if ":" not in nb or not nb.startswith(m["id"] + ":"):
+                    err("%s: neighbor %r is not a same-map canonical id" % (tid, nb))
             if t.get("terrainType") is not None or t.get("settlementType") is not None:
                 err("%s: terrain/settlement must be null in this phase" % tid)
             meta = t.get("_meta")
@@ -138,6 +148,33 @@ def main():
         if missing:
             err("map %s: %d rendered SVG regions missing from catalog: %s"
                 % (m["id"], len(missing), ", ".join(sorted(missing))[:200]))
+
+        # ---- adjacency graph checks (exists, symmetry, components) ----
+        ids = {t["id"] for t in terrs}
+        adjm = {t["id"]: set(t.get("adjacentTerritoryIds") or []) for t in terrs}
+        for tid, ns in adjm.items():
+            for nb in ns:
+                if nb not in ids:
+                    err("%s: neighbor %r does not exist in map %s" % (tid, nb, m["id"]))
+                elif tid not in adjm.get(nb, set()):
+                    err("adjacency not symmetric: %s -> %s but not back" % (tid, nb))
+        # connected components + isolated (INFO/warning, not error — islands are legitimate)
+        seen, comps = set(), 0
+        for t in ids:
+            if t in seen:
+                continue
+            comps += 1
+            stack = [t]
+            while stack:
+                u = stack.pop()
+                if u in seen:
+                    continue
+                seen.add(u)
+                stack.extend((adjm.get(u, set()) & ids) - seen)
+        iso = sorted(t for t, ns in adjm.items() if not ns)
+        warnings.append("map %s graph: %d edges, %d components, %d isolated%s"
+                        % (m["id"], sum(len(v) for v in adjm.values()) // 2, comps, len(iso),
+                           (" (" + ", ".join(iso[:8]) + ("…" if len(iso) > 8 else "") + ")" if iso else "")))
 
     if len(schema_versions) > 1:
         err("mixed schema versions across territories: %s" % sorted(schema_versions))

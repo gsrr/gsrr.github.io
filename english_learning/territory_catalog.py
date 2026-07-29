@@ -158,6 +158,50 @@ class TerritoryCatalog:
         t = self.territories.get(territory_id)
         return t.get("gamePopulation") if t else None
 
+    # ---- World-Domain adjacency graph (topology only; NOT game attack rules) ----
+    def neighbors(self, territory_id):
+        self._ensure()
+        t = self.territories.get(territory_id)
+        return list(t.get("adjacentTerritoryIds") or []) if t else []
+
+    def are_adjacent(self, a, b):
+        self._ensure()
+        return b in (self.territories.get(a, {}).get("adjacentTerritoryIds") or [])
+
+    def degree(self, territory_id):
+        return len(self.neighbors(territory_id))
+
+    def connected_component(self, territory_id):
+        """Set of territory ids reachable from territory_id via adjacency (same map)."""
+        self._ensure()
+        if territory_id not in self.territories:
+            return set()
+        seen, stack = set(), [territory_id]
+        while stack:
+            u = stack.pop()
+            if u in seen:
+                continue
+            seen.add(u)
+            stack.extend(n for n in self.neighbors(u) if n not in seen)
+        return seen
+
+    def map_components(self, map_id):
+        """List of connected components (lists of ids) for a map."""
+        self._ensure()
+        ids = [tid for tid, t in self.territories.items() if t.get("mapId") == map_id]
+        seen, comps = set(), []
+        for t in ids:
+            if t in seen:
+                continue
+            c = self.connected_component(t)
+            comps.append(sorted(c))
+            seen |= c
+        return comps
+
+    def child_maps(self, map_id):
+        self._ensure()
+        return list((self.map_by_id.get(map_id) or {}).get("childMaps") or [])
+
     def count_per_map(self):
         self._ensure()
         out = {}

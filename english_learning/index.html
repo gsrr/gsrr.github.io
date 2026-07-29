@@ -516,6 +516,8 @@
   .geo-marker-drill { fill: rgba(88,28,135,.92); }
   .geo-leader { stroke: rgba(15,23,42,.5); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
   .geo-region.geo-hi { filter: brightness(1.25) drop-shadow(0 0 5px #fff); }   /* 滑清單時對應地區發亮 */
+  .geo-region.geo-adj-self { fill: #16a34a !important; }                        /* dev adjacency debug: hovered */
+  .geo-region.geo-adj-nbr { fill: #f59e0b !important; }                         /* dev adjacency debug: neighbours */
   .geo-index { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin: 12px 0 2px; }
   .geo-idx { display: flex; align-items: center; gap: 7px; text-align: left; padding: 7px 9px; border-radius: 10px;
     border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #e8edf5; cursor: pointer;
@@ -4665,6 +4667,7 @@
   // ===== Phase 1A：正規領地目錄(靜態、唯讀，來自 world-data/) =====
   // 提供穩定的邏輯領地身分(canonical id)與凍結後的 gamePopulation；一個邏輯領地可對應多個 SVG path。
   const TERR_CATALOG = { maps: {}, terrById: {}, terrByMapPath: {}, mapIdBySvg: {}, loaded: false };
+  const DEBUG_ADJ = /[?&]debugAdjacency=1\b/.test(location.search);   // dev-only adjacency inspection
   function canonicalTerritoryId(mapId, regionCode) { return mapId + ":" + regionCode; }
   function mapIdForSvg(svgFile) { return TERR_CATALOG.mapIdBySvg[svgFile] || null; }
   function territoryForPath(mapId, pathId) { return TERR_CATALOG.terrByMapPath[mapId + "|" + pathId] || null; }
@@ -4837,6 +4840,20 @@
           } else {
             regionList.push({ p: p, key: key, territoryId: territoryId, name: name, pop: pop, open: open, dup: true });
           }
+        });
+      }
+      // ===== DEV-ONLY adjacency debug (?debugAdjacency=1): hover a territory → outline its
+      //   catalog neighbours. Reads the same authoritative catalog; does NOT affect gameplay. =====
+      if (DEBUG_ADJ) {
+        const partsByCanon = {};
+        regionList.forEach(r => { if (r.key && r.p) (partsByCanon[r.key] || (partsByCanon[r.key] = [])).push(r.p); });
+        regionList.forEach(r => {
+          if (r.drill || !r.key || !r.p) return;
+          const ct = TERR_CATALOG.terrById[r.key];
+          const nbrs = (ct && ct.adjacentTerritoryIds) || [];
+          const enter = () => { (partsByCanon[r.key] || []).forEach(p => p.classList.add("geo-adj-self")); nbrs.forEach(nb => (partsByCanon[nb] || []).forEach(p => p.classList.add("geo-adj-nbr"))); };
+          const leave = () => { document.querySelectorAll(".geo-adj-self,.geo-adj-nbr").forEach(p => p.classList.remove("geo-adj-self", "geo-adj-nbr")); };
+          r.p.addEventListener("mouseenter", enter); r.p.addEventListener("mouseleave", leave);
         });
       }
       // ===== 縮放式標籤層：常數螢幕大小的 HTML 疊層，用現有投影(viewBox + 平移縮放)換算螢幕座標 =====

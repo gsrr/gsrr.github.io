@@ -22,7 +22,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taiwan:nantou-county",
+      "taiwan:taichung-city",
+      "taiwan:yunlin-county"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -59,7 +63,9 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taiwan:chiayi-county"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -96,7 +102,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taiwan:chiayi-city",
+      "taiwan:kaohsiung-city",
+      "taiwan:nantou-county",
+      "taiwan:tainan-city",
+      "taiwan:yunlin-county"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -133,7 +145,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taiwan:kaohsiung-city",
+      "taiwan:nantou-county",
+      "taiwan:taichung-city",
+      "taiwan:taitung-county",
+      "taiwan:yilan-county"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -170,7 +188,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taiwan:hsinchu-county",
+      "taiwan:miaoli-county"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -207,7 +228,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taiwan:hsinchu-city",
+      "taiwan:miaoli-county",
+      "taiwan:taichung-city",
+      "taiwan:taoyuan-city",
+      "taiwan:yilan-county"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -244,7 +271,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taiwan:chiayi-county",
+      "taiwan:hualien-county",
+      "taiwan:nantou-county",
+      "taiwan:pingtung-county",
+      "taiwan:tainan-city",
+      "taiwan:taitung-county"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -281,7 +315,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taiwan:new-taipei-city",
+      "taiwan:taipei-city"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -392,7 +429,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taiwan:hsinchu-city",
+      "taiwan:hsinchu-county",
+      "taiwan:taichung-city"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -429,7 +470,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taiwan:changhua-county",
+      "taiwan:chiayi-county",
+      "taiwan:hualien-county",
+      "taiwan:kaohsiung-city",
+      "taiwan:taichung-city",
+      "taiwan:yunlin-county"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -466,7 +514,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taiwan:keelung-city",
+      "taiwan:taipei-city",
+      "taiwan:taoyuan-city",
+      "taiwan:yilan-county"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -540,7 +593,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taiwan:kaohsiung-city",
+      "taiwan:taitung-county"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -577,7 +633,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taiwan:changhua-county",
+      "taiwan:hsinchu-county",
+      "taiwan:hualien-county",
+      "taiwan:miaoli-county",
+      "taiwan:nantou-county",
+      "taiwan:yilan-county"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -614,7 +677,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taiwan:chiayi-county",
+      "taiwan:kaohsiung-city"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -651,7 +717,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taiwan:keelung-city",
+      "taiwan:new-taipei-city"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -688,7 +757,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taiwan:hualien-county",
+      "taiwan:kaohsiung-city",
+      "taiwan:pingtung-county"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -725,7 +798,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taiwan:hsinchu-county",
+      "taiwan:new-taipei-city",
+      "taiwan:yilan-county"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -762,7 +839,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taiwan:hsinchu-county",
+      "taiwan:hualien-county",
+      "taiwan:new-taipei-city",
+      "taiwan:taichung-city",
+      "taiwan:taoyuan-city"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -799,7 +882,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taiwan:changhua-county",
+      "taiwan:chiayi-county",
+      "taiwan:nantou-county"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,

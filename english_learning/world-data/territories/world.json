@@ -24,7 +24,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:es",
+      "world:fr"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -63,7 +66,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:om",
+      "world:sa"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -102,7 +108,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:cn",
+      "world:ir",
+      "world:pk",
+      "world:tj",
+      "world:tm",
+      "world:uz"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -219,7 +232,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:gr",
+      "world:me",
+      "world:mk",
+      "world:xk"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -258,7 +276,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:az",
+      "world:ge",
+      "world:ir",
+      "world:tr"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -297,7 +320,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:cd",
+      "world:cg",
+      "world:na",
+      "world:zm"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -336,7 +364,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:bo",
+      "world:br",
+      "world:cl",
+      "world:py",
+      "world:uy"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -414,7 +448,16 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:ch",
+      "world:cz",
+      "world:de",
+      "world:hu",
+      "world:it",
+      "world:li",
+      "world:si",
+      "world:sk"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -570,7 +613,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:am",
+      "world:ge",
+      "world:ir",
+      "world:ru",
+      "world:tr"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -609,7 +658,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:hr",
+      "world:me",
+      "world:rs"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -687,7 +740,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:in",
+      "world:mm"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -726,7 +782,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:de",
+      "world:fr",
+      "world:lu",
+      "world:nl"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -765,7 +826,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:bj",
+      "world:ci",
+      "world:gh",
+      "world:ml",
+      "world:ne",
+      "world:tg"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -804,7 +872,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:gr",
+      "world:mk",
+      "world:ro",
+      "world:rs",
+      "world:tr"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -882,7 +956,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:cd",
+      "world:rw",
+      "world:tz"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -921,7 +999,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:bf",
+      "world:ne",
+      "world:ng",
+      "world:tg"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -999,7 +1082,9 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:my"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1038,7 +1123,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:ar",
+      "world:br",
+      "world:cl",
+      "world:pe",
+      "world:py"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1155,7 +1246,18 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:ar",
+      "world:bo",
+      "world:co",
+      "world:gf",
+      "world:gy",
+      "world:pe",
+      "world:py",
+      "world:sr",
+      "world:uy",
+      "world:ve"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1233,7 +1335,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:cn",
+      "world:in"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1309,7 +1414,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:na",
+      "world:za",
+      "world:zm",
+      "world:zw"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1348,7 +1458,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:lt",
+      "world:lv",
+      "world:pl",
+      "world:ru",
+      "world:ua"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1387,7 +1503,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:gt",
+      "world:mx"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1426,7 +1545,9 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:us"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1504,7 +1625,17 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:ao",
+      "world:bi",
+      "world:cf",
+      "world:cg",
+      "world:rw",
+      "world:ss",
+      "world:tz",
+      "world:ug",
+      "world:zm"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1543,7 +1674,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:cd",
+      "world:cg",
+      "world:cm",
+      "world:sd",
+      "world:ss",
+      "world:td"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1582,7 +1720,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:ao",
+      "world:cd",
+      "world:cf",
+      "world:cm",
+      "world:ga"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1621,7 +1765,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:at",
+      "world:de",
+      "world:fr",
+      "world:it",
+      "world:li"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1660,7 +1810,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:bf",
+      "world:gh",
+      "world:gn",
+      "world:lr",
+      "world:ml"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1738,7 +1894,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:ar",
+      "world:bo",
+      "world:pe"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1777,7 +1937,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:cf",
+      "world:cg",
+      "world:ga",
+      "world:gq",
+      "world:ng",
+      "world:td"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1816,7 +1983,24 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:af",
+      "world:bt",
+      "world:hk",
+      "world:in",
+      "world:kg",
+      "world:kp",
+      "world:kz",
+      "world:la",
+      "world:mm",
+      "world:mn",
+      "world:mo",
+      "world:np",
+      "world:pk",
+      "world:ru",
+      "world:tj",
+      "world:vn"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1855,7 +2039,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:br",
+      "world:ec",
+      "world:pa",
+      "world:pe",
+      "world:ve"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1894,7 +2084,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:ni",
+      "world:pa"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -2128,7 +2321,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:at",
+      "world:de",
+      "world:pl",
+      "world:sk"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -2167,7 +2365,17 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:at",
+      "world:be",
+      "world:ch",
+      "world:cz",
+      "world:dk",
+      "world:fr",
+      "world:lu",
+      "world:nl",
+      "world:pl"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -2206,7 +2414,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:er",
+      "world:et",
+      "world:so"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -2245,7 +2457,9 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:de"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -2362,7 +2576,15 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:eh",
+      "world:ly",
+      "world:ma",
+      "world:ml",
+      "world:mr",
+      "world:ne",
+      "world:tn"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -2401,7 +2623,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:co",
+      "world:pe"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -2440,7 +2665,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:il",
+      "world:ly",
+      "world:ps",
+      "world:sd"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -2479,7 +2709,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:lv",
+      "world:ru"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -2518,7 +2751,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:dz",
+      "world:ma",
+      "world:mr"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -2557,7 +2794,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:dj",
+      "world:et",
+      "world:sd"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -2596,7 +2837,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:ad",
+      "world:fr",
+      "world:gi",
+      "world:pt"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -2635,7 +2881,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:dj",
+      "world:er",
+      "world:ke",
+      "world:sd",
+      "world:so",
+      "world:ss"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -2674,7 +2927,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:no",
+      "world:ru",
+      "world:se"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -2869,7 +3126,16 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:ad",
+      "world:be",
+      "world:ch",
+      "world:de",
+      "world:es",
+      "world:it",
+      "world:lu",
+      "world:mc"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -2908,7 +3174,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:cg",
+      "world:cm",
+      "world:gq"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -2947,7 +3217,9 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:ie"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -2986,7 +3258,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:am",
+      "world:az",
+      "world:ru",
+      "world:tr"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -3064,7 +3341,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:br",
+      "world:sr"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -3142,7 +3422,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:bf",
+      "world:ci",
+      "world:tg"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -3181,7 +3465,9 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:es"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -3259,7 +3545,9 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:sn"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -3298,7 +3586,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:ci",
+      "world:gw",
+      "world:lr",
+      "world:ml",
+      "world:sl",
+      "world:sn"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -3413,7 +3708,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:cm",
+      "world:ga"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -3452,7 +3750,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:al",
+      "world:bg",
+      "world:mk",
+      "world:tr"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -3528,7 +3831,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:bz",
+      "world:hn",
+      "world:mx",
+      "world:sv"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -3606,7 +3914,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:gn",
+      "world:sn"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -3645,7 +3956,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:br",
+      "world:sr",
+      "world:ve"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -3684,7 +3999,9 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:cn"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -3760,7 +4077,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:gt",
+      "world:ni",
+      "world:sv"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -3799,7 +4120,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:ba",
+      "world:hu",
+      "world:me",
+      "world:rs",
+      "world:si"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -3877,7 +4204,15 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:at",
+      "world:hr",
+      "world:ro",
+      "world:rs",
+      "world:si",
+      "world:sk",
+      "world:ua"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -3916,7 +4251,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:my",
+      "world:pg",
+      "world:tl"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -3955,7 +4294,9 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:gb"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -3994,7 +4335,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:eg",
+      "world:jo",
+      "world:lb",
+      "world:ps",
+      "world:sy"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -4072,7 +4419,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:bd",
+      "world:bt",
+      "world:cn",
+      "world:mm",
+      "world:np",
+      "world:pk"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -4150,7 +4504,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:ir",
+      "world:jo",
+      "world:kw",
+      "world:sa",
+      "world:sy",
+      "world:tr"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -4189,7 +4550,15 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:af",
+      "world:am",
+      "world:az",
+      "world:iq",
+      "world:pk",
+      "world:tm",
+      "world:tr"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -4267,7 +4636,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:at",
+      "world:ch",
+      "world:fr",
+      "world:si",
+      "world:sm",
+      "world:va"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -4384,7 +4760,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:il",
+      "world:iq",
+      "world:ps",
+      "world:sa",
+      "world:sy"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -4499,7 +4881,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:et",
+      "world:so",
+      "world:ss",
+      "world:tz",
+      "world:ug"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -4538,7 +4926,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:cn",
+      "world:kz",
+      "world:tj",
+      "world:uz"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -4577,7 +4970,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:la",
+      "world:th",
+      "world:vn"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -4733,7 +5130,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:cn",
+      "world:kr",
+      "world:ru"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -4772,7 +5173,9 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:kp"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -4811,7 +5214,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:al",
+      "world:me",
+      "world:mk",
+      "world:rs"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -4850,7 +5258,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:iq",
+      "world:sa"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -4928,7 +5339,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:cn",
+      "world:kg",
+      "world:ru",
+      "world:tm",
+      "world:uz"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -4967,7 +5384,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:cn",
+      "world:kh",
+      "world:mm",
+      "world:th",
+      "world:vn"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -5006,7 +5429,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:il",
+      "world:sy"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -5084,7 +5510,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:at",
+      "world:ch"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -5162,7 +5591,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:ci",
+      "world:gn",
+      "world:sl"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -5201,7 +5634,9 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:za"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -5240,7 +5675,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:by",
+      "world:lv",
+      "world:pl",
+      "world:ru"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -5279,7 +5719,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:be",
+      "world:de",
+      "world:fr"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -5318,7 +5762,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:by",
+      "world:ee",
+      "world:lt",
+      "world:ru"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -5357,7 +5806,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:dz",
+      "world:eg",
+      "world:ne",
+      "world:sd",
+      "world:td",
+      "world:tn"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -5396,7 +5852,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:dz",
+      "world:eh"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -5435,7 +5894,9 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:fr"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -5474,7 +5935,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:ro",
+      "world:ua"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -5552,7 +6016,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:al",
+      "world:ba",
+      "world:hr",
+      "world:rs",
+      "world:xk"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -5669,7 +6139,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:al",
+      "world:bg",
+      "world:gr",
+      "world:rs",
+      "world:xk"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -5708,7 +6184,15 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:bf",
+      "world:ci",
+      "world:dz",
+      "world:gn",
+      "world:mr",
+      "world:ne",
+      "world:sn"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -5747,7 +6231,9 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:cn"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -5786,7 +6272,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:bd",
+      "world:cn",
+      "world:in",
+      "world:la",
+      "world:th"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -5825,7 +6317,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:cn",
+      "world:ru"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -5942,7 +6437,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:dz",
+      "world:eh",
+      "world:ml",
+      "world:sn"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -6137,7 +6637,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:mz",
+      "world:tz",
+      "world:zm"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -6176,7 +6680,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:bz",
+      "world:gt",
+      "world:us"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -6215,7 +6723,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:bn",
+      "world:id",
+      "world:th"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -6254,7 +6766,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:mw",
+      "world:sz",
+      "world:tz",
+      "world:za",
+      "world:zm",
+      "world:zw"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -6293,7 +6812,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:ao",
+      "world:bw",
+      "world:za",
+      "world:zm"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -6371,7 +6895,15 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:bf",
+      "world:bj",
+      "world:dz",
+      "world:ly",
+      "world:ml",
+      "world:ng",
+      "world:td"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -6449,7 +6981,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:bj",
+      "world:cm",
+      "world:ne",
+      "world:td"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -6488,7 +7025,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:cr",
+      "world:hn"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -6527,7 +7067,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:be",
+      "world:de"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -6566,7 +7109,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:fi",
+      "world:ru",
+      "world:se"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -6605,7 +7152,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:cn",
+      "world:in"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -6761,7 +7311,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:ae",
+      "world:sa",
+      "world:ye"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -6800,7 +7354,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:co",
+      "world:cr"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -6839,7 +7396,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:bo",
+      "world:br",
+      "world:cl",
+      "world:co",
+      "world:ec"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -6917,7 +7480,9 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:id"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -6995,7 +7560,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:af",
+      "world:cn",
+      "world:in",
+      "world:ir"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -7034,7 +7604,15 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:by",
+      "world:cz",
+      "world:de",
+      "world:lt",
+      "world:ru",
+      "world:sk",
+      "world:ua"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -7190,7 +7768,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:eg",
+      "world:il",
+      "world:jo"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -7229,7 +7811,9 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:es"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -7307,7 +7891,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:ar",
+      "world:bo",
+      "world:br"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -7346,7 +7934,9 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:sa"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -7424,7 +8014,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:bg",
+      "world:hu",
+      "world:md",
+      "world:rs",
+      "world:ua"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -7463,7 +8059,16 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:ba",
+      "world:bg",
+      "world:hr",
+      "world:hu",
+      "world:me",
+      "world:mk",
+      "world:ro",
+      "world:xk"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -7502,7 +8107,22 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:az",
+      "world:by",
+      "world:cn",
+      "world:ee",
+      "world:fi",
+      "world:ge",
+      "world:kp",
+      "world:kz",
+      "world:lt",
+      "world:lv",
+      "world:mn",
+      "world:no",
+      "world:pl",
+      "world:ua"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -7541,7 +8161,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:bi",
+      "world:cd",
+      "world:tz",
+      "world:ug"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -7580,7 +8205,15 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:ae",
+      "world:iq",
+      "world:jo",
+      "world:kw",
+      "world:om",
+      "world:qa",
+      "world:ye"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -7697,7 +8330,15 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:cf",
+      "world:eg",
+      "world:er",
+      "world:et",
+      "world:ly",
+      "world:ss",
+      "world:td"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -7736,7 +8377,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:fi",
+      "world:no"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -7853,7 +8497,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:at",
+      "world:hr",
+      "world:hu",
+      "world:it"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -7931,7 +8580,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:at",
+      "world:cz",
+      "world:hu",
+      "world:pl",
+      "world:ua"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -7970,7 +8625,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:gn",
+      "world:lr"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -8009,7 +8667,9 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:it"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -8048,7 +8708,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:gm",
+      "world:gn",
+      "world:gw",
+      "world:ml",
+      "world:mr"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -8087,7 +8753,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:dj",
+      "world:et",
+      "world:ke"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -8126,7 +8796,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:br",
+      "world:gf",
+      "world:gy"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -8165,7 +8839,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:cd",
+      "world:cf",
+      "world:et",
+      "world:ke",
+      "world:sd",
+      "world:ug"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -8243,7 +8924,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:gt",
+      "world:hn"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -8321,7 +9005,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:il",
+      "world:iq",
+      "world:jo",
+      "world:lb",
+      "world:tr"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -8360,7 +9050,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:mz",
+      "world:za"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -8438,7 +9131,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:cf",
+      "world:cm",
+      "world:ly",
+      "world:ne",
+      "world:ng",
+      "world:sd"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -8514,7 +9214,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:bf",
+      "world:bj",
+      "world:gh"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -8553,7 +9257,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:kh",
+      "world:la",
+      "world:mm",
+      "world:my"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -8592,7 +9301,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:af",
+      "world:cn",
+      "world:kg",
+      "world:uz"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -8670,7 +9384,9 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:id"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -8709,7 +9425,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:af",
+      "world:ir",
+      "world:kz",
+      "world:uz"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -8748,7 +9469,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:dz",
+      "world:ly"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -8826,7 +9550,16 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:am",
+      "world:az",
+      "world:bg",
+      "world:ge",
+      "world:gr",
+      "world:iq",
+      "world:ir",
+      "world:sy"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -8982,7 +9715,16 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:bi",
+      "world:cd",
+      "world:ke",
+      "world:mw",
+      "world:mz",
+      "world:rw",
+      "world:ug",
+      "world:zm"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -9021,7 +9763,15 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:by",
+      "world:hu",
+      "world:md",
+      "world:pl",
+      "world:ro",
+      "world:ru",
+      "world:sk"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -9060,7 +9810,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:cd",
+      "world:ke",
+      "world:rw",
+      "world:ss",
+      "world:tz"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -9099,7 +9855,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:ca",
+      "world:mx"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -9138,7 +9897,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:ar",
+      "world:br"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -9177,7 +9939,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:af",
+      "world:kg",
+      "world:kz",
+      "world:tj",
+      "world:tm"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -9216,7 +9984,9 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:it"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -9294,7 +10064,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:br",
+      "world:co",
+      "world:gy"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -9411,7 +10185,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:cn",
+      "world:kh",
+      "world:la"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -9567,7 +10345,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:om",
+      "world:sa"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -9645,7 +10426,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:bw",
+      "world:ls",
+      "world:mz",
+      "world:na",
+      "world:sz",
+      "world:zw"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -9684,7 +10472,16 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:ao",
+      "world:bw",
+      "world:cd",
+      "world:mw",
+      "world:mz",
+      "world:na",
+      "world:tz",
+      "world:zw"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -9723,7 +10520,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "world:bw",
+      "world:mz",
+      "world:za",
+      "world:zm"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,

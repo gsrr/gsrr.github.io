@@ -28,7 +28,7 @@ function extractBlock(src, from, to) {
   return src.slice(a, b);
 }
 
-const ctx = { console: { warn: function () {} } };
+const ctx = { console: { warn: function () {} }, location: { search: "" } };
 vm.runInNewContext(
   "POP_TABLE = " + extractLiteral(html, "const POP_TABLE", "{") + ";\n" +
   extractFn(html, "popForName") + ";\n" +

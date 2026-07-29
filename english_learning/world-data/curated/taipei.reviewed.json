@@ -1,0 +1,19 @@
+{
+  "map": "taipei",
+  "base": "curated",
+  "provenance": "Hand-authored Taipei City district land borders (geometry unusable: districts span a transformed SVG group). Land borders only.",
+  "borders": {
+    "beitou": ["shilin"],
+    "shilin": ["beitou", "datong", "zhongshan", "neihu"],
+    "datong": ["shilin", "zhongshan", "zhongzheng", "wanhua"],
+    "zhongshan": ["datong", "shilin", "neihu", "songshan", "zhongzheng", "daan"],
+    "neihu": ["shilin", "zhongshan", "songshan", "nangang"],
+    "songshan": ["zhongshan", "neihu", "nangang", "xinyi", "daan"],
+    "nangang": ["neihu", "songshan", "xinyi", "wenshan"],
+    "xinyi": ["songshan", "nangang", "wenshan", "daan"],
+    "daan": ["zhongshan", "songshan", "xinyi", "wenshan", "zhongzheng"],
+    "zhongzheng": ["datong", "zhongshan", "daan", "wanhua", "wenshan"],
+    "wanhua": ["datong", "zhongzheng"],
+    "wenshan": ["nangang", "xinyi", "daan", "zhongzheng"]
+  }
+}

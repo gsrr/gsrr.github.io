@@ -23,7 +23,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pJL",
+      "china:pNM"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -61,7 +64,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pHJ",
+      "china:pLN",
+      "china:pNM"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -99,7 +106,16 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pGS",
+      "china:pHE",
+      "china:pHJ",
+      "china:pJL",
+      "china:pLN",
+      "china:pNX",
+      "china:pSN",
+      "china:pSX"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -137,7 +153,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pGS",
+      "china:pNM",
+      "china:pSN"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -175,7 +195,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pNM",
+      "china:pNX",
+      "china:pQH",
+      "china:pSC",
+      "china:pSN",
+      "china:pXJ"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -213,7 +240,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pGS",
+      "china:pSC",
+      "china:pXJ",
+      "china:pXZ"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -251,7 +283,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pGS",
+      "china:pQH",
+      "china:pXZ"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -289,7 +325,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pQH",
+      "china:pSC",
+      "china:pXJ",
+      "china:pYN"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -327,7 +368,15 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pCQ",
+      "china:pGS",
+      "china:pGZ",
+      "china:pQH",
+      "china:pSN",
+      "china:pXZ",
+      "china:pYN"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -365,7 +414,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pGZ",
+      "china:pHB",
+      "china:pHN",
+      "china:pSC",
+      "china:pSN"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -403,7 +458,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pCQ",
+      "china:pGX",
+      "china:pHN",
+      "china:pSC",
+      "china:pYN"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -441,7 +502,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pGX",
+      "china:pGZ",
+      "china:pSC",
+      "china:pXZ"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -479,7 +545,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pHE",
+      "china:pTJ"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -517,7 +586,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pBJ",
+      "china:pHE"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -555,7 +627,15 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pAH",
+      "china:pHB",
+      "china:pHE",
+      "china:pJS",
+      "china:pSD",
+      "china:pSN",
+      "china:pSX"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -593,7 +673,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pAH",
+      "china:pHA",
+      "china:pHE",
+      "china:pJS"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -631,7 +716,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pHA",
+      "china:pHE",
+      "china:pNM",
+      "china:pSN"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -669,7 +759,16 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pCQ",
+      "china:pGS",
+      "china:pHA",
+      "china:pHB",
+      "china:pNM",
+      "china:pNX",
+      "china:pSC",
+      "china:pSX"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -707,7 +806,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pHA",
+      "china:pHB",
+      "china:pJS",
+      "china:pJX",
+      "china:pSD",
+      "china:pZJ"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -745,7 +851,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pAH",
+      "china:pHA",
+      "china:pSD",
+      "china:pSH",
+      "china:pZJ"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -783,7 +895,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pAH",
+      "china:pFJ",
+      "china:pJS",
+      "china:pJX",
+      "china:pSH"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -821,7 +939,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pAH",
+      "china:pFJ",
+      "china:pGD",
+      "china:pHB",
+      "china:pHN",
+      "china:pZJ"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -859,7 +984,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pAH",
+      "china:pCQ",
+      "china:pHA",
+      "china:pHN",
+      "china:pJX",
+      "china:pSN"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -897,7 +1029,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pCQ",
+      "china:pGD",
+      "china:pGX",
+      "china:pGZ",
+      "china:pHB",
+      "china:pJX"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -935,7 +1074,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pGD",
+      "china:pGZ",
+      "china:pHN",
+      "china:pYN"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1052,7 +1196,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pHE",
+      "china:pJL",
+      "china:pNM"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1091,7 +1239,15 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pBJ",
+      "china:pHA",
+      "china:pLN",
+      "china:pNM",
+      "china:pSD",
+      "china:pSX",
+      "china:pTJ"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1131,7 +1287,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pJS",
+      "china:pZJ"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1171,7 +1330,11 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pGD",
+      "china:pJX",
+      "china:pZJ"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1214,7 +1377,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pFJ",
+      "china:pGX",
+      "china:pHK",
+      "china:pHN",
+      "china:pJX",
+      "china:pMO"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1254,7 +1424,9 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pGD"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -1293,7 +1465,9 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "china:pGD"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,

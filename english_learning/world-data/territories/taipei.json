@@ -23,7 +23,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taipei:daan",
+      "taipei:nangang",
+      "taipei:xinyi",
+      "taipei:zhongzheng"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -61,7 +66,9 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taipei:shilin"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -99,7 +106,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taipei:beitou",
+      "taipei:datong",
+      "taipei:neihu",
+      "taipei:zhongshan"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -137,7 +149,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taipei:shilin",
+      "taipei:wanhua",
+      "taipei:zhongshan",
+      "taipei:zhongzheng"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -175,7 +192,14 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taipei:daan",
+      "taipei:datong",
+      "taipei:neihu",
+      "taipei:shilin",
+      "taipei:songshan",
+      "taipei:zhongzheng"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -213,7 +237,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taipei:nangang",
+      "taipei:shilin",
+      "taipei:songshan",
+      "taipei:zhongshan"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -251,7 +280,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taipei:neihu",
+      "taipei:songshan",
+      "taipei:wenshan",
+      "taipei:xinyi"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -289,7 +323,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taipei:daan",
+      "taipei:nangang",
+      "taipei:neihu",
+      "taipei:xinyi",
+      "taipei:zhongshan"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -327,7 +367,12 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taipei:daan",
+      "taipei:nangang",
+      "taipei:songshan",
+      "taipei:wenshan"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -365,7 +410,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taipei:songshan",
+      "taipei:wenshan",
+      "taipei:xinyi",
+      "taipei:zhongshan",
+      "taipei:zhongzheng"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -403,7 +454,13 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taipei:daan",
+      "taipei:datong",
+      "taipei:wanhua",
+      "taipei:wenshan",
+      "taipei:zhongshan"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,
@@ -441,7 +498,10 @@
     "terrainType": null,
     "settlementType": null,
     "features": [],
-    "adjacentTerritoryIds": [],
+    "adjacentTerritoryIds": [
+      "taipei:datong",
+      "taipei:zhongzheng"
+    ],
     "economy": null,
     "quests": [],
     "ai": null,

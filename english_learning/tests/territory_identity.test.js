@@ -21,7 +21,7 @@ function fn(name) {
 }
 function block(from, to) { const a = html.indexOf(from), b = html.indexOf(to, a); return html.slice(a, b); }
 
-const ctx = { console: { warn: function () {} } };
+const ctx = { console: { warn: function () {} }, location: { search: "" } };
 vm.runInNewContext(
   "POP_TABLE = " + lit("const POP_TABLE", "{") + ";\n" +
   fn("popForName") + ";\n" +

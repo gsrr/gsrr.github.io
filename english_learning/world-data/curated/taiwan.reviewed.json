@@ -1,0 +1,8 @@
+{
+  "map": "taiwan",
+  "base": "geometry",
+  "provenance": "SVG geometry candidates (taiwan.svg has no transforms), reviewed: outlying-island counties (Penghu/Kinmen/Lienchiang) correctly isolated. Land borders only.",
+  "isolate": [],
+  "remove": [],
+  "add": []
+}

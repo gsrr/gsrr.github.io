@@ -2,7 +2,8 @@
   {
     "id": "taiwan",
     "svgFile": "maps/taiwan.svg",
-    "name": "Taiwan 台灣"
+    "name": "Taiwan 台灣",
+    "childMaps": ["taipei"]
   },
   {
     "id": "taipei",
