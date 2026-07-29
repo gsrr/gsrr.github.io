@@ -5089,6 +5089,62 @@
   }
   function randomLesson(i) { const p = lessonPool(i); return p.length ? p[Math.floor(Math.random() * p.length)] : null; }
 
+  // ===== Phase 2B — territorial conquest attack (source ↔ target, adjacency-gated) =====
+  // 攻擊必須「從自己的相鄰領地(source)出兵」。source 清單=目標的 World-Domain 相鄰領地中，你擁有且有駐軍者。
+  // 這是「建議性」前端過濾(highlight 有效來源)；真正的授權一律由後端 can_attack 判定(section 22)。
+  function validAttackSources(targetKey) {
+    const me = (authUser() || userName || "").toLowerCase();
+    const holders = (territory && territory.holders) || {};
+    const ct = TERR_CATALOG.terrById[targetKey];              // 只有目錄領地(canonical)才有相鄰資料
+    const nbrs = (ct && ct.adjacentTerritoryIds) || [];       // World-Domain 相鄰(非幾何/座標推導)
+    return nbrs.filter(nb => { const h = holders[nb]; return h && h.owner && (h.owner + "").toLowerCase() === me && sumHp(h.troops) > 0; });
+  }
+  // 送出攻擊意圖 → 後端權威判定。前端「絕不」送出 winner/survivors；只用回傳的 defenderOrder 重播動畫。
+  function launchAttack(source, targetKey, targetName, h, squad) {
+    const atkForce = sumHp(squad);
+    closeModal();
+    const t = authToken(); if (!t) { alert("Log in first."); return; }
+    fetch(withRoom("/api/territory/attack?token=" + encodeURIComponent(t)),
+      { method: "POST", body: JSON.stringify({ sourceTerritoryId: source, targetTerritoryId: targetKey, squad: squad, avatar: avatarOf(userName) }) })
+      .then(r => r.json().catch(() => ({})).then(j => ({ ok: r.ok, j: j })))
+      .then(o => {
+        if (!o.ok || !o.j.ok) { alert("Attack failed: " + ((o.j && o.j.error) || "unknown")); loadEconomy(function () { loadTerritory(function () { renderEmpire(); refreshMap(); }); }); return; }
+        const res = o.j, order = res.defenderOrder || [], defForce = sumHp(order);
+        const finish = function () {
+          logEvent("attack", { region: targetName, target: res.defender || h.owner, key: targetKey, atk: atkForce, def: defForce, win: res.attackerWon });
+          if (res.gold != null && myEcon) myEcon.gold = res.gold;
+          loadEconomy(function () { loadTerritory(function () { renderEmpire(); refreshMap(); }); });
+        };
+        // 重播後端已判定的戰鬥(server 的 defenderOrder + defenderTech → 動畫與結果一致，preOrdered=true)
+        runBattle(squad, order, dispName(res.defender || h.owner), finish, res.defenderTech || (h && h.tech) || null, true);
+      })
+      .catch(function () { alert("Couldn't reach the server."); });
+  }
+  // 攻擊面板(target-first UI 最小變動)：先選相鄰的自有來源領地，兵力預算=該來源的駐軍(非全域兵力池)。
+  function renderAttackPanel(terr, targetKey, targetName, h) {
+    const sources = validAttackSources(targetKey);
+    if (!sources.length) {
+      terr.innerHTML = '<p class="op-hint">🚫 You can only attack ' + dispName(h.owner) +
+        ' from an <b>adjacent territory you own</b> (with a garrison). Conquer or occupy a neighbouring region first — isolated/island regions can\'t be reached by land yet.</p>';
+      return;
+    }
+    const holders = (territory && territory.holders) || {};
+    terr.innerHTML = '<p class="op-hint">⚔️ Attack ' + dispName(h.owner) + " — you can't scout their garrison. March from one of your adjacent territories:</p>" +
+      '<div class="op-src">🚩 March from: <select id="atkSrc">' +
+      sources.map(s => '<option value="' + s + '">' + regionDisplayName(s) + ' (🛡️ ' + sumHp((holders[s] || {}).troops) + ')</option>').join("") +
+      '</select></div><div id="atkDeploy"></div>';
+    const srcSel = terr.querySelector("#atkSrc"), deployBox = terr.querySelector("#atkDeploy");
+    function renderDeploy() {
+      const src = srcSel.value;
+      deployBox.innerHTML = "";
+      // 兵力預算 = 選定來源領地的駐軍(分兵種)；出兵順序 = 牌 1→4。
+      deployPanel(deployBox, squadByType((holders[src] || {}).troops), { attack: true, foe: [], label: "⚔️ Attack",
+        onGo: squad => launchAttack(src, targetKey, targetName, h, squad) });
+    }
+    srcSel.addEventListener("change", renderDeploy);
+    renderDeploy();
+  }
+
   // 領地面板：自己的→重新佈署；別人的→先攻打；無主的→佔領時隨機給一課，過了才出兵。每次都要重新過。
   function openRegion(key, name, pop, i) {
     const h = (territory && territory.holders && territory.holders[key]) || null;
@@ -5118,31 +5174,8 @@
       return;
     }
     if (enemy) {
-      // 有主：先攻打。打贏 → 該區恢復「無主」，之後再走過關→佔領流程才真正佔領。
-      if (T <= 0) { terr.innerHTML = noTroops; return; }
-      terr.innerHTML = '<p class="op-hint">⚔️ Attack ' + dispName(h.owner) + " — you can't scout the garrison. Assign troops by type:</p>";
-      deployPanel(terr, poolAvail(), { attack: true, foe: [], label: "⚔️ Attack", onGo: squad => {
-        const atkForce = sumHp(squad);
-        closeModal();
-        // 後端權威：把出征兵交給 /api/territory/attack，勝負/傷亡/生還/金幣皆由後端決定。
-        // 前端只用回傳的 defenderOrder 重播動畫(非權威)，結束後重新載入狀態。
-        const t = authToken(); if (!t) { alert("Log in first."); return; }
-        fetch(withRoom("/api/territory/attack?token=" + encodeURIComponent(t)),
-          { method: "POST", body: JSON.stringify({ file: key, squad: squad }) })
-          .then(r => r.json().catch(() => ({})).then(j => ({ ok: r.ok, j: j })))
-          .then(o => {
-            if (!o.ok || !o.j.ok) { alert("Attack failed: " + ((o.j && o.j.error) || "unknown")); loadEconomy(function () { loadTerritory(function () { renderEmpire(); refreshMap(); }); }); return; }
-            const res = o.j, order = res.defenderOrder || [], defForce = sumHp(order);
-            const finish = function () {
-              logEvent("attack", { region: name, target: res.defender || h.owner, key: key, atk: atkForce, def: defForce, win: res.attackerWon });
-              if (res.gold != null && myEcon) myEcon.gold = res.gold;
-              loadEconomy(function () { loadTerritory(function () { renderEmpire(); refreshMap(); }); });
-            };
-            // 重播後端已判定的戰鬥(用 server 的 defenderOrder + defenderTech → 動畫與結果一致)
-            runBattle(squad, order, dispName(res.defender || h.owner), finish, res.defenderTech || (h && h.tech) || null, true);
-          })
-          .catch(function () { alert("Couldn't reach the server."); });
-      } });
+      // Phase 2B：有主敵區 → 從相鄰的自有來源領地出兵攻打(source→target，後端權威判定 + 相鄰檢查)。
+      renderAttackPanel(terr, key, name, h);
       return;
     }
     // 無主：當場過關一課，過了才出兵佔領。
@@ -5433,33 +5466,8 @@
         } });
       }
     } else {
-      // 有主：先攻打（不需先過關）。後端權威地判定 → 打贏該區清成無主，之後走過關→佔領流程才真正佔領。
-      if (T <= 0) { terr.innerHTML = '<p class="op-hint">⚠️ No troops to attack with — recruit or redeploy first.</p>'; }
-      else {
-        terr.innerHTML = '<p class="op-hint">⚔️ Attack! You can\'t scout the garrison. Assign troops by type:</p>';
-        deployPanel(terr, poolAvail(), { attack: true, foe: [], label: "⚔️ Attack", onGo: squad => {
-          const atkForce = sumHp(squad);
-          closeModal();
-          // 後端權威：出征兵交給 /api/territory/attack，勝負/傷亡/生還/金幣/所有權皆由後端決定。
-          // 前端只用回傳的 defenderOrder 重播動畫(非權威)，結束後重新載入伺服器狀態。(與地理地圖 openRegion 同一條路徑)
-          const t = authToken(); if (!t) { alert("Log in first."); return; }
-          fetch(withRoom("/api/territory/attack?token=" + encodeURIComponent(t)),
-            { method: "POST", body: JSON.stringify({ file: file, squad: squad }) })
-            .then(r => r.json().catch(() => ({})).then(j => ({ ok: r.ok, j: j })))
-            .then(o => {
-              if (!o.ok || !o.j.ok) { alert("Attack failed: " + ((o.j && o.j.error) || "unknown")); loadEconomy(function () { loadTerritory(function () { renderEmpire(); refreshMap(); }); }); return; }
-              const res = o.j, order = res.defenderOrder || [], defForce = sumHp(order);
-              const finish = function () {
-                logEvent("attack", { region: title, target: res.defender || h.owner, key: file, atk: atkForce, def: defForce, win: res.attackerWon });
-                if (res.gold != null && myEcon) myEcon.gold = res.gold;
-                loadEconomy(function () { loadTerritory(function () { renderEmpire(); refreshMap(); }); });
-              };
-              // 重播後端已判定的戰鬥(server 的 defenderOrder + defenderTech → 動畫與結果一致，preOrdered=true)
-              runBattle(squad, order, dispName(res.defender || h.owner), finish, res.defenderTech || (h && h.tech) || null, true);
-            })
-            .catch(function () { alert("Couldn't reach the server."); });
-        } });
-      }
+      // Phase 2B：有主敵區 → 從相鄰的自有來源領地出兵攻打(與地理地圖 openRegion 同一條 source→target 路徑)。
+      renderAttackPanel(terr, file, title, h);
     }
   }
 
@@ -5872,10 +5880,10 @@
 
     function end(w, msg) {
       render();
-      // 打贏「有主」據點只是把它清成無主，不會直接佔領——要再去過關才佔領。訊息要講清楚。
+      // Phase 2B：打贏敵區 → 直接易主、生還者成為新駐軍(不再是「清成無主+過關佔領」)。訊息據此更新。
       logEl.textContent = w
-        ? (msg ? msg + " " : "") + "🏆 Defenses broken — the region is now unclaimed! 📖 Pass its lesson to occupy it."
-        : (msg || "💀 Defeated — survivors retreat to your home base.");
+        ? (msg ? msg + " " : "") + "🏆 Region conquered — it's yours now, and your survivors garrison it!"
+        : (msg || "💀 Defeated — survivors retreat to the territory they marched from.");
       ov.querySelector("#btBtns").innerHTML = '<button id="btDone" class="back-btn">' + (w ? "✅ OK" : "↩ Retreat") + '</button>';
       ov.querySelector("#btDone").addEventListener("click", () => {
         const survivors = att.filter(u => u.hp > 0).map(u => ({ type: u.type, hp: Math.round(u.hp) }));

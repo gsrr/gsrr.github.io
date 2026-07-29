@@ -14,8 +14,8 @@ try:                                   # 正規領地目錄(唯讀權威)：身�
     from territory_catalog import catalog as terr_catalog
 except Exception:
     terr_catalog = None
-from game import (conquest as game_conquest, config as game_config, economy as game_economy,   # 核心遊戲領域
-                  recruitment as game_recruit, technology as game_tech)
+from game import (army as game_army, conquest as game_conquest, config as game_config,   # 核心遊戲領域
+                  economy as game_economy, recruitment as game_recruit, technology as game_tech)
 
 # 房間地圖(等級 id) -> 主 canonical mapId。子地圖(下鑽)改由 world-data/maps.json 的 childMaps 提供。
 LEVEL_PRIMARY_MAP = {"Pre-A1": "taiwan", "A1": "china", "A2": "world", "B1": "world"}
@@ -707,20 +707,30 @@ def ai_move(ai_name=AI_OWNER, difficulty=AI_DIFFICULTY, ai_names=None):
             pool_total = sum(t["hp"] for t in army)
 
             owned = set(store.keys())
+            ai_owned = {f: h for f, h in store.items()
+                        if isinstance(h, dict) and h.get("owner") in ai_names}
             player_regions = [f for f, h in store.items()      # 只打「非 AI」的領地
                               if isinstance(h, dict) and h.get("owner") and h.get("owner") not in ai_names]
             cat = load_catalog()
             unowned_known = [k for k in cat.keys() if k not in owned]
 
-            choices = []
-            if player_regions:
-                choices.append("attack")
-            if unowned_known:
-                choices.append("occupy")
-            if pool_total < 8 or not choices:         # 兵力還不夠 / 沒目標 → 這回合只補兵、存錢
+            # Phase 2B：AI 攻擊也必須「從相鄰的自有領地(有駐軍)出兵」。來源挑選 = 駐軍最多者(平手取
+            #   canonical id 最小)——最簡單的確定性規則，不做路徑搜尋/策略圖搜尋。占領(neutral)流程不變。
+            def _best_source(tgt):
+                cands = [s for s, sh in ai_owned.items()
+                         if terr_catalog and terr_catalog.are_adjacent(s, tgt)
+                         and game_army.garrison_total(sh.get("troops")) > 0]
+                cands.sort(key=lambda s: (-game_army.garrison_total(ai_owned[s].get("troops")), s))
+                return cands[0] if cands else None
+            attack_targets = [t for t in player_regions if _best_source(t)]
+
+            can_occupy = bool(unowned_known) and pool_total >= 8   # 占領仍用兵力池的軍隊
+            can_attack_now = bool(attack_targets)                  # 攻擊改用來源領地駐軍
+            if not (can_occupy or can_attack_now):    # 沒有可行動作 → 這回合只補兵、存錢
                 save_econ_store(estore)
                 return None
-            act = ("attack" if random.random() < 0.6 else "occupy") if len(choices) == 2 else choices[0]
+            act = ("attack" if random.random() < 0.6 else "occupy") if (can_occupy and can_attack_now) \
+                else ("attack" if can_attack_now else "occupy")
 
             if act == "occupy":
                 key = random.choice(unowned_known)
@@ -729,24 +739,29 @@ def ai_move(ai_name=AI_OWNER, difficulty=AI_DIFFICULTY, ai_names=None):
                 ae["troops"] = _norm_troops(0)         # 兵力池派出去當駐軍 → 清空(靠金幣再補)
                 logged = ("occupy", _region_display(key), None, key)
             else:
-                key = random.choice(player_regions)
-                h = store[key]
-                victim = h.get("owner")
-                region = _region_display(key)
-                def_troops = h.get("troops") or []
-                atk_force = pool_total
+                target = random.choice(attack_targets)   # 保留「隨機挑目標」的既有風格(僅限有相鄰來源者)
+                source = _best_source(target)
+                sh, th = store[source], store[target]
+                victim = th.get("owner")
+                region = _region_display(target)
+                squad = game_army.alive_garrison(sh.get("troops"))   # AI 投入整支來源駐軍
+                def_troops = th.get("troops") or []
+                atk_force = sum(u["hp"] for u in squad)
                 def_force = sum(clampi(t.get("hp", 0)) for t in def_troops if isinstance(t, dict))
-                # AI 用同一套權威戰鬥引擎(game.battle)。AI 無家鄉科技 → 攻方 tech {}；守方用該區科技。
-                res = game_conquest.resolve_attack(army, def_troops, {}, h.get("tech") or {}, random)
-                if res["attackerWon"]:                 # AI 贏 → 生還者進駐、取得所有權
-                    surv = res["attackerSurvivors"] or [{"type": army[0]["type"], "hp": 1}]
-                    store[key] = {"owner": ai_name, "avatar": AI_AVATAR, "troops": surv,
-                                  "pop": clampi(h.get("pop", cat.get(key, 100)))}
-                    logged = ("attack_win", region, victim, key, atk_force, def_force)
-                else:                                  # AI 輸 → 守方保留領地(以戰鬥引擎的生還者為準)
-                    h["troops"] = res["defenderSurvivors"]
-                    logged = ("attack_fail", region, victim, key, atk_force, def_force)
-                ae["troops"] = _norm_troops(0)         # 出征即從兵力池扣光(勝→已移防；敗→全滅)
+                # 與真人同一條 Game-Domain 規則(無 AI 專用捷徑)：資格 → 戰鬥 → 狀態轉移。
+                elig = game_conquest.can_attack(ai_name, source, target, squad, terr_catalog, store)
+                if not elig.allowed:                   # 已預篩，理論上不會發生 → 保守跳過，狀態零變動
+                    save_econ_store(estore)
+                    return None
+                res = game_conquest.resolve_attack(squad, def_troops, sh.get("tech") or {},
+                                                   th.get("tech") or {}, random)
+                ns, nt = game_conquest.apply_territorial_attack(sh, th, squad, res, ai_name, AI_AVATAR)
+                if res["attackerWon"] and not clampi(nt.get("pop", 0)):
+                    nt["pop"] = clampi(th.get("pop", cat.get(target, 100)))
+                store[source] = ns                     # 來源駐軍已扣除出征兵(輸則生還者退回)
+                store[target] = nt                     # 贏 → 易主+生還者進駐；輸 → 守方保留+守軍改為生還者
+                logged = (("attack_win" if res["attackerWon"] else "attack_fail"),
+                          region, victim, target, atk_force, def_force)
             save_econ_store(estore)
         save_territory_store(store)
 
@@ -1580,18 +1595,27 @@ class Handler(BaseHTTPRequestHandler):
             return
         self._send({"ok": True, "legacy": True})   # 不再更動任何金幣/所有權/兵力
 
-    # 攻打有主據點：後端權威地跑「正規戰鬥引擎」(game.battle，等同前端 runBattle 規則)。
-    # 前端只送出「投入哪些兵(squad)」，勝負/傷亡/生還由後端決定 → 前端動畫僅為重播/預覽。
-    # 語意對齊現有流程：贏 → 該區清成無主(之後過關佔領)、生還者回兵力池；輸 → 攻方 −50、守方 +50、生還者回池。
+    # Phase 2B — territorial conquest：攻擊必須「從自己的相鄰領地(source)出兵」打「敵方相鄰領地(target)」。
+    #   出征兵取自 SOURCE 駐軍(不再是全域兵力池)；資格由 game.conquest.can_attack 權威判定(World-Domain 相鄰)。
+    #   贏 → target 直接易主、生還者成為 target 新駐軍；輸 → 生還者退回 source 駐軍、守方保留。金幣規則不變。
+    # HTTP 情境對照：source_not_owned → 403；其餘資格失敗 → 400，皆附穩定 reason。
+    _ATTACK_STATUS = {"source_not_owned": 403}          # 其餘 reason 一律 400
+
     def _handle_territory_attack(self):
         user = token_user(self._token())
         if not user:
             self._send({"error": "Not logged in"}, 401)
             return
         d = self._body_json()
-        f = self._canon(d.get("file"))
-        if not f:
-            self._send({"error": "Unknown territory", "reason": "unresolved"}, 400)
+        source = self._canon(d.get("sourceTerritoryId") or d.get("source"))
+        target = self._canon(d.get("targetTerritoryId") or d.get("target") or d.get("file"))
+        # 來源不可由後端臆測：舊 client 只送 target 沒送 source → 明確拒絕(不繞過相鄰規則)。
+        if not source:
+            self._send({"error": "sourceTerritoryId is required (attack from an owned adjacent territory)",
+                        "reason": "source_not_found"}, 400)
+            return
+        if not target:
+            self._send({"error": "Unknown target territory", "reason": "target_not_found"}, 400)
             return
         squad = []
         for t in (d.get("squad") or d.get("troops") or [])[:4]:
@@ -1599,52 +1623,41 @@ class Handler(BaseHTTPRequestHandler):
                 hp = int(t.get("hp", 0) or 0)
                 if hp > 0:
                     squad.append({"type": t["type"], "hp": max(0, min(100000, hp))})
-        if not squad:
-            self._send({"error": "no troops"}, 400)
-            return
+        avatar = str(d.get("avatar", "\U0001F466"))[:8]
         defender = None
         result = None
         with terr_lock:
             store = load_territory_store()
-            h = store.get(f)
-            if not (isinstance(h, dict) and h.get("owner")):
-                self._send({"error": "Territory is unclaimed — use claim, not attack", "reason": "neutral"}, 400)
+            elig = game_conquest.can_attack(user, source, target, squad, terr_catalog, store)
+            if not elig.allowed:                         # 資格不符 → 一切狀態零變動(原子拒絕)
+                self._send({"error": "Attack not allowed", "reason": elig.reason},
+                           self._ATTACK_STATUS.get(elig.reason, 400))
                 return
-            if h.get("owner") == user:
-                self._send({"error": "Already yours", "reason": "own"}, 400)
-                return
-            defender = h.get("owner")
-            def_troops = h.get("troops") or []
-            def_tech = h.get("tech") or {}
-            with econ_lock:
-                estore = load_econ_store()
-                region_pop = user_region_pop(store, user)
-                e = econ_get(estore, user, time.time(), region_pop)
-                pool = e["troops"]                      # {type: count}
-                need = {}
-                for u in squad:
-                    need[u["type"]] = need.get(u["type"], 0) + u["hp"]
-                for ty, n in need.items():              # 後端驗證：真的有這麼多兵才准出征
-                    if clampi(pool.get(ty, 0)) < n:
-                        self._send({"error": "not enough troops", "reason": "troops"}, 400)
-                        return
-                for ty, n in need.items():
-                    pool[ty] = clampi(pool.get(ty, 0)) - n
-                result = game_conquest.resolve_attack(squad, def_troops, e.get("tech") or {}, def_tech, random.Random())
-                for s in result["attackerSurvivors"]:   # 生還者回兵力池(勝敗皆然，對齊現有)
-                    pool[s["type"]] = clampi(pool.get(s["type"], 0)) + s["hp"]
-                if not result["attackerWon"]:
-                    e["gold"] = clampi(e.get("gold", 0) - ATTACK_FAIL_GOLD)
-                save_econ_store(estore)
-                newgold = e["gold"]
-            if result["attackerWon"]:                    # 贏 → 清成無主(所有權之後靠過關佔領取得)
-                if f in store:
-                    del store[f]
-                save_territory_store(store)
-        # 守方防守成功 +50：在 terr_lock 之外呼叫(econ_add_gold 自己會取 terr_lock，避免巢狀死鎖)
-        if not result["attackerWon"] and defender and defender != user and defender != AI_OWNER:
-            econ_add_gold(defender, DEFEND_GOLD)
-        self._send({"ok": True, "attackerWon": result["attackerWon"], "gold": newgold,
+            src, tgt = store[source], store[target]
+            defender = tgt.get("owner")
+            def_tech = tgt.get("tech") or {}
+            # 攻方科技 = SOURCE 領地科技(駐軍所在地)；守方科技 = TARGET 領地科技。戰鬥公式不變。
+            result = game_conquest.resolve_attack(squad, tgt.get("troops") or [], src.get("tech") or {},
+                                                  def_tech, random.Random())
+            new_source, new_target = game_conquest.apply_territorial_attack(src, tgt, squad, result, user, avatar)
+            if result["attackerWon"] and not clampi(new_target.get("pop", 0)):   # 佔領時補人口(以目錄為權威)
+                cpop = terr_catalog.game_population(target) if terr_catalog else None
+                new_target["pop"] = clampi(cpop if cpop is not None else tgt.get("pop", 0))
+            store[source] = new_source
+            store[target] = new_target
+            save_territory_store(store)
+        # 金幣獎懲(規則不變)：輸 → 攻方 −50、守方(真人非 AI) +50；贏 → 不變。在 terr_lock 外呼叫避免巢狀死鎖。
+        newgold = None
+        if not result["attackerWon"]:
+            newgold = econ_add_gold(user, -ATTACK_FAIL_GOLD)
+            if defender and defender != user and defender != AI_OWNER:
+                econ_add_gold(defender, DEFEND_GOLD)
+        self._send({"ok": True,
+                    "sourceTerritoryId": source, "targetTerritoryId": target,
+                    "attackerWon": result["attackerWon"], "owner": new_target.get("owner"),
+                    "sourceGarrison": new_source.get("troops") or [],
+                    "targetGarrison": new_target.get("troops") or [],
+                    "gold": newgold,
                     "attackerSurvivors": result["attackerSurvivors"],
                     "defenderSurvivors": result["defenderSurvivors"],
                     "defenderOrder": result["defenderOrder"], "defenderTech": def_tech, "defender": defender})

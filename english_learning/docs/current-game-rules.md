@@ -106,3 +106,54 @@ Flow: frontend `terrRecruit` → `POST /api/territory/recruit` → `_handle_terr
 ## Duplicated logic (candidates for centralization)
 - Counter multipliers, `UNIT_COST`, `TECH_COST`, `TECH_MAX`, `BUILD_COST`, `RECRUIT_BATCH` exist in **both** `index.html` and `server.py` (values identical → safe to centralize as backend-authoritative config; frontend keeps display copies).
 - Battle math exists twice and **differs materially** (above) → cannot be consolidated without changing behavior on one side.
+
+> The sections A–H above are the **pre-2A** snapshot. Phase 2A retired the client/AI battle divergence (single canonical engine) and made all combat server-authoritative. The section below is the **Phase 2A baseline** that Phase 2B builds on.
+
+---
+
+# Phase 2A Baseline — current attack flow (the "before" reference for Phase 2B)
+
+*As of commit `91d5b49`. This is the exact runtime behavior Phase 2B modifies.*
+
+### 1. Where attacking troops come from
+The attacker commits a **squad from the player's GLOBAL troop pool** (`economy.json → <user>.troops`, a `{cav,archer,inf,spear}` count map). The squad is a list `[{type,hp}]` (≤4 entries). Territory **garrisons** (`territory.json → <id>.troops`) are NOT the attack source in 2A.
+
+### 2. How the global pool is represented
+Per-player, per-room `economy.json`: `troops` = `{cav,archer,inf,spear}` integer counts (normalized by `_norm_troops`/`game.army.normalize_pool`). Recruitment at `@home` adds here; territory recruit adds to that region's garrison list instead.
+
+### 3. Target validation (`POST /api/territory/attack`, `_handle_territory_attack`)
+- login required; `file` → `_canon` to a canonical id (else 400 `unresolved`).
+- target must exist **and be owned** (else 400 `neutral` — "use claim, not attack").
+- target must **not** be owned by the attacker (else 400 `own`).
+- **No adjacency check. No source territory. Any owned target is attackable from anywhere.**
+
+### 4. Battle invocation
+Server-authoritative: `game.conquest.resolve_attack(squad, def_troops, attacker_home_tech, target_tech, random.Random())`. Attacker tech = the player's **home** economy tech; defender tech = the **target region** tech. Defender order is seeded server-side and returned as `defenderOrder` for non-authoritative frontend replay.
+
+### 5. Survivor placement
+On **both** win and loss, attacker survivors are returned to the **global pool** (`pool[type] += survivor.hp`). The committed squad was deducted from the pool first (server-side, validated against pool counts).
+
+### 6. Ownership transfer
+On **win**: the target is **NEUTRALIZED** (`del store[target]`) — ownership does **not** transfer to the attacker. The attacker must subsequently pass a lesson (frontend gate) and use the separate **neutral claim** flow to occupy it. On **loss**: owner unchanged.
+
+### 7. Neutralization behavior
+Win → `del store[target]` (garrison/growth discarded). Defender garrison is **not** wounded on a repelled attack in the human path (it stays at full pre-battle strength); the AI path *does* set `defender = defenderSurvivors` on its loss (minor human/AI inconsistency).
+
+### 8. Gold effects
+Win → no gold change. Loss → attacker `−ATTACK_FAIL_GOLD (50)`; if the defender is a real, non-AI player → defender `+DEFEND_GOLD (50)` (applied via `econ_add_gold` **outside** `terr_lock`).
+
+### 9. AI attack origin behavior (`ai_move`)
+AI attacks from its **global pool** (`ae["troops"]`), targeting a **random** non-AI-owned territory (no adjacency, no source). Win → AI takes ownership immediately with survivors as garrison (AI is exempt from the lesson/claim gate). Loss → target owner keeps it, garrison set to defender survivors. The AI pool is cleared (`_norm_troops(0)`) after any attack. AI occupy places its whole pool as the new garrison.
+
+### 10. Frontend attack UI flow
+Two target-first surfaces, both POST `{file, squad}` to `/api/territory/attack` and replay via `runBattle(..., preOrdered=true)` (non-authoritative):
+- `openRegion` (SVG geo-map drill-down), and
+- `openOutpost` (adventure-trail lesson nodes).
+Squad budget = the global pool (`poolAvail()`); the player picks any owned enemy region and assigns troops. After a win, the frontend guides the player to pass a lesson and claim the now-neutral region.
+
+### 11. Files that Phase 2B modifies
+- `game/conquest.py` — add `can_attack()` + territorial state transition (`apply_territorial_attack`).
+- `server.py` — `_handle_territory_attack` (require source, enforce adjacency, commit from source garrison); `ai_move` (source/target selection).
+- `index.html` — `openRegion` / `openOutpost` attack branches (source selection, squad from source garrison).
+- `tests/*` — new `game_conquest_test.py` cases; the "non-adjacent allowed" regression flips to "non-adjacent rejected".
+- `docs/conquest-rules.md` — new.
