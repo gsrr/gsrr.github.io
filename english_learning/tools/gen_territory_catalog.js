@@ -57,28 +57,40 @@ const MAPS = [
   { id: "world", svgFile: "maps/world.svg", name: "World 世界" }
 ];
 
-// discovered (generator-owned) shape for one map
+// Canonical regionCode for an SVG path id. THE ONE PLACE the china multi-path suffix
+// rule lives: china provinces are drawn as pXX or pXX_<n> (e.g. pLN_1, pTW_3) — group them
+// by the pXX prefix so pLN_1/pLN_2 -> china:pLN. Other maps use the path id verbatim.
+function regionCodeFor(mapId, pathId) {
+  if (mapId === "china") { const m = pathId.match(/^(p[A-Z]{2})(_.*)?$/); return m ? m[1] : null; }
+  if (mapId === "world") { return /^[a-z]{2}$/i.test(pathId) ? pathId : null; }
+  return pathId || null;   // taiwan / taipei: aria-labelled slug ids
+}
+
+// discovered (generator-owned) shape for one map — one entry per LOGICAL territory
 function discover(map) {
-  const groups = {};
+  const groups = {};   // regionCode -> {label, pathIds:[], count}
   svgPaths(map.svgFile).forEach(p => {
-    let ok, label;
-    if (map.id === "china") { ok = /^p[A-Z]{2}$/.test(p.id); label = APP.CHINA_NAMES[p.id] || p.id; }
-    else if (map.id === "world") { ok = /^[a-z]{2}$/i.test(p.id); label = p.label; }
-    else { ok = !!p.label; label = p.label; }
-    if (!ok) return;
-    (groups[p.id] || (groups[p.id] = { label, count: 0 })).count++;
+    let label;
+    if (map.id === "china") label = APP.CHINA_NAMES[(p.id.match(/^(p[A-Z]{2})/) || [])[1]] || p.id;
+    else label = p.label;
+    if (map.id !== "china" && map.id !== "world" && !p.label) return;   // taiwan/taipei need aria-label
+    const code = regionCodeFor(map.id, p.id);
+    if (!code) return;
+    const g = groups[code] || (groups[code] = { label, pathIds: [], count: 0 });
+    g.pathIds.push(p.id); g.count++;
   });
-  return Object.keys(groups).map(pid => {
-    const nm = splitName(groups[pid].label), loc = { en: nm.en };
+  return Object.keys(groups).map(code => {
+    const nm = splitName(groups[code].label), loc = { en: nm.en };
     if (nm.zh) loc["zh-TW"] = nm.zh;
     const meta = {};
-    if (map.id === "world" && APP.codeCont[pid.toLowerCase()]) meta.continent = APP.codeCont[pid.toLowerCase()];
+    if (map.id === "world" && APP.codeCont[code.toLowerCase()]) meta.continent = APP.codeCont[code.toLowerCase()];
     return {
-      id: map.id + ":" + pid, mapId: map.id, regionCode: pid,
-      displayName: groups[pid].label, localizedNames: loc, svgPathKeys: [pid],
-      administrativeCode: map.id === "world" ? pid.toUpperCase() : null,
-      gamePopulation: APP.popForName(groups[pid].label),
-      metadata: meta, _componentCount: groups[pid].count
+      id: map.id + ":" + code, mapId: map.id, regionCode: code,
+      displayName: groups[code].label, localizedNames: loc,
+      svgPathKeys: groups[code].pathIds.slice(),   // ALL svg paths of this logical territory
+      administrativeCode: map.id === "world" ? code.toUpperCase() : null,
+      gamePopulation: APP.popForName(groups[code].label),
+      metadata: meta, _componentCount: groups[code].count
     };
   });
 }

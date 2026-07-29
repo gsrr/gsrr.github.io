@@ -4417,8 +4417,8 @@
     const mine = [];
     if (territory && territory.holders) Object.keys(territory.holders).forEach(f => {
       const h = territory.holders[f];
-      // 地區已與課程脫鉤 → 只認地圖地區(key 含 "#")；舊版綁課程的殘留(key=課程檔名)忽略不顯示
-      if (f.indexOf("#") < 0) return;
+      // 只認地圖領地 key：canonical("mapId:code") 或 legacy("file#id")；舊版綁課程的殘留(課程檔名)忽略
+      if (f.indexOf(":") < 0 && f.indexOf("#") < 0) return;
       if (h && h.owner && (h.owner || "").toLowerCase() === me) mine.push({ file: f, h: h });
     });
     let garTotal = 0; mine.forEach(m => garTotal += sumHp(m.h.troops));
@@ -4474,14 +4474,19 @@
     const pseudoH = { buildings: e.buildings || {}, tech: e.tech || {}, pop: e.population || 0, income: Math.round((e.population || 0) * 0.10) };
     buildingsPanel(host, HOME_KEY, pseudoH, function () { openHomeBase(); });
   }
-  // 由領地 key(檔名#id) 找出它屬於哪個等級的地圖(給 openRegion / refreshMap 用)
+  // 由領地 key 找出它屬於哪個等級的地圖(給 openRegion / refreshMap 用)。
+  // 支援 canonical("mapId:code") 與 legacy("file#id")。
   function levelIdxForKey(key) {
-    const file = String(key).split("#")[0];
+    let file = null;
+    const s = String(key);
+    if (s.indexOf(":") >= 0) { const mapId = s.split(":")[0]; file = TERR_CATALOG.maps[mapId] ? TERR_CATALOG.maps[mapId].svgFile : null; }
+    else if (s.indexOf("#") >= 0) { file = s.split("#")[0]; }
+    if (!file) return selLevelIdx;
     const levels = manifest ? manifest.levels : [];
     for (let k = 0; k < levels.length; k++) {
-      const s = GEO_MAPS[levels[k].id]; if (!s) continue;
-      if (s.file === file) return k;
-      if (s.drill && Object.keys(s.drill).some(d => s.drill[d].file === file)) return k;
+      const g = GEO_MAPS[levels[k].id]; if (!g) continue;
+      if (g.file === file) return k;
+      if (g.drill && Object.keys(g.drill).some(d => g.drill[d].file === file)) return k;
     }
     return selLevelIdx;
   }
@@ -4504,7 +4509,7 @@
   const GEO_MAPS = {
     "Pre-A1": { file: "maps/taiwan.svg", label: "Taiwan 台灣 🗺️",
                 drill: { "taipei-city": { file: "maps/taiwan-taipei.svg", label: "Taipei 台北 🗺️", viewBox: "0 0 350 461" } } },
-    "A1":     { file: "maps/china.svg",  label: "China 中國 🗺️", viewBox: "0 0 1000 850", region: id => /^p[A-Z]{2}$/.test(id),
+    "A1":     { file: "maps/china.svg",  label: "China 中國 🗺️", viewBox: "0 0 1000 850", region: id => /^p[A-Z]{2}(_.*)?$/.test(id),
                 names: { pBJ:"Beijing 北京", pTJ:"Tianjin 天津", pSH:"Shanghai 上海", pCQ:"Chongqing 重慶",
                   pHE:"Hebei 河北", pSX:"Shanxi 山西", pNM:"Inner Mongolia 內蒙古", pLN:"Liaoning 遼寧", pJL:"Jilin 吉林",
                   pHJ:"Heilongjiang 黑龍江", pJS:"Jiangsu 江蘇", pZJ:"Zhejiang 浙江", pAH:"Anhui 安徽", pFJ:"Fujian 福建",
@@ -4585,15 +4590,39 @@
   let pending = null;   // 挑戰中：{key, file, base(通過cnt), article, i}
   let pendingOccupy = null;   // 上完課要直接跳佔領的據點：{ file, reopen() }（取代舊的小遊戲賺點數升級卡片流程）
   let _passCounted = false;   // 本次進課是否已計過一次通過（避免總結重繪重複累加）
-  function regionKey(spec, p) { return (spec.file || "") + "#" + (p.id || p.getAttribute("aria-label") || ""); }
+  // THE ONE resolver: SVG path -> canonical territory id. Catalog-driven (svgPathKeys index
+  // already encodes china multi-path grouping); documented offline fallback strips the china
+  // suffix so pLN_1/pLN_2 still collapse to china:pLN even if the catalog didn't load.
+  function resolveSvgPath(mapId, pathId) {
+    if (mapId) {
+      const t = territoryForPath(mapId, pathId);
+      if (t) return t.id;
+      let code = pathId;
+      if (mapId === "china") { const m = String(pathId).match(/^(p[A-Z]{2})(_.*)?$/); if (m) code = m[1]; }
+      return canonicalTerritoryId(mapId, code);
+    }
+    return (mapId || "?") + ":" + pathId;
+  }
+  // regionKey is now the CANONICAL territory id (game identity) — used for ownership, selection,
+  // labels, claim, population. SVG path ids (rendering identity) are resolved here and nowhere else.
+  function regionKey(spec, p) {
+    const mapId = mapIdForSvg(spec.file);
+    const pid = p.id || p.getAttribute("aria-label") || "";
+    if (mapId) return resolveSvgPath(mapId, pid);
+    return (spec.file || "") + "#" + pid;   // unknown map (no catalog) → legacy string
+  }
   // 領地(regionKey) → 地理名稱 快取：地圖畫出時記錄，讓「我的帝國」等處顯示地區名而非課程名（地區已不綁課程）
   let regionNames = {};
   try { regionNames = JSON.parse(localStorage.getItem("regionNames") || "{}") || {}; } catch (e) { regionNames = {}; }
   function rememberRegion(key, name) { if (key && name && regionNames[key] !== name) { regionNames[key] = name; try { localStorage.setItem("regionNames", JSON.stringify(regionNames)); } catch (e) {} } }
   function regionDisplayName(key) {
     if (regionNames[key]) return regionNames[key];
+    const ct = TERR_CATALOG.terrById[key];                 // canonical id -> catalog display name
+    if (ct && ct.displayName) return ct.displayName;
     const hash = String(key).indexOf("#");
     if (hash >= 0) { const id = key.slice(hash + 1); if (id) return id.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()); }
+    const colon = String(key).indexOf(":");
+    if (colon >= 0) { const id = key.slice(colon + 1); if (id) return id.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()); }
     return lessonTitleByFile(key);
   }
   // 進入某等級的地理地圖（頂層）
@@ -4745,7 +4774,13 @@
       const vb = (svg.getAttribute("viewBox") || "0 0 1000 1000").split(/\s+/).map(Number);
       const rMark = Math.max(7, Math.min(vb[2], vb[3]) * 0.02);
       const regionList = [], markerSpecs = [];
-      function regionName(p) { return spec.names ? (spec.names[p.id] || p.id) : (p.getAttribute("aria-label") || p.id); }
+      function regionName(p) {
+        const tid = mapId && resolveSvgPath(mapId, p.id);           // prefer catalog display name
+        const ct = tid && TERR_CATALOG.terrById[tid];
+        if (ct && ct.displayName) return ct.displayName;
+        if (spec.names) return spec.names[String(p.id).replace(/_.*/, "")] || spec.names[p.id] || p.id;   // china: strip multi-path suffix
+        return p.getAttribute("aria-label") || p.id;
+      }
       function addTitle(p, txt) { let t = p.querySelector("title"); if (!t) { t = document.createElementNS(NSU, "title"); p.appendChild(t); } t.textContent = txt; }
       function marker(p, label, extra, fields) {
         let bb = null; try { bb = p.getBBox(); } catch (e) {}

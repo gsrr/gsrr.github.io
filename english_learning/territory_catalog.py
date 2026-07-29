@@ -126,6 +126,33 @@ class TerritoryCatalog:
         self._ensure()
         return self.territories.get(self.by_map_path.get((map_id, path_id)))
 
+    def is_canonical(self, key):
+        self._ensure()
+        return key in self.territories
+
+    def map_of(self, territory_id):
+        self._ensure()
+        t = self.territories.get(territory_id)
+        return t["mapId"] if t else None
+
+    def resolve_any(self, key):
+        """Resolve ANY identifier to a canonical territory id (or None).
+        Accepts a canonical id ('china:pLN'), a legacy key ('maps/china.svg#pLN_1'),
+        or 'mapId#pathId'. Never guesses — unknown -> None (caller decides)."""
+        self._ensure()
+        if not key:
+            return None
+        if key in self.territories:
+            return key
+        if "#" in key:
+            resolved = self.canonical_from_legacy(key)
+            if resolved:
+                return resolved
+            left, pid = key.rsplit("#", 1)          # also allow 'mapId#pathId'
+            if left in self.map_by_id:
+                return self.by_map_path.get((left, pid))
+        return None
+
     def game_population(self, territory_id):
         self._ensure()
         t = self.territories.get(territory_id)

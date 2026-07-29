@@ -36,7 +36,7 @@ def svg_regions(map_id, svg_file):
         m_al = re.search(r'aria-label="([^"]*)"', tag)
         label = m_al.group(1) if m_al else ""
         if map_id == "china":
-            ok = re.match(r"^p[A-Z]{2}$", pid) is not None
+            ok = re.match(r"^p[A-Z]{2}(_.*)?$", pid) is not None   # provinces: pXX or multi-path pXX_<n>
         elif map_id == "world":
             ok = re.match(r"^[a-z]{2}$", pid, re.I) is not None
         else:

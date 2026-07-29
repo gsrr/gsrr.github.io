@@ -10,6 +10,33 @@
 import json, os, threading, tempfile, subprocess, hashlib, secrets, time, random
 from urllib.parse import urlparse, parse_qs
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+try:                                   # 正規領地目錄(唯讀權威)：身分/人口解析
+    from territory_catalog import catalog as terr_catalog
+except Exception:
+    terr_catalog = None
+
+# 房間地圖(等級 id) -> 允許的 canonical mapId(含下鑽子地圖)。對齊前端 GEO_MAPS 的拓撲。
+LEVEL_TO_MAPS = {"Pre-A1": ["taiwan", "taipei"], "A1": ["china"], "A2": ["world"], "B1": ["world"]}
+
+
+def canonize_keys(d):
+    """把 territory / 學習到的 catalog 這種 {key: value} 的 key 就地正規化成 canonical 領地 id。
+    舊版 legacy key('maps/world.svg#us') 可讀；解析不到的 key 保留(不丟棄)；碰撞則保留第一個。"""
+    if not terr_catalog or not isinstance(d, dict):
+        return d
+    out, seen = {}, {}
+    for k, v in d.items():
+        ck = None
+        try:
+            ck = terr_catalog.resolve_any(k)
+        except Exception:
+            ck = None
+        ck = ck or k                    # 解析不到 → 保留原 key（不丟棄）
+        if ck in out:                   # 碰撞：兩個 legacy key 對到同一 canonical → 保留第一個
+            seen[ck] = seen.get(ck, 1) + 1
+            continue
+        out[ck] = v
+    return out
 
 DATA = "/data/visits.json"
 lock = threading.Lock()
@@ -230,7 +257,7 @@ def load_territory_store():
             for h in t.values():                       # 把舊的中文 AI 名字就地換成英文
                 if isinstance(h, dict) and h.get("owner") == AI_OWNER_LEGACY:
                     h["owner"] = AI_OWNER
-            return t
+            return canonize_keys(t)                     # legacy key -> canonical(下次存檔即遷移)
     except Exception:
         return {}
 
@@ -569,7 +596,7 @@ def load_catalog():
     try:
         with open(TERR_CATALOG) as f:
             c = json.load(f)
-            return c if isinstance(c, dict) else {}
+            return canonize_keys(c) if isinstance(c, dict) else {}   # 學到的人口快取也用 canonical key
     except Exception:
         return {}
 
@@ -632,7 +659,16 @@ def _force_power(force, enemy):
 
 
 def _region_display(key):       # 從 store key 生一個看得懂的名字給事件牆用
-    k = key.split("#")[-1] if "#" in key else key
+    if terr_catalog:            # canonical id -> 目錄裡的顯示名
+        try:
+            t = terr_catalog.territories.get(key) if terr_catalog.loaded else None
+            if t is None and not terr_catalog.loaded:
+                terr_catalog.load(); t = terr_catalog.territories.get(key)
+            if t and t.get("displayName"):
+                return clean_txt(t["displayName"], 40)
+        except Exception:
+            pass
+    k = key.split("#")[-1] if "#" in key else (key.split(":")[-1] if ":" in key else key)
     k = k.split("/")[-1]
     k = k.rsplit(".", 1)[0]
     return clean_txt(k.replace("_", " ").replace("-", " ").strip() or "a region", 40)
@@ -1238,16 +1274,43 @@ class Handler(BaseHTTPRequestHandler):
         self._send({"holders": holders, "counts": counts})
 
     # 攻方在前端用兵種打贏（或佔領空據點）後呼叫，存下新的守備軍（pilot：信任前端結果）
+    # 後端權威：把 client 傳來的任何識別碼解析成 canonical 領地 id(解析不到回 None)。
+    def _canon(self, raw):
+        raw = (raw or "").strip()
+        if not raw:
+            return None
+        if terr_catalog:
+            try:
+                return terr_catalog.resolve_any(raw)
+            except Exception:
+                return None
+        return raw          # 目錄不可用時退回原字串(相容)
+
     def _handle_territory_claim(self):
         user = token_user(self._token())
         if not user:
             self._send({"error": "Not logged in"}, 401)
             return
         d = self._body_json()
-        f = (d.get("file") or "").strip()
         troops_in = d.get("troops")
-        if not f or not isinstance(troops_in, list):
-            self._send({"error": "missing file/troops"}, 400)
+        if not isinstance(troops_in, list):
+            self._send({"error": "missing troops"}, 400)
+            return
+        # ---- 後端權威：解析 + 驗證領地身分（絕不直接信任 client 的 SVG path）----
+        f = self._canon(d.get("file"))
+        if not f:
+            self._send({"error": "Unknown territory", "reason": "unresolved"}, 400)
+            return
+        if not terr_catalog or not terr_catalog.is_canonical(f):
+            self._send({"error": "Territory not in catalog", "reason": "not_in_catalog"}, 400)
+            return
+        allowed = LEVEL_TO_MAPS.get((load_room().get("map") or ""))
+        if allowed is not None and terr_catalog.map_of(f) not in allowed:
+            self._send({"error": "Territory is not on this room's map", "reason": "wrong_map"}, 400)
+            return
+        cpop = terr_catalog.game_population(f)
+        if cpop is None:
+            self._send({"error": "No population for territory", "reason": "no_population"}, 400)
             return
         troops = []
         for t in troops_in[:4]:
@@ -1258,27 +1321,25 @@ class Handler(BaseHTTPRequestHandler):
                 continue
             hp = int(t.get("hp", 0) or 0)
             troops.append({"type": ty, "hp": max(0, min(100000, hp))})
-        region_pop = int(d.get("pop", 0) or 0)
+        region_pop = clampi(cpop)          # 人口以目錄為權威(不信任 client 的 pop)
         # 佔領只發生在「無主」據點：有主據點要先打贏 → /territory/release 清成無主，才能佔領。
-        # 因此這裡不會有前主人可扣（扣人口在 release 時就處理過了）。
         with terr_lock:
             store = load_territory_store()
             prev = store.get(f) if isinstance(store.get(f), dict) else {}
             keep = {}
-            if prev.get("owner") == user:                # 重新部署自己的守軍 → 保留建築/科技/人口/徵兵設定(人口伺服器管理，不被前端覆蓋)
+            if prev.get("owner") == user:                # 重新部署自己的守軍 → 保留建築/科技/人口/徵兵設定
                 keep = {"buildings": prev.get("buildings") or {}, "tech": prev.get("tech") or {}}
                 for k in ("pop", "lastPop", "conscript", "conscriptBudget", "lastConscript"):
                     if k in prev:
                         keep[k] = prev[k]
             store[f] = {"owner": user, "avatar": str(d.get("avatar", "👦"))[:8],
                         "troops": troops, "pop": region_pop, **keep}
-            save_territory_store(store)
-            if region_pop > 0:                       # 讓電腦 AI 學到「這塊地存在 + 人口」，日後可佔領
-                cat = load_catalog()
-                if cat.get(f) != region_pop:
-                    cat[f] = region_pop
-                    save_catalog(cat)
-        self._send({"ok": True})
+            save_territory_store(store)                  # 一律以 canonical key 存檔
+            cat = load_catalog()                         # 讓電腦 AI 學到「這塊地存在 + 人口」
+            if cat.get(f) != region_pop:
+                cat[f] = region_pop
+                save_catalog(cat)
+        self._send({"ok": True, "territory": f})
 
     # 攻方打贏「有主」據點後呼叫：把該據點清成「無主」，前主人扣掉該區人口。
     # 攻方不會馬上取得所有權——之後要走「過關→佔領」流程才真正佔領。
@@ -1288,7 +1349,7 @@ class Handler(BaseHTTPRequestHandler):
             self._send({"error": "Not logged in"}, 401)
             return
         d = self._body_json()
-        f = (d.get("file") or "").strip()
+        f = self._canon(d.get("file")) or (d.get("file") or "").strip()   # canonical 領地 id(相容 legacy)
         if not f:
             self._send({"error": "missing file"}, 400)
             return
@@ -1308,7 +1369,7 @@ class Handler(BaseHTTPRequestHandler):
             self._send({"error": "Not logged in"}, 401)
             return
         d = self._body_json()
-        f = (d.get("file") or "").strip()
+        f = self._canon(d.get("file")) or (d.get("file") or "").strip()   # canonical 領地 id(相容 legacy)
         building = str(d.get("building", ""))
         if building not in BUILD_COST:
             self._send({"error": "unknown building"}, 400)
@@ -1365,7 +1426,7 @@ class Handler(BaseHTTPRequestHandler):
             self._send({"error": "Not logged in"}, 401)
             return
         d = self._body_json()
-        f = (d.get("file") or "").strip()
+        f = self._canon(d.get("file")) or (d.get("file") or "").strip()   # canonical 領地 id(相容 legacy)
         track = str(d.get("track", ""))
         if track not in TECH_TRACKS:
             self._send({"error": "unknown track"}, 400)
@@ -1431,7 +1492,7 @@ class Handler(BaseHTTPRequestHandler):
             self._send({"error": "Not logged in"}, 401)
             return
         d = self._body_json()
-        f = (d.get("file") or "").strip()
+        f = self._canon(d.get("file")) or (d.get("file") or "").strip()   # canonical 領地 id(相容 legacy)
         unit = str(d.get("unit", ""))
         if unit not in UNIT_COST:
             self._send({"error": "unknown unit"}, 400)
@@ -1493,7 +1554,7 @@ class Handler(BaseHTTPRequestHandler):
             self._send({"error": "Not logged in"}, 401)
             return
         d = self._body_json()
-        f = (d.get("file") or "").strip()
+        f = self._canon(d.get("file")) or (d.get("file") or "").strip()   # canonical 領地 id(相容 legacy)
         on = bool(d.get("on"))
         budget = clampi(d.get("budget", 0), 0, 1000000)
         now = time.time()
@@ -1521,7 +1582,8 @@ class Handler(BaseHTTPRequestHandler):
         if not user:
             self._send({"error": "Not logged in"}, 401)
             return
-        f = (self._body_json().get("file") or "").strip()
+        raw = self._body_json().get("file")
+        f = self._canon(raw) or (raw or "").strip()
         with terr_lock:
             store = load_territory_store()
             h = store.get(f)
@@ -1537,7 +1599,7 @@ class Handler(BaseHTTPRequestHandler):
             self._send({"error": "Not logged in"}, 401)
             return
         d = self._body_json()
-        f = (d.get("file") or "").strip()
+        f = self._canon(d.get("file")) or (d.get("file") or "").strip()   # canonical 領地 id(相容 legacy)
         win = bool(d.get("win"))
         with terr_lock:
             store = load_territory_store()
