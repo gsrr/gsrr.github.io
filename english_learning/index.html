@@ -5745,6 +5745,40 @@
   function techDef(tech) { return 0.10 * ((tech && tech.def) || 0); }
   // 4v4 對戰：攻方(玩家排序) vs 守方(電腦亂序)。每回合當前兩張卡「同時出手」，
   //   傷害 = 基礎 × 該卡回合開始時的兵力 → 同時扣血；陣亡換下一張，一方無兵即敗（同歸於盡則守方保住）。
+  // ===== PURE battle core (deterministic given the defender ORDER) — the canonical rule.
+  //   Frontend uses it for animation; the backend Game Domain (game/battle.py) is the faithful
+  //   port and the AUTHORITY. `def` must already be in the intended (shuffled) order.
+  //   aForge/aArmor = attacker home tech (0.10/level); dForge/dArmor = defender region tech.
+  //   Returns { attackerWon, steps:[...], att:[...], def:[...] } (att/def are final unit states). =====
+  function battleResolve(attArr, defArr, aForge, aArmor, dForge, dArmor) {
+    const att = attArr.map(u => ({ type: u.type, hp: u.hp, max: u.max != null ? u.max : u.hp }));
+    const def = defArr.map(u => ({ type: u.type, hp: u.hp, max: u.max != null ? u.max : u.hp }));
+    const steps = [];
+    function fa(arr, from) { while (from < arr.length && arr[from].hp <= 0) from++; return from; }
+    function decideWin() {
+      const aAlive = fa(att, 0) < att.length, dAlive = fa(def, 0) < def.length;
+      if (aAlive && !dAlive) return true;
+      if (!aAlive) return false;
+      const sa = att.reduce((s, u) => s + Math.max(0, u.hp), 0), sd = def.reduce((s, u) => s + Math.max(0, u.hp), 0);
+      return sa > sd;
+    }
+    if (!def.length) return { attackerWon: true, steps: steps, att: att, def: def, undefended: true };
+    let round = 0, lastAi = -1, lastDi = -1, engage = 0;
+    while (true) {
+      const ai = fa(att, 0), di = fa(def, 0);
+      if (ai >= att.length || di >= def.length || round++ > 16) return { attackerWon: decideWin(), steps: steps, att: att, def: def, roundCap: round > 16 };
+      if (ai === lastAi && di === lastDi) engage++; else { engage = 1; lastAi = ai; lastDi = di; }
+      const a = att[ai], d = def[di], preA = a.hp, preD = d.hp;
+      const closeA = (a.type !== "archer" && d.type === "archer") ? 0.1 * engage : 0;
+      const closeD = (d.type !== "archer" && a.type === "archer") ? 0.1 * engage : 0;
+      const dmgDA = troopHit(d, a, closeD + dForge, aArmor); a.hp -= dmgDA;   // defender strikes first
+      const atkAlive = a.hp > 0;
+      let dmgAD = 0;
+      if (atkAlive) { dmgAD = troopHit(a, d, closeA + aForge, dArmor); d.hp -= dmgAD; }
+      steps.push({ ai: ai, di: di, aType: a.type, dType: d.type, preA: preA, preD: preD, dmgDA: dmgDA, dmgAD: dmgAD, atkAlive: atkAlive, closeA: closeA, closeD: closeD });
+    }
+  }
+
   function runBattle(attTroops, defTroops, foeName, onResult, defTech) {
     const att = aliveTroops(attTroops).map(u => ({ type: u.type, hp: u.hp, max: u.hp }));
     const def = shuffled(aliveTroops(defTroops)).map(u => ({ type: u.type, hp: u.hp, max: u.hp }));

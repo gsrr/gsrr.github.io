@@ -1,0 +1,397 @@
+{
+  "note": "Golden master from JS battleResolve (canonical). Defender order is as given (no shuffle).",
+  "cases": [
+    {
+      "name": "inf_vs_inf",
+      "att": [
+        {
+          "type": "inf",
+          "hp": 30
+        }
+      ],
+      "def": [
+        {
+          "type": "inf",
+          "hp": 30
+        }
+      ],
+      "atkTech": {},
+      "defTech": {},
+      "attackerWon": false,
+      "attackerSurvivors": [],
+      "defenderSurvivors": [
+        {
+          "type": "inf",
+          "hp": 11
+        }
+      ],
+      "steps": 10
+    },
+    {
+      "name": "inf_vs_archer",
+      "att": [
+        {
+          "type": "inf",
+          "hp": 40
+        }
+      ],
+      "def": [
+        {
+          "type": "archer",
+          "hp": 40
+        }
+      ],
+      "atkTech": {},
+      "defTech": {},
+      "attackerWon": false,
+      "attackerSurvivors": [],
+      "defenderSurvivors": [
+        {
+          "type": "archer",
+          "hp": 25
+        }
+      ],
+      "steps": 4
+    },
+    {
+      "name": "archer_vs_cav",
+      "att": [
+        {
+          "type": "archer",
+          "hp": 40
+        }
+      ],
+      "def": [
+        {
+          "type": "cav",
+          "hp": 40
+        }
+      ],
+      "atkTech": {},
+      "defTech": {},
+      "attackerWon": false,
+      "attackerSurvivors": [],
+      "defenderSurvivors": [
+        {
+          "type": "cav",
+          "hp": 37
+        }
+      ],
+      "steps": 3
+    },
+    {
+      "name": "cav_vs_inf",
+      "att": [
+        {
+          "type": "cav",
+          "hp": 40
+        }
+      ],
+      "def": [
+        {
+          "type": "inf",
+          "hp": 40
+        }
+      ],
+      "atkTech": {},
+      "defTech": {},
+      "attackerWon": false,
+      "attackerSurvivors": [],
+      "defenderSurvivors": [
+        {
+          "type": "inf",
+          "hp": 15
+        }
+      ],
+      "steps": 10
+    },
+    {
+      "name": "spear_vs_cav",
+      "att": [
+        {
+          "type": "spear",
+          "hp": 30
+        }
+      ],
+      "def": [
+        {
+          "type": "cav",
+          "hp": 30
+        }
+      ],
+      "atkTech": {},
+      "defTech": {},
+      "attackerWon": true,
+      "attackerSurvivors": [
+        {
+          "type": "spear",
+          "hp": 15
+        }
+      ],
+      "defenderSurvivors": [],
+      "steps": 5
+    },
+    {
+      "name": "attacker_big_win",
+      "att": [
+        {
+          "type": "cav",
+          "hp": 90
+        },
+        {
+          "type": "inf",
+          "hp": 60
+        }
+      ],
+      "def": [
+        {
+          "type": "archer",
+          "hp": 20
+        }
+      ],
+      "atkTech": {},
+      "defTech": {},
+      "attackerWon": true,
+      "attackerSurvivors": [
+        {
+          "type": "cav",
+          "hp": 88
+        },
+        {
+          "type": "inf",
+          "hp": 60
+        }
+      ],
+      "defenderSurvivors": [],
+      "steps": 1
+    },
+    {
+      "name": "defender_win",
+      "att": [
+        {
+          "type": "inf",
+          "hp": 15
+        }
+      ],
+      "def": [
+        {
+          "type": "spear",
+          "hp": 50
+        },
+        {
+          "type": "cav",
+          "hp": 40
+        }
+      ],
+      "atkTech": {},
+      "defTech": {},
+      "attackerWon": false,
+      "attackerSurvivors": [],
+      "defenderSurvivors": [
+        {
+          "type": "spear",
+          "hp": 49
+        },
+        {
+          "type": "cav",
+          "hp": 40
+        }
+      ],
+      "steps": 2
+    },
+    {
+      "name": "undefended",
+      "att": [
+        {
+          "type": "inf",
+          "hp": 10
+        }
+      ],
+      "def": [],
+      "atkTech": {},
+      "defTech": {},
+      "attackerWon": true,
+      "attackerSurvivors": [
+        {
+          "type": "inf",
+          "hp": 10
+        }
+      ],
+      "defenderSurvivors": [],
+      "steps": 0
+    },
+    {
+      "name": "mixed_multi",
+      "att": [
+        {
+          "type": "cav",
+          "hp": 40
+        },
+        {
+          "type": "archer",
+          "hp": 35
+        },
+        {
+          "type": "inf",
+          "hp": 30
+        },
+        {
+          "type": "spear",
+          "hp": 25
+        }
+      ],
+      "def": [
+        {
+          "type": "inf",
+          "hp": 45
+        },
+        {
+          "type": "archer",
+          "hp": 30
+        },
+        {
+          "type": "cav",
+          "hp": 25
+        }
+      ],
+      "atkTech": {},
+      "defTech": {},
+      "attackerWon": false,
+      "attackerSurvivors": [
+        {
+          "type": "inf",
+          "hp": 12
+        },
+        {
+          "type": "spear",
+          "hp": 25
+        }
+      ],
+      "defenderSurvivors": [
+        {
+          "type": "archer",
+          "hp": 20
+        },
+        {
+          "type": "cav",
+          "hp": 25
+        }
+      ],
+      "steps": 17
+    },
+    {
+      "name": "atk_tech3",
+      "att": [
+        {
+          "type": "inf",
+          "hp": 30
+        }
+      ],
+      "def": [
+        {
+          "type": "inf",
+          "hp": 30
+        }
+      ],
+      "atkTech": {
+        "atk": 3
+      },
+      "defTech": {},
+      "attackerWon": true,
+      "attackerSurvivors": [
+        {
+          "type": "inf",
+          "hp": 19
+        }
+      ],
+      "defenderSurvivors": [],
+      "steps": 4
+    },
+    {
+      "name": "def_tech3",
+      "att": [
+        {
+          "type": "inf",
+          "hp": 30
+        }
+      ],
+      "def": [
+        {
+          "type": "inf",
+          "hp": 30
+        }
+      ],
+      "atkTech": {},
+      "defTech": {
+        "def": 3
+      },
+      "attackerWon": false,
+      "attackerSurvivors": [],
+      "defenderSurvivors": [
+        {
+          "type": "inf",
+          "hp": 22
+        }
+      ],
+      "steps": 7
+    },
+    {
+      "name": "both_tech",
+      "att": [
+        {
+          "type": "cav",
+          "hp": 50
+        }
+      ],
+      "def": [
+        {
+          "type": "archer",
+          "hp": 50
+        }
+      ],
+      "atkTech": {
+        "atk": 2,
+        "def": 1
+      },
+      "defTech": {
+        "atk": 1,
+        "def": 2
+      },
+      "attackerWon": true,
+      "attackerSurvivors": [
+        {
+          "type": "cav",
+          "hp": 42
+        }
+      ],
+      "defenderSurvivors": [],
+      "steps": 3
+    },
+    {
+      "name": "round_cap_stalemate",
+      "att": [
+        {
+          "type": "inf",
+          "hp": 100
+        }
+      ],
+      "def": [
+        {
+          "type": "inf",
+          "hp": 100
+        }
+      ],
+      "atkTech": {},
+      "defTech": {},
+      "attackerWon": false,
+      "attackerSurvivors": [],
+      "defenderSurvivors": [
+        {
+          "type": "inf",
+          "hp": 37
+        }
+      ],
+      "steps": 11
+    }
+  ]
+}
