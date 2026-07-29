@@ -1840,6 +1840,16 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     migrate_accounts()      # 舊版單檔結構 -> 拆檔（只跑一次有效果）
+    try:                    # 領地目錄(靜態、唯讀)：開機載入 + 驗證，只記錄不致命
+        from territory_catalog import catalog as _terr_catalog
+        _terr_catalog.load()
+        _errs = _terr_catalog.validate()
+        print("[territory-catalog]", _terr_catalog.count_per_map(),
+              "total", len(_terr_catalog.territories), "errors", len(_errs))
+        for _e in _errs[:10]:
+            print("  -", _e)
+    except Exception as _ex:
+        print("[territory-catalog] load skipped:", _ex)
     ensure_global_room()    # 常駐世界(全域房間)：不存在就建立
     threading.Thread(target=ai_loop, daemon=True).start()   # 電腦 AI 帝國：背景自動擴張/攻擊
     threading.Thread(target=conscript_loop, daemon=True).start()   # 徵兵制：每小時自動買兵

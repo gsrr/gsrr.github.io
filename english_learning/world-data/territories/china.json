@@ -1,0 +1,990 @@
+[
+  {
+    "id": "china:pHJ",
+    "mapId": "china",
+    "regionCode": "pHJ",
+    "displayName": "Heilongjiang 黑龍江",
+    "localizedNames": {
+      "en": "Heilongjiang",
+      "zh-TW": "黑龍江"
+    },
+    "svgPathKeys": [
+      "pHJ"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 66,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pJL",
+    "mapId": "china",
+    "regionCode": "pJL",
+    "displayName": "Jilin 吉林",
+    "localizedNames": {
+      "en": "Jilin",
+      "zh-TW": "吉林"
+    },
+    "svgPathKeys": [
+      "pJL"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 237,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pNM",
+    "mapId": "china",
+    "regionCode": "pNM",
+    "displayName": "Inner Mongolia 內蒙古",
+    "localizedNames": {
+      "en": "Inner Mongolia",
+      "zh-TW": "內蒙古"
+    },
+    "svgPathKeys": [
+      "pNM"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 265,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pNX",
+    "mapId": "china",
+    "regionCode": "pNX",
+    "displayName": "Ningxia 寧夏",
+    "localizedNames": {
+      "en": "Ningxia",
+      "zh-TW": "寧夏"
+    },
+    "svgPathKeys": [
+      "pNX"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 210,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pGS",
+    "mapId": "china",
+    "regionCode": "pGS",
+    "displayName": "Gansu 甘肅",
+    "localizedNames": {
+      "en": "Gansu",
+      "zh-TW": "甘肅"
+    },
+    "svgPathKeys": [
+      "pGS"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 163,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pQH",
+    "mapId": "china",
+    "regionCode": "pQH",
+    "displayName": "Qinghai 青海",
+    "localizedNames": {
+      "en": "Qinghai",
+      "zh-TW": "青海"
+    },
+    "svgPathKeys": [
+      "pQH"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 250,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pXJ",
+    "mapId": "china",
+    "regionCode": "pXJ",
+    "displayName": "Xinjiang 新疆",
+    "localizedNames": {
+      "en": "Xinjiang",
+      "zh-TW": "新疆"
+    },
+    "svgPathKeys": [
+      "pXJ"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 273,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pXZ",
+    "mapId": "china",
+    "regionCode": "pXZ",
+    "displayName": "Tibet 西藏",
+    "localizedNames": {
+      "en": "Tibet",
+      "zh-TW": "西藏"
+    },
+    "svgPathKeys": [
+      "pXZ"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 185,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pSC",
+    "mapId": "china",
+    "regionCode": "pSC",
+    "displayName": "Sichuan 四川",
+    "localizedNames": {
+      "en": "Sichuan",
+      "zh-TW": "四川"
+    },
+    "svgPathKeys": [
+      "pSC"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 186,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pCQ",
+    "mapId": "china",
+    "regionCode": "pCQ",
+    "displayName": "Chongqing 重慶",
+    "localizedNames": {
+      "en": "Chongqing",
+      "zh-TW": "重慶"
+    },
+    "svgPathKeys": [
+      "pCQ"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 245,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pGZ",
+    "mapId": "china",
+    "regionCode": "pGZ",
+    "displayName": "Guizhou 貴州",
+    "localizedNames": {
+      "en": "Guizhou",
+      "zh-TW": "貴州"
+    },
+    "svgPathKeys": [
+      "pGZ"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 173,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pYN",
+    "mapId": "china",
+    "regionCode": "pYN",
+    "displayName": "Yunnan 雲南",
+    "localizedNames": {
+      "en": "Yunnan",
+      "zh-TW": "雲南"
+    },
+    "svgPathKeys": [
+      "pYN"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 144,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pBJ",
+    "mapId": "china",
+    "regionCode": "pBJ",
+    "displayName": "Beijing 北京",
+    "localizedNames": {
+      "en": "Beijing",
+      "zh-TW": "北京"
+    },
+    "svgPathKeys": [
+      "pBJ"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 241,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pTJ",
+    "mapId": "china",
+    "regionCode": "pTJ",
+    "displayName": "Tianjin 天津",
+    "localizedNames": {
+      "en": "Tianjin",
+      "zh-TW": "天津"
+    },
+    "svgPathKeys": [
+      "pTJ"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 180,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pHA",
+    "mapId": "china",
+    "regionCode": "pHA",
+    "displayName": "Henan 河南",
+    "localizedNames": {
+      "en": "Henan",
+      "zh-TW": "河南"
+    },
+    "svgPathKeys": [
+      "pHA"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 224,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pSD",
+    "mapId": "china",
+    "regionCode": "pSD",
+    "displayName": "Shandong 山東",
+    "localizedNames": {
+      "en": "Shandong",
+      "zh-TW": "山東"
+    },
+    "svgPathKeys": [
+      "pSD"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 120,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pSX",
+    "mapId": "china",
+    "regionCode": "pSX",
+    "displayName": "Shanxi 山西",
+    "localizedNames": {
+      "en": "Shanxi",
+      "zh-TW": "山西"
+    },
+    "svgPathKeys": [
+      "pSX"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 116,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pSN",
+    "mapId": "china",
+    "regionCode": "pSN",
+    "displayName": "Shaanxi 陝西",
+    "localizedNames": {
+      "en": "Shaanxi",
+      "zh-TW": "陝西"
+    },
+    "svgPathKeys": [
+      "pSN"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 177,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pAH",
+    "mapId": "china",
+    "regionCode": "pAH",
+    "displayName": "Anhui 安徽",
+    "localizedNames": {
+      "en": "Anhui",
+      "zh-TW": "安徽"
+    },
+    "svgPathKeys": [
+      "pAH"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 146,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pJS",
+    "mapId": "china",
+    "regionCode": "pJS",
+    "displayName": "Jiangsu 江蘇",
+    "localizedNames": {
+      "en": "Jiangsu",
+      "zh-TW": "江蘇"
+    },
+    "svgPathKeys": [
+      "pJS"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 64,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pZJ",
+    "mapId": "china",
+    "regionCode": "pZJ",
+    "displayName": "Zhejiang 浙江",
+    "localizedNames": {
+      "en": "Zhejiang",
+      "zh-TW": "浙江"
+    },
+    "svgPathKeys": [
+      "pZJ"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 299,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pJX",
+    "mapId": "china",
+    "regionCode": "pJX",
+    "displayName": "Jiangxi 江西",
+    "localizedNames": {
+      "en": "Jiangxi",
+      "zh-TW": "江西"
+    },
+    "svgPathKeys": [
+      "pJX"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 185,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pHB",
+    "mapId": "china",
+    "regionCode": "pHB",
+    "displayName": "Hubei 湖北",
+    "localizedNames": {
+      "en": "Hubei",
+      "zh-TW": "湖北"
+    },
+    "svgPathKeys": [
+      "pHB"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 170,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pHN",
+    "mapId": "china",
+    "regionCode": "pHN",
+    "displayName": "Hunan 湖南",
+    "localizedNames": {
+      "en": "Hunan",
+      "zh-TW": "湖南"
+    },
+    "svgPathKeys": [
+      "pHN"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 189,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pGX",
+    "mapId": "china",
+    "regionCode": "pGX",
+    "displayName": "Guangxi 廣西",
+    "localizedNames": {
+      "en": "Guangxi",
+      "zh-TW": "廣西"
+    },
+    "svgPathKeys": [
+      "pGX"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 157,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "china:pHI",
+    "mapId": "china",
+    "regionCode": "pHI",
+    "displayName": "Hainan 海南",
+    "localizedNames": {
+      "en": "Hainan",
+      "zh-TW": "海南"
+    },
+    "svgPathKeys": [
+      "pHI"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 272,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  }
+]

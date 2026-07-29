@@ -4633,6 +4633,36 @@
   let _geoRelayout = null;          // 視窗尺寸改變時重新配置
   let _geoResizeHooked = false;
 
+  // ===== Phase 1A：正規領地目錄(靜態、唯讀，來自 world-data/) =====
+  // 提供穩定的邏輯領地身分(canonical id)與凍結後的 gamePopulation；一個邏輯領地可對應多個 SVG path。
+  const TERR_CATALOG = { maps: {}, terrById: {}, terrByMapPath: {}, mapIdBySvg: {}, loaded: false };
+  function canonicalTerritoryId(mapId, regionCode) { return mapId + ":" + regionCode; }
+  function mapIdForSvg(svgFile) { return TERR_CATALOG.mapIdBySvg[svgFile] || null; }
+  function territoryForPath(mapId, pathId) { return TERR_CATALOG.terrByMapPath[mapId + "|" + pathId] || null; }
+  let _popFallbackWarned = false;
+  // 領地人口一律取 catalog 的 gamePopulation；查不到才退回舊的 popForName 並警告(過渡相容)。
+  function catalogPopulation(mapId, pathId, fallbackName) {
+    const t = mapId && territoryForPath(mapId, pathId);
+    if (t && typeof t.gamePopulation === "number") return t.gamePopulation;
+    if (!_popFallbackWarned) { try { console.warn("[territory-catalog] population fallback used for", mapId + ":" + pathId, "— not in world-data (add it to the catalog)"); } catch (e) {} _popFallbackWarned = true; }
+    return popForName(fallbackName);
+  }
+  function loadTerritoryCatalog(cb) {
+    fetch("world-data/maps.json").then(r => r.ok ? r.json() : null).then(maps => {
+      if (!maps) { try { console.warn("[territory-catalog] maps.json not found — using legacy population fallback"); } catch (e) {} if (cb) cb(false); return; }
+      maps.forEach(m => { TERR_CATALOG.maps[m.id] = m; TERR_CATALOG.mapIdBySvg[m.svgFile] = m.id; });
+      Promise.all(maps.map(m => fetch("world-data/territories/" + m.id + ".json").then(r => r.ok ? r.json() : []).catch(() => [])))
+        .then(lists => {
+          lists.forEach(list => (list || []).forEach(t => {
+            TERR_CATALOG.terrById[t.id] = t;
+            (t.svgPathKeys || []).forEach(pk => { TERR_CATALOG.terrByMapPath[t.mapId + "|" + pk] = t; });
+          }));
+          TERR_CATALOG.loaded = true;
+          if (cb) cb(true);
+        });
+    }).catch(() => { if (cb) cb(false); });
+  }
+
   // 地圖捏合縮放 / 拖曳平移：滾輪(桌機)、雙指捏合(手機)縮放；拖曳平移；雙擊還原。拖曳後吞掉 click 避免誤觸地區。
   //   onChange(s,tx,ty)：每次縮放/平移就通知(讓標籤重新配置)
   function attachPanZoom(svg, frame, onChange) {
@@ -4697,6 +4727,7 @@
       Array.prototype.filter.call(svg.querySelectorAll("path"), p => !isRegion(p.id, p)).forEach(p => { p.style.fill = "none"; p.style.pointerEvents = "none"; });
       let paths = Array.prototype.filter.call(svg.querySelectorAll("path"), p => isRegion(p.id, p));
       const drill = spec.drill || {};
+      const mapId = mapIdForSvg(spec.file);   // canonical 邏輯地圖 id（catalog 沒載到時為 null → 人口退回舊算法）
       // 世界地圖分洲：contFilter 空 = 頂層(顯示各洲)；有值 = 已點進某洲(縮放到該洲、只留該洲國家可點)
       const grouped = !!spec.grouped, contFilter = spec.groupFilter || null;
       if (grouped) paths = paths.filter(p => WORLD_CODE_CONT[(p.id || "").toLowerCase()]);   // 只留有分洲的國家(排除背景框與無人島)
@@ -4742,7 +4773,7 @@
           regionList.push({ drill: true, name: WORLD_CONT_LABEL[ck] || ck, group: g.paths, open: open });
         });
       } else {
-        const seen = {};
+        const seen = {}, partsByKey = {};
         paths.forEach(p => {
           const name = regionName(p);
           if (drill[p.id]) {                       // 可下鑽的容器（點進去看子地區，像台北市那樣）
@@ -4755,18 +4786,21 @@
             regionList.push({ p: p, drill: true, name: name, open: open });
             return;
           }
-          const key = regionKey(spec, p), pop = popForName(name);
+          const key = regionKey(spec, p);
+          const pop = catalogPopulation(mapId, p.id, name);   // 人口一律取 catalog 的 gamePopulation(凍結值)
+          const territoryId = mapId ? canonicalTerritoryId(mapId, p.id) : null;
           rememberRegion(key, name);   // 記住地區名，供帝國清單等顯示
           p.setAttribute("class", "geo-region");
           addTitle(p, name + " · 👥" + pop);
           const open = () => openRegion(key, name, pop, i);
-          p.addEventListener("click", open);   // 同一國的每個 path 都可點、都會上色
-          if (!seen[key]) {                    // 但標籤/清單一國只出現一次（如印尼由很多塊組成）
+          p.addEventListener("click", open);   // 一個邏輯領地的每個 path 都可點、都會上色
+          (partsByKey[key] || (partsByKey[key] = [])).push(p);   // 同一領地的所有 SVG path(多 path 國家)
+          if (!seen[key]) {                    // 標籤/清單一領地只出現一次(如多 path 國家)
             seen[key] = 1;
             marker(p, name, "", { key: key, open: open });
-            regionList.push({ p: p, key: key, name: name, pop: pop, open: open });
+            regionList.push({ p: p, key: key, territoryId: territoryId, name: name, pop: pop, open: open, parts: partsByKey[key] });
           } else {
-            regionList.push({ p: p, key: key, name: name, pop: pop, open: open, dup: true });
+            regionList.push({ p: p, key: key, territoryId: territoryId, name: name, pop: pop, open: open, dup: true });
           }
         });
       }
@@ -4824,7 +4858,7 @@
           '<span class="gi-tx"><span class="gi-rg">' + r.name + '</span>' +
           '<span class="gi-ls">' + (r.drill ? "zoom in ▸" : ("👥 " + r.pop)) + '</span></span>';
         btn.addEventListener("click", r.open);
-        const hi = r.group || (r.p ? [r.p] : []);   // 洲：整組亮起；國家：單塊亮起
+        const hi = r.group || r.parts || (r.p ? [r.p] : []);   // 洲：整組；多 path 領地：所有 path；否則單塊
         btn.addEventListener("mouseenter", () => { hi.forEach(pp => pp.classList.add("geo-hi")); if (r.key) { geoSelectedKey = r.key; if (_geoResel) _geoResel(); } });   // 選取 → 該標籤一律顯示
         btn.addEventListener("mouseleave", () => { hi.forEach(pp => pp.classList.remove("geo-hi")); if (r.key && geoSelectedKey === r.key) { geoSelectedKey = null; if (_geoResel) _geoResel(); } });
         r.idxEl = btn; r.idxLs = btn.querySelector(".gi-ls"); idx.appendChild(btn);
@@ -6079,6 +6113,7 @@
       const res = await fetch("lessons.json", { cache: "no-cache" });
       if (!res.ok) throw new Error("HTTP " + res.status);
       manifest = await res.json();
+      loadTerritoryCatalog();   // Phase 1A：載入正規領地目錄(人口/身分來源)；失敗會退回舊算法並警告
     } catch (e) {
       profileGrid.innerHTML =
         '<div style="padding:16px;color:#b91c1c;background:#fee2e2;border-radius:12px;line-height:1.7">' +

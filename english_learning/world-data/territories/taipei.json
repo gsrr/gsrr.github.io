@@ -1,0 +1,458 @@
+[
+  {
+    "id": "taipei:wenshan",
+    "mapId": "taipei",
+    "regionCode": "wenshan",
+    "displayName": "Wenshan 文山區",
+    "localizedNames": {
+      "en": "Wenshan",
+      "zh-TW": "文山區"
+    },
+    "svgPathKeys": [
+      "wenshan"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 190,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taipei:beitou",
+    "mapId": "taipei",
+    "regionCode": "beitou",
+    "displayName": "Beitou 北投區",
+    "localizedNames": {
+      "en": "Beitou",
+      "zh-TW": "北投區"
+    },
+    "svgPathKeys": [
+      "beitou"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 180,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taipei:shilin",
+    "mapId": "taipei",
+    "regionCode": "shilin",
+    "displayName": "Shilin 士林區",
+    "localizedNames": {
+      "en": "Shilin",
+      "zh-TW": "士林區"
+    },
+    "svgPathKeys": [
+      "shilin"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 200,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taipei:datong",
+    "mapId": "taipei",
+    "regionCode": "datong",
+    "displayName": "Datong 大同區",
+    "localizedNames": {
+      "en": "Datong",
+      "zh-TW": "大同區"
+    },
+    "svgPathKeys": [
+      "datong"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 100,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taipei:zhongshan",
+    "mapId": "taipei",
+    "regionCode": "zhongshan",
+    "displayName": "Zhongshan 中山區",
+    "localizedNames": {
+      "en": "Zhongshan",
+      "zh-TW": "中山區"
+    },
+    "svgPathKeys": [
+      "zhongshan"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 160,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taipei:neihu",
+    "mapId": "taipei",
+    "regionCode": "neihu",
+    "displayName": "Neihu 內湖區",
+    "localizedNames": {
+      "en": "Neihu",
+      "zh-TW": "內湖區"
+    },
+    "svgPathKeys": [
+      "neihu"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 200,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taipei:nangang",
+    "mapId": "taipei",
+    "regionCode": "nangang",
+    "displayName": "Nangang 南港區",
+    "localizedNames": {
+      "en": "Nangang",
+      "zh-TW": "南港區"
+    },
+    "svgPathKeys": [
+      "nangang"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 100,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taipei:songshan",
+    "mapId": "taipei",
+    "regionCode": "songshan",
+    "displayName": "Songshan 松山區",
+    "localizedNames": {
+      "en": "Songshan",
+      "zh-TW": "松山區"
+    },
+    "svgPathKeys": [
+      "songshan"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 140,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taipei:xinyi",
+    "mapId": "taipei",
+    "regionCode": "xinyi",
+    "displayName": "Xinyi 信義區",
+    "localizedNames": {
+      "en": "Xinyi",
+      "zh-TW": "信義區"
+    },
+    "svgPathKeys": [
+      "xinyi"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 150,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taipei:daan",
+    "mapId": "taipei",
+    "regionCode": "daan",
+    "displayName": "Daan 大安區",
+    "localizedNames": {
+      "en": "Daan",
+      "zh-TW": "大安區"
+    },
+    "svgPathKeys": [
+      "daan"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 220,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taipei:zhongzheng",
+    "mapId": "taipei",
+    "regionCode": "zhongzheng",
+    "displayName": "Zhongzheng 中正區",
+    "localizedNames": {
+      "en": "Zhongzheng",
+      "zh-TW": "中正區"
+    },
+    "svgPathKeys": [
+      "zhongzheng"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 120,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taipei:wanhua",
+    "mapId": "taipei",
+    "regionCode": "wanhua",
+    "displayName": "Wanhua 萬華區",
+    "localizedNames": {
+      "en": "Wanhua",
+      "zh-TW": "萬華區"
+    },
+    "svgPathKeys": [
+      "wanhua"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 130,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  }
+]

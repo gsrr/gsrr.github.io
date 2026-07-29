@@ -1,0 +1,22 @@
+[
+  {
+    "id": "taiwan",
+    "svgFile": "maps/taiwan.svg",
+    "name": "Taiwan 台灣"
+  },
+  {
+    "id": "taipei",
+    "svgFile": "maps/taiwan-taipei.svg",
+    "name": "Taipei 台北"
+  },
+  {
+    "id": "china",
+    "svgFile": "maps/china.svg",
+    "name": "China 中國"
+  },
+  {
+    "id": "world",
+    "svgFile": "maps/world.svg",
+    "name": "World 世界"
+  }
+]

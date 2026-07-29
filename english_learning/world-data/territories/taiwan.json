@@ -1,0 +1,816 @@
+[
+  {
+    "id": "taiwan:changhua-county",
+    "mapId": "taiwan",
+    "regionCode": "changhua-county",
+    "displayName": "Changhua County",
+    "localizedNames": {
+      "en": "Changhua County"
+    },
+    "svgPathKeys": [
+      "changhua-county"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 125,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taiwan:chiayi-city",
+    "mapId": "taiwan",
+    "regionCode": "chiayi-city",
+    "displayName": "Chiayi City",
+    "localizedNames": {
+      "en": "Chiayi City"
+    },
+    "svgPathKeys": [
+      "chiayi-city"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 40,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taiwan:chiayi-county",
+    "mapId": "taiwan",
+    "regionCode": "chiayi-county",
+    "displayName": "Chiayi County",
+    "localizedNames": {
+      "en": "Chiayi County"
+    },
+    "svgPathKeys": [
+      "chiayi-county"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 48,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taiwan:hualien-county",
+    "mapId": "taiwan",
+    "regionCode": "hualien-county",
+    "displayName": "Hualien County",
+    "localizedNames": {
+      "en": "Hualien County"
+    },
+    "svgPathKeys": [
+      "hualien-county"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 40,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taiwan:hsinchu-city",
+    "mapId": "taiwan",
+    "regionCode": "hsinchu-city",
+    "displayName": "Hsinchu City",
+    "localizedNames": {
+      "en": "Hsinchu City"
+    },
+    "svgPathKeys": [
+      "hsinchu-city"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 45,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taiwan:hsinchu-county",
+    "mapId": "taiwan",
+    "regionCode": "hsinchu-county",
+    "displayName": "Hsinchu County",
+    "localizedNames": {
+      "en": "Hsinchu County"
+    },
+    "svgPathKeys": [
+      "hsinchu-county"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 58,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taiwan:kaohsiung-city",
+    "mapId": "taiwan",
+    "regionCode": "kaohsiung-city",
+    "displayName": "Kaohsiung City",
+    "localizedNames": {
+      "en": "Kaohsiung City"
+    },
+    "svgPathKeys": [
+      "kaohsiung-city"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 273,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taiwan:keelung-city",
+    "mapId": "taiwan",
+    "regionCode": "keelung-city",
+    "displayName": "Keelung City",
+    "localizedNames": {
+      "en": "Keelung City"
+    },
+    "svgPathKeys": [
+      "keelung-city"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 40,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taiwan:kinmen-county",
+    "mapId": "taiwan",
+    "regionCode": "kinmen-county",
+    "displayName": "Kinmen County",
+    "localizedNames": {
+      "en": "Kinmen County"
+    },
+    "svgPathKeys": [
+      "kinmen-county"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 40,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taiwan:lienchiang-county",
+    "mapId": "taiwan",
+    "regionCode": "lienchiang-county",
+    "displayName": "Lienchiang County",
+    "localizedNames": {
+      "en": "Lienchiang County"
+    },
+    "svgPathKeys": [
+      "lienchiang-county"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 40,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taiwan:miaoli-county",
+    "mapId": "taiwan",
+    "regionCode": "miaoli-county",
+    "displayName": "Miaoli County",
+    "localizedNames": {
+      "en": "Miaoli County"
+    },
+    "svgPathKeys": [
+      "miaoli-county"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 54,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taiwan:nantou-county",
+    "mapId": "taiwan",
+    "regionCode": "nantou-county",
+    "displayName": "Nantou County",
+    "localizedNames": {
+      "en": "Nantou County"
+    },
+    "svgPathKeys": [
+      "nantou-county"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 48,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taiwan:new-taipei-city",
+    "mapId": "taiwan",
+    "regionCode": "new-taipei-city",
+    "displayName": "New Taipei City",
+    "localizedNames": {
+      "en": "New Taipei City"
+    },
+    "svgPathKeys": [
+      "new-taipei-city"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 400,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taiwan:penghu-county",
+    "mapId": "taiwan",
+    "regionCode": "penghu-county",
+    "displayName": "Penghu County",
+    "localizedNames": {
+      "en": "Penghu County"
+    },
+    "svgPathKeys": [
+      "penghu-county"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 40,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taiwan:pingtung-county",
+    "mapId": "taiwan",
+    "regionCode": "pingtung-county",
+    "displayName": "Pingtung County",
+    "localizedNames": {
+      "en": "Pingtung County"
+    },
+    "svgPathKeys": [
+      "pingtung-county"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 80,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taiwan:taichung-city",
+    "mapId": "taiwan",
+    "regionCode": "taichung-city",
+    "displayName": "Taichung City",
+    "localizedNames": {
+      "en": "Taichung City"
+    },
+    "svgPathKeys": [
+      "taichung-city"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 280,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taiwan:tainan-city",
+    "mapId": "taiwan",
+    "regionCode": "tainan-city",
+    "displayName": "Tainan City",
+    "localizedNames": {
+      "en": "Tainan City"
+    },
+    "svgPathKeys": [
+      "tainan-city"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 186,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taiwan:taipei-city",
+    "mapId": "taiwan",
+    "regionCode": "taipei-city",
+    "displayName": "Taipei City",
+    "localizedNames": {
+      "en": "Taipei City"
+    },
+    "svgPathKeys": [
+      "taipei-city"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 250,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taiwan:taitung-county",
+    "mapId": "taiwan",
+    "regionCode": "taitung-county",
+    "displayName": "Taitung County",
+    "localizedNames": {
+      "en": "Taitung County"
+    },
+    "svgPathKeys": [
+      "taitung-county"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 40,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taiwan:taoyuan-city",
+    "mapId": "taiwan",
+    "regionCode": "taoyuan-city",
+    "displayName": "Taoyuan City",
+    "localizedNames": {
+      "en": "Taoyuan City"
+    },
+    "svgPathKeys": [
+      "taoyuan-city"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 230,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taiwan:yilan-county",
+    "mapId": "taiwan",
+    "regionCode": "yilan-county",
+    "displayName": "Yilan County",
+    "localizedNames": {
+      "en": "Yilan County"
+    },
+    "svgPathKeys": [
+      "yilan-county"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 45,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  },
+  {
+    "id": "taiwan:yunlin-county",
+    "mapId": "taiwan",
+    "regionCode": "yunlin-county",
+    "displayName": "Yunlin County",
+    "localizedNames": {
+      "en": "Yunlin County"
+    },
+    "svgPathKeys": [
+      "yunlin-county"
+    ],
+    "administrativeCode": null,
+    "gamePopulation": 66,
+    "populationSource": {
+      "value": null,
+      "year": null,
+      "sourceName": null,
+      "sourceUrl": null
+    },
+    "metadata": {},
+    "terrainType": null,
+    "settlementType": null,
+    "features": [],
+    "adjacentTerritoryIds": [],
+    "economy": null,
+    "quests": [],
+    "ai": null,
+    "events": [],
+    "_meta": {
+      "schemaVersion": 1,
+      "catalogVersion": 1,
+      "generatedBy": "tools/gen_territory_catalog.js",
+      "generatedAt": "2026-07-29T05:53:05.343Z",
+      "generatorVersion": "1.0.0",
+      "lastDesignerEdit": null
+    }
+  }
+]

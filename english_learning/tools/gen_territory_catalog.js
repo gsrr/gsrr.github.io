@@ -1,0 +1,206 @@
+// Territory catalog tool — Phase 1A.5 (merge-safe).
+//
+//   node tools/gen_territory_catalog.js --check   (default; read-only report)
+//   node tools/gen_territory_catalog.js --init     (bootstrap: create only missing files)
+//   node tools/gen_territory_catalog.js --merge     (structural sync: add new / repair svg refs / backfill;
+//                                                    NEVER overwrites designer-authored metadata)
+//
+// world-data/ is AUTHORITATIVE production content. This tool discovers territories from
+// maps/*.svg and freezes initial population/names, but it must never clobber designer edits
+// (gamePopulation, localizedNames, terrain, settlement, features, adjacency, economy, quests,
+// ai, events, or _meta.lastDesignerEdit). See docs/world-data.md.
+"use strict";
+const fs = require("fs");
+const path = require("path");
+const vm = require("vm");
+
+const ROOT = path.join(__dirname, "..");
+// world-data location (override with TERR_CATALOG_DIR for tests; production is the repo dir)
+const OUT = process.env.TERR_CATALOG_DIR ? path.resolve(process.env.TERR_CATALOG_DIR) : path.join(ROOT, "world-data");
+const SCHEMA_VERSION = 1;
+const CATALOG_VERSION = 1;
+const GENERATOR_VERSION = "1.0.0";
+const GENERATED_BY = "tools/gen_territory_catalog.js";
+// generator-owned (structural) vs designer-owned fields:
+const DESIGNER_FIELDS = ["displayName", "localizedNames", "gamePopulation", "populationSource",
+  "terrainType", "settlementType", "features", "adjacentTerritoryIds", "economy", "quests", "ai", "events"];
+
+// ---------- shared SVG discovery (mirrors index.html render rules; freezes population) ----------
+function loadAppData() {
+  const html = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
+  const lit = (marker, open) => {
+    const i = html.indexOf(marker), start = html.indexOf(open, i), close = open === "{" ? "}" : "]";
+    let d = 0, k = start; for (; k < html.length; k++) { if (html[k] === open) d++; else if (html[k] === close) { d--; if (!d) { k++; break; } } }
+    return html.slice(start, k);
+  };
+  const fn = name => { const i = html.indexOf("function " + name), s = html.indexOf("{", i); let d = 0, k = s; for (; k < html.length; k++) { if (html[k] === "{") d++; else if (html[k] === "}") { d--; if (!d) { k++; break; } } } return html.slice(i, k); };
+  const sb = {};
+  const chinaLit = (() => { const sub = html.slice(html.indexOf('"A1":')); const i = sub.indexOf("names:"), s = sub.indexOf("{", i); let d = 0, k = s; for (; k < sub.length; k++) { if (sub[k] === "{") d++; else if (sub[k] === "}") { d--; if (!d) { k++; break; } } } return sub.slice(s, k); })();
+  vm.runInNewContext(
+    "POP_TABLE = " + lit("const POP_TABLE", "{") + ";\n" +
+    "CHINA_NAMES = " + chinaLit + ";\n" +
+    "WORLD_CONTINENTS = " + lit("const WORLD_CONTINENTS", "[") + ";\n" +
+    fn("popForName") + ";\n" +
+    "this.POP_TABLE=POP_TABLE;this.CHINA_NAMES=CHINA_NAMES;this.WORLD_CONTINENTS=WORLD_CONTINENTS;this.popForName=popForName;", sb);
+  const codeCont = {}; sb.WORLD_CONTINENTS.forEach(c => c.codes.split(/\s+/).forEach(cd => { codeCont[cd] = c.key; }));
+  return { POP_TABLE: sb.POP_TABLE, CHINA_NAMES: sb.CHINA_NAMES, popForName: sb.popForName, codeCont };
+}
+const APP = loadAppData();
+const splitName = s => { const m = s.match(/[一-鿿].*$/); return { en: (s.replace(/[一-鿿].*$/, "").trim()) || s, zh: m ? m[0].trim() : null }; };
+const svgPaths = file => (fs.readFileSync(path.join(ROOT, file), "utf8").match(/<path\b[\s\S]*?>/g) || [])
+  .map(t => ({ id: (t.match(/id="([^"]*)"/) || [])[1] || "", label: (t.match(/aria-label="([^"]*)"/) || [])[1] || "" }));
+
+const MAPS = [
+  { id: "taiwan", svgFile: "maps/taiwan.svg", name: "Taiwan 台灣" },
+  { id: "taipei", svgFile: "maps/taiwan-taipei.svg", name: "Taipei 台北" },
+  { id: "china", svgFile: "maps/china.svg", name: "China 中國" },
+  { id: "world", svgFile: "maps/world.svg", name: "World 世界" }
+];
+
+// discovered (generator-owned) shape for one map
+function discover(map) {
+  const groups = {};
+  svgPaths(map.svgFile).forEach(p => {
+    let ok, label;
+    if (map.id === "china") { ok = /^p[A-Z]{2}$/.test(p.id); label = APP.CHINA_NAMES[p.id] || p.id; }
+    else if (map.id === "world") { ok = /^[a-z]{2}$/i.test(p.id); label = p.label; }
+    else { ok = !!p.label; label = p.label; }
+    if (!ok) return;
+    (groups[p.id] || (groups[p.id] = { label, count: 0 })).count++;
+  });
+  return Object.keys(groups).map(pid => {
+    const nm = splitName(groups[pid].label), loc = { en: nm.en };
+    if (nm.zh) loc["zh-TW"] = nm.zh;
+    const meta = {};
+    if (map.id === "world" && APP.codeCont[pid.toLowerCase()]) meta.continent = APP.codeCont[pid.toLowerCase()];
+    return {
+      id: map.id + ":" + pid, mapId: map.id, regionCode: pid,
+      displayName: groups[pid].label, localizedNames: loc, svgPathKeys: [pid],
+      administrativeCode: map.id === "world" ? pid.toUpperCase() : null,
+      gamePopulation: APP.popForName(groups[pid].label),
+      metadata: meta, _componentCount: groups[pid].count
+    };
+  });
+}
+
+function newTerritory(disc, now) {
+  return {
+    id: disc.id, mapId: disc.mapId, regionCode: disc.regionCode,
+    displayName: disc.displayName, localizedNames: disc.localizedNames,
+    svgPathKeys: disc.svgPathKeys, administrativeCode: disc.administrativeCode,
+    gamePopulation: disc.gamePopulation,
+    populationSource: { value: null, year: null, sourceName: null, sourceUrl: null },
+    metadata: disc.metadata,
+    terrainType: null, settlementType: null, features: [], adjacentTerritoryIds: [],
+    economy: null, quests: [], ai: null, events: [],       // reserved placeholders (do not populate)
+    _meta: { schemaVersion: SCHEMA_VERSION, catalogVersion: CATALOG_VERSION, generatedBy: GENERATED_BY,
+             generatedAt: now, generatorVersion: GENERATOR_VERSION, lastDesignerEdit: null }
+  };
+}
+
+// merge one discovered territory into an existing one WITHOUT overwriting designer fields
+function backfill(existing, disc, now) {
+  const tmpl = newTerritory(disc, now);
+  Object.keys(tmpl).forEach(k => { if (!(k in existing)) existing[k] = tmpl[k]; });   // add only missing fields
+  existing.svgPathKeys = disc.svgPathKeys;                                            // structural: repair svg mapping
+  existing.regionCode = disc.regionCode; existing.mapId = disc.mapId;
+  if (existing.administrativeCode == null) existing.administrativeCode = disc.administrativeCode;
+  const m = existing._meta || {};
+  existing._meta = {
+    schemaVersion: SCHEMA_VERSION, catalogVersion: CATALOG_VERSION, generatedBy: GENERATED_BY,
+    generatedAt: m.generatedAt || now, generatorVersion: GENERATOR_VERSION,
+    lastDesignerEdit: (m.lastDesignerEdit !== undefined ? m.lastDesignerEdit : null)
+  };
+  return existing;
+}
+
+function readJson(p, def) { try { return JSON.parse(fs.readFileSync(p, "utf8")); } catch (e) { return def; } }
+function writeJson(p, obj) { fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, JSON.stringify(obj, null, 2) + "\n"); }
+function terrFile(mapId) { return path.join(OUT, "territories", mapId + ".json"); }
+
+function writeCatalogMeta(now, total, mode) {
+  const p = path.join(OUT, "catalog.json");
+  const prev = readJson(p, null);
+  writeJson(p, {
+    catalogVersion: CATALOG_VERSION, schemaVersion: SCHEMA_VERSION, generatorVersion: GENERATOR_VERSION,
+    createdAt: (prev && prev.createdAt) || now, updatedAt: now,
+    maps: MAPS.length, territories: total
+  });
+}
+
+// ---------------------------- modes ----------------------------
+function runCheck() {
+  let issues = 0, total = 0;
+  MAPS.forEach(m => {
+    const disc = discover(m), discIds = new Set(disc.map(d => d.id));
+    const existing = readJson(terrFile(m.id), null);
+    if (existing === null) { console.log("  [" + m.id + "] MISSING territory file"); issues++; return; }
+    total += existing.length;
+    const exIds = new Set(existing.map(t => t.id));
+    disc.forEach(d => { if (!exIds.has(d.id)) { console.log("  [" + m.id + "] missing territory: " + d.id); issues++; } });
+    existing.forEach(t => { if (!discIds.has(t.id)) { console.log("  [" + m.id + "] unknown/obsolete territory: " + t.id); issues++; } });
+    const seenPaths = {};
+    existing.forEach(t => (t.svgPathKeys || []).forEach(pk => {
+      const dk = discIds.has(t.id) ? disc.find(d => d.id === t.id).svgPathKeys : [];
+      if (dk.indexOf(pk) < 0) { console.log("  [" + m.id + "] obsolete svg ref " + t.id + " -> " + pk); issues++; }
+      const key = m.id + "|" + pk; if (seenPaths[key]) { console.log("  [" + m.id + "] duplicate svg mapping " + pk); issues++; } seenPaths[key] = 1;
+    }));
+  });
+  console.log("check: " + total + " territories, " + issues + " issue(s)");
+  return issues === 0 ? 0 : 1;
+}
+
+function runInit(now) {
+  let created = 0, skipped = 0, total = 0;
+  if (!fs.existsSync(path.join(OUT, "maps.json"))) writeJson(path.join(OUT, "maps.json"), MAPS);
+  MAPS.forEach(m => {
+    const f = terrFile(m.id);
+    if (fs.existsSync(f)) { const ex = readJson(f, []); total += ex.length; skipped++; console.log("  [" + m.id + "] exists — skipped (init never overwrites)"); return; }
+    const disc = discover(m).map(d => newTerritory(d, now));
+    writeJson(f, disc); created++; total += disc.length; console.log("  [" + m.id + "] created " + disc.length + " territories");
+  });
+  writeCatalogMeta(now, total, "init");
+  console.log("init: created " + created + " file(s), skipped " + skipped + ", total " + total);
+  return 0;
+}
+
+function runMerge(now) {
+  let added = 0, backfilled = 0, obsolete = 0, total = 0;
+  if (!fs.existsSync(path.join(OUT, "maps.json"))) writeJson(path.join(OUT, "maps.json"), MAPS);
+  MAPS.forEach(m => {
+    const disc = discover(m), byId = {}; disc.forEach(d => { byId[d.id] = d; });
+    let existing = readJson(terrFile(m.id), null);
+    if (existing === null) existing = [];
+    const exById = {}; existing.forEach(t => { exById[t.id] = t; });
+    // add new territories
+    disc.forEach(d => { if (!exById[d.id]) { existing.push(newTerritory(d, now)); exById[d.id] = existing[existing.length - 1]; added++; } });
+    // backfill + repair existing (preserve designer fields)
+    existing.forEach(t => {
+      if (byId[t.id]) backfill(t, byId[t.id], now);
+      else {   // territory no longer in SVG → strip obsolete svg refs, keep record, report
+        if ((t.svgPathKeys || []).length) { t.svgPathKeys = []; obsolete++; console.log("  [" + m.id + "] obsolete (no SVG): " + t.id + " — svgPathKeys cleared, record kept for designer review"); }
+      }
+    });
+    existing.forEach(t => { if (byId[t.id]) backfilled++; });
+    writeJson(terrFile(m.id), existing);
+    total += existing.length;
+  });
+  writeCatalogMeta(now, total, "merge");
+  console.log("merge: added " + added + ", synced " + backfilled + ", obsolete " + obsolete + ", total " + total);
+  return 0;
+}
+
+// ---------------------------- CLI ----------------------------
+function main() {
+  const mode = (process.argv[2] || "--check");
+  const now = new Date().toISOString();
+  if (mode === "--check") process.exit(runCheck());
+  if (mode === "--init") process.exit(runInit(now));
+  if (mode === "--merge") process.exit(runMerge(now));
+  console.error("unknown mode " + mode + " (use --check | --init | --merge)");
+  process.exit(2);
+}
+if (require.main === module) main();
+
+module.exports = { discover, newTerritory, backfill, runInit, runMerge, runCheck, MAPS,
+  SCHEMA_VERSION, CATALOG_VERSION, GENERATOR_VERSION, DESIGNER_FIELDS };
