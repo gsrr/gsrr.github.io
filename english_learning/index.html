@@ -448,6 +448,14 @@
   .geo-holder:active { cursor: grabbing; }
   .geo-zoom-hint { position: absolute; right: 8px; bottom: 8px; z-index: 3; font-size: 11px; font-weight: 700;
     color: #e8edf5; background: rgba(15,23,42,.6); border-radius: 8px; padding: 3px 8px; pointer-events: none; }
+  /* 縮放式標籤層：常數螢幕大小、只顯示不接收點擊(點擊由底下地區處理) */
+  .geo-labels { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+  .geo-lab { position: absolute; transform: translate(-50%, -50%); white-space: nowrap; pointer-events: none;
+    font-size: 13px; font-weight: 800; line-height: 1; color: #fff; padding: 3px 7px; border-radius: 9px;
+    background: rgba(15,23,42,.72); border: 1px solid rgba(255,255,255,.5); paint-order: stroke;
+    text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+  .geo-lab.drill { background: rgba(88,28,135,.9); font-size: 14px; }
+  .geo-lab.sel { background: #16a34a; border-color: #fff; z-index: 4; }
   .geo-svg { width: 100%; height: auto; display: block; border-radius: 16px;
     background: #aedcf0; box-shadow: inset 0 0 0 2px rgba(40,90,120,.3); }
   .geo-svg path { fill: #dbe7f1; stroke: #1f3d57; stroke-width: 1.3; stroke-linejoin: round; vector-effect: non-scaling-stroke; transition: fill .2s, filter .15s; }
@@ -4602,11 +4610,35 @@
     loadEconomy(renderEmpire);            // 再抓最新（含每日產兵）
     drawGeo(spec, null, i, lv);
   }
+  // ===== 縮放式標籤取捨（純函式，可單元測試）=====
+  //   cands: [{priority, minZoom, maxZoom, selected, box:{x0,y0,x1,y1}}]；zoom：目前縮放倍率
+  //   規則：先依縮放過濾(選取的一律留)，再依 priority 高→低貪婪擺放，box 與已接受者重疊者隱藏；選取的必顯示。
+  //   回傳同一批 cands，並在每個上設 .visible。
+  function rectsOverlap(a, b) { return !(a.x1 <= b.x0 || a.x0 >= b.x1 || a.y1 <= b.y0 || a.y0 >= b.y1); }
+  function placeMapLabels(cands, zoom) {
+    const eligible = cands.filter(c => c.selected || (zoom >= c.minZoom && zoom <= c.maxZoom));
+    const rest = cands.filter(c => eligible.indexOf(c) < 0);
+    eligible.sort((a, b) => (b.selected ? 1 : 0) - (a.selected ? 1 : 0) || b.priority - a.priority);
+    const placed = [];
+    eligible.forEach(c => {
+      if (c.selected) { c.visible = true; placed.push(c.box); return; }   // 選取的一律顯示(也會擋別人)
+      const hit = placed.some(b => rectsOverlap(c.box, b));
+      c.visible = !hit; if (!hit) placed.push(c.box);
+    });
+    rest.forEach(c => { c.visible = false; });                            // 縮放過濾掉的：不顯示
+    return cands;
+  }
+  let geoSelectedKey = null;        // 目前選取的地區 key（一律顯示其標籤）
+  let _geoResel = null;             // 重新配置目前地圖標籤（選取改變時呼叫）
+  let _geoRelayout = null;          // 視窗尺寸改變時重新配置
+  let _geoResizeHooked = false;
+
   // 地圖捏合縮放 / 拖曳平移：滾輪(桌機)、雙指捏合(手機)縮放；拖曳平移；雙擊還原。拖曳後吞掉 click 避免誤觸地區。
-  function attachPanZoom(svg, frame) {
+  //   onChange(s,tx,ty)：每次縮放/平移就通知(讓標籤重新配置)
+  function attachPanZoom(svg, frame, onChange) {
     let s = 1, tx = 0, ty = 0, moved = false, start = null, pinch = null;
     const pts = new Map();
-    const apply = () => { svg.style.transformOrigin = "0 0"; svg.style.transform = "translate(" + tx + "px," + ty + "px) scale(" + s + ")"; };
+    const apply = () => { svg.style.transformOrigin = "0 0"; svg.style.transform = "translate(" + tx + "px," + ty + "px) scale(" + s + ")"; if (onChange) onChange(s, tx, ty); };
     const rel = e => { const r = frame.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
     function zoomAt(px, py, ns) { ns = Math.max(1, Math.min(6, ns)); tx = px - (px - tx) * (ns / s); ty = py - (py - ty) * (ns / s); s = ns; if (s <= 1.001) { s = 1; tx = 0; ty = 0; } apply(); }
     svg.addEventListener("wheel", e => { e.preventDefault(); const p = rel(e); zoomAt(p.x, p.y, s * (e.deltaY < 0 ? 1.15 : 1 / 1.15)); }, { passive: false });
@@ -4655,7 +4687,9 @@
       svg.style.maxWidth = Math.round(Math.max(320, window.innerHeight * 0.82 * (_vb[2] / (_vb[3] || 1)))) + "px";
       svg.style.margin = "0 auto";
       const zh = document.createElement("div"); zh.className = "geo-zoom-hint"; zh.textContent = "🔍 scroll / pinch to zoom · drag to pan"; holder.appendChild(zh);
-      attachPanZoom(svg, holder);
+      let labelState = { s: 1, tx: 0, ty: 0 };
+      let relayoutLabels = function () {};
+      attachPanZoom(svg, holder, (s, tx, ty) => { labelState = { s: s, tx: tx, ty: ty }; relayoutLabels(s, tx, ty); });
       const NSU = "http://www.w3.org/2000/svg";
       svg.querySelectorAll("style").forEach(s => s.remove());
       svg.querySelectorAll("path").forEach(p => { p.style.removeProperty("fill"); p.style.removeProperty("stroke"); p.style.removeProperty("opacity"); p.removeAttribute("fill"); });
@@ -4682,11 +4716,11 @@
       const regionList = [], markerSpecs = [];
       function regionName(p) { return spec.names ? (spec.names[p.id] || p.id) : (p.getAttribute("aria-label") || p.id); }
       function addTitle(p, txt) { let t = p.querySelector("title"); if (!t) { t = document.createElementNS(NSU, "title"); p.appendChild(t); } t.textContent = txt; }
-      function marker(p, label, extra) {
+      function marker(p, label, extra, fields) {
         let bb = null; try { bb = p.getBBox(); } catch (e) {}
         if (!bb || !bb.width) return;
         const cx = bb.x + bb.width / 2, cy = bb.y + bb.height / 2;
-        markerSpecs.push({ cx: cx, cy: cy, ox: cx, oy: cy, label: label, extra: extra || "" });
+        markerSpecs.push(Object.assign({ cx: cx, cy: cy, label: label, extra: extra || "", uw: bb.width }, fields || {}));
       }
       // 地區不再固定綁課：佔領時才隨機挑一課（全域世界則不分等級）。地圖只顯示地區名稱。
       if (grouped && !contFilter) {
@@ -4704,7 +4738,7 @@
         Object.keys(groups).forEach(ck => {
           const g = groups[ck], cx = (g.x0 + g.x1) / 2, cy = (g.y0 + g.y1) / 2;
           const open = () => drawGeo(Object.assign({}, spec, { groupFilter: ck }), () => renderGeoMap(i, spec), i, lv);
-          markerSpecs.push({ cx: cx, cy: cy, ox: cx, oy: cy, label: WORLD_CONT_LABEL[ck] || ck, extra: " geo-marker-drill" });
+          markerSpecs.push({ cx: cx, cy: cy, label: WORLD_CONT_LABEL[ck] || ck, extra: " geo-marker-drill", uw: (g.x1 - g.x0), drill: true, open: open });
           regionList.push({ drill: true, name: WORLD_CONT_LABEL[ck] || ck, group: g.paths, open: open });
         });
       } else {
@@ -4717,7 +4751,7 @@
             addTitle(p, name + " — zoom in ▸");
             const open = () => drawGeo(sub, () => renderGeoMap(i, spec), i, lv);
             p.addEventListener("click", open);
-            marker(p, name, " geo-marker-drill");
+            marker(p, name, " geo-marker-drill", { drill: true, open: open });
             regionList.push({ p: p, drill: true, name: name, open: open });
             return;
           }
@@ -4729,39 +4763,52 @@
           p.addEventListener("click", open);   // 同一國的每個 path 都可點、都會上色
           if (!seen[key]) {                    // 但標籤/清單一國只出現一次（如印尼由很多塊組成）
             seen[key] = 1;
-            marker(p, name);
+            marker(p, name, "", { key: key, open: open });
             regionList.push({ p: p, key: key, name: name, pop: pop, open: open });
           } else {
             regionList.push({ p: p, key: key, name: name, pop: pop, open: open, dup: true });
           }
         });
       }
-      // 分散重疊的標號
-      const minD = rMark * 2 + 3;
-      for (let it = 0; it < 80; it++) {
-        let moved = false;
-        for (let x = 0; x < markerSpecs.length; x++) for (let y = x + 1; y < markerSpecs.length; y++) {
-          const A = markerSpecs[x], B = markerSpecs[y];
-          const dx = B.cx - A.cx, dy = B.cy - A.cy, d = Math.hypot(dx, dy) || 0.01;
-          if (d < minD) { const push = (minD - d) / 2, ux = dx / d, uy = dy / d; A.cx -= ux * push; A.cy -= uy * push; B.cx += ux * push; B.cy += uy * push; moved = true; }
-        }
-        if (!moved) break;
+      // ===== 縮放式標籤層：常數螢幕大小的 HTML 疊層，用現有投影(viewBox + 平移縮放)換算螢幕座標 =====
+      //   標籤只是視覺(pointer-events:none)；點擊仍由底下的地區 path 處理。
+      const lay = document.createElement("div"); lay.className = "geo-labels"; holder.appendChild(lay);
+      let offX = 0, offY = 0, w0 = 1, h0 = 1;
+      const vx = vb[0], vy = vb[1], vw = vb[2] || 1, vh = vb[3] || 1;
+      function captureGeom() {
+        const hr = holder.getBoundingClientRect(), sr = svg.getBoundingClientRect();
+        offX = sr.left - hr.left; offY = sr.top - hr.top; w0 = sr.width || 1; h0 = sr.height || 1;
       }
-      markerSpecs.forEach(s => { if (Math.hypot(s.cx - s.ox, s.cy - s.oy) > rMark * 1.3) { const ln = document.createElementNS(NSU, "line"); ln.setAttribute("x1", s.ox); ln.setAttribute("y1", s.oy); ln.setAttribute("x2", s.cx); ln.setAttribute("y2", s.cy); ln.setAttribute("class", "geo-leader"); mg.appendChild(ln); } });
-      // 只顯示地區名稱：用一顆圓角膠囊(pill)當底、上面寫名字（可下鑽的地區前面加 🏙️）
-      const fs = rMark * 0.92;
-      markerSpecs.forEach(s => {
-        const label = (s.extra.indexOf("drill") >= 0 ? "🏙️ " : "") + s.label;
-        const w = label.length * fs * 0.62 + fs * 0.9, hh = fs * 1.7;
-        const rect = document.createElementNS(NSU, "rect");
-        rect.setAttribute("x", s.cx - w / 2); rect.setAttribute("y", s.cy - hh / 2);
-        rect.setAttribute("width", w); rect.setAttribute("height", hh);
-        rect.setAttribute("rx", hh / 2); rect.setAttribute("class", "geo-marker-pill" + s.extra);
-        const tx = document.createElementNS(NSU, "text");
-        tx.setAttribute("x", s.cx); tx.setAttribute("y", s.cy); tx.setAttribute("font-size", fs);
-        tx.setAttribute("class", "geo-marker-t"); tx.textContent = label;
-        mg.appendChild(rect); mg.appendChild(tx);
+      captureGeom();
+      markerSpecs.forEach(L => {
+        const el = document.createElement("div"); el.className = "geo-lab" + (L.drill ? " drill" : "");
+        el.textContent = (L.drill ? "🏙 " : "") + L.label;
+        lay.appendChild(el); L.el = el;
+        const restW = (L.uw || 10) / vw * w0;                      // 該區在 s=1 時的螢幕寬(px)
+        L.priority = (L.drill ? 1e6 : 0) + restW;                  // 大區優先；洲/可下鑽最高
+        L.minZoom = L.drill ? 0 : Math.max(0, 44 / Math.max(6, restW));   // 小區要放大到一定程度才出現(縮放分層)
+        L.maxZoom = Infinity;
       });
+      // 依目前縮放/平移，把每個標籤投影到螢幕、量測 box、交給 placeMapLabels 取捨後定位
+      relayoutLabels = function (s, tx, ty) {
+        s = s || 1; tx = tx || 0; ty = ty || 0;
+        const FS = 13, PADX = 12;
+        const cands = markerSpecs.map(L => {
+          const fx = offX + tx + ((L.cx - vx) / vw * w0) * s;
+          const fy = offY + ty + ((L.cy - vy) / vh * h0) * s;
+          const txt = (L.drill ? "🏙 " : "") + L.label;
+          const w = txt.length * FS * 0.56 + PADX, h = FS * 1.8;
+          return { L: L, fx: fx, fy: fy, priority: L.priority, minZoom: L.minZoom, maxZoom: L.maxZoom,
+            selected: !!(L.key && L.key === geoSelectedKey),
+            box: { x0: fx - w / 2, y0: fy - h / 2, x1: fx + w / 2, y1: fy + h / 2 } };
+        });
+        placeMapLabels(cands, s);
+        cands.forEach(c => { const el = c.L.el; el.style.left = c.fx + "px"; el.style.top = c.fy + "px"; el.style.display = c.visible ? "" : "none"; el.classList.toggle("sel", c.selected); });
+      };
+      _geoResel = function () { relayoutLabels(labelState.s, labelState.tx, labelState.ty); };
+      _geoRelayout = function () { if (labelState.s === 1) captureGeom(); _geoResel(); };
+      if (!_geoResizeHooked) { window.addEventListener("resize", () => { if (_geoRelayout) _geoRelayout(); }); _geoResizeHooked = true; }
+      relayoutLabels(1, 0, 0);   // 初次配置
       const legend = document.createElement("div"); legend.className = "geo-legend";
       legend.innerHTML = '<span class="gl gl-mine">You</span><span class="gl gl-open">Open</span>' +
         (Object.keys(drill).length ? '<span class="gl gl-drill">Zoom in</span>' : '');
@@ -4778,8 +4825,8 @@
           '<span class="gi-ls">' + (r.drill ? "zoom in ▸" : ("👥 " + r.pop)) + '</span></span>';
         btn.addEventListener("click", r.open);
         const hi = r.group || (r.p ? [r.p] : []);   // 洲：整組亮起；國家：單塊亮起
-        btn.addEventListener("mouseenter", () => hi.forEach(pp => pp.classList.add("geo-hi")));
-        btn.addEventListener("mouseleave", () => hi.forEach(pp => pp.classList.remove("geo-hi")));
+        btn.addEventListener("mouseenter", () => { hi.forEach(pp => pp.classList.add("geo-hi")); if (r.key) { geoSelectedKey = r.key; if (_geoResel) _geoResel(); } });   // 選取 → 該標籤一律顯示
+        btn.addEventListener("mouseleave", () => { hi.forEach(pp => pp.classList.remove("geo-hi")); if (r.key && geoSelectedKey === r.key) { geoSelectedKey = null; if (_geoResel) _geoResel(); } });
         r.idxEl = btn; r.idxLs = btn.querySelector(".gi-ls"); idx.appendChild(btn);
       });
       wrap.appendChild(idx);
