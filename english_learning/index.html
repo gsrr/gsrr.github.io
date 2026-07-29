@@ -4477,8 +4477,22 @@
     }
     return selLevelIdx;
   }
+  // 世界地圖分洲（world.svg 用 ISO 兩碼當 id）→ 一開始只顯示大洲，點進去才看該洲國家
+  const WORLD_CONTINENTS = [
+    { key: "as", label: "Asia 亞洲",        codes: "ae af am az bd bh bn bt cc cn cx ge hk id il in io iq ir jo jp kg kh kp kr kw kz la lb lk mm mn mo mv my np om ph pk ps qa sa sg sy th tj tl tm tr tw uz vn ye" },
+    { key: "eu", label: "Europe 歐洲",      codes: "ad al at ax ba be bg by ch cy cz de dk ee es fi fo fr gb gg gi gr hr hu ie im is it je li lt lu lv mc md me mk mt nl no pl pt ro rs ru se si sj sk sm ua va xk" },
+    { key: "af", label: "Africa 非洲",      codes: "ao bf bi bj bw cd cf cg ci cm cv dj dz eg eh er et ga gh gm gn gq gw ke km lr ls ly ma mg ml mr mu mw mz na ne ng re rw sc sd sh sl sn so ss st sz td tg tn tz ug yt za zm zw" },
+    { key: "na", label: "N. America 北美洲", codes: "ag ai aw bb bl bm bq bs bz ca cr cu cw dm do gd gl gp gt hn ht jm kn ky lc mf mq ms mx ni pa pm pr sv sx tc tt us vc vg vi" },
+    { key: "sa", label: "S. America 南美洲", codes: "ar bo br cl co ec fk gf gy pe py sr uy ve" },
+    { key: "oc", label: "Oceania 大洋洲",    codes: "as au ck fj fm gu ki mh mp nc nf nr nu nz pf pg pn pw sb tk to tv vu wf ws" }
+  ];
+  const WORLD_CODE_CONT = {}, WORLD_CONT_LABEL = { other: "Other 其他" };
+  WORLD_CONTINENTS.forEach(c => { WORLD_CONT_LABEL[c.key] = c.label; c.codes.split(/\s+/).forEach(cd => { WORLD_CODE_CONT[cd] = c.key; }); });
+  function worldContinentKey(id) { return WORLD_CODE_CONT[(id || "").toLowerCase()] || "other"; }
+
   // 各等級對應一張真實地理地圖（沒列到的等級 fallback 用蜿蜒小徑地圖）
   // drill: { 地區id: 子地圖 } → 該地區變「容器」，點進去看子地圖（例：台北市 → 12 行政區）
+  // grouped:true → 分洲兩層下鑽（世界地圖）
   const GEO_MAPS = {
     "Pre-A1": { file: "maps/taiwan.svg", label: "Taiwan 台灣 🗺️",
                 drill: { "taipei-city": { file: "maps/taiwan-taipei.svg", label: "Taipei 台北 🗺️", viewBox: "0 0 350 461" } } },
@@ -4490,8 +4504,8 @@
                   pGD:"Guangdong 廣東", pGX:"Guangxi 廣西", pHI:"Hainan 海南", pSC:"Sichuan 四川", pGZ:"Guizhou 貴州",
                   pYN:"Yunnan 雲南", pXZ:"Tibet 西藏", pSN:"Shaanxi 陝西", pGS:"Gansu 甘肅", pQH:"Qinghai 青海",
                   pNX:"Ningxia 寧夏", pXJ:"Xinjiang 新疆", pHK:"Hong Kong 香港", pMO:"Macau 澳門", pTW:"Taiwan 台灣" } },
-    "A2":     { file: "maps/world.svg",  label: "World 世界 🗺️" },
-    "B1":     { file: "maps/world.svg",  label: "World 世界 🗺️" }
+    "A2":     { file: "maps/world.svg",  label: "World 世界 🗺️", grouped: true },
+    "B1":     { file: "maps/world.svg",  label: "World 世界 🗺️", grouped: true }
   };
   // 地形風景（山🏔️/森林🌲），依現實位置近似擺放。座標為 viewBox 的比例(0~1)，畫成裝飾層(不吃點擊)。
   const TERRAIN = {
@@ -4616,7 +4630,9 @@
     svg.addEventListener("click", e => { if (moved) { e.stopPropagation(); e.preventDefault(); } }, true);
   }
   // 資料驅動的地圖引擎：吃任一張地圖 SVG → 佔領時隨機給課 → 依佔領上色 → 點地區進課/下鑽
+  let curDrawArgs = null;   // 記住目前這張(可能已下鑽到某洲的)畫面，refreshMap 時原地重畫、不跳回頂層
   function drawGeo(spec, backFn, i, lv) {
+    curDrawArgs = [spec, backFn, i, lv];
     const wrap = articleGrid; wrap.className = "geo-wrap"; wrap.removeAttribute("style"); wrap.innerHTML = "";
     const banner = document.getElementById("terrBanner"); if (banner) banner.style.display = "none";
     const _card = document.querySelector(".card"); if (_card) _card.classList.add("map-wide");   // 地圖畫面加寬(桌機)
@@ -4645,10 +4661,22 @@
       svg.querySelectorAll("path").forEach(p => { p.style.removeProperty("fill"); p.style.removeProperty("stroke"); p.style.removeProperty("opacity"); p.removeAttribute("fill"); });
       const isRegion = spec.region || ((id, p) => !!p.getAttribute("aria-label"));   // 只認有名字的地區
       Array.prototype.filter.call(svg.querySelectorAll("path"), p => !isRegion(p.id, p)).forEach(p => { p.style.fill = "none"; p.style.pointerEvents = "none"; });
-      const paths = Array.prototype.filter.call(svg.querySelectorAll("path"), p => isRegion(p.id, p));
+      let paths = Array.prototype.filter.call(svg.querySelectorAll("path"), p => isRegion(p.id, p));
       const drill = spec.drill || {};
+      // 世界地圖分洲：contFilter 空 = 頂層(顯示各洲)；有值 = 已點進某洲(縮放到該洲、只留該洲國家可點)
+      const grouped = !!spec.grouped, contFilter = spec.groupFilter || null;
+      if (grouped) paths = paths.filter(p => WORLD_CODE_CONT[(p.id || "").toLowerCase()]);   // 只留有分洲的國家(排除背景框與無人島)
+      if (grouped && contFilter) {
+        let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+        paths.forEach(p => {
+          if (worldContinentKey(p.id) === contFilter) { let b = null; try { b = p.getBBox(); } catch (e) {} if (b && b.width) { x0 = Math.min(x0, b.x); y0 = Math.min(y0, b.y); x1 = Math.max(x1, b.x + b.width); y1 = Math.max(y1, b.y + b.height); } }
+          else { p.style.fill = "#e6edf4"; p.style.opacity = ".4"; p.style.pointerEvents = "none"; }   // 其他洲淡出、不可點
+        });
+        if (x1 > x0) { const px = (x1 - x0) * 0.06, py = (y1 - y0) * 0.08; svg.setAttribute("viewBox", (x0 - px) + " " + (y0 - py) + " " + ((x1 - x0) + 2 * px) + " " + ((y1 - y0) + 2 * py)); }
+        paths = paths.filter(p => worldContinentKey(p.id) === contFilter);
+      }
       const mg = document.createElementNS(NSU, "g"); mg.setAttribute("class", "geo-markers"); svg.appendChild(mg);
-      const tg = buildTerrainLayer(svg, spec); if (tg) svg.insertBefore(tg, mg);   // 地形風景層(地區之上、標號之下)
+      const tg = spec.grouped ? null : buildTerrainLayer(svg, spec); if (tg) svg.insertBefore(tg, mg);   // 地形風景層(分洲地圖不畫，縮放會跑位)
       const vb = (svg.getAttribute("viewBox") || "0 0 1000 1000").split(/\s+/).map(Number);
       const rMark = Math.max(7, Math.min(vb[2], vb[3]) * 0.02);
       const regionList = [], markerSpecs = [];
@@ -4661,29 +4689,53 @@
         markerSpecs.push({ cx: cx, cy: cy, ox: cx, oy: cy, label: label, extra: extra || "" });
       }
       // 地區不再固定綁課：佔領時才隨機挑一課（全域世界則不分等級）。地圖只顯示地區名稱。
-      let num = 0;
-      paths.forEach(p => {
-        const name = regionName(p);
-        if (drill[p.id]) {                       // 可下鑽的容器（點進去看子地區，像台北市那樣）
-          const sub = drill[p.id];
-          p.setAttribute("class", "geo-region geo-drill");
-          addTitle(p, name + " — zoom in ▸");
-          const open = () => drawGeo(sub, () => renderGeoMap(i, spec), i, lv);
-          p.addEventListener("click", open);
-          marker(p, name, " geo-marker-drill");
-          regionList.push({ p: p, drill: true, name: name, open: open });
-        } else {
-          num++;
+      if (grouped && !contFilter) {
+        // 頂層：只顯示各大洲一個標籤；點任何國家 → 進入該洲（層層下鑽）
+        const groups = {};
+        paths.forEach(p => {
+          const ck = worldContinentKey(p.id);
+          let b = null; try { b = p.getBBox(); } catch (e) {} if (!b || !b.width) return;
+          const g = groups[ck] || (groups[ck] = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity, paths: [] });
+          g.x0 = Math.min(g.x0, b.x); g.y0 = Math.min(g.y0, b.y); g.x1 = Math.max(g.x1, b.x + b.width); g.y1 = Math.max(g.y1, b.y + b.height); g.paths.push(p);
+          p.setAttribute("class", "geo-region geo-drill"); p.style.cursor = "pointer";
+          addTitle(p, (WORLD_CONT_LABEL[ck] || ck) + " — zoom in ▸");
+          p.addEventListener("click", () => drawGeo(Object.assign({}, spec, { groupFilter: ck }), () => renderGeoMap(i, spec), i, lv));
+        });
+        Object.keys(groups).forEach(ck => {
+          const g = groups[ck], cx = (g.x0 + g.x1) / 2, cy = (g.y0 + g.y1) / 2;
+          const open = () => drawGeo(Object.assign({}, spec, { groupFilter: ck }), () => renderGeoMap(i, spec), i, lv);
+          markerSpecs.push({ cx: cx, cy: cy, ox: cx, oy: cy, label: WORLD_CONT_LABEL[ck] || ck, extra: " geo-marker-drill" });
+          regionList.push({ drill: true, name: WORLD_CONT_LABEL[ck] || ck, group: g.paths, open: open });
+        });
+      } else {
+        const seen = {};
+        paths.forEach(p => {
+          const name = regionName(p);
+          if (drill[p.id]) {                       // 可下鑽的容器（點進去看子地區，像台北市那樣）
+            const sub = drill[p.id];
+            p.setAttribute("class", "geo-region geo-drill");
+            addTitle(p, name + " — zoom in ▸");
+            const open = () => drawGeo(sub, () => renderGeoMap(i, spec), i, lv);
+            p.addEventListener("click", open);
+            marker(p, name, " geo-marker-drill");
+            regionList.push({ p: p, drill: true, name: name, open: open });
+            return;
+          }
           const key = regionKey(spec, p), pop = popForName(name);
           rememberRegion(key, name);   // 記住地區名，供帝國清單等顯示
           p.setAttribute("class", "geo-region");
           addTitle(p, name + " · 👥" + pop);
           const open = () => openRegion(key, name, pop, i);
-          p.addEventListener("click", open);
-          marker(p, name);
-          regionList.push({ p: p, key: key, name: name, pop: pop, num: num, open: open });
-        }
-      });
+          p.addEventListener("click", open);   // 同一國的每個 path 都可點、都會上色
+          if (!seen[key]) {                    // 但標籤/清單一國只出現一次（如印尼由很多塊組成）
+            seen[key] = 1;
+            marker(p, name);
+            regionList.push({ p: p, key: key, name: name, pop: pop, open: open });
+          } else {
+            regionList.push({ p: p, key: key, name: name, pop: pop, open: open, dup: true });
+          }
+        });
+      }
       // 分散重疊的標號
       const minD = rMark * 2 + 3;
       for (let it = 0; it < 80; it++) {
@@ -4719,13 +4771,15 @@
       // 對照清單：領地名 + 人口 + 守軍（滑過 highlight，點擊開領地面板）
       const idx = document.createElement("div"); idx.className = "geo-index";
       regionList.forEach(r => {
+        if (r.dup) return;                       // 同一國的多餘 path 不重複列
         const btn = document.createElement("button"); btn.className = "geo-idx" + (r.drill ? " gi-drill" : "");
         btn.innerHTML = '<span class="gi-no">' + (r.drill ? "🏙️" : "📍") + '</span>' +
           '<span class="gi-tx"><span class="gi-rg">' + r.name + '</span>' +
           '<span class="gi-ls">' + (r.drill ? "zoom in ▸" : ("👥 " + r.pop)) + '</span></span>';
         btn.addEventListener("click", r.open);
-        btn.addEventListener("mouseenter", () => r.p.classList.add("geo-hi"));
-        btn.addEventListener("mouseleave", () => r.p.classList.remove("geo-hi"));
+        const hi = r.group || (r.p ? [r.p] : []);   // 洲：整組亮起；國家：單塊亮起
+        btn.addEventListener("mouseenter", () => hi.forEach(pp => pp.classList.add("geo-hi")));
+        btn.addEventListener("mouseleave", () => hi.forEach(pp => pp.classList.remove("geo-hi")));
         r.idxEl = btn; r.idxLs = btn.querySelector(".gi-ls"); idx.appendChild(btn);
       });
       wrap.appendChild(idx);
@@ -4842,7 +4896,7 @@
         // 先蒐集這張地圖上所有擁有者 → 配色（同一張地圖上人人不同色）
         const holders = (territory && territory.holders) || {};
         const present = [], seen = {}, stats = {};
-        regionList.forEach(r => { if (r.drill || !r.key) return; const h = holders[r.key]; if (!h || !h.owner) return;
+        regionList.forEach(r => { if (r.drill || !r.key || r.dup) return; const h = holders[r.key]; if (!h || !h.owner) return;
           const low = h.owner.toLowerCase(); if (!seen[low]) { seen[low] = 1; present.push(h.owner); }
           const s = stats[low] || (stats[low] = { name: h.owner, avatar: h.avatar, n: 0 }); s.n++; if (h.avatar) s.avatar = h.avatar; });
         const cmap = ownerColorMap(present, me);
@@ -4857,7 +4911,7 @@
           if (h && h.owner) {
             const isMine = (h.owner || "").toLowerCase() === me;
             const col = cmap[(h.owner || "").toLowerCase()];
-            if (isMine) { r.p.classList.add("geo-mine"); if (r.idxEl) r.idxEl.classList.add("gi-mine"); mine++; }
+            if (isMine) { r.p.classList.add("geo-mine"); if (r.idxEl) r.idxEl.classList.add("gi-mine"); if (!r.dup) mine++; }
             else { r.p.style.setProperty("fill", col, "important"); if (dot) dot.style.background = col; }
             // 戰霧：只有自己的領地看得到守軍組成，別人的只顯示擁有者
             const garTxt = isMine ? (" " + aliveTroops(h.troops).map(t => troopIcon(t.type) + t.hp).join(" ")) : " 🛡️❓";
@@ -5136,7 +5190,7 @@
   }
 
   // ===== 占地盤：據點面板（讀書 / 插旗守護 / 用卡片攻打）=====
-  function refreshMap() { selectLevel(selLevelIdx); }
+  function refreshMap() { if (curDrawArgs) drawGeo(curDrawArgs[0], curDrawArgs[1], curDrawArgs[2], curDrawArgs[3]); else selectLevel(selLevelIdx); }
   function openModal(html) {
     closeModal();
     const ov = document.createElement("div"); ov.className = "modal-ov"; ov.id = "appModal";
