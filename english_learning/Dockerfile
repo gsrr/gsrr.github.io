@@ -51,8 +51,13 @@ exec nginx -g 'daemon off;'
 EOF
 RUN chmod +x /app/start.sh
 
-# 計數程式 + 網站內容
+# 後端 runtime：server.py + 遊戲領域套件(game/) + 世界目錄程式與資料(territory_catalog.py 用
+# __file__ 相對路徑找 world-data/，兩者必須同放在 /app/)。缺任何一個後端會在 import 就崩(502)。
 COPY server.py /app/server.py
+COPY game/ /app/game/
+COPY territory_catalog.py /app/territory_catalog.py
+COPY world-data/ /app/world-data/
+# 網站內容(前端靜態檔)
 COPY . /var/www/html/
 
 EXPOSE 80 443
