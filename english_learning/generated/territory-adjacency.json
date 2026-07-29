@@ -1,0 +1,1965 @@
+{
+  "maps": {
+    "taiwan": {
+      "territories": 22,
+      "edges": 34,
+      "avgDegree": 3.091,
+      "isolated": [
+        "taiwan:kinmen-county",
+        "taiwan:lienchiang-county",
+        "taiwan:penghu-county"
+      ],
+      "components": 4,
+      "adjacency": {
+        "taiwan:changhua-county": [
+          "taiwan:nantou-county",
+          "taiwan:taichung-city",
+          "taiwan:yunlin-county"
+        ],
+        "taiwan:chiayi-city": [
+          "taiwan:chiayi-county"
+        ],
+        "taiwan:chiayi-county": [
+          "taiwan:chiayi-city",
+          "taiwan:kaohsiung-city",
+          "taiwan:nantou-county",
+          "taiwan:tainan-city",
+          "taiwan:yunlin-county"
+        ],
+        "taiwan:hualien-county": [
+          "taiwan:kaohsiung-city",
+          "taiwan:nantou-county",
+          "taiwan:taichung-city",
+          "taiwan:taitung-county",
+          "taiwan:yilan-county"
+        ],
+        "taiwan:hsinchu-city": [
+          "taiwan:hsinchu-county",
+          "taiwan:miaoli-county"
+        ],
+        "taiwan:hsinchu-county": [
+          "taiwan:hsinchu-city",
+          "taiwan:miaoli-county",
+          "taiwan:taichung-city",
+          "taiwan:taoyuan-city",
+          "taiwan:yilan-county"
+        ],
+        "taiwan:kaohsiung-city": [
+          "taiwan:chiayi-county",
+          "taiwan:hualien-county",
+          "taiwan:nantou-county",
+          "taiwan:pingtung-county",
+          "taiwan:tainan-city",
+          "taiwan:taitung-county"
+        ],
+        "taiwan:keelung-city": [
+          "taiwan:new-taipei-city",
+          "taiwan:taipei-city"
+        ],
+        "taiwan:kinmen-county": [],
+        "taiwan:lienchiang-county": [],
+        "taiwan:miaoli-county": [
+          "taiwan:hsinchu-city",
+          "taiwan:hsinchu-county",
+          "taiwan:taichung-city"
+        ],
+        "taiwan:nantou-county": [
+          "taiwan:changhua-county",
+          "taiwan:chiayi-county",
+          "taiwan:hualien-county",
+          "taiwan:kaohsiung-city",
+          "taiwan:taichung-city",
+          "taiwan:yunlin-county"
+        ],
+        "taiwan:new-taipei-city": [
+          "taiwan:keelung-city",
+          "taiwan:taipei-city",
+          "taiwan:taoyuan-city",
+          "taiwan:yilan-county"
+        ],
+        "taiwan:penghu-county": [],
+        "taiwan:pingtung-county": [
+          "taiwan:kaohsiung-city",
+          "taiwan:taitung-county"
+        ],
+        "taiwan:taichung-city": [
+          "taiwan:changhua-county",
+          "taiwan:hsinchu-county",
+          "taiwan:hualien-county",
+          "taiwan:miaoli-county",
+          "taiwan:nantou-county",
+          "taiwan:yilan-county"
+        ],
+        "taiwan:tainan-city": [
+          "taiwan:chiayi-county",
+          "taiwan:kaohsiung-city"
+        ],
+        "taiwan:taipei-city": [
+          "taiwan:keelung-city",
+          "taiwan:new-taipei-city"
+        ],
+        "taiwan:taitung-county": [
+          "taiwan:hualien-county",
+          "taiwan:kaohsiung-city",
+          "taiwan:pingtung-county"
+        ],
+        "taiwan:taoyuan-city": [
+          "taiwan:hsinchu-county",
+          "taiwan:new-taipei-city",
+          "taiwan:yilan-county"
+        ],
+        "taiwan:yilan-county": [
+          "taiwan:hsinchu-county",
+          "taiwan:hualien-county",
+          "taiwan:new-taipei-city",
+          "taiwan:taichung-city",
+          "taiwan:taoyuan-city"
+        ],
+        "taiwan:yunlin-county": [
+          "taiwan:changhua-county",
+          "taiwan:chiayi-county",
+          "taiwan:nantou-county"
+        ]
+      },
+      "suspicious": []
+    },
+    "taipei": {
+      "territories": 12,
+      "edges": 21,
+      "avgDegree": 3.5,
+      "isolated": [
+        "taipei:wenshan"
+      ],
+      "components": 2,
+      "adjacency": {
+        "taipei:wenshan": [],
+        "taipei:beitou": [
+          "taipei:shilin"
+        ],
+        "taipei:shilin": [
+          "taipei:beitou",
+          "taipei:datong",
+          "taipei:neihu"
+        ],
+        "taipei:datong": [
+          "taipei:daan",
+          "taipei:neihu",
+          "taipei:shilin",
+          "taipei:xinyi",
+          "taipei:zhongshan"
+        ],
+        "taipei:zhongshan": [
+          "taipei:datong",
+          "taipei:nangang",
+          "taipei:neihu",
+          "taipei:songshan",
+          "taipei:xinyi"
+        ],
+        "taipei:neihu": [
+          "taipei:datong",
+          "taipei:nangang",
+          "taipei:shilin",
+          "taipei:songshan",
+          "taipei:zhongshan"
+        ],
+        "taipei:nangang": [
+          "taipei:neihu",
+          "taipei:songshan",
+          "taipei:wanhua",
+          "taipei:zhongshan"
+        ],
+        "taipei:songshan": [
+          "taipei:nangang",
+          "taipei:neihu",
+          "taipei:wanhua",
+          "taipei:xinyi",
+          "taipei:zhongshan"
+        ],
+        "taipei:xinyi": [
+          "taipei:daan",
+          "taipei:datong",
+          "taipei:songshan",
+          "taipei:wanhua",
+          "taipei:zhongshan"
+        ],
+        "taipei:daan": [
+          "taipei:datong",
+          "taipei:wanhua",
+          "taipei:xinyi",
+          "taipei:zhongzheng"
+        ],
+        "taipei:zhongzheng": [
+          "taipei:daan"
+        ],
+        "taipei:wanhua": [
+          "taipei:daan",
+          "taipei:nangang",
+          "taipei:songshan",
+          "taipei:xinyi"
+        ]
+      },
+      "suspicious": []
+    },
+    "china": {
+      "territories": 34,
+      "edges": 74,
+      "avgDegree": 4.353,
+      "isolated": [],
+      "components": 1,
+      "adjacency": {
+        "china:pTW": [
+          "china:pFJ"
+        ],
+        "china:pHJ": [
+          "china:pJL",
+          "china:pNM"
+        ],
+        "china:pJL": [
+          "china:pHJ",
+          "china:pLN",
+          "china:pNM"
+        ],
+        "china:pLN": [
+          "china:pHE",
+          "china:pJL",
+          "china:pNM"
+        ],
+        "china:pNM": [
+          "china:pGS",
+          "china:pHE",
+          "china:pHJ",
+          "china:pJL",
+          "china:pLN",
+          "china:pNX",
+          "china:pSN",
+          "china:pSX"
+        ],
+        "china:pNX": [
+          "china:pGS",
+          "china:pNM",
+          "china:pSN"
+        ],
+        "china:pGS": [
+          "china:pNM",
+          "china:pNX",
+          "china:pQH",
+          "china:pSC",
+          "china:pSN",
+          "china:pXJ"
+        ],
+        "china:pQH": [
+          "china:pGS",
+          "china:pSC",
+          "china:pXJ",
+          "china:pXZ"
+        ],
+        "china:pXJ": [
+          "china:pGS",
+          "china:pQH",
+          "china:pXZ"
+        ],
+        "china:pXZ": [
+          "china:pQH",
+          "china:pSC",
+          "china:pXJ",
+          "china:pYN"
+        ],
+        "china:pSC": [
+          "china:pCQ",
+          "china:pGS",
+          "china:pGZ",
+          "china:pQH",
+          "china:pSN",
+          "china:pXZ",
+          "china:pYN"
+        ],
+        "china:pCQ": [
+          "china:pGZ",
+          "china:pHB",
+          "china:pHN",
+          "china:pSC",
+          "china:pSN"
+        ],
+        "china:pGZ": [
+          "china:pCQ",
+          "china:pGX",
+          "china:pHN",
+          "china:pSC",
+          "china:pYN"
+        ],
+        "china:pYN": [
+          "china:pGX",
+          "china:pGZ",
+          "china:pSC",
+          "china:pXZ"
+        ],
+        "china:pBJ": [
+          "china:pHE",
+          "china:pTJ"
+        ],
+        "china:pTJ": [
+          "china:pBJ",
+          "china:pHE"
+        ],
+        "china:pHE": [
+          "china:pBJ",
+          "china:pHA",
+          "china:pLN",
+          "china:pNM",
+          "china:pSD",
+          "china:pSX",
+          "china:pTJ"
+        ],
+        "china:pHA": [
+          "china:pAH",
+          "china:pHB",
+          "china:pHE",
+          "china:pJS",
+          "china:pSD",
+          "china:pSN",
+          "china:pSX"
+        ],
+        "china:pSD": [
+          "china:pAH",
+          "china:pHA",
+          "china:pHE",
+          "china:pJS"
+        ],
+        "china:pSX": [
+          "china:pHA",
+          "china:pHE",
+          "china:pNM",
+          "china:pSN"
+        ],
+        "china:pSN": [
+          "china:pCQ",
+          "china:pGS",
+          "china:pHA",
+          "china:pHB",
+          "china:pNM",
+          "china:pNX",
+          "china:pSC",
+          "china:pSX"
+        ],
+        "china:pAH": [
+          "china:pHA",
+          "china:pHB",
+          "china:pJS",
+          "china:pJX",
+          "china:pSD",
+          "china:pZJ"
+        ],
+        "china:pJS": [
+          "china:pAH",
+          "china:pHA",
+          "china:pSD",
+          "china:pSH",
+          "china:pZJ"
+        ],
+        "china:pSH": [
+          "china:pJS",
+          "china:pZJ"
+        ],
+        "china:pZJ": [
+          "china:pAH",
+          "china:pFJ",
+          "china:pJS",
+          "china:pJX",
+          "china:pSH"
+        ],
+        "china:pJX": [
+          "china:pAH",
+          "china:pFJ",
+          "china:pGD",
+          "china:pHB",
+          "china:pHN",
+          "china:pZJ"
+        ],
+        "china:pHB": [
+          "china:pAH",
+          "china:pCQ",
+          "china:pHA",
+          "china:pHN",
+          "china:pJX",
+          "china:pSN"
+        ],
+        "china:pHN": [
+          "china:pCQ",
+          "china:pGD",
+          "china:pGX",
+          "china:pGZ",
+          "china:pHB",
+          "china:pJX"
+        ],
+        "china:pFJ": [
+          "china:pGD",
+          "china:pJX",
+          "china:pTW",
+          "china:pZJ"
+        ],
+        "china:pGD": [
+          "china:pFJ",
+          "china:pGX",
+          "china:pHI",
+          "china:pHK",
+          "china:pHN",
+          "china:pJX",
+          "china:pMO"
+        ],
+        "china:pGX": [
+          "china:pGD",
+          "china:pGZ",
+          "china:pHN",
+          "china:pYN"
+        ],
+        "china:pHI": [
+          "china:pGD"
+        ],
+        "china:pHK": [
+          "china:pGD",
+          "china:pMO"
+        ],
+        "china:pMO": [
+          "china:pGD",
+          "china:pHK"
+        ]
+      },
+      "suspicious": []
+    },
+    "world": {
+      "territories": 250,
+      "edges": 501,
+      "avgDegree": 4.008,
+      "isolated": [
+        "world:bm",
+        "world:bv",
+        "world:cc",
+        "world:ck",
+        "world:cv",
+        "world:cx",
+        "world:fj",
+        "world:fk",
+        "world:fm",
+        "world:fo",
+        "world:gl",
+        "world:go",
+        "world:gs",
+        "world:hm",
+        "world:io",
+        "world:is",
+        "world:ki",
+        "world:ky",
+        "world:mh",
+        "world:mu",
+        "world:mv",
+        "world:nc",
+        "world:nf",
+        "world:nr",
+        "world:nu",
+        "world:nz",
+        "world:pf",
+        "world:pn",
+        "world:pw",
+        "world:re",
+        "world:sc",
+        "world:sh",
+        "world:sj",
+        "world:st",
+        "world:tf",
+        "world:tk",
+        "world:to",
+        "world:tv",
+        "world:vu",
+        "world:wf"
+      ],
+      "components": 46,
+      "adjacency": {
+        "world:ad": [
+          "world:es",
+          "world:fr"
+        ],
+        "world:ae": [
+          "world:ir",
+          "world:om",
+          "world:qa",
+          "world:sa"
+        ],
+        "world:af": [
+          "world:cn",
+          "world:ir",
+          "world:kg",
+          "world:pk",
+          "world:tj",
+          "world:tm",
+          "world:uz"
+        ],
+        "world:ag": [
+          "world:ai",
+          "world:bl",
+          "world:bq",
+          "world:dm",
+          "world:gp",
+          "world:kn",
+          "world:mf",
+          "world:ms",
+          "world:sx"
+        ],
+        "world:ai": [
+          "world:ag",
+          "world:bl",
+          "world:bq",
+          "world:kn",
+          "world:mf",
+          "world:sx",
+          "world:vg",
+          "world:vi"
+        ],
+        "world:al": [
+          "world:ba",
+          "world:gr",
+          "world:hr",
+          "world:it",
+          "world:me",
+          "world:mk",
+          "world:rs",
+          "world:xk"
+        ],
+        "world:am": [
+          "world:az",
+          "world:ge",
+          "world:ir",
+          "world:ru",
+          "world:tr"
+        ],
+        "world:ao": [
+          "world:bw",
+          "world:cd",
+          "world:cg",
+          "world:ga",
+          "world:na",
+          "world:zm"
+        ],
+        "world:ar": [
+          "world:bo",
+          "world:br",
+          "world:cl",
+          "world:py",
+          "world:uy"
+        ],
+        "world:as": [
+          "world:ws"
+        ],
+        "world:at": [
+          "world:ch",
+          "world:cz",
+          "world:de",
+          "world:hr",
+          "world:hu",
+          "world:it",
+          "world:li",
+          "world:si",
+          "world:sk"
+        ],
+        "world:au": [
+          "world:id",
+          "world:pg"
+        ],
+        "world:aw": [
+          "world:co",
+          "world:cw",
+          "world:ve"
+        ],
+        "world:ax": [
+          "world:fi",
+          "world:se"
+        ],
+        "world:az": [
+          "world:am",
+          "world:ge",
+          "world:ir",
+          "world:ru",
+          "world:tr"
+        ],
+        "world:ba": [
+          "world:al",
+          "world:hr",
+          "world:hu",
+          "world:me",
+          "world:rs",
+          "world:si",
+          "world:xk"
+        ],
+        "world:bb": [
+          "world:lc",
+          "world:vc"
+        ],
+        "world:bd": [
+          "world:bt",
+          "world:cn",
+          "world:in",
+          "world:mm",
+          "world:np"
+        ],
+        "world:be": [
+          "world:de",
+          "world:fr",
+          "world:gb",
+          "world:lu",
+          "world:nl"
+        ],
+        "world:bf": [
+          "world:bj",
+          "world:ci",
+          "world:gh",
+          "world:ml",
+          "world:ne",
+          "world:ng",
+          "world:tg"
+        ],
+        "world:bg": [
+          "world:gr",
+          "world:mk",
+          "world:ro",
+          "world:rs",
+          "world:tr",
+          "world:xk"
+        ],
+        "world:bh": [
+          "world:qa",
+          "world:sa"
+        ],
+        "world:bi": [
+          "world:cd",
+          "world:rw",
+          "world:tz",
+          "world:ug"
+        ],
+        "world:bj": [
+          "world:bf",
+          "world:gh",
+          "world:ne",
+          "world:ng",
+          "world:tg"
+        ],
+        "world:bl": [
+          "world:ag",
+          "world:ai",
+          "world:bq",
+          "world:kn",
+          "world:mf",
+          "world:ms",
+          "world:sx"
+        ],
+        "world:bn": [
+          "world:id",
+          "world:my"
+        ],
+        "world:bo": [
+          "world:ar",
+          "world:br",
+          "world:cl",
+          "world:pe",
+          "world:py"
+        ],
+        "world:bm": [],
+        "world:bq": [
+          "world:ag",
+          "world:ai",
+          "world:bl",
+          "world:cw",
+          "world:kn",
+          "world:mf",
+          "world:ms",
+          "world:sx",
+          "world:ve",
+          "world:vg",
+          "world:vi"
+        ],
+        "world:br": [
+          "world:ar",
+          "world:bo",
+          "world:co",
+          "world:gf",
+          "world:gy",
+          "world:pe",
+          "world:py",
+          "world:sr",
+          "world:uy",
+          "world:ve"
+        ],
+        "world:bs": [
+          "world:cu",
+          "world:ht",
+          "world:tc",
+          "world:us"
+        ],
+        "world:bt": [
+          "world:bd",
+          "world:cn",
+          "world:in",
+          "world:np"
+        ],
+        "world:bv": [],
+        "world:bw": [
+          "world:ao",
+          "world:na",
+          "world:za",
+          "world:zm",
+          "world:zw"
+        ],
+        "world:by": [
+          "world:lt",
+          "world:lv",
+          "world:pl",
+          "world:ru",
+          "world:ua"
+        ],
+        "world:bz": [
+          "world:gt",
+          "world:hn",
+          "world:mx"
+        ],
+        "world:ca": [
+          "world:pm",
+          "world:us"
+        ],
+        "world:cc": [],
+        "world:cd": [
+          "world:ao",
+          "world:bi",
+          "world:cf",
+          "world:cg",
+          "world:ga",
+          "world:rw",
+          "world:ss",
+          "world:tz",
+          "world:ug",
+          "world:zm"
+        ],
+        "world:cf": [
+          "world:cd",
+          "world:cg",
+          "world:cm",
+          "world:sd",
+          "world:ss",
+          "world:td"
+        ],
+        "world:cg": [
+          "world:ao",
+          "world:cd",
+          "world:cf",
+          "world:cm",
+          "world:ga"
+        ],
+        "world:ch": [
+          "world:at",
+          "world:de",
+          "world:fr",
+          "world:it",
+          "world:li"
+        ],
+        "world:ci": [
+          "world:bf",
+          "world:gh",
+          "world:gn",
+          "world:lr",
+          "world:ml"
+        ],
+        "world:ck": [],
+        "world:cl": [
+          "world:ar",
+          "world:bo",
+          "world:pe"
+        ],
+        "world:cm": [
+          "world:cf",
+          "world:cg",
+          "world:ga",
+          "world:gq",
+          "world:ne",
+          "world:ng",
+          "world:td"
+        ],
+        "world:cn": [
+          "world:af",
+          "world:bd",
+          "world:bt",
+          "world:hk",
+          "world:in",
+          "world:kg",
+          "world:kp",
+          "world:kz",
+          "world:la",
+          "world:mm",
+          "world:mn",
+          "world:mo",
+          "world:np",
+          "world:pk",
+          "world:ru",
+          "world:th",
+          "world:tj",
+          "world:tw",
+          "world:uz",
+          "world:vn"
+        ],
+        "world:co": [
+          "world:aw",
+          "world:br",
+          "world:ec",
+          "world:pa",
+          "world:pe",
+          "world:ve"
+        ],
+        "world:cr": [
+          "world:ni",
+          "world:pa"
+        ],
+        "world:cu": [
+          "world:bs",
+          "world:ht",
+          "world:jm",
+          "world:us"
+        ],
+        "world:cv": [],
+        "world:cw": [
+          "world:aw",
+          "world:bq",
+          "world:ve"
+        ],
+        "world:cx": [],
+        "world:cy": [
+          "world:sy",
+          "world:tr"
+        ],
+        "world:cz": [
+          "world:at",
+          "world:de",
+          "world:hu",
+          "world:pl",
+          "world:sk"
+        ],
+        "world:de": [
+          "world:at",
+          "world:be",
+          "world:ch",
+          "world:cz",
+          "world:dk",
+          "world:fr",
+          "world:it",
+          "world:li",
+          "world:lu",
+          "world:nl",
+          "world:pl",
+          "world:se"
+        ],
+        "world:dj": [
+          "world:er",
+          "world:et",
+          "world:so",
+          "world:ye"
+        ],
+        "world:dk": [
+          "world:de",
+          "world:se"
+        ],
+        "world:dm": [
+          "world:ag",
+          "world:gp",
+          "world:lc",
+          "world:mq",
+          "world:ms"
+        ],
+        "world:do": [
+          "world:ht",
+          "world:pr"
+        ],
+        "world:dz": [
+          "world:eh",
+          "world:ly",
+          "world:ma",
+          "world:ml",
+          "world:mr",
+          "world:ne",
+          "world:tn"
+        ],
+        "world:ec": [
+          "world:co",
+          "world:pe"
+        ],
+        "world:eg": [
+          "world:il",
+          "world:jo",
+          "world:ly",
+          "world:ps",
+          "world:sa",
+          "world:sd"
+        ],
+        "world:ee": [
+          "world:fi",
+          "world:lv",
+          "world:ru"
+        ],
+        "world:eh": [
+          "world:dz",
+          "world:es",
+          "world:ma",
+          "world:mr"
+        ],
+        "world:er": [
+          "world:dj",
+          "world:et",
+          "world:sd",
+          "world:so",
+          "world:ye"
+        ],
+        "world:es": [
+          "world:ad",
+          "world:eh",
+          "world:fr",
+          "world:gi",
+          "world:ma",
+          "world:pt"
+        ],
+        "world:et": [
+          "world:dj",
+          "world:er",
+          "world:ke",
+          "world:sd",
+          "world:so",
+          "world:ss",
+          "world:ye"
+        ],
+        "world:fi": [
+          "world:ax",
+          "world:ee",
+          "world:no",
+          "world:ru",
+          "world:se"
+        ],
+        "world:fj": [],
+        "world:fk": [],
+        "world:fm": [],
+        "world:fo": [],
+        "world:fr": [
+          "world:ad",
+          "world:be",
+          "world:ch",
+          "world:de",
+          "world:es",
+          "world:gb",
+          "world:gg",
+          "world:it",
+          "world:je",
+          "world:lu",
+          "world:mc",
+          "world:nl"
+        ],
+        "world:ga": [
+          "world:ao",
+          "world:cd",
+          "world:cg",
+          "world:cm",
+          "world:gq"
+        ],
+        "world:gb": [
+          "world:be",
+          "world:fr",
+          "world:ie",
+          "world:im"
+        ],
+        "world:ge": [
+          "world:am",
+          "world:az",
+          "world:ru",
+          "world:tr"
+        ],
+        "world:gd": [
+          "world:tt",
+          "world:vc",
+          "world:ve"
+        ],
+        "world:gf": [
+          "world:br",
+          "world:sr"
+        ],
+        "world:gg": [
+          "world:fr",
+          "world:je"
+        ],
+        "world:gh": [
+          "world:bf",
+          "world:bj",
+          "world:ci",
+          "world:tg"
+        ],
+        "world:gi": [
+          "world:es",
+          "world:ma"
+        ],
+        "world:gl": [],
+        "world:gm": [
+          "world:gn",
+          "world:gw",
+          "world:sn"
+        ],
+        "world:gn": [
+          "world:ci",
+          "world:gm",
+          "world:gw",
+          "world:lr",
+          "world:ml",
+          "world:sl",
+          "world:sn"
+        ],
+        "world:go": [],
+        "world:gp": [
+          "world:ag",
+          "world:dm",
+          "world:kn",
+          "world:mq",
+          "world:ms"
+        ],
+        "world:gq": [
+          "world:cm",
+          "world:ga",
+          "world:ng"
+        ],
+        "world:gr": [
+          "world:al",
+          "world:bg",
+          "world:it",
+          "world:mk",
+          "world:rs",
+          "world:tr",
+          "world:xk"
+        ],
+        "world:gs": [],
+        "world:gt": [
+          "world:bz",
+          "world:hn",
+          "world:mx",
+          "world:sv"
+        ],
+        "world:gu": [
+          "world:mp"
+        ],
+        "world:gw": [
+          "world:gm",
+          "world:gn",
+          "world:sn"
+        ],
+        "world:gy": [
+          "world:br",
+          "world:sr",
+          "world:ve"
+        ],
+        "world:hk": [
+          "world:cn",
+          "world:mo"
+        ],
+        "world:hm": [],
+        "world:hn": [
+          "world:bz",
+          "world:gt",
+          "world:ni",
+          "world:sv"
+        ],
+        "world:hr": [
+          "world:al",
+          "world:at",
+          "world:ba",
+          "world:hu",
+          "world:it",
+          "world:me",
+          "world:ro",
+          "world:rs",
+          "world:si"
+        ],
+        "world:ht": [
+          "world:bs",
+          "world:cu",
+          "world:do"
+        ],
+        "world:hu": [
+          "world:at",
+          "world:ba",
+          "world:cz",
+          "world:hr",
+          "world:pl",
+          "world:ro",
+          "world:rs",
+          "world:si",
+          "world:sk",
+          "world:ua"
+        ],
+        "world:id": [
+          "world:au",
+          "world:bn",
+          "world:my",
+          "world:pg",
+          "world:sg",
+          "world:tl"
+        ],
+        "world:ie": [
+          "world:gb",
+          "world:im"
+        ],
+        "world:il": [
+          "world:eg",
+          "world:jo",
+          "world:lb",
+          "world:ps",
+          "world:sa",
+          "world:sy"
+        ],
+        "world:im": [
+          "world:gb",
+          "world:ie"
+        ],
+        "world:in": [
+          "world:bd",
+          "world:bt",
+          "world:cn",
+          "world:lk",
+          "world:mm",
+          "world:np",
+          "world:pk"
+        ],
+        "world:io": [],
+        "world:iq": [
+          "world:ir",
+          "world:jo",
+          "world:kw",
+          "world:sa",
+          "world:sy",
+          "world:tr"
+        ],
+        "world:ir": [
+          "world:ae",
+          "world:af",
+          "world:am",
+          "world:az",
+          "world:iq",
+          "world:kw",
+          "world:om",
+          "world:pk",
+          "world:tm",
+          "world:tr"
+        ],
+        "world:is": [],
+        "world:it": [
+          "world:al",
+          "world:at",
+          "world:ch",
+          "world:de",
+          "world:fr",
+          "world:gr",
+          "world:hr",
+          "world:li",
+          "world:mc",
+          "world:mt",
+          "world:si",
+          "world:sm",
+          "world:tn",
+          "world:va"
+        ],
+        "world:je": [
+          "world:fr",
+          "world:gg"
+        ],
+        "world:jm": [
+          "world:cu"
+        ],
+        "world:jo": [
+          "world:eg",
+          "world:il",
+          "world:iq",
+          "world:lb",
+          "world:ps",
+          "world:sa",
+          "world:sy"
+        ],
+        "world:jp": [
+          "world:kr",
+          "world:ru"
+        ],
+        "world:ju": [
+          "world:mg"
+        ],
+        "world:ke": [
+          "world:et",
+          "world:so",
+          "world:ss",
+          "world:tz",
+          "world:ug"
+        ],
+        "world:kg": [
+          "world:af",
+          "world:cn",
+          "world:kz",
+          "world:tj",
+          "world:uz"
+        ],
+        "world:kh": [
+          "world:la",
+          "world:th",
+          "world:vn"
+        ],
+        "world:ki": [],
+        "world:km": [
+          "world:yt"
+        ],
+        "world:kn": [
+          "world:ag",
+          "world:ai",
+          "world:bl",
+          "world:bq",
+          "world:gp",
+          "world:mf",
+          "world:ms",
+          "world:sx"
+        ],
+        "world:kp": [
+          "world:cn",
+          "world:kr",
+          "world:ru"
+        ],
+        "world:kr": [
+          "world:jp",
+          "world:kp"
+        ],
+        "world:xk": [
+          "world:al",
+          "world:ba",
+          "world:bg",
+          "world:gr",
+          "world:me",
+          "world:mk",
+          "world:rs"
+        ],
+        "world:kw": [
+          "world:iq",
+          "world:ir",
+          "world:sa"
+        ],
+        "world:ky": [],
+        "world:kz": [
+          "world:cn",
+          "world:kg",
+          "world:mn",
+          "world:ru",
+          "world:tj",
+          "world:tm",
+          "world:uz"
+        ],
+        "world:la": [
+          "world:cn",
+          "world:kh",
+          "world:mm",
+          "world:th",
+          "world:vn"
+        ],
+        "world:lb": [
+          "world:il",
+          "world:jo",
+          "world:ps",
+          "world:sy",
+          "world:tr"
+        ],
+        "world:lc": [
+          "world:bb",
+          "world:dm",
+          "world:mq",
+          "world:vc"
+        ],
+        "world:li": [
+          "world:at",
+          "world:ch",
+          "world:de",
+          "world:it"
+        ],
+        "world:lk": [
+          "world:in"
+        ],
+        "world:lr": [
+          "world:ci",
+          "world:gn",
+          "world:sl"
+        ],
+        "world:ls": [
+          "world:za"
+        ],
+        "world:lt": [
+          "world:by",
+          "world:lv",
+          "world:pl",
+          "world:ru"
+        ],
+        "world:lu": [
+          "world:be",
+          "world:de",
+          "world:fr",
+          "world:nl"
+        ],
+        "world:lv": [
+          "world:by",
+          "world:ee",
+          "world:lt",
+          "world:ru"
+        ],
+        "world:ly": [
+          "world:dz",
+          "world:eg",
+          "world:ne",
+          "world:sd",
+          "world:td",
+          "world:tn"
+        ],
+        "world:ma": [
+          "world:dz",
+          "world:eh",
+          "world:es",
+          "world:gi",
+          "world:mr"
+        ],
+        "world:mc": [
+          "world:fr",
+          "world:it"
+        ],
+        "world:md": [
+          "world:ro",
+          "world:ua"
+        ],
+        "world:mg": [
+          "world:ju"
+        ],
+        "world:me": [
+          "world:al",
+          "world:ba",
+          "world:hr",
+          "world:mk",
+          "world:rs",
+          "world:xk"
+        ],
+        "world:mf": [
+          "world:ag",
+          "world:ai",
+          "world:bl",
+          "world:bq",
+          "world:kn",
+          "world:sx",
+          "world:vg",
+          "world:vi"
+        ],
+        "world:mh": [],
+        "world:mk": [
+          "world:al",
+          "world:bg",
+          "world:gr",
+          "world:me",
+          "world:rs",
+          "world:xk"
+        ],
+        "world:ml": [
+          "world:bf",
+          "world:ci",
+          "world:dz",
+          "world:gn",
+          "world:mr",
+          "world:ne",
+          "world:sn"
+        ],
+        "world:mo": [
+          "world:cn",
+          "world:hk"
+        ],
+        "world:mm": [
+          "world:bd",
+          "world:cn",
+          "world:in",
+          "world:la",
+          "world:th",
+          "world:vn"
+        ],
+        "world:mn": [
+          "world:cn",
+          "world:kz",
+          "world:ru"
+        ],
+        "world:mp": [
+          "world:gu"
+        ],
+        "world:mq": [
+          "world:dm",
+          "world:gp",
+          "world:lc",
+          "world:vc"
+        ],
+        "world:mr": [
+          "world:dz",
+          "world:eh",
+          "world:ma",
+          "world:ml",
+          "world:sn"
+        ],
+        "world:ms": [
+          "world:ag",
+          "world:bl",
+          "world:bq",
+          "world:dm",
+          "world:gp",
+          "world:kn"
+        ],
+        "world:mt": [
+          "world:it"
+        ],
+        "world:mu": [],
+        "world:mv": [],
+        "world:mw": [
+          "world:mz",
+          "world:tz",
+          "world:zm"
+        ],
+        "world:mx": [
+          "world:bz",
+          "world:gt",
+          "world:us"
+        ],
+        "world:my": [
+          "world:bn",
+          "world:id",
+          "world:ph",
+          "world:sg",
+          "world:th"
+        ],
+        "world:mz": [
+          "world:mw",
+          "world:sz",
+          "world:tz",
+          "world:za",
+          "world:zm",
+          "world:zw"
+        ],
+        "world:na": [
+          "world:ao",
+          "world:bw",
+          "world:za",
+          "world:zm",
+          "world:zw"
+        ],
+        "world:nc": [],
+        "world:ne": [
+          "world:bf",
+          "world:bj",
+          "world:cm",
+          "world:dz",
+          "world:ly",
+          "world:ml",
+          "world:ng",
+          "world:td"
+        ],
+        "world:nf": [],
+        "world:ng": [
+          "world:bf",
+          "world:bj",
+          "world:cm",
+          "world:gq",
+          "world:ne",
+          "world:td",
+          "world:tg"
+        ],
+        "world:ni": [
+          "world:cr",
+          "world:hn",
+          "world:pa",
+          "world:sv"
+        ],
+        "world:nl": [
+          "world:be",
+          "world:de",
+          "world:fr",
+          "world:lu"
+        ],
+        "world:no": [
+          "world:fi",
+          "world:ru",
+          "world:se"
+        ],
+        "world:np": [
+          "world:bd",
+          "world:bt",
+          "world:cn",
+          "world:in"
+        ],
+        "world:nr": [],
+        "world:nu": [],
+        "world:nz": [],
+        "world:om": [
+          "world:ae",
+          "world:ir",
+          "world:sa",
+          "world:ye"
+        ],
+        "world:pa": [
+          "world:co",
+          "world:cr",
+          "world:ni"
+        ],
+        "world:pe": [
+          "world:bo",
+          "world:br",
+          "world:cl",
+          "world:co",
+          "world:ec"
+        ],
+        "world:pf": [],
+        "world:pg": [
+          "world:au",
+          "world:id",
+          "world:sb"
+        ],
+        "world:ph": [
+          "world:my"
+        ],
+        "world:pk": [
+          "world:af",
+          "world:cn",
+          "world:in",
+          "world:ir",
+          "world:tj"
+        ],
+        "world:pl": [
+          "world:by",
+          "world:cz",
+          "world:de",
+          "world:hu",
+          "world:lt",
+          "world:ro",
+          "world:ru",
+          "world:sk",
+          "world:ua"
+        ],
+        "world:pm": [
+          "world:ca"
+        ],
+        "world:pn": [],
+        "world:pr": [
+          "world:do",
+          "world:vg",
+          "world:vi"
+        ],
+        "world:ps": [
+          "world:eg",
+          "world:il",
+          "world:jo",
+          "world:lb",
+          "world:sa",
+          "world:sy"
+        ],
+        "world:pt": [
+          "world:es"
+        ],
+        "world:pw": [],
+        "world:py": [
+          "world:ar",
+          "world:bo",
+          "world:br"
+        ],
+        "world:qa": [
+          "world:ae",
+          "world:bh",
+          "world:sa"
+        ],
+        "world:re": [],
+        "world:ro": [
+          "world:bg",
+          "world:hr",
+          "world:hu",
+          "world:md",
+          "world:pl",
+          "world:rs",
+          "world:sk",
+          "world:ua"
+        ],
+        "world:rs": [
+          "world:al",
+          "world:ba",
+          "world:bg",
+          "world:gr",
+          "world:hr",
+          "world:hu",
+          "world:me",
+          "world:mk",
+          "world:ro",
+          "world:xk"
+        ],
+        "world:ru": [
+          "world:am",
+          "world:az",
+          "world:by",
+          "world:cn",
+          "world:ee",
+          "world:fi",
+          "world:ge",
+          "world:jp",
+          "world:kp",
+          "world:kz",
+          "world:lt",
+          "world:lv",
+          "world:mn",
+          "world:no",
+          "world:pl",
+          "world:ua"
+        ],
+        "world:rw": [
+          "world:bi",
+          "world:cd",
+          "world:tz",
+          "world:ug"
+        ],
+        "world:sa": [
+          "world:ae",
+          "world:bh",
+          "world:eg",
+          "world:il",
+          "world:iq",
+          "world:jo",
+          "world:kw",
+          "world:om",
+          "world:ps",
+          "world:qa",
+          "world:sy",
+          "world:ye"
+        ],
+        "world:sb": [
+          "world:pg"
+        ],
+        "world:sc": [],
+        "world:sd": [
+          "world:cf",
+          "world:eg",
+          "world:er",
+          "world:et",
+          "world:ly",
+          "world:ss",
+          "world:td"
+        ],
+        "world:se": [
+          "world:ax",
+          "world:de",
+          "world:dk",
+          "world:fi",
+          "world:no"
+        ],
+        "world:sg": [
+          "world:id",
+          "world:my"
+        ],
+        "world:sh": [],
+        "world:si": [
+          "world:at",
+          "world:ba",
+          "world:hr",
+          "world:hu",
+          "world:it"
+        ],
+        "world:sj": [],
+        "world:sk": [
+          "world:at",
+          "world:cz",
+          "world:hu",
+          "world:pl",
+          "world:ro",
+          "world:ua"
+        ],
+        "world:sl": [
+          "world:gn",
+          "world:lr"
+        ],
+        "world:sm": [
+          "world:it"
+        ],
+        "world:sn": [
+          "world:gm",
+          "world:gn",
+          "world:gw",
+          "world:ml",
+          "world:mr"
+        ],
+        "world:so": [
+          "world:dj",
+          "world:er",
+          "world:et",
+          "world:ke",
+          "world:ye"
+        ],
+        "world:sr": [
+          "world:br",
+          "world:gf",
+          "world:gy"
+        ],
+        "world:ss": [
+          "world:cd",
+          "world:cf",
+          "world:et",
+          "world:ke",
+          "world:sd",
+          "world:ug"
+        ],
+        "world:st": [],
+        "world:sv": [
+          "world:gt",
+          "world:hn",
+          "world:ni"
+        ],
+        "world:sx": [
+          "world:ag",
+          "world:ai",
+          "world:bl",
+          "world:bq",
+          "world:kn",
+          "world:mf",
+          "world:vg",
+          "world:vi"
+        ],
+        "world:sy": [
+          "world:cy",
+          "world:il",
+          "world:iq",
+          "world:jo",
+          "world:lb",
+          "world:ps",
+          "world:sa",
+          "world:tr"
+        ],
+        "world:sz": [
+          "world:mz",
+          "world:za"
+        ],
+        "world:tc": [
+          "world:bs"
+        ],
+        "world:td": [
+          "world:cf",
+          "world:cm",
+          "world:ly",
+          "world:ne",
+          "world:ng",
+          "world:sd"
+        ],
+        "world:tf": [],
+        "world:tg": [
+          "world:bf",
+          "world:bj",
+          "world:gh",
+          "world:ng"
+        ],
+        "world:th": [
+          "world:cn",
+          "world:kh",
+          "world:la",
+          "world:mm",
+          "world:my",
+          "world:vn"
+        ],
+        "world:tj": [
+          "world:af",
+          "world:cn",
+          "world:kg",
+          "world:kz",
+          "world:pk",
+          "world:tm",
+          "world:uz"
+        ],
+        "world:tk": [],
+        "world:tl": [
+          "world:id"
+        ],
+        "world:tm": [
+          "world:af",
+          "world:ir",
+          "world:kz",
+          "world:tj",
+          "world:uz"
+        ],
+        "world:tn": [
+          "world:dz",
+          "world:it",
+          "world:ly"
+        ],
+        "world:to": [],
+        "world:tr": [
+          "world:am",
+          "world:az",
+          "world:bg",
+          "world:cy",
+          "world:ge",
+          "world:gr",
+          "world:iq",
+          "world:ir",
+          "world:lb",
+          "world:sy"
+        ],
+        "world:tt": [
+          "world:gd",
+          "world:ve"
+        ],
+        "world:tv": [],
+        "world:tw": [
+          "world:cn"
+        ],
+        "world:tz": [
+          "world:bi",
+          "world:cd",
+          "world:ke",
+          "world:mw",
+          "world:mz",
+          "world:rw",
+          "world:ug",
+          "world:zm"
+        ],
+        "world:ua": [
+          "world:by",
+          "world:hu",
+          "world:md",
+          "world:pl",
+          "world:ro",
+          "world:ru",
+          "world:sk"
+        ],
+        "world:ug": [
+          "world:bi",
+          "world:cd",
+          "world:ke",
+          "world:rw",
+          "world:ss",
+          "world:tz"
+        ],
+        "world:us": [
+          "world:bs",
+          "world:ca",
+          "world:cu",
+          "world:mx"
+        ],
+        "world:uy": [
+          "world:ar",
+          "world:br"
+        ],
+        "world:uz": [
+          "world:af",
+          "world:cn",
+          "world:kg",
+          "world:kz",
+          "world:tj",
+          "world:tm"
+        ],
+        "world:va": [
+          "world:it"
+        ],
+        "world:vc": [
+          "world:bb",
+          "world:gd",
+          "world:lc",
+          "world:mq"
+        ],
+        "world:ve": [
+          "world:aw",
+          "world:bq",
+          "world:br",
+          "world:co",
+          "world:cw",
+          "world:gd",
+          "world:gy",
+          "world:tt"
+        ],
+        "world:vg": [
+          "world:ai",
+          "world:bq",
+          "world:mf",
+          "world:pr",
+          "world:sx",
+          "world:vi"
+        ],
+        "world:vi": [
+          "world:ai",
+          "world:bq",
+          "world:mf",
+          "world:pr",
+          "world:sx",
+          "world:vg"
+        ],
+        "world:vn": [
+          "world:cn",
+          "world:kh",
+          "world:la",
+          "world:mm",
+          "world:th"
+        ],
+        "world:vu": [],
+        "world:wf": [],
+        "world:ws": [
+          "world:as"
+        ],
+        "world:ye": [
+          "world:dj",
+          "world:er",
+          "world:et",
+          "world:om",
+          "world:sa",
+          "world:so"
+        ],
+        "world:yt": [
+          "world:km"
+        ],
+        "world:za": [
+          "world:bw",
+          "world:ls",
+          "world:mz",
+          "world:na",
+          "world:sz",
+          "world:zw"
+        ],
+        "world:zm": [
+          "world:ao",
+          "world:bw",
+          "world:cd",
+          "world:mw",
+          "world:mz",
+          "world:na",
+          "world:tz",
+          "world:zw"
+        ],
+        "world:zw": [
+          "world:bw",
+          "world:mz",
+          "world:na",
+          "world:za",
+          "world:zm"
+        ]
+      },
+      "suspicious": [
+        [
+          [
+            "world:mf",
+            "world:vi"
+          ],
+          2
+        ],
+        [
+          [
+            "world:au",
+            "world:id"
+          ],
+          2
+        ],
+        [
+          [
+            "world:ni",
+            "world:pa"
+          ],
+          2
+        ]
+      ]
+    }
+  }
+}
