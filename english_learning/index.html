@@ -5123,17 +5123,25 @@
       terr.innerHTML = '<p class="op-hint">⚔️ Attack ' + dispName(h.owner) + " — you can't scout the garrison. Assign troops by type:</p>";
       deployPanel(terr, poolAvail(), { attack: true, foe: [], label: "⚔️ Attack", onGo: squad => {
         const atkForce = sumHp(squad);
-        poolSpend(squad); closeModal();
-        terrEngage(key, function (foe) {   // 開戰才揭露守軍(戰霧)
-          const defForce = sumHp((foe && foe.troops) || []);
-          runBattle(squad, (foe && foe.troops) || [], dispName(h.owner), function (win, survivors) {
-            poolAdd(survivors);                                   // 生還者(分兵種)撤回兵力池（尚未佔領）
-            terrAttackResult(key, win);                            // 失敗 −50 / 守方 +50
-            if (win) releaseTerritory(key, pop, function () {});   // 打贏 → 清成無主
-            logEvent("attack", { region: name, target: h.owner, key: key, atk: atkForce, def: defForce, win: win });   // 記事件(含攻/守軍力)
-            saveEconomy(function () { renderEmpire(); refreshMap(); });
-          }, (foe && foe.tech) || null);
-        });
+        closeModal();
+        // 後端權威：把出征兵交給 /api/territory/attack，勝負/傷亡/生還/金幣皆由後端決定。
+        // 前端只用回傳的 defenderOrder 重播動畫(非權威)，結束後重新載入狀態。
+        const t = authToken(); if (!t) { alert("Log in first."); return; }
+        fetch(withRoom("/api/territory/attack?token=" + encodeURIComponent(t)),
+          { method: "POST", body: JSON.stringify({ file: key, squad: squad }) })
+          .then(r => r.json().catch(() => ({})).then(j => ({ ok: r.ok, j: j })))
+          .then(o => {
+            if (!o.ok || !o.j.ok) { alert("Attack failed: " + ((o.j && o.j.error) || "unknown")); loadEconomy(function () { loadTerritory(function () { renderEmpire(); refreshMap(); }); }); return; }
+            const res = o.j, order = res.defenderOrder || [], defForce = sumHp(order);
+            const finish = function () {
+              logEvent("attack", { region: name, target: res.defender || h.owner, key: key, atk: atkForce, def: defForce, win: res.attackerWon });
+              if (res.gold != null && myEcon) myEcon.gold = res.gold;
+              loadEconomy(function () { loadTerritory(function () { renderEmpire(); refreshMap(); }); });
+            };
+            // 重播後端已判定的戰鬥(用 server 的 defenderOrder + defenderTech → 動畫與結果一致)
+            runBattle(squad, order, dispName(res.defender || h.owner), finish, res.defenderTech || (h && h.tech) || null, true);
+          })
+          .catch(function () { alert("Couldn't reach the server."); });
       } });
       return;
     }
@@ -5779,9 +5787,13 @@
     }
   }
 
-  function runBattle(attTroops, defTroops, foeName, onResult, defTech) {
+  // preOrdered=true → defTroops is the exact (server-resolved) defender order; skip the local shuffle so
+  //   the animation replays the backend-authoritative battle. onResult is display-only (backend already
+  //   persisted the outcome); it must NOT mutate authoritative state.
+  function runBattle(attTroops, defTroops, foeName, onResult, defTech, preOrdered) {
     const att = aliveTroops(attTroops).map(u => ({ type: u.type, hp: u.hp, max: u.hp }));
-    const def = shuffled(aliveTroops(defTroops)).map(u => ({ type: u.type, hp: u.hp, max: u.hp }));
+    const defAlive = aliveTroops(defTroops);
+    const def = (preOrdered ? defAlive : shuffled(defAlive)).map(u => ({ type: u.type, hp: u.hp, max: u.hp }));
     const dForge = techAtk(defTech), dArmor = techDef(defTech);   // 守軍兵工廠科技加成
     const attTech = (myEcon && myEcon.tech) || {};                // 你的「家鄉科技」加成攻擊軍
     const aForge = techAtk(attTech), aArmor = techDef(attTech);

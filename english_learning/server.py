@@ -14,6 +14,7 @@ try:                                   # 正規領地目錄(唯讀權威)：身�
     from territory_catalog import catalog as terr_catalog
 except Exception:
     terr_catalog = None
+from game import conquest as game_conquest, config as game_config, economy as game_economy   # 核心遊戲領域
 
 # 房間地圖(等級 id) -> 主 canonical mapId。子地圖(下鑽)改由 world-data/maps.json 的 childMaps 提供。
 LEVEL_PRIMARY_MAP = {"Pre-A1": "taiwan", "A1": "china", "A2": "world", "B1": "world"}
@@ -393,12 +394,8 @@ def econ_get(store, user, now, region_pop=0):
             last = now
     else:
         last = now                                  # 舊帳號首次改用金幣制 → 從現在起算，不回溯灌金幣
-    hours = int((now - last) // GROW_SECONDS)
-    if hours > 0:
-        rp = clampi(region_pop)
-        # 只累積金幣：每小時 (家鄉人口 + 領地人口) × GOLD_RATE。人口不再自動成長。
-        gold = clampi(gold + min(hours, ECON_MAX_CATCHUP) * int(round((pop + rp) * GOLD_RATE)))
-        last = last + hours * GROW_SECONDS               # 時鐘照實推進（即使被 catch-up 上限截斷）
+    # 被動金幣結算委派給 Game Domain(game.economy)——單一權威公式，行為不變。
+    gold, last = game_economy.calculate_passive_gold(gold, pop, clampi(region_pop), last, now)
     e["population"], e["gold"], e["lastGold"] = pop, gold, last
     e["troops"] = _norm_troops(e.get("troops", 0))   # 兵力池分兵種保存(舊的單一數字會自動轉)
     if not isinstance(e.get("passcnt"), dict):       # 每課通過次數(佔領解鎖用)——改由後端統一保存
@@ -639,37 +636,9 @@ def _def_bonus(df, at):        # 守方 df 面對攻方 at 的防守倍率（對
     return 1.0
 
 
-def _alive(troops):            # -> [(type, hp)]，只留活著且合法兵種
-    out = []
-    for t in (troops or []):
-        if not isinstance(t, dict):
-            continue
-        ty = str(t.get("type", ""))
-        hp = int(t.get("hp", 0) or 0)
-        if ty in TROOP_KINDS and hp > 0:
-            out.append((ty, hp))
-    return out
-
-
-def _mix(force):               # 兵種占比（依 hp 加權）
-    tot = sum(hp for _, hp in force) or 1
-    m = {}
-    for ty, hp in force:
-        m[ty] = m.get(ty, 0) + hp / tot
-    return m
-
-
-def _force_power(force, enemy):
-    # 兵力 × 對「敵方兵種組成」的加權克制倍率
-    em = _mix(enemy)
-    p = 0.0
-    for ty, hp in force:
-        if em:
-            mult = sum(frac * _atk_bonus(ty, ety) / _def_bonus(ety, ty) for ety, frac in em.items())
-        else:
-            mult = 1.0
-        p += hp * (mult or 1.0)
-    return p
+# NOTE (Phase 2A): the legacy aggregate "_force_power / _mix / _alive" AI battle formula was
+# RETIRED. The AI now resolves battles through the one canonical engine (game.battle via
+# game.conquest.resolve_attack), the same rules as player battles.
 
 
 def _region_display(key):       # 從 store key 生一個看得懂的名字給事件牆用
@@ -765,7 +734,6 @@ def ai_move(ai_name=AI_OWNER, difficulty=AI_DIFFICULTY, ai_names=None):
                 save_econ_store(estore)
                 return None
             act = ("attack" if random.random() < 0.6 else "occupy") if len(choices) == 2 else choices[0]
-            atk_tuples = [(t["type"], t["hp"]) for t in army]
 
             if act == "occupy":
                 key = random.choice(unowned_known)
@@ -777,25 +745,19 @@ def ai_move(ai_name=AI_OWNER, difficulty=AI_DIFFICULTY, ai_names=None):
                 key = random.choice(player_regions)
                 h = store[key]
                 victim = h.get("owner")
-                defender = _alive(h.get("troops"))
-                tech = h.get("tech") or {}
-                forge = 1 + 0.10 * clampi(tech.get("atk", 0))
-                armor = 1 + 0.08 * clampi(tech.get("def", 0))
-                ap = _force_power(atk_tuples, defender) / armor * random.uniform(0.85, 1.15)
-                dp = _force_power(defender, atk_tuples) * forge * 1.10 * random.uniform(0.85, 1.15)
                 region = _region_display(key)
-                atk_force, def_force = pool_total, sum(hp for _, hp in defender)
-                if ap > dp:                            # AI 贏 → 存活主力進駐打下的地
-                    surv_frac = max(0.2, min(0.9, 1 - dp / (ap + 1)))
-                    surv = [{"type": t["type"], "hp": max(1, int(t["hp"] * surv_frac))} for t in army]
+                def_troops = h.get("troops") or []
+                atk_force = pool_total
+                def_force = sum(clampi(t.get("hp", 0)) for t in def_troops if isinstance(t, dict))
+                # AI 用同一套權威戰鬥引擎(game.battle)。AI 無家鄉科技 → 攻方 tech {}；守方用該區科技。
+                res = game_conquest.resolve_attack(army, def_troops, {}, h.get("tech") or {}, random)
+                if res["attackerWon"]:                 # AI 贏 → 生還者進駐、取得所有權
+                    surv = res["attackerSurvivors"] or [{"type": army[0]["type"], "hp": 1}]
                     store[key] = {"owner": ai_name, "avatar": AI_AVATAR, "troops": surv,
                                   "pop": clampi(h.get("pop", cat.get(key, 100)))}
                     logged = ("attack_win", region, victim, key, atk_force, def_force)
-                else:                                  # AI 輸 → 出征兵力池全滅；守方只受小損
-                    dmg = min(0.25, ap / (dp + 1) * 0.25)
-                    for t in (h.get("troops") or []):
-                        if isinstance(t, dict):
-                            t["hp"] = max(0, int(int(t.get("hp", 0) or 0) * (1 - dmg)))
+                else:                                  # AI 輸 → 守方保留領地(以戰鬥引擎的生還者為準)
+                    h["troops"] = res["defenderSurvivors"]
                     logged = ("attack_fail", region, victim, key, atk_force, def_force)
                 ae["troops"] = _norm_troops(0)         # 出征即從兵力池扣光(勝→已移防；敗→全滅)
             save_econ_store(estore)
@@ -1060,6 +1022,8 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_territory_recruit()
         elif path == "/api/territory/engage":
             self._handle_territory_engage()
+        elif path == "/api/territory/attack":
+            self._handle_territory_attack()
         elif path == "/api/territory/attack-result":
             self._handle_territory_attack_result()
         elif path == "/api/territory/conscript":
@@ -1625,6 +1589,75 @@ class Handler(BaseHTTPRequestHandler):
             if defender and defender != user and defender != AI_OWNER:
                 econ_add_gold(defender, DEFEND_GOLD)   # 守方防守成功
         self._send({"ok": True, "gold": newgold})
+
+    # 攻打有主據點：後端權威地跑「正規戰鬥引擎」(game.battle，等同前端 runBattle 規則)。
+    # 前端只送出「投入哪些兵(squad)」，勝負/傷亡/生還由後端決定 → 前端動畫僅為重播/預覽。
+    # 語意對齊現有流程：贏 → 該區清成無主(之後過關佔領)、生還者回兵力池；輸 → 攻方 −50、守方 +50、生還者回池。
+    def _handle_territory_attack(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        d = self._body_json()
+        f = self._canon(d.get("file"))
+        if not f:
+            self._send({"error": "Unknown territory", "reason": "unresolved"}, 400)
+            return
+        squad = []
+        for t in (d.get("squad") or d.get("troops") or [])[:4]:
+            if isinstance(t, dict) and str(t.get("type")) in self.TROOP_TYPES:
+                hp = int(t.get("hp", 0) or 0)
+                if hp > 0:
+                    squad.append({"type": t["type"], "hp": max(0, min(100000, hp))})
+        if not squad:
+            self._send({"error": "no troops"}, 400)
+            return
+        defender = None
+        result = None
+        with terr_lock:
+            store = load_territory_store()
+            h = store.get(f)
+            if not (isinstance(h, dict) and h.get("owner")):
+                self._send({"error": "Territory is unclaimed — use claim, not attack", "reason": "neutral"}, 400)
+                return
+            if h.get("owner") == user:
+                self._send({"error": "Already yours", "reason": "own"}, 400)
+                return
+            defender = h.get("owner")
+            def_troops = h.get("troops") or []
+            def_tech = h.get("tech") or {}
+            with econ_lock:
+                estore = load_econ_store()
+                region_pop = user_region_pop(store, user)
+                e = econ_get(estore, user, time.time(), region_pop)
+                pool = e["troops"]                      # {type: count}
+                need = {}
+                for u in squad:
+                    need[u["type"]] = need.get(u["type"], 0) + u["hp"]
+                for ty, n in need.items():              # 後端驗證：真的有這麼多兵才准出征
+                    if clampi(pool.get(ty, 0)) < n:
+                        self._send({"error": "not enough troops", "reason": "troops"}, 400)
+                        return
+                for ty, n in need.items():
+                    pool[ty] = clampi(pool.get(ty, 0)) - n
+                result = game_conquest.resolve_attack(squad, def_troops, e.get("tech") or {}, def_tech, random.Random())
+                for s in result["attackerSurvivors"]:   # 生還者回兵力池(勝敗皆然，對齊現有)
+                    pool[s["type"]] = clampi(pool.get(s["type"], 0)) + s["hp"]
+                if not result["attackerWon"]:
+                    e["gold"] = clampi(e.get("gold", 0) - ATTACK_FAIL_GOLD)
+                save_econ_store(estore)
+                newgold = e["gold"]
+            if result["attackerWon"]:                    # 贏 → 清成無主(所有權之後靠過關佔領取得)
+                if f in store:
+                    del store[f]
+                save_territory_store(store)
+        # 守方防守成功 +50：在 terr_lock 之外呼叫(econ_add_gold 自己會取 terr_lock，避免巢狀死鎖)
+        if not result["attackerWon"] and defender and defender != user and defender != AI_OWNER:
+            econ_add_gold(defender, DEFEND_GOLD)
+        self._send({"ok": True, "attackerWon": result["attackerWon"], "gold": newgold,
+                    "attackerSurvivors": result["attackerSurvivors"],
+                    "defenderSurvivors": result["defenderSurvivors"],
+                    "defenderOrder": result["defenderOrder"], "defenderTech": def_tech, "defender": defender})
 
     # 全站事件牆：GET 取最近事件（所有人共見）
     def _handle_events(self):
