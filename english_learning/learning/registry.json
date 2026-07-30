@@ -2,16 +2,13 @@
   "schemaVersion": 1,
 
   "contentPacks": {
-    "english.prea1": {
-      "title": "English · Pre-A1"
-    }
+    "english.prea1": { "title": "English · Pre-A1" },
+    "english.a1": { "title": "English · A1" }
   },
 
   "courses": {
-    "english.prea1.taipei": {
-      "contentPackId": "english.prea1",
-      "title": "Taipei"
-    }
+    "english.prea1.taipei": { "contentPackId": "english.prea1", "title": "Taipei" },
+    "english.a1.core": { "contentPackId": "english.a1", "title": "A1 Core Readings" }
   },
 
   "units": {},
@@ -21,6 +18,11 @@
       "courseId": "english.prea1.taipei",
       "contentPath": "Pre-A1/taipei/zoo",
       "title": "Taipei · At the Zoo"
+    },
+    "english.a1.core.001": {
+      "courseId": "english.a1.core",
+      "contentPath": "A1/001",
+      "title": "A1 · 001 My Weekend"
     }
   },
 
@@ -33,6 +35,53 @@
       "grants": ["english.prea1.taipei.zoo"],
       "rewardPolicy": "standard_activity_pass",
       "legacyKeys": ["Pre-A1/taipei/zoo#quiz3"]
+    },
+
+    "english.prea1.taipei.zoo.quiz4": {
+      "lessonId": "english.prea1.taipei.zoo",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "Taipei · At the Zoo — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.prea1.taipei.zoo.wh": {
+      "lessonId": "english.prea1.taipei.zoo",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "Taipei · At the Zoo — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.prea1.taipei.zoo.cloze": {
+      "lessonId": "english.prea1.taipei.zoo",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "Taipei · At the Zoo — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.001.reorder": {
+      "lessonId": "english.a1.core.001",
+      "contentKey": "reorder",
+      "graderType": "reorder",
+      "title": "A1 · 001 — Sentence reordering",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.001.dictation": {
+      "lessonId": "english.a1.core.001",
+      "contentKey": "dictation",
+      "graderType": "dictation",
+      "title": "A1 · 001 — Dictation",
+      "grants": [],
+      "rewardPolicy": "none"
     }
   },
 

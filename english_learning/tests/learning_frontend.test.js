@@ -211,6 +211,43 @@ ok("Study navigation is metadata-driven (studyTarget -> contentPath); no hardcod
 }
 ok("attempt request carries {activityId, answers} only — no score/passed/qualification/gold/reward");
 
+// 6b) Phase 3C — every migrated controller collects answer EVIDENCE and submits it to the one
+//     authoritative endpoint, resets it per attempt, and still leaves scoring authority to the server.
+{
+  const CONTROLLERS = [
+    { fn: "makeQuiz", push: /chosen\.push\(\{ q: shuffled\[idx\]\.q, answer: choice \}\)/,
+      submit: /maybeSubmitLearningAttempt\(currentArticleKey, "quiz" \+ level, chosen\)/ },
+    { fn: "makeWh", push: /chosen\.push\(\{ q: it\.q, answer: choice \}\)/,
+      submit: /maybeSubmitLearningAttempt\(currentArticleKey, "wh", chosen\)/ },
+    { fn: "makeCloze", push: /chosen\.push\(\{ q: it\.text, answer: choice \}\)/,
+      submit: /maybeSubmitLearningAttempt\(currentArticleKey, "cloze", chosen\)/ },
+    { fn: "makeDictation", push: /chosen\.push\(\{ q: sentence, answer: input\.value \}\)/,
+      submit: /maybeSubmitLearningAttempt\(currentArticleKey, "dictation", chosen\)/ },
+    { fn: "makeReorder", push: /chosen\.push\(\{ q: sentences\[idx\]\.join\(" "\), answer: placed\.slice\(\) \}\)/,
+      submit: /maybeSubmitLearningAttempt\(currentArticleKey, "reorder", chosen\)/ },
+  ];
+  CONTROLLERS.forEach(c => {
+    const src = extractFn(html, "function " + c.fn + "(");
+    assert(/let chosen = \[\]/.test(src), c.fn + " must declare an evidence buffer");
+    assert(c.push.test(src), c.fn + " must record {q, answer} evidence");
+    assert(/chosen = \[\]/.test(src.replace(/let chosen = \[\]/, "")), c.fn + " must reset evidence per attempt");
+    assert(c.submit.test(src), c.fn + " must submit its evidence to the authoritative endpoint");
+    // the controller must not compute authority: no gold, no qualification, no pass declaration
+    ["myQualifications.add", "myEcon.gold =", "PASS_GOLD", "qualification"].forEach(bad =>
+      assert(src.indexOf(bad) < 0, c.fn + " must not touch " + bad));
+  });
+  // reorder submits only AFTER the last sentence, so evidence covers the whole activity
+  const ro = extractFn(html, "function makeReorder(");
+  assert(/recordScore\(6, sentences\.length, sentences\.length\);[\s\S]{0,120}maybeSubmitLearningAttempt/.test(ro),
+    "reorder must submit once, at the end of the activity");
+  // level 5 (matching) is deliberately NOT migrated - it must have no attempt submission
+  const match = extractFn(html, "function makeMatch(");
+  assert(match.indexOf("maybeSubmitLearningAttempt") < 0,
+    "makeMatch must NOT submit: matching is category B and stays client-scored in Phase 3C");
+  assert(/recordScore\(5, firstTry, seq\.length\)/.test(match), "makeMatch keeps its existing scoring");
+}
+ok("Phase 3C: quiz/wh/cloze/dictation/reorder submit evidence to one endpoint; matching left unmigrated");
+
 // 6) the client treats the server response as the authority and cannot self-grant
 const settle = () => new Promise(r => setImmediate(r));
 

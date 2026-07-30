@@ -45,9 +45,12 @@ assert G.grade("yes_no", KEY, None)["passed"] is False
 # a key item with a blank answer can never be scored correct (no free points)
 assert G.grade("yes_no", [{"q": "x", "answer": ""}], [{"q": "x", "answer": ""}])["correct"] == 0
 # unknown grader type -> never a pass, never an exception. THE OLD ACTIVITY-NAME API IS GONE.
-for bad in ("quiz3", "quiz4", "match", "reorder", None, "", "Yes_No"):
+for bad in ("quiz3", "quiz4", "match", "matching", "vocab", "pronunciation", "roleplay",
+            None, "", "Yes_No"):
     assert G.grade(bad, KEY, allright)["passed"] is False and not G.is_supported(bad), bad
-assert G.grader_types() == ["yes_no"], "Phase 3B ships exactly one grader (3C adds more)"
+# Phase 3C added three deterministic graders. `matching` stays OUT on purpose (category B — its score
+# depends on click history, see docs/deterministic-graders.md), as do pronunciation and roleplay.
+assert G.grader_types() == ["dictation", "multiple_choice", "reorder", "yes_no"], G.grader_types()
 assert G.PASS_MARK == 80
 ok("grading: type-dispatched, order/case-independent, threshold 80, unknown type never passes")
 

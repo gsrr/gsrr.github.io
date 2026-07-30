@@ -323,8 +323,8 @@ assert call("GET", "/api/learning/state?room=" + CODE, "tBOB")[1]["qualification
 ok("E2E scope: qualification is per-account (survives total defeat, crosses rooms, not shared)")
 
 # --- only registry-whitelisted, gradable activities are accepted; ids cannot escape CONTENT_ROOT ---
-for bad in ({"lessonId": LESSON, "activity": "match", "answers": []},          # real lesson, unregistered activity
-            {"lessonId": LESSON, "activity": "wh", "answers": []},
+for bad in ({"lessonId": LESSON, "activity": "vocab", "answers": []},   # real lesson, UNREGISTERED activity
+            {"lessonId": LESSON, "activity": "match", "answers": []},   # matching stays unmigrated (cat. B)
             {"lessonId": "A2/space/mars", "activity": "quiz3", "answers": []},  # unregistered lesson
             {"lessonId": "../server", "activity": "quiz3", "answers": []},      # traversal via legacy shape
             {"lessonId": "../../etc/passwd", "activity": "quiz3", "answers": []},

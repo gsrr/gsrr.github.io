@@ -2655,6 +2655,7 @@
   function makeReorder(progressEl, answerEl, poolEl, statusEl) {
     let sentences = [], idx = 0;
     let tokens = [], pool = [], placed = [], solved = false, timer = null;
+    let chosen = [];   // Phase 3C：每句解出的 token 順序 [{q: 原句, answer: [tokenIdx]}]（送後端批改）
 
     function startSentence() {
       clearTimeout(timer);
@@ -2703,6 +2704,7 @@
     function check() {
       if (placed.every((id, i) => id === i)) {
         solved = true;
+        chosen.push({ q: sentences[idx].join(" "), answer: placed.slice() });   // 記錄這句的 token 順序
         playDing();
         render();
         if (idx < sentences.length - 1) {
@@ -2713,6 +2715,7 @@
           statusEl.textContent = "🎉 All done! Great job!";
           recordScore(6, sentences.length, sentences.length);   // 重組完成 = 滿分
           markLevelDone(6);
+          maybeSubmitLearningAttempt(currentArticleKey, "reorder", chosen);   // 權威批改在後端
         }
       } else {
         statusEl.textContent = "Try again 🤔 (tap a word above to remove)";
@@ -2722,7 +2725,7 @@
     return {
       setData(s) {
         sentences = (s || []).filter(x => x && x.length);
-        idx = 0;
+        idx = 0; chosen = [];
         if (sentences.length) { startSentence(); }
         else {
           progressEl.textContent = "";
@@ -2731,7 +2734,7 @@
           statusEl.textContent = "(No reorder sentences in this lesson.)";
         }
       },
-      restart() { idx = 0; if (sentences.length) startSentence(); }
+      restart() { idx = 0; chosen = []; if (sentences.length) startSentence(); }
     };
   }
 
@@ -2744,11 +2747,12 @@
   /* ================= Level 7：WH 問題（三選一） ================= */
   function makeWh(boxEl) {
     let items = [], shuffled = [], idx = 0, correct = 0, answered = false, timer = null;
+    let chosen = [];   // Phase 3C：本次作答 [{q, answer}]（送後端權威批改用，非權威顯示）
 
     function build() {
       clearTimeout(timer);
       shuffled = shuffle(items);
-      idx = 0; correct = 0;
+      idx = 0; correct = 0; chosen = [];
       render();
     }
 
@@ -2801,6 +2805,7 @@
     function answer(choice, btn, opts, mark, it) {
       if (answered) return;
       answered = true;
+      chosen.push({ q: it.q, answer: choice });   // 記錄作答(依題目文字對回權威鍵)
       opts.querySelectorAll(".opt").forEach(b => {
         b.disabled = true;
         if (b.dataset.val === it.a) b.classList.add("correct");
@@ -2831,6 +2836,7 @@
       boxEl.appendChild(retry);
       recordScore(7, correct, m);
       markLevelDone(7);
+      maybeSubmitLearningAttempt(currentArticleKey, "wh", chosen);   // 權威批改在後端
     }
 
     return { setData(d) { items = d || []; build(); }, restart: build };
@@ -2842,6 +2848,7 @@
   function makeDictation(boxEl) {
     let items = [], shuffled = [], idx = 0, correct = 0, answered = false, timer = null;
     let speed = 1;   // 播放速度倍率，可由使用者調整
+    let chosen = [];   // Phase 3C：本次作答 [{q: 句子, answer: 打的字}]（送後端權威批改用）
     const SPEEDS = [{ mult: 0.7, label: "🐢 Slow" }, { mult: 1, label: "1×" }, { mult: 1.3, label: "🐇 Fast" }];
 
     function norm(s) {
@@ -2863,7 +2870,7 @@
     function build() {
       clearTimeout(timer);
       shuffled = shuffle(items);
-      idx = 0; correct = 0;
+      idx = 0; correct = 0; chosen = [];
       render();
     }
 
@@ -2941,6 +2948,7 @@
       const sentence = shuffled[idx];
       const ok = norm(input.value) === norm(sentence);
       answered = true;
+      chosen.push({ q: sentence, answer: input.value });   // 記錄作答原文(後端用同一個 norm 規則批改)
       input.disabled = true;
       if (ok) {
         fb.innerHTML = '<span class="dict-ok">✅ Correct!</span>';
@@ -2967,6 +2975,7 @@
                         correct + ' / ' + m + '  ' + emoji + '</div>';
       recordScore(8, correct, m);
       markLevelDone(8);
+      maybeSubmitLearningAttempt(currentArticleKey, "dictation", chosen);   // 權威批改在後端
     }
 
     return { setData(d) { items = d || []; build(); }, restart: build };
@@ -2977,11 +2986,12 @@
   /* ================= Level 9：單字填空（有選項） ================= */
   function makeCloze(boxEl) {
     let items = [], shuffled = [], idx = 0, correct = 0, answered = false, timer = null;
+    let chosen = [];   // Phase 3C：本次作答 [{q, answer}]（送後端權威批改用，非權威顯示）
 
     function build() {
       clearTimeout(timer);
       shuffled = shuffle(items);
-      idx = 0; correct = 0;
+      idx = 0; correct = 0; chosen = [];
       render();
     }
 
@@ -3030,6 +3040,7 @@
     function answer(choice, btn, opts, blank, it) {
       if (answered) return;
       answered = true;
+      chosen.push({ q: it.text, answer: choice });   // 記錄作答(依句子文字對回權威鍵)
       opts.querySelectorAll(".opt").forEach(b => {
         b.disabled = true;
         if (b.textContent === it.answer) b.classList.add("correct");
@@ -3057,6 +3068,7 @@
                         correct + ' / ' + m + '  ' + emoji + '</div>';
       recordScore(9, correct, m);
       markLevelDone(9);
+      maybeSubmitLearningAttempt(currentArticleKey, "cloze", chosen);   // 權威批改在後端
     }
 
     return { setData(d) { items = d || []; build(); }, restart: build };

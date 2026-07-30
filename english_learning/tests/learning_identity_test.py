@@ -111,12 +111,26 @@ rejects(lambda d: d["lessons"]["p.c.l"].update(contentPath="/abs"), "malformed c
 rejects(lambda d: d["lessons"]["p.c.l"].pop("contentPath"), "malformed contentPath")
 rejects(lambda d: d["activities"]["p.c.l.a"].pop("contentKey"), "missing/invalid contentKey")
 # grader
-rejects(lambda d: d["activities"]["p.c.l.a"].update(graderType="multiple_choice"), "unknown graderType")
+rejects(lambda d: d["activities"]["p.c.l.a"].update(graderType="matching"), "unknown graderType")
 rejects(lambda d: d["activities"]["p.c.l.a"].update(graderType="quiz3"), "unknown graderType")
+rejects(lambda d: d["activities"]["p.c.l.a"].update(graderType="pronunciation"), "unknown graderType")
 rejects(lambda d: d["activities"]["p.c.l.a"].pop("graderType"), "unknown graderType")
+# Phase 3C graderConfig validation
+rejects(lambda d: d["activities"]["p.c.l.a"].update(graderConfig="nope"), "graderConfig must be an object")
+rejects(lambda d: d["activities"]["p.c.l.a"].update(graderConfig={"bogusKey": "q"}), "unknown keys")
+rejects(lambda d: d["activities"]["p.c.l.a"].update(graderConfig={"promptField": ""}), "non-empty string")
+rejects(lambda d: d["activities"]["p.c.l.a"].update(graderConfig={"answerField": 5}), "non-empty string")
+rejects(lambda d: d["activities"]["p.c.l.a"].update(grants="p.q1"), "grants must be a list")
 # titles + grants
 rejects(lambda d: d["activities"]["p.c.l.a"].pop("title"), "no title")
-rejects(lambda d: d["activities"]["p.c.l.a"].update(grants=[]), "must grant at least one")
+# Phase 3C §24: an activity may be server-graded WITHOUT granting a qualification, so empty grants is
+# now valid — but the qualification it used to grant must then have another route (or not exist).
+import copy as _copy  # noqa: E402
+_no_grants = _copy.deepcopy(BASE)
+_no_grants["activities"]["p.c.l.a"]["grants"] = []
+_no_grants["qualifications"] = {}
+assert R.validate(_no_grants) == [], R.validate(_no_grants)
+assert R.Registry(_no_grants).qualification_ids_for("p.c.l.a") == []
 rejects(lambda d: d["activities"]["p.c.l.a"].update(grants=["p.q1", "p.q1"]), "duplicate qualification in grants")
 rejects(lambda d: d["qualifications"].update({"p.orphan": {"scope": "activity"}}), "no activity grants it")
 # reward policy trust boundary (§15)

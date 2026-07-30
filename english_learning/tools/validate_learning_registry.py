@@ -43,6 +43,52 @@ def warn(msg):
     warnings.append(msg)
 
 
+def shape_problems(grader_type, cfg, items):
+    """Does the real content match what `grader_type` needs? Returns a list of problem strings.
+
+    A grader that cannot read its content would silently score 0/0 at runtime, so this is checked at
+    validation time rather than discovered by a learner. Only the first offending item is reported per
+    problem so the output stays readable.
+    """
+    probs = []
+    if grader_type in ("yes_no", "multiple_choice"):
+        pf = (cfg or {}).get("promptField") or "q"
+        af = (cfg or {}).get("answerField") or ("answer" if grader_type == "yes_no" else "a")
+        for i, it in enumerate(items):
+            if not isinstance(it, dict):
+                probs.append("item %d is %s, expected an object" % (i, type(it).__name__))
+                break
+        else:
+            missing_p = [i for i, it in enumerate(items) if not str(it.get(pf) or "").strip()]
+            missing_a = [i for i, it in enumerate(items) if it.get(af) in (None, "")]
+            if missing_p:
+                probs.append("promptField %r missing/blank on item(s) %s" % (pf, missing_p[:5]))
+            if missing_a:
+                probs.append("answerField %r missing/blank on item(s) %s" % (af, missing_a[:5]))
+            if grader_type == "multiple_choice":
+                df = (cfg or {}).get("distractorsField") or "wrong"
+                nodis = [i for i, it in enumerate(items) if not isinstance(it.get(df), list) or not it[df]]
+                if nodis:
+                    probs.append("distractorsField %r missing/empty on item(s) %s — the activity would "
+                                 "offer only the correct answer" % (df, nodis[:5]))
+    elif grader_type == "reorder":
+        bad = [i for i, it in enumerate(items) if not isinstance(it, list) or not it]
+        if bad:
+            probs.append("reorder items must be non-empty token lists; offending item(s) %s" % bad[:5])
+        else:
+            joined = [" ".join(str(t) for t in it) for it in items]
+            if len(set(joined)) != len(joined):
+                probs.append("two reorder sentences join to the same text — answers could not be "
+                             "attributed to the right sentence")
+    elif grader_type == "dictation":
+        bad = [i for i, it in enumerate(items) if not isinstance(it, str) or not it.strip()]
+        if bad:
+            probs.append("dictation items must be non-empty strings; offending item(s) %s" % bad[:5])
+        elif len(set(s.strip() for s in items)) != len(items):
+            probs.append("duplicate dictation sentences — answers could not be attributed")
+    return probs
+
+
 def territory_requirements(catalog_dir):
     """{territoryId: [qualificationId, ...]} straight from world-data (no game logic involved)."""
     out = {}
@@ -81,7 +127,9 @@ def main():
         err("registry: " + e)
     reg = learning_registry.Registry(data)
 
-    # content files the registry promises must actually exist and expose the declared activity keys
+    # content files the registry promises must exist, expose the declared key, AND have a shape the
+    # declared grader can actually read (§35) — this is what catches a graderType/graderConfig that
+    # was pointed at the wrong content key.
     for aid, spec in sorted(reg.activities.items()):
         path = reg.content_path_of(aid)
         items = learning_content.load_activity_items(path, spec.get("contentKey"), ROOT,
@@ -89,6 +137,9 @@ def main():
         if items is None:
             err("activity %s: content %r has no usable %r list under CONTENT_ROOT"
                 % (aid, path, spec.get("contentKey")))
+            continue
+        for msg in shape_problems(spec.get("graderType"), reg.grader_config_of(aid), items):
+            err("activity %s (%s/%s): %s" % (aid, path, spec.get("contentKey"), msg))
 
     # every earnable qualification should be reachable (have a study destination) for the UI
     for qid in sorted(reg.qualifications):
@@ -122,6 +173,13 @@ def main():
     print("  graders: %s | reward policies in use: %s"
           % (sorted({a.get("graderType") for a in reg.activities.values()}),
              sorted({reg.reward_policy_of(a) for a in reg.activities})))
+    # per-activity coverage: which are gold-bearing and which certify a qualification (§22/§24)
+    for aid in sorted(reg.activities):
+        pol = reg.reward_policy_of(aid)
+        print("    %-34s %-16s reward=%-24s grants=%s"
+              % (aid, reg.grader_type_of(aid), pol, reg.qualification_ids_for(aid) or "[]"))
+    paid = [a for a in reg.activities if reg.reward_policy_of(a) != "none"]
+    print("  gold-bearing activities: %d/%d %s" % (len(paid), len(reg.activities), sorted(paid)))
     print("  territories with learning requirements: %d" % len(terr_reqs))
     for tid, reqs in sorted(terr_reqs.items()):
         print("    %s requires ALL of %s" % (tid, reqs))

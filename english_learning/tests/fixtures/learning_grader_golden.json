@@ -1,0 +1,323 @@
+{
+  "_comment": [
+    "Phase 3C golden grading cases. Small synthetic content only - real lesson files are NOT embedded.",
+    "Both tests/learning_graders_test.py (backend) and tests/learning_parity.test.js (frontend rules,",
+    "extracted live from index.html) read this file and must agree on correct/total/pct/passed.",
+    "Deliberately mixed subjects to prove content-pack independence."
+  ],
+  "cases": [
+    {
+      "name": "multiple_choice/wh: all correct",
+      "graderType": "multiple_choice",
+      "cfg": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "content": [
+        { "q": "Who went to the park?", "a": "Tom and Anna.", "wrong": ["Mom and Dad.", "The dog."] },
+        { "q": "When did they go?", "a": "On Sunday.", "wrong": ["On Monday.", "At night."] },
+        { "q": "What did they see?", "a": "A panda.", "wrong": ["A lion.", "A bus."] },
+        { "q": "Where is the zoo?", "a": "In Taipei.", "wrong": ["In Tainan.", "In Tokyo."] },
+        { "q": "Why was Tom happy?", "a": "He saw a panda.", "wrong": ["He was tired.", "It rained."] }
+      ],
+      "answers": [
+        { "q": "Who went to the park?", "answer": "Tom and Anna." },
+        { "q": "When did they go?", "answer": "On Sunday." },
+        { "q": "What did they see?", "answer": "A panda." },
+        { "q": "Where is the zoo?", "answer": "In Taipei." },
+        { "q": "Why was Tom happy?", "answer": "He saw a panda." }
+      ],
+      "expect": { "correct": 5, "total": 5, "pct": 100, "passed": true }
+    },
+    {
+      "name": "multiple_choice/wh: shuffled submission order still grades",
+      "graderType": "multiple_choice",
+      "cfg": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "content": [
+        { "q": "Who went to the park?", "a": "Tom and Anna.", "wrong": ["Mom and Dad.", "The dog."] },
+        { "q": "When did they go?", "a": "On Sunday.", "wrong": ["On Monday.", "At night."] },
+        { "q": "What did they see?", "a": "A panda.", "wrong": ["A lion.", "A bus."] }
+      ],
+      "answers": [
+        { "q": "What did they see?", "answer": "A panda." },
+        { "q": "Who went to the park?", "answer": "Tom and Anna." },
+        { "q": "When did they go?", "answer": "On Sunday." }
+      ],
+      "expect": { "correct": 3, "total": 3, "pct": 100, "passed": true }
+    },
+    {
+      "name": "multiple_choice/wh: 4 of 5 = 80 passes exactly at threshold",
+      "graderType": "multiple_choice",
+      "cfg": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "content": [
+        { "q": "Q1", "a": "A1", "wrong": ["B1", "C1"] },
+        { "q": "Q2", "a": "A2", "wrong": ["B2", "C2"] },
+        { "q": "Q3", "a": "A3", "wrong": ["B3", "C3"] },
+        { "q": "Q4", "a": "A4", "wrong": ["B4", "C4"] },
+        { "q": "Q5", "a": "A5", "wrong": ["B5", "C5"] }
+      ],
+      "answers": [
+        { "q": "Q1", "answer": "A1" }, { "q": "Q2", "answer": "A2" },
+        { "q": "Q3", "answer": "A3" }, { "q": "Q4", "answer": "A4" },
+        { "q": "Q5", "answer": "B5" }
+      ],
+      "expect": { "correct": 4, "total": 5, "pct": 80, "passed": true }
+    },
+    {
+      "name": "multiple_choice/wh: 3 of 5 = 60 fails",
+      "graderType": "multiple_choice",
+      "cfg": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "content": [
+        { "q": "Q1", "a": "A1", "wrong": ["B1", "C1"] },
+        { "q": "Q2", "a": "A2", "wrong": ["B2", "C2"] },
+        { "q": "Q3", "a": "A3", "wrong": ["B3", "C3"] },
+        { "q": "Q4", "a": "A4", "wrong": ["B4", "C4"] },
+        { "q": "Q5", "a": "A5", "wrong": ["B5", "C5"] }
+      ],
+      "answers": [
+        { "q": "Q1", "answer": "A1" }, { "q": "Q2", "answer": "A2" },
+        { "q": "Q3", "answer": "A3" }, { "q": "Q4", "answer": "B4" },
+        { "q": "Q5", "answer": "C5" }
+      ],
+      "expect": { "correct": 3, "total": 5, "pct": 60, "passed": false }
+    },
+    {
+      "name": "multiple_choice/wh: exact comparison - case and trailing space are WRONG",
+      "graderType": "multiple_choice",
+      "cfg": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "content": [
+        { "q": "Q1", "a": "A panda.", "wrong": ["B", "C"] },
+        { "q": "Q2", "a": "A panda.", "wrong": ["B", "C"] },
+        { "q": "Q3", "a": "A panda.", "wrong": ["B", "C"] }
+      ],
+      "answers": [
+        { "q": "Q1", "answer": "a panda." },
+        { "q": "Q2", "answer": "A panda. " },
+        { "q": "Q3", "answer": "A panda." }
+      ],
+      "expect": { "correct": 1, "total": 3, "pct": 33, "passed": false }
+    },
+    {
+      "name": "multiple_choice/wh: missing, extra and invalid-option answers",
+      "graderType": "multiple_choice",
+      "cfg": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "content": [
+        { "q": "Q1", "a": "A1", "wrong": ["B1", "C1"] },
+        { "q": "Q2", "a": "A2", "wrong": ["B2", "C2"] },
+        { "q": "Q3", "a": "A3", "wrong": ["B3", "C3"] },
+        { "q": "Q4", "a": "A4", "wrong": ["B4", "C4"] }
+      ],
+      "answers": [
+        { "q": "Q1", "answer": "A1" },
+        { "q": "Q2", "answer": "NOT-AN-OPTION" },
+        { "q": "Q9", "answer": "A9" },
+        { "q": "Q4", "answer": "A4" }
+      ],
+      "expect": { "correct": 2, "total": 4, "pct": 50, "passed": false }
+    },
+    {
+      "name": "multiple_choice/cloze: text/answer field mapping, all correct",
+      "graderType": "multiple_choice",
+      "cfg": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "content": [
+        { "text": "We can play in the ___.", "answer": "park", "wrong": ["good", "ready"] },
+        { "text": "The panda is ___ and white.", "answer": "black", "wrong": ["run", "very"] },
+        { "text": "Tom is very ___.", "answer": "happy", "wrong": ["park", "black"] }
+      ],
+      "answers": [
+        { "q": "We can play in the ___.", "answer": "park" },
+        { "q": "The panda is ___ and white.", "answer": "black" },
+        { "q": "Tom is very ___.", "answer": "happy" }
+      ],
+      "expect": { "correct": 3, "total": 3, "pct": 100, "passed": true }
+    },
+    {
+      "name": "multiple_choice/cloze: one wrong of three fails (67)",
+      "graderType": "multiple_choice",
+      "cfg": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "content": [
+        { "text": "A ___.", "answer": "park", "wrong": ["good", "ready"] },
+        { "text": "B ___.", "answer": "black", "wrong": ["run", "very"] },
+        { "text": "C ___.", "answer": "happy", "wrong": ["park", "black"] }
+      ],
+      "answers": [
+        { "q": "A ___.", "answer": "park" },
+        { "q": "B ___.", "answer": "run" },
+        { "q": "C ___.", "answer": "happy" }
+      ],
+      "expect": { "correct": 2, "total": 3, "pct": 67, "passed": false }
+    },
+    {
+      "name": "multiple_choice: empty answers scores zero",
+      "graderType": "multiple_choice",
+      "cfg": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "content": [{ "q": "Q1", "a": "A1", "wrong": ["B1"] }],
+      "answers": [],
+      "expect": { "correct": 0, "total": 1, "pct": 0, "passed": false }
+    },
+    {
+      "name": "reorder: exact order for every sentence = full marks",
+      "graderType": "reorder",
+      "content": [
+        ["I", "went", "to", "the", "park"],
+        ["She", "likes", "green", "tea"],
+        ["We", "can", "play", "now"]
+      ],
+      "answers": [
+        { "q": "I went to the park", "answer": [0, 1, 2, 3, 4] },
+        { "q": "She likes green tea", "answer": [0, 1, 2, 3] },
+        { "q": "We can play now", "answer": [0, 1, 2, 3] }
+      ],
+      "expect": { "correct": 3, "total": 3, "pct": 100, "passed": true }
+    },
+    {
+      "name": "reorder: reversed order is wrong",
+      "graderType": "reorder",
+      "content": [["I", "went", "to", "the", "park"]],
+      "answers": [{ "q": "I went to the park", "answer": [4, 3, 2, 1, 0] }],
+      "expect": { "correct": 0, "total": 1, "pct": 0, "passed": false }
+    },
+    {
+      "name": "reorder: partially correct order is wrong (no partial credit inside a sentence)",
+      "graderType": "reorder",
+      "content": [["I", "went", "to", "the", "park"]],
+      "answers": [{ "q": "I went to the park", "answer": [0, 1, 2, 4, 3] }],
+      "expect": { "correct": 0, "total": 1, "pct": 0, "passed": false }
+    },
+    {
+      "name": "reorder: 4 of 5 sentences correct = 80 passes",
+      "graderType": "reorder",
+      "content": [["a", "b"], ["c", "d"], ["e", "f"], ["g", "h"], ["i", "j"]],
+      "answers": [
+        { "q": "a b", "answer": [0, 1] }, { "q": "c d", "answer": [0, 1] },
+        { "q": "e f", "answer": [0, 1] }, { "q": "g h", "answer": [0, 1] },
+        { "q": "i j", "answer": [1, 0] }
+      ],
+      "expect": { "correct": 4, "total": 5, "pct": 80, "passed": true }
+    },
+    {
+      "name": "reorder: duplicate tokens are index-sensitive - swapping them is WRONG",
+      "graderType": "reorder",
+      "content": [["the", "cat", "and", "the", "dog"]],
+      "answers": [{ "q": "the cat and the dog", "answer": [3, 1, 2, 0, 4] }],
+      "expect": { "correct": 0, "total": 1, "pct": 0, "passed": false }
+    },
+    {
+      "name": "reorder: missing item, duplicate index and extra item all fail safely",
+      "graderType": "reorder",
+      "content": [["a", "b", "c"], ["d", "e", "f"], ["g", "h", "i"]],
+      "answers": [
+        { "q": "a b c", "answer": [0, 1] },
+        { "q": "d e f", "answer": [0, 0, 1] },
+        { "q": "g h i", "answer": [0, 1, 2, 2] }
+      ],
+      "expect": { "correct": 0, "total": 3, "pct": 0, "passed": false }
+    },
+    {
+      "name": "reorder: unsubmitted sentences count against the total",
+      "graderType": "reorder",
+      "content": [["a", "b"], ["c", "d"], ["e", "f"], ["g", "h"]],
+      "answers": [{ "q": "a b", "answer": [0, 1] }, { "q": "c d", "answer": [0, 1] }],
+      "expect": { "correct": 2, "total": 4, "pct": 50, "passed": false }
+    },
+    {
+      "name": "reorder: non-English content pack (history) grades identically",
+      "graderType": "reorder",
+      "content": [["Meiji", "era", "began", "in", "1868"], ["Edo", "became", "Tokyo"]],
+      "answers": [
+        { "q": "Meiji era began in 1868", "answer": [0, 1, 2, 3, 4] },
+        { "q": "Edo became Tokyo", "answer": [0, 1, 2] }
+      ],
+      "expect": { "correct": 2, "total": 2, "pct": 100, "passed": true }
+    },
+    {
+      "name": "dictation: exact typing = full marks",
+      "graderType": "dictation",
+      "content": ["I went to the park with my mom.", "She likes green tea.", "We can play now."],
+      "answers": [
+        { "q": "I went to the park with my mom.", "answer": "I went to the park with my mom." },
+        { "q": "She likes green tea.", "answer": "She likes green tea." },
+        { "q": "We can play now.", "answer": "We can play now." }
+      ],
+      "expect": { "correct": 3, "total": 3, "pct": 100, "passed": true }
+    },
+    {
+      "name": "dictation: frontend norm() - case, listed punctuation and extra whitespace forgiven",
+      "graderType": "dictation",
+      "content": ["I went to the park with my mom.", "Don't stop; we can play!", "Yes: it is here?"],
+      "answers": [
+        { "q": "I went to the park with my mom.", "answer": "  i WENT   to the park with my   mom  " },
+        { "q": "Don't stop; we can play!", "answer": "dont stop we can play" },
+        { "q": "Yes: it is here?", "answer": "YES it is HERE" }
+      ],
+      "expect": { "correct": 3, "total": 3, "pct": 100, "passed": true }
+    },
+    {
+      "name": "dictation: hyphens and curly quotes are NOT stripped by norm() - typing them differently is wrong",
+      "graderType": "dictation",
+      "content": ["It is a well-known park.", "It’s sunny today.", "We can play now."],
+      "answers": [
+        { "q": "It is a well-known park.", "answer": "it is a well known park" },
+        { "q": "It’s sunny today.", "answer": "its sunny today" },
+        { "q": "We can play now.", "answer": "we can play now" }
+      ],
+      "expect": { "correct": 1, "total": 3, "pct": 33, "passed": false }
+    },
+    {
+      "name": "dictation: a wrong word fails the item (4 of 5 = 80 passes)",
+      "graderType": "dictation",
+      "content": ["one two", "three four", "five six", "seven eight", "nine ten"],
+      "answers": [
+        { "q": "one two", "answer": "one two" },
+        { "q": "three four", "answer": "three four" },
+        { "q": "five six", "answer": "five six" },
+        { "q": "seven eight", "answer": "seven eight" },
+        { "q": "nine ten", "answer": "nine eleven" }
+      ],
+      "expect": { "correct": 4, "total": 5, "pct": 80, "passed": true }
+    },
+    {
+      "name": "dictation: empty and whitespace-only typing scores zero",
+      "graderType": "dictation",
+      "content": ["one two", "three four"],
+      "answers": [
+        { "q": "one two", "answer": "" },
+        { "q": "three four", "answer": "   " }
+      ],
+      "expect": { "correct": 0, "total": 2, "pct": 0, "passed": false }
+    },
+    {
+      "name": "dictation: unsubmitted sentences count against the total",
+      "graderType": "dictation",
+      "content": ["one two", "three four", "five six", "seven eight"],
+      "answers": [
+        { "q": "one two", "answer": "one two" },
+        { "q": "three four", "answer": "three four" }
+      ],
+      "expect": { "correct": 2, "total": 4, "pct": 50, "passed": false }
+    },
+    {
+      "name": "dictation: non-English content pack (biology) grades identically",
+      "graderType": "dictation",
+      "content": ["Mitochondria make ATP.", "A cell has a membrane."],
+      "answers": [
+        { "q": "Mitochondria make ATP.", "answer": "mitochondria make atp" },
+        { "q": "A cell has a membrane.", "answer": "a cell has a membrane" }
+      ],
+      "expect": { "correct": 2, "total": 2, "pct": 100, "passed": true }
+    },
+    {
+      "name": "multiple_choice: non-English content pack (maths) grades identically",
+      "graderType": "multiple_choice",
+      "cfg": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "content": [
+        { "q": "2 + 2 = ?", "a": "4", "wrong": ["5", "22"] },
+        { "q": "3 x 3 = ?", "a": "9", "wrong": ["6", "33"] },
+        { "q": "10 / 2 = ?", "a": "5", "wrong": ["20", "8"] }
+      ],
+      "answers": [
+        { "q": "2 + 2 = ?", "answer": "4" },
+        { "q": "3 x 3 = ?", "answer": "9" },
+        { "q": "10 / 2 = ?", "answer": "5" }
+      ],
+      "expect": { "correct": 3, "total": 3, "pct": 100, "passed": true }
+    }
+  ]
+}

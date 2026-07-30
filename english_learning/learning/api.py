@@ -58,7 +58,10 @@ class LearningService:
             self.content_root, self.registry.approved_content_paths())
         if items is None:
             return None, REASON_CONTENT_UNAVAILABLE
-        return grading.grade(grader_type, items, answers), None
+        # graderConfig comes from the REGISTRY, never from the request (§8) — a client cannot point a
+        # grader at a different field to make its own answer look correct.
+        return grading.grade(grader_type, items, answers,
+                             self.registry.grader_config_of(activity_id)), None
 
     # ---- reward policy ----
     def reward_for(self, activity_id):

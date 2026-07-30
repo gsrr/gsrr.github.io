@@ -28,6 +28,8 @@ from . import grading, identity, rewards
 _PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "registry.json")
 SCHEMA_VERSION = 1
 _SECTIONS = ("contentPacks", "courses", "units", "lessons", "activities", "qualifications")
+# graderConfig keys the graders actually read (learning/grading.py). Anything else is an authoring bug.
+_GRADER_CFG_KEYS = {"promptField", "answerField", "distractorsField", "joinWith"}
 
 
 def _no_dup_keys(pairs):
@@ -132,6 +134,11 @@ class Registry:
     def grader_type_of(self, activity_id):
         return (self.activities.get(activity_id) or {}).get("graderType")
 
+    def grader_config_of(self, activity_id):
+        """Registry-owned grader configuration (field names etc.). Never client input."""
+        cfg = (self.activities.get(activity_id) or {}).get("graderConfig")
+        return dict(cfg) if isinstance(cfg, dict) else {}
+
     def approved_content_paths(self):
         """The ONLY content paths the backend may ever read (§28). Registry == filesystem allowlist."""
         return {l.get("contentPath") for l in self.lessons.values() if l.get("contentPath")}
@@ -171,10 +178,13 @@ class Registry:
                                      "title": self.title_of_qualification(qid),
                                      "studyTarget": self.study_target(qid)}
                                for qid, q in self.qualifications.items()},
+            # `serverGraded` tells the client whether this activity goes through the authoritative
+            # attempt endpoint (§18). Grader type, grader config and reward policy stay server-side.
             "activities": {aid: {"lessonId": a.get("lessonId"),
                                  "contentPath": self.content_path_of(aid),
                                  "contentKey": a.get("contentKey"),
                                  "title": a.get("title"),
+                                 "serverGraded": grading.is_supported(a.get("graderType")),
                                  "grants": self.qualification_ids_for(aid)}
                            for aid, a in self.activities.items()},
             "lessons": {lid: {"courseId": l.get("courseId"), "contentPath": l.get("contentPath"),
@@ -255,9 +265,22 @@ def validate(data):
         for money in ("rewardGold", "gold", "rewardAmount", "amount"):
             if money in a:                       # §15: content may NAME a policy, never an amount
                 err("activity %s may not set %r — reward amounts come from game config only" % (aid, money))
-        grants = a.get("grants")
-        if not isinstance(grants, list) or not grants:
-            err("activity %s must grant at least one qualification" % aid)
+        gcfg = a.get("graderConfig")
+        if gcfg is not None:
+            if not isinstance(gcfg, dict):
+                err("activity %s graderConfig must be an object" % aid)
+            else:
+                unknown_cfg = set(gcfg) - _GRADER_CFG_KEYS
+                if unknown_cfg:
+                    err("activity %s graderConfig has unknown keys %s" % (aid, sorted(unknown_cfg)))
+                for k, v in gcfg.items():
+                    if not isinstance(v, str) or not v:
+                        err("activity %s graderConfig.%s must be a non-empty string" % (aid, k))
+        # Phase 3C §24: server grading does NOT imply a qualification. `grants` may be empty — but it
+        # must still be a list, and every id in it must exist.
+        grants = a.get("grants", [])
+        if not isinstance(grants, list):
+            err("activity %s grants must be a list (may be empty)" % aid)
             grants = []
         if len(grants) != len(set(grants)):
             err("activity %s lists a duplicate qualification in grants" % aid)
