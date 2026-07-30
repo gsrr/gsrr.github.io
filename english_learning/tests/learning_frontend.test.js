@@ -129,6 +129,9 @@ ok("0 requirements (and fully satisfied requirements) fall through to the normal
   assert.strictEqual(vm.runInContext("renderRequirementPanel", c)(terr, "t:target", null), true);
   assert(/🔒/.test(terr.innerHTML) && /Zoo — Yes\/No/.test(terr.innerHTML), terr.innerHTML);
   assert(/✗/.test(terr.innerHTML) && /req-missing/.test(terr.innerHTML));
+  // singular copy: no "all of these", no plural noun
+  assert(/you need this requirement:/.test(terr.innerHTML), "singular wording: " + terr.innerHTML);
+  assert(!/all<\/b> of these|requirements:/.test(terr.innerHTML), "no plural/all wording for one requirement");
   assert(!/q\.zoo/.test(terr.innerHTML), "the raw opaque id must not be shown to a learner");
   const btns = allButtons(terr);
   assert.strictEqual(btns.length, 1, "one missing requirement -> one Study button");
@@ -142,6 +145,9 @@ ok("1 requirement: locked panel shows the human-readable title (never the raw id
   assert.strictEqual(vm.runInContext("renderRequirementPanel", c)(terr, "t:target", null), true);
   const items = terr.innerHTML.match(/<li[^>]*>.*?<\/li>/g) || [];
   assert.strictEqual(items.length, 2, "one <li> per requirement: " + terr.innerHTML);
+  // plural copy keeps "all of these requirements"
+  assert(/you need <b>all<\/b> of these requirements:/.test(terr.innerHTML),
+    "plural wording: " + terr.innerHTML);
   assert(/✓ Basic Greetings/.test(items[0]) && /req-ok/.test(items[0]), items[0]);
   assert(/✗ Zoo — Yes\/No/.test(items[1]) && /req-missing/.test(items[1]), items[1]);
   const btns = allButtons(terr);

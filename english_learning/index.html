@@ -5151,8 +5151,8 @@
   function renderRequirementPanel(terr, targetKey, reopen) {
     const reqs = territoryRequirements(targetKey), missing = missingQualifications(targetKey);
     if (!reqs.length || !missing.length) return false;
-    terr.innerHTML = '<p class="op-hint">🔒 This region is locked — you need <b>all</b> of these ' +
-      (reqs.length > 1 ? "requirements" : "requirements") + ':</p><ul class="op-reqs">' +
+    terr.innerHTML = '<p class="op-hint">🔒 This region is locked — you need ' +
+      (reqs.length > 1 ? '<b>all</b> of these requirements' : 'this requirement') + ':</p><ul class="op-reqs">' +
       reqs.map(q => '<li class="' + (myQualifications.has(q) ? "req-ok" : "req-missing") + '">' +
         (myQualifications.has(q) ? "✓ " : "✗ ") + escapeHtml(qualTitle(q)) + '</li>').join("") + '</ul>';
     const btns = document.createElement("div"); btns.className = "op-btns";
