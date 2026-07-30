@@ -158,6 +158,16 @@ class TerritoryCatalog:
         t = self.territories.get(territory_id)
         return t.get("gamePopulation") if t else None
 
+    def attack_requirements(self, territory_id):
+        """Phase 3A: designer-owned learning gate for attacking this territory — the list of opaque
+        qualification IDs a player must hold. Missing/empty -> [] (unrestricted). Never raises."""
+        self._ensure()
+        t = self.territories.get(territory_id)
+        if not t:
+            return []
+        reqs = (t.get("requirements") or {}).get("attackQualificationIds") or []
+        return [q for q in reqs if isinstance(q, str) and q]
+
     # ---- World-Domain adjacency graph (topology only; NOT game attack rules) ----
     def neighbors(self, territory_id):
         self._ensure()

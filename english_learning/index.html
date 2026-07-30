@@ -583,6 +583,10 @@
   .op-def.op-mine { background: #f0fdf4; border-color: #bbf7d0; }
   .op-card { color: #475569; font-size: 18px; }
   .op-hint { font-size: 13px; color: #475569; margin: 10px 0 6px; }
+  .op-reqs { list-style: none; padding: 0; margin: 6px 0 10px; font-size: 14px; }
+  .op-reqs li { padding: 4px 8px; border-radius: 8px; background: #f8fafc; border: 1px solid #e2e8f0; margin: 4px 0; font-weight: 600; color: #334155; }
+  .op-src { font-size: 14px; margin: 8px 0; font-weight: 600; color: #334155; }
+  .op-src select { margin-left: 6px; padding: 4px 8px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px; }
   /* 領地建設面板：兵工廠 + 科技研發 */
   .bld-box { margin-top: 12px; border-top: 2px dashed #e2e8f0; padding-top: 10px; }
   .bld-gold { font-size: 16px; font-weight: 800; color: #b45309; margin-bottom: 8px; }
@@ -2445,11 +2449,12 @@
   // 測驗控制器：一次只顯示一題，答完按「下一題」，最後算總分
   function makeQuiz(listEl, scoreEl, resetEl, level) {
     let data = [], shuffled = [], idx = 0, correct = 0, answered = false, timer = null;
+    let chosen = [];   // Phase 3A：本次作答 [{q, answer}]（送後端權威批改用，非權威顯示）
 
     function build() {
       clearTimeout(timer);
       shuffled = shuffle(data);   // 每次重新洗牌
-      idx = 0; correct = 0;
+      idx = 0; correct = 0; chosen = [];
       renderQuestion();
     }
 
@@ -2498,6 +2503,7 @@
     function answer(choice, btn, opts, mark) {
       if (answered) return;                // 每題只能答一次
       answered = true;
+      chosen.push({ q: shuffled[idx].q, answer: choice });   // 記錄作答(依題目文字對回權威鍵)
       const right = shuffled[idx].answer;
       opts.querySelectorAll(".opt").forEach(b => {
         b.disabled = true;
@@ -2532,6 +2538,8 @@
       resetEl.classList.remove("hidden");
       recordScore(level, correct, m);
       markLevelDone(level);
+      // Phase 3A：quiz3/quiz4 → 送作答給後端權威批改(僅對登錄簿有對應資格的課程/活動生效)。
+      maybeSubmitLearningAttempt(currentArticleKey, "quiz" + level, chosen);
     }
 
     resetEl.addEventListener("click", build);
@@ -5089,6 +5097,52 @@
   }
   function randomLesson(i) { const p = lessonPool(i); return p.length ? p[Math.floor(Math.random() * p.length)] : null; }
 
+  // ===== Phase 3A — learning qualifications (advisory display only; backend can_attack is authoritative) =====
+  let learningRegistry = {};          // qualificationId -> { lessonId, activity, title }  (public, no answer keys)
+  let myQualifications = new Set();    // qualification IDs this player has EARNED (server-authoritative mirror)
+  function loadLearningRegistry(cb) {
+    fetch("/api/learning/registry").then(r => r.ok ? r.json() : null)
+      .then(j => { if (j && j.registry) learningRegistry = j.registry; if (cb) cb(); }).catch(() => { if (cb) cb(); });
+  }
+  function loadLearningState(cb) {
+    const t = authToken();
+    if (!t) { myQualifications = new Set(); if (cb) cb(); return; }
+    fetch("/api/learning/state?token=" + encodeURIComponent(t)).then(r => r.ok ? r.json() : null)
+      .then(j => { myQualifications = new Set(Object.keys((j && j.qualifications) || {})); if (cb) cb(); })
+      .catch(() => { if (cb) cb(); });
+  }
+  function refreshLearning(cb) { loadLearningRegistry(function () { loadLearningState(cb); }); }
+  function learningQualForActivity(lessonId, activity) {   // which qualification (if any) this activity grants
+    for (const qid in learningRegistry) { const s = learningRegistry[qid]; if (s.lessonId === lessonId && s.activity === activity) return qid; }
+    return null;
+  }
+  function qualTitle(qid) { const s = learningRegistry[qid]; return (s && s.title) || qid; }
+  function findArticleByFile(file) {
+    if (!manifest) return null;
+    for (const lv of manifest.levels) { const arts = (lv.articles || []).concat(LEVEL_ARCS[lv.id] || []); for (const a of arts) if (a.file === file) return a; }
+    return null;
+  }
+  function territoryRequirements(targetKey) {   // designer-owned learning gate from the catalog (advisory copy)
+    const ct = TERR_CATALOG.terrById[targetKey];
+    return (ct && ct.requirements && ct.requirements.attackQualificationIds) || [];
+  }
+  function missingQualifications(targetKey) { return territoryRequirements(targetKey).filter(q => !myQualifications.has(q)); }
+  // 課程活動作答 → 唯一權威的伺服器批改路徑(/api/learning/attempt)。前端「不」送 passed/score，只送作答。
+  function maybeSubmitLearningAttempt(lessonId, activity, chosen) {
+    const qid = learningQualForActivity(lessonId, activity);
+    if (!qid) return;                                   // 非本切片可批改的活動 → 無事可做
+    const t = authToken(); if (!t) return;
+    fetch(withRoom("/api/learning/attempt?token=" + encodeURIComponent(t)),
+      { method: "POST", body: JSON.stringify({ lessonId: lessonId, activity: activity, answers: chosen }) })
+      .then(r => r.ok ? r.json() : null)
+      .then(j => {
+        if (!j || !j.ok || !j.passed || !j.qualification) return;
+        myQualifications.add(j.qualification);          // 解鎖(顯示用)；權威仍在後端
+        if (j.rewarded && j.gold != null && myEcon) { myEcon.gold = j.gold; renderEmpire(); }
+        showLockedMsg("✅ Learned: " + qualTitle(j.qualification) + (j.rewarded ? " (+gold!)" : "") + " — territory unlocked!");
+      }).catch(() => {});
+  }
+
   // ===== Phase 2B — territorial conquest attack (source ↔ target, adjacency-gated) =====
   // 攻擊必須「從自己的相鄰領地(source)出兵」。source 清單=目標的 World-Domain 相鄰領地中，你擁有且有駐軍者。
   // 這是「建議性」前端過濾(highlight 有效來源)；真正的授權一律由後端 can_attack 判定(section 22)。
@@ -5122,6 +5176,21 @@
   }
   // 攻擊面板(target-first UI 最小變動)：先選相鄰的自有來源領地，兵力預算=該來源的駐軍(非全域兵力池)。
   function renderAttackPanel(terr, targetKey, targetName, h) {
+    // Phase 3A：學習資格鎖。若此領地設有 requiredQualificationIds 且玩家尚未全數取得 → 顯示鎖定與「去學習」。
+    // 僅為前端提示;真正授權由後端 can_attack 判定(crafted client 隱藏此鎖也無法攻擊)。
+    const reqs = territoryRequirements(targetKey), missing = missingQualifications(targetKey);
+    if (reqs.length && missing.length) {
+      terr.innerHTML = '<p class="op-hint">🔒 This region is locked — finish the required lesson first:</p>' +
+        '<ul class="op-reqs">' + reqs.map(q => '<li>' + (myQualifications.has(q) ? '✓ ' : '✗ ') + qualTitle(q) + '</li>').join("") + '</ul>';
+      const s = learningRegistry[missing[0]], art = s && findArticleByFile(s.lessonId);
+      const btns = document.createElement("div"); btns.className = "op-btns";
+      const study = document.createElement("button"); study.className = "dict-play";
+      study.textContent = art ? "📖 Study: " + qualTitle(missing[0]) : "📖 Lesson unavailable";
+      if (art) study.addEventListener("click", () => { closeModal(); selectArticle(art); });
+      else study.disabled = true;
+      btns.appendChild(study); terr.appendChild(btns);
+      return;
+    }
     const sources = validAttackSources(targetKey);
     if (!sources.length) {
       terr.innerHTML = '<p class="op-hint">🚫 You can only attack ' + dispName(h.owner) +
@@ -5926,9 +5995,11 @@
       localStorage.setItem("auth:user", user);
       if (code) localStorage.setItem("auth:code", code);
     } catch (e) {}
+    loadLearningState();   // Phase 3A：登入後載入(權威)學習資格，供領地鎖定/解鎖顯示
   }
   function clearAuth() {
     try { ["auth:token", "auth:user", "auth:code"].forEach(k => localStorage.removeItem(k)); } catch (e) {}
+    myQualifications = new Set();   // 登出即清空資格顯示鏡像
   }
   function acctToken() { return authToken(); }
   // 蒐集本機所有學生（profiles）的頭像/英雄/各課分數與進度，準備上傳
@@ -6234,6 +6305,7 @@
       if (!res.ok) throw new Error("HTTP " + res.status);
       manifest = await res.json();
       loadTerritoryCatalog();   // Phase 1A：載入正規領地目錄(人口/身分來源)；失敗會退回舊算法並警告
+      refreshLearning();        // Phase 3A：載入資格登錄簿(id→課名) + 玩家已得資格(若已登入)
     } catch (e) {
       profileGrid.innerHTML =
         '<div style="padding:16px;color:#b91c1c;background:#fee2e2;border-radius:12px;line-height:1.7">' +

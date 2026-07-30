@@ -12,23 +12,27 @@ from .army import clampi
 class AttackEligibility:
     """Structured result of can_attack(). Truthy iff the attack is allowed.
     `reason` is a stable machine string (see REASONS) or None when allowed — safe to expose to
-    the frontend/UI and to assert on in tests. Never carries internal exception detail."""
-    __slots__ = ("allowed", "reason")
+    the frontend/UI and to assert on in tests. Never carries internal exception detail.
+    `missing_qualifications` is populated only for reason == 'qualification_required'."""
+    __slots__ = ("allowed", "reason", "missing_qualifications")
     REASONS = (
         "source_not_found", "target_not_found", "same_territory",
         "source_not_owned", "target_already_owned", "target_not_attackable",
         "not_adjacent", "invalid_squad", "insufficient_source_garrison",
+        "qualification_required",
     )
 
-    def __init__(self, allowed, reason=None):
+    def __init__(self, allowed, reason=None, missing_qualifications=None):
         self.allowed = bool(allowed)
         self.reason = reason
+        self.missing_qualifications = list(missing_qualifications or [])
 
     def __bool__(self):
         return self.allowed
 
     def __repr__(self):
-        return "AttackEligibility(allowed=%r, reason=%r)" % (self.allowed, self.reason)
+        return "AttackEligibility(allowed=%r, reason=%r, missing=%r)" % (
+            self.allowed, self.reason, self.missing_qualifications)
 
 
 def _squad_need(squad):
@@ -69,9 +73,14 @@ def _subtract_squad(garrison, squad):
 # `world` is any object exposing is_canonical(id), map_of(id), are_adjacent(a, b) — pass the
 # territory catalog. Adjacency comes ONLY from World Domain (world-data adjacentTerritoryIds); this
 # function never touches SVG geometry, map coordinates, or a duplicated adjacency table.
-# NOTE (Phase 2B): a future Learning/qualification gate would slot in as one more check here — the
-# hook is intentionally left as a comment; nothing about courses/qualifications is enforced yet.
-def can_attack(player_id, source_id, target_id, squad, world, territories):
+# Phase 3A: the Learning/qualification gate is now active (last check). It is a PLAYER-state gate:
+# `player_qualifications` is the set of opaque qualification IDs the player holds; the target's
+# required IDs come from World Domain (world.attack_requirements). `require_qualifications=False`
+# bypasses ONLY this layer — used for AI (human learning does not apply to the AI) and any future
+# non-learning-gated caller. It never bypasses ownership/adjacency/garrison. Game Domain treats the
+# IDs as fully opaque (no "english" special-casing) — see the content-independence test.
+def can_attack(player_id, source_id, target_id, squad, world, territories,
+               player_qualifications=None, require_qualifications=True):
     """Pure eligibility rule. No HTTP, no DOM, no I/O. Returns AttackEligibility."""
     if not source_id or not world.is_canonical(source_id):
         return AttackEligibility(False, "source_not_found")
@@ -98,7 +107,18 @@ def can_attack(player_id, source_id, target_id, squad, world, territories):
     for ty, n in need.items():
         if avail.get(ty, 0) < n:
             return AttackEligibility(False, "insufficient_source_garrison")
-    # [future] qualification/course gate would go here — NOT enforced in Phase 2B.
+    # Phase 3A: learning-qualification gate (player state). ALL required IDs must be held.
+    # Missing/empty requirement list == unrestricted. Bypassed only when require_qualifications=False.
+    if require_qualifications:
+        try:
+            required = world.attack_requirements(target_id) or []
+        except Exception:
+            required = []
+        if required:
+            held = player_qualifications or set()
+            missing = [q for q in required if q not in held]
+            if missing:
+                return AttackEligibility(False, "qualification_required", missing)
     return AttackEligibility(True, None)
 
 

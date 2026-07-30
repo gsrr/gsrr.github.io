@@ -123,6 +123,25 @@ def main():
                     err("%s: neighbor %r is not a same-map canonical id" % (tid, nb))
             if t.get("terrainType") is not None or t.get("settlementType") is not None:
                 err("%s: terrain/settlement must be null in this phase" % tid)
+            # Phase 3A: optional designer-owned learning gate. Missing == unrestricted (fine).
+            if "requirements" in t:
+                rq = t.get("requirements")
+                if not isinstance(rq, dict):
+                    err("%s: requirements must be an object" % tid)
+                else:
+                    unknown = set(rq) - {"attackQualificationIds"}
+                    if unknown:
+                        err("%s: unknown requirements keys %s" % (tid, sorted(unknown)))
+                    qids = rq.get("attackQualificationIds", [])
+                    if not isinstance(qids, list):
+                        err("%s: requirements.attackQualificationIds must be a list" % tid)
+                    else:
+                        if not all(isinstance(q, str) and q.strip() for q in qids):
+                            err("%s: attackQualificationIds must be non-empty strings" % tid)
+                        if len(qids) != len(set(qids)):
+                            err("%s: duplicate qualification id in attackQualificationIds" % tid)
+                        if qids != sorted(qids):
+                            err("%s: attackQualificationIds must be sorted deterministically" % tid)
             meta = t.get("_meta")
             if not isinstance(meta, dict):
                 err("%s: missing _meta ownership block" % tid)

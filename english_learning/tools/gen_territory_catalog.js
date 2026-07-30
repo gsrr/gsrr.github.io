@@ -23,7 +23,8 @@ const GENERATOR_VERSION = "1.0.0";
 const GENERATED_BY = "tools/gen_territory_catalog.js";
 // generator-owned (structural) vs designer-owned fields:
 const DESIGNER_FIELDS = ["displayName", "localizedNames", "gamePopulation", "populationSource",
-  "terrainType", "settlementType", "features", "adjacentTerritoryIds", "economy", "quests", "ai", "events"];
+  "terrainType", "settlementType", "features", "adjacentTerritoryIds", "economy", "quests", "ai", "events",
+  "requirements"];   // Phase 3A: designer-owned learning gate (requirements.attackQualificationIds) — never clobbered
 
 // ---------- shared SVG discovery (mirrors index.html render rules; freezes population) ----------
 function loadAppData() {

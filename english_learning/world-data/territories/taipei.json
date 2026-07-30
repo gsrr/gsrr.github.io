@@ -388,6 +388,11 @@
   },
   {
     "id": "taipei:daan",
+    "requirements": {
+      "attackQualificationIds": [
+        "english.prea1.taipei.zoo"
+      ]
+    },
     "mapId": "taipei",
     "regionCode": "daan",
     "displayName": "Daan 大安區",

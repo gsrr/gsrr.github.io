@@ -315,10 +315,15 @@ assert conquest.can_attack("ALICE", "maps/china.svg#pBJ_1", "china:pHE", SQ, W, 
 ok("2B can_attack: ownership / same / already-owned / adjacency / unknown ids / garrison / squad / neutral / canonical-only")
 
 # ============================ Phase 2B — adjacency uses real Phase 1C world-data ============================
-def can(src, tgt):
+# This block isolates ADJACENCY, so it opts out of the Phase 3A learning layer
+# (require_qualifications=False) — otherwise a designer adding a learning requirement to any territory
+# named here would masquerade as an adjacency failure. The gate itself is covered in
+# tests/learning_gate_test.py; the assertion below pins that the two layers stay independent.
+def can(src, tgt, require_quals=False):
     tt = {src: {"owner": "ALICE", "troops": [{"type": "cav", "hp": 20}]},
           tgt: {"owner": "BOB", "troops": [{"type": "inf", "hp": 3}]}}
-    return conquest.can_attack("ALICE", src, tgt, [{"type": "cav", "hp": 5}], W, tt)
+    return conquest.can_attack("ALICE", src, tgt, [{"type": "cav", "hp": 5}], W, tt,
+                               require_qualifications=require_quals)
 
 
 assert can("china:pBJ", "china:pHE").allowed, "China: Beijing ↔ Hebei adjacent"
@@ -329,6 +334,10 @@ assert can("world:jp", "world:kr").reason == "not_adjacent", "Japan ↔ Korea NO
 assert can("china:pTW", "china:pFJ").reason == "not_adjacent", "Taiwan ↔ China(Fujian) NOT adjacent (strait)"
 assert can("world:gb", "world:fr").reason == "not_adjacent", "UK ↔ France NOT adjacent (channel)"
 assert can("world:au", "world:id").reason == "not_adjacent", "Australia ↔ Indonesia NOT adjacent (sea)"
+# 3A cross-check: taipei:daan is adjacency-OK but learning-gated — the layers are orthogonal, and a
+# learning requirement never turns into (or hides behind) an adjacency verdict.
+assert can("taipei:wenshan", "taipei:daan", require_quals=True).reason == "qualification_required"
+assert can("taipei:wenshan", "taipei:xinyi", require_quals=True).allowed, "ungated neighbour unaffected"
 ok("2B adjacency: real Phase 1C positives (CN / TW / Taipei / World) + island/sea negatives, canonical ids only")
 
 # ============================ Phase 2B — apply_territorial_attack state transition (pure) ============================

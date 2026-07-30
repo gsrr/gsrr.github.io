@@ -16,6 +16,8 @@ except Exception:
     terr_catalog = None
 from game import (army as game_army, conquest as game_conquest, config as game_config,   # 核心遊戲領域
                   economy as game_economy, recruitment as game_recruit, technology as game_tech)
+from learning import (qualifications as learning_qual, grading as learning_grading,        # 學習領域(與遊戲領域分離)
+                      content as learning_content, registry as learning_registry)
 
 # 房間地圖(等級 id) -> 主 canonical mapId。子地圖(下鑽)改由 world-data/maps.json 的 childMaps 提供。
 LEVEL_PRIMARY_MAP = {"Pre-A1": "taiwan", "A1": "china", "A2": "world", "B1": "world"}
@@ -434,6 +436,9 @@ def user_region_pop(tstore, user):
 GOLD_RATE = 0.10                                   # 每小時金幣 = round(pop * GOLD_RATE)
 PASS_GOLD = 10000                                   # 通過一課 +10000 金幣（重賞上課）
 DEFEND_GOLD = 50                                    # 防守成功 +50 金幣
+# Phase 3A：後端權威地重新批改課程活動時，讀取「與前端相同」的課程 JSON(答案鍵)。容器內內容在
+# /var/www/html(Dockerfile 設 CONTENT_ROOT)；本機/測試預設為 server.py 所在的專案根目錄。
+CONTENT_ROOT = os.environ.get("CONTENT_ROOT") or os.path.dirname(os.path.abspath(__file__))
 ATTACK_FAIL_GOLD = 50                               # 攻打失敗 −50 金幣
 # 蓋建築的金幣花費：兵工廠(科技) + 三種生產建築
 BUILD_COST = {"armory": 50, "barracks": 60, "archery": 80, "stable": 120}
@@ -748,8 +753,10 @@ def ai_move(ai_name=AI_OWNER, difficulty=AI_DIFFICULTY, ai_names=None):
                 def_troops = th.get("troops") or []
                 atk_force = sum(u["hp"] for u in squad)
                 def_force = sum(clampi(t.get("hp", 0)) for t in def_troops if isinstance(t, dict))
-                # 與真人同一條 Game-Domain 規則(無 AI 專用捷徑)：資格 → 戰鬥 → 狀態轉移。
-                elig = game_conquest.can_attack(ai_name, source, target, squad, terr_catalog, store)
+                # 與真人同一條 Game-Domain 規則：擁有權/相鄰/駐軍/戰鬥完全相同。唯一差別 =
+                # require_qualifications=False：人類的「學習資格」不適用於 AI(明確政策，非散落的 if-ai)。
+                elig = game_conquest.can_attack(ai_name, source, target, squad, terr_catalog, store,
+                                                require_qualifications=False)
                 if not elig.allowed:                   # 已預篩，理論上不會發生 → 保守跳過，狀態零變動
                     save_econ_store(estore)
                     return None
@@ -985,6 +992,10 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_room()
         elif path == "/api/rooms":
             self._handle_rooms_list()
+        elif path == "/api/learning/registry":
+            self._handle_learning_registry()
+        elif path == "/api/learning/state":
+            self._handle_learning_state()
         else:
             self._send({"error": "not found"}, 404)
 
@@ -1034,6 +1045,8 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_economy_set()
         elif path == "/api/economy/pass":
             self._handle_economy_pass()
+        elif path == "/api/learning/attempt":
+            self._handle_learning_attempt()
         elif path == "/api/room/start":
             self._handle_room_start()
         elif path == "/api/room/stop":
@@ -1599,7 +1612,7 @@ class Handler(BaseHTTPRequestHandler):
     #   出征兵取自 SOURCE 駐軍(不再是全域兵力池)；資格由 game.conquest.can_attack 權威判定(World-Domain 相鄰)。
     #   贏 → target 直接易主、生還者成為 target 新駐軍；輸 → 生還者退回 source 駐軍、守方保留。金幣規則不變。
     # HTTP 情境對照：source_not_owned → 403；其餘資格失敗 → 400，皆附穩定 reason。
-    _ATTACK_STATUS = {"source_not_owned": 403}          # 其餘 reason 一律 400
+    _ATTACK_STATUS = {"source_not_owned": 403, "qualification_required": 403}   # 其餘 reason 一律 400
 
     def _handle_territory_attack(self):
         user = token_user(self._token())
@@ -1626,12 +1639,16 @@ class Handler(BaseHTTPRequestHandler):
         avatar = str(d.get("avatar", "\U0001F466"))[:8]
         defender = None
         result = None
+        pq = self._player_qualifications(user)           # 玩家(權威)學習資格；AI 走另一條(bypass)
         with terr_lock:
             store = load_territory_store()
-            elig = game_conquest.can_attack(user, source, target, squad, terr_catalog, store)
+            elig = game_conquest.can_attack(user, source, target, squad, terr_catalog, store,
+                                            player_qualifications=pq, require_qualifications=True)
             if not elig.allowed:                         # 資格不符 → 一切狀態零變動(原子拒絕)
-                self._send({"error": "Attack not allowed", "reason": elig.reason},
-                           self._ATTACK_STATUS.get(elig.reason, 400))
+                resp = {"error": "Attack not allowed", "reason": elig.reason}
+                if elig.reason == "qualification_required":   # 附上缺哪些資格(給前端顯示/導向學習)
+                    resp["missingQualificationIds"] = elig.missing_qualifications
+                self._send(resp, self._ATTACK_STATUS.get(elig.reason, 400))
                 return
             src, tgt = store[source], store[target]
             defender = tgt.get("owner")
@@ -1733,7 +1750,10 @@ class Handler(BaseHTTPRequestHandler):
                     "passcnt": passcnt, "buildings": buildings, "tech": tech,
                     "conscript": conscript, "conscriptBudget": cbudget})
 
-    # 記錄「通過一課」→ 該課通過次數 +1（佔領解鎖用，後端統一保存、跨裝置一致）
+    # Phase 3A — RETIRED as a gold source. This endpoint used to mint PASS_GOLD from a bare, unverified
+    # client `{file}` (unlimited-gold exploit). Gold + qualifications now come ONLY from the
+    # server-verified /api/learning/attempt. This endpoint no longer touches gold; it only records the
+    # neutral-claim occupy passcount (the bootstrap gate, which §Phase 3A does NOT tie to learning).
     def _handle_economy_pass(self):
         user = token_user(self._token())
         if not user:
@@ -1749,11 +1769,77 @@ class Handler(BaseHTTPRequestHandler):
             store = load_econ_store()
             e = econ_get(store, user, time.time(), region_pop)
             pc = e["passcnt"]
-            pc[f] = clampi(pc.get(f, 0)) + 1
-            e["gold"] = clampi(e.get("gold", 0) + PASS_GOLD)   # 通過一課 +100 金幣
+            pc[f] = clampi(pc.get(f, 0)) + 1               # 佔領解鎖用的通過次數(不再發金幣)
             save_econ_store(store)
-            cnt, gold = pc[f], e["gold"]
-        self._send({"ok": True, "file": f, "count": cnt, "gold": gold})
+            cnt = pc[f]
+        self._send({"ok": True, "file": f, "count": cnt, "legacy": True})   # no gold: server-verified only
+
+    def _player_qualifications(self, user):
+        """The player's authoritative set of held qualification IDs (per-account, room-independent)."""
+        with acct_lock:
+            p = load_progress(user)
+        return learning_qual.earned_qualification_ids((p.get("learning") or {}))
+
+    # 學習資格登錄簿(公開的 id→標題對照，無答案鍵)：前端用來把資格 id 顯示成人看得懂的課名。
+    def _handle_learning_registry(self):
+        self._send({"registry": learning_registry.public_view()})
+
+    # 玩家自己的(權威)學習狀態：已獲資格 + 活動完成紀錄。前端用來標示領地鎖定/解鎖(僅顯示，非授權)。
+    def _handle_learning_state(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        with acct_lock:
+            p = load_progress(user)
+        learning = p.get("learning") or {}
+        self._send({"qualifications": learning.get("qualifications") or {},
+                    "activityCompletions": learning.get("activityCompletions") or {}})
+
+    # Phase 3A — 唯一權威的「學習完成」路徑：前端送出「作答」(非 passed=true)，後端用相同課程 JSON 批改，
+    # 通過 → 冪等地授予資格 + 一次性 PASS_GOLD(本垂直切片的獎勵語意)。伺服器忽略 client 送的 passed/score/qid/gold。
+    def _handle_learning_attempt(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        d = self._body_json()
+        lesson_id = (d.get("lessonId") or "").strip()
+        activity = (d.get("activity") or "").strip()
+        answers = d.get("answers")
+        if not isinstance(answers, list):
+            self._send({"error": "missing answers", "reason": "bad_answers"}, 400)
+            return
+        qid = learning_registry.qualification_for(lesson_id, activity)   # 登錄簿=白名單:僅可批改有對應資格的活動
+        if not qid or not learning_grading.is_gradable(activity):
+            self._send({"error": "activity not gradable in Phase 3A", "reason": "not_gradable"}, 400)
+            return
+        lesson = learning_content.load_lesson(lesson_id, CONTENT_ROOT)   # 讀權威課程 JSON(路徑受限)
+        if not isinstance(lesson, dict) or not isinstance(lesson.get(activity), list):
+            self._send({"error": "lesson content unavailable", "reason": "lesson_unavailable"}, 400)
+            return
+        result = learning_grading.grade(activity, lesson.get(activity), answers)   # 後端權威批改
+        key = lesson_id + "#" + activity
+        award_gold, granted_now, already = False, False, False
+        with acct_lock:
+            p = load_progress(user)
+            learning = p.setdefault("learning", {})
+            acts = learning.setdefault("activityCompletions", {})
+            rec = acts.get(key) or {}
+            already = bool(rec.get("passedAt"))
+            if result["passed"]:
+                _, granted_now = learning_qual.grant_qualification(learning, qid, int(time.time()))   # 冪等
+                if not rec.get("rewarded"):        # 一次性獎勵：首次通過此活動才發 PASS_GOLD
+                    award_gold = True
+                acts[key] = {"passedAt": rec.get("passedAt") or int(time.time()),
+                             "pct": result["pct"], "rewarded": True}
+            save_progress(user, p)
+        newgold = econ_add_gold(user, PASS_GOLD) if award_gold else None   # 在 acct_lock 外呼叫(避免巢狀鎖)
+        self._send({"ok": True, "passed": result["passed"], "pct": result["pct"],
+                    "correct": result["correct"], "total": result["total"],
+                    "qualification": (qid if result["passed"] else None),
+                    "grantedNow": granted_now, "alreadyCompleted": already,
+                    "rewarded": award_gold, "gold": newgold})
 
     # 玩家經濟：POST 設定（pilot：信任前端戰果，僅夾範圍）
     def _handle_economy_set(self):

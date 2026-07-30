@@ -55,10 +55,12 @@ RUN chmod +x /app/start.sh
 # __file__ 相對路徑找 world-data/，兩者必須同放在 /app/)。缺任何一個後端會在 import 就崩(502)。
 COPY server.py /app/server.py
 COPY game/ /app/game/
+COPY learning/ /app/learning/
 COPY territory_catalog.py /app/territory_catalog.py
 COPY world-data/ /app/world-data/
-# 網站內容(前端靜態檔)
+# 網站內容(前端靜態檔)。後端 Phase 3A 需讀取權威課程 JSON(答案鍵) → CONTENT_ROOT 指向這裡。
 COPY . /var/www/html/
+ENV CONTENT_ROOT=/var/www/html
 
 EXPOSE 80 443
 CMD ["sh", "/app/start.sh"]
