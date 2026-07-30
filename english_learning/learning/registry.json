@@ -1,7 +1,45 @@
 {
-  "english.prea1.taipei.zoo": {
-    "lessonId": "Pre-A1/taipei/zoo",
-    "activity": "quiz3",
-    "title": "Taipei · At the Zoo — Yes/No reading comprehension"
+  "schemaVersion": 1,
+
+  "contentPacks": {
+    "english.prea1": {
+      "title": "English · Pre-A1"
+    }
+  },
+
+  "courses": {
+    "english.prea1.taipei": {
+      "contentPackId": "english.prea1",
+      "title": "Taipei"
+    }
+  },
+
+  "units": {},
+
+  "lessons": {
+    "english.prea1.taipei.zoo": {
+      "courseId": "english.prea1.taipei",
+      "contentPath": "Pre-A1/taipei/zoo",
+      "title": "Taipei · At the Zoo"
+    }
+  },
+
+  "activities": {
+    "english.prea1.taipei.zoo.quiz3": {
+      "lessonId": "english.prea1.taipei.zoo",
+      "contentKey": "quiz3",
+      "graderType": "yes_no",
+      "title": "Taipei · At the Zoo — Yes/No reading comprehension",
+      "grants": ["english.prea1.taipei.zoo"],
+      "rewardPolicy": "standard_activity_pass",
+      "legacyKeys": ["Pre-A1/taipei/zoo#quiz3"]
+    }
+  },
+
+  "qualifications": {
+    "english.prea1.taipei.zoo": {
+      "scope": "activity",
+      "title": "Taipei · At the Zoo — Yes/No reading comprehension"
+    }
   }
 }

@@ -16,8 +16,7 @@ except Exception:
     terr_catalog = None
 from game import (army as game_army, conquest as game_conquest, config as game_config,   # 核心遊戲領域
                   economy as game_economy, recruitment as game_recruit, technology as game_tech)
-from learning import (qualifications as learning_qual, grading as learning_grading,        # 學習領域(與遊戲領域分離)
-                      content as learning_content, registry as learning_registry)
+from learning import api as learning_api                                                   # 學習領域(與遊戲領域分離)
 
 # 房間地圖(等級 id) -> 主 canonical mapId。子地圖(下鑽)改由 world-data/maps.json 的 childMaps 提供。
 LEVEL_PRIMARY_MAP = {"Pre-A1": "taiwan", "A1": "china", "A2": "world", "B1": "world"}
@@ -439,6 +438,9 @@ DEFEND_GOLD = 50                                    # 防守成功 +50 金幣
 # Phase 3A：後端權威地重新批改課程活動時，讀取「與前端相同」的課程 JSON(答案鍵)。容器內內容在
 # /var/www/html(Dockerfile 設 CONTENT_ROOT)；本機/測試預設為 server.py 所在的專案根目錄。
 CONTENT_ROOT = os.environ.get("CONTENT_ROOT") or os.path.dirname(os.path.abspath(__file__))
+# Learning Domain 單一入口。獎勵「金額」在這裡由遊戲設定注入(內容包只能指名 policy，不能指定金額 §15)。
+LEARNING = learning_api.LearningService(content_root=CONTENT_ROOT,
+                                        reward_amounts={"PASS_GOLD": PASS_GOLD})
 ATTACK_FAIL_GOLD = 50                               # 攻打失敗 −50 金幣
 # 蓋建築的金幣花費：兵工廠(科技) + 三種生產建築
 BUILD_COST = {"armory": 50, "barracks": 60, "archery": 80, "stable": 120}
@@ -1778,11 +1780,11 @@ class Handler(BaseHTTPRequestHandler):
         """The player's authoritative set of held qualification IDs (per-account, room-independent)."""
         with acct_lock:
             p = load_progress(user)
-        return learning_qual.earned_qualification_ids((p.get("learning") or {}))
+        return LEARNING.player_qualification_ids(p.get("learning") or {})
 
-    # 學習資格登錄簿(公開的 id→標題對照，無答案鍵)：前端用來把資格 id 顯示成人看得懂的課名。
+    # 學習登錄簿(公開)：資格 id→標題/學習去處、活動 id→課程對照。不含答案鍵、不含獎勵金額。
     def _handle_learning_registry(self):
-        self._send({"registry": learning_registry.public_view()})
+        self._send({"registry": LEARNING.public_registry_view()})
 
     # 玩家自己的(權威)學習狀態：已獲資格 + 活動完成紀錄。前端用來標示領地鎖定/解鎖(僅顯示，非授權)。
     def _handle_learning_state(self):
@@ -1792,54 +1794,45 @@ class Handler(BaseHTTPRequestHandler):
             return
         with acct_lock:
             p = load_progress(user)
-        learning = p.get("learning") or {}
-        self._send({"qualifications": learning.get("qualifications") or {},
-                    "activityCompletions": learning.get("activityCompletions") or {}})
+        self._send(LEARNING.state_view(p.get("learning") or {}))
 
-    # Phase 3A — 唯一權威的「學習完成」路徑：前端送出「作答」(非 passed=true)，後端用相同課程 JSON 批改，
-    # 通過 → 冪等地授予資格 + 一次性 PASS_GOLD(本垂直切片的獎勵語意)。伺服器忽略 client 送的 passed/score/qid/gold。
+    # 唯一權威的「學習完成」路徑。前端只送「身分 + 作答」，其餘一律由 Learning Domain 決定：
+    #   activityId(或 3A 舊式 lessonId+activity) → 登錄簿解析 → 權威內容 → grader → 完成 → 資格 → 獎勵政策。
+    # 伺服器忽略 client 送的 passed / score / correct / qualification / gold / reward。
     def _handle_learning_attempt(self):
         user = token_user(self._token())
         if not user:
             self._send({"error": "Not logged in"}, 401)
             return
         d = self._body_json()
-        lesson_id = (d.get("lessonId") or "").strip()
-        activity = (d.get("activity") or "").strip()
-        answers = d.get("answers")
-        if not isinstance(answers, list):
-            self._send({"error": "missing answers", "reason": "bad_answers"}, 400)
+        # 3B 正規身分；同時相容 3A 前端送的 lessonId+activity(進入 Learning Domain 後立即正規化為 activityId)
+        aid = LEARNING.resolve_activity((d.get("activityId") or "").strip(),
+                                        (d.get("lessonId") or "").strip(),
+                                        (d.get("activity") or "").strip())
+        if not aid:
+            self._send({"error": "unknown or ungradable activity",
+                        "reason": learning_api.REASON_NOT_GRADABLE}, 400)
             return
-        qid = learning_registry.qualification_for(lesson_id, activity)   # 登錄簿=白名單:僅可批改有對應資格的活動
-        if not qid or not learning_grading.is_gradable(activity):
-            self._send({"error": "activity not gradable in Phase 3A", "reason": "not_gradable"}, 400)
+        result, reason = LEARNING.grade_attempt(aid, d.get("answers"))   # 後端權威批改
+        if reason:
+            self._send({"error": "cannot grade this attempt", "reason": reason}, 400)
             return
-        lesson = learning_content.load_lesson(lesson_id, CONTENT_ROOT)   # 讀權威課程 JSON(路徑受限)
-        if not isinstance(lesson, dict) or not isinstance(lesson.get(activity), list):
-            self._send({"error": "lesson content unavailable", "reason": "lesson_unavailable"}, 400)
-            return
-        result = learning_grading.grade(activity, lesson.get(activity), answers)   # 後端權威批改
-        key = lesson_id + "#" + activity
-        award_gold, granted_now, already = False, False, False
         with acct_lock:
             p = load_progress(user)
             learning = p.setdefault("learning", {})
-            acts = learning.setdefault("activityCompletions", {})
-            rec = acts.get(key) or {}
-            already = bool(rec.get("passedAt"))
-            if result["passed"]:
-                _, granted_now = learning_qual.grant_qualification(learning, qid, int(time.time()))   # 冪等
-                if not rec.get("rewarded"):        # 一次性獎勵：首次通過此活動才發 PASS_GOLD
-                    award_gold = True
-                acts[key] = {"passedAt": rec.get("passedAt") or int(time.time()),
-                             "pct": result["pct"], "rewarded": True}
+            _, out = LEARNING.record_attempt(learning, aid, result, int(time.time()))
             save_progress(user, p)
-        newgold = econ_add_gold(user, PASS_GOLD) if award_gold else None   # 在 acct_lock 外呼叫(避免巢狀鎖)
-        self._send({"ok": True, "passed": result["passed"], "pct": result["pct"],
+        # 獎勵金額來自遊戲設定(LEARNING 建構時注入)，內容包無法指定金額。在 acct_lock 外呼叫避免巢狀鎖。
+        newgold = econ_add_gold(user, out["rewardAmount"]) if out["rewarded"] else None
+        granted = out["granted"] if out["passed"] else []
+        self._send({"ok": True, "activityId": aid,
+                    "passed": out["passed"], "pct": result["pct"],
                     "correct": result["correct"], "total": result["total"],
-                    "qualification": (qid if result["passed"] else None),
-                    "grantedNow": granted_now, "alreadyCompleted": already,
-                    "rewarded": award_gold, "gold": newgold})
+                    "qualifications": granted,
+                    "qualification": (granted[0] if granted else None),   # 3A 相容欄位(單一資格)
+                    "grantedNow": bool(out["grantedNow"]), "grantedNowIds": out["grantedNow"],
+                    "alreadyCompleted": out["alreadyCompleted"],
+                    "rewarded": out["rewarded"], "gold": newgold})
 
     # 玩家經濟：POST 設定（pilot：信任前端戰果，僅夾範圍）
     def _handle_economy_set(self):

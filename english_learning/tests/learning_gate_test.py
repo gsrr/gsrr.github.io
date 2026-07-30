@@ -130,6 +130,7 @@ server.PROG_DIR = os.path.join(d, "progress")
 server.DATA = os.path.join(d, "visits.json")
 server.TERR_CATALOG = os.path.join(d, "learned.json")
 server.CONTENT_ROOT = ROOT                     # authoritative lesson JSON lives in the repo root
+server.LEARNING.content_root = ROOT            # (the service captured it at construction)
 os.makedirs(d, exist_ok=True)
 json.dump({"users": {"ALICE": {"code": "LRNAAA"}, "BOB": {}}, "codes": {"LRNAAA": "ALICE"}}, open(server.ACCT, "w"))
 for u in ("ALICE", "BOB"):
@@ -155,7 +156,9 @@ call("POST", "/api/room/create", "tALICE", {})
 CODE = call("POST", "/api/room/start", "tALICE",
             {"map": "Pre-A1", "aiCount": 0, "resources": "medium", "capacity": 4})[1]["code"]
 now = time.time()
-LESSON, ACT, QID = "Pre-A1/taipei/zoo", "quiz3", "english.prea1.taipei.zoo"
+LESSON, ACT, QID = "Pre-A1/taipei/zoo", "quiz3", "english.prea1.taipei.zoo"   # LESSON = content path
+AID = "english.prea1.taipei.zoo.quiz3"          # Phase 3B canonical activity id
+LEGACY_KEY = LESSON + "#" + ACT                 # Phase 3A completion key (must stay resolvable)
 KEY = json.load(open(os.path.join(ROOT, LESSON + ".json"), encoding="utf-8"))[ACT]
 RIGHT = [{"q": it["q"], "answer": it["answer"]} for it in KEY]
 WRONG = [{"q": it["q"], "answer": ("No" if it["answer"] == "Yes" else "Yes")} for it in KEY]
@@ -196,19 +199,34 @@ def gold():
 
 
 def attempt(answers, extra=None):
-    body = {"lessonId": LESSON, "activity": ACT, "answers": answers}
+    """Phase 3B canonical request: activity IDENTITY + answers, nothing else."""
+    body = {"activityId": AID, "answers": answers}
     if extra:
         body.update(extra)
     return call("POST", "/api/learning/attempt?room=" + CODE, "tALICE", body)
 
 
-# --- the public registry exposes titles but never answer keys ---
+def attempt_legacy(answers):
+    """Phase 3A-shaped request (content path + activity key) — normalized inside the Learning Domain."""
+    return call("POST", "/api/learning/attempt?room=" + CODE, "tALICE",
+                {"lessonId": LESSON, "activity": ACT, "answers": answers})
+
+
+# --- the public registry publishes identity + titles + study targets, never answer keys ---
 code, reg = call("GET", "/api/learning/registry", "tALICE")
-assert code == 200 and QID in reg["registry"] and reg["registry"][QID]["lessonId"] == LESSON
-assert reg["registry"][QID]["activity"] == ACT and reg["registry"][QID]["title"]
+r = reg["registry"]
+assert code == 200 and r["schemaVersion"] == 1
+q = r["qualifications"][QID]
+assert q["scope"] == "activity" and q["title"], q
+assert q["studyTarget"] == {"activityId": AID, "lessonId": "english.prea1.taipei.zoo",
+                            "contentPath": LESSON, "title": q["title"]}, q["studyTarget"]
+a = r["activities"][AID]
+assert a["contentPath"] == LESSON and a["contentKey"] == ACT and a["grants"] == [QID], a
 blob = json.dumps(reg)
 assert "answer" not in blob and "Tom is sad" not in blob, "the registry must not leak the answer key"
-ok("E2E registry: id -> {lessonId, activity, title} published, zero answer-key leakage")
+for leak in ("PASS_GOLD", "rewardPolicy", "graderType", "10000"):
+    assert leak not in blob, "the public view must not leak reward amounts or grader internals: " + leak
+ok("E2E registry: identity + title + studyTarget published; no answer keys, no reward/grader internals")
 
 # --- LOCKED: no qualification -> attack on taipei:daan refused, nothing changes ---
 slice_state()
@@ -229,9 +247,13 @@ ok("E2E control: taipei:xinyi (no requirement) conquers normally — the gate is
 # --- FAILED attempt: server grading rejects it, and forged passed/score/qualification are ignored ---
 slice_state()
 g0 = gold()
-code, body = attempt(WRONG, {"passed": True, "pct": 100, "score": 100, "qualification": QID, "gold": 999999})
+code, body = attempt(WRONG, {"passed": True, "pct": 100, "score": 100, "correct": 5, "total": 5,
+                             "qualification": QID, "qualifications": [QID], "gold": 999999,
+                             "rewardGold": 999999, "rewardPolicy": "standard_activity_pass",
+                             "rewarded": True, "graderType": "yes_no"})
 assert code == 200 and body["passed"] is False and body["pct"] == 0, (code, body)
-assert body["qualification"] is None and body["grantedNow"] is False and body["rewarded"] is False
+assert body["qualification"] is None and body["qualifications"] == [] and body["grantedNow"] is False
+assert body["rewarded"] is False and body["activityId"] == AID
 assert gold() == g0, "a failed attempt mints no gold, even when the client claims passed=true"
 assert call("GET", "/api/learning/state?room=" + CODE, "tALICE")[1]["qualifications"] == {}
 assert atk("taipei:daan")[0] == 403, "still locked after a failed attempt"
@@ -241,10 +263,19 @@ ok("E2E forge-proof: client-sent passed/pct/qualification/gold ignored — serve
 g0 = gold()
 code, body = attempt(RIGHT)
 assert code == 200 and body["passed"] is True and body["pct"] == 100, (code, body)
-assert body["qualification"] == QID and body["grantedNow"] is True and body["alreadyCompleted"] is False
+assert body["qualification"] == QID and body["qualifications"] == [QID]
+assert body["grantedNow"] is True and body["grantedNowIds"] == [QID] and body["alreadyCompleted"] is False
 assert body["rewarded"] is True and body["gold"] == g0 + server.PASS_GOLD, (g0, body)
 assert gold() == g0 + server.PASS_GOLD, "PASS_GOLD amount unchanged, granted on the verified event"
 ok("E2E pass: server re-grades 100%, grants the qualification, pays PASS_GOLD once")
+
+# --- §13 LEGACY REQUEST SHAPE: a Phase 3A client (contentPath + activity) hits the SAME code path ---
+g_leg = gold()
+code, body = attempt_legacy(RIGHT)
+assert code == 200 and body["passed"] is True and body["activityId"] == AID, (code, body)
+assert body["rewarded"] is False and gold() == g_leg, \
+    "the legacy request shape normalizes to the same canonical activity — no second reward"
+ok("E2E legacy request: lessonId+activity normalizes to the canonical activityId (one grading path)")
 
 # --- IDEMPOTENT: replaying the same passing attempt pays nothing and does not re-date the grant ---
 g1 = gold()
@@ -255,8 +286,8 @@ assert body["grantedNow"] is False and body["alreadyCompleted"] is True and body
 assert body["gold"] is None and gold() == g1, "replaying a completed activity is worth 0 gold"
 st_after = call("GET", "/api/learning/state?room=" + CODE, "tALICE")[1]
 assert st_after["qualifications"][QID]["earnedAt"] == st_before["qualifications"][QID]["earnedAt"]
-assert st_after["activityCompletions"][LESSON + "#" + ACT]["passedAt"] == \
-    st_before["activityCompletions"][LESSON + "#" + ACT]["passedAt"], "passedAt is first-pass, not last-pass"
+assert st_after["activityCompletions"][AID]["passedAt"] == \
+    st_before["activityCompletions"][AID]["passedAt"], "passedAt is first-pass, not last-pass"
 for _ in range(3):
     attempt(RIGHT)
 assert gold() == g1, "gold cannot be farmed by replaying the verified endpoint"
@@ -264,12 +295,16 @@ ok("E2E idempotent: replays grant no gold, earnedAt/passedAt frozen at the first
 
 # --- persistence shape: activity-scoped completion, separate from the qualification ledger ---
 st = call("GET", "/api/learning/state?room=" + CODE, "tALICE")[1]
-rec = st["activityCompletions"][LESSON + "#" + ACT]
+rec = st["activityCompletions"][AID]
 assert sorted(rec) == ["passedAt", "pct", "rewarded"] and rec["pct"] == 100 and rec["rewarded"] is True
 assert isinstance(rec["passedAt"], int) and rec["passedAt"] > 0
 assert sorted(st["qualifications"][QID]) == ["earnedAt"]
-assert LESSON not in st["activityCompletions"], "the record is keyed by lesson#ACTIVITY, never by lesson alone"
-ok("E2E persistence: activityCompletions['<lesson>#<activity>'] + qualifications['<id>'] stored separately")
+for not_a_key in ("english.prea1.taipei.zoo", LESSON, "english.prea1.taipei"):
+    assert not_a_key not in st["activityCompletions"], \
+        "completion is keyed by ACTIVITY id, never by lesson/course/content path: " + not_a_key
+# §8: higher-level blocks are NOT invented — nothing claims lesson/unit/course completion yet
+assert set(st) == {"qualifications", "activityCompletions"}, st.keys()
+ok("E2E persistence: activityCompletions['<activityId>'] + qualifications['<id>'], no faked aggregates")
 
 # --- UNLOCK: the same attack that was 403 now succeeds ---
 code, body = atk("taipei:daan")
@@ -288,18 +323,43 @@ assert call("GET", "/api/learning/state?room=" + CODE, "tBOB")[1]["qualification
 ok("E2E scope: qualification is per-account (survives total defeat, crosses rooms, not shared)")
 
 # --- only registry-whitelisted, gradable activities are accepted; ids cannot escape CONTENT_ROOT ---
-for bad in ({"lessonId": LESSON, "activity": "match", "answers": []},
+for bad in ({"lessonId": LESSON, "activity": "match", "answers": []},          # real lesson, unregistered activity
             {"lessonId": LESSON, "activity": "wh", "answers": []},
-            {"lessonId": "A2/space/mars", "activity": "quiz3", "answers": []},
-            {"lessonId": "../server", "activity": "quiz3", "answers": []},
+            {"lessonId": "A2/space/mars", "activity": "quiz3", "answers": []},  # unregistered lesson
+            {"lessonId": "../server", "activity": "quiz3", "answers": []},      # traversal via legacy shape
             {"lessonId": "../../etc/passwd", "activity": "quiz3", "answers": []},
-            {"lessonId": "", "activity": "quiz3", "answers": []}):
+            {"lessonId": "", "activity": "quiz3", "answers": []},
+            {"activityId": "made.up.activity", "answers": []},                  # traversal/forgery via 3B shape
+            {"activityId": AID + ".bogus", "answers": []},
+            {"activityId": "english.prea1.taipei.zoo", "answers": []},          # a LESSON id is not an activity
+            {"activityId": "../../etc/passwd", "answers": []},
+            {"activityId": "", "answers": []}):
     c, b = call("POST", "/api/learning/attempt?room=" + CODE, "tALICE", bad)
     assert c == 400 and b["reason"] == "not_gradable", (bad, c, b)
-c, b = call("POST", "/api/learning/attempt?room=" + CODE, "tALICE", {"lessonId": LESSON, "activity": ACT})
-assert c == 400 and b["reason"] == "bad_answers", (c, b)
-assert call("POST", "/api/learning/attempt", "bogus-token", {"lessonId": LESSON, "activity": ACT, "answers": RIGHT})[0] == 401
-ok("E2E endpoint hardening: unregistered/ungradable/traversal/missing-answers/anonymous all refused")
+for missing in ({"activityId": AID}, {"activityId": AID, "answers": "Yes"}, {"activityId": AID, "answers": {}}):
+    c, b = call("POST", "/api/learning/attempt?room=" + CODE, "tALICE", missing)
+    assert c == 400 and b["reason"] == "bad_answers", (missing, c, b)
+assert call("POST", "/api/learning/attempt", "bogus-token", {"activityId": AID, "answers": RIGHT})[0] == 401
+ok("E2E endpoint hardening: unregistered/ungradable/traversal/bad-answers/anonymous all refused")
+
+# --- §42 BACKWARD COMPATIBILITY: a pre-Phase-3B record is honoured, not rewritten or re-rewarded ---
+with server.acct_lock:
+    p = server.load_progress("BOB")
+    p["learning"] = {"activityCompletions": {LEGACY_KEY: {"passedAt": 1000, "pct": 100, "rewarded": True}},
+                     "qualifications": {QID: {"earnedAt": 1000}}}
+    server.save_progress("BOB", p)
+code, body = call("POST", "/api/learning/attempt?room=" + CODE, "tBOB", {"activityId": AID, "answers": RIGHT})
+assert code == 200 and body["passed"] is True, (code, body)
+assert body["alreadyCompleted"] is True, "the legacy record proves prior completion"
+assert body["rewarded"] is False and body["gold"] is None, "an already-rewarded legacy pass is never paid twice"
+assert body["grantedNow"] is False, "the qualification was already held"
+st = call("GET", "/api/learning/state?room=" + CODE, "tBOB")[1]
+assert st["activityCompletions"][LEGACY_KEY] == {"passedAt": 1000, "pct": 100, "rewarded": True}, \
+    "the Phase 3A record is left byte-for-byte intact (non-destructive migration)"
+assert st["activityCompletions"][AID]["passedAt"] == 1000, \
+    "the canonical record inherits the ORIGINAL passedAt — credit is carried forward, not reset"
+assert st["qualifications"][QID]["earnedAt"] == 1000, "earnedAt untouched"
+ok("E2E backward compat: Phase 3A completion key still resolves — additive, idempotent, no double reward")
 
 # --- RETIRED: /api/economy/pass still counts occupy-unlock passes but can no longer mint Gold ---
 slice_state()

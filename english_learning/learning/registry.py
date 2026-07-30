@@ -1,39 +1,306 @@
-"""Qualification registry (content-pack config): qualificationId -> {lessonId, activity, title}.
+"""Learning registry — the content-pack configuration that maps content to logical identity.
 
-Maps a server-graded activity to the OPAQUE qualification it grants, and provides a human-readable
-title for the UI. This is Learning-Domain data — the Game Domain never imports it and only ever sees
-opaque qualification IDs. A qualification ID is stable even if its `title` (UI text) changes.
+This is Learning-Domain data. The Game Domain never imports it and only ever sees opaque
+qualification IDs. Schema (see docs/learning-model.md for the full contract):
+
+    {
+      "schemaVersion": 1,
+      "contentPacks": { "<packId>":   {"title": ...} },
+      "courses":      { "<courseId>": {"contentPackId": ..., "title": ..., "unitId": <optional>} },
+      "units":        { "<unitId>":   {"courseId": ..., "title": ...} },              # optional level
+      "lessons":      { "<lessonId>": {"courseId": ..., "contentPath": ..., "title": ...,
+                                       "unitId": <optional>} },
+      "activities":   { "<activityId>": {"lessonId": ..., "contentKey": ..., "graderType": ...,
+                                         "title": ..., "grants": [...], "rewardPolicy": ...,
+                                         "legacyKeys": [...]} },
+      "qualifications": { "<qualificationId>": {"scope": "activity|lesson|unit|course",
+                                                "title": ..., "studyTarget": <optional override>} }
+    }
+
+Deliberately NOT in here: answer keys (the authoritative lesson JSON already owns them, so
+duplicating them would create a second source of truth) and reward AMOUNTS (see rewards.py §15).
 """
 import json
 import os
 
+from . import grading, identity, rewards
+
 _PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "registry.json")
-try:
-    with open(_PATH, encoding="utf-8") as _f:
-        REGISTRY = json.load(_f)
-    if not isinstance(REGISTRY, dict):
-        REGISTRY = {}
-except Exception:
-    REGISTRY = {}
+SCHEMA_VERSION = 1
+_SECTIONS = ("contentPacks", "courses", "units", "lessons", "activities", "qualifications")
 
 
-def qualification_for(lesson_id, activity):
-    """The qualification id granted by passing (lesson_id, activity), or None if not registered."""
-    for qid, spec in REGISTRY.items():
-        if spec.get("lessonId") == lesson_id and spec.get("activity") == activity:
-            return qid
-    return None
+def _no_dup_keys(pairs):
+    """json object hook: a duplicated key is a registry authoring error, not a silent last-wins."""
+    seen = {}
+    for k, v in pairs:
+        if k in seen:
+            raise ValueError("duplicate key %r in learning registry" % k)
+        seen[k] = v
+    return seen
 
 
-def spec(qid):
-    return REGISTRY.get(qid)
+class Registry:
+    """An immutable-by-convention view over registry data. Constructible from a dict for tests."""
+
+    def __init__(self, data=None):
+        data = data if isinstance(data, dict) else {}
+        self.schema_version = data.get("schemaVersion", SCHEMA_VERSION)
+        for s in _SECTIONS:
+            setattr(self, _attr(s), data.get(s) if isinstance(data.get(s), dict) else {})
+        # derived indexes (built once; every lookup below is O(1) and never scans)
+        self._by_legacy = {}
+        self._by_content = {}
+        for aid, a in self.activities.items():
+            for lk in (a.get("legacyKeys") or []):
+                self._by_legacy.setdefault(lk, aid)
+            path = self.content_path_of(aid)
+            if path:
+                self._by_content.setdefault((path, a.get("contentKey")), aid)
+        self._granted_by = {}
+        for aid, a in self.activities.items():
+            for qid in (a.get("grants") or []):
+                self._granted_by.setdefault(qid, []).append(aid)
+
+    # ---- raw lookups ----
+    def activity(self, activity_id):
+        return self.activities.get(activity_id)
+
+    def lesson(self, lesson_id):
+        return self.lessons.get(lesson_id)
+
+    def course(self, course_id):
+        return self.courses.get(course_id)
+
+    def unit(self, unit_id):
+        return self.units.get(unit_id)
+
+    def content_pack(self, pack_id):
+        return self.contentPacks.get(pack_id)
+
+    def qualification(self, qid):
+        return self.qualifications.get(qid)
+
+    # ---- resolution ----
+    def content_path_of(self, activity_id):
+        """The on-disk content path for an activity, via its lesson. None if unmapped."""
+        a = self.activities.get(activity_id) or {}
+        les = self.lessons.get(a.get("lessonId")) or {}
+        return les.get("contentPath")
+
+    def resolve_activity_id(self, activity_id=None, lesson_id=None, activity=None):
+        """Canonical activityId from either the canonical id or a legacy (lessonId, activity) pair.
+
+        Accepted, in order: a known canonical activityId; a legacy completion key; a
+        logical lessonId + contentKey; a CONTENT PATH + contentKey (what the Phase 3A client sends).
+        Returns None for anything unknown — an unregistered id is never fabricated, so the registry
+        stays the single whitelist for grading and filesystem access.
+        """
+        if activity_id and activity_id in self.activities:
+            return activity_id
+        if activity_id and activity_id in self._by_legacy:
+            return self._by_legacy[activity_id]
+        if lesson_id and activity:
+            key = identity.legacy_completion_key(lesson_id, activity)
+            if key in self._by_legacy:
+                return self._by_legacy[key]
+            for aid, a in self.activities.items():          # logical lessonId + contentKey
+                if a.get("lessonId") == lesson_id and a.get("contentKey") == activity:
+                    return aid
+            hit = self._by_content.get((lesson_id, activity))   # content path + contentKey
+            if hit:
+                return hit
+        return None
+
+    def legacy_keys_for(self, activity_id):
+        a = self.activities.get(activity_id) or {}
+        return list(a.get("legacyKeys") or [])
+
+    def qualification_ids_for(self, activity_id):
+        """The opaque qualification IDs granted by passing this activity (order preserved)."""
+        a = self.activities.get(activity_id) or {}
+        return [q for q in (a.get("grants") or []) if q]
+
+    def granted_by(self, qid):
+        """Which activities can grant this qualification (a qualification may have several routes)."""
+        return list(self._granted_by.get(qid) or [])
+
+    def reward_policy_of(self, activity_id):
+        a = self.activities.get(activity_id) or {}
+        return a.get("rewardPolicy") or rewards.DEFAULT_POLICY
+
+    def grader_type_of(self, activity_id):
+        return (self.activities.get(activity_id) or {}).get("graderType")
+
+    def approved_content_paths(self):
+        """The ONLY content paths the backend may ever read (§28). Registry == filesystem allowlist."""
+        return {l.get("contentPath") for l in self.lessons.values() if l.get("contentPath")}
+
+    def study_target(self, qid):
+        """Where a learner should go to earn `qid` — {lessonId, activityId, contentPath, title}.
+
+        Derived from the granting activity so it can never drift out of sync; a qualification may
+        override it explicitly. None when nothing currently grants the qualification (e.g. a
+        reserved lesson/course-scope qualification, or a requirement whose pack is not installed).
+        """
+        q = self.qualifications.get(qid) or {}
+        override = q.get("studyTarget")
+        if isinstance(override, dict) and override.get("activityId") in self.activities:
+            aid = override["activityId"]
+        else:
+            routes = self.granted_by(qid)
+            if not routes:
+                return None
+            aid = sorted(routes)[0]                 # deterministic when several routes exist
+        a = self.activities.get(aid) or {}
+        return {"activityId": aid, "lessonId": a.get("lessonId"),
+                "contentPath": self.content_path_of(aid), "title": a.get("title")}
+
+    def title_of_qualification(self, qid):
+        q = self.qualifications.get(qid) or {}
+        if q.get("title"):
+            return q["title"]
+        tgt = self.study_target(qid)
+        return (tgt or {}).get("title") or qid       # last resort: the opaque id itself
+
+    # ---- frontend view (never carries answer keys, grader internals or reward amounts) ----
+    def public_view(self):
+        return {
+            "schemaVersion": self.schema_version,
+            "qualifications": {qid: {"scope": q.get("scope") or "activity",
+                                     "title": self.title_of_qualification(qid),
+                                     "studyTarget": self.study_target(qid)}
+                               for qid, q in self.qualifications.items()},
+            "activities": {aid: {"lessonId": a.get("lessonId"),
+                                 "contentPath": self.content_path_of(aid),
+                                 "contentKey": a.get("contentKey"),
+                                 "title": a.get("title"),
+                                 "grants": self.qualification_ids_for(aid)}
+                           for aid, a in self.activities.items()},
+            "lessons": {lid: {"courseId": l.get("courseId"), "contentPath": l.get("contentPath"),
+                              "title": l.get("title")} for lid, l in self.lessons.items()},
+        }
 
 
-def public_view():
-    """id -> {lessonId, activity, title} for the frontend. Contains NO answer keys."""
-    return {qid: {"lessonId": s.get("lessonId"), "activity": s.get("activity"), "title": s.get("title")}
-            for qid, s in REGISTRY.items()}
+def _attr(section):
+    return section
 
 
-def gradable_lesson_ids():
-    return {s.get("lessonId") for s in REGISTRY.values() if s.get("lessonId")}
+# ======================= validation (§26) — pure, operates on a raw dict =======================
+def validate(data):
+    """Return a list of human-readable error strings; empty means valid.
+
+    Structural + referential + trust-boundary checks. Never raises, never touches the filesystem,
+    so it is usable from the CLI validator and from unit tests on synthetic registries alike.
+    """
+    errs = []
+
+    def err(msg):
+        errs.append(msg)
+
+    if not isinstance(data, dict):
+        return ["registry must be a JSON object"]
+    if data.get("schemaVersion") != SCHEMA_VERSION:
+        err("schemaVersion must be %d (got %r)" % (SCHEMA_VERSION, data.get("schemaVersion")))
+    unknown = set(data) - set(_SECTIONS) - {"schemaVersion"}
+    if unknown:
+        err("unknown top-level sections: %s" % sorted(unknown))
+    sec = {}
+    for s in _SECTIONS:
+        v = data.get(s, {})
+        if not isinstance(v, dict):
+            err("%s must be an object" % s)
+            v = {}
+        sec[s] = v
+    packs, courses, units = sec["contentPacks"], sec["courses"], sec["units"]
+    lessons, activities, quals = sec["lessons"], sec["activities"], sec["qualifications"]
+
+    for name, table in (("contentPack", packs), ("course", courses), ("unit", units),
+                        ("lesson", lessons), ("activity", activities), ("qualification", quals)):
+        for key in table:
+            if not identity.is_id(key):
+                err("%s id %r is empty or malformed (expect dotted lowercase segments)" % (name, key))
+
+    for cid, c in courses.items():
+        if (c or {}).get("contentPackId") not in packs:
+            err("course %s references unknown contentPackId %r" % (cid, (c or {}).get("contentPackId")))
+    for uid, u in units.items():
+        if (u or {}).get("courseId") not in courses:
+            err("unit %s references unknown courseId %r" % (uid, (u or {}).get("courseId")))
+
+    for lid, l in lessons.items():
+        l = l or {}
+        if l.get("courseId") not in courses:
+            err("lesson %s references unknown courseId %r" % (lid, l.get("courseId")))
+        if l.get("unitId") is not None and l.get("unitId") not in units:
+            err("lesson %s references unknown unitId %r" % (lid, l.get("unitId")))
+        if not identity.is_content_path(l.get("contentPath")):
+            err("lesson %s has a missing/malformed contentPath %r" % (lid, l.get("contentPath")))
+
+    seen_legacy = {}
+    for aid, a in activities.items():
+        a = a or {}
+        if a.get("lessonId") not in lessons:
+            err("activity %s references unknown lessonId %r" % (aid, a.get("lessonId")))
+        if not a.get("contentKey") or not isinstance(a.get("contentKey"), str):
+            err("activity %s has a missing/invalid contentKey" % aid)
+        if not grading.is_supported(a.get("graderType")):
+            err("activity %s has unknown graderType %r (known: %s)"
+                % (aid, a.get("graderType"), grading.grader_types()))
+        if not a.get("title"):
+            err("activity %s has no title" % aid)
+        if not rewards.is_policy(a.get("rewardPolicy") or rewards.DEFAULT_POLICY):
+            err("activity %s has invalid rewardPolicy %r (allowed: %s)"
+                % (aid, a.get("rewardPolicy"), rewards.policy_ids()))
+        for money in ("rewardGold", "gold", "rewardAmount", "amount"):
+            if money in a:                       # §15: content may NAME a policy, never an amount
+                err("activity %s may not set %r — reward amounts come from game config only" % (aid, money))
+        grants = a.get("grants")
+        if not isinstance(grants, list) or not grants:
+            err("activity %s must grant at least one qualification" % aid)
+            grants = []
+        if len(grants) != len(set(grants)):
+            err("activity %s lists a duplicate qualification in grants" % aid)
+        for qid in grants:
+            if qid not in quals:
+                err("activity %s grants unknown qualification %r" % (aid, qid))
+            elif (quals[qid] or {}).get("scope", "activity") != "activity":
+                # §7: only what the server can actually prove may be earnable today.
+                err("activity %s grants %s whose scope is %r — only 'activity' scope is earnable "
+                    "until authoritative aggregation exists" % (aid, qid, (quals[qid] or {}).get("scope")))
+        for lk in (a.get("legacyKeys") or []):
+            if not identity.looks_legacy(lk):
+                err("activity %s has malformed legacyKey %r (expect '<contentPath>#<contentKey>')" % (aid, lk))
+            elif lk in seen_legacy:
+                err("legacyKey %r is claimed by both %s and %s" % (lk, seen_legacy[lk], aid))
+            else:
+                seen_legacy[lk] = aid
+
+    granted = set()
+    for a in activities.values():
+        granted.update((a or {}).get("grants") or [])
+    for qid, q in quals.items():
+        q = q or {}
+        scope = q.get("scope", "activity")
+        if scope not in identity.SCOPES:
+            err("qualification %s has invalid scope %r (allowed: %s)" % (qid, scope, list(identity.SCOPES)))
+        tgt = q.get("studyTarget")
+        if tgt is not None:
+            if not isinstance(tgt, dict) or tgt.get("activityId") not in activities:
+                err("qualification %s has a studyTarget pointing at an unknown activity" % qid)
+        if scope == "activity" and qid not in granted:
+            err("qualification %s has scope 'activity' but no activity grants it" % qid)
+    return errs
+
+
+def load_data(path=_PATH):
+    """Parse the registry file. Returns (data, errors); a duplicate key or bad JSON is an error."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f, object_pairs_hook=_no_dup_keys), []
+    except Exception as e:
+        return {}, ["cannot load %s: %s" % (path, e)]
+
+
+DATA, LOAD_ERRORS = load_data()
+REGISTRY = Registry(DATA)

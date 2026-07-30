@@ -78,7 +78,8 @@ def _subtract_squad(garrison, squad):
 # required IDs come from World Domain (world.attack_requirements). `require_qualifications=False`
 # bypasses ONLY this layer — used for AI (human learning does not apply to the AI) and any future
 # non-learning-gated caller. It never bypasses ownership/adjacency/garrison. Game Domain treats the
-# IDs as fully opaque (no "english" special-casing) — see the content-independence test.
+# IDs as FULLY OPAQUE strings: it never parses, splits or classifies them, and nothing in game/ knows
+# what any of them certify or how one is earned — see the content-independence regression test.
 def can_attack(player_id, source_id, target_id, squad, world, territories,
                player_qualifications=None, require_qualifications=True):
     """Pure eligibility rule. No HTTP, no DOM, no I/O. Returns AttackEligibility."""
@@ -114,11 +115,18 @@ def can_attack(player_id, source_id, target_id, squad, world, territories,
             required = world.attack_requirements(target_id) or []
         except Exception:
             required = []
-        if required:
-            held = player_qualifications or set()
-            missing = [q for q in required if q not in held]
-            if missing:
-                return AttackEligibility(False, "qualification_required", missing)
+        held = player_qualifications or set()
+        # ALL semantics (no OR groups in this phase). Junk entries (non-string/empty) are ignored
+        # rather than treated as unmeetable gates, and a duplicated requirement is reported once —
+        # `missing` is the exact list the UI renders, so it must be clean and order-stable.
+        missing, seen = [], set()
+        for q in required:
+            if isinstance(q, str) and q and q not in seen:
+                seen.add(q)
+                if q not in held:
+                    missing.append(q)
+        if missing:
+            return AttackEligibility(False, "qualification_required", missing)
     return AttackEligibility(True, None)
 
 

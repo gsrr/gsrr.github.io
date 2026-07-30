@@ -270,3 +270,65 @@ was **not** performed. Steps to reproduce manually:
 6. Return to the map, click **taipei:daan** → the normal attack panel now renders; the attack succeeds.
 7. Retake Level 3 → still passes, but **no additional gold** (idempotent).
 8. Complete any other lesson end-to-end → green pass as before, **no gold** (expected under rollout A).
+
+---
+
+# Phase 3B — generalization (as-built)
+
+Phase 3A's one-off mapping is gone; the architecture is now content-neutral. The full model —
+identity hierarchy, registry schema, reward-policy trust boundary, grader dispatch, study navigation,
+validation and the cross-domain decision — lives in **[docs/learning-model.md](learning-model.md)**.
+This section records only what changed relative to Phase 3A and what is *deliberately* still narrow.
+
+## What generalized
+
+| Phase 3A | Phase 3B |
+|---|---|
+| `registry.json` = `{qid: {lessonId, activity, title}}` | pack → course → (unit) → lesson → activity → qualification sections |
+| lesson id **was** the content path | logical `lessonId` **separate from** `contentPath` |
+| no activity id | canonical `activityId`, e.g. `english.prea1.taipei.zoo.quiz3` |
+| grading gated on `activity in ("quiz3","quiz4")` | dispatch on registry `graderType` (`GRADERS`) |
+| one activity → one qualification | `grants: [...]`, many-to-many throughout |
+| `PASS_GOLD` hardcoded in the HTTP handler | `rewardPolicy` name → server-owned allowlist → game config |
+| completion key `Pre-A1/taipei/zoo#quiz3` | canonical `activityId`, legacy key still read |
+| `server.py` did resolution + content + grading | `LearningService` facade; handlers delegate |
+| lock UI assumed a single requirement | generic renderer: 0 / 1 / N, one Study entry per missing |
+| study nav found the article from `lessonId` | from qualification metadata (`studyTarget`) |
+| filesystem read guarded by traversal check | registry allowlist + shape + realpath containment |
+
+## What is deliberately still narrow
+
+- **One grader** (`yes_no`). `wh` / `match` / `reorder` / `dict` / `cloze` are **not** migrated (§30) —
+  that is Phase 3C.
+- **One earnable scope** (`activity`). `lesson` / `unit` / `course` are reserved in the schema and the
+  validator *rejects* granting them, so no aggregate completion can be faked (§7).
+- **One production requirement** — the Taipei slice. Many-to-many is proven in domain tests, not by
+  inventing curriculum (§18, §36).
+- **ALL semantics only** — no OR groups (§6).
+- **No pack install infrastructure** — model compatibility only (§19).
+
+## Reward semantics — unchanged from Phase 3A
+
+`PASS_GOLD` is still `10000`, still granted only by a server-verified pass of a registered activity,
+still once per activity, still not mintable from `/api/economy/pass`, and still a **temporary
+vertical-slice reward policy** rather than the generic whole-lesson/whole-course model. Phase 3B only
+moved *where the number comes from* (game config via a named policy) — not the amount, the trigger or
+the idempotency.
+
+## Migration report
+
+Nothing was rewritten or discarded. See learning-model.md §14 for the table; the behaviour is proven
+by `tests/learning_gate_test.py` ("E2E backward compat") and `tests/learning_domain_test.py`
+("service legacy"): a pre-3B record keeps its original `passedAt`, is left byte-for-byte intact, and
+its `rewarded` flag prevents a second payout under the new canonical key.
+
+## Test inventory
+
+| File | Covers |
+|---|---|
+| `tests/learning_identity_test.py` (10) | §31 identity, §32 registry validation, lookups, public view |
+| `tests/learning_domain_test.py` (10) | §33 generic grader via a synthetic non-English pack, §34 qualifications, §37 reward authority, content allowlist |
+| `tests/learning_requirements_test.py` (6) | §35 0/1/2+ matrix, §36 many-to-many, §20 Game-Domain content-independence, §17 boundary |
+| `tests/learning_gate_test.py` (19) | §39 the original slice end-to-end, §13 legacy request shape, §42 legacy record compat, endpoint hardening, AI policy |
+| `tests/learning_frontend.test.js` (6) | §38 0/1/N requirement rendering, metadata-driven study nav, client submits no authority |
+| `tools/validate_learning_registry.py` | §26 registry validation, §27 cross-domain report (`--strict`) |

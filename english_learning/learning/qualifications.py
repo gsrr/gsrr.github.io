@@ -1,13 +1,17 @@
-"""Player qualification state — server-authoritative, content-independent, PURE (no I/O).
+"""Player learning state — server-authoritative, content-independent, PURE (no I/O).
 
-Operates on a plain "learning state" dict of the shape:
+Operates on a plain "learning state" dict:
 
-    { "activityCompletions": { "<lessonId>#<activity>": {passedAt, pct, rewarded} },
+    { "activityCompletions": { "<activityId>": {passedAt, pct, rewarded} },
       "qualifications":      { "<qualificationId>": {earnedAt} } }
 
+Phase 3B keeps the Phase 3A shape and adds many-to-many grants. Higher-level blocks
+(lessonCompletions / unitCompletions / courseCompletions) are intentionally NOT created: §8 says do
+not create empty persistence blocks, and §7 says do not claim a completion the server cannot prove.
+
 Game Domain depends only on these small operations + opaque qualification IDs — never on what a
-qualification teaches. Qualification is PLAYER state: it is independent of territory ownership, army,
-and room state, so a player who loses every territory keeps their qualifications (future revival).
+qualification teaches. Qualification is PLAYER state: independent of territory ownership, army and
+room, so a player who loses every territory keeps their qualifications.
 """
 
 
@@ -38,12 +42,57 @@ def earned_qualification_ids(state):
 
 
 def grant_qualification(state, qid, earned_at):
-    """Idempotent grant. Returns (state, granted_now: bool). Mutates & returns state for caller
-    persistence; a repeated grant leaves the original earnedAt untouched and returns granted_now=False."""
+    """Idempotent grant. Returns (state, granted_now). A repeat leaves the original earnedAt intact."""
     if not isinstance(state, dict):
         state = {}
     quals = state.setdefault("qualifications", {})
-    if qid in quals:
+    if not qid or qid in quals:
         return state, False
     quals[qid] = {"earnedAt": earned_at}
     return state, True
+
+
+def grant_qualifications(state, qids, earned_at):
+    """Grant several at once (one activity may certify more than one). Returns (state, newly_granted).
+
+    Order of `qids` is preserved in the returned list; duplicates within the input are collapsed.
+    """
+    newly = []
+    for qid in (qids or []):
+        state, now = grant_qualification(state, qid, earned_at)
+        if now:
+            newly.append(qid)
+    return state, newly
+
+
+# ---- activity completion records -------------------------------------------------------------
+def get_completion(state, key):
+    rec = ((state or {}).get("activityCompletions") or {}).get(key)
+    return rec if isinstance(rec, dict) else None
+
+
+def merge_completions(state, keys):
+    """Fold the records at `keys` (canonical first, then legacy aliases) into one logical record.
+
+    Phase 3A wrote `"<contentPath>#<activity>"`; Phase 3B writes the canonical activityId. Reading
+    through BOTH is what makes the migration non-destructive: `passedAt` is the earliest known pass
+    and `rewarded` is true if ANY alias was already paid, so nobody is paid twice and nobody loses
+    credit for work done before Phase 3B.
+    """
+    recs = [r for r in (get_completion(state, k) for k in (keys or [])) if r]
+    if not recs:
+        return None
+    passed_ats = [r["passedAt"] for r in recs if isinstance(r.get("passedAt"), int)]
+    pcts = [r["pct"] for r in recs if isinstance(r.get("pct"), int)]
+    return {"passedAt": min(passed_ats) if passed_ats else None,
+            "pct": max(pcts) if pcts else 0,
+            "rewarded": any(bool(r.get("rewarded")) for r in recs)}
+
+
+def record_completion(state, key, passed_at, pct, rewarded):
+    """Write/refresh one activity-completion record. Returns the stored record."""
+    if not isinstance(state, dict):
+        state = {}
+    acts = state.setdefault("activityCompletions", {})
+    acts[key] = {"passedAt": passed_at, "pct": pct, "rewarded": bool(rewarded)}
+    return acts[key]
