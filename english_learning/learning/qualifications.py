@@ -96,3 +96,27 @@ def record_completion(state, key, passed_at, pct, rewarded):
     acts = state.setdefault("activityCompletions", {})
     acts[key] = {"passedAt": passed_at, "pct": pct, "rewarded": bool(rewarded)}
     return acts[key]
+
+
+# ---- authoritative latest SCORE evidence (Phase 3F) --------------------------------------------
+# Deliberately separate from activityCompletions:
+#   activityScores      = the latest authoritative score, whether the attempt passed or not
+#   activityCompletions = the authoritative "this activity was passed" record (never written on fail)
+# Legacy recordScore() is latest-wins, so this store is latest-wins too — a worse retry lowers the
+# score while leaving the earlier completion (and its one-time reward) untouched.
+def get_activity_score(state, activity_id):
+    table = (state or {}).get("activityScores")
+    if not isinstance(table, dict):
+        return None                      # malformed stored state -> no evidence, never a crash
+    rec = table.get(activity_id)
+    return rec if isinstance(rec, dict) else None
+
+
+def record_activity_score(state, activity_id, correct, total, pct, now):
+    """Latest-wins. Keeps exact correct/total so Rule A can average unrounded percentages."""
+    if not isinstance(state, dict):
+        state = {}
+    table = state.setdefault("activityScores", {})
+    table[activity_id] = {"correct": int(correct), "total": int(total), "pct": int(pct),
+                          "updatedAt": now}
+    return table[activity_id]

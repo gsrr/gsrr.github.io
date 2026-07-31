@@ -262,7 +262,7 @@ assert [a for a in svc.registry.activities if svc.registry.reward_policy_of(a) !
 assert o["lessonCompleted"] is False and o["lessonCompletedNow"] is False
 assert st4.get("lessonCompletions") is None or st4["lessonCompletions"] == {}
 active = [l for l in svc.registry.lessons if svc.registry.completion_available(l)]
-assert active == [], active
+assert active == ["english.prea1.taipei.zoo"], active   # Phase 3F: Zoo only
 ok("§37/§38 neutrality: matching pays 0 gold, grants 0 qualifications, production policies still 0")
 
 # ============================== §39 validator ==============================

@@ -15,8 +15,10 @@ would be a DIFFERENT and easier rule than the one learners see today. So:
 
 See docs/lesson-completion.md for the full inventory and the decision record.
 """
+import math
 
-POLICY_TYPES = ("all_required_activities",)
+POLICY_TYPES = ("all_required_activities", "average_required_activities")
+PASS_MARK = 80          # the authoritative global threshold (index.html PASS_MARK); see pass_mark_of()
 DEFAULT_VERSION = 1
 # A lesson policy that names no reward pays nothing. NOTE this is deliberately NOT
 # rewards.DEFAULT_POLICY — a lesson must never mint gold just because someone forgot the field.
@@ -49,6 +51,36 @@ def policy_version(policy):
     return v if isinstance(v, int) and not isinstance(v, bool) and v > 0 else DEFAULT_VERSION
 
 
+def pass_mark_of(policy):
+    """The threshold. Content may restate it but never weaken it — the validator pins it to PASS_MARK."""
+    pm = (policy or {}).get("passMark")
+    return pm if isinstance(pm, int) and not isinstance(pm, bool) else PASS_MARK
+
+
+def _round_half_up(value):
+    """JS Math.round semantics. Python's round() is banker's and would disagree on .5 means."""
+    return int(math.floor(value + 0.5))
+
+
+def rule_a_mean(scores, required):
+    """Legacy Rule A arithmetic, exactly as index.html statusFromScores() does it:
+
+        mean = sum(correct / total * 100  for each required level) / len(required)
+
+    Note the per-level term is NOT rounded — only the final mean is (by the caller). Every evidence
+    source supplies an exact correct/total pair, so this reproduces the client value bit for bit.
+    """
+    if not required:
+        return None
+    terms = []
+    for aid in required:
+        rec = (scores or {}).get(aid)
+        if not isinstance(rec, dict) or not rec.get("total"):
+            return None
+        terms.append(rec["correct"] / float(rec["total"]) * 100)
+    return sum(terms) / float(len(terms))
+
+
 def grants_of(policy):
     return [q for q in ((policy or {}).get("grants") or []) if isinstance(q, str) and q]
 
@@ -58,7 +90,7 @@ def reward_policy_of(policy):
     return rp if isinstance(rp, str) and rp else DEFAULT_REWARD_POLICY
 
 
-def evaluate(lesson_id, lesson, passed_activity_ids):
+def evaluate(lesson_id, lesson, passed_activity_ids, activity_scores=None):
     """Decide whether `lesson` is complete, given the set of activity ids the player has PASSED.
 
     `passed_activity_ids` must come from server-authoritative activity completions only — the caller
@@ -77,7 +109,8 @@ def evaluate(lesson_id, lesson, passed_activity_ids):
     policy = policy_of(lesson)
     out = {"lessonId": lesson_id, "available": False, "completed": False,
            "policyType": None, "policyVersion": None,
-           "requiredActivityIds": [], "completedActivityIds": [], "missingActivityIds": []}
+           "requiredActivityIds": [], "completedActivityIds": [], "missingActivityIds": [],
+           "activityScores": {}, "meanPct": None, "roundedPct": None, "passMark": None}
     if not policy or policy.get("type") not in POLICY_TYPES:
         return out
     required = required_activity_ids(policy)
@@ -89,6 +122,20 @@ def evaluate(lesson_id, lesson, passed_activity_ids):
         # An empty requirement list is a registry error (the validator rejects it); treat it as
         # NOT complete rather than vacuously true, so a malformed policy can never grant anything.
         out["completed"] = bool(required) and not out["missingActivityIds"]
+    elif policy["type"] == "average_required_activities":
+        # Legacy Rule A: EVERY required level must have a score, then the unweighted mean of the
+        # per-level percentages must reach PASS_MARK. An individual level may be below it.
+        scores = activity_scores or {}
+        have = {a: scores.get(a) for a in required}
+        out["activityScores"] = {a: (dict(v) if isinstance(v, dict) else None) for a, v in have.items()}
+        out["completedActivityIds"] = [a for a in required if isinstance(have[a], dict)]
+        out["missingActivityIds"] = [a for a in required if not isinstance(have[a], dict)]
+        out["passMark"] = pass_mark_of(policy)
+        if required and not out["missingActivityIds"]:
+            mean = rule_a_mean(have, required)
+            out["meanPct"] = mean
+            out["roundedPct"] = _round_half_up(mean)
+            out["completed"] = out["roundedPct"] >= out["passMark"]
     return out
 
 

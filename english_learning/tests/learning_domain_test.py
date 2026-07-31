@@ -173,10 +173,15 @@ state, out2 = svc.record_attempt(state, "bio.cells.intro.check", res, 2000)
 assert out2["alreadyCompleted"] is True and out2["grantedNow"] == [] and out2["rewarded"] is False
 assert out2["rewardAmount"] == 0 and state["activityCompletions"]["bio.cells.intro.check"]["passedAt"] == 1000
 # a FAILED attempt records nothing and grants nothing
-before = json.dumps(state, sort_keys=True)
+before_completions = json.dumps(state.get("activityCompletions"), sort_keys=True)
+before_quals = json.dumps(state.get("qualifications"), sort_keys=True)
 state, out3 = svc.record_attempt(state, "bio.cells.intro.review", res_bad, 3000)
 assert out3["passed"] is False and out3["granted"] == [] and out3["rewarded"] is False
-assert json.dumps(state, sort_keys=True) == before, "a failed attempt is a no-op on player state"
+# Phase 3F: a failure now persists the LATEST SCORE (Rule A needs it) but still grants nothing and
+# still writes no completion record.
+assert state["activityScores"]["bio.cells.intro.review"]["pct"] == res_bad["pct"]
+assert json.dumps(state.get("activityCompletions"), sort_keys=True) == before_completions
+assert json.dumps(state.get("qualifications"), sort_keys=True) == before_quals
 # activity B grants TWO qualifications, one of which is already held, and carries NO reward
 res_b, _ = svc.grade_attempt("bio.cells.intro.review",
                              [{"q": "Osmosis moves water.", "answer": "Yes"},

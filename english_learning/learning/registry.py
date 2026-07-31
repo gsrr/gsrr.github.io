@@ -31,7 +31,8 @@ _SECTIONS = ("contentPacks", "courses", "units", "lessons", "activities", "quali
 # graderConfig keys the graders actually read (learning/grading.py). Anything else is an authoring bug.
 _GRADER_CFG_KEYS = {"promptField", "answerField", "distractorsField", "joinWith"}
 # Phase 3D: keys allowed inside a lesson's optional completionPolicy.
-_COMPLETION_KEYS = {"type", "version", "requiredActivityIds", "grants", "rewardPolicy"}
+_COMPLETION_KEYS = {"type", "version", "requiredActivityIds", "grants", "rewardPolicy",
+                    "passMark"}
 # Phase 3E1: non-deterministic scorers live outside the GRADERS table (§8).
 _SCORER_TYPES = {stt_scoring.SCORER_TYPE, matching.SCORER_TYPE}
 _SCORED_KIND = {stt_scoring.SCORER_TYPE: "stt", matching.SCORER_TYPE: "matching"}
@@ -314,6 +315,17 @@ def validate(data):
             elif (activities[aid] or {}).get("lessonId") != lid:
                 err("lesson %s completionPolicy requires %s, which belongs to lesson %r"
                     % (lid, aid, (activities[aid] or {}).get("lessonId")))
+        # §4/§6: a restated threshold may never WEAKEN the trusted one, and every required activity
+        # must have a server-side evidence source that can supply an exact correct/total pair.
+        if "passMark" in cp and cp.get("passMark") != completion.PASS_MARK:
+            err("lesson %s completionPolicy.passMark must be %d (the authoritative PASS_MARK), got %r"
+                % (lid, completion.PASS_MARK, cp.get("passMark")))
+        if cp.get("type") == "average_required_activities":
+            for aid in req:
+                a = activities.get(aid) or {}
+                sct, gt = a.get("scorerType"), a.get("graderType")
+                if not (sct in _SCORER_TYPES or grading.is_supported(gt)):
+                    err("lesson %s averages %s, which has no server-side evidence source" % (lid, aid))
         for money in ("rewardGold", "gold", "rewardAmount", "amount"):
             if money in cp:                 # §15 again: content may NAME a policy, never an amount
                 err("lesson %s completionPolicy may not set %r — reward amounts come from game config "

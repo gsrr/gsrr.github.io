@@ -237,7 +237,7 @@ def rejects(mutate, needle):
 
 
 P = lambda d: d["lessons"]["bio.cells.intro"]["completionPolicy"]  # noqa: E731
-rejects(lambda d: P(d).update(type="average_required_activities"), "unknown type")
+rejects(lambda d: P(d).update(type="mean_of_everything"), "unknown type")
 rejects(lambda d: P(d).update(type=None), "unknown type")
 rejects(lambda d: P(d).update(version=0), "version must be a positive integer")
 rejects(lambda d: P(d).update(version="1"), "version must be a positive integer")
@@ -298,25 +298,27 @@ shutil.rmtree(tmp, ignore_errors=True)
 
 # ================= PRODUCTION: the machinery must be dormant (§ approved decision) =================
 prod = L.LearningService(content_root=ROOT, reward_amounts={"PASS_GOLD": 10000})
+# Phase 3F activated exactly ONE production policy (Zoo). Everything else stays dormant.
 active = [lid for lid in prod.registry.lessons if prod.registry.completion_available(lid)]
-assert active == [], "Phase 3D must configure NO production lesson with a completionPolicy: %s" % active
+assert active == ["english.prea1.taipei.zoo"], active
 assert R.validate(R.DATA) == [], R.validate(R.DATA)
 for lid in prod.registry.lessons:
     ev = prod.evaluate_lesson(lid, {})
-    assert ev["available"] is False and ev["completed"] is False, lid
+    assert ev["completed"] is False, lid
+    assert ev["available"] is (lid == "english.prea1.taipei.zoo"), lid
     # even a player who passed literally every registered activity completes no lesson
     everything = {"activityCompletions": {aid: {"passedAt": 1, "pct": 100, "rewarded": False}
                                           for aid in prod.registry.activities}}
     ev2 = prod.evaluate_lesson(lid, everything)
-    assert ev2["completed"] is False, "%s must not complete while its policy is absent" % lid
+    # pass records alone are NOT Rule A evidence - it averages activityScores / stt / matching
+    assert ev2["completed"] is False, "%s needs real score evidence, not just pass records" % lid
 # no lesson-scope qualification exists in production, so none can be earned
 assert all((q or {}).get("scope") == "activity" for q in prod.registry.qualifications.values())
 pv = prod.progress_view({"activityCompletions": {aid: {"passedAt": 1, "pct": 100}
                                                  for aid in prod.registry.activities}})
 assert pv["completedLessonIds"] == []
-assert all(l["authoritativeCompletionAvailable"] is False and l["completed"] is False
-           for l in pv["lessons"].values())
-ok("production: 0 lessons have a completionPolicy — passing every registered activity completes none")
+assert all(l["completed"] is False for l in pv["lessons"].values())
+ok("production: exactly 1 lesson (Zoo) has a completionPolicy; pass records alone complete nothing")
 
 # the Zoo activity reward is untouched by any of this (§35)
 zoo = "english.prea1.taipei.zoo.quiz3"

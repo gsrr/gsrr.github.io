@@ -306,7 +306,7 @@ for not_a_key in ("english.prea1.taipei.zoo", LESSON, "english.prea1.taipei"):
 # production lesson declares a completionPolicy, so the block must stay empty — and unit/course
 # completion still does not exist at all.
 assert set(st) == {"qualifications", "activityCompletions", "lessonCompletions",
-                   "sttProgress", "matchingProgress"}, st.keys()
+                   "sttProgress", "matchingProgress", "activityScores"}, st.keys()
 assert st["lessonCompletions"] == {}, "no production lesson can be authoritatively complete yet"
 assert st["sttProgress"] == {}, "this player has recorded no Read-Along evidence"
 assert st["matchingProgress"] == {}, "this player has played no matching round"

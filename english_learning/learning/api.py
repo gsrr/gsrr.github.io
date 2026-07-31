@@ -84,6 +84,14 @@ class LearningService:
           - awards the reward only on the first pass across ALL aliases (`once`).
         A failure changes nothing at all.
         """
+        # §1: the authoritative LATEST score is persisted for every graded attempt, pass or fail,
+        # independently of the completion record below. Rule A averages these, not the pass records.
+        if isinstance(result, dict) and isinstance(result.get("total"), int) and result["total"] > 0:
+            if not isinstance(state, dict):
+                state = {}
+            qualifications.record_activity_score(
+                state, activity_id, result.get("correct") or 0, result["total"],
+                result.get("pct") or 0, now)
         prior = self.read_completion(state, activity_id)
         out = {"activityId": activity_id, "passed": bool(result and result.get("passed")),
                "alreadyCompleted": bool(prior and prior.get("passedAt")),
@@ -266,6 +274,41 @@ class LearningService:
                 out[k] = act[k]
         return state, out
 
+
+    # ---- authoritative per-activity score for Rule A (Phase 3F) ----
+    def authoritative_activity_score(self, state, activity_id):
+        """{correct, total, pct} for one activity, or None when there is no server evidence yet.
+
+        One resolver for all evidence shapes, so the lesson policy never learns where a score lives:
+          deterministic graders -> activityScores  (exact correct/total, latest-wins)
+          Read-Along (STT)      -> sttProgress     (legacy recordScore(2, avg, 100) => correct=pct,
+                                                    total=100, so the pair is already exact)
+          Matching              -> matchingProgress(legacy recordScore(5, firstTry, n) => correct/total
+                                                    stored verbatim)
+        Every source therefore supplies an exact numerator/denominator, so Rule A can average the
+        UNROUNDED per-level percentages exactly as index.html does.
+        """
+        state = state or {}
+        if self.is_matching(activity_id):
+            rec = (state.get("matchingProgress") or {}).get(activity_id)
+            if isinstance(rec, dict) and isinstance(rec.get("total"), int) and rec["total"] > 0:
+                return {"correct": int(rec.get("correct") or 0), "total": int(rec["total"]),
+                        "pct": int(rec.get("pct") or 0)}
+            return None
+        if self.is_read_along(activity_id):
+            rec = (state.get("sttProgress") or {}).get(activity_id)
+            if isinstance(rec, dict) and isinstance(rec.get("pct"), int):
+                return {"correct": int(rec["pct"]), "total": 100, "pct": int(rec["pct"])}
+            return None
+        rec = qualifications.get_activity_score(state, activity_id)
+        if isinstance(rec, dict) and isinstance(rec.get("total"), int) and rec["total"] > 0:
+            return {"correct": int(rec.get("correct") or 0), "total": int(rec["total"]),
+                    "pct": int(rec.get("pct") or 0)}
+        return None
+
+    def authoritative_activity_scores(self, state, activity_ids):
+        return {aid: self.authoritative_activity_score(state, aid) for aid in (activity_ids or [])}
+
     # ---- whole-lesson completion (Phase 3D) ----
     def passed_activity_ids(self, state):
         """Activity ids the player has authoritatively PASSED (canonical + legacy keys merged)."""
@@ -278,8 +321,10 @@ class LearningService:
 
     def evaluate_lesson(self, lesson_id, state):
         """Pure-ish evaluation of one lesson against server-authoritative activity state only."""
-        return completion.evaluate(lesson_id, self.registry.lesson(lesson_id),
-                                   self.passed_activity_ids(state))
+        lesson = self.registry.lesson(lesson_id)
+        required = completion.required_activity_ids(completion.policy_of(lesson))
+        return completion.evaluate(lesson_id, lesson, self.passed_activity_ids(state),
+                                   self.authoritative_activity_scores(state, required))
 
     def _settle_lesson(self, state, lesson_id, now, out):
         """Record a first-time lesson completion + its configured grants/reward. Idempotent."""
@@ -314,7 +359,9 @@ class LearningService:
         lessons = {}
         passed = self.passed_activity_ids(state)
         for lid, lesson in self.registry.lessons.items():
-            ev = completion.evaluate(lid, lesson, passed)
+            required = completion.required_activity_ids(completion.policy_of(lesson))
+            ev = completion.evaluate(lid, lesson, passed,
+                                     self.authoritative_activity_scores(state, required))
             rec = completion.get_lesson_completion(state, lid)
             lessons[lid] = {
                 "title": lesson.get("title"),
@@ -339,7 +386,8 @@ class LearningService:
                 "activityCompletions": state.get("activityCompletions") or {},
                 "lessonCompletions": state.get("lessonCompletions") or {},
                 "sttProgress": state.get("sttProgress") or {},
-                "matchingProgress": state.get("matchingProgress") or {}}
+                "matchingProgress": state.get("matchingProgress") or {},
+                "activityScores": state.get("activityScores") or {}}
 
     def player_qualification_ids(self, state):
         return qualifications.earned_qualification_ids(state)

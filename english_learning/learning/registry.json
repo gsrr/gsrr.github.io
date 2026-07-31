@@ -17,7 +17,20 @@
     "english.prea1.taipei.zoo": {
       "courseId": "english.prea1.taipei",
       "contentPath": "Pre-A1/taipei/zoo",
-      "title": "Taipei · At the Zoo"
+      "title": "Taipei · At the Zoo",
+      "completionPolicy": {
+        "type": "average_required_activities",
+        "version": 1,
+        "passMark": 80,
+        "requiredActivityIds": [
+          "english.prea1.taipei.zoo.read_along",
+          "english.prea1.taipei.zoo.quiz3",
+          "english.prea1.taipei.zoo.quiz4",
+          "english.prea1.taipei.zoo.matching",
+          "english.prea1.taipei.zoo.wh",
+          "english.prea1.taipei.zoo.cloze"
+        ]
+      }
     },
     "english.a1.core.001": {
       "courseId": "english.a1.core",

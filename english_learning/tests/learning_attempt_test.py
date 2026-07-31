@@ -293,8 +293,10 @@ ok("§34 retries: fail->retry->pass works; first passedAt/earnedAt frozen; no se
 code, prog = call("GET", "/api/learning/progress?room=" + CODE)
 assert code == 200 and set(prog) == {"lessons", "completedLessonIds"}, prog
 assert prog["completedLessonIds"] == [], prog
-assert all(l["authoritativeCompletionAvailable"] is False and l["completed"] is False
-           for l in prog["lessons"].values()), prog["lessons"]
+# Phase 3F activated Zoo's policy: it is now AVAILABLE, but this player has not completed it.
+assert prog["lessons"]["english.prea1.taipei.zoo"]["authoritativeCompletionAvailable"] is True
+assert prog["lessons"]["english.a1.core.001"]["authoritativeCompletionAvailable"] is False
+assert all(l["completed"] is False for l in prog["lessons"].values()), prog["lessons"]
 blob = json.dumps(prog)
 for leak in ("answer", "graderType", "graderConfig", "rewardPolicy", "PASS_GOLD", "10000", "contentPath"):
     assert leak not in blob, "progress endpoint leaks " + leak
