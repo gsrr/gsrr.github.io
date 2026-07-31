@@ -1051,6 +1051,10 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_economy_pass()
         elif path == "/api/learning/attempt":
             self._handle_learning_attempt()
+        elif path == "/api/learning/matching/start":
+            self._handle_matching_start()
+        elif path == "/api/learning/matching/attempt":
+            self._handle_matching_attempt()
         elif path == "/api/room/start":
             self._handle_room_start()
         elif path == "/api/room/stop":
@@ -1886,6 +1890,55 @@ class Handler(BaseHTTPRequestHandler):
                     "lessonCompletedNow": out["lessonCompletedNow"],
                     "lessonQualifications": out["lessonQualifications"],
                     "lessonRewarded": out["lessonRewarded"]})
+
+    # Phase 3E2：配對(Level 5)改為「伺服器擁有回合」。抽樣、正確配對、first-try 狀態全在後端；
+    #   client 只拿到可顯示的單字與圖片(不含對應關係)，並把每次點擊送回來由後端判定。
+    def _handle_matching_start(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        aid = (self._body_json().get("activityId") or "").strip()
+        if not LEARNING.is_matching(aid):
+            self._send({"error": "not a matching activity", "reason": "not_scorable"}, 400)
+            return
+        with acct_lock:
+            p = load_progress(user)
+            learning = p.setdefault("learning", {})
+            _, view = LEARNING.start_matching_round(learning, aid, int(time.time()), random.Random())
+            if view is None:
+                self._send({"error": "matching content unavailable",
+                            "reason": "content_unavailable"}, 400)
+                return
+            save_progress(user, p)
+        self._send(view)          # roundId + 單字(依序) + 圖片(打散)；不含任何配對答案
+
+    def _handle_matching_attempt(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        d = self._body_json()
+        rid = (d.get("roundId") or "").strip()
+        with acct_lock:
+            p = load_progress(user)
+            learning = p.setdefault("learning", {})
+            # 回合存在「該帳號自己的」學習狀態裡 → 別人的 roundId 對這個帳號根本不存在(結構性擁有權)。
+            _, out = LEARNING.matching_click(learning, rid, d.get("itemId"), d.get("choiceId"),
+                                             int(time.time()))
+            if out is None:
+                self._send({"error": "unknown, expired or finished round",
+                            "reason": "bad_round"}, 400)
+                return
+            save_progress(user, p)
+        delta = clampi(out.get("rewardAmount", 0)) + clampi(out.get("lessonRewardAmount", 0))
+        newgold = econ_add_gold(user, delta) if delta else None
+        resp = {"ok": True, "roundId": rid, "status": out["status"], "expected": out["expected"],
+                "total": out["total"], "completed": out["completed"], "scored": out["scored"]}
+        if out["status"] == "complete":
+            resp.update(result=out["result"], qualifications=out.get("granted") or [],
+                        rewarded=bool(out.get("rewarded")), gold=newgold)
+        self._send(resp)
 
     # 唯讀的整課進度：哪些課有權威完成政策、已完成了哪些、還缺哪些活動。不含答案鍵/批改設定/獎勵細節。
     def _handle_learning_progress(self):

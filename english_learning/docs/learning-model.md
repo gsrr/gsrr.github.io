@@ -96,6 +96,13 @@ create a second source of truth) and reward amounts (§5 below).
 An activity completion is **not** whole-lesson completion. The pre-existing whole-lesson rule (client
 average ≥ `PASS_MARK`, stored as `passcnt`) is untouched and unrelated.
 
+**Phase 3E2 update.** `matchingProgress[activityId] = {latestRoundId, correct, total, pct, updatedAt}`
+holds authoritative Matching evidence, **latest-wins** (a later round replaces an earlier one, exactly
+as the legacy `recordScore` did). Live rounds sit in `matchingRounds[roundId]` inside the owning
+account's state — so another account structurally cannot reach them — and are compacted away on
+completion or dropped after `ROUND_TTL`. A `matching_first_try` activity DOES declare a `contentKey`
+(`vocab`), unlike `read_along_stt` whose content is the lesson dialogue.
+
 **Phase 3E1 update.** `sttProgress[activityId] = {sentences: {<index>: {score, updatedAt}},
 totalSentences, pct}` holds authoritative Read-Along evidence, per account. It is best-per-sentence
 (a worse retry never lowers a score) and is created only when a sentence is actually scored. Crossing
@@ -140,7 +147,7 @@ Not every activity is deterministic. An activity declares **exactly one** of:
 | field | meaning | dispatch |
 |---|---|---|
 | `graderType` | deterministic text grading | `grading.GRADERS[...]` |
-| `scorerType` | non-deterministic input (today: `read_along_stt`) | `learning/stt_scoring.py` |
+| `scorerType` | stateful / non-deterministic input | `read_along_stt` → `learning/stt_scoring.py`; `matching_first_try` → `learning/matching.py` |
 
 STT is deliberately **outside** the `GRADERS` table: its input is audio→transcript rather than
 submitted answers, and its retry rule is *best-per-sentence* rather than latest-wins. Its content is

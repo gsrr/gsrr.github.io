@@ -7,8 +7,8 @@ granting, reward policy) lives behind LearningService.
 The service is stateless with respect to players — every method takes the player's `learning` dict
 and returns it mutated for the caller to persist, exactly like the pure modules underneath.
 """
-from . import (completion, content, grading, identity, qualifications, registry, rewards,
-               stt_scoring)
+from . import (completion, content, grading, identity, matching, qualifications, registry,
+               rewards, stt_scoring)
 
 # stable machine reasons returned to the client (never internal exception detail)
 REASON_NOT_GRADABLE = "not_gradable"
@@ -180,6 +180,92 @@ class LearningService:
                 out[k] = act_out[k]
         return state, out
 
+    # ---- Matching (Phase 3E2) — server-owned rounds ----
+    def is_matching(self, activity_id):
+        return self.registry.scorer_type_of(activity_id) == matching.SCORER_TYPE
+
+    def matching_vocab(self, activity_id):
+        """The authoritative word/picture pairs, or None. Server-resolved; never client-supplied."""
+        if not self.is_matching(activity_id):
+            return None
+        spec = self.registry.activity(activity_id) or {}
+        items = content.load_activity_items(
+            self.registry.content_path_of(activity_id), spec.get("contentKey") or "vocab",
+            self.content_root, self.registry.approved_content_paths())
+        if not items:
+            return None
+        ok = [i for i in items if isinstance(i, dict) and str(i.get("word") or "").strip()
+              and str(i.get("pic") or "").strip()]
+        return ok or None
+
+    def start_matching_round(self, state, activity_id, now, rng):
+        """Draw a new server-owned round. Returns (state, public_view) or (state, None).
+
+        Starting a round RETIRES any other open round for the same activity (the UI only ever shows
+        one), and drops expired rounds, so live state cannot accumulate (§30).
+        """
+        vocab = self.matching_vocab(activity_id)
+        if not vocab:
+            return state, None
+        if not isinstance(state, dict):
+            state = {}
+        rounds = state.setdefault("matchingRounds", {})
+        for rid in [r for r, v in rounds.items()
+                    if (v or {}).get("activityId") == activity_id or matching.is_expired(v, now)]:
+            rounds.pop(rid, None)
+        rs = matching.build_round(activity_id, vocab, rng)
+        if not rs:
+            return state, None
+        rs["createdAt"] = now
+        round_id = self._new_round_id()
+        rounds[round_id] = rs
+        return state, matching.public_view(round_id, rs, vocab)
+
+    @staticmethod
+    def _new_round_id():
+        import secrets
+        return secrets.token_hex(16)
+
+    def matching_click(self, state, round_id, item_id, choice_id, now):
+        """Process one click against a round the player owns. Returns (state, outcome) or (state, None).
+
+        A round lives inside its owner's learning state, so another account simply has no such round —
+        ownership is structural, not a check that can be forgotten. Unknown/expired/completed rounds
+        are refused, so nothing can be replayed to alter a score.
+        """
+        if not isinstance(state, dict):
+            return state, None
+        rounds = state.get("matchingRounds")
+        if not isinstance(rounds, dict):
+            return state, None            # malformed stored state -> refuse, never crash
+        rs = rounds.get(round_id)
+        if not isinstance(rs, dict) or rs.get("completed") or matching.is_expired(rs, now):
+            return state, None
+        activity_id = rs.get("activityId")
+        vocab = self.matching_vocab(activity_id)
+        if not vocab:
+            return state, None
+        out, _changed = matching.apply_click(rs, round_id, item_id, choice_id)
+        if out["status"] != "complete":
+            return state, out
+        # Round finished: compact it into evidence and run it through the normal activity machinery.
+        res = matching.result_of(rs)
+        state["matchingRounds"].pop(round_id, None)
+        prog = state.setdefault("matchingProgress", {})
+        prog[activity_id] = {"latestRoundId": round_id, "correct": res["correct"],
+                             "total": res["total"], "pct": res["pct"], "updatedAt": now}
+        out["result"] = res
+        out.update(granted=[], grantedNow=[], rewardAmount=0, rewarded=False, alreadyCompleted=False,
+                   lessonCompleted=False, lessonCompletedNow=False, lessonQualifications=[],
+                   lessonRewardAmount=0, lessonRewarded=False)
+        if res["passed"]:
+            state, act = self.record_attempt(state, activity_id, res, now)
+            for k in ("granted", "grantedNow", "rewardAmount", "rewarded", "alreadyCompleted",
+                      "lessonCompleted", "lessonCompletedNow", "lessonQualifications",
+                      "lessonRewardAmount", "lessonRewarded"):
+                out[k] = act[k]
+        return state, out
+
     # ---- whole-lesson completion (Phase 3D) ----
     def passed_activity_ids(self, state):
         """Activity ids the player has authoritatively PASSED (canonical + legacy keys merged)."""
@@ -252,7 +338,8 @@ class LearningService:
         return {"qualifications": state.get("qualifications") or {},
                 "activityCompletions": state.get("activityCompletions") or {},
                 "lessonCompletions": state.get("lessonCompletions") or {},
-                "sttProgress": state.get("sttProgress") or {}}
+                "sttProgress": state.get("sttProgress") or {},
+                "matchingProgress": state.get("matchingProgress") or {}}
 
     def player_qualification_ids(self, state):
         return qualifications.earned_qualification_ids(state)

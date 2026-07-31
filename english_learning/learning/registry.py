@@ -23,7 +23,7 @@ duplicating them would create a second source of truth) and reward AMOUNTS (see 
 import json
 import os
 
-from . import completion, grading, identity, rewards, stt_scoring
+from . import completion, grading, identity, matching, rewards, stt_scoring
 
 _PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "registry.json")
 SCHEMA_VERSION = 1
@@ -33,7 +33,8 @@ _GRADER_CFG_KEYS = {"promptField", "answerField", "distractorsField", "joinWith"
 # Phase 3D: keys allowed inside a lesson's optional completionPolicy.
 _COMPLETION_KEYS = {"type", "version", "requiredActivityIds", "grants", "rewardPolicy"}
 # Phase 3E1: non-deterministic scorers live outside the GRADERS table (§8).
-_SCORER_TYPES = {stt_scoring.SCORER_TYPE}
+_SCORER_TYPES = {stt_scoring.SCORER_TYPE, matching.SCORER_TYPE}
+_SCORED_KIND = {stt_scoring.SCORER_TYPE: "stt", matching.SCORER_TYPE: "matching"}
 
 
 def _no_dup_keys(pairs):
@@ -215,7 +216,7 @@ class Registry:
                                  "contentKey": a.get("contentKey"),
                                  "title": a.get("title"),
                                  "serverGraded": self.is_server_scored(aid),
-                                 "scored": ("stt" if a.get("scorerType") else "deterministic"),
+                                 "scored": _SCORED_KIND.get(a.get("scorerType"), "deterministic"),
                                  "grants": self.qualification_ids_for(aid)}
                            for aid, a in self.activities.items()},
             # `authoritativeCompletionAvailable` is false for every production lesson in Phase 3D —
@@ -351,9 +352,12 @@ def validate(data):
             if sct not in _SCORER_TYPES:
                 err("activity %s has unknown scorerType %r (known: %s)"
                     % (aid, sct, sorted(_SCORER_TYPES)))
-            if a.get("contentKey") is not None:
+            if sct == stt_scoring.SCORER_TYPE and a.get("contentKey") is not None:
                 err("activity %s uses scorerType %r, whose content is the lesson dialogue — it must "
                     "not declare a contentKey" % (aid, sct))
+            if sct == matching.SCORER_TYPE and not isinstance(a.get("contentKey"), str):
+                err("activity %s uses scorerType %r and must name the content key holding its "
+                    "word/picture pairs (e.g. \"vocab\")" % (aid, sct))
             if a.get("graderConfig") is not None:
                 err("activity %s uses scorerType %r and must not declare graderConfig" % (aid, sct))
         elif not grading.is_supported(gt):

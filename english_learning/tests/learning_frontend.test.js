@@ -240,13 +240,43 @@ ok("attempt request carries {activityId, answers} only — no score/passed/quali
   const ro = extractFn(html, "function makeReorder(");
   assert(/recordScore\(6, sentences\.length, sentences\.length\);[\s\S]{0,120}maybeSubmitLearningAttempt/.test(ro),
     "reorder must submit once, at the end of the activity");
-  // level 5 (matching) is deliberately NOT migrated - it must have no attempt submission
+  // Phase 3E2: matching migrated to its OWN server-owned round endpoints (not the attempt endpoint)
   const match = extractFn(html, "function makeMatch(");
   assert(match.indexOf("maybeSubmitLearningAttempt") < 0,
-    "makeMatch must NOT submit: matching is category B and stays client-scored in Phase 3C");
-  assert(/recordScore\(5, firstTry, seq\.length\)/.test(match), "makeMatch keeps its existing scoring");
+    "makeMatch must not use the deterministic attempt endpoint - it has its own round API");
+  assert(/\/api\/learning\/matching\/start/.test(match), "makeMatch must start a server-owned round");
+  assert(/\/api\/learning\/matching\/attempt/.test(match), "clicks must go to the attempt endpoint");
+  // the activityId comes from registry metadata, never hardcoded
+  assert(/acts\[aid\]\.contentPath === currentArticleKey && acts\[aid\]\.scored === "matching"/.test(match),
+    "the matching activityId must be resolved from registry metadata");
+  [/zoo/i, /taipei/i, /pre-a1/i].forEach(re =>
+    assert(!re.test(match), "makeMatch must not hardcode content: " + re));
+  // the START request carries only the activity identity
+  const startBody = (match.match(/JSON\.stringify\(\{ activityId: aid \}\)/) || [])[0];
+  assert(startBody, "start request must be exactly {activityId}");
+  // the ATTEMPT request carries only round/item/choice identity - no authority
+  const attemptBody = (match.match(/JSON\.stringify\(\{ roundId:[^}]*\}\)/) || [])[0] || "";
+  assert(/roundId: round\.roundId/.test(attemptBody) && /itemId: item\.itemId/.test(attemptBody) &&
+    /choiceId: choice\.choiceId/.test(attemptBody), "attempt body: " + attemptBody);
+  ["firstTry", "score", "pct", "passed", "correct", "total", "sample", "qualification", "reward"]
+    .forEach(k => assert(attemptBody.indexOf(k) < 0, "attempt request must not submit " + k));
+  // the FINAL score comes from the server result, fed to recordScore for legacy display only
+  assert(/if \(d\.status === "complete" && d\.result\) finish\(d\.result\.correct, d\.result\.total\)/.test(match),
+    "the completion score must come from the server result");
+  assert(/recordScore\(5, correct, n\)/.test(match), "recordScore is display/progression only");
+  // a backend failure must NOT fall back to local authoritative scoring (§8)
+  assert(/Couldn't start the matching round/.test(match), "start failure must offer a retryable state");
+  assert(!/buildLocal\(\);?\s*\}\)\s*;?\s*$/m.test(match.slice(match.indexOf(".catch("))),
+    "the start .catch must not silently switch to the local path");
+  // the local practice path survives for backendless mode only
+  assert(/if \(!aid \|\| !tok\) \{ buildLocal\(\); return; \}/.test(match),
+    "local practice mode is entered only when there is no registered activity or no login");
+  assert(/const n = Math\.min\(5, vocab\.length\)/.test(match), "legacy local sample rule preserved");
+  // in-flight guard (§6)
+  assert(/if \(!round \|\| inFlight/.test(match), "a click while a request is in flight must be ignored");
 }
-ok("Phase 3C: quiz/wh/cloze/dictation/reorder submit evidence to one endpoint; matching left unmigrated");
+ok("Phase 3C/3E2: quiz/wh/cloze/dictation/reorder use the attempt endpoint; matching uses its own " +
+   "server-owned round API and submits no authority");
 
 // 6) the client treats the server response as the authority and cannot self-grant
 const settle = () => new Promise(r => setImmediate(r));

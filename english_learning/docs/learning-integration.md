@@ -389,3 +389,46 @@ GitHub Pages deployment, so learners there are not trapped by the level lock. It
 server evidence.
 
 Production lesson `completionPolicy` count is still **0**: Level 5 matching remains the last blocker.
+
+
+---
+
+# Phase 3E2 — Matching becomes server-authoritative
+
+Detailed design in **[docs/matching-authority.md](matching-authority.md)**. What changed:
+
+| | Before | After (backend mode) |
+|---|---|---|
+| Sample | client `shuffle(vocab).slice(0,5)` | **server** draws it (injectable RNG; deterministic in tests) |
+| Word→picture mapping | client | **server only** — never sent to the client |
+| first-try state | browser memory | **server** round state |
+| Score | client `firstTry / n` | **server** `POST /api/learning/matching/attempt` result |
+| Persistence | `localStorage` | `learning.matchingProgress`, per account, latest-wins |
+| Round identity | none | opaque `roundId`, stored inside the owner's own state |
+
+`POST /api/learning/matching/start` returns `{roundId, items[{itemId, word}], choices[{choiceId, pic}],
+total}` — **no** pairing. `POST /api/learning/matching/attempt` takes `{roundId, itemId, choiceId}`
+and returns `{status, expected, total, scored, completed}` plus `result` on the final click.
+
+Deliberately preserved, unchanged:
+
+- `n = min(5, len(vocab))` (always 5 for shipped content) and the independent picture shuffle;
+- strictly sequential matching, and a wrong click costing the current word's point permanently;
+- clicking an already-matched picture is **inert**, not a wrong attempt;
+- **the last word can never be missed** (every other picture is already matched), so the theoretical
+  score floor is 1/5 = 20%, not 0. This artifact is intentionally kept — fixing it would be a product
+  change, not an authority migration;
+- restart re-rolls the sample and the score is **latest-wins**, so a learner may retry until clean.
+  Documented trust implication: the score proves "a clean round happened", not "clean first time".
+
+Choice identity is the **button position** (`<roundId>#choice:<pos>`), not the emoji, so the 4 lessons
+whose vocab reuses a glyph stay unambiguous. Item identity is `<activityId>#item:<vocabIndex>` —
+derived from content, requiring no lesson-JSON change.
+
+**Backendless mode** (GitHub Pages / not logged in / lesson not registered) keeps the legacy local
+implementation, clearly labelled as local practice. Its score is never uploaded and can never become
+`matchingProgress`. A *backend failure* is handled differently from backendless mode: the UI shows a
+retryable state and never silently falls back to local authoritative scoring.
+
+Reward and qualification neutrality: both matching activities use `rewardPolicy: "none"` with no
+grants, so gold-bearing activities remain **1/10** and production `completionPolicy` count remains **0**.

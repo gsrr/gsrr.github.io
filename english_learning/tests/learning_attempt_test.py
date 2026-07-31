@@ -111,8 +111,10 @@ reg = call("GET", "/api/learning/registry")[1]["registry"]
 # Phase 3E1 added two Read-Along (STT) activities. They are server-SCORED but not gradable through
 # the attempt endpoint, so they are advertised separately and excluded from the deterministic set.
 READ_ALONG = {a for a, v in reg["activities"].items() if v.get("scored") == "stt"}
+MATCHING = {a for a, v in reg["activities"].items() if v.get("scored") == "matching"}
 assert READ_ALONG == {"english.prea1.taipei.zoo.read_along", "english.a1.core.001.read_along"}, READ_ALONG
-assert set(reg["activities"]) - READ_ALONG == set(RIGHT), sorted(reg["activities"])
+assert MATCHING == {"english.prea1.taipei.zoo.matching", "english.a1.core.001.matching"}, MATCHING
+assert set(reg["activities"]) - READ_ALONG - MATCHING == set(RIGHT), sorted(reg["activities"])
 assert all(reg["activities"][a]["serverGraded"] is True for a in reg["activities"])
 assert all(reg["activities"][a]["scored"] == "deterministic" for a in RIGHT)
 blob = json.dumps(reg)
@@ -442,6 +444,92 @@ assert gold() == g_before
 ok("§12/§25 threshold: 100%% records a completion with 0 gold/0 qualification; bad retry keeps the best")
 
 server.transcribe = _real_transcribe
+
+
+# ============ Phase 3E2: matching round ownership + forgery over HTTP (§9) ============
+MATCH_AID = "english.prea1.taipei.zoo.matching"
+server._tokens["tBOB2"] = {"user": "BOB2", "exp": time.time() + 9999, "admin": False}
+
+
+def mstart(tok="tALICE", aid=MATCH_AID):
+    return call("POST", "/api/learning/matching/start?room=" + CODE, {"activityId": aid}, tok=tok)
+
+
+def mattempt(rid, item, choice, tok="tALICE", extra=None):
+    body = {"roundId": rid, "itemId": item, "choiceId": choice}
+    if extra:
+        body.update(extra)
+    return call("POST", "/api/learning/matching/attempt?room=" + CODE, body, tok=tok)
+
+
+code, r1 = mstart()
+assert code == 200 and r1["roundId"] and r1["total"] == 5, (code, r1)
+assert len(r1["items"]) == 5 and len(r1["choices"]) == 5
+blob = json.dumps(r1)
+for leak in ("order", "vocabIndex", "firstTry", "missedCurrent", "correct"):
+    assert leak not in blob, "matching/start leaks " + leak
+RID = r1["roundId"]
+# Bob cannot use Alice's round: it does not exist in HIS state (structural ownership)
+code, b = mattempt(RID, r1["items"][0]["itemId"], r1["choices"][0]["choiceId"], tok="tBOB2")
+assert code == 400 and b["reason"] == "bad_round", (code, b)
+# anonymous cannot start or attempt
+assert call("POST", "/api/learning/matching/start", {"activityId": MATCH_AID}, tok="bogus")[0] == 401
+assert call("POST", "/api/learning/matching/attempt",
+            {"roundId": RID, "itemId": "x", "choiceId": "y"}, tok="bogus")[0] == 401
+# unknown round rejected
+for bad in ("", "nope", RID + "ff"):
+    c, bb = mattempt(bad, r1["items"][0]["itemId"], r1["choices"][0]["choiceId"])
+    assert c == 400 and bb["reason"] == "bad_round", (bad, c, bb)
+# a non-matching activity cannot start a round
+for bad_aid in ("english.prea1.taipei.zoo.quiz3", "english.prea1.taipei.zoo", "nope", ""):
+    c, bb = mstart(aid=bad_aid)
+    assert c == 400 and bb["reason"] in ("not_scorable",), (bad_aid, c, bb)
+ok("§9 matching HTTP: start/attempt require auth; another account's round is unreachable; "
+   "unknown round and non-matching activity refused")
+
+# play a full round through HTTP, forging every authority field we can think of
+g_m = gold()
+quals_before = set(state()["qualifications"])
+code, r = mstart()
+RID = r["roundId"]
+FORGE = {"firstTry": 5, "correct": 5, "total": 5, "score": 100, "pct": 100, "passed": True,
+         "completed": True, "sample": [], "qualification": QID, "rewardGold": 999999,
+         "activityId": "english.prea1.taipei.zoo.quiz3"}
+seen_status = set()
+for step in range(5):
+    # brute-force the current word by trying each choice; wrong ones are safe and cost only the point
+    for ch in r["choices"]:
+        c, b = mattempt(RID, r["items"][step]["itemId"], ch["choiceId"], extra=FORGE)
+        assert c == 200, (c, b)
+        seen_status.add(b["status"])
+        if b["status"] in ("correct", "complete"):
+            break
+assert "complete" in seen_status and "wrong" in seen_status, seen_status
+assert b["result"]["total"] == 5 and 0 <= b["result"]["correct"] <= 5
+assert b["result"]["correct"] < 5, "brute-forcing every choice must cost first-try points"
+assert b.get("rewarded") is False and gold() == g_m, "matching mints no gold even with forged fields"
+assert set(state()["qualifications"]) == quals_before, "and grants no qualification"
+prog = state()["matchingProgress"][MATCH_AID]
+assert prog["total"] == 5 and prog["correct"] == b["result"]["correct"]
+# a completed round cannot be replayed to change the score
+c, b2 = mattempt(RID, r["items"][0]["itemId"], r["choices"][0]["choiceId"])
+assert c == 400 and b2["reason"] == "bad_round", (c, b2)
+assert state()["matchingProgress"][MATCH_AID]["correct"] == prog["correct"], "score unchanged by replay"
+ok("§9 matching HTTP: forged firstTry/score/sample/qualification/reward ignored; completed round "
+   "cannot be replayed; 0 gold, 0 qualifications")
+
+# latest-wins: a later clean round replaces a worse one (legacy semantics preserved)
+code, r = mstart()
+RID = r["roundId"]
+for step in range(5):
+    for ch in r["choices"]:
+        c, b = mattempt(RID, r["items"][step]["itemId"], ch["choiceId"])
+        if b["status"] in ("correct", "complete"):
+            break
+after = state()["matchingProgress"][MATCH_AID]
+assert after["latestRoundId"] == RID, "evidence points at the LATEST round"
+assert state()["lessonCompletions"] == {}, "§15 production lesson completion still dormant"
+ok("§11 matching HTTP: latest-wins evidence, lesson completion still dormant")
 
 srv.shutdown()
 print("\nAll %d attempt-endpoint tests passed." % passed)

@@ -53,6 +53,24 @@
       "rewardPolicy": "none"
     },
 
+    "english.prea1.taipei.zoo.matching": {
+      "lessonId": "english.prea1.taipei.zoo",
+      "contentKey": "vocab",
+      "scorerType": "matching_first_try",
+      "title": "Taipei · At the Zoo — Word/Picture matching",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.001.matching": {
+      "lessonId": "english.a1.core.001",
+      "contentKey": "vocab",
+      "scorerType": "matching_first_try",
+      "title": "A1 · 001 — Word/Picture matching",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
     "english.prea1.taipei.zoo.quiz4": {
       "lessonId": "english.prea1.taipei.zoo",
       "contentKey": "quiz4",

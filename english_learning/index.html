@@ -2593,81 +2593,145 @@
     document.getElementById("resetQuiz4"), 4);
 
   /* ================= Level 5：單字配圖 ================= */
+  // Phase 3E2：後端部署時，配對回合由「伺服器擁有」——抽樣、正確配對、first-try 狀態全在後端，
+  //   前端只送 roundId + itemId + choiceId，並照伺服器回應更新畫面。沒有後端 / 未登入 / 此課未登錄
+  //   → 走 legacy 本地練習模式：分數只在本機顯示，永遠不會上傳、也不會變成權威學習證據。
   function makeMatch(wordsEl, picsEl, statusEl, resetEl) {
     let vocab = [], seq = [], expected = 0;
-    let firstTry = 0, missedCurrent = false;   // 一次就點對才算分
+    let firstTry = 0, missedCurrent = false;   // 僅 legacy 本地模式使用（非權威）
+    let round = null;                          // 後端模式：{ roundId, items, choices, total }
+    let inFlight = false;                      // 避免快速連點重複送出（§6）
 
     const matchWrap = wordsEl.parentElement;
-    function build() {
-      expected = 0;
-      firstTry = 0; missedCurrent = false;
-      wordsEl.innerHTML = "";
-      picsEl.innerHTML = "";
+
+    function matchingActivityId() {
+      const acts = (learningRegistry && learningRegistry.activities) || {};
+      for (const aid in acts) {
+        if (acts[aid].contentPath === currentArticleKey && acts[aid].scored === "matching") return aid;
+      }
+      return null;
+    }
+    function total() { return round ? round.total : seq.length; }
+    function updateStatus() { statusEl.textContent = `Matched ${expected} / ${total()}`; }
+
+    function resetUi() {
+      expected = 0; firstTry = 0; missedCurrent = false; round = null; inFlight = false;
+      wordsEl.innerHTML = ""; picsEl.innerHTML = "";
       matchWrap.classList.remove("hidden");
       resetEl.classList.add("hidden");
       statusEl.textContent = "";
-      if (!vocab.length) { statusEl.textContent = "(No word-picture set for this lesson.)"; return; }
-      const n = Math.min(5, vocab.length);
-      seq = shuffle(vocab).slice(0, n);   // 依對話內容隨機抽 n 個單字
-
-      // 左欄：單字依序（1 → n）
-      seq.forEach((item, i) => {
+    }
+    // 左欄單字（依序）＋ 右欄圖片（已打散）。兩種模式共用，畫面與 legacy 完全相同。
+    function renderColumns(items, choices, onPick) {
+      items.forEach((item, i) => {
         const w = document.createElement("div");
         w.className = "mword" + (i === 0 ? " current" : "");
         w.id = "mword-" + i;
         w.innerHTML = `<span class="num">${i + 1}</span>` +
-                      `<span class="wword">${item.word}</span>` +
+                      `<span class="wword">${escapeHtml(item.word)}</span>` +
                       `<span id="wmark-${i}"></span>`;
         wordsEl.appendChild(w);
       });
-
-      // 右欄：圖片打散
-      shuffle(seq).forEach(item => {
+      choices.forEach(c => {
         const b = document.createElement("button");
         b.className = "mpic";
         b.type = "button";
-        b.textContent = item.pic;
-        b.addEventListener("click", () => clickPic(item.word, b));
+        b.textContent = c.pic;
+        b.addEventListener("click", () => onPick(c, b));
         picsEl.appendChild(b);
       });
-
       updateStatus();
     }
-
-    function clickPic(word, btn) {
-      if (btn.disabled || expected >= seq.length) return;
-      if (word === seq[expected].word) {
-        btn.classList.add("done");
-        btn.disabled = true;
-        const w = document.getElementById("mword-" + expected);
-        w.classList.remove("current");
-        w.classList.add("done");
-        // 這個字在 current 期間沒點錯 -> 一次就對，計分
-        if (!missedCurrent) firstTry++;
-        document.getElementById("wmark-" + expected).textContent = missedCurrent ? " ✗" : " ✓";
-        expected++;
-        missedCurrent = false;
-        if (expected < seq.length) {
-          document.getElementById("mword-" + expected).classList.add("current");
-          updateStatus();
-        } else {
-          matchWrap.classList.add("hidden");
-          statusEl.textContent = "🏆 All matched! " + firstTry + " / " + seq.length + " on the first try!";
-          resetEl.classList.remove("hidden");
-          playDing();
-          recordScore(5, firstTry, seq.length);   // 一次就點對的題數 / 總題數
-          markLevelDone(5);
-        }
-      } else {
-        missedCurrent = true;                      // 這個字點錯過，不算一次就對
-        btn.classList.add("shake");
-        setTimeout(() => btn.classList.remove("shake"), 400);
-        statusEl.textContent = `Look at word #${expected + 1} on the left!`;
+    function markCorrect(btn, scored) {
+      btn.classList.add("done");
+      btn.disabled = true;
+      const w = document.getElementById("mword-" + expected);
+      w.classList.remove("current");
+      w.classList.add("done");
+      document.getElementById("wmark-" + expected).textContent = scored ? " ✓" : " ✗";
+      expected++;
+      if (expected < total()) {
+        document.getElementById("mword-" + expected).classList.add("current");
+        updateStatus();
       }
     }
+    function markWrong(btn) {
+      btn.classList.add("shake");
+      setTimeout(() => btn.classList.remove("shake"), 400);
+      statusEl.textContent = `Look at word #${expected + 1} on the left!`;
+    }
+    function finish(correct, n) {
+      matchWrap.classList.add("hidden");
+      statusEl.textContent = "🏆 All matched! " + correct + " / " + n + " on the first try!";
+      resetEl.classList.remove("hidden");
+      playDing();
+      recordScore(5, correct, n);   // 關卡進度/顯示用；後端模式的權威分數已在伺服器保存
+      markLevelDone(5);
+    }
 
-    function updateStatus() {
-      statusEl.textContent = `Matched ${expected} / ${seq.length}`;
+    function build() {
+      resetUi();
+      if (!vocab.length) { statusEl.textContent = "(No word-picture set for this lesson.)"; return; }
+      const aid = matchingActivityId(), tok = authToken();
+      if (!aid || !tok) { buildLocal(); return; }        // 無後端可用 → legacy 本地練習
+      statusEl.textContent = "Loading…";
+      fetch(withRoom("/api/learning/matching/start?token=" + encodeURIComponent(tok)),
+        { method: "POST", body: JSON.stringify({ activityId: aid }) })
+        .then(r => r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)))
+        .then(d => {
+          if (!d || !d.roundId || !d.items || !d.choices) throw new Error("bad round");
+          round = d;
+          renderColumns(d.items, d.choices, serverPick);
+        })
+        .catch(() => {
+          // §8：後端失敗不可偽造分數，也不可偷偷改用「本地權威」。給一個可重試的狀態。
+          round = null;
+          matchWrap.classList.add("hidden");
+          statusEl.textContent = "⚠️ Couldn't start the matching round. Tap 🔄 Try Again.";
+          resetEl.classList.remove("hidden");
+        });
+    }
+
+    // 後端模式：只送「意圖」(roundId + itemId + choiceId)，正確與否、計分全由伺服器決定。
+    function serverPick(choice, btn) {
+      if (!round || inFlight || btn.disabled || expected >= round.total) return;
+      inFlight = true;
+      const item = round.items[expected];
+      fetch(withRoom("/api/learning/matching/attempt?token=" + encodeURIComponent(authToken())),
+        { method: "POST", body: JSON.stringify({ roundId: round.roundId, itemId: item.itemId, choiceId: choice.choiceId }) })
+        .then(r => r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)))
+        .then(d => {
+          if (!d || !d.ok) throw new Error("bad attempt");
+          if (d.status === "wrong") { markWrong(btn); return; }
+          if (d.status === "correct" || d.status === "complete") {
+            markCorrect(btn, d.scored === true);
+            if (d.status === "complete" && d.result) finish(d.result.correct, d.result.total);
+          }
+        })
+        .catch(() => { statusEl.textContent = "⚠️ Network problem — tap the picture again."; })
+        .finally(() => { inFlight = false; });
+    }
+
+    // ===== legacy 本地練習模式（GitHub Pages / 未登入 / 此課未登錄）=====
+    // 與舊版行為完全相同，但只是本機練習：分數不會上傳，也永遠不會成為 matchingProgress。
+    function buildLocal() {
+      const n = Math.min(5, vocab.length);
+      seq = shuffle(vocab).slice(0, n);   // 依對話內容隨機抽 n 個單字
+      renderColumns(seq.map(it => ({ word: it.word })),
+                    shuffle(seq).map(it => ({ pic: it.pic, word: it.word })), localPick);
+    }
+    function localPick(choice, btn) {
+      if (btn.disabled || expected >= seq.length) return;
+      if (choice.word === seq[expected].word) {
+        const scored = !missedCurrent;
+        if (scored) firstTry++;
+        missedCurrent = false;
+        markCorrect(btn, scored);
+        if (expected >= seq.length) finish(firstTry, seq.length);
+      } else {
+        missedCurrent = true;              // 這個字點錯過，不算一次就對
+        markWrong(btn);
+      }
     }
 
     resetEl.addEventListener("click", build);

@@ -285,13 +285,14 @@ and the required/completed/missing activity id lists — no answer keys, grader 
    sentence from lesson content, scores the transcript with an exact port of the frontend rule,
    persists best-per-sentence evidence per account, and records a normal activity completion at the
    80% threshold. An STT outage produces no evidence at all. See [stt-authority.md](stt-authority.md).
-2. **Level 5 · Match (matching)** — needs a click-stream evidence format plus a decision on verifying
-   the client-drawn word sample. Still Phase 3C category B. Not being solved here (§39).
+2. ~~**Level 5 · Match (matching)**~~ — **RESOLVED in Phase 3E2.** The server now owns the round: it
+   draws the sample, holds the word→picture mapping, observes every click and computes `firstTry / n`.
+   See [matching-authority.md](matching-authority.md).
 
-**One blocker remains.** With Level 2 authoritative, a lesson's scored set is
-`2,3,4,5,7,9` (Zoo) of which only **Level 5** still lacks server evidence. Once matching lands, a
-`completionPolicy` can list the full scored set and authoritative completion becomes semantically
-equal to the legacy rule. Until then the production count stays at **0**.
+**No evidence blocker remains for Zoo.** Every scored level of the legacy Rule A set
+(`2, 3, 4, 5, 7, 9`) now has server-authoritative evidence — see the readiness table in the Phase 3E2
+report. Enabling a production `completionPolicy` is nevertheless a **separate, explicitly approved
+step**; the production count remains **0** until then.
 
 Once both exist, a lesson's `completionPolicy.requiredActivityIds` can list the full scored set and
 authoritative completion becomes semantically equal to the legacy rule — at which point migrating the
