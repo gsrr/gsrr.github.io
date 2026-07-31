@@ -112,11 +112,17 @@ reg = call("GET", "/api/learning/registry")[1]["registry"]
 # the attempt endpoint, so they are advertised separately and excluded from the deterministic set.
 READ_ALONG = {a for a, v in reg["activities"].items() if v.get("scored") == "stt"}
 MATCHING = {a for a, v in reg["activities"].items() if v.get("scored") == "matching"}
-assert READ_ALONG == {"english.prea1.taipei.zoo.read_along", "english.a1.core.001.read_along"}, READ_ALONG
-assert MATCHING == {"english.prea1.taipei.zoo.matching", "english.a1.core.001.matching"}, MATCHING
-# Phase 4A registered MRT/Market/Park quiz3 as new progression gates.
-PROGRESSION = {"english.prea1.taipei.mrt.quiz3", "english.prea1.taipei.market.quiz3",
-               "english.prea1.taipei.park.quiz3"}
+# Phase 4B deepened MRT/Market/Park to the same six activities Zoo has, so each of the three now
+# carries a Read-Along and a Matching activity too. Their behaviour is covered exhaustively by
+# tests/taipei_content_depth_test.py; here we only pin the advertised sets so a stray registration
+# cannot slip in unnoticed.
+DEEP = {"english.prea1.taipei.%s" % s for s in ("mrt", "market", "park")}
+assert READ_ALONG == {"english.prea1.taipei.zoo.read_along", "english.a1.core.001.read_along"} | {
+    d + ".read_along" for d in DEEP}, READ_ALONG
+assert MATCHING == {"english.prea1.taipei.zoo.matching", "english.a1.core.001.matching"} | {
+    d + ".matching" for d in DEEP}, MATCHING
+# Phase 4A registered MRT/Market/Park quiz3 as progression gates; Phase 4B added quiz4/wh/cloze.
+PROGRESSION = {"%s.%s" % (d, k) for d in DEEP for k in ("quiz3", "quiz4", "wh", "cloze")}
 assert PROGRESSION <= set(reg["activities"]), sorted(reg["activities"])
 assert set(reg["activities"]) - READ_ALONG - MATCHING - PROGRESSION == set(RIGHT), sorted(reg["activities"])
 assert all(reg["activities"][a]["serverGraded"] is True for a in reg["activities"])
@@ -297,9 +303,8 @@ ok("§34 retries: fail->retry->pass works; first passedAt/earnedAt frozen; no se
 code, prog = call("GET", "/api/learning/progress?room=" + CODE)
 assert code == 200 and set(prog) == {"lessons", "completedLessonIds"}, prog
 assert prog["completedLessonIds"] == [], prog
-# Phase 3F activated Zoo's policy: it is now AVAILABLE, but this player has not completed it.
-assert prog["lessons"]["english.prea1.taipei.zoo"]["authoritativeCompletionAvailable"] is True
-assert prog["lessons"]["english.a1.core.001"]["authoritativeCompletionAvailable"] is False
+# Phase 4B retired Zoo's v1 policy, so NO lesson advertises authoritative completion any more.
+assert all(l["authoritativeCompletionAvailable"] is False for l in prog["lessons"].values())
 assert all(l["completed"] is False for l in prog["lessons"].values()), prog["lessons"]
 blob = json.dumps(prog)
 for leak in ("answer", "graderType", "graderConfig", "rewardPolicy", "PASS_GOLD", "10000", "contentPath"):

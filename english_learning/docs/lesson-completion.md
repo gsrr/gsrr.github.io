@@ -74,8 +74,8 @@ reach the server, but as untrusted client data — not authoritative state.
 | Question | Answer |
 |---|---|
 | Does level 1 (Listen) count? | **No** — excluded by `scoredLevelsFor` (`l >= 2`). It is auto-pass (`levelPassed("1")` always true). |
-| Which levels count? | Every level ≥2 the article declares. Zoo arcs: `[2,3,4,5,7,9]`. `lessons.json` articles: `[2,3,4,5,6,7,8,9]`. |
-| Does any article include level 10 (roleplay)? | **No.** The only two level-sets in the manifest are `(1,2,3,4,5,7,9)` and `(1..9)`. Roleplay calls `recordScore(10, …)` but no lesson lists level 10, so it never enters `scoredLevelsFor`. |
+| Which levels count? | ~~Every level ≥2 the article declares. Zoo arcs: `[2,3,4,5,7,9]`.~~ **CORRECTED (Phase 4B):** every level ≥2 the article declares, **plus level 10 always**. Zoo/Taipei arcs: `[2,3,4,5,7,9,10]`. `lessons.json` articles: `[2,3,4,5,6,7,8,9,10]`. |
+| Does any article include level 10 (roleplay)? | ~~**No.**~~ **CORRECTED (Phase 4B): YES — every lesson.** The `if (lv.indexOf("10") < 0) lv.push("10")` line sits **outside** the if/else in `scoredLevelsFor`, so it applies to declared-level arcs too. Level 10's tab is un-hidden for any lesson with a ≥2-sentence dialogue (all of them), authored scenarios exist for all four Taipei lessons, and `rpOnEnd` calls `recordScore(10, passes, turns)`. The row below was wrong for the same reason. See `docs/taipei-content-depth.md` §3 for the executed proof. |
 | Do skipped activities count? | Rule A: a skipped level makes the lesson **not** passed. Rule B: skipped levels are simply omitted from the mean. |
 | Retry: replace or best? | **Replace (latest wins).** `recordScore` overwrites `lessonScores[level]` unconditionally, then persists the whole map. No best-of tracking. |
 | Threshold | `PASS_MARK = 80`, applied to the rounded mean, not per level. |
@@ -100,7 +100,7 @@ For the Zoo lesson (`Pre-A1/taipei/zoo`, scored levels `2,3,4,5,7,9`) and for a 
 | 7 · WH | `multiple_choice` | `wh` | **A** | **YES** (Phase 3C) |
 | 8 · Dictation | `dictation` | `dictation` | **A** | **YES** (Phase 3C) |
 | 9 · Fill Blank | `multiple_choice` | `cloze` | **A** | **YES** (Phase 3C) |
-| 10 · Role-play | roleplay | roleplay pack | **C** | **NO** — and not part of any lesson's rule |
+| 10 · Role-play | roleplay | roleplay pack | **C** | **NO** — ~~and not part of any lesson's rule~~ **and it IS part of every lesson's rule (corrected in Phase 4B)** |
 
 ### Why level 2 is not authoritative (§40)
 
@@ -166,7 +166,7 @@ Recommendation is to keep them separate; flagged as §46.7.
 | 1 | Lesson completion depends on **matching** | **TRUE** | level 5 is in `scoredLevelsFor` for every lesson |
 | 2 | Depends on **client-only scores** | **TRUE** | both rules read `localStorage`; levels 2 and 5 have no server evidence |
 | 3 | **STT evidence** cannot be consumed authoritatively | **TRUE** | `/api/stt` returns a transcript only; the score is client-side, with a "full marks" fallback |
-| 4 | **Roleplay** required | FALSE | no lesson declares level 10 |
+| 4 | **Roleplay** required | ~~FALSE~~ **TRUE (corrected in Phase 4B)** | `scoredLevelsFor` appends level 10 unconditionally, so every lesson's Rule A requires a roleplay score. This does not change the Phase 3D decision (machinery only, zero lessons configured) — it makes it *more* correct. It did mean Zoo's Phase 3F policy covered only 6 of the 7 legacy levels, so **that policy was retired in Phase 4B** and production is back to **0 active completion policies**. See `docs/roleplay-authority-gap.md`. |
 | 5 | Legacy average **cannot be reproduced** from server state | **TRUE** | follows from 1–3 |
 | 6 | Choosing required activities changes the meaning of completion | **TRUE** | any server-only subset drops levels 2 and 5 |
 | 7 | `passcnt` semantics conflict | **TRUE** | it is an occupy-bootstrap event counter, not lesson state (§5 above) |

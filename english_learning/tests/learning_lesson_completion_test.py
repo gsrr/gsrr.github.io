@@ -298,14 +298,17 @@ shutil.rmtree(tmp, ignore_errors=True)
 
 # ================= PRODUCTION: the machinery must be dormant (§ approved decision) =================
 prod = L.LearningService(content_root=ROOT, reward_amounts={"PASS_GOLD": 10000})
-# Phase 3F activated exactly ONE production policy (Zoo). Everything else stays dormant.
+# Phase 3F activated one production policy (Zoo); Phase 4B RETIRED it, because legacy Rule A also
+# scores level 10 Role-play and the 6-activity policy therefore did not reproduce it. The machinery
+# stays fully tested above against synthetic registries; production is dormant again.
 active = [lid for lid in prod.registry.lessons if prod.registry.completion_available(lid)]
-assert active == ["english.prea1.taipei.zoo"], active
+assert active == [], active
+assert prod.registry.retired_policy_versions("english.prea1.taipei.zoo") == [1]
 assert R.validate(R.DATA) == [], R.validate(R.DATA)
 for lid in prod.registry.lessons:
     ev = prod.evaluate_lesson(lid, {})
     assert ev["completed"] is False, lid
-    assert ev["available"] is (lid == "english.prea1.taipei.zoo"), lid
+    assert ev["available"] is False, lid
     # even a player who passed literally every registered activity completes no lesson
     everything = {"activityCompletions": {aid: {"passedAt": 1, "pct": 100, "rewarded": False}
                                           for aid in prod.registry.activities}}
@@ -318,7 +321,7 @@ pv = prod.progress_view({"activityCompletions": {aid: {"passedAt": 1, "pct": 100
                                                  for aid in prod.registry.activities}})
 assert pv["completedLessonIds"] == []
 assert all(l["completed"] is False for l in pv["lessons"].values())
-ok("production: exactly 1 lesson (Zoo) has a completionPolicy; pass records alone complete nothing")
+ok("production: NO lesson has an active completionPolicy; pass records alone complete nothing")
 
 # the Zoo activity reward is untouched by any of this (§35)
 zoo = "english.prea1.taipei.zoo.quiz3"

@@ -177,7 +177,7 @@ ok("§29 second real lesson (A1/001) scores and persists identically — no Zoo 
 
 # ============================== §30 Phase 3D dormancy ==============================
 active = [lid for lid in svc.registry.lessons if svc.registry.completion_available(lid)]
-assert active == ["english.prea1.taipei.zoo"], active   # Phase 3F: Zoo only
+assert active == [], active   # Phase 4B: Zoo's v1 policy was retired (level 10 gap)
 everything = {"activityCompletions": {aid: {"passedAt": 1, "pct": 100, "rewarded": False}
                                       for aid in svc.registry.activities}}
 for lid in svc.registry.lessons:

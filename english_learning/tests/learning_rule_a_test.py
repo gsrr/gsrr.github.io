@@ -134,17 +134,33 @@ for junk in ({"activityScores": "x"}, {"activityScores": {WH: "x"}}, {"activityS
     assert svc.authoritative_activity_score(junk, WH) is None, junk
 ok("resolver: deterministic/STT/matching all yield exact correct+total; malformed evidence -> None")
 
-# ============================== real Zoo activation ==============================
-assert svc.registry.completion_available(ZOO_LESSON)
-pol = svc.registry.completion_policy_of(ZOO_LESSON)
-assert pol["type"] == "average_required_activities" and pol["version"] == 1 and pol["passMark"] == 80
-assert pol["requiredActivityIds"] == REQ, pol["requiredActivityIds"]
-assert [l for l in svc.registry.lessons if svc.registry.completion_available(l)] == [ZOO_LESSON]
-assert svc.registry.lesson_reward_policy_of(ZOO_LESSON) == "none"
-assert svc.registry.lesson_qualification_ids_for(ZOO_LESSON) == []
-# the six required activities are exactly the legacy Rule A scored levels of this article
-assert len(REQ) == 6 and all(svc.registry.lesson_of_activity(a) == ZOO_LESSON for a in REQ)
-ok("Zoo activation: exactly 1 production policy, the 6 legacy scored levels, no reward, no grants")
+# ====================== Zoo policy RETIRED (Phase 4B correction) ======================
+# Phase 3F activated a 6-activity Zoo policy believing it reproduced legacy Rule A exactly. It did
+# not: legacy Rule A also scores level 10 Role-play (see docs/roleplay-authority-gap.md). The policy
+# was therefore retired rather than left active with the wrong semantics, and version 1 is spent.
+assert svc.registry.completion_available(ZOO_LESSON) is False, "Zoo policy must be retired"
+assert svc.registry.completion_policy_of(ZOO_LESSON) is None
+assert [l for l in svc.registry.lessons if svc.registry.completion_available(l)] == [], \
+    "production authoritative lesson policies must be 0 until level 10 is authoritative"
+assert svc.registry.retired_policy_versions(ZOO_LESSON) == [1]
+ok("Phase 4B correction: 0 production completion policies; Zoo's v1 is recorded as retired")
+
+# The MACHINERY still has to be provably correct, so the rest of this file drives a CANDIDATE Zoo
+# policy at the next free version. It is synthetic, never written to disk, and its existence is not
+# production state.
+CAND = copy.deepcopy(R.DATA)
+CAND["lessons"][ZOO_LESSON]["completionPolicy"] = {
+    "type": "average_required_activities", "version": 2, "passMark": 80,
+    "requiredActivityIds": list(REQ)}
+assert R.validate(CAND) == [], R.validate(CAND)
+csvc = L.LearningService(reg=R.Registry(CAND), content_root=ROOT,
+                         reward_amounts={"PASS_GOLD": 10000})
+pol = csvc.registry.completion_policy_of(ZOO_LESSON)
+assert pol["version"] == 2 and pol["passMark"] == 80 and pol["requiredActivityIds"] == REQ
+assert csvc.registry.lesson_reward_policy_of(ZOO_LESSON) == "none"
+assert csvc.registry.lesson_qualification_ids_for(ZOO_LESSON) == []
+assert len(REQ) == 6 and all(csvc.registry.lesson_of_activity(a) == ZOO_LESSON for a in REQ)
+ok("candidate Zoo policy takes version 2 (v1 is spent), 6 activities, no reward, no grants")
 
 
 def zoo_state(scores):
@@ -163,63 +179,63 @@ def zoo_state(scores):
 
 allfull = zoo_state({REQ[0]: (100, 100), REQ[1]: (5, 5), REQ[2]: (5, 5), REQ[3]: (5, 5),
                      REQ[4]: (5, 5), REQ[5]: (5, 5)})
-r = svc.evaluate_lesson(ZOO_LESSON, allfull)
+r = csvc.evaluate_lesson(ZOO_LESSON, allfull)
 assert r["available"] and r["completed"] and r["roundedPct"] == 100, r
 # case E on the REAL Zoo ids: WH at 60, the rest 100 -> 93 -> complete
 caseE_zoo = zoo_state({REQ[0]: (100, 100), REQ[1]: (5, 5), REQ[2]: (5, 5), REQ[3]: (5, 5),
                        REQ[4]: (3, 5), REQ[5]: (5, 5)})
-r = svc.evaluate_lesson(ZOO_LESSON, caseE_zoo)
+r = csvc.evaluate_lesson(ZOO_LESSON, caseE_zoo)
 assert r["completed"] is True and r["roundedPct"] == 93, r
 # all six present but the mean is below 80 -> not complete
 low = zoo_state({REQ[0]: (60, 100), REQ[1]: (4, 5), REQ[2]: (3, 5), REQ[3]: (3, 5),
                  REQ[4]: (4, 5), REQ[5]: (4, 5)})
-r = svc.evaluate_lesson(ZOO_LESSON, low)
+r = csvc.evaluate_lesson(ZOO_LESSON, low)
 assert r["completed"] is False and r["roundedPct"] < 80, r
 # one missing -> not complete no matter how good the others are
-r = svc.evaluate_lesson(ZOO_LESSON, zoo_state({a: (5, 5) for a in REQ[1:]}))
+r = csvc.evaluate_lesson(ZOO_LESSON, zoo_state({a: (5, 5) for a in REQ[1:]}))
 assert r["completed"] is False and r["missingActivityIds"] == [REQ[0]], r
 # raising the weak levels through the authoritative stores flips it to complete
 fixed = json.loads(json.dumps(low))
 for a in (REQ[1], REQ[2], REQ[4], REQ[5]):
     fixed["activityScores"][a] = {"correct": 5, "total": 5, "pct": 100, "updatedAt": 2}
 fixed["sttProgress"][REQ[0]] = {"pct": 100, "totalSentences": 10}
-assert svc.evaluate_lesson(ZOO_LESSON, fixed)["completed"] is True
+assert csvc.evaluate_lesson(ZOO_LESSON, fixed)["completed"] is True
 ok("real Zoo: all-six completes, case E completes, mean<80 fails, missing fails, improving flips it")
 
 # a client-style localStorage score can never complete the lesson (§26)
 fake = {"scores": {"2": {"correct": 100, "total": 100}, "3": {"correct": 5, "total": 5}},
         "statusFromScores": {"passed": True}, "completed": True, "avg": 100}
-assert svc.evaluate_lesson(ZOO_LESSON, fake)["completed"] is False
-assert svc.evaluate_lesson(ZOO_LESSON, fake)["missingActivityIds"] == REQ
+assert csvc.evaluate_lesson(ZOO_LESSON, fake)["completed"] is False
+assert csvc.evaluate_lesson(ZOO_LESSON, fake)["missingActivityIds"] == REQ
 ok("§26 client-shaped score fields in the state cannot complete the lesson")
 
 # ============================== persistence, idempotency, neutrality ==============================
 st = json.loads(json.dumps(caseE_zoo))
-st, out = svc.record_attempt(st, REQ[1], {"passed": True, "pct": 100, "correct": 5, "total": 5}, 5000)
+st, out = csvc.record_attempt(st, REQ[1], {"passed": True, "pct": 100, "correct": 5, "total": 5}, 5000)
 assert out["lessonCompleted"] is True and out["lessonCompletedNow"] is True
-assert C.get_lesson_completion(st, ZOO_LESSON) == {"completedAt": 5000, "policyVersion": 1}
+assert C.get_lesson_completion(st, ZOO_LESSON) == {"completedAt": 5000, "policyVersion": 2}
 assert out["lessonRewardAmount"] == 0 and out["lessonRewarded"] is False, "no lesson gold"
 assert out["lessonQualifications"] == [], "no lesson qualification"
-st, out = svc.record_attempt(st, REQ[1], {"passed": True, "pct": 100, "correct": 5, "total": 5}, 9000)
+st, out = csvc.record_attempt(st, REQ[1], {"passed": True, "pct": 100, "correct": 5, "total": 5}, 9000)
 assert out["lessonCompletedNow"] is False
 assert C.get_lesson_completion(st, ZOO_LESSON)["completedAt"] == 5000, "never re-dated"
 # a lower retry after completion drops the current mean but does NOT revoke history (monotonic)
-st, out = svc.record_attempt(st, REQ[1], {"passed": False, "pct": 0, "correct": 0, "total": 5}, 9500)
-assert svc.evaluate_lesson(ZOO_LESSON, st)["completed"] is False, "current Rule A state is below 80"
+st, out = csvc.record_attempt(st, REQ[1], {"passed": False, "pct": 0, "correct": 0, "total": 5}, 9500)
+assert csvc.evaluate_lesson(ZOO_LESSON, st)["completed"] is False, "current Rule A state is below 80"
 assert C.get_lesson_completion(st, ZOO_LESSON)["completedAt"] == 5000, "history is monotonic"
 assert st["activityScores"][REQ[1]]["pct"] == 0, "latest-wins score really did drop"
 ok("persistence: recorded once and never re-dated; a later worse score lowers the current mean but "
    "does not revoke the historical completion")
 
 # ============================== progress view ==============================
-pv = svc.progress_view(allfull)
+pv = csvc.progress_view(allfull)
 z = pv["lessons"][ZOO_LESSON]
 assert z["authoritativeCompletionAvailable"] is True and z["requiredActivityIds"] == REQ
 assert z["completed"] is False, "no lessonCompletions record in this state"
-pv2 = svc.progress_view(st)
+pv2 = csvc.progress_view(st)
 assert pv2["lessons"][ZOO_LESSON]["completed"] is True
 assert pv2["lessons"][ZOO_LESSON]["completedAt"] == 5000
-assert pv2["lessons"][ZOO_LESSON]["policyVersion"] == 1
+assert pv2["lessons"][ZOO_LESSON]["policyVersion"] == 2
 assert pv2["completedLessonIds"] == [ZOO_LESSON]
 blob = json.dumps(pv2)
 for leak in ("answer", "graderType", "graderConfig", "rewardPolicy", "roundId", "10000"):
@@ -227,7 +243,10 @@ for leak in ("answer", "graderType", "graderConfig", "rewardPolicy", "roundId", 
 ok("progress view: Zoo availability / completed / completedAt / policyVersion, no internals")
 
 # ============================== validator ==============================
-BASE = copy.deepcopy(R.DATA)
+# The production registry has no active policy any more, so the policy-shape rejections below are
+# driven from the candidate registry (real ids, version 2).
+assert R.validate(R.DATA) == [], R.validate(R.DATA)
+BASE = copy.deepcopy(CAND)
 assert R.validate(BASE) == [], R.validate(BASE)
 
 
@@ -252,5 +271,15 @@ rejects(lambda d: P(d).update(rewardGold=1), "may not set")
 rejects(lambda d: P(d).update(rewardPolicy="jackpot"), "invalid rewardPolicy")
 rejects(lambda d: P(d).update(bogusKey=1), "unknown keys")
 ok("validator: passMark pinned to 80; unknown type / duplicate / foreign activity / reward rejected")
+
+# ====================== retired versions are enforced, not just documented ======================
+reuse = copy.deepcopy(CAND)
+reuse["lessons"][ZOO_LESSON]["completionPolicy"]["version"] = 1
+assert any("reuses retired policy version" in e for e in R.validate(reuse)), R.validate(reuse)
+for bad in ([], "1", [0], [1, 1], [True], [1.5]):
+    d = copy.deepcopy(R.DATA)
+    d["lessons"][ZOO_LESSON]["retiredCompletionPolicyVersions"] = bad
+    assert R.validate(d), "malformed retired-version list %r must be rejected" % (bad,)
+ok("retired policy versions: v1 cannot be reused by a new policy; malformed retirement lists rejected")
 
 print("\nAll %d Rule A tests passed." % passed)

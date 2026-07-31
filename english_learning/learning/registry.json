@@ -18,19 +18,7 @@
       "courseId": "english.prea1.taipei",
       "contentPath": "Pre-A1/taipei/zoo",
       "title": "Taipei · At the Zoo",
-      "completionPolicy": {
-        "type": "average_required_activities",
-        "version": 1,
-        "passMark": 80,
-        "requiredActivityIds": [
-          "english.prea1.taipei.zoo.read_along",
-          "english.prea1.taipei.zoo.quiz3",
-          "english.prea1.taipei.zoo.quiz4",
-          "english.prea1.taipei.zoo.matching",
-          "english.prea1.taipei.zoo.wh",
-          "english.prea1.taipei.zoo.cloze"
-        ]
-      }
+      "retiredCompletionPolicyVersions": [1]
     },
     "english.prea1.taipei.mrt": {
       "courseId": "english.prea1.taipei",
@@ -166,6 +154,144 @@
       "contentKey": "dictation",
       "graderType": "dictation",
       "title": "A1 · 001 — Dictation",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.prea1.taipei.mrt.read_along": {
+      "lessonId": "english.prea1.taipei.mrt",
+      "scorerType": "read_along_stt",
+      "title": "Taipei · On the MRT — Read Along",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.prea1.taipei.mrt.quiz4": {
+      "lessonId": "english.prea1.taipei.mrt",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "Taipei · On the MRT — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.prea1.taipei.mrt.matching": {
+      "lessonId": "english.prea1.taipei.mrt",
+      "contentKey": "vocab",
+      "scorerType": "matching_first_try",
+      "title": "Taipei · On the MRT — Word/Picture matching",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.prea1.taipei.mrt.wh": {
+      "lessonId": "english.prea1.taipei.mrt",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "Taipei · On the MRT — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.prea1.taipei.mrt.cloze": {
+      "lessonId": "english.prea1.taipei.mrt",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "Taipei · On the MRT — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.prea1.taipei.market.read_along": {
+      "lessonId": "english.prea1.taipei.market",
+      "scorerType": "read_along_stt",
+      "title": "Taipei · The Night Market — Read Along",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.prea1.taipei.market.quiz4": {
+      "lessonId": "english.prea1.taipei.market",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "Taipei · The Night Market — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.prea1.taipei.market.matching": {
+      "lessonId": "english.prea1.taipei.market",
+      "contentKey": "vocab",
+      "scorerType": "matching_first_try",
+      "title": "Taipei · The Night Market — Word/Picture matching",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.prea1.taipei.market.wh": {
+      "lessonId": "english.prea1.taipei.market",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "Taipei · The Night Market — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.prea1.taipei.market.cloze": {
+      "lessonId": "english.prea1.taipei.market",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "Taipei · The Night Market — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.prea1.taipei.park.read_along": {
+      "lessonId": "english.prea1.taipei.park",
+      "scorerType": "read_along_stt",
+      "title": "Taipei · At the Park — Read Along",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.prea1.taipei.park.quiz4": {
+      "lessonId": "english.prea1.taipei.park",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "Taipei · At the Park — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.prea1.taipei.park.matching": {
+      "lessonId": "english.prea1.taipei.park",
+      "contentKey": "vocab",
+      "scorerType": "matching_first_try",
+      "title": "Taipei · At the Park — Word/Picture matching",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.prea1.taipei.park.wh": {
+      "lessonId": "english.prea1.taipei.park",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "Taipei · At the Park — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.prea1.taipei.park.cloze": {
+      "lessonId": "english.prea1.taipei.park",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "Taipei · At the Park — Fill in the blank",
       "grants": [],
       "rewardPolicy": "none"
     }

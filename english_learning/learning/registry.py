@@ -9,7 +9,9 @@ qualification IDs. Schema (see docs/learning-model.md for the full contract):
       "courses":      { "<courseId>": {"contentPackId": ..., "title": ..., "unitId": <optional>} },
       "units":        { "<unitId>":   {"courseId": ..., "title": ...} },              # optional level
       "lessons":      { "<lessonId>": {"courseId": ..., "contentPath": ..., "title": ...,
-                                       "unitId": <optional>} },
+                                       "unitId": <optional>,
+                                       "completionPolicy": <optional>,
+                                       "retiredCompletionPolicyVersions": [<optional ints>]} },
       "activities":   { "<activityId>": {"lessonId": ..., "contentKey": ..., "graderType": ...,
                                          "title": ..., "grants": [...], "rewardPolicy": ...,
                                          "legacyKeys": [...]} },
@@ -162,6 +164,17 @@ class Registry:
     def completion_available(self, lesson_id):
         return completion.is_available(self.lessons.get(lesson_id))
 
+    def retired_policy_versions(self, lesson_id):
+        """Policy versions this lesson has already SPENT in production (Phase 4B).
+
+        Learners may hold `lessonCompletions` records stamped with these versions; the records stay
+        valid history and are never rewritten. A future policy must pick an unused version so a
+        record's version always identifies the rule that produced it.
+        """
+        v = (self.lessons.get(lesson_id) or {}).get("retiredCompletionPolicyVersions")
+        return sorted(x for x in v if isinstance(x, int) and not isinstance(x, bool)) \
+            if isinstance(v, list) else []
+
     def lesson_of_activity(self, activity_id):
         return (self.activities.get(activity_id) or {}).get("lessonId")
 
@@ -285,6 +298,22 @@ def validate(data):
             err("lesson %s references unknown unitId %r" % (lid, l.get("unitId")))
         if not identity.is_content_path(l.get("contentPath")):
             err("lesson %s has a missing/malformed contentPath %r" % (lid, l.get("contentPath")))
+        # ---- Phase 4B: retired policy versions (OPTIONAL) ----
+        # A version number is spent once it has been active in production: learners may hold
+        # lessonCompletions stamped with it, and those records mean whatever that policy meant. A
+        # later policy with different semantics must therefore take a NEW version, never reuse one.
+        retired = l.get("retiredCompletionPolicyVersions")
+        if retired is not None:
+            if not isinstance(retired, list) or not retired:
+                err("lesson %s retiredCompletionPolicyVersions must be a non-empty list" % lid)
+            else:
+                seen_v = set()
+                for v in retired:
+                    if isinstance(v, bool) or not isinstance(v, int) or v <= 0:
+                        err("lesson %s has a malformed retired policy version %r" % (lid, v))
+                    elif v in seen_v:
+                        err("lesson %s lists retired policy version %r twice" % (lid, v))
+                    seen_v.add(v)
         # ---- Phase 3D completion policy (OPTIONAL; absent == authoritative completion unavailable) ----
         if "completionPolicy" not in l or l.get("completionPolicy") is None:
             continue
@@ -301,6 +330,10 @@ def validate(data):
         ver = cp.get("version")
         if not isinstance(ver, int) or isinstance(ver, bool) or ver < 1:
             err("lesson %s completionPolicy.version must be a positive integer" % lid)
+        elif isinstance(retired, list) and ver in retired:
+            err("lesson %s completionPolicy reuses retired policy version %d — historical "
+                "lessonCompletions carry that version and mean what the OLD policy meant, so a "
+                "policy with different semantics must take a new version" % (lid, ver))
         req = cp.get("requiredActivityIds")
         if not isinstance(req, list) or not req:
             err("lesson %s completionPolicy must list at least one requiredActivityId" % lid)
