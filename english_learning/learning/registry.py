@@ -23,13 +23,15 @@ duplicating them would create a second source of truth) and reward AMOUNTS (see 
 import json
 import os
 
-from . import grading, identity, rewards
+from . import completion, grading, identity, rewards
 
 _PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "registry.json")
 SCHEMA_VERSION = 1
 _SECTIONS = ("contentPacks", "courses", "units", "lessons", "activities", "qualifications")
 # graderConfig keys the graders actually read (learning/grading.py). Anything else is an authoring bug.
 _GRADER_CFG_KEYS = {"promptField", "answerField", "distractorsField", "joinWith"}
+# Phase 3D: keys allowed inside a lesson's optional completionPolicy.
+_COMPLETION_KEYS = {"type", "version", "requiredActivityIds", "grants", "rewardPolicy"}
 
 
 def _no_dup_keys(pairs):
@@ -139,6 +141,23 @@ class Registry:
         cfg = (self.activities.get(activity_id) or {}).get("graderConfig")
         return dict(cfg) if isinstance(cfg, dict) else {}
 
+    # ---- lesson completion (Phase 3D) ----
+    def completion_policy_of(self, lesson_id):
+        """The lesson's completion policy, or None when authoritative completion is unavailable."""
+        return completion.policy_of(self.lessons.get(lesson_id))
+
+    def completion_available(self, lesson_id):
+        return completion.is_available(self.lessons.get(lesson_id))
+
+    def lesson_of_activity(self, activity_id):
+        return (self.activities.get(activity_id) or {}).get("lessonId")
+
+    def lesson_qualification_ids_for(self, lesson_id):
+        return completion.grants_of(self.completion_policy_of(lesson_id))
+
+    def lesson_reward_policy_of(self, lesson_id):
+        return completion.reward_policy_of(self.completion_policy_of(lesson_id))
+
     def approved_content_paths(self):
         """The ONLY content paths the backend may ever read (§28). Registry == filesystem allowlist."""
         return {l.get("contentPath") for l in self.lessons.values() if l.get("contentPath")}
@@ -187,8 +206,13 @@ class Registry:
                                  "serverGraded": grading.is_supported(a.get("graderType")),
                                  "grants": self.qualification_ids_for(aid)}
                            for aid, a in self.activities.items()},
+            # `authoritativeCompletionAvailable` is false for every production lesson in Phase 3D —
+            # the client must therefore NOT present those lessons as "incomplete"; it simply has no
+            # authoritative answer for them and keeps using its existing legacy display.
             "lessons": {lid: {"courseId": l.get("courseId"), "contentPath": l.get("contentPath"),
-                              "title": l.get("title")} for lid, l in self.lessons.items()},
+                              "title": l.get("title"),
+                              "authoritativeCompletionAvailable": completion.is_available(l)}
+                        for lid, l in self.lessons.items()},
         }
 
 
@@ -238,6 +262,7 @@ def validate(data):
         if (u or {}).get("courseId") not in courses:
             err("unit %s references unknown courseId %r" % (uid, (u or {}).get("courseId")))
 
+    lesson_granted = set()
     for lid, l in lessons.items():
         l = l or {}
         if l.get("courseId") not in courses:
@@ -246,6 +271,58 @@ def validate(data):
             err("lesson %s references unknown unitId %r" % (lid, l.get("unitId")))
         if not identity.is_content_path(l.get("contentPath")):
             err("lesson %s has a missing/malformed contentPath %r" % (lid, l.get("contentPath")))
+        # ---- Phase 3D completion policy (OPTIONAL; absent == authoritative completion unavailable) ----
+        if "completionPolicy" not in l or l.get("completionPolicy") is None:
+            continue
+        cp = l.get("completionPolicy")
+        if not isinstance(cp, dict):
+            err("lesson %s completionPolicy must be an object (or absent)" % lid)
+            continue
+        unknown_cp = set(cp) - _COMPLETION_KEYS
+        if unknown_cp:
+            err("lesson %s completionPolicy has unknown keys %s" % (lid, sorted(unknown_cp)))
+        if cp.get("type") not in completion.POLICY_TYPES:
+            err("lesson %s completionPolicy has unknown type %r (known: %s)"
+                % (lid, cp.get("type"), list(completion.POLICY_TYPES)))
+        ver = cp.get("version")
+        if not isinstance(ver, int) or isinstance(ver, bool) or ver < 1:
+            err("lesson %s completionPolicy.version must be a positive integer" % lid)
+        req = cp.get("requiredActivityIds")
+        if not isinstance(req, list) or not req:
+            err("lesson %s completionPolicy must list at least one requiredActivityId" % lid)
+            req = []
+        if len(req) != len(set(req)):
+            err("lesson %s completionPolicy lists a duplicate requiredActivityId" % lid)
+        for aid in req:
+            if not identity.is_id(aid):
+                err("lesson %s completionPolicy requiredActivityId %r is malformed" % (lid, aid))
+            elif aid not in activities:
+                err("lesson %s completionPolicy requires unknown activity %r" % (lid, aid))
+            elif (activities[aid] or {}).get("lessonId") != lid:
+                err("lesson %s completionPolicy requires %s, which belongs to lesson %r"
+                    % (lid, aid, (activities[aid] or {}).get("lessonId")))
+        for money in ("rewardGold", "gold", "rewardAmount", "amount"):
+            if money in cp:                 # §15 again: content may NAME a policy, never an amount
+                err("lesson %s completionPolicy may not set %r — reward amounts come from game config "
+                    "only" % (lid, money))
+        if not rewards.is_policy(completion.reward_policy_of(cp)):
+            err("lesson %s completionPolicy has invalid rewardPolicy %r (allowed: %s)"
+                % (lid, cp.get("rewardPolicy"), rewards.policy_ids()))
+        lg = cp.get("grants", [])
+        if not isinstance(lg, list):
+            err("lesson %s completionPolicy grants must be a list (may be empty)" % lid)
+            lg = []
+        if len(lg) != len(set(lg)):
+            err("lesson %s completionPolicy lists a duplicate qualification in grants" % lid)
+        for qid in lg:
+            if qid not in quals:
+                err("lesson %s completionPolicy grants unknown qualification %r" % (lid, qid))
+            elif (quals[qid] or {}).get("scope") != "lesson":
+                # a lesson may only certify a lesson-scope qualification, and vice versa
+                err("lesson %s completionPolicy grants %s whose scope is %r — expected 'lesson'"
+                    % (lid, qid, (quals[qid] or {}).get("scope")))
+            else:
+                lesson_granted.add(qid)
 
     seen_legacy = {}
     for aid, a in activities.items():
@@ -313,6 +390,12 @@ def validate(data):
                 err("qualification %s has a studyTarget pointing at an unknown activity" % qid)
         if scope == "activity" and qid not in granted:
             err("qualification %s has scope 'activity' but no activity grants it" % qid)
+        if scope == "lesson" and qid not in lesson_granted:
+            err("qualification %s has scope 'lesson' but no lesson completionPolicy grants it" % qid)
+        if scope in ("unit", "course"):
+            # §7 still holds: nothing can prove these yet, so nothing may grant them.
+            err("qualification %s has scope %r — unit/course completion is not authoritative yet, so "
+                "such a qualification cannot be earned" % (qid, scope))
     return errs
 
 

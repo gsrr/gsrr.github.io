@@ -180,6 +180,20 @@ def main():
               % (aid, reg.grader_type_of(aid), pol, reg.qualification_ids_for(aid) or "[]"))
     paid = [a for a in reg.activities if reg.reward_policy_of(a) != "none"]
     print("  gold-bearing activities: %d/%d %s" % (len(paid), len(reg.activities), sorted(paid)))
+    # Phase 3D: authoritative whole-lesson completion coverage. Expected to be 0 until Level 2 (STT)
+    # and Level 5 (matching) have server-authoritative evidence — see docs/lesson-completion.md.
+    with_policy = sorted(l for l in reg.lessons if reg.completion_available(l))
+    print("  lessons with an active completionPolicy: %d/%d %s"
+          % (len(with_policy), len(reg.lessons), with_policy or "[]"))
+    for lid in with_policy:
+        pol = reg.completion_policy_of(lid)
+        print("    %-30s type=%s v=%s reward=%s grants=%s required=%d"
+              % (lid, pol.get("type"), pol.get("version"), reg.lesson_reward_policy_of(lid),
+                 reg.lesson_qualification_ids_for(lid) or "[]", len(pol.get("requiredActivityIds") or [])))
+    paid_lessons = [l for l in with_policy if reg.lesson_reward_policy_of(l) != "none"]
+    if paid_lessons:
+        warn("cross-domain: %d lesson(s) carry a gold-bearing completion reward: %s"
+             % (len(paid_lessons), paid_lessons))
     print("  territories with learning requirements: %d" % len(terr_reqs))
     for tid, reqs in sorted(terr_reqs.items()):
         print("    %s requires ALL of %s" % (tid, reqs))

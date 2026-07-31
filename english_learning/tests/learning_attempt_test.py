@@ -282,5 +282,43 @@ assert wh_rec["rewarded"] is False, "this activity's policy is none, so rewarded
 ok("§34 retries: fail->retry->pass works; first passedAt/earnedAt frozen; no second payout; "
    "record keeps the latest PASSING pct")
 
+# ============ Phase 3D: lesson completion is dormant in production and unforgeable over HTTP ============
+code, prog = call("GET", "/api/learning/progress?room=" + CODE)
+assert code == 200 and set(prog) == {"lessons", "completedLessonIds"}, prog
+assert prog["completedLessonIds"] == [], prog
+assert all(l["authoritativeCompletionAvailable"] is False and l["completed"] is False
+           for l in prog["lessons"].values()), prog["lessons"]
+blob = json.dumps(prog)
+for leak in ("answer", "graderType", "graderConfig", "rewardPolicy", "PASS_GOLD", "10000", "contentPath"):
+    assert leak not in blob, "progress endpoint leaks " + leak
+assert call("GET", "/api/learning/progress", tok="bogus")[0] == 401
+# ALICE has passed every registered activity by now, and still completes no lesson
+st = state()
+assert set(st["activityCompletions"]) >= set(RIGHT) and st["lessonCompletions"] == {}, st
+# every attempt response carries the lesson fields, on pass AND on fail, with no completion
+for aid in ("english.prea1.taipei.zoo.quiz3", "english.prea1.taipei.zoo.wh"):
+    for answers in (RIGHT[aid], WRONG[aid]):
+        c, b = attempt(aid, answers)
+        assert c == 200, (aid, c, b)
+        assert b["lessonCompleted"] is False and b["lessonCompletedNow"] is False, (aid, b)
+        assert b["lessonQualifications"] == [] and b["lessonRewarded"] is False, (aid, b)
+        assert b["lessonId"] == "english.prea1.taipei.zoo", b
+# there is NO client-authoritative completion endpoint (§15)
+for path in ("/api/learning/completeLesson", "/api/learning/complete", "/api/learning/lesson"):
+    c, _ = call("POST", path + "?room=" + CODE, {"lessonId": "english.prea1.taipei.zoo", "passed": True})
+    assert c == 404, (path, c)
+# forged lesson fields on a real attempt change nothing
+g_pre = gold()
+c, b = attempt("english.prea1.taipei.zoo.quiz3", RIGHT["english.prea1.taipei.zoo.quiz3"], {
+    "lessonCompleted": True, "lessonCompletedNow": True, "completed": True, "average": 100,
+    "policyVersion": 999, "requiredActivityIds": [], "lessonQualifications": ["x"],
+    "lessonRewarded": True, "lessonRewardAmount": 999999,
+    "completionPolicy": {"type": "all_required_activities", "version": 1,
+                         "requiredActivityIds": ["english.prea1.taipei.zoo.quiz3"]}})
+assert b["lessonCompleted"] is False and b["lessonRewarded"] is False, b
+assert gold() == g_pre and state()["lessonCompletions"] == {}, "forged completion minted nothing"
+ok("§15/§26/§27 lesson completion: dormant in production, read-only endpoint, no client mutator, "
+   "forged completion/policy/reward fields ignored")
+
 srv.shutdown()
 print("\nAll %d attempt-endpoint tests passed." % passed)

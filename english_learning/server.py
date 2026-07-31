@@ -998,6 +998,8 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_learning_registry()
         elif path == "/api/learning/state":
             self._handle_learning_state()
+        elif path == "/api/learning/progress":
+            self._handle_learning_progress()
         else:
             self._send({"error": "not found"}, 404)
 
@@ -1823,7 +1825,10 @@ class Handler(BaseHTTPRequestHandler):
             _, out = LEARNING.record_attempt(learning, aid, result, int(time.time()))
             save_progress(user, p)
         # 獎勵金額來自遊戲設定(LEARNING 建構時注入)，內容包無法指定金額。在 acct_lock 外呼叫避免巢狀鎖。
-        newgold = econ_add_gold(user, out["rewardAmount"]) if out["rewarded"] else None
+        # Phase 3D：活動獎勵與「整課完成」獎勵是分開的政策，一次結算。目前沒有任何正式課程啟用
+        # completionPolicy，所以 lessonRewardAmount 恆為 0。
+        delta = clampi(out["rewardAmount"]) + clampi(out["lessonRewardAmount"])
+        newgold = econ_add_gold(user, delta) if delta else None
         granted = out["granted"] if out["passed"] else []
         self._send({"ok": True, "activityId": aid,
                     "passed": out["passed"], "pct": result["pct"],
@@ -1832,7 +1837,22 @@ class Handler(BaseHTTPRequestHandler):
                     "qualification": (granted[0] if granted else None),   # 3A 相容欄位(單一資格)
                     "grantedNow": bool(out["grantedNow"]), "grantedNowIds": out["grantedNow"],
                     "alreadyCompleted": out["alreadyCompleted"],
-                    "rewarded": out["rewarded"], "gold": newgold})
+                    "rewarded": out["rewarded"], "gold": newgold,
+                    # 整課完成(衍生，非 client 宣告)。沒有政策的課程一律 false。
+                    "lessonId": out["lessonId"], "lessonCompleted": out["lessonCompleted"],
+                    "lessonCompletedNow": out["lessonCompletedNow"],
+                    "lessonQualifications": out["lessonQualifications"],
+                    "lessonRewarded": out["lessonRewarded"]})
+
+    # 唯讀的整課進度：哪些課有權威完成政策、已完成了哪些、還缺哪些活動。不含答案鍵/批改設定/獎勵細節。
+    def _handle_learning_progress(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        with acct_lock:
+            p = load_progress(user)
+        self._send(LEARNING.progress_view(p.get("learning") or {}))
 
     # 玩家經濟：POST 設定（pilot：信任前端戰果，僅夾範圍）
     def _handle_economy_set(self):

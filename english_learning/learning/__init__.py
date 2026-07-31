@@ -11,7 +11,11 @@ grading rules or reward amounts from here.
     content.py        : allowlisted, traversal-proof access to the authoritative lesson JSON.
     grading.py        : deterministic graders, dispatched by activity graderType (not by name).
     rewards.py        : server-owned reward POLICY allowlist — content can name one, never an amount.
+    normalization.py  : text rules ported verbatim from the frontend (no "smart" answer matching).
     qualifications.py : pure player state (completions + qualifications), idempotent, many-to-many.
+    completion.py     : authoritative whole-lesson completion — policy model + pure evaluator.
+                        Capability only: NO production lesson declares a completionPolicy, because
+                        Level 2 (STT) and Level 5 (matching) have no server-authoritative evidence.
     api.py            : LearningService — the single facade the HTTP layer delegates to.
 
 See docs/learning-model.md for the identity hierarchy, schema and trust boundaries.

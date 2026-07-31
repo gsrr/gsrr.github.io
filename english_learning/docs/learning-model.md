@@ -96,11 +96,16 @@ create a second source of truth) and reward amounts (§5 below).
 An activity completion is **not** whole-lesson completion. The pre-existing whole-lesson rule (client
 average ≥ `PASS_MARK`, stored as `passcnt`) is untouched and unrelated.
 
-`lessonCompletions` / `unitCompletions` / `courseCompletions` are **not created** — §8 forbids empty
-blocks and §7 forbids claiming a completion the server cannot prove. The `scope` field reserves the
-vocabulary; the validator **rejects** any activity that grants a non-`activity`-scope qualification,
-so a higher-level qualification cannot become earnable by accident. Adding real aggregation later
-means adding a new block and a new grant path — no existing record changes meaning.
+**Phase 3D update.** `lessonCompletions` now exists as authoritative state — but only for lessons
+whose registry entry declares a `completionPolicy`, and **no production lesson declares one**
+(see [lesson-completion.md](lesson-completion.md) for the decision and the two blockers). The block
+is created only when a completion actually happens, so a player with no completed lesson has no such
+key. `unitCompletions` / `courseCompletions` are still **not created**, and the validator rejects any
+`unit`/`course`-scope qualification outright, because nothing can prove them.
+
+Scope discipline is enforced both ways: an activity may grant only `activity`-scope qualifications, a
+lesson `completionPolicy` may grant only `lesson`-scope ones. A higher-level qualification therefore
+cannot become earnable by accident.
 
 ## 5. Reward policy and the untrusted-content boundary
 

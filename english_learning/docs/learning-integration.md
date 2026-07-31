@@ -332,3 +332,33 @@ its `rewarded` flag prevents a second payout under the new canonical key.
 | `tests/learning_gate_test.py` (19) | §39 the original slice end-to-end, §13 legacy request shape, §42 legacy record compat, endpoint hardening, AI policy |
 | `tests/learning_frontend.test.js` (6) | §38 0/1/N requirement rendering, metadata-driven study nav, client submits no authority |
 | `tools/validate_learning_registry.py` | §26 registry validation, §27 cross-domain report (`--strict`) |
+
+---
+
+# Phase 3D — authoritative whole-lesson completion (capability only)
+
+Full inventory, the decision record and the model are in
+**[docs/lesson-completion.md](lesson-completion.md)**. The short version:
+
+The current whole-lesson rule (there are actually **two** client rules — `statusFromScores` for the
+green light, `renderLessonSummary` for `passcnt`) depends on **Level 2 (STT)** and **Level 5
+(matching)**, neither of which has server-authoritative evidence. Declaring a lesson complete from the
+server-verified subset alone would be a *different and easier* rule, so the approved decision was to
+build the machinery and configure **zero production lessons**.
+
+| | Phase 3C | Phase 3D |
+|---|---|---|
+| Lesson completion | client-only (legacy, two rules) | authoritative model exists, **0 lessons enabled** |
+| Persistence | `activityCompletions`, `qualifications` | `+ lessonCompletions` (created only on real completion) |
+| Qualification scopes earnable | `activity` | `activity`, **`lesson`** (registry-configured only) |
+| Rewards | activity policy | `+ lesson completion policy` — **none enabled in production** |
+| Read API | `/api/learning/{registry,state}` | `+ GET /api/learning/progress` (read-only) |
+| `passcnt` | occupy-bootstrap counter | **unchanged, deliberately kept separate** |
+| Legacy client rules | live | **live and unchanged** — Phase 3D does not claim they are authoritative |
+
+There is deliberately **no** client mutation route (`POST /api/learning/completeLesson` does not
+exist); completion is derived from server state after an authoritative activity attempt. Nothing was
+backfilled, and no historical `completedAt` was invented.
+
+**Before a real lesson can be enabled:** authoritative evidence for Level 2 (STT scoring persisted
+server-side) and Level 5 (matching click-stream evidence). Both explicitly out of scope here.
