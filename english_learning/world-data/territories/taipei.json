@@ -170,6 +170,12 @@
   },
   {
     "id": "taipei:zhongshan",
+    "requirements": {
+      "attackQualificationIds": [
+        "english.prea1.taipei.market.quiz3.pass",
+        "english.prea1.taipei.zoo"
+      ]
+    },
     "mapId": "taipei",
     "regionCode": "zhongshan",
     "displayName": "Zhongshan 中山區",
@@ -301,6 +307,11 @@
   },
   {
     "id": "taipei:songshan",
+    "requirements": {
+      "attackQualificationIds": [
+        "english.prea1.taipei.park.quiz3.pass"
+      ]
+    },
     "mapId": "taipei",
     "regionCode": "songshan",
     "displayName": "Songshan 松山區",
@@ -345,6 +356,11 @@
   },
   {
     "id": "taipei:xinyi",
+    "requirements": {
+      "attackQualificationIds": [
+        "english.prea1.taipei.mrt.quiz3.pass"
+      ]
+    },
     "mapId": "taipei",
     "regionCode": "xinyi",
     "displayName": "Xinyi 信義區",
@@ -437,6 +453,11 @@
   },
   {
     "id": "taipei:zhongzheng",
+    "requirements": {
+      "attackQualificationIds": [
+        "english.prea1.taipei.market.quiz3.pass"
+      ]
+    },
     "mapId": "taipei",
     "regionCode": "zhongzheng",
     "displayName": "Zhongzheng 中正區",

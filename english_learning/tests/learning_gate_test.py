@@ -5,7 +5,7 @@
 
 Part 1 exercises game.conquest.can_attack's qualification layer in isolation (opaque IDs, ordering
 vs the other eligibility checks, AI bypass). Part 2 drives the REAL Taipei vertical slice over HTTP:
-locked taipei:daan vs unrestricted taipei:xinyi, server-graded quiz3, one-time PASS_GOLD, unlock.
+locked taipei:daan vs unrestricted taipei:nangang, server-graded quiz3, one-time PASS_GOLD, unlock.
 """
 import json
 import os
@@ -117,9 +117,11 @@ ok("gate robustness: a raising attack_requirements degrades to unrestricted, rea
 import territory_catalog  # noqa: E402
 _cat = territory_catalog.catalog
 assert _cat.attack_requirements("taipei:daan") == ["english.prea1.taipei.zoo"], _cat.attack_requirements("taipei:daan")
-assert _cat.attack_requirements("taipei:xinyi") == [], "the comparison target carries no learning requirement"
+assert _cat.attack_requirements("taipei:nangang") == [], "the comparison target carries no requirement"
+# Phase 4A gated Xinyi with the MRT qualification, so Nangang is now the ungated control.
+assert _cat.attack_requirements("taipei:xinyi") == ["english.prea1.taipei.mrt.quiz3.pass"]
 assert _cat.attack_requirements("taipei:wenshan") == [] and _cat.attack_requirements("nope:nope") == []
-ok("catalog: taipei:daan requires the slice qualification, taipei:xinyi/unknown ids are unrestricted")
+ok("catalog: taipei:daan requires the slice qualification, taipei:nangang/unknown ids are unrestricted")
 
 
 # ==================== Part 2 — end-to-end HTTP vertical slice ====================
@@ -165,13 +167,13 @@ WRONG = [{"q": it["q"], "answer": ("No" if it["answer"] == "Yes" else "Yes")} fo
 
 
 def slice_state(owner="ALICE"):
-    """ALICE holds taipei:wenshan; BOB holds the gated daan and the ungated xinyi (side-by-side test)."""
+    """ALICE holds taipei:wenshan; BOB holds the gated daan and the ungated nangang (side-by-side)."""
     server.set_room(CODE)
-    server.save_catalog({"taipei:wenshan": 100, "taipei:daan": 100, "taipei:xinyi": 100})
+    server.save_catalog({"taipei:wenshan": 100, "taipei:daan": 100, "taipei:nangang": 100})
     server.save_territory_store({
         "taipei:wenshan": {"owner": owner, "avatar": "\U0001F466", "troops": [{"type": "cav", "hp": 300}], "pop": 100},
         "taipei:daan": {"owner": "BOB", "troops": [{"type": "inf", "hp": 1}], "pop": 100},
-        "taipei:xinyi": {"owner": "BOB", "troops": [{"type": "inf", "hp": 1}], "pop": 100},
+        "taipei:nangang": {"owner": "BOB", "troops": [{"type": "inf", "hp": 1}], "pop": 100},
     })
     es = server.load_econ_store()
     for u in (owner, "BOB", server.AI_OWNER):
@@ -240,9 +242,9 @@ assert server.load_territory_store()["taipei:wenshan"]["troops"][0]["hp"] == 300
 ok("E2E locked: taipei:daan -> 403 qualification_required + missing ids, zero state change")
 
 # --- SIDE-BY-SIDE control: the ungated neighbour is conquerable with the same (empty) learning state ---
-code, body = atk("taipei:xinyi")
-assert code == 200 and body["attackerWon"] is True and owner_of("taipei:xinyi") == "ALICE", (code, body)
-ok("E2E control: taipei:xinyi (no requirement) conquers normally — the gate is targeted, not global")
+code, body = atk("taipei:nangang")
+assert code == 200 and body["attackerWon"] is True and owner_of("taipei:nangang") == "ALICE", (code, body)
+ok("E2E control: taipei:nangang (no requirement) conquers normally — the gate is targeted, not global")
 
 # --- FAILED attempt: server grading rejects it, and forged passed/score/qualification are ignored ---
 slice_state()

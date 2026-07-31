@@ -337,7 +337,9 @@ assert can("world:au", "world:id").reason == "not_adjacent", "Australia ↔ Indo
 # 3A cross-check: taipei:daan is adjacency-OK but learning-gated — the layers are orthogonal, and a
 # learning requirement never turns into (or hides behind) an adjacency verdict.
 assert can("taipei:wenshan", "taipei:daan", require_quals=True).reason == "qualification_required"
-assert can("taipei:wenshan", "taipei:xinyi", require_quals=True).allowed, "ungated neighbour unaffected"
+assert can("taipei:wenshan", "taipei:nangang", require_quals=True).allowed, "ungated neighbour unaffected"
+# Phase 4A gated Xinyi too (MRT); Nangang is the remaining ungated Taipei neighbour of Wenshan.
+assert can("taipei:wenshan", "taipei:xinyi", require_quals=True).reason == "qualification_required"
 ok("2B adjacency: real Phase 1C positives (CN / TW / Taipei / World) + island/sea negatives, canonical ids only")
 
 # ============================ Phase 2B — apply_territorial_attack state transition (pure) ============================

@@ -32,6 +32,21 @@
         ]
       }
     },
+    "english.prea1.taipei.mrt": {
+      "courseId": "english.prea1.taipei",
+      "contentPath": "Pre-A1/taipei/mrt",
+      "title": "Taipei · On the MRT"
+    },
+    "english.prea1.taipei.market": {
+      "courseId": "english.prea1.taipei",
+      "contentPath": "Pre-A1/taipei/market",
+      "title": "Taipei · The Night Market"
+    },
+    "english.prea1.taipei.park": {
+      "courseId": "english.prea1.taipei",
+      "contentPath": "Pre-A1/taipei/park",
+      "title": "Taipei · At the Park"
+    },
     "english.a1.core.001": {
       "courseId": "english.a1.core",
       "contentPath": "A1/001",
@@ -50,6 +65,30 @@
       "legacyKeys": ["Pre-A1/taipei/zoo#quiz3"]
     },
 
+    "english.prea1.taipei.mrt.quiz3": {
+      "lessonId": "english.prea1.taipei.mrt",
+      "contentKey": "quiz3",
+      "graderType": "yes_no",
+      "title": "Taipei · On the MRT — Yes/No reading comprehension",
+      "grants": ["english.prea1.taipei.mrt.quiz3.pass"],
+      "rewardPolicy": "none"
+    },
+    "english.prea1.taipei.market.quiz3": {
+      "lessonId": "english.prea1.taipei.market",
+      "contentKey": "quiz3",
+      "graderType": "yes_no",
+      "title": "Taipei · The Night Market — Yes/No reading comprehension",
+      "grants": ["english.prea1.taipei.market.quiz3.pass"],
+      "rewardPolicy": "none"
+    },
+    "english.prea1.taipei.park.quiz3": {
+      "lessonId": "english.prea1.taipei.park",
+      "contentKey": "quiz3",
+      "graderType": "yes_no",
+      "title": "Taipei · At the Park — Yes/No reading comprehension",
+      "grants": ["english.prea1.taipei.park.quiz3.pass"],
+      "rewardPolicy": "none"
+    },
     "english.prea1.taipei.zoo.read_along": {
       "lessonId": "english.prea1.taipei.zoo",
       "scorerType": "read_along_stt",
@@ -136,6 +175,21 @@
     "english.prea1.taipei.zoo": {
       "scope": "activity",
       "title": "Taipei · At the Zoo — Yes/No reading comprehension"
+    },
+
+    "english.prea1.taipei.mrt.quiz3.pass": {
+      "scope": "activity",
+      "title": "Taipei · On the MRT — Yes/No reading comprehension"
+    },
+
+    "english.prea1.taipei.market.quiz3.pass": {
+      "scope": "activity",
+      "title": "Taipei · The Night Market — Yes/No reading comprehension"
+    },
+
+    "english.prea1.taipei.park.quiz3.pass": {
+      "scope": "activity",
+      "title": "Taipei · At the Park — Yes/No reading comprehension"
     }
   }
 }

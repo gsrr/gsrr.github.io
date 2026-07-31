@@ -114,7 +114,11 @@ READ_ALONG = {a for a, v in reg["activities"].items() if v.get("scored") == "stt
 MATCHING = {a for a, v in reg["activities"].items() if v.get("scored") == "matching"}
 assert READ_ALONG == {"english.prea1.taipei.zoo.read_along", "english.a1.core.001.read_along"}, READ_ALONG
 assert MATCHING == {"english.prea1.taipei.zoo.matching", "english.a1.core.001.matching"}, MATCHING
-assert set(reg["activities"]) - READ_ALONG - MATCHING == set(RIGHT), sorted(reg["activities"])
+# Phase 4A registered MRT/Market/Park quiz3 as new progression gates.
+PROGRESSION = {"english.prea1.taipei.mrt.quiz3", "english.prea1.taipei.market.quiz3",
+               "english.prea1.taipei.park.quiz3"}
+assert PROGRESSION <= set(reg["activities"]), sorted(reg["activities"])
+assert set(reg["activities"]) - READ_ALONG - MATCHING - PROGRESSION == set(RIGHT), sorted(reg["activities"])
 assert all(reg["activities"][a]["serverGraded"] is True for a in reg["activities"])
 assert all(reg["activities"][a]["scored"] == "deterministic" for a in RIGHT)
 blob = json.dumps(reg)
