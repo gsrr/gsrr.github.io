@@ -305,8 +305,10 @@ for not_a_key in ("english.prea1.taipei.zoo", LESSON, "english.prea1.taipei"):
 # §8: higher-level blocks are NOT invented. Phase 3D added authoritative LESSON completion, but no
 # production lesson declares a completionPolicy, so the block must stay empty — and unit/course
 # completion still does not exist at all.
-assert set(st) == {"qualifications", "activityCompletions", "lessonCompletions"}, st.keys()
+assert set(st) == {"qualifications", "activityCompletions", "lessonCompletions",
+                   "sttProgress"}, st.keys()
 assert st["lessonCompletions"] == {}, "no production lesson can be authoritatively complete yet"
+assert st["sttProgress"] == {}, "this player has recorded no Read-Along evidence"
 assert "unitCompletions" not in st and "courseCompletions" not in st
 ok("E2E persistence: activityCompletions['<activityId>'] + qualifications['<id>'], no faked aggregates")
 

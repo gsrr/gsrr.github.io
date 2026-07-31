@@ -37,6 +37,22 @@
       "legacyKeys": ["Pre-A1/taipei/zoo#quiz3"]
     },
 
+    "english.prea1.taipei.zoo.read_along": {
+      "lessonId": "english.prea1.taipei.zoo",
+      "scorerType": "read_along_stt",
+      "title": "Taipei · At the Zoo — Read Along",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.001.read_along": {
+      "lessonId": "english.a1.core.001",
+      "scorerType": "read_along_stt",
+      "title": "A1 · 001 — Read Along",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
     "english.prea1.taipei.zoo.quiz4": {
       "lessonId": "english.prea1.taipei.zoo",
       "contentKey": "quiz4",

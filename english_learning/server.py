@@ -1066,19 +1066,62 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self._send({"error": "not found"}, 404)
 
+    # Phase 3E1：Read-Along 轉為後端權威。帶 activityId + sentenceIndex(且已登入) → 伺服器自己
+    #   從課程內容取出目標句、自己批改、自己保存(每句取最佳)。client 送的 ?text= 在這個模式下一律忽略。
+    #   沒帶 activityId → 舊模式(roleplay 用)，只回 transcript，不產生任何權威狀態。
+    #   轉檔/辨識失敗 → 回錯誤且「不」寫入任何分數/完成/資格/獎勵(不可把當機變成滿分)。
     def _handle_stt(self):
         qs = parse_qs(urlparse(self.path).query)
-        target = (qs.get("text", [""]) or [""])[0]
+        client_text = (qs.get("text", [""]) or [""])[0]
+        aid = (qs.get("activityId", [""]) or [""])[0].strip()
+        sidx_raw = (qs.get("sentenceIndex", [""]) or [""])[0].strip()
         length = int(self.headers.get("Content-Length") or 0)
         if length <= 0:
             self._send({"error": "no audio"}, 400)
             return
         audio = self.rfile.read(length)
+        user = token_user(self._token())
+        authoritative = bool(aid) and user is not None
+        target = client_text                          # legacy mode only: a soft whisper hint
+        if authoritative:
+            if not LEARNING.is_read_along(aid):
+                self._send({"error": "not a read-along activity", "reason": "not_scorable"}, 400)
+                return
+            target, total = LEARNING.read_along_target(aid, sidx_raw)
+            if target is None:
+                self._send({"error": "unknown sentence for this activity",
+                            "reason": "bad_sentence"}, 400)
+                return
+        elif aid and user is None:
+            self._send({"error": "Not logged in"}, 401)
+            return
         try:
             text = transcribe(audio, target)
-            self._send({"transcript": text, "target": target})
-        except Exception as e:
-            self._send({"error": str(e)}, 500)
+        except Exception:
+            # §14: an outage must never become authoritative success. No score, no completion, no
+            # qualification, no reward. Internal detail is not leaked to the client.
+            self._send({"error": "speech recognition unavailable", "reason": "stt_unavailable"}, 503)
+            return
+        if not authoritative:
+            self._send({"transcript": text, "target": target, "authoritative": False})
+            return
+        with acct_lock:
+            p = load_progress(user)
+            learning = p.setdefault("learning", {})
+            _, out = LEARNING.record_read_along(learning, aid, sidx_raw, text, int(time.time()))
+            if out is None:
+                self._send({"error": "unknown sentence for this activity",
+                            "reason": "bad_sentence"}, 400)
+                return
+            save_progress(user, p)
+        delta = clampi(out.get("rewardAmount", 0)) + clampi(out.get("lessonRewardAmount", 0))
+        newgold = econ_add_gold(user, delta) if delta else None
+        self._send({"transcript": text, "target": out["target"], "authoritative": True,
+                    "activityId": out["activityId"], "sentenceIndex": out["sentenceIndex"],
+                    "score": out["score"], "improved": out["improved"],
+                    "totalSentences": out["totalSentences"],
+                    "activityPct": out["activityPct"], "activityPassed": out["activityPassed"],
+                    "qualifications": out["granted"], "rewarded": out["rewarded"], "gold": newgold})
 
     # ---- 帳號 / 雲端進度 ----
     def _body_json(self):

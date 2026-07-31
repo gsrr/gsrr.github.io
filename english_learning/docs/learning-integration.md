@@ -362,3 +362,30 @@ backfilled, and no historical `completedAt` was invented.
 
 **Before a real lesson can be enabled:** authoritative evidence for Level 2 (STT scoring persisted
 server-side) and Level 5 (matching click-stream evidence). Both explicitly out of scope here.
+
+
+---
+
+# Phase 3E1 — Read-Along / STT becomes server-authoritative
+
+Full inventory, the exact ported formula and the design are in
+**[docs/stt-authority.md](stt-authority.md)**. Summary of the change:
+
+| | Before | After |
+|---|---|---|
+| Target sentence | client sent `?text=` | **server** resolves it from lesson content by `sentenceIndex` |
+| Per-sentence score | computed in the browser | **server** (exact port of `pronWords`/`showPron`) |
+| Level 2 pct | browser | **server** `activityPct` |
+| Persistence | `localStorage` only | `learning.sttProgress`, per account, room-independent |
+| Retry | best-per-sentence (browser memory) | best-per-sentence (**server state**) — rule unchanged |
+| Backend outage | recorded **full marks** | **503, zero evidence** — no score, completion, qualification or reward |
+| Reward / qualification | — | still **none** (`rewardPolicy: "none"`, `grants: []`) |
+
+`/api/stt` gained an authoritative mode (`activityId` + `sentenceIndex` + token); `?text=` is ignored
+there. The legacy target-less mode still exists and is what roleplay uses — it creates no state.
+
+The full-marks fallback survives **only as a local, non-authoritative convenience** for the backendless
+GitHub Pages deployment, so learners there are not trapped by the level lock. It can never become
+server evidence.
+
+Production lesson `completionPolicy` count is still **0**: Level 5 matching remains the last blocker.

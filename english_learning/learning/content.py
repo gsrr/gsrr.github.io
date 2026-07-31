@@ -15,18 +15,23 @@ local runs and tests default to the repo root next to server.py. Same lookup rul
 """
 import json
 import os
+import re
 
 from . import identity
 
 
-def resolve_path(content_path, content_root, allowed_paths=None):
-    """Absolute, contained path to `<content_path>.json`, or None if any gate rejects it."""
+def resolve_path(content_path, content_root, allowed_paths=None, suffix=".json"):
+    """Absolute, contained path to `<content_path><suffix>`, or None if any gate rejects it.
+
+    `suffix` is "" for the plain dialogue text file (the Read-Along source), which lives next to the
+    activity JSON under the same registry-approved content path — so it passes the same three gates.
+    """
     if not content_path or not content_root or not identity.is_content_path(content_path):
         return None
     if allowed_paths is not None and content_path not in allowed_paths:
         return None                                  # not declared by the registry -> never read
     root = os.path.realpath(os.path.abspath(content_root))
-    path = os.path.realpath(os.path.abspath(os.path.join(root, content_path + ".json")))
+    path = os.path.realpath(os.path.abspath(os.path.join(root, content_path + suffix)))
     if path != root and not path.startswith(root + os.sep):
         return None
     return path
@@ -43,6 +48,35 @@ def load_lesson(content_path, content_root, allowed_paths=None):
         return data if isinstance(data, dict) else None
     except Exception:
         return None
+
+
+_DIALOGUE_LINE = re.compile(r"^([^:：]+)[:：]\s*(.*)$")
+
+
+def load_dialogue(content_path, content_root, allowed_paths=None):
+    """The lesson's spoken script as a list of sentence strings, or None if unavailable.
+
+    Exact port of index.html parseDialogue(): split on newlines, trim, drop blanks, keep only lines
+    shaped `<speaker>: <text>`, and take the text. This is what makes the Read-Along target sentence
+    server-resolvable — the client never gets to say what the target is.
+    """
+    path = resolve_path(content_path, content_root, allowed_paths, suffix="")
+    if not path:
+        return None
+    try:
+        with open(path, encoding="utf-8") as f:
+            raw = f.read()
+    except Exception:
+        return None
+    out = []
+    for line in raw.replace("\r\n", "\n").split("\n"):
+        line = line.strip()
+        if not line:
+            continue
+        m = _DIALOGUE_LINE.match(line)
+        if m:
+            out.append(m.group(2).strip())
+    return out or None
 
 
 def load_activity_items(content_path, content_key, content_root, allowed_paths=None):

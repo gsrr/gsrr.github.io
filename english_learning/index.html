@@ -2229,7 +2229,15 @@
       statusEl.textContent = "⚠️ Cannot use the microphone. Please allow mic permission and try again.";
     }
   });
-  // 把錄好的音檔送到後端 Whisper，轉文字後比對目標句算發音分數
+  // Phase 3E1：Read-Along 的分數改由「後端權威」計算。前端只送 activityId + 句子序號 + 音檔；
+  //   目標句由伺服器自己從課程內容取出(client 無法換成簡單的句子)，分數也由伺服器算並保存。
+  //   沒有登錄簿對應(或未登入/無後端)時，退回舊的本地顯示分數 —— 明確標示為非權威、不寫入學習狀態。
+  let sttAuthPct = null;          // 後端回傳的權威 Level 2 百分比（null = 尚無權威分數）
+  function readAlongActivityId(contentPath) {
+    const acts = (learningRegistry && learningRegistry.activities) || {};
+    for (const aid in acts) if (acts[aid].contentPath === contentPath && acts[aid].scored === "stt") return aid;
+    return null;
+  }
   function scorePronunciation(target, blob) {
     isScoring = true;
     recBtn.disabled = true;        // 計分期間鎖住 Record，等分數回來
@@ -2237,11 +2245,22 @@
     nextBtn.disabled = true;
     pronResult.innerHTML = '<div style="font-size:13px;color:#94a3b8">🎯 Scoring…</div>';
     pronResult.classList.remove("hidden");
-    fetch("/api/stt?text=" + encodeURIComponent(target), { method: "POST", body: blob })
+    const aid = readAlongActivityId(currentArticleKey), tok = authToken(), sIdx = idx;
+    const url = (aid && tok)
+      ? "/api/stt?activityId=" + encodeURIComponent(aid) + "&sentenceIndex=" + sIdx +
+        "&token=" + encodeURIComponent(tok)
+      : "/api/stt?text=" + encodeURIComponent(target);
+    fetch(url, { method: "POST", body: blob })
       .then(r => r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)))
       .then(d => {
-        if (d && typeof d.transcript === "string") showPron(target, d.transcript);
-        else throw new Error((d && d.error) || "no transcript");
+        if (!d || typeof d.transcript !== "string") throw new Error((d && d.error) || "no transcript");
+        if (d.authoritative) {                       // 伺服器已批改並保存 → 用它的分數
+          sttAuthPct = d.activityPct;
+          pronScores[sIdx] = d.score;                // 顯示鏡像；權威在後端(每句取最佳)
+          showPron(d.target != null ? d.target : target, d.transcript, d.score);
+        } else {
+          showPron(target, d.transcript, null);      // 非權威(舊模式/roleplay 環境)
+        }
       })
       .catch(() => {
         pronResult.innerHTML = '<div style="font-size:13px;color:#94a3b8">🎯 Pronunciation score needs the server (Docker build). Not available on GitHub Pages / local file.</div>';
@@ -2292,8 +2311,14 @@
       // 計入每句發音分數：Level 2 分數 = 各句最佳分數的平均（沒錄到的句子算 0）。
       // 因為「下一句」需先錄音，能走到這裡代表每句都錄過；
       // 若整課都拿不到發音分（GitHub Pages / 無後端），退回「完成即滿分」才公平。
+      // Phase 3E1：有後端權威分數就用它(伺服器已保存，每句取最佳)；否則沿用本地顯示分數。
       const scoredCount = Object.keys(pronScores).length;
-      if (scoredCount > 0) {
+      if (sttAuthPct != null) {
+        recordScore(2, sttAuthPct, 100);
+        shadowScore.textContent = "🎤 Pronunciation: " + sttAuthPct + "% (" + scoredCount + "/" +
+          script.length + " sentences scored · server-verified)";
+        shadowScore.classList.remove("hidden");
+      } else if (scoredCount > 0) {
         let sum = 0;
         for (let i = 0; i < script.length; i++) sum += (pronScores[i] || 0);
         const avg = Math.round(sum / script.length);
@@ -2301,7 +2326,9 @@
         shadowScore.textContent = "🎤 Pronunciation: " + avg + "% (" + scoredCount + "/" + script.length + " sentences scored)";
         shadowScore.classList.remove("hidden");
       } else {
-        recordScore(2, script.length, script.length);   // 無發音評分環境：完成即滿分
+        // 沒有任何評分環境(GitHub Pages / 無後端)：維持舊的本地便利行為，讓學生不會卡關。
+        // 這只是「本機顯示與關卡解鎖」，永遠不會變成伺服器上的權威學習證據。
+        recordScore(2, script.length, script.length);   // 無發音評分環境：完成即滿分(非權威)
         shadowScore.classList.add("hidden");
       }
       // 通關(≥80)只顯示 Next、藏 Try Again；沒過則相反並提示要重做
@@ -2320,7 +2347,7 @@
 
   /* 重來 */
   shadowRetry.addEventListener("click", () => {
-    idx = 0; recordings = {}; pronScores = {};
+    idx = 0; recordings = {}; pronScores = {}; sttAuthPct = null;
     renderShadow();
   });
 
@@ -2357,7 +2384,9 @@
       .replace(/[^a-z' ]/g, " ").split(/\s+/).filter(Boolean)
       .reduce((out, w) => out.concat((CONTRACTIONS[w] || w).split(" ")), []);
   }
-  function showPron(target, said) {
+  // serverPct != null → 分數由後端權威提供，這裡只負責「畫」逐字對照(顯示用)。
+  // serverPct == null → 沒有權威來源(GitHub Pages / 未登入)，本地算一個「僅供顯示」的分數。
+  function showPron(target, said, serverPct) {
     const sCount = {};
     pronWords(said).forEach(w => { sCount[w] = (sCount[w] || 0) + 1; });
     let total = 0, matched = 0;
@@ -2368,8 +2397,8 @@
       if (subs.every(x => sCount[x] > 0)) { subs.forEach(x => sCount[x]--); matched++; return '<span class="pw-ok">' + tok + '</span>'; }
       return '<span class="pw-bad">' + tok + '</span>';
     }).join(" ");
-    const pct = total ? Math.round(matched / total * 100) : 0;
-    pronScores[idx] = Math.max(pronScores[idx] || 0, pct);   // 記錄這句最佳分數，計入 Level 2 統計
+    const pct = (serverPct != null) ? serverPct : (total ? Math.round(matched / total * 100) : 0);
+    if (serverPct == null) pronScores[idx] = Math.max(pronScores[idx] || 0, pct);   // 本地顯示分數(非權威)
     const face = pct >= 80 ? "🌟" : pct >= 50 ? "🙂" : "💪";
     pronResult.innerHTML = '<div class="pron-score">' + face + ' ' + pct + '%</div>' +
       '<div class="pron-sentence">' + html + '</div>' +
@@ -3521,7 +3550,7 @@
     stopRecordingIfAny();
     idx = 0;
     recordings = {};
-    pronScores = {};
+    pronScores = {}; sttAuthPct = null;
     renderDialogue();
     renderShadow();
     currentScene = article.scene || "park-ball";

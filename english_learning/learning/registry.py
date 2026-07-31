@@ -23,7 +23,7 @@ duplicating them would create a second source of truth) and reward AMOUNTS (see 
 import json
 import os
 
-from . import completion, grading, identity, rewards
+from . import completion, grading, identity, rewards, stt_scoring
 
 _PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "registry.json")
 SCHEMA_VERSION = 1
@@ -32,6 +32,8 @@ _SECTIONS = ("contentPacks", "courses", "units", "lessons", "activities", "quali
 _GRADER_CFG_KEYS = {"promptField", "answerField", "distractorsField", "joinWith"}
 # Phase 3D: keys allowed inside a lesson's optional completionPolicy.
 _COMPLETION_KEYS = {"type", "version", "requiredActivityIds", "grants", "rewardPolicy"}
+# Phase 3E1: non-deterministic scorers live outside the GRADERS table (§8).
+_SCORER_TYPES = {stt_scoring.SCORER_TYPE}
 
 
 def _no_dup_keys(pairs):
@@ -136,6 +138,15 @@ class Registry:
     def grader_type_of(self, activity_id):
         return (self.activities.get(activity_id) or {}).get("graderType")
 
+    def scorer_type_of(self, activity_id):
+        """Non-deterministic scorer (Phase 3E1 Read-Along/STT). Mutually exclusive with graderType."""
+        return (self.activities.get(activity_id) or {}).get("scorerType")
+
+    def is_server_scored(self, activity_id):
+        """True if the server produces the authoritative result for this activity, either way."""
+        a = self.activities.get(activity_id) or {}
+        return grading.is_supported(a.get("graderType")) or a.get("scorerType") in _SCORER_TYPES
+
     def grader_config_of(self, activity_id):
         """Registry-owned grader configuration (field names etc.). Never client input."""
         cfg = (self.activities.get(activity_id) or {}).get("graderConfig")
@@ -203,7 +214,8 @@ class Registry:
                                  "contentPath": self.content_path_of(aid),
                                  "contentKey": a.get("contentKey"),
                                  "title": a.get("title"),
-                                 "serverGraded": grading.is_supported(a.get("graderType")),
+                                 "serverGraded": self.is_server_scored(aid),
+                                 "scored": ("stt" if a.get("scorerType") else "deterministic"),
                                  "grants": self.qualification_ids_for(aid)}
                            for aid, a in self.activities.items()},
             # `authoritativeCompletionAvailable` is false for every production lesson in Phase 3D —
@@ -329,11 +341,24 @@ def validate(data):
         a = a or {}
         if a.get("lessonId") not in lessons:
             err("activity %s references unknown lessonId %r" % (aid, a.get("lessonId")))
-        if not a.get("contentKey") or not isinstance(a.get("contentKey"), str):
+        if a.get("scorerType") is None and (not a.get("contentKey") or
+                                            not isinstance(a.get("contentKey"), str)):
             err("activity %s has a missing/invalid contentKey" % aid)
-        if not grading.is_supported(a.get("graderType")):
+        gt, sct = a.get("graderType"), a.get("scorerType")
+        if gt is not None and sct is not None:
+            err("activity %s declares both graderType and scorerType — exactly one is allowed" % aid)
+        elif sct is not None:
+            if sct not in _SCORER_TYPES:
+                err("activity %s has unknown scorerType %r (known: %s)"
+                    % (aid, sct, sorted(_SCORER_TYPES)))
+            if a.get("contentKey") is not None:
+                err("activity %s uses scorerType %r, whose content is the lesson dialogue — it must "
+                    "not declare a contentKey" % (aid, sct))
+            if a.get("graderConfig") is not None:
+                err("activity %s uses scorerType %r and must not declare graderConfig" % (aid, sct))
+        elif not grading.is_supported(gt):
             err("activity %s has unknown graderType %r (known: %s)"
-                % (aid, a.get("graderType"), grading.grader_types()))
+                % (aid, gt, grading.grader_types()))
         if not a.get("title"):
             err("activity %s has no title" % aid)
         if not rewards.is_policy(a.get("rewardPolicy") or rewards.DEFAULT_POLICY):

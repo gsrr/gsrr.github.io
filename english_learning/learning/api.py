@@ -7,7 +7,8 @@ granting, reward policy) lives behind LearningService.
 The service is stateless with respect to players — every method takes the player's `learning` dict
 and returns it mutated for the caller to persist, exactly like the pure modules underneath.
 """
-from . import completion, content, grading, identity, qualifications, registry, rewards
+from . import (completion, content, grading, identity, qualifications, registry, rewards,
+               stt_scoring)
 
 # stable machine reasons returned to the client (never internal exception detail)
 REASON_NOT_GRADABLE = "not_gradable"
@@ -112,6 +113,73 @@ class LearningService:
         self._settle_lesson(state, self.registry.lesson_of_activity(activity_id), now, out)
         return state, out
 
+    # ---- Read-Along / STT (Phase 3E1) ----
+    def is_read_along(self, activity_id):
+        return self.registry.scorer_type_of(activity_id) == stt_scoring.SCORER_TYPE
+
+    def read_along_sentences(self, activity_id):
+        """The authoritative spoken script for this activity, or None. Server-resolved, never client."""
+        if not self.is_read_along(activity_id):
+            return None
+        return content.load_dialogue(self.registry.content_path_of(activity_id),
+                                     self.content_root, self.registry.approved_content_paths())
+
+    def read_along_target(self, activity_id, sentence_index):
+        """(target_sentence, total) for a validated index, or (None, total) when out of range."""
+        sentences = self.read_along_sentences(activity_id)
+        if not sentences:
+            return None, 0
+        # Strictly integral only. A float must NOT be truncated into a valid index, and a boolean is
+        # not a sentence position — both are malformed requests, not sentence 1.
+        if isinstance(sentence_index, bool):
+            return None, len(sentences)
+        if isinstance(sentence_index, int):
+            i = sentence_index
+        elif isinstance(sentence_index, str) and sentence_index.strip().isdigit():
+            i = int(sentence_index.strip())          # the query string always arrives as text
+        else:
+            return None, len(sentences)
+        if i < 0 or i >= len(sentences):
+            return None, len(sentences)
+        return sentences[i], len(sentences)
+
+    def record_read_along(self, state, activity_id, sentence_index, transcript, now):
+        """Score one spoken sentence server-side and fold it into authoritative state.
+
+        The target comes from lesson content and the transcript from the server's own STT — neither is
+        taken from the request. Best-per-sentence retry semantics are preserved exactly (§10).
+        Returns (state, outcome) or (state, None) when the activity/index cannot be resolved.
+        """
+        target, total = self.read_along_target(activity_id, sentence_index)
+        if target is None:
+            return state, None
+        if not isinstance(state, dict):
+            state = {}
+        res = stt_scoring.score_sentence(target, transcript)
+        table = state.setdefault("sttProgress", {})
+        prog = table.get(activity_id)
+        prog = prog if isinstance(prog, dict) else {}
+        prog, improved = stt_scoring.apply_sentence_score(
+            prog, int(sentence_index), res["pct"], total, now)
+        table[activity_id] = prog
+        out = {"activityId": activity_id, "sentenceIndex": int(sentence_index), "target": target,
+               "score": res["pct"], "improved": improved, "totalSentences": total,
+               "activityPct": prog["pct"],
+               "activityPassed": prog["pct"] >= stt_scoring.PASS_MARK,
+               "granted": [], "grantedNow": [], "rewardAmount": 0, "rewarded": False,
+               "alreadyCompleted": False}
+        # A Read-Along level has a real 80% threshold, so crossing it is a normal activity completion
+        # and goes through the SAME machinery (grants + reward policy) as every deterministic activity.
+        if out["activityPassed"]:
+            state, act_out = self.record_attempt(
+                state, activity_id, {"passed": True, "pct": prog["pct"]}, now)
+            for k in ("granted", "grantedNow", "rewardAmount", "rewarded", "alreadyCompleted"):
+                out[k] = act_out[k]
+            for k in ("lessonId", "lessonCompleted", "lessonCompletedNow", "lessonQualifications",
+                      "lessonRewardAmount", "lessonRewarded"):
+                out[k] = act_out[k]
+        return state, out
+
     # ---- whole-lesson completion (Phase 3D) ----
     def passed_activity_ids(self, state):
         """Activity ids the player has authoritatively PASSED (canonical + legacy keys merged)."""
@@ -183,7 +251,8 @@ class LearningService:
         state = state or {}
         return {"qualifications": state.get("qualifications") or {},
                 "activityCompletions": state.get("activityCompletions") or {},
-                "lessonCompletions": state.get("lessonCompletions") or {}}
+                "lessonCompletions": state.get("lessonCompletions") or {},
+                "sttProgress": state.get("sttProgress") or {}}
 
     def player_qualification_ids(self, state):
         return qualifications.earned_qualification_ids(state)

@@ -132,6 +132,16 @@ def main():
     # was pointed at the wrong content key.
     for aid, spec in sorted(reg.activities.items()):
         path = reg.content_path_of(aid)
+        if spec.get("scorerType"):
+            # Read-Along scores the lesson DIALOGUE file (contentPath with no extension), so validate
+            # that instead of a JSON key: it must exist and yield at least one spoken sentence.
+            sentences = learning_content.load_dialogue(path, ROOT, reg.approved_content_paths())
+            if not sentences:
+                err("activity %s (scorerType %s): dialogue %r has no usable '<speaker>: <text>' lines"
+                    % (aid, spec.get("scorerType"), path))
+            elif any(not s.strip() for s in sentences):
+                err("activity %s: dialogue %r contains a blank sentence" % (aid, path))
+            continue
         items = learning_content.load_activity_items(path, spec.get("contentKey"), ROOT,
                                                     reg.approved_content_paths())
         if items is None:
@@ -170,14 +180,16 @@ def main():
           "%d activity(ies), %d qualification(s)"
           % (reg.schema_version, len(reg.contentPacks), len(reg.courses), len(reg.units),
              len(reg.lessons), len(reg.activities), len(reg.qualifications)))
-    print("  graders: %s | reward policies in use: %s"
-          % (sorted({a.get("graderType") for a in reg.activities.values()}),
+    print("  graders: %s | scorers: %s | reward policies in use: %s"
+          % (sorted({a["graderType"] for a in reg.activities.values() if a.get("graderType")}),
+             sorted({a["scorerType"] for a in reg.activities.values() if a.get("scorerType")}),
              sorted({reg.reward_policy_of(a) for a in reg.activities})))
     # per-activity coverage: which are gold-bearing and which certify a qualification (§22/§24)
     for aid in sorted(reg.activities):
         pol = reg.reward_policy_of(aid)
-        print("    %-34s %-16s reward=%-24s grants=%s"
-              % (aid, reg.grader_type_of(aid), pol, reg.qualification_ids_for(aid) or "[]"))
+        kind = reg.grader_type_of(aid) or ("scorer:" + (reg.scorer_type_of(aid) or "?"))
+        print("    %-34s %-22s reward=%-24s grants=%s"
+              % (aid, kind, pol, reg.qualification_ids_for(aid) or "[]"))
     paid = [a for a in reg.activities if reg.reward_policy_of(a) != "none"]
     print("  gold-bearing activities: %d/%d %s" % (len(paid), len(reg.activities), sorted(paid)))
     # Phase 3D: authoritative whole-lesson completion coverage. Expected to be 0 until Level 2 (STT)

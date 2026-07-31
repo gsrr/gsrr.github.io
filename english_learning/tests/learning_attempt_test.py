@@ -108,8 +108,13 @@ NO_REWARD = [a for a in RIGHT if a != "english.prea1.taipei.zoo.quiz3"]
 
 # ============================== §30 one endpoint, every grader ==============================
 reg = call("GET", "/api/learning/registry")[1]["registry"]
-assert set(reg["activities"]) == set(RIGHT), sorted(reg["activities"])
-assert all(reg["activities"][a]["serverGraded"] is True for a in RIGHT)
+# Phase 3E1 added two Read-Along (STT) activities. They are server-SCORED but not gradable through
+# the attempt endpoint, so they are advertised separately and excluded from the deterministic set.
+READ_ALONG = {a for a, v in reg["activities"].items() if v.get("scored") == "stt"}
+assert READ_ALONG == {"english.prea1.taipei.zoo.read_along", "english.a1.core.001.read_along"}, READ_ALONG
+assert set(reg["activities"]) - READ_ALONG == set(RIGHT), sorted(reg["activities"])
+assert all(reg["activities"][a]["serverGraded"] is True for a in reg["activities"])
+assert all(reg["activities"][a]["scored"] == "deterministic" for a in RIGHT)
 blob = json.dumps(reg)
 for leak in ("graderType", "graderConfig", "rewardPolicy", "legacyKeys", "PASS_GOLD", "10000",
              "promptField", "answerField"):
@@ -319,6 +324,124 @@ assert b["lessonCompleted"] is False and b["lessonRewarded"] is False, b
 assert gold() == g_pre and state()["lessonCompletions"] == {}, "forged completion minted nothing"
 ok("§15/§26/§27 lesson completion: dormant in production, read-only endpoint, no client mutator, "
    "forged completion/policy/reward fields ignored")
+
+# ============ Phase 3E1: Read-Along STT authority over HTTP (§22, §26, §27) ============
+ZOO_RA = "english.prea1.taipei.zoo.read_along"
+ZOO_SENTENCES = server.LEARNING.read_along_sentences(ZOO_RA)
+_real_transcribe = server.transcribe
+
+
+def stt(query, body=b"AUDIO", tok="tALICE"):
+    url = B + "/api/stt?" + query + ("&" if query else "") + "token=" + tok
+    try:
+        r = U.urlopen(U.Request(url, data=body, method="POST"))
+        return r.getcode(), json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        return e.code, json.loads(e.read())
+
+
+# the server transcribes; the test controls what the "microphone" produced
+def fake_transcribe(text):
+    def _t(audio, hint=""):
+        fake_transcribe.last_hint = hint
+        return text
+    return _t
+
+
+g_stt = gold()
+server.transcribe = fake_transcribe(ZOO_SENTENCES[0].lower())
+code, b = stt("activityId=%s&sentenceIndex=0" % ZOO_RA)
+assert code == 200 and b["authoritative"] is True, (code, b)
+assert b["score"] == 100 and b["target"] == ZOO_SENTENCES[0] and b["totalSentences"] == 10
+assert b["activityPct"] == 10 and b["activityPassed"] is False and b["rewarded"] is False
+assert b["gold"] is None and gold() == g_stt
+st = state()
+assert st["sttProgress"][ZOO_RA]["sentences"]["0"]["score"] == 100
+assert ZOO_RA not in st["activityCompletions"], "10%% is far below the 80%% threshold"
+ok("§16 STT authoritative mode: server resolves the target, scores it, persists it, pays nothing")
+
+# the client cannot substitute an easier target: ?text= is ignored in authoritative mode
+server.transcribe = fake_transcribe("easy")
+code, b = stt("activityId=%s&sentenceIndex=1&text=easy" % ZOO_RA)
+assert code == 200 and b["target"] == ZOO_SENTENCES[1], b["target"]
+assert b["score"] < 100, "a one-word transcript cannot score the real sentence"
+assert fake_transcribe.last_hint == ZOO_SENTENCES[1], "the whisper hint is the SERVER's sentence"
+# forged score/pass/reward fields in the query are ignored
+server.transcribe = fake_transcribe("nothing like it")
+code, b = stt("activityId=%s&sentenceIndex=2&score=100&pct=100&passed=true&activityPct=100"
+              "&rewardGold=999999&qualification=english.prea1.taipei.zoo" % ZOO_RA)
+assert code == 200 and b["score"] < 100 and b["activityPassed"] is False, b
+assert b["rewarded"] is False and gold() == g_stt
+assert set(state()["qualifications"]) == {QID}, "no new qualification from Read-Along"
+ok("§22/§26 authority: forged target/score/pass/reward/qualification in the request are all ignored")
+
+# malformed identity fails safely and writes nothing
+before = json.dumps(state(), sort_keys=True)
+for q in ("activityId=%s&sentenceIndex=99" % ZOO_RA, "activityId=%s&sentenceIndex=-1" % ZOO_RA,
+          "activityId=%s&sentenceIndex=x" % ZOO_RA, "activityId=%s&sentenceIndex=1.5" % ZOO_RA,
+          "activityId=%s" % ZOO_RA, "activityId=nope&sentenceIndex=0",
+          "activityId=english.prea1.taipei.zoo.quiz3&sentenceIndex=0",
+          "activityId=../../etc/passwd&sentenceIndex=0"):
+    c, bb = stt(q)
+    assert c == 400 and bb.get("reason") in ("bad_sentence", "not_scorable"), (q, c, bb)
+    for tell in (ROOT, "Traceback", ".json", "\\"):
+        assert tell not in json.dumps(bb), (q, bb)
+assert json.dumps(state(), sort_keys=True) == before, "refused requests mutate nothing"
+assert stt("activityId=%s&sentenceIndex=0" % ZOO_RA, tok="bogus")[0] == 401
+assert stt("activityId=%s&sentenceIndex=0" % ZOO_RA, body=b"")[0] == 400, "no audio"
+ok("§22 malformed identity: out-of-range/float/missing/unknown/non-read-along/traversal all 400, inert")
+
+# §27 OUTAGE: a failing STT backend must never become authoritative success
+def boom(audio, hint=""):
+    raise RuntimeError("whisper model unavailable: /opt/models/base.en missing")
+
+
+server.transcribe = boom
+before = json.dumps(state(), sort_keys=True)
+g_before = gold()
+code, b = stt("activityId=%s&sentenceIndex=3" % ZOO_RA)
+assert code == 503 and b.get("reason") == "stt_unavailable", (code, b)
+assert "whisper" not in json.dumps(b).lower() and "/opt" not in json.dumps(b), "no internal detail leaked"
+assert json.dumps(state(), sort_keys=True) == before, "an outage writes NO state"
+assert gold() == g_before, "an outage mints no gold"
+st = state()
+assert "3" not in (st["sttProgress"].get(ZOO_RA) or {}).get("sentences", {}), "no score recorded"
+assert ZOO_RA not in st["activityCompletions"], "no completion forged"
+assert set(st["qualifications"]) == {QID}, "no qualification forged"
+ok("§27 OUTAGE: failing STT -> 503, zero score/completion/qualification/reward, no full-marks fallback")
+
+# legacy mode (roleplay: no activityId) still works and stays non-authoritative
+server.transcribe = fake_transcribe("free conversation text")
+before = json.dumps(state(), sort_keys=True)
+code, b = stt("")
+assert code == 200 and b["transcript"] == "free conversation text" and b["authoritative"] is False, b
+assert "score" not in b and "activityPct" not in b, b
+assert json.dumps(state(), sort_keys=True) == before, "legacy mode creates no learning state"
+ok("§16 legacy mode: roleplay's target-less /api/stt still works and creates no authoritative state")
+
+# crossing the threshold flows through the normal machinery: completion, still zero gold
+server.set_room(CODE)
+g_before = gold()
+for i, s in enumerate(ZOO_SENTENCES):
+    server.transcribe = fake_transcribe(s.lower())
+    c, b = stt("activityId=%s&sentenceIndex=%d" % (ZOO_RA, i))
+    assert c == 200 and b["score"] == 100, (i, b)
+assert b["activityPct"] == 100 and b["activityPassed"] is True and b["rewarded"] is False, b
+st = state()
+assert st["activityCompletions"][ZOO_RA]["pct"] == 100
+assert gold() == g_before, "Read-Along pays no gold (rewardPolicy none)"
+assert set(st["qualifications"]) == {QID}, "and grants no qualification"
+assert st["lessonCompletions"] == {}, "§13 lesson completion stays dormant"
+first = st["activityCompletions"][ZOO_RA]["passedAt"]
+server.transcribe = fake_transcribe("bad")
+stt("activityId=%s&sentenceIndex=0" % ZOO_RA)
+st2 = state()
+assert st2["activityCompletions"][ZOO_RA]["passedAt"] == first, "first passedAt frozen"
+assert st2["sttProgress"][ZOO_RA]["sentences"]["0"]["score"] == 100, "best-per-sentence survives a bad retry"
+assert gold() == g_before
+ok("§12/§25 threshold: 100%% records a completion with 0 gold/0 qualification; bad retry keeps the best")
+
+server.transcribe = _real_transcribe
 
 srv.shutdown()
 print("\nAll %d attempt-endpoint tests passed." % passed)

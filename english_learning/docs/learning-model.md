@@ -96,6 +96,11 @@ create a second source of truth) and reward amounts (§5 below).
 An activity completion is **not** whole-lesson completion. The pre-existing whole-lesson rule (client
 average ≥ `PASS_MARK`, stored as `passcnt`) is untouched and unrelated.
 
+**Phase 3E1 update.** `sttProgress[activityId] = {sentences: {<index>: {score, updatedAt}},
+totalSentences, pct}` holds authoritative Read-Along evidence, per account. It is best-per-sentence
+(a worse retry never lowers a score) and is created only when a sentence is actually scored. Crossing
+80% writes a normal `activityCompletions` record through the existing path.
+
 **Phase 3D update.** `lessonCompletions` now exists as authoritative state — but only for lessons
 whose registry entry declares a `completionPolicy`, and **no production lesson declares one**
 (see [lesson-completion.md](lesson-completion.md) for the decision and the two blockers). The block
@@ -127,6 +132,21 @@ registry (untrusted content)          server (authoritative)
 
 So a future user-uploaded pack cannot mint gold: the worst it can do is name `none` or an unknown
 policy and get nothing.
+
+## 5b. Scorer architecture (Phase 3E1)
+
+Not every activity is deterministic. An activity declares **exactly one** of:
+
+| field | meaning | dispatch |
+|---|---|---|
+| `graderType` | deterministic text grading | `grading.GRADERS[...]` |
+| `scorerType` | non-deterministic input (today: `read_along_stt`) | `learning/stt_scoring.py` |
+
+STT is deliberately **outside** the `GRADERS` table: its input is audio→transcript rather than
+submitted answers, and its retry rule is *best-per-sentence* rather than latest-wins. Its content is
+the lesson's **dialogue file** (the `contentPath` with no extension), so a `scorerType` activity must
+not declare a `contentKey`. Everything downstream — activity completion, grants, reward policy,
+lesson evaluation — is the same shared machinery. See [stt-authority.md](stt-authority.md).
 
 ## 6. Grader architecture
 

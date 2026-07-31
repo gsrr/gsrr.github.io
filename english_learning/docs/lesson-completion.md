@@ -281,11 +281,17 @@ and the required/completed/missing activity id lists — no answer keys, grader 
 
 # 9. Remaining blockers before a production lesson can be enabled
 
-1. **Level 2 · Read Along (STT)** — needs a server-computed, persisted pronunciation result. Today
-   `/api/stt` returns only a transcript, and there is a "completion = full marks" fallback when no
-   scoring backend is reachable. Not being solved here (§40).
+1. ~~**Level 2 · Read Along (STT)**~~ — **RESOLVED in Phase 3E1.** The server now resolves the target
+   sentence from lesson content, scores the transcript with an exact port of the frontend rule,
+   persists best-per-sentence evidence per account, and records a normal activity completion at the
+   80% threshold. An STT outage produces no evidence at all. See [stt-authority.md](stt-authority.md).
 2. **Level 5 · Match (matching)** — needs a click-stream evidence format plus a decision on verifying
    the client-drawn word sample. Still Phase 3C category B. Not being solved here (§39).
+
+**One blocker remains.** With Level 2 authoritative, a lesson's scored set is
+`2,3,4,5,7,9` (Zoo) of which only **Level 5** still lacks server evidence. Once matching lands, a
+`completionPolicy` can list the full scored set and authoritative completion becomes semantically
+equal to the legacy rule. Until then the production count stays at **0**.
 
 Once both exist, a lesson's `completionPolicy.requiredActivityIds` can list the full scored set and
 authoritative completion becomes semantically equal to the legacy rule — at which point migrating the
