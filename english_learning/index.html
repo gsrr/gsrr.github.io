@@ -244,6 +244,44 @@
   }
   .levels::-webkit-scrollbar { height: 6px; }
   .levels::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  /* ===== Phase 5A — completion card / progress / banner (display only) ===== */
+  .comp-card { margin: 10px 0 4px; padding: 10px 12px; border-radius: 12px; border: 1px solid #e2e8f0;
+               background: #f8fafc; font-size: 13px; line-height: 1.55; }
+  .comp-card.is-done { border-color: #bbf7d0; background: #f0fdf4; }
+  .comp-card.is-stale { border-color: #fde68a; background: #fffbeb; }
+  .comp-verified { display: inline-block; font-weight: 700; color: #15803d; font-size: 12px;
+                   letter-spacing: .02em; }
+  .comp-card.is-open .comp-verified { color: #64748b; }
+  .comp-state { font-weight: 700; font-size: 15px; margin: 2px 0 4px; }
+  .comp-state.done { color: #15803d; }
+  .comp-state.not { color: #64748b; }
+  .comp-meta { color: #475569; }
+  .comp-meta b { color: #0f172a; }
+  .comp-rule { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 999px;
+               background: #e2e8f0; color: #334155; font-size: 11px; font-weight: 700; }
+  .comp-bar { position: relative; height: 8px; border-radius: 999px; background: #e2e8f0;
+              overflow: hidden; margin: 7px 0 4px; }
+  .comp-bar-fill { position: absolute; inset: 0 auto 0 0; background: #22c55e; border-radius: 999px;
+                   transition: width .35s ease; }
+  .comp-bar-fill.partial { background: #38bdf8; }
+  .comp-levels { color: #475569; font-size: 12px; }
+  .comp-hist { margin: 6px 0 0; padding: 0; list-style: none; color: #475569; font-size: 12px; }
+  .comp-hist li { padding: 1px 0; }
+  .comp-hist .cv { display: inline-block; min-width: 34px; font-weight: 700; color: #334155; }
+  .comp-note { color: #92400e; font-size: 12px; margin-top: 4px; }
+  .comp-banner { position: fixed; left: 50%; top: 18%; transform: translate(-50%, -12px);
+                 z-index: 99999; padding: 16px 26px; border-radius: 16px; text-align: center;
+                 background: #ffffff; border: 3px solid #22c55e; color: #14532d;
+                 box-shadow: 0 18px 46px rgba(15,23,42,.28); opacity: 0; pointer-events: none;
+                 transition: opacity .25s ease, transform .25s ease; }
+  .comp-banner.show { opacity: 1; transform: translate(-50%, 0); }
+  .comp-banner .cb-t { font-size: 20px; font-weight: 800; }
+  .comp-banner .cb-s { font-size: 12px; font-weight: 700; color: #15803d; letter-spacing: .04em;
+                       margin-top: 3px; }
+  .comp-banner .cb-m { font-size: 12px; color: #475569; margin-top: 4px; }
+  .lesson-row .comp-chip { margin-left: auto; font-size: 11px; font-weight: 700; padding: 1px 7px;
+                           border-radius: 999px; background: #e2e8f0; color: #475569; }
+  .lesson-row .comp-chip.done { background: #dcfce7; color: #15803d; }
   .levelTab {
     flex: 0 0 auto; display: flex; align-items: center; gap: 5px;
     border: 2px solid #e2e8f0; background: #f8fafc; border-radius: 999px;
@@ -3492,6 +3530,7 @@
       .then(d => {
         if (key !== currentArticleKey || !rpSession || rpSession.id !== sid) return;
         rpSession.turn = d.turn; rpSession.passes = d.passes; rpSession.completed = !!d.completed;
+        noteLessonCompletion(d);                       // Phase 5A: Role-play may finish the lesson
         const fb = document.getElementById("rpFb");
         if (d.result === "PASS") { fb.className = "rp-fb pass"; fb.innerHTML = "✅ Nice! That fits the lesson."; }
         else if (d.result === "PARTIAL") { fb.className = "rp-fb partial"; fb.innerHTML = "🟡 Almost — " + escapeHtml(d.hint || "Close! Try to finish your answer."); }
@@ -3819,7 +3858,7 @@
         const st = lessonStatus(a);
         if (st.passed) { passed++; lvPassed++; }
         if (st.allScored && st.avg != null) { pcts.push(st.avg); if (st.avg === 100) perfect = true; }
-        lessons.push({ title: a.title || a.id, st: st });
+        lessons.push({ title: a.title || a.id, st: st, file: a.file });
       });
       const cleared = lv.articles.length > 0 && lvPassed === lv.articles.length;
       if (cleared) levelsCleared++;
@@ -3874,15 +3913,42 @@
             dot = ls.st.passed ? "dot done" : "dot fail";
             sc = ls.st.avg + ' / 100';
           }
+          // Phase 5A: server-verified chip + the shared completion card (history included).
+          const row = progressForContent(ls.file);
+          let chip = "";
+          if (row && row.authoritativeCompletionAvailable) {
+            chip = '<span class="comp-chip' + (row.activePolicyCompleted ? ' done' : '') + '">' +
+                   (row.activePolicyCompleted ? '✓ v' + row.activePolicyVersion : 'not completed') +
+                   '</span>';
+          }
           return '<div class="lesson-row"><span class="' + dot + '"></span>' +
-                 '<span>' + ls.title + '</span><span class="sc">' + sc + '</span></div>';
+                 '<span>' + ls.title + '</span><span class="sc">' + sc + '</span>' + chip + '</div>';
         }).join("");
         return head + rows;
       }).join("");
 
+    // Phase 5A: server-verified whole-lesson completion. Driven by /api/learning/progress, so it
+    // lists exactly the lessons the SERVER says carry a policy — including the map arcs, which the
+    // per-level rows above never enumerate (they only walk lv.articles). Same shared card renderer.
+    const verified = Object.keys((learningProgress.lessons) || {})
+      .filter(lid => (learningProgress.lessons[lid] || {}).authoritativeCompletionAvailable)
+      .map(lid => ({ lid: lid, row: learningProgress.lessons[lid], path: contentPathForLesson(lid) }))
+      .filter(x => x.path)
+      .sort((a, b) => String(a.row.title || a.lid).localeCompare(String(b.row.title || b.lid)));
+    const doneCount = verified.filter(x => x.row.activePolicyCompleted).length;
+    const verifiedHtml = verified.length
+      ? '<div class="stats-h">🔒 Server-verified completion <span class="comp-chip' +
+        (doneCount === verified.length ? ' done' : '') + '">' + doneCount + ' / ' + verified.length +
+        '</span></div>' +
+        verified.map(x => '<div class="lv-row"><span class="lv-ico">📗</span><span class="lv-nm">' +
+          escapeHtml(String(x.row.title || x.lid)) + '</span></div>' +
+          '<div data-comp-for="' + escapeHtml(x.path) + '">' + completionCardHTML(x.path) + '</div>'
+        ).join("")
+      : "";
+
     statsBody.innerHTML =
       '<p class="screen-intro">' + (userName ? 'Hi, ' + userName + ' 👋' : '') + '</p>' +
-      statCards + badgeHtml + levelHtml;
+      statCards + badgeHtml + verifiedHtml + levelHtml;
   }
 
   function renderDailyReport() {
@@ -5321,7 +5387,126 @@
       .then(j => { myQualifications = new Set(Object.keys((j && j.qualifications) || {})); if (cb) cb(); })
       .catch(() => { if (cb) cb(); });
   }
-  function refreshLearning(cb) { loadLearningRegistry(function () { loadLearningState(cb); }); }
+  // ===== Phase 5A — whole-lesson completion, read from /api/learning/progress =====
+  // Display ONLY. Every value below is copied from the server response; nothing is inferred,
+  // recomputed or defaulted, and there is no client-side Rule A anywhere in this block.
+  let learningProgress = { lessons: {}, completedLessonIds: [] };
+  function loadLearningProgress(cb) {
+    const t = authToken();
+    if (!t) { learningProgress = { lessons: {}, completedLessonIds: [] }; if (cb) cb(); return; }
+    fetch(withRoom("/api/learning/progress?token=" + encodeURIComponent(t)))
+      .then(r => r.ok ? r.json() : null)
+      .then(j => {
+        learningProgress = { lessons: (j && j.lessons) || {},
+                             completedLessonIds: (j && j.completedLessonIds) || [] };
+        if (cb) cb();
+      }).catch(() => { if (cb) cb(); });
+  }
+  function refreshLearning(cb) {
+    loadLearningRegistry(function () {
+      loadLearningState(function () { loadLearningProgress(cb); });
+    });
+  }
+  // contentPath -> the lessonId the registry gives it (never a hardcoded lesson name)
+  function lessonIdForContent(contentPath) {
+    const ls = learningRegistry.lessons || {};
+    for (const lid in ls) if (ls[lid].contentPath === contentPath) return lid;
+    return null;
+  }
+  function contentPathForLesson(lessonId) {
+    return ((learningRegistry.lessons || {})[lessonId] || {}).contentPath || null;
+  }
+  function progressForContent(contentPath) {
+    const lid = lessonIdForContent(contentPath);
+    return lid ? (learningProgress.lessons || {})[lid] || null : null;
+  }
+  function fmtStamp(sec) {                            // epoch seconds -> YYYY-MM-DD (local)
+    if (typeof sec !== "number" || !isFinite(sec)) return null;
+    const d = new Date(sec * 1000), z = n => (n < 10 ? "0" : "") + n;
+    return d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate());
+  }
+  // The ONE completion card, reused by the outpost panel and the learning-history screen.
+  function completionCardHTML(contentPath) {
+    const row = progressForContent(contentPath);
+    if (!row) return "";
+    if (!row.authoritativeCompletionAvailable) {
+      // No active policy for this lesson => the server has no verdict. Say so; invent nothing.
+      return '<div class="comp-card is-open"><span class="comp-verified">SERVER VERIFIED</span>' +
+             '<div class="comp-state not">Not tracked yet</div>' +
+             '<div class="comp-meta">This lesson has no authoritative completion policy.</div></div>';
+    }
+    const req = (row.requiredActivityIds || []).length;
+    const have = (row.completedActivityIds || []).length;
+    const pct = req ? Math.round(have * 100 / req) : 0;   // exact fraction of REQUIRED levels verified
+    const doneNow = row.activePolicyCompleted === true;
+    const stale = doneNow && row.currentPolicySatisfied === false;
+    // `stale` implies `doneNow`, so it must be tested FIRST or it can never win the class.
+    let cls = "comp-card" + (stale ? " is-stale" : (doneNow ? " is-done" : ""));
+    let out = '<div class="' + cls + '"><span class="comp-verified">SERVER VERIFIED</span>' +
+      '<span class="comp-rule">Rule A</span>';
+    if (doneNow) {
+      out += '<div class="comp-state done">Completed</div>' +
+             '<div class="comp-meta">Completed on <b>' + escapeHtml(fmtStamp(row.activePolicyCompletedAt) || "—") +
+             '</b> · Policy <b>v' + escapeHtml(String(row.activePolicyVersion)) + '</b></div>';
+    } else {
+      out += '<div class="comp-state not">Not completed</div>';
+      if (row.historicallyCompleted && row.firstCompletedAt != null) {
+        // Completed under an EARLIER (now retired) rule. Real history — shown, never relabelled v2.
+        out += '<div class="comp-meta">Earlier completion on <b>' +
+               escapeHtml(fmtStamp(row.firstCompletedAt) || "—") + '</b> under Policy <b>v' +
+               escapeHtml(String(row.firstCompletedPolicyVersion)) + '</b></div>' +
+               '<div class="comp-note">The current rule (Policy v' +
+               escapeHtml(String(row.activePolicyVersion)) + ') has not been met yet.</div>';
+      }
+    }
+    out += '<div class="comp-bar"><span class="comp-bar-fill' + (pct >= 100 ? '' : ' partial') +
+           '" style="width:' + pct + '%"></span></div>' +
+           '<div class="comp-levels">Verified levels <b>' + have + ' / ' + req + '</b>' +
+           (row.roundedPct != null ? ' · Rule A score <b>' + row.roundedPct + ' / 100</b>' : '') +
+           (stale ? ' · latest scores are below the pass mark' : '') + '</div>';
+    const hist = row.completionHistory || [];
+    if (hist.length) {
+      out += '<ul class="comp-hist">' + hist.map(h =>
+        '<li><span class="cv">v' + escapeHtml(String(h.policyVersion)) + '</span> Completed · ' +
+        escapeHtml(fmtStamp(h.completedAt) || "—") + '</li>').join("") + '</ul>';
+    }
+    return out + '</div>';
+  }
+  // STEP 5: one-shot banner the first time the SERVER says a lesson newly completed.
+  function showCompletionBanner(lessonId) {
+    const les = (learningRegistry.lessons || {})[lessonId] || {};
+    const el = document.getElementById("compBanner") || (function () {
+      const b = document.createElement("div"); b.id = "compBanner"; b.className = "comp-banner";
+      document.body.appendChild(b); return b;
+    })();
+    el.innerHTML = '<div class="cb-t">🎉 Lesson Complete</div>' +
+      '<div class="cb-s">SERVER VERIFIED · RULE A</div>' +
+      '<div class="cb-m">' + escapeHtml(les.title || lessonId) + '</div>';
+    el.classList.add("show");
+    if (showCompletionBanner._t) clearTimeout(showCompletionBanner._t);
+    showCompletionBanner._t = setTimeout(() => el.classList.remove("show"), 3600);
+    playDing();
+  }
+  // Any authoritative response may report a newly-recorded completion. Never derived here — the
+  // ONLY input is the server's own lessonCompletedNow flag.
+  // Note: /api/learning/attempt returns lessonId, but /api/learning/roleplay/respond returns only
+  // activityId, so the lesson is resolved through the registry rather than assumed. (Adding lessonId
+  // to that response would be a backend change, which this phase does not make.)
+  function noteLessonCompletion(j) {
+    if (!j || j.lessonCompletedNow !== true) return;
+    const lid = j.lessonId ||
+      ((learningRegistry.activities || {})[j.activityId] || {}).lessonId;
+    if (!lid) return;
+    loadLearningProgress(function () {
+      showCompletionBanner(lid);
+      refreshCompletionCards();
+    });
+  }
+  function refreshCompletionCards() {
+    document.querySelectorAll("[data-comp-for]").forEach(el => {
+      el.innerHTML = completionCardHTML(el.getAttribute("data-comp-for"));
+    });
+  }
   // 內容路徑 + 活動鍵 → 正規 activityId（登錄簿查表；沒登錄 = 這個活動不參與資格制度）
   function activityIdForContent(contentPath, contentKey) {
     const acts = learningRegistry.activities || {};
@@ -5376,6 +5561,10 @@
       { method: "POST", body: JSON.stringify({ activityId: aid, answers: chosen }) })
       .then(r => r.ok ? r.json() : null)
       .then(j => {
+        // A lesson can newly complete even on a FAILING attempt (the failing score still lands in
+        // activityScores and the Rule A mean may stay >= 80), so this is checked before the early
+        // return below.
+        noteLessonCompletion(j);
         if (!j || !j.ok || !j.passed) return;
         (j.qualifications || []).forEach(q => myQualifications.add(q));   // 解鎖(顯示用)；權威仍在後端
         if (j.rewarded && j.gold != null && myEcon) { myEcon.gold = j.gold; renderEmpire(); }
@@ -5755,6 +5944,8 @@
         (mine ? garrisonHTML(h.troops) : '<span class="op-card">🛡️ Garrison unknown (enemy)</span>') + '</div>';
     } else { html += '<div class="op-def">🏳️ Unclaimed region</div>'; }
     html += '<div class="op-econ">⚔️ Your troops: <b>' + T + '</b></div>' +
+      // Phase 5A: the shared completion card, rendered from the server's own progress row.
+      '<div data-comp-for="' + escapeHtml(a.file) + '">' + completionCardHTML(a.file) + '</div>' +
       '<div class="op-btns"><button id="opStudy" class="dict-play">📖 Study lesson</button></div><div id="opTerr"></div>';
     const ov = openModal(html);
     ov.querySelector("#opStudy").addEventListener("click", () => { pendingOccupy = { file: a.file, reopen: function () { openOutpost(a); } }; closeModal(); selectArticle(a); });

@@ -66,6 +66,8 @@ function makeCtx(over) {
     selectLevel: () => { ctx.log.push("selectLevel"); },
     showLockedMsg: m => { ctx.log.push("toast:" + m); },
     renderEmpire: () => {},
+    // Phase 5A: the completion-banner hook. Display only — stubbed here like every other collaborator.
+    noteLessonCompletion: j => { ctx.log.push("noteCompletion:" + (j && j.lessonCompletedNow)); },
     authToken: () => "tok",
     withRoom: u => u,
     synth: { cancel() {} }, stopListenL1() {}, stopRecordingIfAny() {},
@@ -290,6 +292,18 @@ const settle = () => new Promise(r => setImmediate(r));
   await settle();
   assert.strictEqual(c.myQualifications.size, 0, "passed:false grants nothing client-side");
   assert.strictEqual(c.myEcon.gold, 0, "no gold is applied when the server says not passed");
+  // Phase 5A: a lesson can newly complete on a FAILING attempt (the failing score still lands in
+  // activityScores and the Rule A mean may stay >= 80), so the hook must run before the early return.
+  assert(c.log.includes("noteCompletion:undefined"),
+    "a failing attempt still reports its lesson-completion outcome");
+  const c1b = makeCtx({ learningRegistry: REG, manifest: MANIFEST });
+  c1b._fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve(
+    { ok: true, passed: false, lessonCompletedNow: true, lessonId: "l.zoo" }) });
+  vm.runInContext("maybeSubmitLearningAttempt", c1b)("Pre-A1/taipei/zoo", "quiz3", []);
+  await settle();
+  assert(c1b.log.includes("noteCompletion:true"),
+    "lessonCompletedNow on a failing attempt is forwarded to the UI hook");
+  assert.strictEqual(c1b.myQualifications.size, 0, "…and still grants nothing client-side");
 
   // a PASSING response is mirrored (display only) and the return-to-territory offer appears
   const c2 = makeCtx({ learningRegistry: REG, manifest: MANIFEST });
@@ -300,6 +314,8 @@ const settle = () => new Promise(r => setImmediate(r));
   vm.runInContext("maybeSubmitLearningAttempt", c2)("Pre-A1/taipei/zoo", "quiz3", []);
   await settle();
   assert(c2.myQualifications.has("q.zoo"), "server-confirmed pass updates the display mirror");
+  assert(c2.log.includes("noteCompletion:undefined"),
+    "Phase 5A: every authoritative response is offered to the completion-banner hook");
   assert.strictEqual(c2.myEcon.gold, 12345, "gold comes from the server response, never computed");
   assert(c2.log.some(l => /^toast:/.test(l) && /Zoo — Yes\/No/.test(l)), c2.log);
   const btn = c2.document.body.children.find(x => x.id === "studyReturn");
