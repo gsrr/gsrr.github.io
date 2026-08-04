@@ -265,6 +265,24 @@
                    transition: width .35s ease; }
   .comp-bar-fill.partial { background: #38bdf8; }
   .comp-levels { color: #475569; font-size: 12px; }
+  .comp-next { margin-top: 5px; font-size: 13px; color: #0f172a; }
+  .comp-next b { color: #1d4ed8; }
+  .comp-list { margin: 7px 0 0; padding: 0; list-style: none; font-size: 12.5px; }
+  .comp-list li { display: flex; align-items: center; gap: 6px; padding: 2px 0; color: #475569; }
+  .comp-list li.on { color: #15803d; }
+  .comp-list .cm { width: 14px; text-align: center; font-weight: 700; }
+  .comp-list li.next-up { font-weight: 700; color: #1d4ed8; }
+  .comp-cont { margin-top: 9px; }
+  .comp-cont button { background: #2563eb; color: #fff; border: 0; border-radius: 10px;
+                      padding: 8px 16px; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .comp-cont button:hover { background: #1d4ed8; }
+  .camp-box { margin: 4px 0 12px; padding: 11px 13px; border: 1px solid #e2e8f0; border-radius: 12px;
+              background: #f8fafc; }
+  .camp-nm { font-weight: 800; font-size: 14px; color: #0f172a; }
+  .camp-bar { position: relative; height: 10px; border-radius: 999px; background: #e2e8f0;
+              overflow: hidden; margin: 7px 0 5px; }
+  .camp-bar-fill { position: absolute; inset: 0 auto 0 0; background: #6366f1; border-radius: 999px; }
+  .camp-sub { font-size: 12.5px; color: #475569; }
   .comp-hist { margin: 6px 0 0; padding: 0; list-style: none; color: #475569; font-size: 12px; }
   .comp-hist li { padding: 1px 0; }
   .comp-hist .cv { display: inline-block; min-width: 34px; font-weight: 700; color: #334155; }
@@ -3937,7 +3955,8 @@
       .sort((a, b) => String(a.row.title || a.lid).localeCompare(String(b.row.title || b.lid)));
     const doneCount = verified.filter(x => x.row.activePolicyCompleted).length;
     const verifiedHtml = verified.length
-      ? '<div class="stats-h">🔒 Server-verified completion <span class="comp-chip' +
+      ? campaignSummaryHTML() +
+        '<div class="stats-h">🔒 Server-verified completion <span class="comp-chip' +
         (doneCount === verified.length ? ' done' : '') + '">' + doneCount + ' / ' + verified.length +
         '</span></div>' +
         verified.map(x => '<div class="lv-row"><span class="lv-ico">📗</span><span class="lv-nm">' +
@@ -5435,21 +5454,32 @@
              '<div class="comp-state not">Not tracked yet</div>' +
              '<div class="comp-meta">This lesson has no authoritative completion policy.</div></div>';
     }
-    const req = (row.requiredActivityIds || []).length;
     const have = (row.completedActivityIds || []).length;
-    const pct = req ? Math.round(have * 100 / req) : 0;   // exact fraction of REQUIRED levels verified
+    const reqCount = (row.requiredActivityIds || []).length;
+    const pct = reqCount ? Math.round(have * 100 / reqCount) : 0;   // exact fraction, server counts
     const doneNow = row.activePolicyCompleted === true;
     const stale = doneNow && row.currentPolicySatisfied === false;
     // `stale` implies `doneNow`, so it must be tested FIRST or it can never win the class.
     let cls = "comp-card" + (stale ? " is-stale" : (doneNow ? " is-done" : ""));
     let out = '<div class="' + cls + '"><span class="comp-verified">SERVER VERIFIED</span>' +
       '<span class="comp-rule">Rule A</span>';
-    if (doneNow) {
+    const req = row.requiredActivityIds || [], miss = row.missingActivityIds || [];
+    const nextId = miss[0] || null;
+    if (stale) {
+      // STEP 6: a historical achievement and a live evaluation are different things. Say both.
+      out += '<div class="comp-state done">Previously completed</div>' +
+             '<div class="comp-meta">Current score below Rule A · completed on <b>' +
+             escapeHtml(fmtStamp(row.activePolicyCompletedAt) || "—") + '</b> under Policy <b>v' +
+             escapeHtml(String(row.activePolicyVersion)) + '</b></div>';
+    } else if (doneNow) {
       out += '<div class="comp-state done">Completed</div>' +
              '<div class="comp-meta">Completed on <b>' + escapeHtml(fmtStamp(row.activePolicyCompletedAt) || "—") +
              '</b> · Policy <b>v' + escapeHtml(String(row.activePolicyVersion)) + '</b></div>';
     } else {
-      out += '<div class="comp-state not">Not completed</div>';
+      // STEP 4: actionable, from server counts only — never a fabricated percentage.
+      out += '<div class="comp-state not">' + have + ' of ' + req.length + ' completed</div>';
+      if (nextId) out += '<div class="comp-next">Next: <b>' +
+        escapeHtml(activityShortLabel(nextId)) + '</b></div>';
       if (row.historicallyCompleted && row.firstCompletedAt != null) {
         // Completed under an EARLIER (now retired) rule. Real history — shown, never relabelled v2.
         out += '<div class="comp-meta">Earlier completion on <b>' +
@@ -5461,9 +5491,24 @@
     }
     out += '<div class="comp-bar"><span class="comp-bar-fill' + (pct >= 100 ? '' : ' partial') +
            '" style="width:' + pct + '%"></span></div>' +
-           '<div class="comp-levels">Verified levels <b>' + have + ' / ' + req + '</b>' +
+           '<div class="comp-levels">Verified levels <b>' + have + ' / ' + req.length + '</b>' +
            (row.roundedPct != null ? ' · Rule A score <b>' + row.roundedPct + ' / 100</b>' : '') +
            (stale ? ' · latest scores are below the pass mark' : '') + '</div>';
+    // STEP 2: the checklist IS the server's requiredActivityIds, in the server's order.
+    if (req.length) {
+      const missSet = {}; miss.forEach(m => missSet[m] = 1);
+      out += '<ul class="comp-list">' + req.map(aid => {
+        const open = !!missSet[aid];
+        return '<li class="' + (open ? (aid === nextId ? "next-up" : "") : "on") + '">' +
+               '<span class="cm">' + (open ? "○" : "✓") + '</span>' +
+               escapeHtml(activityShortLabel(aid)) + '</li>';
+      }).join("") + '</ul>';
+    }
+    // STEP 3: exactly ONE Continue button, and only while something is actually missing.
+    if (nextId) {
+      out += '<div class="comp-cont"><button type="button" data-continue-for="' +
+             escapeHtml(contentPath) + '">▶️ Continue Lesson</button></div>';
+    }
     const hist = row.completionHistory || [];
     if (hist.length) {
       out += '<ul class="comp-hist">' + hist.map(h =>
@@ -5471,6 +5516,76 @@
         escapeHtml(fmtStamp(h.completedAt) || "—") + '</li>').join("") + '</ul>';
     }
     return out + '</div>';
+  }
+  // ===== Phase 5B — actionable progress =====
+  // activityId -> which LEVEL TAB renders it. The server has no concept of a tab, so this routing
+  // table is UI-owned by necessity — but it is keyed on the SERVER's own `scored` / `contentKey`
+  // fields, never on a lesson or course name, so new content needs no change here.
+  const TAB_BY_SCORED = { stt: "2", matching: "5", roleplay: "10" };
+  const TAB_BY_KEY = { quiz3: "3", quiz4: "4", reorder: "6", wh: "7", dictation: "8", cloze: "9" };
+  function levelTabForActivity(activityId) {
+    const a = (learningRegistry.activities || {})[activityId] || {};
+    return TAB_BY_SCORED[a.scored] || TAB_BY_KEY[a.contentKey] || null;
+  }
+  // "Taipei · At the Zoo — Word/Picture matching" -> "Word/Picture matching" (server title, trimmed)
+  function activityShortLabel(activityId) {
+    const a = (learningRegistry.activities || {})[activityId] || {};
+    const ttl = String(a.title || activityId);
+    const i = ttl.lastIndexOf("—");
+    return (i >= 0 ? ttl.slice(i + 1) : ttl).trim() || activityId;
+  }
+  // Jump straight to the FIRST missing activity. The order is the server's: missingActivityIds is
+  // already emitted in requiredActivityIds order, so nothing is sorted or prioritised here.
+  async function continueLesson(contentPath) {
+    const row = progressForContent(contentPath);
+    if (!row) return;
+    const aid = (row.missingActivityIds || [])[0];
+    const art = findArticleByFile(contentPath);
+    if (!aid || !art) return;
+    closeModal();
+    await selectArticle(art);
+    enterTestMode();                                  // leave Level 1 (listen) like Start Test does
+    const lvl = levelTabForActivity(aid);
+    const tab = lvl && document.querySelector('.levelTab[data-level="' + lvl + '"]');
+    if (!tab || tab.classList.contains("hidden")) return;
+    // An earlier level scored below the pass mark still counts as "has evidence", so the target tab
+    // can be locked. Respect the existing lock rather than reordering the server's checklist: land
+    // on the furthest unlocked level and let the existing lock toast explain why.
+    if (tab.classList.contains("locked")) { tab.click(); return; }
+    tab.click();
+  }
+  // One delegated listener, installed once, so cards can be re-rendered freely.
+  document.addEventListener("click", function (e) {
+    const b = e.target && e.target.closest && e.target.closest("[data-continue-for]");
+    if (b) continueLesson(b.getAttribute("data-continue-for"));
+  });
+  // Campaign roll-up. Grouped by the registry's courseId; the display name is derived from the
+  // common prefix of the lessons' own titles (no course title is exposed by the public registry),
+  // falling back to the courseId itself. Cosmetic only — counts come from progress.
+  function campaignSummaryHTML() {
+    const rows = learningProgress.lessons || {}, byCourse = {};
+    Object.keys(rows).forEach(lid => {
+      if (!rows[lid].authoritativeCompletionAvailable) return;   // active policies only
+      const cid = ((learningRegistry.lessons || {})[lid] || {}).courseId || "—";
+      (byCourse[cid] = byCourse[cid] || []).push(rows[lid]);
+    });
+    const ids = Object.keys(byCourse).sort();
+    if (!ids.length) return "";
+    return ids.map(cid => {
+      const list = byCourse[cid];
+      const done = list.filter(r => r.activePolicyCompleted).length;
+      const pct = Math.round(done * 100 / list.length);
+      const titles = list.map(r => String(r.title || ""));
+      let name = titles[0] || cid;
+      if (titles.length > 1) {                        // longest shared prefix of the lesson titles
+        let k = 0;
+        while (k < name.length && titles.every(x => x[k] === name[k])) k++;
+        name = name.slice(0, k).replace(/[\s·\-—:]+$/, "").trim() || cid;
+      }
+      return '<div class="camp-box"><div class="camp-nm">' + escapeHtml(name) + ' Campaign</div>' +
+        '<div class="camp-bar"><span class="camp-bar-fill" style="width:' + pct + '%"></span></div>' +
+        '<div class="camp-sub"><b>' + done + ' / ' + list.length + '</b> lessons completed</div></div>';
+    }).join("");
   }
   // STEP 5: one-shot banner the first time the SERVER says a lesson newly completed.
   function showCompletionBanner(lessonId) {
