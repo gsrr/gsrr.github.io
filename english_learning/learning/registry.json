@@ -18,22 +18,86 @@
       "courseId": "english.prea1.taipei",
       "contentPath": "Pre-A1/taipei/zoo",
       "title": "Taipei · At the Zoo",
-      "retiredCompletionPolicyVersions": [1]
+      "retiredCompletionPolicyVersions": [1],
+      "completionPolicy": {
+        "type": "average_required_activities",
+        "version": 2,
+        "passMark": 80,
+        "rewardPolicy": "none",
+        "grants": [],
+        "requiredActivityIds": [
+          "english.prea1.taipei.zoo.read_along",
+          "english.prea1.taipei.zoo.quiz3",
+          "english.prea1.taipei.zoo.quiz4",
+          "english.prea1.taipei.zoo.matching",
+          "english.prea1.taipei.zoo.wh",
+          "english.prea1.taipei.zoo.cloze",
+          "english.prea1.taipei.zoo.roleplay"
+        ]
+      }
     },
     "english.prea1.taipei.mrt": {
       "courseId": "english.prea1.taipei",
       "contentPath": "Pre-A1/taipei/mrt",
-      "title": "Taipei · On the MRT"
+      "title": "Taipei · On the MRT",
+      "completionPolicy": {
+        "type": "average_required_activities",
+        "version": 2,
+        "passMark": 80,
+        "rewardPolicy": "none",
+        "grants": [],
+        "requiredActivityIds": [
+          "english.prea1.taipei.mrt.read_along",
+          "english.prea1.taipei.mrt.quiz3",
+          "english.prea1.taipei.mrt.quiz4",
+          "english.prea1.taipei.mrt.matching",
+          "english.prea1.taipei.mrt.wh",
+          "english.prea1.taipei.mrt.cloze",
+          "english.prea1.taipei.mrt.roleplay"
+        ]
+      }
     },
     "english.prea1.taipei.market": {
       "courseId": "english.prea1.taipei",
       "contentPath": "Pre-A1/taipei/market",
-      "title": "Taipei · The Night Market"
+      "title": "Taipei · The Night Market",
+      "completionPolicy": {
+        "type": "average_required_activities",
+        "version": 2,
+        "passMark": 80,
+        "rewardPolicy": "none",
+        "grants": [],
+        "requiredActivityIds": [
+          "english.prea1.taipei.market.read_along",
+          "english.prea1.taipei.market.quiz3",
+          "english.prea1.taipei.market.quiz4",
+          "english.prea1.taipei.market.matching",
+          "english.prea1.taipei.market.wh",
+          "english.prea1.taipei.market.cloze",
+          "english.prea1.taipei.market.roleplay"
+        ]
+      }
     },
     "english.prea1.taipei.park": {
       "courseId": "english.prea1.taipei",
       "contentPath": "Pre-A1/taipei/park",
-      "title": "Taipei · At the Park"
+      "title": "Taipei · At the Park",
+      "completionPolicy": {
+        "type": "average_required_activities",
+        "version": 2,
+        "passMark": 80,
+        "rewardPolicy": "none",
+        "grants": [],
+        "requiredActivityIds": [
+          "english.prea1.taipei.park.read_along",
+          "english.prea1.taipei.park.quiz3",
+          "english.prea1.taipei.park.quiz4",
+          "english.prea1.taipei.park.matching",
+          "english.prea1.taipei.park.wh",
+          "english.prea1.taipei.park.cloze",
+          "english.prea1.taipei.park.roleplay"
+        ]
+      }
     },
     "english.a1.core.001": {
       "courseId": "english.a1.core",

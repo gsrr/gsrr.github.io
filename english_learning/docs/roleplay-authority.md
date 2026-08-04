@@ -311,9 +311,11 @@ numerator and denominator, and `rule_a_mean` is already parity-tested against th
 
 `tools/validate_content_coverage.py` reports **7/7** for all four lessons.
 
-**Production `completionPolicy` count remains 0.** Readiness is not activation: enabling a policy is a
-separate, explicitly approved step, and Zoo's replacement must take a version other than the retired
-`1` (the registry validator enforces this).
+**Phase 4D activated it.** All four Taipei lessons now carry `average_required_activities` **version
+2** requiring exactly these seven activities, passMark 80, `rewardPolicy: "none"`, `grants: []`, so the
+production `completionPolicy` count is **4**. Zoo's retired v1 remains recorded and unusable, and a
+learner who completed under v1 keeps that record while gaining a separate v2 history entry — see
+`docs/lesson-completion.md`.
 
 ## 15. Known limitations
 

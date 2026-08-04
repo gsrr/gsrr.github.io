@@ -202,12 +202,22 @@ assert svcf.evaluate_lesson("bio.cells.intro", FORGED)["completed"] is False
 FORGED2 = {"activityCompletions": {"bio.cells.intro.a": {"pct": 100, "rewarded": True},
                                    "bio.cells.intro.b": {"pct": 100}}}
 assert svcf.evaluate_lesson("bio.cells.intro", FORGED2)["completed"] is False
-# a planted lessonCompletion is reported (it IS the store) but never re-grants or re-pays
+# A planted record of a DIFFERENT policy version does not block a completion of the ACTIVE version —
+# that is the whole point of the Phase 4D versioned history: "completed under v999" and "completed
+# under v1" are different facts. The planted record survives untouched and keeps first-ever status,
+# while the active version is recorded (and paid) exactly once.
 PLANTED = {"lessonCompletions": {"bio.cells.intro": {"completedAt": 1, "policyVersion": 999}}}
 stp, outp = do(service(PAID), dict(PLANTED), "bio.cells.intro.a", RIGHT["bio.cells.intro.a"])
 stp, outp = do(service(PAID), stp, "bio.cells.intro.b", RIGHT["bio.cells.intro.b"])
-assert outp["lessonCompletedNow"] is False and outp["lessonRewarded"] is False, outp
+assert outp["lessonCompletedNow"] is True, outp          # v1 (the ACTIVE version) is newly recorded
+assert outp["activePolicyVersion"] == 1 and outp["activePolicyCompleted"] is True, outp
+assert outp["firstCompletedPolicyVersion"] == 999, "the planted record keeps first-ever status"
 assert stp["lessonCompletions"]["bio.cells.intro"]["completedAt"] == 1, "existing record wins"
+assert stp["lessonCompletions"]["bio.cells.intro"]["policyVersion"] == 999, "never re-versioned"
+assert [e["policyVersion"] for e in C.merged_history(stp, "bio.cells.intro")] == [1, 999]
+# …and a repeat settlement of that same active version neither re-dates nor re-pays
+stp2, outp2 = do(service(PAID), stp, "bio.cells.intro.b", RIGHT["bio.cells.intro.b"])
+assert outp2["lessonCompletedNow"] is False and outp2["lessonRewarded"] is False, outp2
 # there is no client route to assert completion: the service exposes no such mutator
 assert not hasattr(L.LearningService, "complete_lesson")
 assert not hasattr(L.LearningService, "set_lesson_completed")
@@ -296,32 +306,39 @@ ok("progress view: status + missing activities only; no answer keys, grader conf
 shutil.rmtree(tmp, ignore_errors=True)
 
 
-# ================= PRODUCTION: the machinery must be dormant (§ approved decision) =================
+# ============ PRODUCTION: four active v2 policies, and PASS RECORDS ALONE complete nothing ============
 prod = L.LearningService(content_root=ROOT, reward_amounts={"PASS_GOLD": 10000})
-# Phase 3F activated one production policy (Zoo); Phase 4B RETIRED it, because legacy Rule A also
-# scores level 10 Role-play and the 6-activity policy therefore did not reproduce it. The machinery
-# stays fully tested above against synthetic registries; production is dormant again.
-active = [lid for lid in prod.registry.lessons if prod.registry.completion_available(lid)]
-assert active == [], active
+# Phase 3F activated a 6-activity Zoo v1; Phase 4B retired it (legacy Rule A also scores level 10);
+# Phase 4C made level 10 authoritative; Phase 4D activated a 7-activity v2 on all four Taipei lessons.
+TAIPEI4 = ["english.prea1.taipei.zoo", "english.prea1.taipei.mrt",
+           "english.prea1.taipei.market", "english.prea1.taipei.park"]
+active = sorted(lid for lid in prod.registry.lessons if prod.registry.completion_available(lid))
+assert active == sorted(TAIPEI4), active
 assert prod.registry.retired_policy_versions("english.prea1.taipei.zoo") == [1]
 assert R.validate(R.DATA) == [], R.validate(R.DATA)
 for lid in prod.registry.lessons:
     ev = prod.evaluate_lesson(lid, {})
     assert ev["completed"] is False, lid
-    assert ev["available"] is False, lid
-    # even a player who passed literally every registered activity completes no lesson
+    assert ev["available"] is (lid in TAIPEI4), lid
+    # even a player who passed literally every registered activity completes no lesson: Rule A
+    # averages SCORES, and a pass record carries no numerator/denominator
     everything = {"activityCompletions": {aid: {"passedAt": 1, "pct": 100, "rewarded": False}
                                           for aid in prod.registry.activities}}
     ev2 = prod.evaluate_lesson(lid, everything)
-    # pass records alone are NOT Rule A evidence - it averages activityScores / stt / matching
     assert ev2["completed"] is False, "%s needs real score evidence, not just pass records" % lid
+    if lid in TAIPEI4:
+        assert len(ev2["missingActivityIds"]) == 7, (lid, ev2["missingActivityIds"])
 # no lesson-scope qualification exists in production, so none can be earned
 assert all((q or {}).get("scope") == "activity" for q in prod.registry.qualifications.values())
+assert all(prod.registry.lesson_reward_policy_of(l) == "none" for l in TAIPEI4)
+assert all(prod.registry.lesson_qualification_ids_for(l) == [] for l in TAIPEI4)
 pv = prod.progress_view({"activityCompletions": {aid: {"passedAt": 1, "pct": 100}
                                                  for aid in prod.registry.activities}})
 assert pv["completedLessonIds"] == []
 assert all(l["completed"] is False for l in pv["lessons"].values())
-ok("production: NO lesson has an active completionPolicy; pass records alone complete nothing")
+assert all(l["currentPolicySatisfied"] is False for l in pv["lessons"].values())
+ok("production: exactly the 4 Taipei lessons carry an active v2 policy, all reward-free and "
+   "grant-free; pass records alone complete nothing because Rule A averages scores")
 
 # the Zoo activity reward is untouched by any of this (§35)
 zoo = "english.prea1.taipei.zoo.quiz3"

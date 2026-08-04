@@ -962,6 +962,17 @@ def migrate_accounts():
         save_accounts(db)
 
 
+# Phase 4D §21: the unambiguous lesson-status fields. All derived server-side from the trusted
+# registry + authoritative score stores; a client cannot submit or influence any of them.
+_LESSON_STATUS_FIELDS = ("currentPolicySatisfied", "historicallyCompleted", "activePolicyVersion",
+                         "activePolicyCompleted", "activePolicyCompletedAt", "firstCompletedAt",
+                         "firstCompletedPolicyVersion", "missingActivityIds", "roundedPct")
+
+
+def _lesson_status_fields(out):
+    return {k: out[k] for k in _LESSON_STATUS_FIELDS if k in out}
+
+
 class Handler(BaseHTTPRequestHandler):
     def _send(self, obj, code=200):
         body = json.dumps(obj).encode()
@@ -1890,10 +1901,12 @@ class Handler(BaseHTTPRequestHandler):
                     "alreadyCompleted": out["alreadyCompleted"],
                     "rewarded": out["rewarded"], "gold": newgold,
                     # 整課完成(衍生，非 client 宣告)。沒有政策的課程一律 false。
+                    # lessonCompleted 為相容欄位，語意等同 currentPolicySatisfied(見 Phase 4D §19)。
                     "lessonId": out["lessonId"], "lessonCompleted": out["lessonCompleted"],
                     "lessonCompletedNow": out["lessonCompletedNow"],
                     "lessonQualifications": out["lessonQualifications"],
-                    "lessonRewarded": out["lessonRewarded"]})
+                    "lessonRewarded": out["lessonRewarded"],
+                    **_lesson_status_fields(out)})
 
     # Phase 3E2：配對(Level 5)改為「伺服器擁有回合」。抽樣、正確配對、first-try 狀態全在後端；
     #   client 只拿到可顯示的單字與圖片(不含對應關係)，並把每次點擊送回來由後端判定。
@@ -2007,7 +2020,8 @@ class Handler(BaseHTTPRequestHandler):
                         qualifications=view.get("granted") or [],
                         rewarded=bool(view.get("rewarded")), gold=newgold,
                         lessonCompleted=bool(view.get("lessonCompleted")),
-                        lessonCompletedNow=bool(view.get("lessonCompletedNow")))
+                        lessonCompletedNow=bool(view.get("lessonCompletedNow")),
+                        **_lesson_status_fields(view))
         self._send(resp)
 
     # 唯讀的整課進度：哪些課有權威完成政策、已完成了哪些、還缺哪些活動。不含答案鍵/批改設定/獎勵細節。

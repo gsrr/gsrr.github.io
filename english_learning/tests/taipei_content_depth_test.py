@@ -223,11 +223,18 @@ ok("§19/§35 monotonic completion: a bad retry lowers activityScores and unsati
 view = svc.progress_view({})
 for lid in LESSONS:
     row = view["lessons"][lid]
-    assert row["authoritativeCompletionAvailable"] is False, lid   # production: no policy yet
+    # Phase 4D activated a v2 policy per lesson; a learner with NO evidence still completes nothing.
+    assert row["authoritativeCompletionAvailable"] is True, lid
     assert row["completed"] is False and row["completedAt"] is None, lid
+    assert row["currentPolicySatisfied"] is False and row["activePolicyVersion"] == 2, lid
+    assert row["activePolicyCompleted"] is False and row["historicallyCompleted"] is False, lid
+    assert len(row["missingActivityIds"]) == 7, row["missingActivityIds"]
     assert set(row) == {"title", "authoritativeCompletionAvailable", "completed", "completedAt",
                         "policyVersion", "requiredActivityIds", "completedActivityIds",
-                        "missingActivityIds"}, sorted(row)
+                        "missingActivityIds", "roundedPct", "currentPolicySatisfied",
+                        "historicallyCompleted", "activePolicyVersion", "activePolicyCompleted",
+                        "activePolicyCompletedAt", "firstCompletedAt",
+                        "firstCompletedPolicyVersion", "completionHistory"}, sorted(row)
 blob = json.dumps(view)
 for leak in ("graderType", "graderConfig", "rewardPolicy", "promptField", "answerField",
              "PASS_GOLD", "10000", "roundId"):
@@ -243,13 +250,15 @@ assert svc.reward_for("english.prea1.taipei.zoo.quiz3")["amount"] == 10000, "PAS
 for lid in LESSONS:
     for suffix in SUFFIXES:
         assert svc.reward_for("%s.%s" % (lid, suffix))["amount"] == 0, (lid, suffix)
-    assert reg.completion_policy_of(lid) is None, "%s must have NO active policy in production" % lid
+    pol = reg.completion_policy_of(lid)
+    assert pol and pol["version"] == 2, "%s carries the Phase 4D v2 policy" % lid
+    assert reg.lesson_reward_policy_of(lid) == "none", lid
+    assert reg.lesson_qualification_ids_for(lid) == [], lid
 active = sorted(l for l in reg.lessons if reg.completion_available(l))
-assert active == [], active
-assert reg.completion_policy_of("english.prea1.taipei.zoo") is None, "Zoo's v1 policy is retired"
+assert active == sorted(LESSONS + ["english.prea1.taipei.zoo"]), active
 assert reg.retired_policy_versions("english.prea1.taipei.zoo") == [1]
-ok("§14/§37 exactly one gold-bearing activity (zoo.quiz3 @ 10000) and ZERO active production "
-   "completion policies — Zoo's v1 retired, MRT/Market/Park never activated")
+ok("§14/§37 exactly one gold-bearing activity (zoo.quiz3 @ 10000); the four Taipei v2 policies are "
+   "active and all pay nothing and grant nothing; Zoo v1 stays retired")
 
 # ============ historical lessonCompletions survive the policy retirement, unmodified ============
 # A learner who completed Zoo under v1 keeps that record verbatim. It grants nothing (no gold, no
@@ -264,8 +273,15 @@ assert HIST == before, "reading progress must not mutate stored history"
 assert C.get_lesson_completion(HIST, "english.prea1.taipei.zoo") == \
     {"completedAt": 1700000000, "policyVersion": 1}, "the v1 record is preserved byte-for-byte"
 assert svc.state_view(HIST)["lessonCompletions"] == before["lessonCompletions"]
-# with no active policy the lesson reports unavailable/not-completed rather than claiming a pass
-assert row["authoritativeCompletionAvailable"] is False and row["completed"] is False, row
+# Phase 4D: Zoo now carries an ACTIVE v2 policy, so the row must separate the three facts cleanly —
+# the retired-v1 history is real, the v2 policy is live, and this learner satisfies neither.
+assert row["authoritativeCompletionAvailable"] is True, row
+assert row["completed"] is True, "the legacy v1 record is historical completion"
+assert row["completedAt"] == 1700000000 and row["policyVersion"] == 1, row
+assert row["historicallyCompleted"] is True and row["firstCompletedPolicyVersion"] == 1, row
+assert row["activePolicyVersion"] == 2, row
+assert row["activePolicyCompleted"] is False and row["activePolicyCompletedAt"] is None, row
+assert row["currentPolicySatisfied"] is False, "only one activity has a score"
 # a fresh attempt does not delete, rewrite or re-date the historical record either
 res, _ = svc.grade_attempt("english.prea1.taipei.zoo.wh",
                            [{"q": i["q"], "answer": i["a"]}
@@ -274,6 +290,9 @@ res, _ = svc.grade_attempt("english.prea1.taipei.zoo.wh",
 st_h, out_h = svc.record_attempt(copy.deepcopy(HIST), "english.prea1.taipei.zoo.wh", res, 1800000000)
 assert st_h["lessonCompletions"] == before["lessonCompletions"], st_h["lessonCompletions"]
 assert out_h["lessonCompleted"] is False and out_h["lessonCompletedNow"] is False, out_h
+assert out_h["activePolicyCompleted"] is False, "no v2 entry is invented from a v1 record"
+assert out_h["firstCompletedPolicyVersion"] == 1, out_h
+assert (st_h.get("lessonCompletionHistory") or {}) == {}, "nothing appended without satisfaction"
 assert out_h["lessonRewardAmount"] == 0 and out_h["lessonQualifications"] == [], out_h
 ok("historical Zoo lessonCompletions from retired v1 are preserved verbatim, grant nothing, and are "
    "neither revoked nor re-dated by later attempts")

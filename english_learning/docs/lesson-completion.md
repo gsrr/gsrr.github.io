@@ -1,4 +1,56 @@
-# Whole-lesson completion — current semantics (Phase 3D STEP 1–3)
+# Whole-lesson completion
+
+> ## Phase 4D — ACTIVE: four Taipei lessons, policy version 2
+>
+> | | |
+> |---|---|
+> | Active policies | **4** — Zoo, MRT, Night Market, Park |
+> | Type / version / passMark | `average_required_activities` / **2** / 80 |
+> | Required activities | exactly **7** per lesson: levels 2, 3, 4, 5, 7, 9, **10** |
+> | Reward | `rewardPolicy: "none"` — completion pays **0 gold** |
+> | Qualifications | `grants: []` — completion grants **nothing** |
+> | Territory gates | **unchanged**, still `quiz3`-based; whole-lesson completion is NOT an attack requirement |
+> | `passcnt` | untouched; still written only by the legacy Rule B summary |
+> | Zoo v1 | **retired** (`retiredCompletionPolicyVersions: [1]`); the validator rejects any reuse |
+>
+> **Rule A is SEVEN levels** — `["2","3","4","5","7","9","10"]`. Level 10 Role-play became
+> server-authoritative in Phase 4C (`docs/roleplay-authority.md`), which is what made an exact v2
+> possible. Level 10 must be *present*, not *passed*: a 0/10 Role-play with the other six perfect
+> still completes the lesson at 86.
+>
+> ### Two stores, and the difference matters
+>
+> ```
+> lessonCompletions[lessonId]       = {completedAt, policyVersion}       LEGACY, first-ever, untouched
+> lessonCompletionHistory[lessonId] = [{policyVersion, completedAt}, …]  NEW, append-only per version
+> ```
+>
+> The legacy record is merged into the history **virtually, at read time**, so a file written before
+> Phase 4D is never rewritten. A learner holding a retired-v1 Zoo record who then satisfies v2 keeps
+> that v1 record byte-for-byte and gains a *separate* v2 entry.
+>
+> ### API: current satisfaction vs historical achievement
+>
+> | Field | Meaning |
+> |---|---|
+> | `currentPolicySatisfied` | the LATEST scores satisfy the ACTIVE policy — a live evaluation, may go true → false |
+> | `historicallyCompleted` | some policy version has been completed, ever |
+> | `activePolicyVersion` | the version the registry enforces now (2) |
+> | `activePolicyCompleted` | the ACTIVE version has a persisted completion entry |
+> | `activePolicyCompletedAt` | when that happened, else `null` |
+> | `firstCompletedAt` / `firstCompletedPolicyVersion` | the legacy first-ever completion |
+>
+> **Deprecated but unchanged** for old readers: `lessonCompleted` (= `currentPolicySatisfied`), and
+> progress's `completed` / `completedAt` / `policyVersion` (= the FIRST-EVER completion). New code
+> should read the named fields above.
+
+---
+
+## Original Phase 3D inventory (Phase 3D STEP 1–3)
+
+Everything below is the historical "before" record, kept because it is the evidence base. Where it was
+later found to be wrong it is annotated in place rather than rewritten — see the level-10 corrections
+in §2 and §3.
 
 Inventory of the **existing** whole-lesson rule at commit `08b1328`, before any Phase 3D runtime
 change. This is the "before" reference and the evidence for the §46 STOP determination at the end.

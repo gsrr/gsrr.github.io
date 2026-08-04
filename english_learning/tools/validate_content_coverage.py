@@ -60,6 +60,10 @@ LEVEL_NAME = {
     "6": "Reorder", "7": "WH Questions", "8": "Dictation", "9": "Fill Blank", "10": "Role-play",
 }
 ROLEPLAY_LEVEL = "10"
+# Phase 4D: the lessons approved to carry an active policy in production. Anything else with a
+# policy, or any of these without one, is an authoring drift worth flagging.
+EXPECTED_ACTIVE = {"english.prea1.taipei.zoo", "english.prea1.taipei.mrt",
+                   "english.prea1.taipei.market", "english.prea1.taipei.park"}
 
 _ARC = re.compile(r'file:\s*"([^"]+)"[^}]*?levels:\s*\[([0-9,\s]+)\]')
 
@@ -120,7 +124,7 @@ def main():
     print("authoritative Rule A coverage (required level set derived from index.html):")
     for lid, path, need, covered, missing, policy in rows:
         retired = reg.retired_policy_versions(lid)
-        state = "ACTIVE policy" if policy else (
+        state = ("ACTIVE policy v%s" % policy.get("version")) if policy else (
             "no policy (retired v%s)" % ",".join(str(v) for v in retired) if retired else "no policy")
         print("  %-32s %-22s %d/%d  %s" % (lid.replace("english.prea1.taipei.", "…taipei."),
                                            path, len(covered), len(need), state))
@@ -164,7 +168,14 @@ def main():
     print("  lessons inventoried            : %d" % len(rows))
     print("  fully authoritative (no gaps)  : %d %s" % (len(full), full))
     print("  active completion policies     : %d %s" % (len(active), active))
-    print("  EXPECTED active policies       : 0  (activation is a separate approved step)")
+    print("  EXPECTED active policies       : %d  (the four approved Taipei Rule A lessons)"
+          % len(EXPECTED_ACTIVE))
+    unexpected = sorted(set(active) - EXPECTED_ACTIVE)
+    absent = sorted(EXPECTED_ACTIVE - set(active))
+    for lid in unexpected:
+        warnings.append("%s has an active policy but is not in the approved production set" % lid)
+    for lid in absent:
+        warnings.append("%s is in the approved production set but has NO active policy" % lid)
     for lid in sorted(reg.lessons):
         rv = reg.retired_policy_versions(lid)
         if rv:

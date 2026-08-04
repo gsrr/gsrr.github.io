@@ -38,6 +38,7 @@ reg = R.REGISTRY
 svc = L.LearningService(content_root=ROOT, reward_amounts={"PASS_GOLD": 10000})
 SLUGS = ["zoo", "mrt", "market", "park"]
 AIDS = {s: "english.prea1.taipei.%s.roleplay" % s for s in SLUGS}
+LIDS_ = {s: "english.prea1.taipei.%s" % s for s in SLUGS}
 WALK = {}
 # The happy path for each lesson is DERIVED from its own graph — the first example utterance of the
 # first route at each node — so the walk always matches the shipped content instead of being guessed.
@@ -271,11 +272,19 @@ for aid in AIDS.values():
 assert sorted(reg.qualifications) == [
     "english.prea1.taipei.market.quiz3.pass", "english.prea1.taipei.mrt.quiz3.pass",
     "english.prea1.taipei.park.quiz3.pass", "english.prea1.taipei.zoo"], sorted(reg.qualifications)
-assert [l for l in reg.lessons if reg.completion_available(l)] == [], "policies stay disabled"
+assert sorted(l for l in reg.lessons if reg.completion_available(l)) == ["english.prea1.taipei.market", "english.prea1.taipei.mrt", "english.prea1.taipei.park", "english.prea1.taipei.zoo"], \
+    "the four Taipei v2 policies are active (Phase 4D)"
 pv = svc.progress_view(combined)
+# Role-play evidence ALONE never completes a lesson: the other six required levels are unscored here.
 assert pv["completedLessonIds"] == [], pv["completedLessonIds"]
 assert all(r["completed"] is False for r in pv["lessons"].values())
-assert all(r["authoritativeCompletionAvailable"] is False for r in pv["lessons"].values())
+assert all(r["currentPolicySatisfied"] is False for r in pv["lessons"].values())
+for slug, lid in ((s, LIDS_[s]) for s in SLUGS):
+    row = pv["lessons"][lid]
+    assert row["authoritativeCompletionAvailable"] is True, lid
+    assert row["activePolicyVersion"] == 2 and row["activePolicyCompleted"] is False, lid
+    assert "%s.roleplay" % lid not in row["missingActivityIds"], "roleplay evidence IS present"
+    assert len(row["missingActivityIds"]) == 6, row["missingActivityIds"]
 ok("§23/§24/§37/§38 Role-play pays 0 gold, grants 0 qualifications, adds no lesson policy: "
    "gold-bearing activities still 1, qualifications still 4, active policies still 0")
 

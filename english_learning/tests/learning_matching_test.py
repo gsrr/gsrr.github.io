@@ -261,8 +261,10 @@ assert [a for a in svc.registry.activities if svc.registry.reward_policy_of(a) !
     ["english.prea1.taipei.zoo.quiz3"], "Zoo quiz3 is still the only paying activity"
 assert o["lessonCompleted"] is False and o["lessonCompletedNow"] is False
 assert st4.get("lessonCompletions") is None or st4["lessonCompletions"] == {}
-active = [l for l in svc.registry.lessons if svc.registry.completion_available(l)]
-assert active == [], active   # Phase 4B: Zoo's v1 policy was retired (level 10 gap)
+active = sorted(l for l in svc.registry.lessons if svc.registry.completion_available(l))
+assert active == ["english.prea1.taipei.market", "english.prea1.taipei.mrt", "english.prea1.taipei.park", "english.prea1.taipei.zoo"], active   # Phase 4D: the four Taipei v2 policies
+# matching alone never completes a lesson: the other six required levels have no evidence here
+assert o["lessonCompleted"] is False
 ok("§37/§38 neutrality: matching pays 0 gold, grants 0 qualifications, production policies still 0")
 
 # ============================== §39 validator ==============================

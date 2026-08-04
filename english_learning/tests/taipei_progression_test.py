@@ -189,12 +189,15 @@ assert conquest.can_attack("ALICE", START, "taipei:daan", SQUAD, cat, STORE,
 # Phase 4B retired Zoo's v1 completionPolicy (legacy Rule A also scores level 10 Role-play, so a
 # 6-activity policy did not reproduce it). That is a LEARNING-side change only: territory access has
 # never depended on lesson completion, so Daan's gate and existing learner access are unaffected.
-assert reg.completion_available("english.prea1.taipei.zoo") is False, "Zoo v1 policy is retired"
-assert reg.retired_policy_versions("english.prea1.taipei.zoo") == [1]
-assert [l for l in reg.lessons if reg.completion_available(l)] == [], \
-    "no lesson completion policy is active"
-ok("§38 backward compatibility: Daan/Zoo gate unchanged and old progress still unlocks, even though "
-   "Zoo's lesson policy was retired — conquest never depended on lesson completion")
+assert reg.completion_available("english.prea1.taipei.zoo") is True, "Zoo now carries v2"
+assert reg.completion_policy_of("english.prea1.taipei.zoo")["version"] == 2
+assert reg.retired_policy_versions("english.prea1.taipei.zoo") == [1], "v1 stays retired"
+assert len([l for l in reg.lessons if reg.completion_available(l)]) == 4
+# Conquest has never depended on lesson completion, and Phase 4D did not change that: Daan's gate is
+# still the Zoo quiz3 qualification, so activating v2 cannot harden any territory.
+assert cat.attack_requirements("taipei:daan") == [ZOO_Q]
+ok("§38 backward compatibility: Daan/Zoo gate unchanged and old progress still unlocks, even with "
+   "four v2 lesson policies now active — conquest never depended on lesson completion")
 
 # ============================== §39 reward neutrality ==============================
 paying = [a for a in reg.activities if reg.reward_policy_of(a) != "none"]

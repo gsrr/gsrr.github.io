@@ -140,25 +140,119 @@ def evaluate(lesson_id, lesson, passed_activity_ids, activity_scores=None):
 
 
 # ---- persistence helpers (state is the player's `learning` dict) --------------------------------
+#
+# Phase 4D uses TWO stores, and the split is deliberate:
+#
+#   lessonCompletions[lessonId]       = {completedAt, policyVersion}      LEGACY, unchanged semantics
+#       The FIRST-EVER completion of this lesson, under whatever policy version was active then.
+#       First-completion-wins; never re-dated, never re-versioned. Old readers keep working.
+#
+#   lessonCompletionHistory[lessonId] = [{policyVersion, completedAt}, …]  NEW, append-only
+#       At most one entry per (lessonId, policyVersion), earliest completedAt wins for that version.
+#
+# A policy version is retired once it has been active (see registry retiredCompletionPolicyVersions),
+# so "completed under v1" and "completed under v2" are genuinely different facts about a learner and
+# both must survive. The legacy record alone could only ever hold one of them.
+#
+# READ MODEL: `merged_history()` merges the legacy record INTO the history VIRTUALLY, at read time.
+# Nothing is migrated on disk: a file that predates Phase 4D and has only a legacy v1 record reads as
+# history [v1] without being rewritten, and a later v2 completion simply APPENDS v2. This was chosen
+# over lazy on-write materialisation because it touches no existing bytes at all — there is no
+# rewrite path that could re-date a record or disturb unrelated player state.
+HISTORY_KEY = "lessonCompletionHistory"
+
+
 def get_lesson_completion(state, lesson_id):
-    rec = ((state or {}).get("lessonCompletions") or {}).get(lesson_id)
+    """The LEGACY first-ever completion record, exactly as older builds wrote and read it."""
+    table = (state or {}).get("lessonCompletions")
+    rec = table.get(lesson_id) if isinstance(table, dict) else None
     return rec if isinstance(rec, dict) else None
 
 
-def record_lesson_completion(state, lesson_id, completed_at, policy_version_value):
-    """Idempotent, first-completion-wins. Returns (state, newly_recorded).
+def _version_of(rec):
+    v = (rec or {}).get("policyVersion")
+    return v if isinstance(v, int) and not isinstance(v, bool) and v > 0 else None
 
-    A later evaluation never re-dates an existing record, and never rewrites its policyVersion —
-    the stored version is the one under which the lesson was actually completed.
+
+def _at_of(rec):
+    t = (rec or {}).get("completedAt")
+    return t if isinstance(t, int) and not isinstance(t, bool) else None
+
+
+def merged_history(state, lesson_id):
+    """The learner's full versioned completion history for one lesson, normalised.
+
+    Merges the legacy record with the append-only history, keeping at most one entry per version and
+    the EARLIEST completedAt for each. Malformed entries are dropped rather than trusted, so a
+    hand-edited or truncated file can never fabricate a completion. Ordered by policyVersion.
+    """
+    best = {}
+
+    def offer(rec):
+        v, at = _version_of(rec), _at_of(rec)
+        if v is None or at is None:
+            return
+        if v not in best or at < best[v]:
+            best[v] = at
+
+    offer(get_lesson_completion(state, lesson_id))       # legacy record, merged virtually
+    table = (state or {}).get(HISTORY_KEY)
+    entries = table.get(lesson_id) if isinstance(table, dict) else None
+    if isinstance(entries, list):
+        for e in entries:
+            if isinstance(e, dict):
+                offer(e)
+    return [{"policyVersion": v, "completedAt": best[v]} for v in sorted(best)]
+
+
+def completion_for_version(state, lesson_id, version):
+    """The completedAt for one policy version, or None if that version was never completed."""
+    for e in merged_history(state, lesson_id):
+        if e["policyVersion"] == version:
+            return e["completedAt"]
+    return None
+
+
+def has_any_completion(state, lesson_id):
+    return bool(merged_history(state, lesson_id))
+
+
+def record_lesson_completion(state, lesson_id, completed_at, policy_version_value):
+    """Record a completion of `policy_version_value`. Returns (state, newly_recorded_for_version).
+
+    Idempotent PER VERSION:
+      * the version is already in the merged history -> nothing is written, `newly` is False
+      * otherwise the version is APPENDED to the history, and the legacy record is created only when
+        the learner has no first-ever record at all
+    An existing legacy record is never re-dated, re-versioned or removed — completing v2 leaves a v1
+    record byte-for-byte intact.
     """
     if not isinstance(state, dict):
         state = {}
-    table = state.setdefault("lessonCompletions", {})
-    if lesson_id in table:
+    if completion_for_version(state, lesson_id, policy_version_value) is not None:
         return state, False
-    table[lesson_id] = {"completedAt": completed_at, "policyVersion": policy_version_value}
+    hist = state.setdefault(HISTORY_KEY, {})
+    existing = hist.get(lesson_id) if isinstance(hist.get(lesson_id), list) else []
+    # Normalise only what is already IN the history list. The legacy record is deliberately NOT
+    # folded in here: it stays where it is and is merged virtually on read, so this write can never
+    # copy, re-date or otherwise disturb a pre-Phase-4D record.
+    best = {}
+    for e in existing + [{"policyVersion": policy_version_value, "completedAt": completed_at}]:
+        v, at = _version_of(e), _at_of(e)
+        if v is not None and at is not None and (v not in best or at < best[v]):
+            best[v] = at
+    hist[lesson_id] = [{"policyVersion": v, "completedAt": best[v]} for v in sorted(best)]
+    table = state.setdefault("lessonCompletions", {})
+    if lesson_id not in table:                  # first-ever completion of this lesson, any version
+        table[lesson_id] = {"completedAt": completed_at, "policyVersion": policy_version_value}
     return state, True
 
 
 def completed_lesson_ids(state):
-    return set(((state or {}).get("lessonCompletions") or {}).keys())
+    """Lessons the learner has completed under ANY policy version (legacy record or history)."""
+    legacy = (state or {}).get("lessonCompletions")
+    out = set(legacy.keys()) if isinstance(legacy, dict) else set()
+    hist = (state or {}).get(HISTORY_KEY)
+    if isinstance(hist, dict):
+        out |= {lid for lid in hist if merged_history(state, lid)}
+    return out

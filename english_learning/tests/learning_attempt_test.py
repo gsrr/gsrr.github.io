@@ -315,7 +315,13 @@ code, prog = call("GET", "/api/learning/progress?room=" + CODE)
 assert code == 200 and set(prog) == {"lessons", "completedLessonIds"}, prog
 assert prog["completedLessonIds"] == [], prog
 # Phase 4B retired Zoo's v1 policy, so NO lesson advertises authoritative completion any more.
-assert all(l["authoritativeCompletionAvailable"] is False for l in prog["lessons"].values())
+# Phase 4D: the four Taipei lessons advertise an active v2 policy; nothing else does, and ALICE has
+# not satisfied any of them (Rule A needs all seven levels scored, not just the ones graded here).
+AVAILABLE = sorted(k for k, v in prog["lessons"].items() if v["authoritativeCompletionAvailable"])
+assert AVAILABLE == sorted("english.prea1.taipei.%s" % s
+                           for s in ("market", "mrt", "park", "zoo")), AVAILABLE
+assert all(l["currentPolicySatisfied"] is False for l in prog["lessons"].values())
+assert all(l["activePolicyCompleted"] is False for l in prog["lessons"].values())
 assert all(l["completed"] is False for l in prog["lessons"].values()), prog["lessons"]
 blob = json.dumps(prog)
 for leak in ("answer", "graderType", "graderConfig", "rewardPolicy", "PASS_GOLD", "10000", "contentPath"):

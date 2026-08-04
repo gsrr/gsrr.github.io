@@ -103,6 +103,17 @@ account's state — so another account structurally cannot reach them — and ar
 completion or dropped after `ROUND_TTL`. A `matching_first_try` activity DOES declare a `contentKey`
 (`vocab`), unlike `read_along_stt` whose content is the lesson dialogue.
 
+**Phase 4D update.** Lesson completion is now VERSIONED. `lessonCompletions[lessonId]` keeps its
+original meaning — the FIRST-EVER completion, `{completedAt, policyVersion}`, first-completion-wins,
+never re-dated or re-versioned — and a new append-only
+`lessonCompletionHistory[lessonId] = [{policyVersion, completedAt}, …]` records at most one entry per
+policy version, earliest timestamp winning. `completion.merged_history()` merges the legacy record in
+VIRTUALLY at read time, so pre-Phase-4D files are never rewritten; only genuinely new versions are
+appended. A policy version is spent once active (`retiredCompletionPolicyVersions`), so "completed
+under v1" and "completed under v2" are different facts and both survive. Four production lessons
+(Zoo/MRT/Market/Park) carry `average_required_activities` **v2**, passMark 80, seven required
+activities, `rewardPolicy: "none"`, `grants: []`.
+
 **Phase 4C update.** `roleplayProgress[activityId] = {passes, turns, pct, sessionId, updatedAt}`
 holds authoritative Level 10 evidence, reproducing `recordScore(10, passes, turns)`; the resolver reads
 `correct = passes`, `total = turns`. Live conversations live in `roleplaySessions[sessionId]`

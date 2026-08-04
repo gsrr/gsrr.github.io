@@ -318,5 +318,5 @@ decision and was not made here. See [§10](#10-product-observation) for why it n
 | Game config fingerprint | `bd773cc3298c14eb` unchanged |
 | `git diff` on `game/`, `server.py`, `index.html`, `world-data/` | empty |
 | Gold-bearing activities | 1 |
-| Active production completion policies | **0** (expected, until level 10 is authoritative) |
+| Active production completion policies | **4** (Phase 4D: Zoo/MRT/Market/Park at v2) |
 | Qualifications | 4 |

@@ -202,6 +202,10 @@ def main():
         print("    %-30s type=%s v=%s reward=%s grants=%s required=%d"
               % (lid, pol.get("type"), pol.get("version"), reg.lesson_reward_policy_of(lid),
                  reg.lesson_qualification_ids_for(lid) or "[]", len(pol.get("requiredActivityIds") or [])))
+    for lid in sorted(reg.lessons):
+        rv = reg.retired_policy_versions(lid)
+        if rv:
+            print("    retired versions: %-24s %s (never reusable)" % (lid, rv))
     paid_lessons = [l for l in with_policy if reg.lesson_reward_policy_of(l) != "none"]
     if paid_lessons:
         warn("cross-domain: %d lesson(s) carry a gold-bearing completion reward: %s"

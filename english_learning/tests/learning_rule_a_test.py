@@ -26,9 +26,11 @@ def ok(name):
 
 svc = L.LearningService(content_root=ROOT, reward_amounts={"PASS_GOLD": 10000})
 ZOO_LESSON = "english.prea1.taipei.zoo"
+# The SEVEN activities the production v2 policy requires, in policy order (levels 2,3,4,5,7,9,10).
 REQ = ["english.prea1.taipei.zoo.read_along", "english.prea1.taipei.zoo.quiz3",
        "english.prea1.taipei.zoo.quiz4", "english.prea1.taipei.zoo.matching",
-       "english.prea1.taipei.zoo.wh", "english.prea1.taipei.zoo.cloze"]
+       "english.prea1.taipei.zoo.wh", "english.prea1.taipei.zoo.cloze",
+       "english.prea1.taipei.zoo.roleplay"]
 
 # ============================== golden Rule A parity (synthetic) ==============================
 POLICY = {"completionPolicy": {"type": "average_required_activities", "version": 1,
@@ -134,73 +136,68 @@ for junk in ({"activityScores": "x"}, {"activityScores": {WH: "x"}}, {"activityS
     assert svc.authoritative_activity_score(junk, WH) is None, junk
 ok("resolver: deterministic/STT/matching all yield exact correct+total; malformed evidence -> None")
 
-# ====================== Zoo policy RETIRED (Phase 4B correction) ======================
-# Phase 3F activated a 6-activity Zoo policy believing it reproduced legacy Rule A exactly. It did
-# not: legacy Rule A also scores level 10 Role-play (see docs/roleplay-authority-gap.md). The policy
-# was therefore retired rather than left active with the wrong semantics, and version 1 is spent.
-assert svc.registry.completion_available(ZOO_LESSON) is False, "Zoo policy must be retired"
-assert svc.registry.completion_policy_of(ZOO_LESSON) is None
-assert [l for l in svc.registry.lessons if svc.registry.completion_available(l)] == [], \
-    "production authoritative lesson policies must be 0 until level 10 is authoritative"
-assert svc.registry.retired_policy_versions(ZOO_LESSON) == [1]
-ok("Phase 4B correction: 0 production completion policies; Zoo's v1 is recorded as retired")
-
-# The MACHINERY still has to be provably correct, so the rest of this file drives a CANDIDATE Zoo
-# policy at the next free version. It is synthetic, never written to disk, and its existence is not
-# production state.
-CAND = copy.deepcopy(R.DATA)
-CAND["lessons"][ZOO_LESSON]["completionPolicy"] = {
-    "type": "average_required_activities", "version": 2, "passMark": 80,
-    "requiredActivityIds": list(REQ)}
-assert R.validate(CAND) == [], R.validate(CAND)
-csvc = L.LearningService(reg=R.Registry(CAND), content_root=ROOT,
-                         reward_amounts={"PASS_GOLD": 10000})
-pol = csvc.registry.completion_policy_of(ZOO_LESSON)
-assert pol["version"] == 2 and pol["passMark"] == 80 and pol["requiredActivityIds"] == REQ
-assert csvc.registry.lesson_reward_policy_of(ZOO_LESSON) == "none"
-assert csvc.registry.lesson_qualification_ids_for(ZOO_LESSON) == []
-assert len(REQ) == 6 and all(csvc.registry.lesson_of_activity(a) == ZOO_LESSON for a in REQ)
-ok("candidate Zoo policy takes version 2 (v1 is spent), 6 activities, no reward, no grants")
+# ============ Zoo policy v2 ACTIVE (Phase 4D), v1 still retired ============
+# Phase 3F activated a 6-activity v1 policy believing it reproduced legacy Rule A. It did not: Rule A
+# also scores level 10 Role-play. v1 was retired in Phase 4B, level 10 became authoritative in 4C, and
+# Phase 4D activated a SEVEN-activity v2. Everything below therefore drives the REAL production policy.
+assert svc.registry.completion_available(ZOO_LESSON) is True, "Zoo v2 must be active"
+pol = svc.registry.completion_policy_of(ZOO_LESSON)
+assert pol["type"] == "average_required_activities", pol
+assert pol["version"] == 2 and pol["passMark"] == 80
+assert pol["requiredActivityIds"] == REQ, pol["requiredActivityIds"]
+assert svc.registry.retired_policy_versions(ZOO_LESSON) == [1], "v1 stays spent"
+assert svc.registry.lesson_reward_policy_of(ZOO_LESSON) == "none"
+assert svc.registry.lesson_qualification_ids_for(ZOO_LESSON) == []
+assert len(REQ) == 7 and all(svc.registry.lesson_of_activity(a) == ZOO_LESSON for a in REQ)
+csvc = svc                       # the rest of this file exercises PRODUCTION, not a candidate
+ok("Zoo v2 active: 7 required activities in level order, passMark 80, no reward, no grants; v1 retired")
 
 
 def zoo_state(scores):
     """Authoritative Zoo evidence from {activityId: (correct, total)}, using the REAL stores."""
-    out = {"activityScores": {}, "sttProgress": {}, "matchingProgress": {}}
+    out = {"activityScores": {}, "sttProgress": {}, "matchingProgress": {}, "roleplayProgress": {}}
     for aid, (c, t) in scores.items():
         pct = int(c * 100.0 / t + 0.5)
         if aid.endswith(".read_along"):
             out["sttProgress"][aid] = {"pct": pct, "totalSentences": 10}
         elif aid.endswith(".matching"):
             out["matchingProgress"][aid] = {"correct": c, "total": t, "pct": pct}
+        elif aid.endswith(".roleplay"):
+            out["roleplayProgress"][aid] = {"passes": c, "turns": t, "pct": pct}
         else:
             out["activityScores"][aid] = {"correct": c, "total": t, "pct": pct, "updatedAt": 1}
     return out
 
 
 allfull = zoo_state({REQ[0]: (100, 100), REQ[1]: (5, 5), REQ[2]: (5, 5), REQ[3]: (5, 5),
-                     REQ[4]: (5, 5), REQ[5]: (5, 5)})
+                     REQ[4]: (5, 5), REQ[5]: (5, 5), REQ[6]: (6, 6)})
 r = csvc.evaluate_lesson(ZOO_LESSON, allfull)
 assert r["available"] and r["completed"] and r["roundedPct"] == 100, r
-# case E on the REAL Zoo ids: WH at 60, the rest 100 -> 93 -> complete
+# case E on the REAL Zoo ids: WH at 60, the rest 100 -> mean 660/7 = 94.29 -> complete
 caseE_zoo = zoo_state({REQ[0]: (100, 100), REQ[1]: (5, 5), REQ[2]: (5, 5), REQ[3]: (5, 5),
-                       REQ[4]: (3, 5), REQ[5]: (5, 5)})
+                       REQ[4]: (3, 5), REQ[5]: (5, 5), REQ[6]: (6, 6)})
 r = csvc.evaluate_lesson(ZOO_LESSON, caseE_zoo)
-assert r["completed"] is True and r["roundedPct"] == 93, r
-# all six present but the mean is below 80 -> not complete
+assert r["completed"] is True and r["roundedPct"] == 94, r
+# all seven present but the mean is below 80 -> not complete
 low = zoo_state({REQ[0]: (60, 100), REQ[1]: (4, 5), REQ[2]: (3, 5), REQ[3]: (3, 5),
-                 REQ[4]: (4, 5), REQ[5]: (4, 5)})
+                 REQ[4]: (4, 5), REQ[5]: (4, 5), REQ[6]: (3, 5)})
 r = csvc.evaluate_lesson(ZOO_LESSON, low)
 assert r["completed"] is False and r["roundedPct"] < 80, r
 # one missing -> not complete no matter how good the others are
 r = csvc.evaluate_lesson(ZOO_LESSON, zoo_state({a: (5, 5) for a in REQ[1:]}))
 assert r["completed"] is False and r["missingActivityIds"] == [REQ[0]], r
+# and level 10 in particular must block it, however good the other six are
+no10 = zoo_state({a: (5, 5) for a in REQ[:6]})
+r = csvc.evaluate_lesson(ZOO_LESSON, no10)
+assert r["completed"] is False and r["missingActivityIds"] == [REQ[6]], r
 # raising the weak levels through the authoritative stores flips it to complete
 fixed = json.loads(json.dumps(low))
 for a in (REQ[1], REQ[2], REQ[4], REQ[5]):
     fixed["activityScores"][a] = {"correct": 5, "total": 5, "pct": 100, "updatedAt": 2}
 fixed["sttProgress"][REQ[0]] = {"pct": 100, "totalSentences": 10}
+fixed["roleplayProgress"][REQ[6]] = {"passes": 6, "turns": 6, "pct": 100}
 assert csvc.evaluate_lesson(ZOO_LESSON, fixed)["completed"] is True
-ok("real Zoo: all-six completes, case E completes, mean<80 fails, missing fails, improving flips it")
+ok("real Zoo v2: all-seven completes, case E completes, mean<80 fails, missing fails, improving flips it")
 
 # a client-style localStorage score can never complete the lesson (§26)
 fake = {"scores": {"2": {"correct": 100, "total": 100}, "3": {"correct": 5, "total": 5}},
@@ -210,7 +207,11 @@ assert csvc.evaluate_lesson(ZOO_LESSON, fake)["missingActivityIds"] == REQ
 ok("§26 client-shaped score fields in the state cannot complete the lesson")
 
 # ============================== persistence, idempotency, neutrality ==============================
-st = json.loads(json.dumps(caseE_zoo))
+# Start just ABOVE the pass mark, so that zeroing ONE of the seven levels genuinely drops the mean
+# under 80. (From the all-100 vector a single zero still averages 85.7 and would stay satisfied —
+# correct Rule A behaviour, but it would not exercise the un-satisfying retry.)
+st = zoo_state({REQ[0]: (80, 100), REQ[1]: (4, 5), REQ[2]: (4, 5), REQ[3]: (4, 5),
+                REQ[4]: (4, 5), REQ[5]: (4, 5), REQ[6]: (5, 5)})
 st, out = csvc.record_attempt(st, REQ[1], {"passed": True, "pct": 100, "correct": 5, "total": 5}, 5000)
 assert out["lessonCompleted"] is True and out["lessonCompletedNow"] is True
 assert C.get_lesson_completion(st, ZOO_LESSON) == {"completedAt": 5000, "policyVersion": 2}
@@ -243,10 +244,8 @@ for leak in ("answer", "graderType", "graderConfig", "rewardPolicy", "roundId", 
 ok("progress view: Zoo availability / completed / completedAt / policyVersion, no internals")
 
 # ============================== validator ==============================
-# The production registry has no active policy any more, so the policy-shape rejections below are
-# driven from the candidate registry (real ids, version 2).
-assert R.validate(R.DATA) == [], R.validate(R.DATA)
-BASE = copy.deepcopy(CAND)
+# The production registry now carries the active v2 policy, so the shape rejections below mutate it.
+BASE = copy.deepcopy(R.DATA)
 assert R.validate(BASE) == [], R.validate(BASE)
 
 
@@ -264,7 +263,7 @@ def P(d):
 rejects(lambda d: P(d).update(passMark=50), "passMark must be 80")
 rejects(lambda d: P(d).update(passMark=0), "passMark must be 80")
 rejects(lambda d: P(d).update(type="mean_of_stuff"), "unknown type")
-rejects(lambda d: P(d).update(requiredActivityIds=REQ + [REQ[0]]), "duplicate requiredActivityId")
+rejects(lambda d: P(d).update(requiredActivityIds=list(REQ) + [REQ[0]]), "duplicate requiredActivityId")
 rejects(lambda d: P(d).update(requiredActivityIds=["english.a1.core.001.reorder"]), "belongs to lesson")
 rejects(lambda d: P(d).update(requiredActivityIds=["nope.nope"]), "unknown activity")
 rejects(lambda d: P(d).update(rewardGold=1), "may not set")
@@ -273,7 +272,7 @@ rejects(lambda d: P(d).update(bogusKey=1), "unknown keys")
 ok("validator: passMark pinned to 80; unknown type / duplicate / foreign activity / reward rejected")
 
 # ====================== retired versions are enforced, not just documented ======================
-reuse = copy.deepcopy(CAND)
+reuse = copy.deepcopy(R.DATA)
 reuse["lessons"][ZOO_LESSON]["completionPolicy"]["version"] = 1
 assert any("reuses retired policy version" in e for e in R.validate(reuse)), R.validate(reuse)
 for bad in ([], "1", [0], [1, 1], [True], [1.5]):

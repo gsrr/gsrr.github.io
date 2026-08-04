@@ -354,6 +354,7 @@ build the machinery and configure **zero production lessons**.
 | Rewards | activity policy | `+ lesson completion policy` — **none enabled in production** |
 | Read API | `/api/learning/{registry,state}` | `+ GET /api/learning/progress` (read-only) |
 | Role-play (Phase 4C) | client-side engine, client score | `POST /api/learning/roleplay/{start,respond}` — server-owned session |
+| Lesson completion (Phase 4D) | client Rule A display only | four ACTIVE v2 policies; `currentPolicySatisfied` / `historicallyCompleted` / `activePolicy*` / `firstCompleted*` on attempt + progress |
 | `passcnt` | occupy-bootstrap counter | **unchanged, deliberately kept separate** |
 | Legacy client rules | live | **live and unchanged** — Phase 3D does not claim they are authoritative |
 

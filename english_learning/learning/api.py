@@ -481,8 +481,37 @@ class LearningService:
         return completion.evaluate(lesson_id, lesson, self.passed_activity_ids(state),
                                    self.authoritative_activity_scores(state, required))
 
+    def lesson_status(self, lesson_id, state, ev=None):
+        """The unambiguous per-lesson status (Phase 4D §19).
+
+        `lessonCompleted` / `completed` have historically meant two different things, so the truth is
+        now spelled out in named fields:
+
+          currentPolicySatisfied   — the LATEST authoritative scores satisfy the ACTIVE policy. May
+                                     go true -> false after a worse retry; it is a live evaluation.
+          historicallyCompleted    — some policy version has been completed at some point, ever.
+          activePolicyVersion      — the version the registry currently enforces.
+          activePolicyCompleted    — the ACTIVE version has a persisted completion entry.
+          activePolicyCompletedAt  — when that happened, else None.
+          firstCompletedAt         — the legacy first-ever completion timestamp.
+          firstCompletedPolicyVersion — the version of that first-ever completion (may be retired).
+        """
+        ev = ev if ev is not None else self.evaluate_lesson(lesson_id, state)
+        legacy = completion.get_lesson_completion(state, lesson_id)
+        history = completion.merged_history(state, lesson_id)
+        active = ev["policyVersion"] if ev["available"] else None
+        at = completion.completion_for_version(state, lesson_id, active) if active else None
+        return {"currentPolicySatisfied": bool(ev["available"] and ev["completed"]),
+                "historicallyCompleted": bool(history),
+                "activePolicyVersion": active,
+                "activePolicyCompleted": at is not None,
+                "activePolicyCompletedAt": at,
+                "firstCompletedAt": (legacy or {}).get("completedAt"),
+                "firstCompletedPolicyVersion": (legacy or {}).get("policyVersion"),
+                "completionHistory": history}
+
     def _settle_lesson(self, state, lesson_id, now, out):
-        """Record a first-time lesson completion + its configured grants/reward. Idempotent."""
+        """Record a completion of the ACTIVE policy version + its grants/reward. Idempotent."""
         out.setdefault("lessonId", lesson_id)
         out.setdefault("lessonCompleted", False)
         out.setdefault("lessonCompletedNow", False)
@@ -490,17 +519,28 @@ class LearningService:
         out.setdefault("lessonGrantedNow", [])
         out.setdefault("lessonRewardAmount", 0)
         out.setdefault("lessonRewarded", False)
+        # Defaulted here too, so the response shape is IDENTICAL for a lesson with and without an
+        # active policy — a caller never has to probe for the presence of a key.
+        out.setdefault("missingActivityIds", [])
+        out.setdefault("roundedPct", None)
         if not lesson_id or not self.registry.completion_available(lesson_id):
+            out.update(self.lesson_status(lesson_id, state))
             return state                       # no policy -> never completable, never a fallback
         ev = self.evaluate_lesson(lesson_id, state)
+        # DEPRECATED name, kept for compatibility: lessonCompleted has always meant "the active
+        # policy is satisfied right now", i.e. currentPolicySatisfied.
         out["lessonCompleted"] = ev["completed"]
+        out["missingActivityIds"] = ev["missingActivityIds"]
+        out["roundedPct"] = ev["roundedPct"]
         if not ev["completed"]:
+            out.update(self.lesson_status(lesson_id, state, ev))
             return state
         state, newly = completion.record_lesson_completion(
             state, lesson_id, now, ev["policyVersion"])
         out["lessonCompletedNow"] = newly
+        out.update(self.lesson_status(lesson_id, state, ev))
         if not newly:
-            return state                       # already completed -> no re-grant, no second reward
+            return state                  # this VERSION already recorded -> no re-grant, no re-pay
         qids = self.registry.lesson_qualification_ids_for(lesson_id)
         state, granted_now = qualifications.grant_qualifications(state, qids, now)
         out["lessonQualifications"], out["lessonGrantedNow"] = qids, granted_now
@@ -518,16 +558,21 @@ class LearningService:
             ev = completion.evaluate(lid, lesson, passed,
                                      self.authoritative_activity_scores(state, required))
             rec = completion.get_lesson_completion(state, lid)
+            status = self.lesson_status(lid, state, ev)
             lessons[lid] = {
                 "title": lesson.get("title"),
                 "authoritativeCompletionAvailable": ev["available"],
+                # DEPRECATED trio, unchanged semantics for old readers: `completed` is historical
+                # (any version), `completedAt`/`policyVersion` describe the FIRST-EVER completion.
                 "completed": bool(rec) if ev["available"] else False,
                 "completedAt": (rec or {}).get("completedAt"),
                 "policyVersion": (rec or {}).get("policyVersion") or ev["policyVersion"],
                 "requiredActivityIds": ev["requiredActivityIds"],
                 "completedActivityIds": ev["completedActivityIds"],
                 "missingActivityIds": ev["missingActivityIds"],
+                "roundedPct": ev["roundedPct"],
             }
+            lessons[lid].update(status)
         return {"lessons": lessons,
                 "completedLessonIds": sorted(completion.completed_lesson_ids(state))}
 
@@ -540,6 +585,7 @@ class LearningService:
         return {"qualifications": state.get("qualifications") or {},
                 "activityCompletions": state.get("activityCompletions") or {},
                 "lessonCompletions": state.get("lessonCompletions") or {},
+                "lessonCompletionHistory": state.get(completion.HISTORY_KEY) or {},
                 "sttProgress": state.get("sttProgress") or {},
                 "matchingProgress": state.get("matchingProgress") or {},
                 "roleplayProgress": state.get("roleplayProgress") or {},

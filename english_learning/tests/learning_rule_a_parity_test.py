@@ -150,17 +150,18 @@ for lid in ARCS:
              and a.rsplit(".", 1)[1] not in COVERED.values()]
     assert not extra, "an unexpected activity appeared on %s: %s" % (lid, extra)
 assert len(LEVELS) == 7, LEVELS
-# No lesson may carry an active policy while level 10 has no server authority: a 6-activity policy
-# would silently redefine Rule A. Zoo's v1 was retired for exactly this reason.
+# Phase 4D: each lesson now carries an ACTIVE v2 policy requiring exactly those seven levels, so the
+# active policy and legacy Rule A agree by construction.
 for lid in ARCS:
-    assert reg.completion_policy_of(lid) is None, \
-        "%s must not be activated while level 10 has no server authority" % lid
-assert [l for l in reg.lessons if reg.completion_available(l)] == [], \
-    "production authoritative lesson policies must be 0"
+    pol = reg.completion_policy_of(lid)
+    assert pol and pol["version"] == 2 and pol["passMark"] == 80, (lid, pol)
+    assert pol["requiredActivityIds"] == ["%s.%s" % (lid, COVERED[lv]) for lv in LEVELS], \
+        (lid, pol["requiredActivityIds"])
+assert sorted(l for l in reg.lessons if reg.completion_available(l)) == sorted(ARCS), \
+    "exactly the four Taipei lessons are active"
 assert reg.retired_policy_versions("english.prea1.taipei.zoo") == [1], "Zoo v1 is spent"
-ok("§39 readiness: all SEVEN legacy Rule A levels now have a server-scored activity on all four "
-   "Taipei lessons — yet 0 policies are active, because activation is a separate approval; Zoo's "
-   "retired v1 can never be reused")
+ok("§39 all SEVEN legacy Rule A levels have a server-scored activity on all four Taipei lessons, and "
+   "each active v2 policy requires exactly that set in level order; Zoo's retired v1 stays unusable")
 
 # ---------- 4. the exact case that must never be assumed away again ----------
 # Perfect scores on the six authoritative levels, level 10 absent -> legacy Rule A is INCOMPLETE.

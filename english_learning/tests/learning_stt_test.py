@@ -176,8 +176,8 @@ assert ZOO not in st4["sttProgress"], "activities keep separate evidence"
 ok("§29 second real lesson (A1/001) scores and persists identically — no Zoo special-casing")
 
 # ============================== §30 Phase 3D dormancy ==============================
-active = [lid for lid in svc.registry.lessons if svc.registry.completion_available(lid)]
-assert active == [], active   # Phase 4B: Zoo's v1 policy was retired (level 10 gap)
+active = sorted(lid for lid in svc.registry.lessons if svc.registry.completion_available(lid))
+assert active == ["english.prea1.taipei.market", "english.prea1.taipei.mrt", "english.prea1.taipei.park", "english.prea1.taipei.zoo"], active   # Phase 4D: the four Taipei v2 policies
 everything = {"activityCompletions": {aid: {"passedAt": 1, "pct": 100, "rewarded": False}
                                       for aid in svc.registry.activities}}
 for lid in svc.registry.lessons:
