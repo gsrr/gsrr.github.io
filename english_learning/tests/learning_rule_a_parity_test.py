@@ -133,17 +133,22 @@ assert not mismatches, mismatches[:3]
 ok("§18/§36 backend rule_a_mean + half-up rounding matches the real statusFromScores() exactly on "
    "%d (lesson, score-vector) pairs across all four Taipei lessons" % len(jobs))
 
-# ---------- 3. pin the DOCUMENTED divergence between legacy Rule A and the active policy ----------
+# ---------- 3. every legacy Rule A level now has server authority (Phase 4C) ----------
 reg = R.REGISTRY
-COVERED = ["read_along", "quiz3", "quiz4", "matching", "wh", "cloze"]     # levels 2,3,4,5,7,9
+# level -> the activity suffix carrying its authoritative evidence, for ALL SEVEN scored levels.
+COVERED = {"2": "read_along", "3": "quiz3", "4": "quiz4", "5": "matching",
+           "7": "wh", "9": "cloze", "10": "roleplay"}
+assert sorted(COVERED) == sorted(LEVELS), (sorted(COVERED), sorted(LEVELS))
 for lid in ARCS:
-    for suffix in COVERED:
-        aid = "%s.%s" % (lid, suffix)
-        assert aid in reg.activities and reg.is_server_scored(aid), aid
-    # level 10 has no registered activity of any kind, under any name
-    assert not [a for a in reg.activities
-                if reg.lesson_of_activity(a) == lid and a.rsplit(".", 1)[1]
-                not in COVERED], "an unexpected activity appeared on %s" % lid
+    for lv in LEVELS:
+        aid = "%s.%s" % (lid, COVERED[lv])
+        assert aid in reg.activities, "level %s has no activity on %s" % (lv, lid)
+        assert reg.is_server_scored(aid), "level %s is not server-scored on %s" % (lv, lid)
+        assert reg.lesson_of_activity(aid) == lid, aid
+    # nothing else is registered against these lessons, so the mapping above is exhaustive
+    extra = [a for a in reg.activities if reg.lesson_of_activity(a) == lid
+             and a.rsplit(".", 1)[1] not in COVERED.values()]
+    assert not extra, "an unexpected activity appeared on %s: %s" % (lid, extra)
 assert len(LEVELS) == 7, LEVELS
 # No lesson may carry an active policy while level 10 has no server authority: a 6-activity policy
 # would silently redefine Rule A. Zoo's v1 was retired for exactly this reason.
@@ -153,8 +158,9 @@ for lid in ARCS:
 assert [l for l in reg.lessons if reg.completion_available(l)] == [], \
     "production authoritative lesson policies must be 0"
 assert reg.retired_policy_versions("english.prea1.taipei.zoo") == [1], "Zoo v1 is spent"
-ok("§42 correction pinned: 0 active lesson policies, because a 6-of-7 policy would silently "
-   "redefine Rule A; Zoo's retired v1 can never be reused")
+ok("§39 readiness: all SEVEN legacy Rule A levels now have a server-scored activity on all four "
+   "Taipei lessons — yet 0 policies are active, because activation is a separate approval; Zoo's "
+   "retired v1 can never be reused")
 
 # ---------- 4. the exact case that must never be assumed away again ----------
 # Perfect scores on the six authoritative levels, level 10 absent -> legacy Rule A is INCOMPLETE.

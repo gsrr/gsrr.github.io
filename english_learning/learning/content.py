@@ -50,6 +50,26 @@ def load_lesson(content_path, content_root, allowed_paths=None):
         return None
 
 
+def load_json_document(content_path, content_root, allowed_paths=None):
+    """(parsed_dict, raw_text) for `<content_path>.json`, or (None, None) if refused/invalid.
+
+    Same three gates as load_lesson(); it additionally returns the raw bytes-as-text so the caller
+    can fingerprint the exact document it loaded. Phase 4C uses this for Role-play scenario graphs,
+    whose version is bound into a session so a mid-session content edit cannot silently change the
+    rules a learner is being scored against.
+    """
+    path = resolve_path(content_path, content_root, allowed_paths)
+    if not path:
+        return None, None
+    try:
+        with open(path, encoding="utf-8") as f:
+            raw = f.read()
+        data = json.loads(raw)
+        return (data, raw) if isinstance(data, dict) else (None, None)
+    except Exception:
+        return None, None
+
+
 _DIALOGUE_LINE = re.compile(r"^([^:：]+)[:：]\s*(.*)$")
 
 

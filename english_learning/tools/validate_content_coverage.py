@@ -15,9 +15,10 @@ uses, so editing either one shows up as a coverage change:
   2. the `scoredLevelsFor()` rule                               (levels >= 2, plus level 10 always)
 
 Level 10 (Role-play) is appended UNCONDITIONALLY by `scoredLevelsFor()` — every lesson with a
-dialogue is scored on it. It has no server-authoritative implementation (free-form semantic
-classification in roleplay/classifier.js, over a Math.random-branched conversation graph), so it is
-reported as an uncovered required level rather than quietly dropped.
+dialogue is scored on it. Phase 4C made it server-authoritative (a server-owned session owns the
+graph, the branch RNG, the classifier and the turn/pass counters), so it now counts as covered.
+Coverage reaching 7/7 is READINESS, not activation: enabling a lesson policy remains a separate,
+explicitly approved step.
 
 Errors (always fatal):
   - a lesson with an ACTIVE completionPolicy whose required set is not exactly its covered set
@@ -41,8 +42,8 @@ from learning import registry as learning_registry  # noqa: E402
 errors, warnings, notes = [], [], []
 
 # Level -> the registry activity suffix that carries its authoritative evidence. Levels absent from
-# this map have no server-authoritative implementation at all (1 = listening, not scored; 6/8 exist
-# generically but no Taipei lesson declares them; 10 = role-play, out of scope).
+# this map have no server-authoritative implementation at all (1 = listening, which Rule A does not
+# score). Level 10 Role-play joined the list in Phase 4C.
 LEVEL_ACTIVITY = {
     "2": "read_along",
     "3": "quiz3",
@@ -52,6 +53,7 @@ LEVEL_ACTIVITY = {
     "7": "wh",
     "8": "dictation",
     "9": "cloze",
+    "10": "roleplay",
 }
 LEVEL_NAME = {
     "1": "Listen", "2": "Read Along", "3": "Quiz", "4": "Tricky Quiz", "5": "Match",
@@ -162,7 +164,7 @@ def main():
     print("  lessons inventoried            : %d" % len(rows))
     print("  fully authoritative (no gaps)  : %d %s" % (len(full), full))
     print("  active completion policies     : %d %s" % (len(active), active))
-    print("  EXPECTED active policies       : 0  (until level 10 Role-play is authoritative)")
+    print("  EXPECTED active policies       : 0  (activation is a separate approved step)")
     for lid in sorted(reg.lessons):
         rv = reg.retired_policy_versions(lid)
         if rv:

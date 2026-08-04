@@ -353,6 +353,7 @@ build the machinery and configure **zero production lessons**.
 | Qualification scopes earnable | `activity` | `activity`, **`lesson`** (registry-configured only) |
 | Rewards | activity policy | `+ lesson completion policy` — **none enabled in production** |
 | Read API | `/api/learning/{registry,state}` | `+ GET /api/learning/progress` (read-only) |
+| Role-play (Phase 4C) | client-side engine, client score | `POST /api/learning/roleplay/{start,respond}` — server-owned session |
 | `passcnt` | occupy-bootstrap counter | **unchanged, deliberately kept separate** |
 | Legacy client rules | live | **live and unchanged** — Phase 3D does not claim they are authoritative |
 
@@ -427,6 +428,30 @@ derived from content, requiring no lesson-JSON change.
 
 **Backendless mode** (GitHub Pages / not logged in / lesson not registered) keeps the legacy local
 implementation, clearly labelled as local practice. Its score is never uploaded and can never become
+### Level 10 Role-play (Phase 4C)
+
+| Aspect | Before | After |
+|---|---|---|
+| Conversation graph | fetched/derived in the browser | server-loaded from `scenarioPath`, validated, version-hashed |
+| Current node | client `rpEng.current` | server `session.currentNodeId` |
+| Branch choice | client `Math.random` over weights | server RNG, same weighted algorithm |
+| Classification | client `RP.classifiers.local` | exact Python port, thresholds server-owned (0.5 / 0.2) |
+| turns / passes | client counters | server counters; `turns` still counts EVERY submission |
+| Score | client `recordScore(10, passes, turns)` | server `roleplayProgress`, latest-wins |
+
+`POST /api/learning/roleplay/start` takes `{activityId}` and returns
+`{sessionId, prompt:{nodeId,text,gender,objective}, turn, passes, completed, you, npc, title}` — one
+node at a time, and **no** routes, keywords, examples, weights or next_nodes.
+`POST /api/learning/roleplay/respond` takes `{sessionId, response, seq}` and returns
+`{result, hint, prompt, turn, passes, completed}` plus `score` on completion. `seq` is the turn the
+client believes it is answering; a mismatch is refused as `stale_turn` without counting, which is what
+makes duplicate submits and two-tab races safe. Everything else a client might send —
+node, graph, version, turns, passes, score, completed, result, thresholds, rng, reward,
+qualification, policyVersion — is ignored.
+
+Backendless mode keeps the legacy local engine as practice only, chosen *before* the session starts;
+a mid-session backend failure shows a retryable error and never invents a turn or a local score.
+
 `matchingProgress`. A *backend failure* is handled differently from backendless mode: the UI shows a
 retryable state and never silently falls back to local authoritative scoring.
 

@@ -3434,20 +3434,111 @@
   }
   function rpProg() {
     const prog = document.getElementById("rpProgress");
-    if (prog && rpEng && rpGraph) prog.textContent = "🎭 Turn " + (rpEng.turns + 1) + " · you are the " + rpGraph.you;
+    if (!prog || !rpGraph) return;
+    const n = (rpMode === "server") ? ((rpSession && rpSession.turn) || 0) : (rpEng ? rpEng.turns : 0);
+    prog.textContent = "🎭 Turn " + (n + 1) + " · you are the " + rpGraph.you;
   }
+  /* ---- Phase 4C: server-authoritative Role-play -------------------------------------------
+     The server owns the graph, the current node, the weighted branch RNG, the classifier
+     thresholds and the turns/passes counters. This client sends only what the learner said and
+     renders what comes back; it never decides a branch, a classification or the final score.
+     On a backend failure it does NOT invent a turn and does NOT fall back to local scoring (§28). */
+  let rpMode = "local", rpSession = null;
+  function rpActive() {
+    return (rpMode === "server") ? !!(rpSession && !rpSession.completed) : !!(rpEng && !rpEng.done);
+  }
+  function roleplayActivityId(contentPath) {
+    const acts = (learningRegistry && learningRegistry.activities) || {};
+    for (const aid in acts) if (acts[aid].contentPath === contentPath && acts[aid].scored === "roleplay") return aid;
+    return null;
+  }
+  function rpSubmit(text) {
+    if (rpMode === "server") rpSubmitServer(text);
+    else if (rpEng) rpEng.submit(text);
+  }
+  function rpStartServer(aid, key) {
+    fetch(withRoom("/api/learning/roleplay/start?token=" + encodeURIComponent(authToken())),
+      { method: "POST", body: JSON.stringify({ activityId: aid }) })
+      .then(r => r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)))
+      .then(d => {
+        if (key !== currentArticleKey) return;            // 使用者中途換課
+        if (!d || !d.sessionId || !d.prompt) throw new Error("bad session");
+        rpSession = { id: d.sessionId, turn: d.turn || 0, passes: d.passes || 0, completed: !!d.completed };
+        rpGraph = { you: d.you || "You", npc: d.npc || "Computer",
+                    npc_gender: (d.prompt && d.prompt.gender) || "female" };
+        const role = document.getElementById("rpRole");
+        if (role) role.innerHTML = 'You are <b>' + escapeHtml(rpGraph.you) + '</b> 🧑 · the computer is <b>' +
+          escapeHtml(rpGraph.npc) + '</b> 🧑‍🍳 — answer in your own words using this lesson\u2019s sentences';
+        rpBuildInput();
+        rpSpeakNode(d.prompt);
+        if (d.completed) rpFinishServer(d);
+      })
+      .catch(() => rpServerError(false));
+  }
+  function rpSpeakNode(prompt) {                          // mirrors rpOnNode for the server path
+    rpAwait = false; rpSetInput(false); rpProg();
+    const b = rpBubble("🧑‍🍳 " + rpGraph.npc, prompt.text, "npc active");
+    rpSpeak({ text: prompt.text, gender: prompt.gender || rpGraph.npc_gender }, function () {
+      b.classList.remove("active");
+      if (rpActive()) { rpAwait = true; rpSetInput(true); const t = document.getElementById("rpText"); if (t) t.focus(); }
+    });
+  }
+  function rpSubmitServer(text) {
+    if (!rpSession || rpSession.completed) return;
+    const sid = rpSession.id, seq = rpSession.turn, key = currentArticleKey;
+    fetch(withRoom("/api/learning/roleplay/respond?token=" + encodeURIComponent(authToken())),
+      { method: "POST", body: JSON.stringify({ sessionId: sid, response: text, seq: seq }) })
+      .then(r => r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)))
+      .then(d => {
+        if (key !== currentArticleKey || !rpSession || rpSession.id !== sid) return;
+        rpSession.turn = d.turn; rpSession.passes = d.passes; rpSession.completed = !!d.completed;
+        const fb = document.getElementById("rpFb");
+        if (d.result === "PASS") { fb.className = "rp-fb pass"; fb.innerHTML = "✅ Nice! That fits the lesson."; }
+        else if (d.result === "PARTIAL") { fb.className = "rp-fb partial"; fb.innerHTML = "🟡 Almost — " + escapeHtml(d.hint || "Close! Try to finish your answer."); }
+        else { fb.className = "rp-fb off"; fb.innerHTML = "🔴 " + escapeHtml(d.hint || "Let\u2019s stay on topic."); }
+        if (d.completed) { rpFinishServer(d); return; }
+        if (d.result === "PASS") rpSpeakNode(d.prompt);   // the server advanced to a new node
+        else rpNudge(d.hint || "Let\u2019s try that again.");   // stays on the same node
+      })
+      .catch(() => rpServerError(true));
+  }
+  function rpFinishServer(d) {
+    rpAwait = false; rpSetInput(false);
+    const passes = d.passes || 0, turns = d.turn || 0;
+    const pct = (d.pct != null) ? d.pct : (turns ? Math.round(passes / turns * 100) : 0);
+    document.getElementById("rpControls").innerHTML =
+      '<div class="rp-done">🎉 Conversation complete!<br>You gave <b>' + passes + '</b> good replies over ' +
+      turns + ' turns (' + pct + '%).</div>';
+    document.getElementById("rpProgress").textContent = "";
+    // 關卡進度/顯示用；權威分數已由伺服器寫入 roleplayProgress。
+    if (turns > 0) recordScore(10, passes, turns);
+    markLevelDone(10);
+  }
+  function rpServerError(midSession) {
+    const fb = document.getElementById("rpFb");
+    if (fb) { fb.className = "rp-fb off"; fb.textContent = "⚠️ Couldn\u2019t reach the role-play server."; }
+    if (midSession) { rpAwait = true; rpSetInput(true); return; }   // retry the same turn; nothing counted
+    document.getElementById("rpControls").innerHTML =
+      '<p class="op-hint">⚠️ Role-play needs the server. Tap Level 10 again to retry.</p>';
+  }
+
   function startRolePlay() {
     const convo = document.getElementById("rpConvo"), ctrl = document.getElementById("rpControls"),
           prog = document.getElementById("rpProgress"), fb = document.getElementById("rpFb"),
           role = document.getElementById("rpRole");
-    if (!window.RP || !RP.Engine || !RP.classifiers) {   // engine scripts missing → fall back gracefully
-      ctrl.innerHTML = '<p class="op-hint">Role-play engine did not load.</p>'; return;
-    }
-    rpEng = null; rpAwait = false;   // 清掉上一輪殘留狀態，避免重進 Level 10 時誤用
+    rpEng = null; rpSession = null; rpAwait = false;   // 清掉上一輪殘留狀態
     convo.innerHTML = ""; if (fb) { fb.className = "rp-fb"; fb.textContent = ""; } prog.textContent = "";
     if (role) role.textContent = "";
     ctrl.innerHTML = '<div class="rp-turn">Loading conversation…</div>';
     const key = currentArticleKey;
+    // Phase 4C：已登入且登錄簿有對應活動 → 整場對話由伺服器擁有（分支 / RNG / turns / passes / 分數）。
+    const rpAid = roleplayActivityId(key), rpTok = authToken();
+    if (rpAid && rpTok) { rpMode = "server"; rpStartServer(rpAid, key); return; }
+    // —— 以下是 legacy 純本機練習模式（GitHub Pages / 未登入）：永遠不會成為權威證據。
+    rpMode = "local";
+    if (!window.RP || !RP.Engine || !RP.classifiers) {   // engine scripts missing → fall back gracefully
+      ctrl.innerHTML = '<p class="op-hint">Role-play engine did not load.</p>'; return;
+    }
     // 優先用「作者手寫、依課文加了 2~3 個分支」的每課劇本；沒有就用課文即時線性生成當後備
     rpLoadLessonScenario(key, function (authored) {
       if (key !== currentArticleKey) return;   // 使用者中途換課 → 放棄這次載入
@@ -3500,7 +3591,7 @@
     const b = rpBubble("🧑‍🍳 " + rpGraph.npc, msg, "npc hint");
     rpSpeak({ text: msg, gender: rpGraph.npc_gender }, function () {
       b.classList.remove("hint");
-      if (rpEng && !rpEng.done) { rpAwait = true; rpSetInput(true); const t = document.getElementById("rpText"); if (t) t.focus(); }
+      if (rpActive()) { rpAwait = true; rpSetInput(true); const t = document.getElementById("rpText"); if (t) t.focus(); }
     });
   }
   function rpOnEnd(summary) {
@@ -3537,16 +3628,16 @@
   }
   function rpSubmitText() {
     const t = document.getElementById("rpText"); if (!t) return;
-    const v = t.value.trim(); if (!v || !rpAwait || !rpEng) return;
+    const v = t.value.trim(); if (!v || !rpAwait || !rpActive()) return;
     rpBubble("🧑 " + rpGraph.you, v, "you");
     t.value = ""; rpAwait = false; rpSetInput(false);
     const fb = document.getElementById("rpFb"); fb.className = "rp-fb rp-scoring"; fb.textContent = "🎯 Checking…";
-    rpEng.submit(v);
+    rpSubmit(v);
   }
   function rpMicToggle() {
     const m = document.getElementById("rpMic"), fb = document.getElementById("rpFb");
     if (rpRecording) { try { if (rpRec && rpRec.state === "recording") rpRec.stop(); } catch (e) {} return; }
-    if (!rpAwait || !rpEng) return;
+    if (!rpAwait || !rpActive()) return;
     if (!rpMicOk()) { fb.className = "rp-fb off"; fb.textContent = "No microphone here — type your answer instead."; return; }
     navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
       rpChunks = []; rpRec = new MediaRecorder(stream);
@@ -3560,12 +3651,12 @@
           .then(r => r.ok ? r.json() : Promise.reject())
           .then(d => {
             const said = ((d && d.transcript) || "").trim();
-            if (!rpEng || rpEng.done) return;
+            if (!rpActive()) return;
             if (!said) { fb.className = "rp-fb off"; fb.textContent = "🔇 Didn’t catch that — try again or type."; rpAwait = true; rpSetInput(true); return; }
             rpBubble("🧑 " + rpGraph.you, said + " 🎤", "you");
             rpAwait = false; rpSetInput(false);
             fb.className = "rp-fb rp-scoring"; fb.textContent = "🎯 Checking…";
-            rpEng.submit(said);
+            rpSubmit(said);
           })
           .catch(() => { fb.className = "rp-fb off"; fb.textContent = "⚠️ Speech needs the server (/api/stt). Type your answer instead."; rpAwait = true; rpSetInput(true); });
       };

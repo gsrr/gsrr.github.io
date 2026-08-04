@@ -25,7 +25,7 @@ duplicating them would create a second source of truth) and reward AMOUNTS (see 
 import json
 import os
 
-from . import completion, grading, identity, matching, rewards, stt_scoring
+from . import completion, grading, identity, matching, rewards, roleplay, stt_scoring
 
 _PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "registry.json")
 SCHEMA_VERSION = 1
@@ -36,8 +36,9 @@ _GRADER_CFG_KEYS = {"promptField", "answerField", "distractorsField", "joinWith"
 _COMPLETION_KEYS = {"type", "version", "requiredActivityIds", "grants", "rewardPolicy",
                     "passMark"}
 # Phase 3E1: non-deterministic scorers live outside the GRADERS table (§8).
-_SCORER_TYPES = {stt_scoring.SCORER_TYPE, matching.SCORER_TYPE}
-_SCORED_KIND = {stt_scoring.SCORER_TYPE: "stt", matching.SCORER_TYPE: "matching"}
+_SCORER_TYPES = {stt_scoring.SCORER_TYPE, matching.SCORER_TYPE, roleplay.SCORER_TYPE}
+_SCORED_KIND = {stt_scoring.SCORER_TYPE: "stt", matching.SCORER_TYPE: "matching",
+                roleplay.SCORER_TYPE: "roleplay"}
 
 
 def _no_dup_keys(pairs):
@@ -145,6 +146,14 @@ class Registry:
     def scorer_type_of(self, activity_id):
         """Non-deterministic scorer (Phase 3E1 Read-Along/STT). Mutually exclusive with graderType."""
         return (self.activities.get(activity_id) or {}).get("scorerType")
+
+    def scenario_path_of(self, activity_id):
+        """The on-disk Role-play graph path for an activity (Phase 4C). None if not applicable."""
+        return (self.activities.get(activity_id) or {}).get("scenarioPath")
+
+    def approved_scenario_paths(self):
+        """The ONLY Role-play graph paths the backend may read (§9). Registry == allowlist."""
+        return {a.get("scenarioPath") for a in self.activities.values() if a.get("scenarioPath")}
 
     def is_server_scored(self, activity_id):
         """True if the server produces the authoritative result for this activity, either way."""
@@ -403,11 +412,24 @@ def validate(data):
             if sct == matching.SCORER_TYPE and not isinstance(a.get("contentKey"), str):
                 err("activity %s uses scorerType %r and must name the content key holding its "
                     "word/picture pairs (e.g. \"vocab\")" % (aid, sct))
+            if sct == roleplay.SCORER_TYPE:
+                # §9: the graph is named by the REGISTRY and nowhere else. The client never supplies
+                # a path, and the path shape is checked here so it can never escape CONTENT_ROOT.
+                if not identity.is_content_path(a.get("scenarioPath")):
+                    err("activity %s uses scorerType %r and must name a valid scenarioPath "
+                        "(got %r)" % (aid, sct, a.get("scenarioPath")))
+                if a.get("contentKey") is not None:
+                    err("activity %s uses scorerType %r, whose content is its own scenario graph — "
+                        "it must not declare a contentKey" % (aid, sct))
+            elif a.get("scenarioPath") is not None:
+                err("activity %s declares scenarioPath but is not a Role-play activity" % aid)
             if a.get("graderConfig") is not None:
                 err("activity %s uses scorerType %r and must not declare graderConfig" % (aid, sct))
         elif not grading.is_supported(gt):
             err("activity %s has unknown graderType %r (known: %s)"
                 % (aid, gt, grading.grader_types()))
+        if sct != roleplay.SCORER_TYPE and a.get("scenarioPath") is not None:
+            err("activity %s declares scenarioPath but is not a Role-play activity" % aid)
         if not a.get("title"):
             err("activity %s has no title" % aid)
         if not rewards.is_policy(a.get("rewardPolicy") or rewards.DEFAULT_POLICY):

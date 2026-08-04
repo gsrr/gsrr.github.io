@@ -152,11 +152,11 @@ Identical for all three lessons (`<L>` ∈ `mrt`, `market`, `park`):
 | 5 · Match | matching | `vocab` | `matchCtl` (`makeMatch`) | `matching_first_try` | **B** | registered | **A** |
 | 7 · WH | `multiple_choice` | `wh` | `whCtl` (`makeWh`) | `multiple_choice` | **B** | registered | **A** |
 | 9 · Fill Blank | `multiple_choice` | `cloze` | `clozeCtl` (`makeCloze`) | `multiple_choice` | **B** | registered | **A** |
-| **10 · Role-play** | free conversation | roleplay pack | `startRolePlay` | — | **D** | **none — blocker** | **D** |
+| **10 · Role-play** | free conversation | scenario graph | `startRolePlay` | `roleplay_local` | **D** | *(Phase 4C)* registered | **A** |
 
 Nothing was category **C**: see [§7](#7-why-no-frontend-change-was-needed).
 
-Coverage before → after, per lesson: **1/7 → 6/7**.
+Coverage before → after, per lesson: **1/7 → 6/7** in Phase 4B, then **7/7** once Phase 4C made Level 10 server-authoritative (`docs/roleplay-authority.md`).
 
 ## 5. Registered activities
 

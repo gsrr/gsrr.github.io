@@ -1055,6 +1055,10 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_matching_start()
         elif path == "/api/learning/matching/attempt":
             self._handle_matching_attempt()
+        elif path == "/api/learning/roleplay/start":
+            self._handle_roleplay_start()
+        elif path == "/api/learning/roleplay/respond":
+            self._handle_roleplay_respond()
         elif path == "/api/room/start":
             self._handle_room_start()
         elif path == "/api/room/stop":
@@ -1938,6 +1942,72 @@ class Handler(BaseHTTPRequestHandler):
         if out["status"] == "complete":
             resp.update(result=out["result"], qualifications=out.get("granted") or [],
                         rewarded=bool(out.get("rewarded")), gold=newgold)
+        self._send(resp)
+
+    # Phase 4C：Level 10 角色扮演改為「伺服器擁有整場對話」。劇本圖、目前節點、分支 RNG、
+    #   分類器門檻、turns/passes 全在後端；client 只送出學習者說的話，拿回可顯示的下一句。
+    #   client 送來的 currentNode/nextNode/turns/passes/score/completed 一律不予採信。
+    def _handle_roleplay_start(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        aid = (self._body_json().get("activityId") or "").strip()
+        if not LEARNING.is_roleplay(aid):
+            self._send({"error": "not a roleplay activity", "reason": "not_scorable"}, 400)
+            return
+        with acct_lock:
+            p = load_progress(user)
+            learning = p.setdefault("learning", {})
+            _, view = LEARNING.start_roleplay_session(learning, aid, int(time.time()),
+                                                      random.Random())
+            if view is None:
+                self._send({"error": "roleplay content unavailable",
+                            "reason": "content_unavailable"}, 400)
+                return
+            save_progress(user, p)
+        self._send(view)          # sessionId + 目前 NPC 台詞；不含路由/關鍵字/權重/下一節點
+
+    def _handle_roleplay_respond(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        d = self._body_json()
+        sid = (d.get("sessionId") or "").strip()
+        text = d.get("response")
+        if not isinstance(text, str):
+            self._send({"error": "response must be a string", "reason": "bad_response"}, 400)
+            return
+        seq = d.get("seq")
+        # seq 是「client 以為自己在回答第幾回合」。只用來擋重送/雙擊/雙分頁，不能改分數。
+        if seq is not None and (isinstance(seq, bool) or not isinstance(seq, int)):
+            self._send({"error": "seq must be an integer", "reason": "bad_seq"}, 400)
+            return
+        with acct_lock:
+            p = load_progress(user)
+            learning = p.setdefault("learning", {})
+            # session 存在「該帳號自己的」學習狀態裡 → 別人的 sessionId 對這個帳號根本不存在。
+            _, view, reason = LEARNING.roleplay_respond(learning, sid, text, seq,
+                                                        int(time.time()), random.Random())
+            if view is None:
+                self._send({"error": "cannot apply this turn", "reason": reason or "bad_session"},
+                           400)
+                return
+            save_progress(user, p)
+        # Role-play 目前沒有任何獎勵/資格政策，這裡仍走與其他活動相同的結算路徑以免日後漏接。
+        delta = clampi(view.get("rewardAmount", 0)) + clampi(view.get("lessonRewardAmount", 0))
+        newgold = econ_add_gold(user, delta) if delta else None
+        resp = {"ok": True, "sessionId": sid, "activityId": view.get("activityId"),
+                "result": view.get("result"), "hint": view.get("hint"),
+                "prompt": view["prompt"], "turn": view["turn"], "passes": view["passes"],
+                "completed": view["completed"]}
+        if view["completed"]:
+            resp.update(score=view.get("score"), pct=view.get("pct"),
+                        qualifications=view.get("granted") or [],
+                        rewarded=bool(view.get("rewarded")), gold=newgold,
+                        lessonCompleted=bool(view.get("lessonCompleted")),
+                        lessonCompletedNow=bool(view.get("lessonCompletedNow")))
         self._send(resp)
 
     # 唯讀的整課進度：哪些課有權威完成政策、已完成了哪些、還缺哪些活動。不含答案鍵/批改設定/獎勵細節。

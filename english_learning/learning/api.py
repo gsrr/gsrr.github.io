@@ -8,12 +8,25 @@ The service is stateless with respect to players — every method takes the play
 and returns it mutated for the caller to persist, exactly like the pure modules underneath.
 """
 from . import (completion, content, grading, identity, matching, qualifications, registry,
-               rewards, stt_scoring)
+               rewards, roleplay, stt_scoring)
 
 # stable machine reasons returned to the client (never internal exception detail)
 REASON_NOT_GRADABLE = "not_gradable"
 REASON_BAD_ANSWERS = "bad_answers"
 REASON_CONTENT_UNAVAILABLE = "content_unavailable"
+
+
+def _stored(state, table, key):
+    """One record out of a per-account progress table, tolerating corrupt stored state.
+
+    Persisted JSON can be malformed (hand-edited, truncated, or written by an older build), and a
+    non-dict table must never crash a read — an unreadable record simply means "no evidence yet".
+    """
+    tbl = (state or {}).get(table)
+    if not isinstance(tbl, dict):
+        return None
+    rec = tbl.get(key)
+    return rec if isinstance(rec, dict) else None
 
 
 class LearningService:
@@ -188,6 +201,138 @@ class LearningService:
                 out[k] = act_out[k]
         return state, out
 
+    # ---- Role-play (Phase 4C) - server-owned sessions ----
+    def is_roleplay(self, activity_id):
+        return self.registry.scorer_type_of(activity_id) == roleplay.SCORER_TYPE
+
+    def roleplay_graph(self, activity_id):
+        """(graph, version) for a Role-play activity, or (None, None).
+
+        The path comes from the REGISTRY, never from the request, and passes the same three gates as
+        every other content read (allowlist -> path shape -> realpath containment). The graph is then
+        structurally validated before it is ever run, so a malformed scenario fails closed instead of
+        producing a bogus score.
+        """
+        if not self.is_roleplay(activity_id):
+            return None, None
+        path = self.registry.scenario_path_of(activity_id)
+        graph, raw = content.load_json_document(
+            path, self.content_root, self.registry.approved_scenario_paths())
+        if not graph or roleplay.validate_graph(graph):
+            return None, None
+        return graph, roleplay.graph_version(raw)
+
+    @staticmethod
+    def _roleplay_prompt(graph, session):
+        """The safe display payload for the CURRENT node: the NPC line and nothing else.
+
+        Deliberately excludes routes, examples, keywords, weights and next_nodes - the client must
+        not be able to read (or replay) the answer key it is being scored against.
+        """
+        node = {n.get("id"): n for n in (graph.get("nodes") or [])}.get(session["currentNodeId"])
+        node = node or {}
+        npc = node.get("npc") or {}
+        return {"nodeId": node.get("id"), "text": npc.get("text") or "",
+                "gender": npc.get("gender") or graph.get("npc_gender") or "female",
+                "objective": node.get("learning_objective") or []}
+
+    def roleplay_view(self, graph, session_id, session):
+        """Everything the UI needs, all of it server-derived."""
+        res = roleplay.result_of(session)
+        return {"sessionId": session_id, "activityId": session.get("activityId"),
+                "you": graph.get("you"), "npc": graph.get("npc"),
+                "title": graph.get("title"),
+                "prompt": self._roleplay_prompt(graph, session),
+                "turn": int(session.get("turns") or 0),
+                "passes": int(session.get("passes") or 0),
+                "completed": bool(session.get("completed")),
+                "pct": res["pct"] if session.get("completed") else None}
+
+    def start_roleplay_session(self, state, activity_id, now, rng=None):
+        """Open a server-owned session. Returns (state, view) or (state, None).
+
+        Starting a session retires any other open session for the same activity (the UI shows one at
+        a time) and prunes expired ones, so live state cannot accumulate.
+        """
+        graph, version = self.roleplay_graph(activity_id)
+        if not graph:
+            return state, None
+        if not isinstance(state, dict):
+            state = {}
+        sessions = roleplay.prune_sessions(state.get("roleplaySessions"), now)
+        for sid in [s for s, v in sessions.items()
+                    if (v or {}).get("activityId") == activity_id and not (v or {}).get("completed")]:
+            sessions.pop(sid, None)
+        session = roleplay.start_session(graph, version, activity_id, now)
+        if not session:
+            return state, None
+        sid = roleplay.new_session_id()
+        sessions[sid] = session
+        state["roleplaySessions"] = sessions
+        if session["completed"]:                 # a start node that is already terminal
+            self._settle_roleplay(state, sid, session, now)
+        return state, self.roleplay_view(graph, sid, session)
+
+    def roleplay_respond(self, state, session_id, text, seq, now, rng):
+        """One authoritative turn. Returns (state, view_or_None, reason).
+
+        A session lives inside the learning state of the account that owns it, so another account
+        simply has no such session - ownership is structural, not a check that can be forgotten.
+        `seq` is the turn index the client believes it is answering; a mismatch means a duplicate
+        submit, a double-click or a second tab, and is refused without touching the counters.
+        """
+        if not isinstance(state, dict):
+            return state, None, "unknown_session"
+        sessions = state.get("roleplaySessions")
+        if not isinstance(sessions, dict):
+            return state, None, "unknown_session"
+        session = sessions.get(session_id)
+        if not isinstance(session, dict):
+            return state, None, "unknown_session"
+        if roleplay.is_expired(session, now):
+            sessions.pop(session_id, None)
+            return state, None, "session_expired"
+        if session.get("completed"):
+            return state, None, "session_complete"
+        if seq is not None and seq != int(session.get("turns") or 0):
+            return state, None, "stale_turn"          # duplicate / out-of-order submit
+        graph, version = self.roleplay_graph(session.get("activityId"))
+        if not graph:
+            return state, None, "content_unavailable"
+        if session.get("graphVersion") != version:
+            return state, None, "graph_changed"       # never score against a different graph
+        status, info = roleplay.apply_response(session, graph, text, rng, now)
+        if status != "ok":
+            return state, None, status
+        view = self.roleplay_view(graph, session_id, session)
+        view.update(result=info["result"], hint=info["hint"])
+        if session["completed"]:
+            view.update(self._settle_roleplay(state, session_id, session, now))
+        else:
+            view.update(granted=[], grantedNow=[], rewardAmount=0, rewarded=False,
+                        lessonCompleted=False, lessonCompletedNow=False,
+                        lessonQualifications=[], lessonRewardAmount=0, lessonRewarded=False)
+        return state, view, None
+
+    def _settle_roleplay(self, state, session_id, session, now):
+        """Persist authoritative Level 10 evidence, LATEST-WINS, and settle the parent lesson.
+
+        Latest-wins matches the shipped behaviour: recordScore overwrites unconditionally, so a
+        second (worse) conversation replaces the first. Role-play has no independent pass definition
+        beyond its numeric score, so no activityCompletion is written and nothing is granted or paid.
+        """
+        activity_id = session.get("activityId")
+        res = roleplay.result_of(session)
+        out = {"granted": [], "grantedNow": [], "rewardAmount": 0, "rewarded": False}
+        if res["turns"] > 0:
+            prog = state.setdefault("roleplayProgress", {})
+            prog[activity_id] = {"passes": res["passes"], "turns": res["turns"], "pct": res["pct"],
+                                 "sessionId": session_id, "updatedAt": now}
+        state["roleplaySessions"] = roleplay.prune_sessions(state.get("roleplaySessions"), now)
+        self._settle_lesson(state, self.registry.lesson_of_activity(activity_id), now, out)
+        out["score"] = res
+        return out
+
     # ---- Matching (Phase 3E2) — server-owned rounds ----
     def is_matching(self, activity_id):
         return self.registry.scorer_type_of(activity_id) == matching.SCORER_TYPE
@@ -285,18 +430,28 @@ class LearningService:
                                                     total=100, so the pair is already exact)
           Matching              -> matchingProgress(legacy recordScore(5, firstTry, n) => correct/total
                                                     stored verbatim)
+          Role-play             -> roleplayProgress(legacy recordScore(10, passes, turns) =>
+                                                    correct=passes, total=turns)
         Every source therefore supplies an exact numerator/denominator, so Rule A can average the
         UNROUNDED per-level percentages exactly as index.html does.
         """
         state = state or {}
+        if self.is_roleplay(activity_id):
+            rec = _stored(state, "roleplayProgress", activity_id)
+            if isinstance(rec, dict) and isinstance(rec.get("turns"), int) and rec["turns"] > 0:
+                # legacy stores {correct: passes, total: turns}; a 0-turn session is "unscored",
+                # exactly as statusFromScores treats a falsy total.
+                return {"correct": int(rec.get("passes") or 0), "total": int(rec["turns"]),
+                        "pct": int(rec.get("pct") or 0)}
+            return None
         if self.is_matching(activity_id):
-            rec = (state.get("matchingProgress") or {}).get(activity_id)
+            rec = _stored(state, "matchingProgress", activity_id)
             if isinstance(rec, dict) and isinstance(rec.get("total"), int) and rec["total"] > 0:
                 return {"correct": int(rec.get("correct") or 0), "total": int(rec["total"]),
                         "pct": int(rec.get("pct") or 0)}
             return None
         if self.is_read_along(activity_id):
-            rec = (state.get("sttProgress") or {}).get(activity_id)
+            rec = _stored(state, "sttProgress", activity_id)
             if isinstance(rec, dict) and isinstance(rec.get("pct"), int):
                 return {"correct": int(rec["pct"]), "total": 100, "pct": int(rec["pct"])}
             return None
@@ -387,7 +542,10 @@ class LearningService:
                 "lessonCompletions": state.get("lessonCompletions") or {},
                 "sttProgress": state.get("sttProgress") or {},
                 "matchingProgress": state.get("matchingProgress") or {},
+                "roleplayProgress": state.get("roleplayProgress") or {},
                 "activityScores": state.get("activityScores") or {}}
+        # NOTE: roleplaySessions is deliberately NOT exposed — an in-flight session holds the
+        # current node, and revealing it would tell the client where the conversation is going.
 
     def player_qualification_ids(self, state):
         return qualifications.earned_qualification_ids(state)

@@ -112,6 +112,12 @@ reg = call("GET", "/api/learning/registry")[1]["registry"]
 # the attempt endpoint, so they are advertised separately and excluded from the deterministic set.
 READ_ALONG = {a for a, v in reg["activities"].items() if v.get("scored") == "stt"}
 MATCHING = {a for a, v in reg["activities"].items() if v.get("scored") == "matching"}
+# Phase 4C: Role-play is a stateful server-owned SESSION, so like STT and Matching it is advertised
+# separately and is not reachable through the stateless attempt endpoint. It is covered exhaustively
+# by tests/learning_roleplay_test.py.
+ROLEPLAY = {a for a, v in reg["activities"].items() if v.get("scored") == "roleplay"}
+assert ROLEPLAY == {"english.prea1.taipei.%s.roleplay" % s for s in
+                    ("zoo", "mrt", "market", "park")}, ROLEPLAY
 # Phase 4B deepened MRT/Market/Park to the same six activities Zoo has, so each of the three now
 # carries a Read-Along and a Matching activity too. Their behaviour is covered exhaustively by
 # tests/taipei_content_depth_test.py; here we only pin the advertised sets so a stray registration
@@ -124,9 +130,14 @@ assert MATCHING == {"english.prea1.taipei.zoo.matching", "english.a1.core.001.ma
 # Phase 4A registered MRT/Market/Park quiz3 as progression gates; Phase 4B added quiz4/wh/cloze.
 PROGRESSION = {"%s.%s" % (d, k) for d in DEEP for k in ("quiz3", "quiz4", "wh", "cloze")}
 assert PROGRESSION <= set(reg["activities"]), sorted(reg["activities"])
-assert set(reg["activities"]) - READ_ALONG - MATCHING - PROGRESSION == set(RIGHT), sorted(reg["activities"])
+assert set(reg["activities"]) - READ_ALONG - MATCHING - ROLEPLAY - PROGRESSION == set(RIGHT), \
+    sorted(reg["activities"])
 assert all(reg["activities"][a]["serverGraded"] is True for a in reg["activities"])
 assert all(reg["activities"][a]["scored"] == "deterministic" for a in RIGHT)
+# a Role-play activity cannot be graded through the stateless attempt endpoint
+for a in sorted(ROLEPLAY):
+    code, body = attempt(a, [])
+    assert code == 400 and body["reason"] == "not_gradable", (a, code, body)
 blob = json.dumps(reg)
 for leak in ("graderType", "graderConfig", "rewardPolicy", "legacyKeys", "PASS_GOLD", "10000",
              "promptField", "answerField"):

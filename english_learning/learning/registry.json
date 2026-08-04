@@ -294,6 +294,42 @@
       "title": "Taipei · At the Park — Fill in the blank",
       "grants": [],
       "rewardPolicy": "none"
+    },
+
+    "english.prea1.taipei.zoo.roleplay": {
+      "lessonId": "english.prea1.taipei.zoo",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/Pre-A1-taipei-zoo",
+      "title": "Taipei · At the Zoo — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.prea1.taipei.mrt.roleplay": {
+      "lessonId": "english.prea1.taipei.mrt",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/Pre-A1-taipei-mrt",
+      "title": "Taipei · On the MRT — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.prea1.taipei.market.roleplay": {
+      "lessonId": "english.prea1.taipei.market",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/Pre-A1-taipei-market",
+      "title": "Taipei · The Night Market — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.prea1.taipei.park.roleplay": {
+      "lessonId": "english.prea1.taipei.park",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/Pre-A1-taipei-park",
+      "title": "Taipei · At the Park — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
     }
   },
 

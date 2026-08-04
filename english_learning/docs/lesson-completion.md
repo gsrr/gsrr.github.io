@@ -100,7 +100,7 @@ For the Zoo lesson (`Pre-A1/taipei/zoo`, scored levels `2,3,4,5,7,9`) and for a 
 | 7 · WH | `multiple_choice` | `wh` | **A** | **YES** (Phase 3C) |
 | 8 · Dictation | `dictation` | `dictation` | **A** | **YES** (Phase 3C) |
 | 9 · Fill Blank | `multiple_choice` | `cloze` | **A** | **YES** (Phase 3C) |
-| 10 · Role-play | roleplay | roleplay pack | **C** | **NO** — ~~and not part of any lesson's rule~~ **and it IS part of every lesson's rule (corrected in Phase 4B)** |
+| 10 · Role-play | roleplay | roleplay pack | ~~**C**~~ **A** | ~~**NO**~~ **YES (Phase 4C)** — server-owned session; it IS part of every lesson's rule (corrected in Phase 4B) |
 
 ### Why level 2 is not authoritative (§40)
 
@@ -166,7 +166,7 @@ Recommendation is to keep them separate; flagged as §46.7.
 | 1 | Lesson completion depends on **matching** | **TRUE** | level 5 is in `scoredLevelsFor` for every lesson |
 | 2 | Depends on **client-only scores** | **TRUE** | both rules read `localStorage`; levels 2 and 5 have no server evidence |
 | 3 | **STT evidence** cannot be consumed authoritatively | **TRUE** | `/api/stt` returns a transcript only; the score is client-side, with a "full marks" fallback |
-| 4 | **Roleplay** required | ~~FALSE~~ **TRUE (corrected in Phase 4B)** | `scoredLevelsFor` appends level 10 unconditionally, so every lesson's Rule A requires a roleplay score. This does not change the Phase 3D decision (machinery only, zero lessons configured) — it makes it *more* correct. It did mean Zoo's Phase 3F policy covered only 6 of the 7 legacy levels, so **that policy was retired in Phase 4B** and production is back to **0 active completion policies**. See `docs/roleplay-authority-gap.md`. |
+| 4 | **Roleplay** required | ~~FALSE~~ **TRUE (corrected in Phase 4B)** | `scoredLevelsFor` appends level 10 unconditionally, so every lesson's Rule A requires a roleplay score. This did mean Zoo's Phase 3F policy covered only 6 of the 7 legacy levels, so **that policy was retired in Phase 4B**. **Phase 4C then made level 10 server-authoritative**, so all seven levels now have an authoritative source and exact Rule A *can* be reproduced server-side — but production is still at **0 active completion policies**, because activation is a separate approved step. See `docs/roleplay-authority.md`. |
 | 5 | Legacy average **cannot be reproduced** from server state | **TRUE** | follows from 1–3 |
 | 6 | Choosing required activities changes the meaning of completion | **TRUE** | any server-only subset drops levels 2 and 5 |
 | 7 | `passcnt` semantics conflict | **TRUE** | it is an occupy-bootstrap event counter, not lesson state (§5 above) |

@@ -103,6 +103,15 @@ account's state — so another account structurally cannot reach them — and ar
 completion or dropped after `ROUND_TTL`. A `matching_first_try` activity DOES declare a `contentKey`
 (`vocab`), unlike `read_along_stt` whose content is the lesson dialogue.
 
+**Phase 4C update.** `roleplayProgress[activityId] = {passes, turns, pct, sessionId, updatedAt}`
+holds authoritative Level 10 evidence, reproducing `recordScore(10, passes, turns)`; the resolver reads
+`correct = passes`, `total = turns`. Live conversations live in `roleplaySessions[sessionId]`
+(`activityId, graphVersion, currentNodeId, turns, passes, visited, createdAt, updatedAt, completed`),
+inside the owning account's own state so cross-account use is structurally impossible, and are NEVER
+exposed by `/api/learning/state`. A `roleplay_local` activity declares no `contentKey`; it names its
+conversation graph with `scenarioPath`, which is the only path the backend will read for it, and the
+graph is structurally validated before any session can start. See `docs/roleplay-authority.md`.
+
 **Phase 3E1 update.** `sttProgress[activityId] = {sentences: {<index>: {score, updatedAt}},
 totalSentences, pct}` holds authoritative Read-Along evidence, per account. It is best-per-sentence
 (a worse retry never lowers a score) and is created only when a sentence is actually scored. Crossing
@@ -147,7 +156,7 @@ Not every activity is deterministic. An activity declares **exactly one** of:
 | field | meaning | dispatch |
 |---|---|---|
 | `graderType` | deterministic text grading | `grading.GRADERS[...]` |
-| `scorerType` | stateful / non-deterministic input | `read_along_stt` → `learning/stt_scoring.py`; `matching_first_try` → `learning/matching.py` |
+| `scorerType` | stateful / non-deterministic input | `read_along_stt` → `learning/stt_scoring.py`; `matching_first_try` → `learning/matching.py`; `roleplay_local` → `learning/roleplay.py` |
 
 STT is deliberately **outside** the `GRADERS` table: its input is audio→transcript rather than
 submitted answers, and its retry rule is *best-per-sentence* rather than latest-wins. Its content is
