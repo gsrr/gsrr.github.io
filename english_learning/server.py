@@ -973,6 +973,17 @@ def _lesson_status_fields(out):
     return {k: out[k] for k in _LESSON_STATUS_FIELDS if k in out}
 
 
+# Phase 5F：第一個正式獎勵是「純外觀(cosmetic)」。只回傳前端顯示得到的東西——這次是否真的發放、
+# 發了哪一個 itemId——不外洩 ledger 內部(grantKey/grantedAt/金額)。itemId 只有在「這一次」真的
+# 授予時才存在(見 learning/api.py grant_reward)，所以前端不需要自己判斷重複。
+_REWARD_FIELDS = ("lessonRewardType", "lessonRewardItemId", "courseId", "courseCompleted",
+                  "courseCompletedNow", "courseRewardType", "courseRewardItemId")
+
+
+def _reward_fields(out):
+    return {k: out[k] for k in _REWARD_FIELDS if k in out}
+
+
 class Handler(BaseHTTPRequestHandler):
     def _send(self, obj, code=200):
         body = json.dumps(obj).encode()
@@ -1141,7 +1152,9 @@ class Handler(BaseHTTPRequestHandler):
                     "score": out["score"], "improved": out["improved"],
                     "totalSentences": out["totalSentences"],
                     "activityPct": out["activityPct"], "activityPassed": out["activityPassed"],
-                    "qualifications": out["granted"], "rewarded": out["rewarded"], "gold": newgold})
+                    "qualifications": out["granted"], "rewarded": out["rewarded"], "gold": newgold,
+                    "lessonCompletedNow": bool(out.get("lessonCompletedNow")),
+                    **_reward_fields(out)})
 
     # ---- 帳號 / 雲端進度 ----
     def _body_json(self):
@@ -1908,7 +1921,7 @@ class Handler(BaseHTTPRequestHandler):
                     "lessonCompletedNow": out["lessonCompletedNow"],
                     "lessonQualifications": out["lessonQualifications"],
                     "lessonRewarded": out["lessonRewarded"],
-                    **_lesson_status_fields(out)})
+                    **_reward_fields(out), **_lesson_status_fields(out)})
 
     # Phase 3E2：配對(Level 5)改為「伺服器擁有回合」。抽樣、正確配對、first-try 狀態全在後端；
     #   client 只拿到可顯示的單字與圖片(不含對應關係)，並把每次點擊送回來由後端判定。
@@ -1957,7 +1970,9 @@ class Handler(BaseHTTPRequestHandler):
                 "total": out["total"], "completed": out["completed"], "scored": out["scored"]}
         if out["status"] == "complete":
             resp.update(result=out["result"], qualifications=out.get("granted") or [],
-                        rewarded=bool(out.get("rewarded")), gold=newgold)
+                        rewarded=bool(out.get("rewarded")), gold=newgold,
+                        lessonCompletedNow=bool(out.get("lessonCompletedNow")),
+                        **_reward_fields(out))
         self._send(resp)
 
     # Phase 4C：Level 10 角色扮演改為「伺服器擁有整場對話」。劇本圖、目前節點、分支 RNG、
@@ -2025,7 +2040,7 @@ class Handler(BaseHTTPRequestHandler):
                         rewarded=bool(view.get("rewarded")), gold=newgold,
                         lessonCompleted=bool(view.get("lessonCompleted")),
                         lessonCompletedNow=bool(view.get("lessonCompletedNow")),
-                        **_lesson_status_fields(view))
+                        **_reward_fields(view), **_lesson_status_fields(view))
         self._send(resp)
 
     # 唯讀的整課進度：哪些課有權威完成政策、已完成了哪些、還缺哪些活動。不含答案鍵/批改設定/獎勵細節。

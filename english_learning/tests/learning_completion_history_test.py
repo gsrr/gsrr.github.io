@@ -25,7 +25,7 @@ import urllib.request as U
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 from game import conquest  # noqa: E402
-from learning import api as L, completion as C, registry as R  # noqa: E402
+from learning import api as L, completion as C, registry as R, rewards as W  # noqa: E402
 import territory_catalog  # noqa: E402
 
 passed = 0
@@ -75,7 +75,10 @@ for slug, lid in LIDS.items():
     assert pol["passMark"] == C.PASS_MARK == 80, lid
     assert pol["requiredActivityIds"] == ["%s.%s" % (lid, s) for s in SUFFIX], lid
     assert len(pol["requiredActivityIds"]) == 7, lid
-    assert reg.lesson_reward_policy_of(lid) == "none", lid          # §15
+    # §15: Phase 5F attached a COSMETIC badge here. What must stay true is that no lesson reward
+    # moves the economy — the policy name alone was only ever a proxy for that.
+    assert reg.lesson_reward_policy_of(lid) == "lesson_mastery_badge", lid
+    assert not W.is_economic(reg.lesson_reward_policy_of(lid)), lid
     assert reg.lesson_qualification_ids_for(lid) == [], lid         # §16
     for aid in pol["requiredActivityIds"]:
         assert aid in reg.activities and reg.is_server_scored(aid), aid

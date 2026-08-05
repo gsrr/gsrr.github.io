@@ -337,7 +337,9 @@ for lid in prod.registry.lessons:
         assert len(ev2["missingActivityIds"]) == 7, (lid, ev2["missingActivityIds"])
 # no lesson-scope qualification exists in production, so none can be earned
 assert all((q or {}).get("scope") == "activity" for q in prod.registry.qualifications.values())
-assert all(prod.registry.lesson_reward_policy_of(l) == "none" for l in TAIPEI4)
+# Phase 5F: the four Taipei lessons carry a cosmetic badge. None of them may be economic.
+assert all(prod.registry.lesson_reward_policy_of(l) == "lesson_mastery_badge" for l in TAIPEI4)
+assert not any(W.is_economic(prod.registry.lesson_reward_policy_of(l)) for l in TAIPEI4)
 assert all(prod.registry.lesson_qualification_ids_for(l) == [] for l in TAIPEI4)
 pv = prod.progress_view({"activityCompletions": {aid: {"passedAt": 1, "pct": 100}
                                                  for aid in prod.registry.activities}})
@@ -350,7 +352,10 @@ ok("production: exactly the 4 Taipei lessons carry an active v2 policy, all rewa
 # the Zoo activity reward is untouched by any of this (§35)
 zoo = "english.prea1.taipei.zoo.quiz3"
 assert prod.reward_for(zoo) == {"type": "gold", "amount": 10000, "itemId": None, "once": True}
-assert prod.registry.lesson_reward_policy_of("english.prea1.taipei.zoo") == "none"
+# Zoo's lesson now carries the cosmetic badge, which pays nothing — the activity payout below is
+# unaffected by it, which is the point of this section.
+assert prod.registry.lesson_reward_policy_of("english.prea1.taipei.zoo") == "lesson_mastery_badge"
+assert W.resolve("lesson_mastery_badge", {"PASS_GOLD": 10000})["amount"] == 0
 assert W.resolve("none", {"PASS_GOLD": 10000})["amount"] == 0
 zoo_key = json.load(open(os.path.join(ROOT, "Pre-A1", "taipei", "zoo.json"), encoding="utf-8"))["quiz3"]
 res, err = prod.grade_attempt(zoo, [{"q": i["q"], "answer": i["answer"]} for i in zoo_key])

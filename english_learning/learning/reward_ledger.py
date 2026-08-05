@@ -19,13 +19,18 @@ Design notes:
   * a corrupt or hand-edited ledger reads as "nothing granted" rather than raising, so a damaged
     progress file can never crash a lesson — and can never fabricate ownership either.
 
-PRE-ACTIVATION CONCERN — see docs/reward-framework.md §8. That last note is safe only while the
-ledger is an audit trail: the one active reward still guards its payout with the historical
-per-activity `rewarded` flag, so a wiped ledger cannot re-pay it. As soon as a lesson, campaign,
-cosmetic, profile or gameplay reward goes live, the ledger BECOMES that reward's idempotency gate and
-"corruption reads as empty" starts to mean "corruption permits a re-grant". Decide then whether such
-a reward should fail closed, rebuild from recovery data, or accept the duplicate — the answer may
-differ per reward type. Deliberately unchanged in Phase 5E.
+CORRUPTION POLICY — see docs/reward-framework.md §8. Since Phase 5F this ledger IS the idempotency
+gate for the two live COSMETIC rewards, so "corruption reads as empty" does mean "corruption permits
+a re-grant". That was decided and accepted for cosmetics: the worst case is re-earning a badge and
+seeing the banner twice, and nothing cosmetic can be spent, traded or fought with. Gold is still NOT
+gated here — `standard_activity_pass` keeps its historical per-activity `rewarded` flag, so a wiped
+ledger cannot re-pay it.
+
+SAFETY BOUNDARY: this read FAILS OPEN, and that is accepted for cosmetics ONLY. It must not be
+applied automatically to gold, profile or gameplay rewards. Before activating any non-cosmetic
+ledger-backed reward, a fail-closed or recoverable corruption policy has to be defined and
+implemented first — refuse to grant while the ledger is unreadable, or rebuild it from durable
+recovery data. Activating such a reward on top of today's fail-open read is a defect.
 """
 
 LEDGER_KEY = "rewardLedger"

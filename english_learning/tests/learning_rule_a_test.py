@@ -13,7 +13,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
-from learning import api as L, completion as C, registry as R  # noqa: E402
+from learning import api as L, completion as C, registry as R, rewards as W  # noqa: E402
 
 passed = 0
 
@@ -146,11 +146,13 @@ assert pol["type"] == "average_required_activities", pol
 assert pol["version"] == 2 and pol["passMark"] == 80
 assert pol["requiredActivityIds"] == REQ, pol["requiredActivityIds"]
 assert svc.registry.retired_policy_versions(ZOO_LESSON) == [1], "v1 stays spent"
-assert svc.registry.lesson_reward_policy_of(ZOO_LESSON) == "none"
+assert svc.registry.lesson_reward_policy_of(ZOO_LESSON) == "lesson_mastery_badge"   # 5F: cosmetic
+assert not W.is_economic(svc.registry.lesson_reward_policy_of(ZOO_LESSON)), "never gold"
 assert svc.registry.lesson_qualification_ids_for(ZOO_LESSON) == []
 assert len(REQ) == 7 and all(svc.registry.lesson_of_activity(a) == ZOO_LESSON for a in REQ)
 csvc = svc                       # the rest of this file exercises PRODUCTION, not a candidate
-ok("Zoo v2 active: 7 required activities in level order, passMark 80, no reward, no grants; v1 retired")
+ok("Zoo v2 active: 7 required activities in level order, passMark 80, a cosmetic badge (no gold), "
+   "no grants; v1 retired")
 
 
 def zoo_state(scores):

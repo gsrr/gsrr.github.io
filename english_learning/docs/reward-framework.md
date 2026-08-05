@@ -1,12 +1,22 @@
-# Reward framework — registry-driven, scoped, and inert (Phase 5E)
+# Reward framework — registry-driven and scoped (Phase 5E, activated in 5F)
 
 Phase 5D established that mastery has no gameplay consequence and that quiz3 carries almost all
-mechanical value. Rather than answer that with a gold number, Phase 5E builds the **infrastructure**
-a reward decision would need, and ships it switched off. **No new reward is active.** Production is
-byte-for-byte the same economy it was before this phase: one gold-bearing activity, no lesson reward,
-no campaign reward.
+mechanical value. Rather than answer that with a gold number, **Phase 5E** built the
+**infrastructure** a reward decision would need and shipped it switched off. **Phase 5F** then turned
+on the first production rewards, and deliberately chose the safest possible ones: two **cosmetic**
+policies that move no gold, change no gameplay, and gate nothing.
 
-Reward *tuning* is a separate product decision that comes after this framework exists.
+Active today:
+
+| Scope | Policy | Type | Grants |
+|---|---|---|---|
+| lesson (×4 Taipei) | `lesson_mastery_badge` | cosmetic | `badge.lesson.mastered`, once per lesson |
+| course (Taipei) | `campaign_trophy` | cosmetic | `trophy.campaign.complete`, once |
+| activity (Zoo quiz3) | `standard_activity_pass` | gold | PASS_GOLD — **pre-existing, unchanged** |
+
+The economy is byte-for-byte what it was before Phase 5E: still exactly one gold-bearing activity,
+still zero gold from any lesson or campaign. Reward *tuning* — whether mastery should ever pay
+anything mechanical — remains a separate product decision.
 
 ---
 
@@ -77,19 +87,22 @@ storage, idempotency and validation.
 
 ## 6. Current policy table
 
-Six reference implementations were added, one per type/scope combination worth having. All are
-**unreferenced by production content**. `ACTIVE_POLICY_IDS` in `learning/rewards.py` gates what
-content may name, and `tools/validate_learning_registry.py` fails if that is ever violated.
+Six reference implementations were added in Phase 5E, one per type/scope combination worth having.
+Phase 5F promoted the two **cosmetic** ones into production; the other four — both gold policies, the
+profile frame and the gameplay boost — remain **unreferenced**. `ACTIVE_POLICY_IDS` in
+`learning/rewards.py` gates what content may name, and `tools/validate_learning_registry.py` fails if
+that is ever violated, so activating a policy is a deliberate two-place change (allowlist + registry)
+rather than an edit anyone can make in content alone.
 
 ```
 reward framework: 8 policies defined, types ['cosmetic', 'gameplay', 'gold', 'none', 'profile']
   campaign_complete_gold     type=gold      scopes=course                 inert (unreferenced)
   campaign_profile_frame     type=profile   scopes=course                 inert (unreferenced)
-  campaign_trophy            type=cosmetic  scopes=course                 inert (unreferenced)
-  lesson_mastery_badge       type=cosmetic  scopes=lesson                 inert (unreferenced)
+  campaign_trophy            type=cosmetic  scopes=course                 REFERENCED by 1
+  lesson_mastery_badge       type=cosmetic  scopes=lesson                 REFERENCED by 4
   lesson_mastery_boost       type=gameplay  scopes=lesson                 inert (unreferenced)
   lesson_mastery_gold        type=gold      scopes=lesson                 inert (unreferenced)
-  none                       type=none      scopes=activity,lesson,course REFERENCED by 37
+  none                       type=none      scopes=activity,lesson,course REFERENCED by 32
   standard_activity_pass     type=gold      scopes=activity               REFERENCED by 1
 economic policies in use: ['standard_activity_pass']
 ```
@@ -102,32 +115,55 @@ supply, so even if something did reference them today they would resolve to zero
 `LearningService.evaluate_course()` derives campaign completion from lesson completion: a lesson
 counts when the **active** policy version has a persisted completion, so a later poor retry never
 un-completes a campaign. A course with no completable lesson yields no lessons and can never fire a
-course reward. `_settle_course()` runs after a lesson settles; today it is a no-op for every course
-because every course policy is `none`. `progress_view` exposes a read-only `campaigns` block.
+course reward. `_settle_course()` runs after a lesson settles; since Phase 5F it grants the Taipei
+campaign trophy the first time all four lessons are complete, and remains a no-op for every other
+course. `progress_view` exposes a read-only `campaigns` block.
 
 ---
 
-## 8. Known pre-activation concern — malformed ledger normalizes to empty
+## 8. Malformed ledger normalizes to empty — the decision taken in Phase 5F
 
-**Current behaviour.** A corrupt or non-dict `rewardLedger` — a string, a number, a list, or a dict
-whose entries are not well-formed — reads as **empty**. `entries()`, `owned_items()` and
-`get_grant()` all return nothing rather than raising, and ownership is never fabricated from junk.
+**Behaviour.** A corrupt or non-dict `rewardLedger` — a string, a number, a list, or a dict whose
+entries are not well-formed — reads as **empty**. `entries()`, `owned_items()` and `get_grant()` all
+return nothing rather than raising, and ownership is never fabricated from junk.
 
-**Why this is safe today.** Nothing in production depends on it. The only active reward,
-`standard_activity_pass`, still guards its payout with the historical per-activity `rewarded` flag,
-not with the ledger — so a wiped ledger cannot re-pay Zoo quiz3 gold. Today the ledger is an audit
-trail, not a gate.
+Phase 5E flagged this as a decision that had to be made **before** any further reward went live,
+because the moment a reward is activated the ledger becomes that reward's idempotency gate, and
+"corruption reads as empty" starts to mean "corruption permits a re-grant". Phase 5F activated two
+rewards, so the decision is now made:
 
-**Why it must be decided before activating anything else.** The moment a lesson, campaign, cosmetic,
-profile or gameplay reward goes live, the ledger *becomes* the idempotency gate for it. At that point
-"corruption reads as empty" means "corruption permits a re-grant". Before activating additional
-production rewards, decide explicitly which of these applies:
+**Decision: for cosmetic rewards, permit re-granting.** This is the third of the three options
+Phase 5E listed, and it is the cheapest failure mode for this reward type. If a learner's ledger were
+ever damaged, the worst outcome is that they re-earn a badge they already had and see the unlock
+banner a second time. Nothing is duplicated that anyone can spend, trade or fight with.
 
-- **fail closed** — refuse to grant while the ledger is unreadable, and surface the error;
-- **use recovery data** — rebuild the ledger from another durable source before granting;
-- **permit re-granting** — accept the duplicate as the cheaper failure mode for that reward type
-  (defensible for a cosmetic item, probably not for gold).
+What makes that acceptable is specifically that the two live policies are **non-economic**:
 
-The answer may legitimately differ per reward type. This behaviour is **deliberately unchanged in
-Phase 5E**: no existing test shows it puts the current production reward at risk, and changing it
-without an activation decision would be guessing at the requirement.
+- gold is still **not** gated by the ledger. `standard_activity_pass` keeps its historical
+  per-activity `rewarded` flag, so a wiped ledger cannot re-pay Zoo quiz3.
+- a cosmetic item confers nothing mechanical, so owning it twice is indistinguishable from owning it
+  once — `owned_items()` de-duplicates by item id.
+
+### The safety boundary (do not cross without a new decision)
+
+State it plainly: **cosmetic ledger corruption FAILS OPEN and may allow a cosmetic re-grant.** That is
+an accepted, bounded cost for cosmetics and nothing else.
+
+**This fail-open policy must NOT be applied automatically to gold, profile or gameplay rewards.**
+It was chosen because a duplicate badge is inert. A duplicate payout, a duplicate profile entitlement
+or a duplicate gameplay effect is not.
+
+**Precondition for any future non-cosmetic ledger-backed reward.** Before activating
+`lesson_mastery_gold`, `campaign_complete_gold`, `campaign_profile_frame`, `lesson_mastery_boost`, or
+any new policy of those types, a **fail-closed or recoverable** corruption policy must be defined and
+implemented first — refuse to grant while the ledger is unreadable, or rebuild it from durable
+recovery data before granting. Activating such a reward on top of today's fail-open read is a defect,
+not a configuration choice.
+
+## 9. What Phase 5F deliberately did not do
+
+- No gold, gameplay or profile reward was activated; those four policies remain unreferenced.
+- No qualification, territory requirement, `passcnt`, energy or conquest rule changed.
+- The ledger format is unchanged — activation was a registry edit plus an allowlist entry.
+- A cosmetic item is display-only. Nothing reads `owned_items()` to decide anything, and there is no
+  inventory, equip, spend or trade path.

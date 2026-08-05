@@ -36,18 +36,33 @@ gold_bearing = sorted(a for a in reg.activities if svc.reward_for(a)["amount"] >
 assert gold_bearing == [ZOO + ".quiz3"], gold_bearing
 assert svc.reward_for(ZOO + ".quiz3") == {"type": "gold", "amount": 10000, "itemId": None,
                                           "once": True}
+# Phase 5F activated the first production rewards. They are COSMETIC: the four Taipei lessons grant
+# a badge, the Taipei campaign grants a trophy, and nothing else grants anything.
+badged = sorted(l for l in reg.lessons if reg.lesson_reward_policy_of(l) == "lesson_mastery_badge")
+assert badged == sorted("english.prea1.taipei." + s for s in ("zoo", "mrt", "market", "park")), badged
+assert [c for c in reg.courses if reg.course_reward_policy_of(c) == "campaign_trophy"] == \
+    ["english.prea1.taipei"]
 for lid in reg.lessons:
-    assert reg.lesson_reward_policy_of(lid) == "none", lid
+    pid = reg.lesson_reward_policy_of(lid)
+    assert pid in ("none", "lesson_mastery_badge"), (lid, pid)
+    assert not W.is_economic(pid), (lid, pid)         # a lesson may never move the economy
 for cid in reg.courses:
-    assert reg.course_reward_policy_of(cid) == "none", cid
+    pid = reg.course_reward_policy_of(cid)
+    assert pid in ("none", "campaign_trophy"), (cid, pid)
+    assert not W.is_economic(pid), (cid, pid)         # nor may a campaign
+# no gameplay or profile reward is active anywhere
+for pid in ({reg.lesson_reward_policy_of(l) for l in reg.lessons}
+            | {reg.course_reward_policy_of(c) for c in reg.courses}
+            | {reg.reward_policy_of(a) for a in reg.activities}):
+    assert W.type_of(pid) in ("none", "gold", "cosmetic"), pid
 used = ({reg.reward_policy_of(a) for a in reg.activities}
         | {reg.lesson_reward_policy_of(l) for l in reg.lessons}
         | {reg.course_reward_policy_of(c) for c in reg.courses})
 assert used <= set(W.ACTIVE_POLICY_IDS), "production references a framework-only policy: %s" % (
     used - set(W.ACTIVE_POLICY_IDS))
 assert R.validate(R.DATA) == [], R.validate(R.DATA)
-ok("production unchanged: 1 gold-bearing activity @10000, 0 lesson rewards, 0 campaign rewards, and "
-   "no content references any framework-only policy")
+ok("production economy unchanged: 1 gold-bearing activity @10000, 4 COSMETIC lesson rewards, 1 "
+   "COSMETIC campaign reward, no gameplay/profile reward, nothing framework-only referenced")
 
 # ============================== the policy table ==============================
 assert set(W.TYPES) == {"none", "gold", "cosmetic", "profile", "gameplay"}, sorted(W.TYPES)

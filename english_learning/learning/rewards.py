@@ -71,7 +71,9 @@ POLICIES = {
 
 # Policies production content is allowed to reference today. Anything else is framework-only and the
 # validator will say so, so "we shipped an inert policy by accident" cannot happen quietly.
-ACTIVE_POLICY_IDS = ("none", "standard_activity_pass")
+# Phase 5F activated the two COSMETIC policies as the first production use of the framework. The
+# remaining four (gold x2, profile, gameplay) stay off this list and therefore stay unreferenceable.
+ACTIVE_POLICY_IDS = ("none", "standard_activity_pass", "lesson_mastery_badge", "campaign_trophy")
 
 
 def is_policy(policy_id):

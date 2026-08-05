@@ -310,6 +310,10 @@
   .comp-banner .cb-s { font-size: 12px; font-weight: 700; color: #15803d; letter-spacing: .04em;
                        margin-top: 3px; }
   .comp-banner .cb-m { font-size: 12px; color: #475569; margin-top: 4px; }
+  /* Phase 5F: the cosmetic unlock line. Same banner, one extra row — no new popup, no animation. */
+  .comp-banner .cb-u { font-size: 12px; font-weight: 700; color: #b45309; margin-top: 6px;
+                       padding-top: 6px; border-top: 1px dashed #e2e8f0; }
+  .rw-owned { margin-top: 6px; font-size: 12px; color: #b45309; font-weight: 700; }
   .lesson-row .comp-chip { margin-left: auto; font-size: 11px; font-weight: 700; padding: 1px 7px;
                            border-radius: 999px; background: #e2e8f0; color: #475569; }
   .lesson-row .comp-chip.done { background: #dcfce7; color: #15803d; }
@@ -2324,6 +2328,7 @@
       .then(d => {
         if (!d || typeof d.transcript !== "string") throw new Error((d && d.error) || "no transcript");
         if (d.authoritative) {                       // 伺服器已批改並保存 → 用它的分數
+          noteLessonCompletion(d);                   // Read-Along may finish the lesson
           sttAuthPct = d.activityPct;
           pronScores[sIdx] = d.score;                // 顯示鏡像；權威在後端(每句取最佳)
           showPron(d.target != null ? d.target : target, d.transcript, d.score);
@@ -2775,6 +2780,7 @@
           if (d.status === "correct" || d.status === "complete") {
             markCorrect(btn, d.scored === true);
             if (d.status === "complete" && d.result) finish(d.result.correct, d.result.total);
+            if (d.status === "complete") noteLessonCompletion(d);   // Matching may finish the lesson
           }
         })
         .catch(() => { statusEl.textContent = "⚠️ Network problem — tap the picture again."; })
@@ -5401,6 +5407,19 @@
 
   // ===== Phase 3B — learning progression (advisory display only; backend can_attack is authoritative) =====
   // 登錄簿是「內容中立」的：前端只認 qualification id、標題與 studyTarget，不認任何科目/課名寫死邏輯。
+  // ===== Phase 5F — cosmetic rewards (display only) =====
+  // The server decides what was granted; these are just the human labels for the item ids it sends.
+  // An unknown id renders as itself rather than being hidden, so a new cosmetic can never be
+  // silently invisible. Nothing here grants, counts or persists anything.
+  const REWARD_ITEMS = {
+    "badge.lesson.mastered":    { icon: "\ud83c\udfc5", name: "Lesson Mastery Badge" },
+    "trophy.campaign.complete": { icon: "\ud83c\udfc6", name: "Campaign Trophy" }
+  };
+  function rewardItemLabel(itemId) {
+    const it = REWARD_ITEMS[itemId];
+    return it ? (it.icon + " " + it.name) : String(itemId || "");
+  }
+  let myCosmetics = [];                // [{itemId, count}] — COSMETIC ledger entries only
   let learningRegistry = { qualifications: {}, activities: {}, lessons: {} };
   let myQualifications = new Set();    // qualification IDs this player has EARNED (server-authoritative mirror)
   let pendingStudy = null;             // { qualificationIds:[…], label, reopen() } — 學完自動回到觸發的領地
@@ -5416,7 +5435,19 @@
     const t = authToken();
     if (!t) { myQualifications = new Set(); if (cb) cb(); return; }
     fetch("/api/learning/state?token=" + encodeURIComponent(t)).then(r => r.ok ? r.json() : null)
-      .then(j => { myQualifications = new Set(Object.keys((j && j.qualifications) || {})); if (cb) cb(); })
+      .then(j => {
+        myQualifications = new Set(Object.keys((j && j.qualifications) || {}));
+        // Phase 5F: mirror ONLY the cosmetic grants. Amounts, grant keys and timestamps are ledger
+        // internals and are deliberately dropped here rather than rendered anywhere.
+        const seen = {};
+        Object.keys((j && j.rewardLedger) || {}).forEach(k => {
+          const e = j.rewardLedger[k];
+          if (!e || e.rewardType !== "cosmetic" || !e.itemId) return;
+          seen[e.itemId] = (seen[e.itemId] || 0) + 1;
+        });
+        myCosmetics = Object.keys(seen).sort().map(i => ({ itemId: i, count: seen[i] }));
+        if (cb) cb();
+      })
       .catch(() => { if (cb) cb(); });
   }
   // ===== Phase 5A — whole-lesson completion, read from /api/learning/progress =====
@@ -5654,18 +5685,29 @@
         '<div class="camp-sub"><b>' + done + ' / ' + total + '</b> Lessons Mastered</div>' +
         (done === total
           ? '<div class="camp-done">🏆 ' + escapeHtml(g.name) + ' Campaign Complete</div>' : '') +
+        // Phase 5F: the cosmetics this learner owns. Labels and counts only — no amount, no grant
+        // key, no timestamp, and nothing here is clickable or spendable.
+        (myCosmetics.length
+          ? '<div class="rw-owned">Rewards: ' + myCosmetics.map(c =>
+              escapeHtml(rewardItemLabel(c.itemId)) + (c.count > 1 ? " ×" + c.count : "")
+            ).join(" · ") + '</div>' : '') +
         '</div>';
     }).join("");
   }
   // STEP 5/6: lightweight, non-blocking celebrations. No persistence, no reward, no library.
-  function showBanner(title, sub, msg, isCamp) {
+  function showBanner(title, sub, msg, isCamp, unlocked) {
     const el = document.getElementById("compBanner") || (function () {
       const b = document.createElement("div"); b.id = "compBanner"; b.className = "comp-banner";
       document.body.appendChild(b); return b;
     })();
     el.className = "comp-banner" + (isCamp ? " is-camp" : "");
+    // Phase 5F: `unlocked` is whatever the SERVER said it granted on this response — never derived
+    // here. No line at all when nothing was granted (e.g. a lesson re-mastered after a dip).
+    const un = (unlocked || []).filter(Boolean);
     el.innerHTML = '<div class="cb-t">' + title + '</div><div class="cb-s">' + sub + '</div>' +
-      '<div class="cb-m">' + escapeHtml(msg) + '</div>';
+      '<div class="cb-m">' + escapeHtml(msg) + '</div>' +
+      (un.length ? '<div class="cb-u">Unlocked:<br>' +
+        un.map(i => escapeHtml(rewardItemLabel(i))).join("<br>") + '</div>' : '');
     el.classList.add("show");
     if (showBanner._t) clearTimeout(showBanner._t);
     showBanner._t = setTimeout(() => el.classList.remove("show"), 3600);
@@ -5673,7 +5715,8 @@
   }
   function showCompletionBanner(lessonId) {
     const les = (learningRegistry.lessons || {})[lessonId] || {};
-    showBanner("⭐ Lesson Mastered", "SERVER VERIFIED · RULE A", les.title || lessonId, false);
+    showBanner("⭐ Lesson Mastered", "SERVER VERIFIED · RULE A", les.title || lessonId, false,
+               [_grantedNow.lesson]);
   }
   // Celebrate on the TRANSITION into mastery, computed from the authoritative rows themselves, so a
   // lesson re-mastered after a dip is celebrated too (lessonCompletedNow only fires the first time).
@@ -5692,17 +5735,25 @@
     const gainedL = Object.keys(nowM).filter(l => !_masteredSnap[l]);
     const gainedC = Object.keys(nowC).filter(c => !_campSnap[c]);
     _masteredSnap = nowM; _campSnap = nowC;
-    if (gainedC.length) showBanner("🏆 Campaign Complete", "EVERY LESSON MASTERED",
-                                   nowC[gainedC[0]] + " Campaign", true);
-    else if (gainedL.length) showCompletionBanner(gainedL[0]);
+    if (gainedC.length) {
+      // Finishing the last lesson grants BOTH its badge and the campaign trophy; the single banner
+      // reports both, because both really were unlocked.
+      showBanner("🏆 Campaign Complete", "EVERY LESSON MASTERED",
+                 nowC[gainedC[0]] + " Campaign", true, [_grantedNow.lesson, _grantedNow.course]);
+    } else if (gainedL.length) showCompletionBanner(gainedL[0]);
+    _grantedNow = { lesson: null, course: null };     // consumed — never celebrated twice
   }
   // Any authoritative response may report a newly-recorded completion. Never derived here — the
   // ONLY input is the server's own lessonCompletedNow flag.
   // Note: /api/learning/attempt returns lessonId, but /api/learning/roleplay/respond returns only
   // activityId, so the lesson is resolved through the registry rather than assumed. (Adding lessonId
   // to that response would be a backend change, which this phase does not make.)
+  // Phase 5F: what the server actually granted on THIS response. Set here, consumed once by the
+  // next checkMasteryTransitions(). Absent => nothing was granted => no unlock line.
+  let _grantedNow = { lesson: null, course: null };
   function noteLessonCompletion(j) {
     if (!j || j.lessonCompletedNow !== true) return;
+    _grantedNow = { lesson: j.lessonRewardItemId || null, course: j.courseRewardItemId || null };
     const lid = j.lessonId ||
       ((learningRegistry.activities || {})[j.activityId] || {}).lessonId;
     if (!lid) return;

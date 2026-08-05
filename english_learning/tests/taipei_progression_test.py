@@ -13,7 +13,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 from game import conquest  # noqa: E402
-from learning import api as L, qualifications as Q, registry as R  # noqa: E402
+from learning import api as L, qualifications as Q, registry as R, rewards as W  # noqa: E402
 import territory_catalog  # noqa: E402
 
 passed = 0
@@ -205,8 +205,12 @@ assert paying == ["english.prea1.taipei.zoo.quiz3"], paying
 assert svc.reward_for("english.prea1.taipei.zoo.quiz3")["amount"] == 10000
 for slug in ("mrt", "market", "park"):
     assert svc.reward_for("english.prea1.taipei.%s.quiz3" % slug)["amount"] == 0
-assert [l for l in reg.lessons if reg.lesson_reward_policy_of(l) != "none"] == []
-ok("§39 reward neutrality: still exactly 1 gold-bearing activity; the 3 new gates pay 0")
+# Phase 5F: lessons now carry a cosmetic badge. Reward NEUTRALITY is about gold, so the check is
+# that no lesson reward is economic — not that no lesson reward exists.
+assert [l for l in reg.lessons if W.is_economic(reg.lesson_reward_policy_of(l))] == []
+assert [c for c in reg.courses if W.is_economic(reg.course_reward_policy_of(c))] == []
+ok("§39 reward neutrality: still exactly 1 gold-bearing activity; the 3 new gates pay 0; the "
+   "cosmetic lesson/campaign rewards move no gold")
 
 # ============================== §40 world invariants ==============================
 assert len(TAIPEI) == 12

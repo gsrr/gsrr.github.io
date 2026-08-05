@@ -29,7 +29,7 @@ import urllib.request as U
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 from game import conquest  # noqa: E402
-from learning import api as L, completion as C, registry as R  # noqa: E402
+from learning import api as L, completion as C, registry as R, rewards as W  # noqa: E402
 import territory_catalog  # noqa: E402
 
 passed = 0
@@ -252,7 +252,8 @@ for lid in LESSONS:
         assert svc.reward_for("%s.%s" % (lid, suffix))["amount"] == 0, (lid, suffix)
     pol = reg.completion_policy_of(lid)
     assert pol and pol["version"] == 2, "%s carries the Phase 4D v2 policy" % lid
-    assert reg.lesson_reward_policy_of(lid) == "none", lid
+    assert reg.lesson_reward_policy_of(lid) == "lesson_mastery_badge", lid    # 5F: cosmetic only
+    assert not W.is_economic(reg.lesson_reward_policy_of(lid)), lid
     assert reg.lesson_qualification_ids_for(lid) == [], lid
 active = sorted(l for l in reg.lessons if reg.completion_available(l))
 assert active == sorted(LESSONS + ["english.prea1.taipei.zoo"]), active

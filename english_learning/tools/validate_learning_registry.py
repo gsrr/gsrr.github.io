@@ -233,10 +233,17 @@ def main():
     econ = sorted(p for p in used if _W.is_economic(p))
     print("  economic policies in use: %s" % (econ or "[] (only 'none' / non-economic)"))
 
-    paid_lessons = [l for l in with_policy if reg.lesson_reward_policy_of(l) != "none"]
+    # This warning is the "did a lesson start paying GOLD" signal, so it must test the reward's
+    # economics, not merely that a policy is set. Before Phase 5F the only non-'none' policy was
+    # gold, so `!= "none"` happened to be equivalent; a cosmetic reward is not a payout.
+    paid_lessons = [l for l in with_policy if _W.is_economic(reg.lesson_reward_policy_of(l))]
     if paid_lessons:
         warn("cross-domain: %d lesson(s) carry a gold-bearing completion reward: %s"
              % (len(paid_lessons), paid_lessons))
+    paid_courses = [c for c in reg.courses if _W.is_economic(reg.course_reward_policy_of(c))]
+    if paid_courses:
+        warn("cross-domain: %d course(s) carry a gold-bearing campaign reward: %s"
+             % (len(paid_courses), paid_courses))
     print("  territories with learning requirements: %d" % len(terr_reqs))
     for tid, reqs in sorted(terr_reqs.items()):
         print("    %s requires ALL of %s" % (tid, reqs))

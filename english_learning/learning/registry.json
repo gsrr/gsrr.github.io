@@ -7,7 +7,8 @@
   },
 
   "courses": {
-    "english.prea1.taipei": { "contentPackId": "english.prea1", "title": "Taipei" },
+    "english.prea1.taipei": { "contentPackId": "english.prea1", "title": "Taipei",
+                              "rewardPolicy": "campaign_trophy" },
     "english.a1.core": { "contentPackId": "english.a1", "title": "A1 Core Readings" }
   },
 
@@ -23,7 +24,7 @@
         "type": "average_required_activities",
         "version": 2,
         "passMark": 80,
-        "rewardPolicy": "none",
+        "rewardPolicy": "lesson_mastery_badge",
         "grants": [],
         "requiredActivityIds": [
           "english.prea1.taipei.zoo.read_along",
@@ -44,7 +45,7 @@
         "type": "average_required_activities",
         "version": 2,
         "passMark": 80,
-        "rewardPolicy": "none",
+        "rewardPolicy": "lesson_mastery_badge",
         "grants": [],
         "requiredActivityIds": [
           "english.prea1.taipei.mrt.read_along",
@@ -65,7 +66,7 @@
         "type": "average_required_activities",
         "version": 2,
         "passMark": 80,
-        "rewardPolicy": "none",
+        "rewardPolicy": "lesson_mastery_badge",
         "grants": [],
         "requiredActivityIds": [
           "english.prea1.taipei.market.read_along",
@@ -86,7 +87,7 @@
         "type": "average_required_activities",
         "version": 2,
         "passMark": 80,
-        "rewardPolicy": "none",
+        "rewardPolicy": "lesson_mastery_badge",
         "grants": [],
         "requiredActivityIds": [
           "english.prea1.taipei.park.read_along",
