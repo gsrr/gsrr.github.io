@@ -248,7 +248,6 @@
   .comp-card { margin: 10px 0 4px; padding: 10px 12px; border-radius: 12px; border: 1px solid #e2e8f0;
                background: #f8fafc; font-size: 13px; line-height: 1.55; }
   .comp-card.is-done { border-color: #bbf7d0; background: #f0fdf4; }
-  .comp-card.is-stale { border-color: #fde68a; background: #fffbeb; }
   .comp-verified { display: inline-block; font-weight: 700; color: #15803d; font-size: 12px;
                    letter-spacing: .02em; }
   .comp-card.is-open .comp-verified { color: #64748b; }
@@ -276,6 +275,20 @@
   .comp-cont button { background: #2563eb; color: #fff; border: 0; border-radius: 10px;
                       padding: 8px 16px; font-size: 14px; font-weight: 700; cursor: pointer; }
   .comp-cont button:hover { background: #1d4ed8; }
+  .comp-badge { display: inline-block; margin: 3px 0 4px; padding: 3px 11px; border-radius: 999px;
+                font-size: 13px; font-weight: 800; letter-spacing: .01em; }
+  .comp-badge.m-mastered   { background: #dcfce7; color: #15803d; }
+  .comp-rulea { margin-top: 6px; font-size: 12.5px; font-weight: 700; }
+  .comp-rulea.pass { color: #15803d; }
+  .comp-review { margin-top: 6px; padding: 6px 9px; border-radius: 9px; background: #fffbeb;
+                 border: 1px solid #fde68a; color: #92400e; font-size: 12.5px; }
+  .comp-review b { display: block; font-size: 13px; }
+  .comp-card.is-review { border-color: #fde68a; }
+  .comp-badge.m-progress   { background: #dbeafe; color: #1d4ed8; }
+  .comp-badge.m-none       { background: #e2e8f0; color: #475569; }
+  .camp-stars { font-size: 17px; letter-spacing: 3px; color: #f59e0b; margin: 3px 0 1px; }
+  .camp-done { margin-top: 6px; font-weight: 800; color: #15803d; font-size: 13px; }
+  .comp-banner.is-camp { border-color: #f59e0b; color: #7c2d12; }
   .camp-box { margin: 4px 0 12px; padding: 11px 13px; border: 1px solid #e2e8f0; border-radius: 12px;
               background: #f8fafc; }
   .camp-nm { font-weight: 800; font-size: 14px; color: #0f172a; }
@@ -3935,9 +3948,9 @@
           const row = progressForContent(ls.file);
           let chip = "";
           if (row && row.authoritativeCompletionAvailable) {
-            chip = '<span class="comp-chip' + (row.activePolicyCompleted ? ' done' : '') + '">' +
-                   (row.activePolicyCompleted ? '✓ v' + row.activePolicyVersion : 'not completed') +
-                   '</span>';
+            const mm = lessonMastery(row);
+            chip = '<span class="comp-chip' + (mm.key === "mastered" ? ' done' : '') + '">' +
+                   mm.icon + ' ' + escapeHtml(mm.label) + '</span>';
           }
           return '<div class="lesson-row"><span class="' + dot + '"></span>' +
                  '<span>' + ls.title + '</span><span class="sc">' + sc + '</span>' + chip + '</div>';
@@ -3953,10 +3966,10 @@
       .map(lid => ({ lid: lid, row: learningProgress.lessons[lid], path: contentPathForLesson(lid) }))
       .filter(x => x.path)
       .sort((a, b) => String(a.row.title || a.lid).localeCompare(String(b.row.title || b.lid)));
-    const doneCount = verified.filter(x => x.row.activePolicyCompleted).length;
+    const doneCount = verified.filter(x => lessonMastery(x.row).key === "mastered").length;
     const verifiedHtml = verified.length
       ? campaignSummaryHTML() +
-        '<div class="stats-h">🔒 Server-verified completion <span class="comp-chip' +
+        '<div class="stats-h">🔒 Server-verified mastery <span class="comp-chip' +
         (doneCount === verified.length ? ' done' : '') + '">' + doneCount + ' / ' + verified.length +
         '</span></div>' +
         verified.map(x => '<div class="lv-row"><span class="lv-ico">📗</span><span class="lv-nm">' +
@@ -5418,6 +5431,7 @@
       .then(j => {
         learningProgress = { lessons: (j && j.lessons) || {},
                              completedLessonIds: (j && j.completedLessonIds) || [] };
+        checkMasteryTransitions();
         if (cb) cb();
       }).catch(() => { if (cb) cb(); });
   }
@@ -5457,31 +5471,28 @@
     const have = (row.completedActivityIds || []).length;
     const reqCount = (row.requiredActivityIds || []).length;
     const pct = reqCount ? Math.round(have * 100 / reqCount) : 0;   // exact fraction, server counts
-    const doneNow = row.activePolicyCompleted === true;
-    const stale = doneNow && row.currentPolicySatisfied === false;
-    // `stale` implies `doneNow`, so it must be tested FIRST or it can never win the class.
-    let cls = "comp-card" + (stale ? " is-stale" : (doneNow ? " is-done" : ""));
+    const m = lessonMastery(row);
+    const review = needsReview(row);        // earned, but the latest scores are below the pass mark
+    // Mastery keeps `is-done` even under review: the achievement stands, only the live score dipped.
+    let cls = "comp-card" + (m.key === "mastered" ? " is-done" : "") + (review ? " is-review" : "");
     let out = '<div class="' + cls + '"><span class="comp-verified">SERVER VERIFIED</span>' +
       '<span class="comp-rule">Rule A</span>';
     const req = row.requiredActivityIds || [], miss = row.missingActivityIds || [];
     const nextId = miss[0] || null;
-    if (stale) {
-      // STEP 6: a historical achievement and a live evaluation are different things. Say both.
-      out += '<div class="comp-state done">Previously completed</div>' +
-             '<div class="comp-meta">Current score below Rule A · completed on <b>' +
-             escapeHtml(fmtStamp(row.activePolicyCompletedAt) || "—") + '</b> under Policy <b>v' +
+    // Exactly ONE achievement badge per card; everything below it is detail.
+    out += masteryBadgeHTML(row);
+    if (m.key === "mastered") {
+      out += '<div class="comp-meta">Completed on <b>' +
+             escapeHtml(fmtStamp(row.activePolicyCompletedAt) || "—") + '</b> · Policy <b>v' +
              escapeHtml(String(row.activePolicyVersion)) + '</b></div>';
-    } else if (doneNow) {
-      out += '<div class="comp-state done">Completed</div>' +
-             '<div class="comp-meta">Completed on <b>' + escapeHtml(fmtStamp(row.activePolicyCompletedAt) || "—") +
-             '</b> · Policy <b>v' + escapeHtml(String(row.activePolicyVersion)) + '</b></div>';
     } else {
-      // STEP 4: actionable, from server counts only — never a fabricated percentage.
+      // Actionable, from server counts only — never a fabricated percentage.
       out += '<div class="comp-state not">' + have + ' of ' + req.length + ' completed</div>';
       if (nextId) out += '<div class="comp-next">Next: <b>' +
         escapeHtml(activityShortLabel(nextId)) + '</b></div>';
       if (row.historicallyCompleted && row.firstCompletedAt != null) {
-        // Completed under an EARLIER (now retired) rule. Real history — shown, never relabelled v2.
+        // Completed under an EARLIER (now retired) rule. Real history — never relabelled, and it
+        // does NOT count as mastery of the policy in force today.
         out += '<div class="comp-meta">Earlier completion on <b>' +
                escapeHtml(fmtStamp(row.firstCompletedAt) || "—") + '</b> under Policy <b>v' +
                escapeHtml(String(row.firstCompletedPolicyVersion)) + '</b></div>' +
@@ -5489,11 +5500,17 @@
                escapeHtml(String(row.activePolicyVersion)) + ') has not been met yet.</div>';
       }
     }
+    // The LIVE Rule A state, shown independently of the achievement above.
+    if (review) {
+      out += '<div class="comp-review"><b>⚠ Needs Review</b>Current Rule A below pass mark.</div>';
+    } else if (row.currentPolicySatisfied === true) {
+      out += '<div class="comp-rulea pass">Current Rule A: PASS</div>';
+    }
     out += '<div class="comp-bar"><span class="comp-bar-fill' + (pct >= 100 ? '' : ' partial') +
            '" style="width:' + pct + '%"></span></div>' +
            '<div class="comp-levels">Verified levels <b>' + have + ' / ' + req.length + '</b>' +
            (row.roundedPct != null ? ' · Rule A score <b>' + row.roundedPct + ' / 100</b>' : '') +
-           (stale ? ' · latest scores are below the pass mark' : '') + '</div>';
+           '</div>';
     // STEP 2: the checklist IS the server's requiredActivityIds, in the server's order.
     if (req.length) {
       const missSet = {}; miss.forEach(m => missSet[m] = 1);
@@ -5559,48 +5576,125 @@
     const b = e.target && e.target.closest && e.target.closest("[data-continue-for]");
     if (b) continueLesson(b.getAttribute("data-continue-for"));
   });
-  // Campaign roll-up. Grouped by the registry's courseId; the display name is derived from the
-  // common prefix of the lessons' own titles (no course title is exposed by the public registry),
-  // falling back to the courseId itself. Cosmetic only — counts come from progress.
-  function campaignSummaryHTML() {
-    const rows = learningProgress.lessons || {}, byCourse = {};
+  // ===== Phase 5C — lesson mastery =====
+  // Derived PURELY from the authoritative progress row; no new backend field, no client Rule A.
+  //
+  // ACHIEVEMENT vs CURRENT STATE — two different questions, deliberately kept apart (Phase 5C.1).
+  //
+  //   mastery  = `activePolicyCompleted`  — completed under the ACTIVE policy at least once.
+  //              Persisted server-side and monotonic: a later poor retry NEVER revokes it.
+  //   ruleANow = `currentPolicySatisfied` — the live evaluation of the LATEST scores. This one is
+  //              expected to go false after a bad retry, and is surfaced separately as a warning.
+  //
+  // (Phase 5C briefly keyed mastery on currentPolicySatisfied, which made an earned star vanish.
+  //  That was a semantic regression and is reverted here.)
+  function lessonMastery(row) {
+    if (!row || !row.authoritativeCompletionAvailable) return { key: "untracked", label: "Not tracked", icon: "" };
+    if (row.activePolicyCompleted === true) return { key: "mastered", label: "Mastered", icon: "⭐" };
+    if ((row.completedActivityIds || []).length > 0)
+      return { key: "progress", label: "In Progress", icon: "◐" };
+    return { key: "none", label: "Not Started", icon: "○" };
+  }
+  // True only when an EARNED mastery currently sits below the pass mark.
+  function needsReview(row) {
+    return !!row && row.activePolicyCompleted === true && row.currentPolicySatisfied === false;
+  }
+  const MASTERY_CLASS = { mastered: "m-mastered", progress: "m-progress",
+                          none: "m-none", untracked: "m-none" };
+  function masteryBadgeHTML(row) {
+    const m = lessonMastery(row);
+    return '<div class="comp-badge ' + MASTERY_CLASS[m.key] + '">' + m.icon + ' ' +
+           escapeHtml(m.label) + '</div>';
+  }
+  // Campaigns, grouped by the registry's courseId. Shared by the summary and the celebration check
+  // so there is exactly one definition of "which lessons belong together".
+  function campaignGroups() {
+    const rows = learningProgress.lessons || {}, by = {};
     Object.keys(rows).forEach(lid => {
-      if (!rows[lid].authoritativeCompletionAvailable) return;   // active policies only
+      if (!rows[lid].authoritativeCompletionAvailable) return;      // active policies only
       const cid = ((learningRegistry.lessons || {})[lid] || {}).courseId || "—";
-      (byCourse[cid] = byCourse[cid] || []).push(rows[lid]);
+      (by[cid] = by[cid] || []).push({ lid: lid, row: rows[lid] });
     });
-    const ids = Object.keys(byCourse).sort();
-    if (!ids.length) return "";
-    return ids.map(cid => {
-      const list = byCourse[cid];
-      const done = list.filter(r => r.activePolicyCompleted).length;
-      const pct = Math.round(done * 100 / list.length);
-      const titles = list.map(r => String(r.title || ""));
+    return Object.keys(by).sort().map(cid => {
+      const list = by[cid];
+      const titles = list.map(x => String(x.row.title || ""));
       let name = titles[0] || cid;
-      if (titles.length > 1) {                        // longest shared prefix of the lesson titles
+      if (titles.length > 1) {                     // longest shared prefix of the lessons' own titles
         let k = 0;
         while (k < name.length && titles.every(x => x[k] === name[k])) k++;
         name = name.slice(0, k).replace(/[\s·\-—:]+$/, "").trim() || cid;
       }
-      return '<div class="camp-box"><div class="camp-nm">' + escapeHtml(name) + ' Campaign</div>' +
+      return { cid: cid, name: name, list: list };
+    });
+  }
+  // The set used for BOTH the campaign roll-up and the celebration trigger. Keyed on the persisted
+  // achievement, so it only ever grows — a Rule A dip can never un-fire or re-fire a celebration.
+  function masteredLessonIds() {
+    const out = {};
+    campaignGroups().forEach(g => g.list.forEach(x => {
+      if (x.row.activePolicyCompleted === true) out[x.lid] = 1;
+    }));
+    return out;
+  }
+  // Campaign roll-up. Grouped by the registry's courseId; the display name is derived from the
+  // common prefix of the lessons' own titles (no course title is exposed by the public registry),
+  // falling back to the courseId itself. Cosmetic only — counts come from progress.
+  function campaignSummaryHTML() {
+    const groups = campaignGroups();
+    if (!groups.length) return "";
+    return groups.map(g => {
+      const total = g.list.length;
+      // Stars are ACHIEVEMENT: they use activePolicyCompleted and never fall back down.
+      const done = g.list.filter(x => x.row.activePolicyCompleted === true).length;
+      const pct = Math.round(done * 100 / total);
+      const stars = new Array(done + 1).join("★") + new Array(total - done + 1).join("☆");
+      return '<div class="camp-box"><div class="camp-nm">' + escapeHtml(g.name) + ' Campaign</div>' +
+        '<div class="camp-stars">' + stars + '</div>' +
         '<div class="camp-bar"><span class="camp-bar-fill" style="width:' + pct + '%"></span></div>' +
-        '<div class="camp-sub"><b>' + done + ' / ' + list.length + '</b> lessons completed</div></div>';
+        '<div class="camp-sub"><b>' + done + ' / ' + total + '</b> Lessons Mastered</div>' +
+        (done === total
+          ? '<div class="camp-done">🏆 ' + escapeHtml(g.name) + ' Campaign Complete</div>' : '') +
+        '</div>';
     }).join("");
   }
-  // STEP 5: one-shot banner the first time the SERVER says a lesson newly completed.
-  function showCompletionBanner(lessonId) {
-    const les = (learningRegistry.lessons || {})[lessonId] || {};
+  // STEP 5/6: lightweight, non-blocking celebrations. No persistence, no reward, no library.
+  function showBanner(title, sub, msg, isCamp) {
     const el = document.getElementById("compBanner") || (function () {
       const b = document.createElement("div"); b.id = "compBanner"; b.className = "comp-banner";
       document.body.appendChild(b); return b;
     })();
-    el.innerHTML = '<div class="cb-t">🎉 Lesson Complete</div>' +
-      '<div class="cb-s">SERVER VERIFIED · RULE A</div>' +
-      '<div class="cb-m">' + escapeHtml(les.title || lessonId) + '</div>';
+    el.className = "comp-banner" + (isCamp ? " is-camp" : "");
+    el.innerHTML = '<div class="cb-t">' + title + '</div><div class="cb-s">' + sub + '</div>' +
+      '<div class="cb-m">' + escapeHtml(msg) + '</div>';
     el.classList.add("show");
-    if (showCompletionBanner._t) clearTimeout(showCompletionBanner._t);
-    showCompletionBanner._t = setTimeout(() => el.classList.remove("show"), 3600);
+    if (showBanner._t) clearTimeout(showBanner._t);
+    showBanner._t = setTimeout(() => el.classList.remove("show"), 3600);
     playDing();
+  }
+  function showCompletionBanner(lessonId) {
+    const les = (learningRegistry.lessons || {})[lessonId] || {};
+    showBanner("⭐ Lesson Mastered", "SERVER VERIFIED · RULE A", les.title || lessonId, false);
+  }
+  // Celebrate on the TRANSITION into mastery, computed from the authoritative rows themselves, so a
+  // lesson re-mastered after a dip is celebrated too (lessonCompletedNow only fires the first time).
+  // The first load after boot primes the snapshot silently — nothing already true is "new".
+  let _masteredSnap = null, _campSnap = null;
+  function completeCampaignIds(mastered) {
+    const done = {};
+    campaignGroups().forEach(g => {
+      if (g.list.length && g.list.every(x => mastered[x.lid])) done[g.cid] = g.name;   // achievement
+    });
+    return done;
+  }
+  function checkMasteryTransitions() {
+    const nowM = masteredLessonIds(), nowC = completeCampaignIds(nowM);
+    if (_masteredSnap === null) { _masteredSnap = nowM; _campSnap = nowC; return; }
+    const gainedL = Object.keys(nowM).filter(l => !_masteredSnap[l]);
+    const gainedC = Object.keys(nowC).filter(c => !_campSnap[c]);
+    _masteredSnap = nowM; _campSnap = nowC;
+    if (gainedC.length) showBanner("🏆 Campaign Complete", "EVERY LESSON MASTERED",
+                                   nowC[gainedC[0]] + " Campaign", true);
+    else if (gainedL.length) showCompletionBanner(gainedL[0]);
   }
   // Any authoritative response may report a newly-recorded completion. Never derived here — the
   // ONLY input is the server's own lessonCompletedNow flag.
@@ -5612,10 +5706,9 @@
     const lid = j.lessonId ||
       ((learningRegistry.activities || {})[j.activityId] || {}).lessonId;
     if (!lid) return;
-    loadLearningProgress(function () {
-      showCompletionBanner(lid);
-      refreshCompletionCards();
-    });
+    // The celebration itself is decided by checkMasteryTransitions() inside loadLearningProgress,
+    // so a lesson is congratulated exactly once per transition and never twice.
+    loadLearningProgress(refreshCompletionCards);
   }
   function refreshCompletionCards() {
     document.querySelectorAll("[data-comp-for]").forEach(el => {
