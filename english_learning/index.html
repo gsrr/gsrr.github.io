@@ -314,6 +314,20 @@
   .comp-banner .cb-u { font-size: 12px; font-weight: 700; color: #b45309; margin-top: 6px;
                        padding-top: 6px; border-top: 1px dashed #e2e8f0; }
   .rw-owned { margin-top: 6px; font-size: 12px; color: #b45309; font-weight: 700; }
+  /* Phase 5G — Owned Achievement Cabinet */
+  .ach-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+              margin: 6px 0 14px; }
+  .ach-card { border: 1px solid #fde68a; background: #fffbeb; border-radius: 12px; padding: 10px 12px; }
+  .ach-card.is-unknown { border-color: #cbd5e1; background: #f8fafc; }
+  .ach-nm { font-size: 14px; font-weight: 800; color: #92400e; }
+  .ach-card.is-unknown .ach-nm { color: #475569; }
+  .ach-id { font-size: 11px; color: #64748b; font-family: ui-monospace, Menlo, Consolas, monospace;
+            word-break: break-all; margin-top: 2px; }
+  .ach-src { font-size: 11px; font-weight: 700; color: #a16207; letter-spacing: .03em;
+             margin-top: 8px; text-transform: uppercase; }
+  .ach-li { font-size: 12px; color: #3f3f46; margin-top: 2px; }
+  .ach-meta { font-size: 12px; color: #78716c; margin-top: 6px; }
+  .ach-meta b { color: #92400e; }
   .lesson-row .comp-chip { margin-left: auto; font-size: 11px; font-weight: 700; padding: 1px 7px;
                            border-radius: 999px; background: #e2e8f0; color: #475569; }
   .lesson-row .comp-chip.done { background: #dcfce7; color: #15803d; }
@@ -3986,7 +4000,7 @@
 
     statsBody.innerHTML =
       '<p class="screen-intro">' + (userName ? 'Hi, ' + userName + ' 👋' : '') + '</p>' +
-      statCards + badgeHtml + verifiedHtml + levelHtml;
+      statCards + badgeHtml + achievementCabinetHTML() + verifiedHtml + levelHtml;
   }
 
   function renderDailyReport() {
@@ -5419,7 +5433,91 @@
     const it = REWARD_ITEMS[itemId];
     return it ? (it.icon + " " + it.name) : String(itemId || "");
   }
-  let myCosmetics = [];                // [{itemId, count}] — COSMETIC ledger entries only
+  // ===== Phase 5G — Owned Achievement Cabinet =====
+  // Read-only. EVERY value below comes from the authoritative rewardLedger; nothing is inferred from
+  // lesson completion, campaign progress, qualifications or territories, and un-earned cosmetics are
+  // not represented at all (there is no client-side catalogue of what exists).
+  //
+  // Known scope labels. An UNKNOWN scope still renders — it gets a generated heading — so a future
+  // reward scope appears in the cabinet with no code change here.
+  const SCOPE_GROUPS = { lesson: "Lesson Rewards", course: "Campaign Rewards",
+                         activity: "Activity Rewards" };
+  function scopeGroupLabel(scope) {
+    if (SCOPE_GROUPS[scope]) return SCOPE_GROUPS[scope];
+    const s = String(scope || "other");
+    return s.charAt(0).toUpperCase() + s.slice(1) + " Rewards";
+  }
+  // A grant's source, named for a human. Tries every title table the server already sends and falls
+  // back to the raw id — never a switch on scope, never a hard-coded lesson or campaign.
+  function grantSourceTitle(sourceId) {
+    const id = String(sourceId || "");
+    const les = (learningRegistry.lessons || {})[id];
+    if (les && les.title) return les.title;
+    const camp = ((learningProgress || {}).campaigns || {})[id];
+    if (camp && camp.title) return camp.title + " Campaign";
+    const act = (learningRegistry.activities || {})[id];
+    if (act && act.title) return act.title;
+    return id;
+  }
+  function grantDate(sec) {
+    if (!sec) return "";
+    const d = new Date(sec * 1000);
+    if (isNaN(d.getTime())) return "";
+    const p = n => (n < 10 ? "0" : "") + n;
+    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+  }
+  // ONE derivation of "what do I own", shared by the cabinet and the campaign summary line so the two
+  // can never disagree. Returns [{scope, itemId, count, latest, sources[]}], newest group first.
+  function ownedCosmetics() {
+    const by = {}, order = [];
+    myCosmetics.forEach(e => {
+      const key = e.scope + "\u0000" + e.itemId;
+      if (!by[key]) { by[key] = { scope: e.scope, itemId: e.itemId, count: 0, latest: 0, sources: [] };
+                      order.push(key); }
+      const g = by[key];
+      g.count += 1;
+      g.latest = Math.max(g.latest, e.grantedAt);
+      if (e.sourceId && g.sources.indexOf(e.sourceId) < 0) g.sources.push(e.sourceId);
+    });
+    return order.map(k => by[k]);
+  }
+  // The single card renderer. Its shape is decided by the DATA (how many grants, whether the item id
+  // is known), not by which scope it happens to sit in.
+  function achievementCardHTML(g) {
+    const known = !!REWARD_ITEMS[g.itemId];
+    const name = known ? rewardItemLabel(g.itemId) : "Unknown cosmetic";
+    const many = g.count > 1;
+    return '<div class="ach-card' + (known ? '' : ' is-unknown') + '">' +
+      '<div class="ach-nm">' + escapeHtml(name) + '</div>' +
+      (known ? '' : '<div class="ach-id">(' + escapeHtml(String(g.itemId)) + ')</div>') +
+      (g.sources.length
+        ? '<div class="ach-src">Earned from</div>' +
+          g.sources.map(s => '<div class="ach-li">\u2713 ' + escapeHtml(grantSourceTitle(s)) + '</div>').join("")
+        : '') +
+      (many ? '<div class="ach-meta"><b>Earned ' + g.count + ' times</b></div>' +
+              '<div class="ach-meta">Latest unlock ' + escapeHtml(grantDate(g.latest)) + '</div>'
+            : '<div class="ach-meta"><b>Unlocked</b></div>' +
+              '<div class="ach-meta">' + escapeHtml(grantDate(g.latest)) + '</div>') +
+      '</div>';
+  }
+  function achievementCabinetHTML() {
+    const owned = ownedCosmetics();
+    if (!owned.length) return "";              // nothing owned -> no cabinet, and no locked teasers
+    const groups = [], byScope = {};
+    owned.forEach(g => {
+      if (!byScope[g.scope]) { byScope[g.scope] = []; groups.push(g.scope); }
+      byScope[g.scope].push(g);
+    });
+    return '<div class="stats-h" id="achCabinet">\ud83c\udfc5 Achievements</div>' +
+      groups.map(sc => '<div class="stats-h ach-h" data-ach-scope="' + escapeHtml(sc) + '">' +
+        escapeHtml(scopeGroupLabel(sc)) + '</div>' +
+        '<div class="ach-grid">' + byScope[sc].map(achievementCardHTML).join("") + '</div>'
+      ).join("");
+  }
+  // Raw COSMETIC ledger entries, oldest first: [{itemId, scope, sourceId, policyId, grantedAt}].
+  // Phase 5G keeps them raw rather than pre-collapsed, so the cabinet can group by scope and name
+  // sources without a second trip and without any client-side notion of ownership.
+  let myCosmetics = [];
   let learningRegistry = { qualifications: {}, activities: {}, lessons: {} };
   let myQualifications = new Set();    // qualification IDs this player has EARNED (server-authoritative mirror)
   let pendingStudy = null;             // { qualificationIds:[…], label, reopen() } — 學完自動回到觸發的領地
@@ -5439,13 +5537,12 @@
         myQualifications = new Set(Object.keys((j && j.qualifications) || {}));
         // Phase 5F: mirror ONLY the cosmetic grants. Amounts, grant keys and timestamps are ledger
         // internals and are deliberately dropped here rather than rendered anywhere.
-        const seen = {};
-        Object.keys((j && j.rewardLedger) || {}).forEach(k => {
-          const e = j.rewardLedger[k];
-          if (!e || e.rewardType !== "cosmetic" || !e.itemId) return;
-          seen[e.itemId] = (seen[e.itemId] || 0) + 1;
-        });
-        myCosmetics = Object.keys(seen).sort().map(i => ({ itemId: i, count: seen[i] }));
+        myCosmetics = Object.keys((j && j.rewardLedger) || {})
+          .map(k => j.rewardLedger[k])
+          .filter(e => e && e.rewardType === "cosmetic" && e.itemId)
+          .map(e => ({ itemId: e.itemId, scope: e.scope || "", sourceId: e.sourceId || "",
+                       policyId: e.policyId || "", grantedAt: Number(e.grantedAt) || 0 }))
+          .sort((a, b) => a.grantedAt - b.grantedAt);
         if (cb) cb();
       })
       .catch(() => { if (cb) cb(); });
@@ -5453,14 +5550,19 @@
   // ===== Phase 5A — whole-lesson completion, read from /api/learning/progress =====
   // Display ONLY. Every value below is copied from the server response; nothing is inferred,
   // recomputed or defaulted, and there is no client-side Rule A anywhere in this block.
-  let learningProgress = { lessons: {}, completedLessonIds: [] };
+  let learningProgress = { lessons: {}, campaigns: {}, completedLessonIds: [] };
   function loadLearningProgress(cb) {
     const t = authToken();
-    if (!t) { learningProgress = { lessons: {}, completedLessonIds: [] }; if (cb) cb(); return; }
+    if (!t) { learningProgress = { lessons: {}, campaigns: {}, completedLessonIds: [] };
+             if (cb) cb(); return; }
     fetch(withRoom("/api/learning/progress?token=" + encodeURIComponent(t)))
       .then(r => r.ok ? r.json() : null)
       .then(j => {
+        // `campaigns` is read-only campaign STATUS the server already sends (Phase 5E). Phase 5G
+        // keeps it so a course-scope reward can be named after its campaign instead of its raw id;
+        // it is never used to decide ownership — that comes only from rewardLedger.
         learningProgress = { lessons: (j && j.lessons) || {},
+                             campaigns: (j && j.campaigns) || {},
                              completedLessonIds: (j && j.completedLessonIds) || [] };
         checkMasteryTransitions();
         if (cb) cb();
@@ -5688,7 +5790,7 @@
         // Phase 5F: the cosmetics this learner owns. Labels and counts only — no amount, no grant
         // key, no timestamp, and nothing here is clickable or spendable.
         (myCosmetics.length
-          ? '<div class="rw-owned">Rewards: ' + myCosmetics.map(c =>
+          ? '<div class="rw-owned">Rewards: ' + ownedCosmetics().map(c =>
               escapeHtml(rewardItemLabel(c.itemId)) + (c.count > 1 ? " ×" + c.count : "")
             ).join(" · ") + '</div>' : '') +
         '</div>';
