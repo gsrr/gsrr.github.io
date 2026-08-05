@@ -55,7 +55,8 @@ assert G.PASS_MARK == 80
 ok("grading: type-dispatched, order/case-independent, threshold 80, unknown type never passes")
 
 # ================= reward policy: content may NAME a policy, never an amount (§15) =================
-assert W.resolve("standard_activity_pass", {"PASS_GOLD": 10000}) == {"type": "gold", "amount": 10000, "once": True}
+assert W.resolve("standard_activity_pass", {"PASS_GOLD": 10000}) == {"type": "gold", "amount": 10000,
+                                                                     "itemId": None, "once": True}
 assert W.resolve("none", {"PASS_GOLD": 10000})["amount"] == 0
 # an unknown/forged policy id, or a policy whose amount the server did not supply, pays NOTHING
 for bogus in ("rewardGold", "custom_999999", "", None, "STANDARD_ACTIVITY_PASS"):
@@ -222,7 +223,7 @@ assert prod.resolve_activity(None, "Pre-A1/taipei/zoo", "quiz3") == AID, "Phase 
 assert prod.resolve_activity("Pre-A1/taipei/zoo#quiz3") == AID, "Phase 3A completion key still resolves"
 assert prod.qualifications_for_activity(AID) == ["english.prea1.taipei.zoo"]
 assert prod.completion_keys(AID) == [AID, "Pre-A1/taipei/zoo#quiz3"]
-assert prod.reward_for(AID) == {"type": "gold", "amount": 10000, "once": True}
+assert prod.reward_for(AID) == {"type": "gold", "amount": 10000, "itemId": None, "once": True}
 zoo = json.load(open(os.path.join(ROOT, "Pre-A1", "taipei", "zoo.json"), encoding="utf-8"))["quiz3"]
 res_zoo, reason = prod.grade_attempt(AID, [{"q": i["q"], "answer": i["answer"]} for i in zoo])
 assert reason is None and res_zoo["passed"] is True and res_zoo["pct"] == 100, (res_zoo, reason)

@@ -312,7 +312,7 @@ ok("§34 retries: fail->retry->pass works; first passedAt/earnedAt frozen; no se
 
 # ============ Phase 3D: lesson completion is dormant in production and unforgeable over HTTP ============
 code, prog = call("GET", "/api/learning/progress?room=" + CODE)
-assert code == 200 and set(prog) == {"lessons", "completedLessonIds"}, prog
+assert code == 200 and set(prog) == {"lessons", "campaigns", "completedLessonIds"}, prog
 assert prog["completedLessonIds"] == [], prog
 # Phase 4B retired Zoo's v1 policy, so NO lesson advertises authoritative completion any more.
 # Phase 4D: the four Taipei lessons advertise an active v2 policy; nothing else does, and ALICE has

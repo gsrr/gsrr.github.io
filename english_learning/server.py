@@ -1133,7 +1133,8 @@ class Handler(BaseHTTPRequestHandler):
                             "reason": "bad_sentence"}, 400)
                 return
             save_progress(user, p)
-        delta = clampi(out.get("rewardAmount", 0)) + clampi(out.get("lessonRewardAmount", 0))
+        delta = (clampi(out.get("rewardAmount", 0)) + clampi(out.get("lessonRewardAmount", 0))
+                 + clampi(out.get("courseRewardAmount", 0)))
         newgold = econ_add_gold(user, delta) if delta else None
         self._send({"transcript": text, "target": out["target"], "authoritative": True,
                     "activityId": out["activityId"], "sentenceIndex": out["sentenceIndex"],
@@ -1889,7 +1890,8 @@ class Handler(BaseHTTPRequestHandler):
         # 獎勵金額來自遊戲設定(LEARNING 建構時注入)，內容包無法指定金額。在 acct_lock 外呼叫避免巢狀鎖。
         # Phase 3D：活動獎勵與「整課完成」獎勵是分開的政策，一次結算。目前沒有任何正式課程啟用
         # completionPolicy，所以 lessonRewardAmount 恆為 0。
-        delta = clampi(out["rewardAmount"]) + clampi(out["lessonRewardAmount"])
+        delta = (clampi(out["rewardAmount"]) + clampi(out["lessonRewardAmount"])
+                 + clampi(out.get("courseRewardAmount", 0)))
         newgold = econ_add_gold(user, delta) if delta else None
         granted = out["granted"] if out["passed"] else []
         self._send({"ok": True, "activityId": aid,
@@ -1948,7 +1950,8 @@ class Handler(BaseHTTPRequestHandler):
                             "reason": "bad_round"}, 400)
                 return
             save_progress(user, p)
-        delta = clampi(out.get("rewardAmount", 0)) + clampi(out.get("lessonRewardAmount", 0))
+        delta = (clampi(out.get("rewardAmount", 0)) + clampi(out.get("lessonRewardAmount", 0))
+                 + clampi(out.get("courseRewardAmount", 0)))
         newgold = econ_add_gold(user, delta) if delta else None
         resp = {"ok": True, "roundId": rid, "status": out["status"], "expected": out["expected"],
                 "total": out["total"], "completed": out["completed"], "scored": out["scored"]}
@@ -2009,7 +2012,8 @@ class Handler(BaseHTTPRequestHandler):
                 return
             save_progress(user, p)
         # Role-play 目前沒有任何獎勵/資格政策，這裡仍走與其他活動相同的結算路徑以免日後漏接。
-        delta = clampi(view.get("rewardAmount", 0)) + clampi(view.get("lessonRewardAmount", 0))
+        delta = (clampi(view.get("rewardAmount", 0)) + clampi(view.get("lessonRewardAmount", 0))
+                 + clampi(view.get("courseRewardAmount", 0)))
         newgold = econ_add_gold(user, delta) if delta else None
         resp = {"ok": True, "sessionId": sid, "activityId": view.get("activityId"),
                 "result": view.get("result"), "hint": view.get("hint"),

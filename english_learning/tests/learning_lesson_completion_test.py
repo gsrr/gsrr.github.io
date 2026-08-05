@@ -165,12 +165,19 @@ ok("§33 lesson qualification: granted once when configured, never inferred when
 # ============================== §34 lesson reward ==============================
 assert out["lessonRewardAmount"] == 0 and out["lessonRewarded"] is False, "policy 'none' pays nothing"
 PAID = copy.deepcopy(BASE)
-PAID["lessons"]["bio.cells.intro"]["completionPolicy"]["rewardPolicy"] = "standard_activity_pass"
+# Phase 5E: a lesson must name a LESSON-scope policy. The activity-scope pass policy is rejected by
+# validation rather than silently paying an activity reward for finishing a lesson.
+WRONG_SCOPE = copy.deepcopy(BASE)
+WRONG_SCOPE["lessons"]["bio.cells.intro"]["completionPolicy"]["rewardPolicy"] = "standard_activity_pass"
+assert any("only valid at scope(s) ['activity']" in e for e in R.validate(WRONG_SCOPE)),     R.validate(WRONG_SCOPE)
+PAID["lessons"]["bio.cells.intro"]["completionPolicy"]["rewardPolicy"] = "lesson_mastery_gold"
 assert R.validate(PAID) == [], R.validate(PAID)
-svc3, st3 = service(PAID), {}
+# the amount comes from the policy's OWN config key, not from PASS_GOLD
+PAID_AMOUNTS = {"PASS_GOLD": 10000, "LESSON_MASTERY_GOLD": 777}
+svc3, st3 = service(PAID, amounts=PAID_AMOUNTS), {}
 st3, _ = do(svc3, st3, "bio.cells.intro.a", RIGHT["bio.cells.intro.a"])
 st3, o3 = do(svc3, st3, "bio.cells.intro.b", RIGHT["bio.cells.intro.b"])
-assert o3["lessonCompletedNow"] is True and o3["lessonRewarded"] is True and o3["lessonRewardAmount"] == 10000
+assert o3["lessonCompletedNow"] is True and o3["lessonRewarded"] is True and o3["lessonRewardAmount"] == 777
 # repeats pay nothing more
 for _ in range(3):
     st3, o = do(svc3, st3, "bio.cells.intro.a", RIGHT["bio.cells.intro.a"], now=12345)
@@ -184,7 +191,7 @@ st4, _ = do(svc4, st4, "bio.cells.intro.a", RIGHT["bio.cells.intro.a"])
 st4, o4 = do(svc4, st4, "bio.cells.intro.b", RIGHT["bio.cells.intro.b"])
 assert o4["lessonCompletedNow"] is True and o4["lessonRewardAmount"] == 0, o4
 # and with no injected game-config amount, even a valid policy pays 0
-svc5, st5 = service(PAID, amounts={}), {}
+svc5, st5 = service(PAID, amounts={"PASS_GOLD": 10000}), {}
 st5, _ = do(svc5, st5, "bio.cells.intro.a", RIGHT["bio.cells.intro.a"])
 st5, o5 = do(svc5, st5, "bio.cells.intro.b", RIGHT["bio.cells.intro.b"])
 assert o5["lessonRewardAmount"] == 0, o5
@@ -342,7 +349,7 @@ ok("production: exactly the 4 Taipei lessons carry an active v2 policy, all rewa
 
 # the Zoo activity reward is untouched by any of this (§35)
 zoo = "english.prea1.taipei.zoo.quiz3"
-assert prod.reward_for(zoo) == {"type": "gold", "amount": 10000, "once": True}
+assert prod.reward_for(zoo) == {"type": "gold", "amount": 10000, "itemId": None, "once": True}
 assert prod.registry.lesson_reward_policy_of("english.prea1.taipei.zoo") == "none"
 assert W.resolve("none", {"PASS_GOLD": 10000})["amount"] == 0
 zoo_key = json.load(open(os.path.join(ROOT, "Pre-A1", "taipei", "zoo.json"), encoding="utf-8"))["quiz3"]

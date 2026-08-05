@@ -8,7 +8,7 @@ The service is stateless with respect to players — every method takes the play
 and returns it mutated for the caller to persist, exactly like the pure modules underneath.
 """
 from . import (completion, content, grading, identity, matching, qualifications, registry,
-               rewards, roleplay, stt_scoring)
+               reward_ledger, rewards, roleplay, stt_scoring)
 
 # stable machine reasons returned to the client (never internal exception detail)
 REASON_NOT_GRADABLE = "not_gradable"
@@ -79,8 +79,31 @@ class LearningService:
 
     # ---- reward policy ----
     def reward_for(self, activity_id):
-        """{'type','amount','once'} for this activity — resolved from the server-owned allowlist."""
+        """{'type','amount','itemId','once'} for this activity — from the server-owned allowlist."""
         return rewards.resolve(self.registry.reward_policy_of(activity_id), self.reward_amounts)
+
+    def grant_reward(self, state, scope, source_id, policy_id, now):
+        """Resolve a policy and record it in the learner's ledger. Returns (state, granted_or_None).
+
+        ONE path for every scope and every reward type (Phase 5E). The ledger key is derived from
+        (scope, sourceId, policyId), so a `once` reward is idempotent against retries, replays and
+        double settlements without each call site inventing its own guard.
+
+        Returns the resolved descriptor when this call actually granted it, else None. Only a `gold`
+        descriptor asks the CALLER to move the economy; cosmetic/profile/gameplay rewards are fully
+        discharged by the ledger entry, and nothing in this codebase applies a gameplay effect yet.
+        """
+        reward = rewards.resolve(policy_id, self.reward_amounts)
+        if reward["type"] == "none":
+            return state, None
+        state, newly = reward_ledger.record_grant(state, scope, source_id, policy_id, reward, now)
+        return state, (reward if newly else None)
+
+    def reward_ledger_view(self, state):
+        """Read-only ledger: what was granted, when, and which items the learner now owns."""
+        return {"entries": reward_ledger.entries(state),
+                "ownedItems": reward_ledger.owned_items(state),
+                "goldGranted": reward_ledger.total_granted(state, "gold")}
 
     # ---- completion + qualification ----
     def read_completion(self, state, activity_id):
@@ -124,6 +147,12 @@ class LearningService:
         pay = reward["amount"] > 0 and not (reward["once"] and already_rewarded)
         if pay:
             out["rewardType"], out["rewardAmount"], out["rewarded"] = reward["type"], reward["amount"], True
+        # Phase 5E: the activity payout keeps its historical `rewarded` idempotency EXACTLY as it was
+        # (that flag is what existing behaviour and tests depend on); the ledger is written alongside
+        # it as the audit trail, and is what carries non-gold activity rewards if any are ever added.
+        if pay or reward["type"] not in ("none", "gold"):
+            state, _ = self.grant_reward(state, "activity", activity_id,
+                                         self.registry.reward_policy_of(activity_id), now)
         qualifications.record_completion(
             state, self.completion_key(activity_id),
             passed_at=(prior or {}).get("passedAt") or now,     # first pass wins, never re-dated
@@ -544,9 +573,56 @@ class LearningService:
         qids = self.registry.lesson_qualification_ids_for(lesson_id)
         state, granted_now = qualifications.grant_qualifications(state, qids, now)
         out["lessonQualifications"], out["lessonGrantedNow"] = qids, granted_now
-        reward = rewards.resolve(self.registry.lesson_reward_policy_of(lesson_id), self.reward_amounts)
-        if reward["amount"] > 0:
-            out["lessonRewardAmount"], out["lessonRewarded"] = reward["amount"], True
+        state, reward = self.grant_reward(state, "lesson", lesson_id,
+                                          self.registry.lesson_reward_policy_of(lesson_id), now)
+        if reward:
+            out["lessonRewardType"] = reward["type"]
+            out["lessonRewardItemId"] = reward["itemId"]
+            if reward["amount"] > 0:
+                out["lessonRewardAmount"], out["lessonRewarded"] = reward["amount"], True
+        # A finished lesson may finish its campaign. Derived here; never asserted by the client.
+        self._settle_course(state, self.registry.course_of_lesson(lesson_id), now, out)
+        return state
+
+    # ---- campaign / course scope (Phase 5E) ----
+    def evaluate_course(self, course_id, state):
+        """Is every completable lesson in this course completed under its ACTIVE policy?
+
+        Campaign completion is derived from lesson completion, exactly as the UI computes it: a
+        lesson counts when the active policy version has a persisted completion, so a later poor
+        retry never un-completes a campaign.
+        """
+        lids = self.registry.lessons_in_course(course_id) if course_id else []
+        done = [lid for lid in lids
+                if completion.completion_for_version(
+                    state, lid, completion.policy_version(
+                        completion.policy_of(self.registry.lesson(lid)))) is not None]
+        return {"courseId": course_id, "available": bool(lids),
+                "completed": bool(lids) and len(done) == len(lids),
+                "lessonIds": lids, "completedLessonIds": done,
+                "missingLessonIds": [l for l in lids if l not in done]}
+
+    def _settle_course(self, state, course_id, now, out):
+        """Record a campaign completion reward. Idempotent; a no-op for every course today."""
+        out.setdefault("courseId", course_id)
+        out.setdefault("courseCompleted", False)
+        out.setdefault("courseCompletedNow", False)
+        out.setdefault("courseRewardAmount", 0)
+        out.setdefault("courseRewarded", False)
+        if not course_id:
+            return state
+        ev = self.evaluate_course(course_id, state)
+        out["courseCompleted"] = ev["completed"]
+        if not ev["completed"]:
+            return state
+        policy_id = self.registry.course_reward_policy_of(course_id)
+        state, reward = self.grant_reward(state, "course", course_id, policy_id, now)
+        if reward:
+            out["courseCompletedNow"] = True
+            out["courseRewardType"] = reward["type"]
+            out["courseRewardItemId"] = reward["itemId"]
+            if reward["amount"] > 0:
+                out["courseRewardAmount"], out["courseRewarded"] = reward["amount"], True
         return state
 
     def progress_view(self, state):
@@ -573,7 +649,18 @@ class LearningService:
                 "roundedPct": ev["roundedPct"],
             }
             lessons[lid].update(status)
-        return {"lessons": lessons,
+        campaigns = {}
+        for cid in sorted({l.get("courseId") for l in self.registry.lessons.values()
+                           if l.get("courseId")}):
+            ev = self.evaluate_course(cid, state)
+            if not ev["available"]:
+                continue                       # no completable lesson -> not a campaign
+            course = self.registry.course(cid) or {}
+            campaigns[cid] = {"title": course.get("title"), "completed": ev["completed"],
+                              "lessonIds": ev["lessonIds"],
+                              "completedLessonIds": ev["completedLessonIds"],
+                              "missingLessonIds": ev["missingLessonIds"]}
+        return {"lessons": lessons, "campaigns": campaigns,
                 "completedLessonIds": sorted(completion.completed_lesson_ids(state))}
 
     # ---- views ----
@@ -589,6 +676,7 @@ class LearningService:
                 "sttProgress": state.get("sttProgress") or {},
                 "matchingProgress": state.get("matchingProgress") or {},
                 "roleplayProgress": state.get("roleplayProgress") or {},
+                "rewardLedger": state.get(reward_ledger.LEDGER_KEY) or {},
                 "activityScores": state.get("activityScores") or {}}
         # NOTE: roleplaySessions is deliberately NOT exposed — an in-flight session holds the
         # current node, and revealing it would tell the client where the conversation is going.

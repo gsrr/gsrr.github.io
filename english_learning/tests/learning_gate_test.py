@@ -309,7 +309,12 @@ for not_a_key in ("english.prea1.taipei.zoo", LESSON, "english.prea1.taipei"):
 # completion still does not exist at all.
 assert set(st) == {"qualifications", "activityCompletions", "lessonCompletions",
                    "lessonCompletionHistory", "sttProgress", "matchingProgress",
-                   "roleplayProgress", "activityScores"}, st.keys()
+                   "roleplayProgress", "rewardLedger", "activityScores"}, st.keys()
+# Phase 5E: the ledger mirrors what was actually paid — activity passes only. No lesson or
+# campaign reward exists in production, so nothing else can appear here.
+assert sorted(e["scope"] for e in st["rewardLedger"].values()) == ["activity"], st["rewardLedger"]
+assert all(e["policyId"] == "standard_activity_pass" and e["itemId"] is None
+           for e in st["rewardLedger"].values()), st["rewardLedger"]
 assert "roleplaySessions" not in st, "in-flight Role-play session state is never exposed"
 assert st["lessonCompletions"] == {}, "no production lesson can be authoritatively complete yet"
 assert st["sttProgress"] == {}, "this player has recorded no Read-Along evidence"

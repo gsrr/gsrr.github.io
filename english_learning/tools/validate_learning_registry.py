@@ -206,6 +206,33 @@ def main():
         rv = reg.retired_policy_versions(lid)
         if rv:
             print("    retired versions: %-24s %s (never reusable)" % (lid, rv))
+    # ---- Phase 5E: the reward framework, and what production actually references ----
+    import learning.rewards as _W
+    used = {}
+    for aid in reg.activities:
+        used.setdefault(reg.reward_policy_of(aid), []).append("activity:" + aid)
+    for lid in reg.lessons:
+        rp = reg.lesson_reward_policy_of(lid)
+        if reg.completion_available(lid):
+            used.setdefault(rp, []).append("lesson:" + lid)
+    for cid in reg.courses:
+        used.setdefault(reg.course_reward_policy_of(cid), []).append("course:" + cid)
+    print("  reward framework: %d policies defined, types %s"
+          % (len(_W.policy_ids()), sorted({_W.type_of(x) for x in _W.policy_ids()})))
+    for pid in _W.policy_ids():
+        refs = [r for r in used.get(pid, []) if not r.endswith(":none")]
+        spec = _W.POLICIES[pid]
+        state = "REFERENCED by %d" % len(used.get(pid, [])) if used.get(pid) else "inert (unreferenced)"
+        print("    %-26s type=%-9s scopes=%-22s %s"
+              % (pid, spec["type"], ",".join(spec["scopes"]), state))
+    # An inert (framework-only) policy must never be referenced by production content.
+    for pid, refs in used.items():
+        if pid not in _W.ACTIVE_POLICY_IDS and refs:
+            err("reward policy %r is framework-only (Phase 5E) but is referenced by %s"
+                % (pid, refs[:3]))
+    econ = sorted(p for p in used if _W.is_economic(p))
+    print("  economic policies in use: %s" % (econ or "[] (only 'none' / non-economic)"))
+
     paid_lessons = [l for l in with_policy if reg.lesson_reward_policy_of(l) != "none"]
     if paid_lessons:
         warn("cross-domain: %d lesson(s) carry a gold-bearing completion reward: %s"

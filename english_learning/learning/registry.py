@@ -6,7 +6,8 @@ qualification IDs. Schema (see docs/learning-model.md for the full contract):
     {
       "schemaVersion": 1,
       "contentPacks": { "<packId>":   {"title": ...} },
-      "courses":      { "<courseId>": {"contentPackId": ..., "title": ..., "unitId": <optional>} },
+      "courses":      { "<courseId>": {"contentPackId": ..., "title": ..., "unitId": <optional>,
+                                       "rewardPolicy": <optional, course/campaign scope>} },
       "units":        { "<unitId>":   {"courseId": ..., "title": ...} },              # optional level
       "lessons":      { "<lessonId>": {"courseId": ..., "contentPath": ..., "title": ...,
                                        "unitId": <optional>,
@@ -138,7 +139,24 @@ class Registry:
 
     def reward_policy_of(self, activity_id):
         a = self.activities.get(activity_id) or {}
-        return a.get("rewardPolicy") or rewards.DEFAULT_POLICY
+        return a.get("rewardPolicy") or rewards.default_for_scope("activity")
+
+    def course_reward_policy_of(self, course_id):
+        """The campaign-scope reward policy for a course. Defaults to paying nothing (Phase 5E)."""
+        c = self.courses.get(course_id) or {}
+        return c.get("rewardPolicy") or rewards.default_for_scope("course")
+
+    def course_of_lesson(self, lesson_id):
+        return (self.lessons.get(lesson_id) or {}).get("courseId")
+
+    def lessons_in_course(self, course_id):
+        """Lesson ids belonging to a course that can actually be completed (have an active policy).
+
+        A course with no completable lesson is not a campaign anyone can finish, so it yields [] and
+        course-scope rewards can never fire for it.
+        """
+        return sorted(lid for lid, l in self.lessons.items()
+                      if l.get("courseId") == course_id and completion.is_available(l))
 
     def grader_type_of(self, activity_id):
         return (self.activities.get(activity_id) or {}).get("graderType")
@@ -292,8 +310,21 @@ def validate(data):
                 err("%s id %r is empty or malformed (expect dotted lowercase segments)" % (name, key))
 
     for cid, c in courses.items():
-        if (c or {}).get("contentPackId") not in packs:
-            err("course %s references unknown contentPackId %r" % (cid, (c or {}).get("contentPackId")))
+        c = c or {}
+        if c.get("contentPackId") not in packs:
+            err("course %s references unknown contentPackId %r" % (cid, c.get("contentPackId")))
+        # Phase 5E: a course may carry a CAMPAIGN-scope reward policy.
+        rp = c.get("rewardPolicy")
+        if rp is not None:
+            if not rewards.is_policy(rp):
+                err("course %s has invalid rewardPolicy %r (allowed: %s)"
+                    % (cid, rp, rewards.policy_ids()))
+            elif not rewards.allows_scope(rp, "course"):
+                err("course %s uses rewardPolicy %r, which is only valid at scope(s) %s"
+                    % (cid, rp, list(rewards.scopes_of(rp))))
+        for money in ("rewardGold", "gold", "rewardAmount", "amount", "itemId"):
+            if money in c:                       # content may NAME a policy, never an amount/item
+                err("course %s may not set %r — reward amounts and items are server-owned" % (cid, money))
     for uid, u in units.items():
         if (u or {}).get("courseId") not in courses:
             err("unit %s references unknown courseId %r" % (uid, (u or {}).get("courseId")))
@@ -375,6 +406,10 @@ def validate(data):
         if not rewards.is_policy(completion.reward_policy_of(cp)):
             err("lesson %s completionPolicy has invalid rewardPolicy %r (allowed: %s)"
                 % (lid, cp.get("rewardPolicy"), rewards.policy_ids()))
+        elif not rewards.allows_scope(completion.reward_policy_of(cp), "lesson"):
+            err("lesson %s completionPolicy uses rewardPolicy %r, which is only valid at scope(s) %s"
+                % (lid, completion.reward_policy_of(cp),
+                   list(rewards.scopes_of(completion.reward_policy_of(cp)))))
         lg = cp.get("grants", [])
         if not isinstance(lg, list):
             err("lesson %s completionPolicy grants must be a list (may be empty)" % lid)
@@ -432,9 +467,15 @@ def validate(data):
             err("activity %s declares scenarioPath but is not a Role-play activity" % aid)
         if not a.get("title"):
             err("activity %s has no title" % aid)
-        if not rewards.is_policy(a.get("rewardPolicy") or rewards.DEFAULT_POLICY):
+        arp = a.get("rewardPolicy") or rewards.default_for_scope("activity")
+        if not rewards.is_policy(arp):
             err("activity %s has invalid rewardPolicy %r (allowed: %s)"
                 % (aid, a.get("rewardPolicy"), rewards.policy_ids()))
+        elif not rewards.allows_scope(arp, "activity"):
+            err("activity %s uses rewardPolicy %r, which is only valid at scope(s) %s"
+                % (aid, arp, list(rewards.scopes_of(arp))))
+        if a.get("itemId") is not None:
+            err("activity %s may not set 'itemId' — reward items are server-owned" % aid)
         for money in ("rewardGold", "gold", "rewardAmount", "amount"):
             if money in a:                       # §15: content may NAME a policy, never an amount
                 err("activity %s may not set %r — reward amounts come from game config only" % (aid, money))
