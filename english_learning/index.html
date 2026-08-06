@@ -283,6 +283,98 @@
   .comp-review { margin-top: 6px; padding: 6px 9px; border-radius: 9px; background: #fffbeb;
                  border: 1px solid #fde68a; color: #92400e; font-size: 12.5px; }
   .comp-review b { display: block; font-size: 13px; }
+  /* ===== Phase 6B — the split card ===== */
+  .comp-title { font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 2px; }
+  .comp-card.comp-compact { padding: 9px 12px; }
+  /* Secondary: everything at priority 3. Native disclosure — tap target, no hover, no JS. */
+  .comp-sec { margin-top: 9px; border-top: 1px solid #e2e8f0; padding-top: 7px; }
+  .comp-sec > summary { cursor: pointer; font-size: 12.5px; font-weight: 700; color: #475569;
+                        list-style: none; padding: 5px 2px; min-height: 30px; }
+  .comp-sec > summary::-webkit-details-marker { display: none; }
+  .comp-sec > summary::before { content: "\25b8 "; color: #94a3b8; }
+  .comp-sec[open] > summary::before { content: "\25be "; }
+  .comp-row { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px;
+              padding: 3px 2px; color: #475569; }
+  .comp-row b { color: #0f172a; }
+  .comp-row.pass b { color: #15803d; }
+  .comp-row.warn b { color: #b45309; }
+  .comp-sub { font-size: 11px; font-weight: 700; color: #94a3b8; letter-spacing: .03em;
+              text-transform: uppercase; margin: 8px 0 2px; }
+  /* The lesson page progress block (STEP 4) — the player never leaves the lesson to see progress. */
+  #lessonProgress { max-width: 720px; margin: 0 auto 6px; padding: 0 12px; }
+  #lessonProgress:empty { display: none; }
+  /* ===== Phase 6C — Learning Home ===== */
+  #homeBody { max-width: 720px; margin: 0 auto; padding: 0 12px 16px; }
+  .lh-h { font-size: 12px; font-weight: 800; color: #94a3b8; letter-spacing: .06em;
+          text-transform: uppercase; margin: 16px 0 6px; }
+  .lh-camp { border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px 14px; background: #fff; }
+  .lh-camp + .lh-camp { margin-top: 8px; }
+  .lh-camp.is-done { border-color: #fde68a; background: #fffbeb; }
+  .lh-camp-nm { font-size: 15px; font-weight: 800; color: #0f172a; }
+  .lh-stars { font-size: 15px; color: #f59e0b; letter-spacing: 2px; margin-top: 2px; }
+  .lh-bar { position: relative; height: 9px; border-radius: 999px; background: #e2e8f0;
+            overflow: hidden; margin: 7px 0 5px; }
+  .lh-bar span { position: absolute; inset: 0 auto 0 0; background: #22c55e; border-radius: 999px; }
+  .lh-sub { font-size: 12.5px; color: #475569; }
+  .lh-sub b { color: #0f172a; }
+  /* Continue: the single most important control on the screen. */
+  .lh-cont { margin-top: 10px; border: 2px solid #2563eb; border-radius: 14px; padding: 13px 15px;
+             background: #eff6ff; }
+  .lh-cont-k { font-size: 11px; font-weight: 800; color: #1d4ed8; letter-spacing: .06em;
+               text-transform: uppercase; }
+  .lh-cont-t { font-size: 17px; font-weight: 800; color: #0f172a; margin-top: 3px; }
+  .lh-cont-s { font-size: 13px; color: #475569; margin-top: 2px; }
+  .lh-cont button { margin-top: 10px; width: 100%; min-height: 46px; background: #2563eb;
+                    color: #fff; border: 0; border-radius: 11px; font-size: 16px; font-weight: 800;
+                    cursor: pointer; }
+  .lh-cont button:hover { background: #1d4ed8; }
+  .lh-done { margin-top: 10px; border: 1px solid #bbf7d0; background: #f0fdf4; border-radius: 14px;
+             padding: 13px 15px; font-size: 14px; font-weight: 700; color: #15803d; }
+  /* Lesson rows: icon + title + state + progress. Nothing else. */
+  .lh-row { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+            border: 1px solid #e2e8f0; background: #fff; border-radius: 11px; padding: 10px 12px;
+            margin-top: 6px; min-height: 46px; cursor: pointer; font: inherit; }
+  .lh-row:hover { border-color: #cbd5e1; }
+  .lh-row .ic { font-size: 17px; width: 22px; text-align: center; }
+  .lh-row .nm { flex: 1; font-size: 14px; font-weight: 700; color: #0f172a; }
+  .lh-row .st { font-size: 12px; color: #64748b; white-space: nowrap; }
+  .lh-row.is-done { border-color: #bbf7d0; background: #f0fdf4; }
+  .lh-row.is-review { border-color: #fde68a; background: #fffbeb; }
+  .lh-row.is-review .st { color: #b45309; font-weight: 700; }
+  /* Achievement SUMMARY — counts only; the cabinet itself stays in the Profile. */
+  .lh-ach { border: 1px solid #fde68a; background: #fffbeb; border-radius: 14px; padding: 12px 14px; }
+  .lh-ach-li { font-size: 14px; font-weight: 700; color: #92400e; padding: 2px 0; }
+  .lh-ach-none { font-size: 13px; color: #a16207; }
+  .lh-ach button { margin-top: 9px; min-height: 40px; padding: 0 14px; border: 1px solid #f59e0b;
+                   background: #fff; color: #92400e; border-radius: 10px; font-size: 13px;
+                   font-weight: 700; cursor: pointer; }
+  .lh-open { display: block; width: 100%; min-height: 48px; margin: 4px 0 12px; border: 0;
+             border-radius: 12px; background: #2563eb; color: #fff; font-size: 15px;
+             font-weight: 800; cursor: pointer; }
+  .lh-open:hover { background: #1d4ed8; }
+  /* ===== Phase 6D — one primary, one bar, one status, one highlight per surface ===== */
+  /* The outpost's conquest action stays primary; "Study lesson" and the per-requirement study
+     buttons become secondary so they no longer compete with it. Nothing is removed. */
+  /* `.dep-go` is the conquest action (Occupy / Deploy) and stays THE primary here. */
+  .modal-card .dict-play:not(.dep-go) { background: #fff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .modal-card .dict-play:not(.dep-go):hover { background: #eff6ff; }
+  /* The achievement summary on Learning Home stops competing with Continue for the eye. */
+  .lh-ach { border-color: #e2e8f0; background: #fff; }
+  .lh-ach-li { color: #475569; }
+  .lh-ach-none { color: #94a3b8; }
+  .lh-ach button { border-color: #cbd5e1; color: #475569; }
+  /* Level-2 checklist: visible on the lesson page, but quieter than the primary action. */
+  .comp-check { margin-top: 8px; }
+  /* Profile: the per-level breakdown is reference material, not a every-visit read. */
+  .stats-det { margin-top: 10px; }
+  .stats-det > summary { cursor: pointer; font-size: 12.5px; font-weight: 700; color: #475569;
+                         list-style: none; padding: 7px 2px; min-height: 34px; }
+  .stats-det > summary::-webkit-details-marker { display: none; }
+  .stats-det > summary::before { content: "\25b8 "; color: #94a3b8; }
+  .stats-det[open] > summary::before { content: "\25be "; }
+  /* Phase 6D.1: the campaign completion line, relocated from the Profile's campaign box to the
+     Learning Home campaign card, which is now the single owner of campaign progress. */
+  .lh-camp-done { margin-top: 6px; font-size: 13px; font-weight: 800; color: #b45309; }
   .comp-card.is-review { border-color: #fde68a; }
   .comp-badge.m-progress   { background: #dbeafe; color: #1d4ed8; }
   .comp-badge.m-none       { background: #e2e8f0; color: #475569; }
@@ -399,8 +491,10 @@
   button:disabled { opacity: .4; cursor: not-allowed; }
 
   .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 20px; }
-  #playBtn   { background: #2563eb; color: #fff; }
-  #pauseBtn  { background: #f59e0b; color: #fff; }
+  /* Phase 6D STEP 4: exactly one filled primary per screen. On the lesson page that is
+     "Continue Learning"; the Level 1 listening controls are secondary but unchanged in function. */
+  #playBtn   { background: #fff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  #pauseBtn  { background: #fff; color: #b45309; border: 1px solid #fde68a; }
   #stopBtn   { background: #ef4444; color: #fff; }
   #toggleText { background: #e2e8f0; color: #334155; }
   .speed { display: flex; align-items: center; gap: 8px; margin-left: auto; color: #475569; font-size: 14px; }
@@ -1318,6 +1412,15 @@
     </div>
 
     <!-- 畫面 1b：學習歷程 / 成就 -->
+    <!-- 畫面：Learning Home（Phase 6C）—— 學習的唯一入口，只回答「接下來做什麼／我到哪了」 -->
+    <div id="screenHome" class="hidden">
+      <div class="learn-top">
+        <button class="back-btn" id="backFromHome">← Back</button>
+        <span class="learn-title">Learning</span>
+      </div>
+      <div id="homeBody"></div>
+    </div>
+
     <div id="screenProfileStats" class="hidden">
       <div class="learn-top">
         <button class="back-btn" id="backFromStats">← Levels</button>
@@ -1355,6 +1458,8 @@
         <button class="back-btn" id="backToList">← Lessons</button>
         <span class="learn-title" id="learnTitle"></span>
       </div>
+      <!-- Phase 6B STEP 4: the lesson page OWNS progress. Filled by renderLessonProgress(). -->
+      <div id="lessonProgress"></div>
 
     <!-- ===== 動畫場景（只在 Level 1 顯示，依文章切換） ===== -->
     <div id="sceneStage">
@@ -1508,7 +1613,7 @@
 
     <!-- Level 1 完成後顯示的「開始測驗」按鈕 -->
     <div class="nextlevel-wrap" id="startTestWrap" style="display:none">
-      <button id="startTestBtn" style="background:#2563eb;color:#fff;font-size:17px;padding:12px 26px">Start Test ✏️</button>
+      <button id="startTestBtn" style="background:#fff;color:#1d4ed8;border:1px solid #bfdbfe;font-size:17px;padding:12px 26px">Start Test ✏️</button>
     </div>
     </div><!-- /#screenLearn -->
 
@@ -3265,6 +3370,7 @@
   const screenLevel   = document.getElementById("screenLevel");
   const screenRooms   = document.getElementById("screenRooms");
   const screenProfileStats = document.getElementById("screenProfileStats");
+  const screenHome    = document.getElementById("screenHome");        // Phase 6C — Learning Home
   const screenArticle = document.getElementById("screenArticle");
   const screenLearn   = document.getElementById("screenLearn");
   const screenBattle  = document.getElementById("screenBattle");
@@ -3411,11 +3517,11 @@
   userNameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") addProfile(); });
 
   function showScreen(el) {
-    [screenLanding, screenRole, screenProfile, screenStudentAcct, screenLevel, screenRooms, screenProfileStats, screenArticle, screenLearn, screenBattle, screenTeacher, screenAdmin, screenLeader].forEach(s => s.classList.add("hidden"));
+    [screenLanding, screenRole, screenProfile, screenStudentAcct, screenLevel, screenRooms, screenProfileStats, screenHome, screenArticle, screenLearn, screenBattle, screenTeacher, screenAdmin, screenLeader].forEach(s => s.classList.add("hidden"));
     el.classList.remove("hidden");
     const _card = document.querySelector(".card"); if (_card) _card.classList.remove("map-wide");   // 只有地圖畫面才加寬
     // 右上角區（使用者鈕 + 匯出）：只在學生 app 內的畫面顯示
-    const inApp = [screenLevel, screenRooms, screenProfileStats, screenArticle, screenLearn, screenBattle].indexOf(el) !== -1;
+    const inApp = [screenLevel, screenRooms, screenProfileStats, screenHome, screenArticle, screenLearn, screenBattle].indexOf(el) !== -1;
     const teacherView = (el === screenTeacher && !!authToken());   // 老師面板也用右上角顯示名字+登出
     topRight.classList.toggle("hidden", !((userName && inApp) || teacherView));
   }
@@ -3928,7 +4034,7 @@
       { icon: "🎓", name: "Scholar",       desc: "Pass 10 lessons",    earned: s.passed >= 10 },
       { icon: "💯", name: "Perfect Score", desc: "Score 100 on a lesson", earned: s.perfect },
       { icon: "🌟", name: "Level Cleared", desc: "Finish a whole level",  earned: s.levelsCleared >= 1 },
-      { icon: "🏆", name: "Champion",      desc: "Clear every level",  earned: s.total > 0 && s.passed === s.total }
+      { icon: "🥇", name: "Champion",      desc: "Clear every level",  earned: s.total > 0 && s.passed === s.total }
     ];
   }
 
@@ -3942,10 +4048,12 @@
       '<div class="stat-box"><div class="stat-num">' + s.passed + ' / ' + s.total + '</div><div class="stat-label">Lessons passed</div></div>' +
       '<div class="stat-box"><div class="stat-num">' + (s.avg == null ? '–' : s.avg) + '</div><div class="stat-label">Average score</div></div>' +
       '<div class="stat-box"><div class="stat-num">' + s.levelsCleared + '</div><div class="stat-label">Levels cleared</div></div>' +
-      '<div class="stat-box"><div class="stat-num">' + earnedCount + ' / ' + badges.length + '</div><div class="stat-label">Badges earned</div></div>' +
+      '<div class="stat-box"><div class="stat-num">' + earnedCount + ' / ' + badges.length + '</div><div class="stat-label">Milestones</div></div>' +
       '</div>';
 
-    const badgeHtml = '<div class="stats-h">🏅 Badges</div><div class="badge-grid">' +
+    // Phase 6B: these are LOCAL, derived play milestones — not server-granted Achievements. Renamed
+    // and re-iconed so the two can never be confused (the cabinet owns "Achievement").
+    const badgeHtml = '<div class="stats-h">🎯 Milestones</div><div class="badge-grid">' +
       badges.map(b =>
         '<div class="badge ' + (b.earned ? 'earned' : 'locked') + '">' +
         '<div class="badge-icon">' + b.icon + '</div>' +
@@ -3953,54 +4061,38 @@
         '<div class="badge-desc">' + b.desc + '</div></div>'
       ).join("") + '</div>';
 
-    const levelHtml = '<div class="stats-h">📈 By level</div>' +
+    // Phase 6D STEP 5: the per-level breakdown is reference material — real, kept, but not a
+    // every-visit read. It moves behind a disclosure instead of being ~90 lines of always-on text.
+    const levelHtml = '<details class="stats-det"><summary>📈 By level</summary>' +
       s.levels.map(lv => {
         const head = '<div class="lv-row"><span class="lv-ico">' + lv.icon + '</span>' +
           '<span class="lv-nm">' + lv.name + '</span>' +
           '<span class="lv-st">' + (lv.cleared ? '✅ ' : '') + lv.passed + ' / ' + lv.total + '</span></div>';
+        // Phase 6B: these rows are local STATISTICS only. Mastery is owned by the lesson page and
+        // rolled up by the campaign summary, so it is not repeated per row here.
         const rows = lv.lessons.map(ls => {
           let dot = "dot", sc = "";
           if (ls.st.allScored) {
             dot = ls.st.passed ? "dot done" : "dot fail";
             sc = ls.st.avg + ' / 100';
           }
-          // Phase 5A: server-verified chip + the shared completion card (history included).
-          const row = progressForContent(ls.file);
-          let chip = "";
-          if (row && row.authoritativeCompletionAvailable) {
-            const mm = lessonMastery(row);
-            chip = '<span class="comp-chip' + (mm.key === "mastered" ? ' done' : '') + '">' +
-                   mm.icon + ' ' + escapeHtml(mm.label) + '</span>';
-          }
           return '<div class="lesson-row"><span class="' + dot + '"></span>' +
-                 '<span>' + ls.title + '</span><span class="sc">' + sc + '</span>' + chip + '</div>';
+                 '<span>' + ls.title + '</span><span class="sc">' + sc + '</span></div>';
         }).join("");
         return head + rows;
-      }).join("");
+      }).join("") + '</details>';
 
-    // Phase 5A: server-verified whole-lesson completion. Driven by /api/learning/progress, so it
-    // lists exactly the lessons the SERVER says carry a policy — including the map arcs, which the
-    // per-level rows above never enumerate (they only walk lv.articles). Same shared card renderer.
-    const verified = Object.keys((learningProgress.lessons) || {})
-      .filter(lid => (learningProgress.lessons[lid] || {}).authoritativeCompletionAvailable)
-      .map(lid => ({ lid: lid, row: learningProgress.lessons[lid], path: contentPathForLesson(lid) }))
-      .filter(x => x.path)
-      .sort((a, b) => String(a.row.title || a.lid).localeCompare(String(b.row.title || b.lid)));
-    const doneCount = verified.filter(x => lessonMastery(x.row).key === "mastered").length;
-    const verifiedHtml = verified.length
-      ? campaignSummaryHTML() +
-        '<div class="stats-h">🔒 Server-verified mastery <span class="comp-chip' +
-        (doneCount === verified.length ? ' done' : '') + '">' + doneCount + ' / ' + verified.length +
-        '</span></div>' +
-        verified.map(x => '<div class="lv-row"><span class="lv-ico">📗</span><span class="lv-nm">' +
-          escapeHtml(String(x.row.title || x.lid)) + '</span></div>' +
-          '<div data-comp-for="' + escapeHtml(x.path) + '">' + completionCardHTML(x.path) + '</div>'
-        ).join("")
-      : "";
+    // Phase 6D.1: campaign progress has exactly ONE owner — Learning Home. The Profile used to
+    // repeat the whole campaign box (stars, bar, count, completion line); it no longer does. The
+    // Profile is retrospective only: what has already been earned, never "how far am I / what next".
+    const verifiedHtml = "";
 
     statsBody.innerHTML =
       '<p class="screen-intro">' + (userName ? 'Hi, ' + userName + ' 👋' : '') + '</p>' +
-      statCards + badgeHtml + achievementCabinetHTML() + verifiedHtml + levelHtml;
+      // Phase 6C: the Profile is retrospective; "what next" lives in Learning Home, one tap away.
+      '<button type="button" id="homeOpen" class="lh-open">📚 Learning Home — what to do next</button>' +
+      // Phase 6B STEP 5 order: campaign roll-up, then what has been earned, then statistics.
+      verifiedHtml + achievementCabinetHTML() + statCards + badgeHtml + levelHtml;
   }
 
   function renderDailyReport() {
@@ -5426,7 +5518,7 @@
   // An unknown id renders as itself rather than being hidden, so a new cosmetic can never be
   // silently invisible. Nothing here grants, counts or persists anything.
   const REWARD_ITEMS = {
-    "badge.lesson.mastered":    { icon: "\ud83c\udfc5", name: "Lesson Mastery Badge" },
+    "badge.lesson.mastered":    { icon: "\ud83c\udfc5", name: "Lesson Mastery" },
     "trophy.campaign.complete": { icon: "\ud83c\udfc6", name: "Campaign Trophy" }
   };
   function rewardItemLabel(itemId) {
@@ -5592,80 +5684,289 @@
     return d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate());
   }
   // The ONE completion card, reused by the outpost panel and the learning-history screen.
+  // ===== Phase 6B — one lesson, three renderings, ONE source of facts =====
+  // Every value below is copied from the server's own progress row. The three renderings differ only
+  // in HOW MUCH they show; none of them recomputes anything, and none of them is a second owner:
+  //
+  //   lessonCompactHTML  -> title + state chip + Continue          (outpost: decide, then leave)
+  //   lessonPrimaryHTML  -> state + progress + next + Continue     (priority 1, always visible)
+  //   lessonSecondaryHTML-> score, dates, history, activity list   (priority 3, behind a disclosure)
+  //   completionCardHTML -> primary + secondary                    (the LESSON PAGE owns this)
+  //
+  // Player-facing wording deliberately avoids the internal vocabulary (rule name, policy, version,
+  // qualification): those are engine concepts and appear only in comments and the API.
+  function lessonStateChip(row) {
+    const m = lessonMastery(row);
+    if (needsReview(row)) return '<span class="comp-chip">\u26a0 Needs Review</span>';
+    return '<span class="comp-chip' + (m.key === "mastered" ? ' done' : '') + '">' +
+           m.icon + ' ' + escapeHtml(m.label) + '</span>';
+  }
+  function lessonTitleOf(contentPath) {
+    const row = progressForContent(contentPath);
+    if (row && row.title) return row.title;
+    const a = findArticleByFile(contentPath);
+    return (a && a.title) || contentPath;
+  }
+  function untrackedCardHTML() {
+    return '<div class="comp-card is-open">' +
+           '<div class="comp-state not">Not tracked yet</div>' +
+           '<div class="comp-meta">This lesson does not have tracked progress.</div></div>';
+  }
+  // ---- PRIMARY (priority 1): state, progress, next, Continue. Nothing else. ----
+  function lessonPrimaryHTML(row, contentPath) {
+    const req = row.requiredActivityIds || [], miss = row.missingActivityIds || [];
+    const have = (row.completedActivityIds || []).length;
+    const pct = req.length ? Math.round(have * 100 / req.length) : 0;   // server counts, exact
+    const nextId = miss[0] || null;
+    let out = masteryBadgeHTML(row);
+    if (needsReview(row)) {
+      out += '<div class="comp-review"><b>\u26a0 Needs Review</b>Your latest scores have dropped ' +
+             'below the pass mark.</div>';
+    }
+    out += '<div class="comp-state not">' + have + ' of ' + req.length + ' activities completed</div>' +
+      '<div class="comp-bar"><span class="comp-bar-fill' + (pct >= 100 ? '' : ' partial') +
+      '" style="width:' + pct + '%"></span></div>';
+    if (nextId) {
+      out += '<div class="comp-next">Next: <b>' + escapeHtml(activityShortLabel(nextId)) + '</b></div>' +
+             '<div class="comp-cont"><button type="button" data-continue-for="' +
+             escapeHtml(contentPath) + '">\u25b6\ufe0f Continue Learning</button></div>';
+    }
+    return out;
+  }
+  // ---- LEVEL 2: the checklist, collapsed by default (Phase 6D.1 STEP 3). ----
+  // Same renderer, same server order, same Continue logic — only the initial density changes. The
+  // summary carries the count, so the player still sees x / y without expanding anything.
+  function lessonChecklistHTML(row) {
+    const req = row.requiredActivityIds || [], miss = row.missingActivityIds || [];
+    if (!req.length) return "";
+    const have = (row.completedActivityIds || []).length;
+    const nextId = miss[0] || null, missSet = {};
+    miss.forEach(m => missSet[m] = 1);
+    return '<details class="comp-sec comp-check"><summary>Activities (' + have + ' / ' +
+      req.length + ')</summary><ul class="comp-list">' + req.map(aid => {
+        const open = !!missSet[aid];
+        return '<li class="' + (open ? (aid === nextId ? "next-up" : "") : "on") + '">' +
+               '<span class="cm">' + (open ? "\u25cb" : "\u2713") + '</span>' +
+               escapeHtml(activityShortLabel(aid)) + '</li>';
+      }).join("") + '</ul></details>';
+  }
+  // ---- LEVEL 3 (collapsed): all of it already exists on the row; nothing is invented. ----
+  function lessonSecondaryHTML(row) {
+    const hist = row.completionHistory || [];
+    let rows = "";
+    if (row.roundedPct != null) {
+      rows += '<div class="comp-row"><span>Current score</span><b>' + row.roundedPct + ' / 100</b></div>';
+    }
+    if (row.currentPolicySatisfied === true) {
+      rows += '<div class="comp-row pass"><span>Current state</span><b>Passing</b></div>';
+    } else if (row.activePolicyCompleted === true) {
+      rows += '<div class="comp-row warn"><span>Current state</span><b>Below pass mark</b></div>';
+    }
+    if (row.activePolicyCompleted === true && row.activePolicyCompletedAt != null) {
+      rows += '<div class="comp-row"><span>Mastered on</span><b>' +
+              escapeHtml(fmtStamp(row.activePolicyCompletedAt) || "\u2014") + '</b></div>';
+    }
+    // Completed under requirements that have since changed. Real history, never relabelled — but
+    // described in player terms rather than by internal version number.
+    if (row.activePolicyCompleted !== true && row.historicallyCompleted && row.firstCompletedAt != null) {
+      rows += '<div class="comp-row"><span>Completed earlier</span><b>' +
+              escapeHtml(fmtStamp(row.firstCompletedAt) || "\u2014") + '</b></div>' +
+              '<div class="comp-note">That was under earlier requirements. The current requirements ' +
+              'have not been met yet.</div>';
+    }
+    let past = "";
+    if (hist.length) {
+      const active = row.activePolicyVersion;
+      past = '<div class="comp-sub">History</div><ul class="comp-hist">' + hist.map(h =>
+        '<li>Completed \u00b7 ' + escapeHtml(fmtStamp(h.completedAt) || "\u2014") +
+        (h.policyVersion !== active ? ' <span class="cv">earlier requirements</span>' : '') +
+        '</li>').join("") + '</ul>';
+    }
+    // Phase 6D: provenance is a technical note, so it sits here rather than competing with the
+    // one primary status chip above.
+    const prov = '<div class="comp-row"><span>Verified by</span><b>Server</b></div>';
+    return '<details class="comp-sec"><summary>Details</summary>' + rows + prov + past + '</details>';
+  }
+  // ---- COMPACT (outpost): decide whether to study, then leave. Detail lives on the lesson page. ----
+  function lessonCompactHTML(contentPath) {
+    const row = progressForContent(contentPath);
+    if (!row) return "";
+    if (!row.authoritativeCompletionAvailable) return untrackedCardHTML();
+    const miss = row.missingActivityIds || [], have = (row.completedActivityIds || []).length;
+    const req = row.requiredActivityIds || [];
+    const m = lessonMastery(row);
+    let out = '<div class="comp-card comp-compact' + (m.key === "mastered" ? " is-done" : "") +
+      (needsReview(row) ? " is-review" : "") + '">' +
+      '<div class="comp-title">' + escapeHtml(lessonTitleOf(contentPath)) + '</div>' +
+      lessonStateChip(row) +
+      '<div class="comp-levels">' + have + ' of ' + req.length + ' activities</div>';
+    if (miss.length) {
+      out += '<div class="comp-cont"><button type="button" data-continue-for="' +
+             escapeHtml(contentPath) + '">\u25b6\ufe0f Continue Learning</button></div>';
+    }
+    return out + '</div>';
+  }
+  // ---- THE LESSON PAGE CARD: primary + secondary. The single owner of lesson detail. ----
   function completionCardHTML(contentPath) {
     const row = progressForContent(contentPath);
     if (!row) return "";
-    if (!row.authoritativeCompletionAvailable) {
-      // No active policy for this lesson => the server has no verdict. Say so; invent nothing.
-      return '<div class="comp-card is-open"><span class="comp-verified">SERVER VERIFIED</span>' +
-             '<div class="comp-state not">Not tracked yet</div>' +
-             '<div class="comp-meta">This lesson has no authoritative completion policy.</div></div>';
-    }
-    const have = (row.completedActivityIds || []).length;
-    const reqCount = (row.requiredActivityIds || []).length;
-    const pct = reqCount ? Math.round(have * 100 / reqCount) : 0;   // exact fraction, server counts
+    if (!row.authoritativeCompletionAvailable) return untrackedCardHTML();
     const m = lessonMastery(row);
-    const review = needsReview(row);        // earned, but the latest scores are below the pass mark
     // Mastery keeps `is-done` even under review: the achievement stands, only the live score dipped.
-    let cls = "comp-card" + (m.key === "mastered" ? " is-done" : "") + (review ? " is-review" : "");
-    let out = '<div class="' + cls + '"><span class="comp-verified">SERVER VERIFIED</span>' +
-      '<span class="comp-rule">Rule A</span>';
-    const req = row.requiredActivityIds || [], miss = row.missingActivityIds || [];
-    const nextId = miss[0] || null;
-    // Exactly ONE achievement badge per card; everything below it is detail.
-    out += masteryBadgeHTML(row);
-    if (m.key === "mastered") {
-      out += '<div class="comp-meta">Completed on <b>' +
-             escapeHtml(fmtStamp(row.activePolicyCompletedAt) || "—") + '</b> · Policy <b>v' +
-             escapeHtml(String(row.activePolicyVersion)) + '</b></div>';
-    } else {
-      // Actionable, from server counts only — never a fabricated percentage.
-      out += '<div class="comp-state not">' + have + ' of ' + req.length + ' completed</div>';
-      if (nextId) out += '<div class="comp-next">Next: <b>' +
-        escapeHtml(activityShortLabel(nextId)) + '</b></div>';
-      if (row.historicallyCompleted && row.firstCompletedAt != null) {
-        // Completed under an EARLIER (now retired) rule. Real history — never relabelled, and it
-        // does NOT count as mastery of the policy in force today.
-        out += '<div class="comp-meta">Earlier completion on <b>' +
-               escapeHtml(fmtStamp(row.firstCompletedAt) || "—") + '</b> under Policy <b>v' +
-               escapeHtml(String(row.firstCompletedPolicyVersion)) + '</b></div>' +
-               '<div class="comp-note">The current rule (Policy v' +
-               escapeHtml(String(row.activePolicyVersion)) + ') has not been met yet.</div>';
-      }
+    const cls = "comp-card" + (m.key === "mastered" ? " is-done" : "") +
+                (needsReview(row) ? " is-review" : "");
+    // STEP 6 order, identical on every surface that shows a lesson:
+    //   state -> progress -> primary action -> supporting (checklist) -> details
+    return '<div class="' + cls + '">' +
+           lessonPrimaryHTML(row, contentPath) +
+           lessonChecklistHTML(row) +
+           lessonSecondaryHTML(row) + '</div>';
+  }
+  // The lesson page shows the same card. Kept as its own name so Phase 6D can move it without
+  // hunting call sites.
+  function lessonPageCardHTML(contentPath) { return completionCardHTML(contentPath); }
+  // ===== Phase 6C — Learning Home =====
+  // Answers exactly two questions: what should I do next, and how far have I got. Every value comes
+  // from the authoritative progress row or the reward ledger; this screen owns campaign progress,
+  // Continue, the lesson overview and the achievement SUMMARY, and owns nothing else. It renders no
+  // score, no date, no history and no internal version — that detail belongs to the lesson page.
+  //
+  // Lessons are listed in the SERVER's own key order (the registry's authoring order), grouped by the
+  // server's campaigns block. No client-side ordering rule, and nothing Taipei-specific.
+  function homeCampaigns() {
+    const rows = learningProgress.lessons || {}, camps = learningProgress.campaigns || {};
+    const out = [];
+    Object.keys(camps).forEach(cid => {
+      const member = {};
+      (camps[cid].lessonIds || []).forEach(l => { member[l] = 1; });
+      const list = Object.keys(rows).filter(l => member[l]).map(l => ({ lid: l, row: rows[l] }));
+      if (list.length) out.push({ cid: cid, name: camps[cid].title || cid,
+                                  completed: camps[cid].completed === true, list: list });
+    });
+    return out;
+  }
+  // STEP 5, in order, from authoritative state only:
+  //   1. a lesson already under way (some activities done, some missing)
+  //   2. else the first lesson not yet mastered
+  //   3. else the first lesson
+  function homeContinueTarget() {
+    const all = [];
+    homeCampaigns().forEach(c => c.list.forEach(x => all.push(x)));
+    if (!all.length) return null;
+    const started = all.find(x => (x.row.completedActivityIds || []).length > 0
+                                  && (x.row.missingActivityIds || []).length > 0);
+    const unmastered = all.find(x => x.row.activePolicyCompleted !== true);
+    return started || unmastered || all[0];
+  }
+  function homeAchievementsHTML() {
+    const owned = ownedCosmetics();
+    const body = owned.length
+      ? owned.map(g => '<div class="lh-ach-li">' + escapeHtml(rewardItemLabel(g.itemId)) +
+          (g.count > 1 ? ' \u00d7' + g.count : '') + '</div>').join("")
+      : '<div class="lh-ach-none">Nothing unlocked yet \u2014 master a lesson to earn your first.</div>';
+    return '<div class="lh-h">Achievements</div><div class="lh-ach">' + body +
+      (owned.length ? '<button type="button" id="homeCollection">View Collection</button>' : '') +
+      '</div>';
+  }
+  function renderLearningHome() {
+    const el = document.getElementById("homeBody");
+    if (!el) return;
+    const camps = homeCampaigns();
+    if (!camps.length) {
+      el.innerHTML = '<div class="lh-h">Learning</div>' +
+        '<div class="lh-camp"><div class="lh-sub">No tracked lessons yet.</div></div>';
+      return;
     }
-    // The LIVE Rule A state, shown independently of the achievement above.
-    if (review) {
-      out += '<div class="comp-review"><b>⚠ Needs Review</b>Current Rule A below pass mark.</div>';
-    } else if (row.currentPolicySatisfied === true) {
-      out += '<div class="comp-rulea pass">Current Rule A: PASS</div>';
+    let out = "";
+    camps.forEach(c => {
+      const done = c.list.filter(x => x.row.activePolicyCompleted === true).length;
+      const pct = Math.round(done * 100 / c.list.length);
+      out += '<div class="lh-camp' + (c.completed ? ' is-done' : '') + '">' +
+        '<div class="lh-camp-nm">' + escapeHtml(c.name) + ' Campaign</div>' +
+        '<div class="lh-stars">' + new Array(done + 1).join("\u2605") +
+          new Array(c.list.length - done + 1).join("\u2606") + '</div>' +
+        '<div class="lh-bar"><span style="width:' + pct + '%"></span></div>' +
+        '<div class="lh-sub"><b>' + done + ' / ' + c.list.length + '</b> Lessons Mastered</div>' +
+        (done === c.list.length
+          ? '<div class="lh-camp-done">\ud83c\udfc6 ' + escapeHtml(c.name) + ' Campaign Complete</div>'
+          : '') + '</div>';
+    });
+    // ---- Continue: the one next action ----
+    // "Finished" means every lesson is actually MASTERED \u2014 never merely that the chosen target has no
+    // activity left. A lesson can have all seven activities attempted and still not be mastered (the
+    // mean sits below the pass mark), and that lesson still needs work: Continue points at it and
+    // offers a retry rather than falsely reporting the campaign as done.
+    const next = homeContinueTarget();
+    const allMastered = camps.every(c => c.list.every(x => x.row.activePolicyCompleted === true));
+    if (allMastered) {
+      out += '<div class="lh-done">\u2705 Every lesson is mastered \u2014 nothing left to finish.</div>';
+    } else if (next) {
+      const req = (next.row.requiredActivityIds || []).length;
+      const have = (next.row.completedActivityIds || []).length;
+      const retry = !(next.row.missingActivityIds || []).length;   // attempted in full, not yet mastered
+      out += '<div class="lh-cont"><div class="lh-cont-k">Continue Learning</div>' +
+        '<div class="lh-cont-t">' + escapeHtml(String(next.row.title || next.lid)) + '</div>' +
+        '<div class="lh-cont-s">' + (retry
+            ? 'All activities attempted \u2014 raise your score to master it'
+            : have + ' / ' + req + ' Activities Complete') + '</div>' +
+        '<button type="button" data-home-continue="' + escapeHtml(next.lid) + '">' +
+        (retry ? 'Open Lesson' : 'Continue') + '</button></div>';
     }
-    out += '<div class="comp-bar"><span class="comp-bar-fill' + (pct >= 100 ? '' : ' partial') +
-           '" style="width:' + pct + '%"></span></div>' +
-           '<div class="comp-levels">Verified levels <b>' + have + ' / ' + req.length + '</b>' +
-           (row.roundedPct != null ? ' · Rule A score <b>' + row.roundedPct + ' / 100</b>' : '') +
-           '</div>';
-    // STEP 2: the checklist IS the server's requiredActivityIds, in the server's order.
-    if (req.length) {
-      const missSet = {}; miss.forEach(m => missSet[m] = 1);
-      out += '<ul class="comp-list">' + req.map(aid => {
-        const open = !!missSet[aid];
-        return '<li class="' + (open ? (aid === nextId ? "next-up" : "") : "on") + '">' +
-               '<span class="cm">' + (open ? "○" : "✓") + '</span>' +
-               escapeHtml(activityShortLabel(aid)) + '</li>';
-      }).join("") + '</ul>';
-    }
-    // STEP 3: exactly ONE Continue button, and only while something is actually missing.
-    if (nextId) {
-      out += '<div class="comp-cont"><button type="button" data-continue-for="' +
-             escapeHtml(contentPath) + '">▶️ Continue Lesson</button></div>';
-    }
-    const hist = row.completionHistory || [];
-    if (hist.length) {
-      out += '<ul class="comp-hist">' + hist.map(h =>
-        '<li><span class="cv">v' + escapeHtml(String(h.policyVersion)) + '</span> Completed · ' +
-        escapeHtml(fmtStamp(h.completedAt) || "—") + '</li>').join("") + '</ul>';
-    }
-    return out + '</div>';
+    // ---- Lessons: icon, title, state, progress. Nothing else. ----
+    out += '<div class="lh-h">Lessons</div>';
+    camps.forEach(c => c.list.forEach(x => {
+      const m = lessonMastery(x.row), rev = needsReview(x.row);
+      const req = (x.row.requiredActivityIds || []).length;
+      const have = (x.row.completedActivityIds || []).length;
+      const state = rev ? "Needs Review" : m.label;
+      out += '<button type="button" class="lh-row' +
+        (m.key === "mastered" ? " is-done" : "") + (rev ? " is-review" : "") +
+        '" data-home-lesson="' + escapeHtml(x.lid) + '">' +
+        '<span class="ic">' + (rev ? "\u26a0" : m.icon) + '</span>' +
+        '<span class="nm">' + escapeHtml(String(x.row.title || x.lid)) + '</span>' +
+        '<span class="st">' + escapeHtml(state) + ' \u00b7 ' + have + ' / ' + req + '</span></button>';
+    }));
+    out += homeAchievementsHTML();
+    el.innerHTML = out;
+  }
+  function contentPathForLessonId(lid) {
+    return contentPathForLesson(lid);
+  }
+  // Opening a lesson FROM here must come back to here (STEP 3). One value, no router.
+  let lessonReturnTo = null;
+  // `continue` reuses the Phase 5B continueLesson(), so Home lands the player on the NEXT MISSING
+  // activity (server order), not merely on the lesson. Tapping a lesson ROW just opens the lesson.
+  function openLessonFromHome(lid, andContinue) {
+    const path = contentPathForLessonId(lid), a = path && findArticleByFile(path);
+    if (!a) return;
+    lessonReturnTo = "home";
+    // continueLesson() jumps to the next MISSING activity. When nothing is missing (the lesson is
+    // attempted in full but not yet mastered) it has no target, so fall back to opening the lesson.
+    const row = (learningProgress.lessons || {})[lid];
+    const missing = row && (row.missingActivityIds || []).length;
+    if (andContinue && missing) { continueLesson(path); return; }
+    selectArticle(a);
+  }
+  function openLearningHome() {
+    lessonReturnTo = null;
+    showScreen(screenHome);
+    renderLearningHome();
+    refreshLearning(renderLearningHome);      // authoritative refresh, then re-render
+  }
+  document.addEventListener("click", function (e) {
+    const c = e.target && e.target.closest && e.target.closest("[data-home-continue]");
+    if (c) { openLessonFromHome(c.getAttribute("data-home-continue"), true); return; }
+    const r = e.target && e.target.closest && e.target.closest("[data-home-lesson]");
+    if (r) { openLessonFromHome(r.getAttribute("data-home-lesson")); return; }
+    if (e.target && e.target.id === "homeCollection") { openProfileStats(); return; }
+    if (e.target && e.target.id === "homeOpen") { openLearningHome(); }
+  });
+
+  function renderLessonProgress() {
+    const el = document.getElementById("lessonProgress");
+    if (!el) return;
+    const path = (typeof currentArticleKey === "string" && currentArticleKey) || "";
+    el.innerHTML = path ? lessonPageCardHTML(path) : "";
   }
   // ===== Phase 5B — actionable progress =====
   // activityId -> which LEVEL TAB renders it. The server has no concept of a tab, so this routing
@@ -5772,30 +6073,9 @@
   // Campaign roll-up. Grouped by the registry's courseId; the display name is derived from the
   // common prefix of the lessons' own titles (no course title is exposed by the public registry),
   // falling back to the courseId itself. Cosmetic only — counts come from progress.
-  function campaignSummaryHTML() {
-    const groups = campaignGroups();
-    if (!groups.length) return "";
-    return groups.map(g => {
-      const total = g.list.length;
-      // Stars are ACHIEVEMENT: they use activePolicyCompleted and never fall back down.
-      const done = g.list.filter(x => x.row.activePolicyCompleted === true).length;
-      const pct = Math.round(done * 100 / total);
-      const stars = new Array(done + 1).join("★") + new Array(total - done + 1).join("☆");
-      return '<div class="camp-box"><div class="camp-nm">' + escapeHtml(g.name) + ' Campaign</div>' +
-        '<div class="camp-stars">' + stars + '</div>' +
-        '<div class="camp-bar"><span class="camp-bar-fill" style="width:' + pct + '%"></span></div>' +
-        '<div class="camp-sub"><b>' + done + ' / ' + total + '</b> Lessons Mastered</div>' +
-        (done === total
-          ? '<div class="camp-done">🏆 ' + escapeHtml(g.name) + ' Campaign Complete</div>' : '') +
-        // Phase 5F: the cosmetics this learner owns. Labels and counts only — no amount, no grant
-        // key, no timestamp, and nothing here is clickable or spendable.
-        (myCosmetics.length
-          ? '<div class="rw-owned">Rewards: ' + ownedCosmetics().map(c =>
-              escapeHtml(rewardItemLabel(c.itemId)) + (c.count > 1 ? " ×" + c.count : "")
-            ).join(" · ") + '</div>' : '') +
-        '</div>';
-    }).join("");
-  }
+  // Phase 6D.1: the Profile's campaign-box renderer is gone. Campaign progress is rendered exactly
+  // once, by renderLearningHome(). campaignGroups() above survives because checkMasteryTransitions()
+  // still needs "which lessons belong together" to decide when to celebrate a completed campaign.
   // STEP 5/6: lightweight, non-blocking celebrations. No persistence, no reward, no library.
   function showBanner(title, sub, msg, isCamp, unlocked) {
     const el = document.getElementById("compBanner") || (function () {
@@ -5817,7 +6097,7 @@
   }
   function showCompletionBanner(lessonId) {
     const les = (learningRegistry.lessons || {})[lessonId] || {};
-    showBanner("⭐ Lesson Mastered", "SERVER VERIFIED · RULE A", les.title || lessonId, false,
+    showBanner("⭐ Lesson Mastered", "SERVER VERIFIED", les.title || lessonId, false,
                [_grantedNow.lesson]);
   }
   // Celebrate on the TRANSITION into mastery, computed from the authoritative rows themselves, so a
@@ -5854,19 +6134,27 @@
   // next checkMasteryTransitions(). Absent => nothing was granted => no unlock line.
   let _grantedNow = { lesson: null, course: null };
   function noteLessonCompletion(j) {
-    if (!j || j.lessonCompletedNow !== true) return;
-    _grantedNow = { lesson: j.lessonRewardItemId || null, course: j.courseRewardItemId || null };
-    const lid = j.lessonId ||
-      ((learningRegistry.activities || {})[j.activityId] || {}).lessonId;
-    if (!lid) return;
-    // The celebration itself is decided by checkMasteryTransitions() inside loadLearningProgress,
-    // so a lesson is congratulated exactly once per transition and never twice.
-    loadLearningProgress(refreshCompletionCards);
+    if (!j) return;
+    if (j.lessonCompletedNow === true) {
+      _grantedNow = { lesson: j.lessonRewardItemId || null, course: j.courseRewardItemId || null };
+    }
+    // Phase 6B STEP 4: refresh on EVERY authoritative response, not only on the completing one, so
+    // the lesson page progress is correct after each activity. The celebration is still decided by
+    // checkMasteryTransitions() inside loadLearningProgress, so it fires exactly once per transition.
+    loadLearningProgress(refreshLessonSurfaces);
   }
   function refreshCompletionCards() {
     document.querySelectorAll("[data-comp-for]").forEach(el => {
-      el.innerHTML = completionCardHTML(el.getAttribute("data-comp-for"));
+      const path = el.getAttribute("data-comp-for");
+      el.innerHTML = el.getAttribute("data-comp-mode") === "compact"
+        ? lessonCompactHTML(path) : completionCardHTML(path);
     });
+  }
+  // Every surface that shows lesson progress, refreshed together. Phase 6B STEP 4: the lesson page is
+  // one of them, so finishing an activity updates progress WITHOUT leaving the lesson.
+  function refreshLessonSurfaces() {
+    refreshCompletionCards();
+    renderLessonProgress();
   }
   // 內容路徑 + 活動鍵 → 正規 activityId（登錄簿查表；沒登錄 = 這個活動不參與資格制度）
   function activityIdForContent(contentPath, contentKey) {
@@ -6305,8 +6593,10 @@
         (mine ? garrisonHTML(h.troops) : '<span class="op-card">🛡️ Garrison unknown (enemy)</span>') + '</div>';
     } else { html += '<div class="op-def">🏳️ Unclaimed region</div>'; }
     html += '<div class="op-econ">⚔️ Your troops: <b>' + T + '</b></div>' +
-      // Phase 5A: the shared completion card, rendered from the server's own progress row.
-      '<div data-comp-for="' + escapeHtml(a.file) + '">' + completionCardHTML(a.file) + '</div>' +
+      // Phase 6B STEP 6: the outpost does NOT own lesson detail. Title + state chip + Continue only;
+      // "Study lesson" below opens the lesson page, which owns the rest.
+      '<div data-comp-for="' + escapeHtml(a.file) + '" data-comp-mode="compact">' +
+        lessonCompactHTML(a.file) + '</div>' +
       '<div class="op-btns"><button id="opStudy" class="dict-play">📖 Study lesson</button></div><div id="opTerr"></div>';
     const ov = openModal(html);
     ov.querySelector("#opStudy").addEventListener("click", () => { pendingOccupy = { file: a.file, reopen: function () { openOutpost(a); } }; closeModal(); selectArticle(a); });
@@ -6767,6 +7057,9 @@
     await loadArticle(a);
     learnTitle.textContent = (manifest.levels[selLevelIdx].name || "") + " · " + (a.title || a.id);
     enterListenMode();   // 進入文章時先顯示 Level 1（聽力），不直接進測驗
+    // Phase 6B STEP 4: the lesson page owns progress, so it is rendered on entry and then refreshed
+    // by refreshLessonSurfaces() after every authoritative response — never by leaving the lesson.
+    renderLessonProgress();
     showScreen(screenLearn);
   }
 
@@ -6778,7 +7071,13 @@
   });
   document.getElementById("backToList").addEventListener("click", () => {
     synth.cancel(); stopListenL1(); stopRecordingIfAny();
+    // Phase 6C STEP 3: back returns to wherever the lesson was opened from. A lesson reached through
+    // Learning Home goes back to Learning Home (refreshed), never out to the level list.
+    if (lessonReturnTo === "home") { openLearningHome(); return; }
     selectLevel(selLevelIdx);   // 回課程列表（順便刷新完成度）
+  });
+  document.getElementById("backFromHome").addEventListener("click", () => {
+    openProfileStats();
   });
 
   /* ================= 老師/家長帳號 + 雲端進度後台 ================= */
