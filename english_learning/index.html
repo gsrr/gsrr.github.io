@@ -375,6 +375,208 @@
   /* Phase 6D.1: the campaign completion line, relocated from the Profile's campaign box to the
      Learning Home campaign card, which is now the single owner of campaign progress. */
   .lh-camp-done { margin-top: 6px; font-size: 13px; font-weight: 800; color: #b45309; }
+
+  /* ==========================================================================
+     Phase 6E — visual system for the Phase-6 learning surfaces.
+     Scoped on purpose: Learning Home, lesson progress card, achievement cabinet,
+     profile blocks, outpost lesson chip. The legacy app keeps its own styling so
+     this phase causes no unrelated churn.
+     ========================================================================== */
+  :root {
+    --space-xs: 4px;  --space-sm: 8px;  --space-md: 12px;
+    --space-lg: 16px; --space-xl: 24px;
+
+    --font-page: 20px;      /* screen title            */
+    --font-section: 12px;   /* section label (caps)    */
+    --font-card: 15px;      /* campaign / lesson title */
+    --font-body: 14px;      /* normal reading text     */
+    --font-small: 12.5px;   /* metadata                */
+
+    --surface-page: #f8fafc;
+    --surface-card: #ffffff;
+    --surface-elevated: #eff6ff;
+
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+
+    --border-color: #e2e8f0;
+    --accent: #2563eb;
+    --accent-strong: #1d4ed8;
+    --success: #15803d;
+    --success-bg: #f0fdf4;
+    --success-border: #bbf7d0;
+    --warning: #b45309;
+    --warning-bg: #fffbeb;
+    --warning-border: #fde68a;
+    --locked: #64748b;
+
+    --radius-sm: 8px;  --radius-md: 12px;  --radius-lg: 16px; --radius-pill: 999px;
+    --shadow-card: 0 1px 2px rgba(15, 23, 42, .05);
+    --shadow-raised: 0 4px 14px rgba(37, 99, 235, .16);
+    --shadow-modal: 0 10px 30px rgba(0, 0, 0, .3);
+    --tap: 44px;                     /* minimum touch target */
+  }
+
+  /* ---------- typography hierarchy (Phase-6 surfaces) ---------- */
+  #homeBody, #lessonProgress, #statsBody { color: var(--text-secondary); }
+  .lh-h, .stats-h, .comp-sub {
+    font-size: var(--font-section); font-weight: 800; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--text-muted);
+    margin: var(--space-lg) 0 var(--space-sm);
+  }
+  .lh-camp-nm, .comp-title { font-size: var(--font-card); font-weight: 800;
+                             color: var(--text-primary); }
+  .lh-cont-t { font-size: 17px; font-weight: 800; color: var(--text-primary); }
+  .lh-sub, .lh-cont-s, .comp-state, .comp-row, .lh-row .nm {
+    font-size: var(--font-body); }
+  .comp-levels, .comp-meta, .ach-meta, .lh-row .st { font-size: var(--font-small); }
+  /* titles must wrap, never clip, at any width */
+  .lh-camp-nm, .lh-cont-t, .comp-title, .lh-row .nm, .ach-nm,
+  .lh-ach-li, .ach-li, .comp-list li {
+    overflow-wrap: anywhere; word-break: break-word; }
+  /* long opaque identifiers break anywhere rather than pushing the card wide */
+  .ach-id { overflow-wrap: anywhere; word-break: break-all; }
+
+  /* ---------- button system ---------- */
+  /* PRIMARY — one per surface. */
+  .lh-cont button, .comp-cont button, .lh-open, .modal-card .dict-play.dep-go {
+    min-height: var(--tap); padding: 0 var(--space-lg);
+    border: 1px solid transparent; border-radius: var(--radius-md);
+    background: var(--accent); color: #fff;
+    font-size: var(--font-card); font-weight: 800; cursor: pointer;
+    box-shadow: var(--shadow-raised);
+  }
+  .lh-cont button:hover, .comp-cont button:hover, .lh-open:hover,
+  .modal-card .dict-play.dep-go:hover { background: var(--accent-strong); }
+  /* SECONDARY — supporting actions. */
+  .lh-ach button, #startTestBtn, #playBtn, #pauseBtn, #toggleText, #joinBtn,
+  .modal-card .dict-play:not(.dep-go) {
+    min-height: var(--tap); padding: 0 var(--space-md);
+    border: 1px solid var(--border-color); border-radius: var(--radius-md);
+    background: var(--surface-card); color: var(--text-secondary);
+    font-size: var(--font-body); font-weight: 700; cursor: pointer; box-shadow: none;
+  }
+  /* #joinBtn is a legacy class-sync action on the Profile, not a learning CTA, so it is
+     secondary: the Profile then has exactly one primary (the Learning Home entry). */
+  #playBtn, #joinBtn, .modal-card .dict-play:not(.dep-go) { color: var(--accent-strong);
+                                                            border-color: #bfdbfe; }
+  #pauseBtn { color: var(--warning); border-color: var(--warning-border); }
+  .lh-ach button:hover, #startTestBtn:hover, #playBtn:hover, #toggleText:hover, #joinBtn:hover,
+  .modal-card .dict-play:not(.dep-go):hover { background: var(--surface-elevated); }
+  /* TERTIARY — navigation and low-priority inline actions. */
+  .back-btn { min-height: var(--tap); padding: 0 var(--space-md);
+              border-radius: var(--radius-md); background: transparent;
+              color: var(--text-secondary); font-size: var(--font-body); font-weight: 700; }
+  .back-btn:hover { background: var(--border-color); }
+  .modal-x { width: var(--tap); height: var(--tap); top: var(--space-xs);
+             right: var(--space-xs); font-size: 20px; }
+  /* the troop sliders render a 16px-tall track: give them a real touch area at every width */
+  .modal-card input[type=range] { min-height: var(--tap); }
+  .dep-help-btn { min-height: 32px; padding: 0 10px; }
+  /* disabled: same shape, unmistakably inert */
+  .lh-cont button:disabled, .comp-cont button:disabled, .lh-open:disabled,
+  #playBtn:disabled, #pauseBtn:disabled, #startTestBtn:disabled,
+  .modal-card .dict-play:disabled {
+    opacity: .45; cursor: not-allowed; box-shadow: none; filter: grayscale(.4); }
+
+  /* ---------- keyboard focus (was: three rules setting outline:none) ---------- */
+  a:focus-visible, button:focus-visible, summary:focus-visible,
+  input:focus-visible, select:focus-visible, [tabindex]:focus-visible {
+    outline: 3px solid var(--accent); outline-offset: 2px; border-radius: var(--radius-sm);
+  }
+  .picker select:focus-visible, .name-row input:focus-visible,
+  .dict-input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  /* ---------- card system ---------- */
+  .lh-camp, .lh-row, .ach-card, .comp-card {
+    box-shadow: var(--shadow-card); border-radius: var(--radius-md); }
+  .lh-cont { border-radius: var(--radius-lg); box-shadow: var(--shadow-raised); }
+  .lh-camp { border-radius: var(--radius-lg); }
+  /* status colour is ALWAYS paired with text and an icon — never colour alone. */
+  .comp-card.is-done, .lh-row.is-done, .lh-camp.is-done {
+    border-color: var(--success-border); background: var(--success-bg); }
+  .comp-card.is-review, .lh-row.is-review {
+    border-color: var(--warning-border); background: var(--warning-bg); }
+  .comp-review { background: var(--warning-bg); border: 1px solid var(--warning-border);
+                 color: var(--warning); border-radius: var(--radius-sm); }
+
+  /* ---------- disclosures: touch-friendly, native semantics kept ---------- */
+  .comp-sec > summary, .stats-det > summary {
+    min-height: var(--tap); display: flex; align-items: center; gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-xs); border-radius: var(--radius-sm);
+    font-size: var(--font-body); color: var(--text-secondary); }
+  .comp-sec > summary:hover, .stats-det > summary:hover { background: var(--surface-page); }
+
+  /* ---------- Learning Home ---------- */
+  #homeBody { max-width: 720px; margin: 0 auto; padding: 0 var(--space-md) var(--space-lg); }
+  .lh-row { min-height: var(--tap); }
+  .lh-stars { letter-spacing: 3px; }
+  /* additional campaigns collapse to a summary; the first stays expanded (Phase 6E STEP 15) */
+  .lh-more { margin-top: var(--space-sm); }
+  .lh-more > summary { min-height: var(--tap); display: flex; align-items: center;
+    padding: var(--space-sm) var(--space-md); border: 1px solid var(--border-color);
+    border-radius: var(--radius-md); background: var(--surface-card); cursor: pointer;
+    font-size: var(--font-body); font-weight: 700; color: var(--text-secondary);
+    list-style: none; }
+  .lh-more > summary::-webkit-details-marker { display: none; }
+  .lh-more > summary::before { content: "\25b8 "; color: var(--text-muted); margin-right: 6px; }
+  .lh-more[open] > summary::before { content: "\25be "; }
+
+  /* ---------- Achievement cabinet ---------- */
+  .ach-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .ach-empty { border: 1px dashed var(--border-color); border-radius: var(--radius-md);
+               padding: var(--space-md); color: var(--text-muted);
+               font-size: var(--font-body); }
+
+  /* ---------- Profile: Milestones must not read as Achievements ---------- */
+  #statsBody .stats-h { display: flex; align-items: center; gap: 6px; }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 420px) {
+    /* Stack rather than shrink: font sizes hold, spacing tightens. */
+    #homeBody { padding: 0 var(--space-sm) var(--space-md); }
+    #lessonProgress { padding: 0 var(--space-sm); }
+    .lh-camp, .lh-cont, .ach-card { padding: 10px var(--space-md); }
+    .lh-row { flex-wrap: wrap; row-gap: 2px; padding: var(--space-sm) 10px; }
+    .lh-row .nm { flex: 1 1 100%; order: 2; }
+    .lh-row .ic { order: 1; }
+    .lh-row .st { order: 3; flex: 1 1 100%; white-space: normal; }
+    .ach-grid { grid-template-columns: 1fr; }
+    /* The lesson progress block gets out of the activity's way on a short phone.
+       Both disclosures are CLOSED most of the time and their labels are short, so they sit side by
+       side and reclaim a whole 52px row. Opening either one returns it to full width. */
+    .comp-card { padding: var(--space-sm) 10px; display: flex; flex-flow: row wrap;
+                 column-gap: var(--space-sm); }
+    .comp-card > * { flex: 1 1 100%; }
+    /* size to content, not a forced 50%: both labels then share one row when they fit, and fall
+       back to stacking on very narrow text without ever breaking mid-label. */
+    .comp-card > details.comp-sec:not([open]) { flex: 0 1 auto; }
+    .comp-card > details.comp-sec:not([open]) > summary { justify-content: center;
+      white-space: nowrap; }
+    .comp-badge { margin: 0 0 2px; }
+    .comp-state { margin: 0 0 2px; }
+    .comp-bar { margin: 4px 0; }
+    .comp-next { margin-top: 3px; }
+    .comp-cont { margin-top: 6px; }
+    .comp-check { margin-top: 4px; }
+    .comp-sec { margin-top: 4px; padding-top: 4px; }
+    .comp-sec > summary, .stats-det > summary { padding: 10px var(--space-xs); }
+  }
+  @media (min-width: 768px) {
+    .ach-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+  }
+
+  /* ---------- motion ---------- */
+  .lh-row, .lh-cont button, .comp-cont button, .lh-open, .ach-card {
+    transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease; }
+  .lh-bar span, .comp-bar-fill { transition: width .3s ease; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .001ms !important; animation-iteration-count: 1 !important;
+      transition-duration: .001ms !important; scroll-behavior: auto !important; }
+  }
+
   .comp-card.is-review { border-color: #fde68a; }
   .comp-badge.m-progress   { background: #dbeafe; color: #1d4ed8; }
   .comp-badge.m-none       { background: #e2e8f0; color: #475569; }
@@ -5594,7 +5796,12 @@
   }
   function achievementCabinetHTML() {
     const owned = ownedCosmetics();
-    if (!owned.length) return "";              // nothing owned -> no cabinet, and no locked teasers
+    // Phase 6E: a neutral empty state. Still no locked catalogue and no totals — it states only
+    // that nothing has been earned, which is exactly what the ledger says.
+    if (!owned.length) {
+      return '<div class="stats-h">\ud83c\udfc5 Achievements</div>' +
+             '<div class="ach-empty">No achievements earned yet.</div>';
+    }
     const groups = [], byScope = {};
     owned.forEach(g => {
       if (!byScope[g.scope]) { byScope[g.scope] = []; groups.push(g.scope); }
@@ -5742,8 +5949,10 @@
     const have = (row.completedActivityIds || []).length;
     const nextId = miss[0] || null, missSet = {};
     miss.forEach(m => missSet[m] = 1);
-    return '<details class="comp-sec comp-check"><summary>Activities (' + have + ' / ' +
-      req.length + ')</summary><ul class="comp-list">' + req.map(aid => {
+    // Phase 6E: the count stays in the summary but reads "Activities 4/7" so the closed disclosure
+    // fits beside Details on one 360px row. Same information, fewer characters.
+    return '<details class="comp-sec comp-check"><summary>Activities ' + have + '/' +
+      req.length + '</summary><ul class="comp-list">' + req.map(aid => {
         const open = !!missSet[aid];
         return '<li class="' + (open ? (aid === nextId ? "next-up" : "") : "on") + '">' +
                '<span class="cm">' + (open ? "\u25cb" : "\u2713") + '</span>' +
@@ -5877,11 +6086,13 @@
         '<div class="lh-camp"><div class="lh-sub">No tracked lessons yet.</div></div>';
       return;
     }
-    let out = "";
-    camps.forEach(c => {
+    // Phase 6E STEP 15: the first (current) campaign stays expanded; any others collapse behind a
+    // single native disclosure. Presentation only — same data, same order, no Taipei-specific rule,
+    // and with one campaign the markup is byte-identical to before.
+    const campCard = (c) => {
       const done = c.list.filter(x => x.row.activePolicyCompleted === true).length;
       const pct = Math.round(done * 100 / c.list.length);
-      out += '<div class="lh-camp' + (c.completed ? ' is-done' : '') + '">' +
+      return '<div class="lh-camp' + (c.completed ? ' is-done' : '') + '">' +
         '<div class="lh-camp-nm">' + escapeHtml(c.name) + ' Campaign</div>' +
         '<div class="lh-stars">' + new Array(done + 1).join("\u2605") +
           new Array(c.list.length - done + 1).join("\u2606") + '</div>' +
@@ -5890,7 +6101,13 @@
         (done === c.list.length
           ? '<div class="lh-camp-done">\ud83c\udfc6 ' + escapeHtml(c.name) + ' Campaign Complete</div>'
           : '') + '</div>';
-    });
+    };
+    let out = campCard(camps[0]);
+    if (camps.length > 1) {
+      out += '<details class="lh-more"><summary>' + (camps.length - 1) +
+             ' more campaign' + (camps.length > 2 ? 's' : '') + '</summary>' +
+             camps.slice(1).map(campCard).join("") + '</details>';
+    }
     // ---- Continue: the one next action ----
     // "Finished" means every lesson is actually MASTERED \u2014 never merely that the chosen target has no
     // activity left. A lesson can have all seven activities attempted and still not be mastered (the
