@@ -1617,7 +1617,7 @@
     <!-- 畫面：Learning Home（Phase 6C）—— 學習的唯一入口，只回答「接下來做什麼／我到哪了」 -->
     <div id="screenHome" class="hidden">
       <div class="learn-top">
-        <button class="back-btn" id="backFromHome">← Back</button>
+        <button class="back-btn" id="backFromHome">← Back to Map</button>
         <span class="learn-title">Learning</span>
       </div>
       <div id="homeBody"></div>
@@ -4927,7 +4927,11 @@
         territory = null; myEcon = null;                   // 換房間 → 清掉上一房的世界快取
         const idx = (manifest && manifest.levels) ? manifest.levels.findIndex(l => l.id === o.j.map) : -1;
         if (idx < 0) { alert("This room's map isn't available."); return; }
+        // Phase 6F: selectLevel() still runs in full — it loads the room, the empire and the
+        // economy and draws the map — but the first screen of a world is now Learning Home, the
+        // canonical learning entry. "Back to Map" on Home reveals the map that is already drawn.
         selectLevel(idx);
+        openLearningHome();
       })
       .catch(() => { const e = "Server not available."; if (onErr) onErr(e); else alert(e); });
   }
@@ -7293,8 +7297,10 @@
     if (lessonReturnTo === "home") { openLearningHome(); return; }
     selectLevel(selLevelIdx);   // 回課程列表（順便刷新完成度）
   });
+  // Phase 6F: Home is the entry, so its back action reveals the Map rather than the Profile.
+  // The Profile stays reachable from the user chip, exactly as on every other in-app screen.
   document.getElementById("backFromHome").addEventListener("click", () => {
-    openProfileStats();
+    selectLevel(selLevelIdx);
   });
 
   /* ================= 老師/家長帳號 + 雲端進度後台 ================= */
