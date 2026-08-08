@@ -6042,13 +6042,46 @@
   //   territory.requirements.attackQualificationIds -> qualification.studyTarget -> contentPath
   // exactly what renderRequirementPanel() already navigates to. It is NOT randomLesson(), so the
   // chip does not change between openings, and it does not decide what \ud83c\udfb2 Occupy plays.
+  // THE resolver: a territory's attack requirements, in the catalog's own authoritative order,
+  // each paired with the lesson its qualification points at. Never reordered, never invented.
+  // `art` is null when a requirement has no mapped lesson — a configuration error, surfaced rather
+  // than papered over.
+  function regionMappedLessons(targetKey) {
+    return territoryRequirements(targetKey).map(qid => ({ qid: qid, art: studyArticleFor(qid) }));
+  }
+  // Display path (Phase 6G): the distinct lessons this region's requirements point at.
   function regionLessonPaths(targetKey) {
     const seen = {}, out = [];
-    territoryRequirements(targetKey).forEach(qid => {
-      const art = studyArticleFor(qid);
-      if (art && art.file && !seen[art.file]) { seen[art.file] = 1; out.push(art.file); }
+    regionMappedLessons(targetKey).forEach(m => {
+      if (m.art && m.art.file && !seen[m.art.file]) { seen[m.art.file] = 1; out.push(m.art.file); }
     });
     return out;
+  }
+  // ===== Phase 6H — which lesson does 占領 (Occupy) launch? =====
+  // Ungated territory              -> the legacy random pool, unchanged.
+  // Gated, some requirement missing -> the FIRST MISSING requirement's lesson (catalog order).
+  // Gated, all requirements held    -> the FIRST requirement's lesson (deterministic fallback).
+  // A gated territory whose requirement has no mapped lesson is a CONFIG ERROR: it reports the
+  // problem instead of silently falling back to a random lesson.
+  //
+  // This decides selection only. Whether a lesson must be passed, the passCount bootstrap, the
+  // pending/pendingOccupy pair, claim authority and the attack gate are all untouched.
+  function occupyLessonPlan(targetKey) {
+    const reqs = territoryRequirements(targetKey);
+    if (!reqs.length) return { random: true };
+    const mapped = regionMappedLessons(targetKey);
+    const unmapped = mapped.filter(m => !m.art || !m.art.file).map(m => m.qid);
+    if (unmapped.length) return { error: unmapped.join(", ") };
+    const missing = mapped.filter(m => !myQualifications.has(m.qid));
+    const pick = missing.length ? missing[0] : mapped[0];
+    return { random: false, qid: pick.qid, article: pick.art, missing: missing.length };
+  }
+  // The one entry point used at click time. `randomLesson()` is called here and ONLY here for
+  // ungated territories, at the same moment it was called before.
+  function selectOccupyLesson(targetKey, i) {
+    const plan = occupyLessonPlan(targetKey);
+    if (plan.error) return plan;
+    return plan.random ? { random: true, article: randomLesson(i) } : plan;
   }
   function regionLearningHTML(targetKey) {
     const paths = regionLessonPaths(targetKey);
@@ -6618,11 +6651,26 @@
       return;
     }
     // 無主：佔領時隨機挑一課（全域世界不分等級），過關才出兵佔領。
-    terr.innerHTML = '<p class="op-hint">🚩 Occupy this region — pass a random lesson (80%+) and your troops deploy automatically:</p>' +
-      '<div class="op-def" style="text-align:center">🎲 A random lesson will be picked for you' + (roomCode === "GLOBAL" ? " (any level)" : "") + '</div>' +
-      '<div class="op-btns"><button id="chStudy" class="dict-play">🎲 Occupy</button></div>';
+    // Phase 6H: a gated region occupies with its OWN mapped lesson; an ungated one keeps the
+    // legacy random pick. Only the choice of lesson differs — everything below is unchanged.
+    const plan = occupyLessonPlan(key);
+    if (plan.error) {
+      terr.innerHTML = '<p class="op-hint">⚠️ This region\'s learning requirement points at a ' +
+        'qualification with no lesson (' + escapeHtml(plan.error) + '). Occupation is unavailable ' +
+        'until the catalog is fixed.</p>';
+      return;
+    }
+    const planTitle = plan.random ? null : lessonTitleOf(plan.article.file);
+    terr.innerHTML = '<p class="op-hint">🚩 Occupy this region — pass ' +
+        (plan.random ? 'a random lesson' : 'this lesson') + ' (80%+) and your troops deploy automatically:</p>' +
+      '<div class="op-def" style="text-align:center">' + (plan.random
+        ? '🎲 A random lesson will be picked for you' + (roomCode === "GLOBAL" ? " (any level)" : "")
+        : '📖 <b>' + escapeHtml(planTitle) + '</b>') + '</div>' +
+      '<div class="op-btns"><button id="chStudy" class="dict-play">' +
+        (plan.random ? '🎲' : '📖') + ' Occupy</button></div>';
     ov.querySelector("#chStudy").addEventListener("click", () => {
-      const ch = randomLesson(i);
+      const sel = selectOccupyLesson(key, i);
+      const ch = sel.article;
       if (!ch) { alert("No lessons available for this map."); return; }
       pending = { key: key, file: ch.file, base: passCount(ch.file), article: ch, i: i };
       pendingOccupy = { file: ch.file, reopen: function () { openRegion(key, name, pop, i); } };   // 過關後直接跳回這個據點佔領
