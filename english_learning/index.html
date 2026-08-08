@@ -6646,7 +6646,10 @@
     const cleared = pending && pending.key === key && passCount(pending.file) > pending.base;
     if (cleared) {
       if (T <= 0) { terr.innerHTML = noTroops; return; }
-      terr.innerHTML = '<p class="op-hint">✅ Challenge cleared! 🚩 Occupy — assign troops by type:</p>';
+      // Phase 6I: "Challenge" now names the RANDOM mode only, so a gated region says "Lesson passed".
+      terr.innerHTML = '<p class="op-hint">✅ ' +
+        (territoryRequirements(key).length ? 'Lesson passed!' : 'Challenge cleared!') +
+        ' 🚩 Occupy — assign troops by type:</p>';
       deployPanel(terr, poolAvail(), { label: "🚩 Occupy", onGo: g => { poolSpend(g); pending = null; claimTroops(key, g, pop, function () {}); logEvent("occupy", { region: name, key: key }); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); } });
       return;
     }
@@ -6660,14 +6663,19 @@
         'until the catalog is fixed.</p>';
       return;
     }
+    // Phase 6I: the two neutral-occupation modes are NAMED. A gated region occupies with its own
+    // lesson and says so; an ungated one launches a random lesson and is called a Random Challenge,
+    // so the label never implies a requirement that does not exist. Copy only — selection is 6H's.
     const planTitle = plan.random ? null : lessonTitleOf(plan.article.file);
-    terr.innerHTML = '<p class="op-hint">🚩 Occupy this region — pass ' +
-        (plan.random ? 'a random lesson' : 'this lesson') + ' (80%+) and your troops deploy automatically:</p>' +
+    terr.innerHTML = '<p class="op-hint">🚩 ' + (plan.random
+        ? 'Pass a random lesson to occupy this region.'
+        : 'Pass this lesson to occupy this region.') + '</p>' +
       '<div class="op-def" style="text-align:center">' + (plan.random
-        ? '🎲 A random lesson will be picked for you' + (roomCode === "GLOBAL" ? " (any level)" : "")
-        : '📖 <b>' + escapeHtml(planTitle) + '</b>') + '</div>' +
+        ? '🎲 A random lesson will be picked for you'
+          + (roomCode === "GLOBAL" ? " (any level)" : "") + ' · 80%+ to pass'
+        : '📖 <b>' + escapeHtml(planTitle) + '</b> · 80%+ to pass') + '</div>' +
       '<div class="op-btns"><button id="chStudy" class="dict-play">' +
-        (plan.random ? '🎲' : '📖') + ' Occupy</button></div>';
+        (plan.random ? '🎲 Random Challenge' : '📖 Occupy') + '</button></div>';
     ov.querySelector("#chStudy").addEventListener("click", () => {
       const sel = selectOccupyLesson(key, i);
       const ch = sel.article;
