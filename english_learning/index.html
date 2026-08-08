@@ -355,9 +355,12 @@
   /* ===== Phase 6D — one primary, one bar, one status, one highlight per surface ===== */
   /* The outpost's conquest action stays primary; "Study lesson" and the per-requirement study
      buttons become secondary so they no longer compete with it. Nothing is removed. */
-  /* `.dep-go` is the conquest action (Occupy / Deploy) and stays THE primary here. */
-  .modal-card .dict-play:not(.dep-go) { background: #fff; color: #1d4ed8; border: 1px solid #bfdbfe; }
-  .modal-card .dict-play:not(.dep-go):hover { background: #eff6ff; }
+  /* `.dep-go` and `#chStudy` are the conquest actions (Deploy / Occupy) and stay THE primary here.
+     Phase 6G: #chStudy had been swept up by the blanket demotion, which left the region panel with
+     no primary at all once the secondary Study Lesson buttons appeared beside it. */
+  .modal-card .dict-play:not(.dep-go):not(#chStudy) {
+    background: #fff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .modal-card .dict-play:not(.dep-go):not(#chStudy):hover { background: #eff6ff; }
   /* The achievement summary on Learning Home stops competing with Continue for the eye. */
   .lh-ach { border-color: #e2e8f0; background: #fff; }
   .lh-ach-li { color: #475569; }
@@ -440,7 +443,8 @@
 
   /* ---------- button system ---------- */
   /* PRIMARY — one per surface. */
-  .lh-cont button, .comp-cont button, .lh-open, .modal-card .dict-play.dep-go {
+  .lh-cont button, .comp-cont button, .lh-open, .modal-card .dict-play.dep-go,
+  .modal-card #chStudy {
     min-height: var(--tap); padding: 0 var(--space-lg);
     border: 1px solid transparent; border-radius: var(--radius-md);
     background: var(--accent); color: #fff;
@@ -448,10 +452,11 @@
     box-shadow: var(--shadow-raised);
   }
   .lh-cont button:hover, .comp-cont button:hover, .lh-open:hover,
-  .modal-card .dict-play.dep-go:hover { background: var(--accent-strong); }
+  .modal-card .dict-play.dep-go:hover, .modal-card #chStudy:hover {
+    background: var(--accent-strong); }
   /* SECONDARY — supporting actions. */
   .lh-ach button, #startTestBtn, #playBtn, #pauseBtn, #toggleText, #joinBtn,
-  .modal-card .dict-play:not(.dep-go) {
+  .modal-card .dict-play:not(.dep-go):not(#chStudy) {
     min-height: var(--tap); padding: 0 var(--space-md);
     border: 1px solid var(--border-color); border-radius: var(--radius-md);
     background: var(--surface-card); color: var(--text-secondary);
@@ -459,11 +464,11 @@
   }
   /* #joinBtn is a legacy class-sync action on the Profile, not a learning CTA, so it is
      secondary: the Profile then has exactly one primary (the Learning Home entry). */
-  #playBtn, #joinBtn, .modal-card .dict-play:not(.dep-go) { color: var(--accent-strong);
+  #playBtn, #joinBtn, .modal-card .dict-play:not(.dep-go):not(#chStudy) { color: var(--accent-strong);
                                                             border-color: #bfdbfe; }
   #pauseBtn { color: var(--warning); border-color: var(--warning-border); }
   .lh-ach button:hover, #startTestBtn:hover, #playBtn:hover, #toggleText:hover, #joinBtn:hover,
-  .modal-card .dict-play:not(.dep-go):hover { background: var(--surface-elevated); }
+  .modal-card .dict-play:not(.dep-go):not(#chStudy):hover { background: var(--surface-elevated); }
   /* TERTIARY — navigation and low-priority inline actions. */
   .back-btn { min-height: var(--tap); padding: 0 var(--space-md);
               border-radius: var(--radius-md); background: transparent;
@@ -528,6 +533,14 @@
   .ach-empty { border: 1px dashed var(--border-color); border-radius: var(--radius-md);
                padding: var(--space-md); color: var(--text-muted);
                font-size: var(--font-body); }
+
+  /* ---------- region panel: learning is SECONDARY to conquest (Phase 6G) ---------- */
+  .op-learn { margin-top: var(--space-md); padding-top: var(--space-sm);
+              border-top: 1px solid var(--border-color); }
+  .op-learn-h { font-size: var(--font-section); font-weight: 800; letter-spacing: .06em;
+                text-transform: uppercase; color: var(--text-muted); margin-bottom: var(--space-xs); }
+  .op-learn .comp-card { margin: 0 0 var(--space-sm); }
+  .op-learn .comp-card:last-child { margin-bottom: 0; }
 
   /* ---------- Profile: Milestones must not read as Achievements ---------- */
   #statsBody .stats-h { display: flex; align-items: center; gap: 6px; }
@@ -6001,7 +6014,9 @@
     return '<details class="comp-sec"><summary>Details</summary>' + rows + prov + past + '</details>';
   }
   // ---- COMPACT (outpost): decide whether to study, then leave. Detail lives on the lesson page. ----
-  function lessonCompactHTML(contentPath) {
+  // `opts.study` swaps the primary Continue for a SECONDARY "Study Lesson" action. Used by the
+  // region panel (Phase 6G), where conquest owns the one primary button and learning is secondary.
+  function lessonCompactHTML(contentPath, opts) {
     const row = progressForContent(contentPath);
     if (!row) return "";
     if (!row.authoritativeCompletionAvailable) return untrackedCardHTML();
@@ -6013,12 +6028,48 @@
       '<div class="comp-title">' + escapeHtml(lessonTitleOf(contentPath)) + '</div>' +
       lessonStateChip(row) +
       '<div class="comp-levels">' + have + ' of ' + req.length + ' activities</div>';
-    if (miss.length) {
+    if (opts && opts.study) {
+      out += '<div class="op-btns"><button type="button" class="dict-play" data-region-study="' +
+             escapeHtml(contentPath) + '">\ud83d\udcd6 Study Lesson</button></div>';
+    } else if (miss.length) {
       out += '<div class="comp-cont"><button type="button" data-continue-for="' +
              escapeHtml(contentPath) + '">\u25b6\ufe0f Continue Learning</button></div>';
     }
     return out + '</div>';
   }
+  // ===== Phase 6G — the region panel's read-only learning section =====
+  // The lesson identity is the STABLE, designer-owned mapping the catalog already carries:
+  //   territory.requirements.attackQualificationIds -> qualification.studyTarget -> contentPath
+  // exactly what renderRequirementPanel() already navigates to. It is NOT randomLesson(), so the
+  // chip does not change between openings, and it does not decide what \ud83c\udfb2 Occupy plays.
+  function regionLessonPaths(targetKey) {
+    const seen = {}, out = [];
+    territoryRequirements(targetKey).forEach(qid => {
+      const art = studyArticleFor(qid);
+      if (art && art.file && !seen[art.file]) { seen[art.file] = 1; out.push(art.file); }
+    });
+    return out;
+  }
+  function regionLearningHTML(targetKey) {
+    const paths = regionLessonPaths(targetKey);
+    if (!paths.length) return "";                 // ungated region -> no lesson, nothing invented
+    const cards = paths.map(f =>
+      '<div data-comp-for="' + escapeHtml(f) + '" data-comp-mode="region">' +
+      lessonCompactHTML(f, { study: true }) + '</div>').join("");
+    if (!cards.replace(/<div[^>]*><\/div>/g, "").trim()) return "";
+    return '<div class="op-learn"><div class="op-learn-h">Learning</div>' + cards + '</div>';
+  }
+  document.addEventListener("click", function (e) {
+    const b = e.target && e.target.closest && e.target.closest("[data-region-study]");
+    if (!b) return;
+    const art = findArticleByFile(b.getAttribute("data-region-study"));
+    if (!art) return;
+    // Phase 6G STEP 5: a contextual Study shortcut FROM THE MAP, so Back returns to the map.
+    // Set explicitly rather than relying on whatever the previous navigation left behind.
+    lessonReturnTo = null;
+    closeModal();
+    selectArticle(art);
+  });
   // ---- THE LESSON PAGE CARD: primary + secondary. The single owner of lesson detail. ----
   function completionCardHTML(contentPath) {
     const row = progressForContent(contentPath);
@@ -6367,8 +6418,9 @@
   function refreshCompletionCards() {
     document.querySelectorAll("[data-comp-for]").forEach(el => {
       const path = el.getAttribute("data-comp-for");
-      el.innerHTML = el.getAttribute("data-comp-mode") === "compact"
-        ? lessonCompactHTML(path) : completionCardHTML(path);
+      const mode = el.getAttribute("data-comp-mode");
+      el.innerHTML = mode === "region" ? lessonCompactHTML(path, { study: true })
+        : mode === "compact" ? lessonCompactHTML(path) : completionCardHTML(path);
     });
   }
   // Every surface that shows lesson progress, refreshed together. Phase 6B STEP 4: the lesson page is
@@ -6413,6 +6465,7 @@
       b.textContent = art ? "📖 Study: " + qualTitle(qid) : "📖 Not available yet: " + qualTitle(qid);
       if (art) b.addEventListener("click", () => {
         pendingStudy = { qualificationIds: missing.slice(), label: regionDisplayName(targetKey), reopen: reopen || null };
+        lessonReturnTo = null;              // Phase 6G: started from the map -> Back returns there
         closeModal(); selectArticle(art);
       });
       else b.disabled = true;
@@ -6532,7 +6585,10 @@
       '<div class="op-pop">👥 Population <b>' + livePop + '</b>' + (mine ? ' (yours · earns gold)' : ' — added to your empire if you take it') + '</div>';
     if (h && h.owner) html += '<div class="op-def' + (mine ? ' op-mine' : '') + '">Held by ' + (h.avatar || "👦") + ' <b>' + dispName(h.owner) + '</b>' + techBadge(h.tech) + '<br>' + (mine ? garrisonHTML(h.troops) : '<span class="op-card">🛡️ Garrison unknown (enemy)</span>') + '</div>';
     else html += '<div class="op-def">🏳️ Unclaimed region</div>';
-    html += '<div class="op-econ">⚔️ Your troops: <b>' + T + '</b></div><div id="opTerr"></div>';
+    // Phase 6G: conquest stays first and owns the primary action; the read-only learning section
+    // renders BELOW it. It changes nothing about occupying or attacking this region.
+    html += '<div class="op-econ">⚔️ Your troops: <b>' + T + '</b></div><div id="opTerr"></div>' +
+            regionLearningHTML(key);
     const ov = openModal(html);
     const terr = ov.querySelector("#opTerr");
     const noTroops = '<p class="op-hint">⚠️ No troops right now — win a battle or redeploy a garrison to free some up.</p>';
@@ -6820,7 +6876,10 @@
         lessonCompactHTML(a.file) + '</div>' +
       '<div class="op-btns"><button id="opStudy" class="dict-play">📖 Study lesson</button></div><div id="opTerr"></div>';
     const ov = openModal(html);
-    ov.querySelector("#opStudy").addEventListener("click", () => { pendingOccupy = { file: a.file, reopen: function () { openOutpost(a); } }; closeModal(); selectArticle(a); });
+    // Phase 6G: pin the return target explicitly. Without this the lesson would inherit whatever
+    // lessonReturnTo the previous navigation left behind, so a Study started from the MAP could send
+    // Back to Learning Home. pendingOccupy and every conquest behaviour are unchanged.
+    ov.querySelector("#opStudy").addEventListener("click", () => { pendingOccupy = { file: a.file, reopen: function () { openOutpost(a); } }; lessonReturnTo = null; closeModal(); selectArticle(a); });
     const terr = ov.querySelector("#opTerr");
     if (!authToken()) { terr.innerHTML = '<p class="op-hint">🔒 Log in to raise an army and battle for territory.</p>'; return; }
     if (mine) {
