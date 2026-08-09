@@ -126,6 +126,11 @@ Therefore, per §23, every activity registered in Phase 3C uses `rewardPolicy: "
 and reward eligibility stay separate registry concepts. The Zoo `quiz3` slice keeps
 `standard_activity_pass` and remains the only gold-bearing activity.
 
+> Superseded in part by Phase 7C.2a: the three other Taipei `quiz3` **gates** were later given the
+> same policy, so the gold-bearing set is now those four activities. The separation asserted here
+> still holds — the ~270 other migrated activities remain `rewardPolicy: "none"`, and reward
+> activation stayed a deliberate, separate decision rather than a consequence of registering content.
+
 ## Qualification finding (§24)
 
 Likewise, no qualification is invented for any newly migrated activity: all Phase 3C registrations use

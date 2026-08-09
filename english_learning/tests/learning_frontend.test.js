@@ -26,9 +26,15 @@ function extractFn(src, sig) {
   throw new Error("unbalanced braces for " + sig);
 }
 
+// Phase 7C.2 moved the gold-bar sync OUT of maybeSubmitLearningAttempt and into
+// noteLessonCompletion, so that every authoritative endpoint (quiz / matching / read-along /
+// role-play) syncs the balance in ONE place. noteLessonCompletion is therefore no longer a mere
+// display hook that can be stubbed away — it now owns "the balance comes from the server response,
+// never computed" — so the REAL one is extracted and run, with only its collaborators stubbed.
 const FNS = ["renderRequirementPanel", "territoryRequirements", "missingQualifications", "qualTitle",
   "studyTargetFor", "studyArticleFor", "activityIdForContent", "maybeSubmitLearningAttempt",
-  "offerStudyReturn", "findArticleByFile"].map(n => extractFn(html, "function " + n + "("));
+  "offerStudyReturn", "findArticleByFile", "noteLessonCompletion"]
+  .map(n => extractFn(html, "function " + n + "("));
 
 // ---- a minimal DOM good enough for the renderer (element + classList + appendChild) ----
 function el(tag) {
@@ -65,9 +71,14 @@ function makeCtx(over) {
     selectArticle: a => { ctx.log.push("selectArticle:" + a.file); },
     selectLevel: () => { ctx.log.push("selectLevel"); },
     showLockedMsg: m => { ctx.log.push("toast:" + m); },
-    renderEmpire: () => {},
-    // Phase 5A: the completion-banner hook. Display only — stubbed here like every other collaborator.
-    noteLessonCompletion: j => { ctx.log.push("noteCompletion:" + (j && j.lessonCompletedNow)); },
+    renderEmpire: () => { ctx.log.push("renderEmpire"); },
+    // Phase 5A/7C.2: the completion hook. The REAL function now runs (see FNS above); these are the
+    // collaborators it reaches for, and __log is how the existing "noteCompletion:" assertions still
+    // observe that it was called.
+    __log: m => { ctx.log.push(m); },
+    _grantedNow: { lesson: null, course: null, gold: 0 },
+    loadLearningProgress: () => { ctx.log.push("loadLearningProgress"); },
+    refreshLessonSurfaces: () => {},
     authToken: () => "tok",
     withRoom: u => u,
     synth: { cancel() {} }, stopListenL1() {}, stopRecordingIfAny() {},
@@ -81,6 +92,12 @@ function makeCtx(over) {
   ctx.document.createElement = t => el(t);
   vm.createContext(ctx);
   vm.runInContext(FNS.join("\n"), ctx);
+  // Wrap the real noteLessonCompletion so its invocation stays observable without replacing it.
+  vm.runInContext(
+    "var __realNote = noteLessonCompletion;" +
+    "noteLessonCompletion = function (j) {" +
+    "  __log('noteCompletion:' + (j && j.lessonCompletedNow));" +
+    "  return __realNote(j); };", ctx);
   return ctx;
 }
 
@@ -305,12 +322,15 @@ const settle = () => new Promise(r => setImmediate(r));
     "lessonCompletedNow on a failing attempt is forwarded to the UI hook");
   assert.strictEqual(c1b.myQualifications.size, 0, "…and still grants nothing client-side");
 
-  // a PASSING response is mirrored (display only) and the return-to-territory offer appears
+  // a PASSING response is mirrored (display only) and the return-to-territory offer appears.
+  // The fixture carries rewardAmount because a real settling response does: the server publishes the
+  // granted amount alongside the new balance, and sends a balance ONLY when it actually credited.
   const c2 = makeCtx({ learningRegistry: REG, manifest: MANIFEST });
   c2.pendingStudy = { qualificationIds: ["q.zoo"], label: "Region t:target",
     reopen: () => c2.log.push("reopen") };
   c2._fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve(
-    { ok: true, passed: true, qualifications: ["q.zoo"], rewarded: true, gold: 12345 }) });
+    { ok: true, passed: true, qualifications: ["q.zoo"], rewarded: true, rewardAmount: 160,
+      lessonRewardAmount: 0, gold: 12345 }) });
   vm.runInContext("maybeSubmitLearningAttempt", c2)("Pre-A1/taipei/zoo", "quiz3", []);
   await settle();
   assert(c2.myQualifications.has("q.zoo"), "server-confirmed pass updates the display mirror");
@@ -324,6 +344,43 @@ const settle = () => new Promise(r => setImmediate(r));
   assert(c2.log.includes("selectLevel") && c2.log.includes("reopen"),
     "clicking it goes back to the map and reopens the originating territory");
   assert.strictEqual(c2.pendingStudy, null, "the return context is consumed once");
+
+  // Phase 7C.2a-fix: the balance is synced on an ECONOMIC SETTLEMENT, identified by the granted
+  // amounts — never by `rewarded` alone, and never from a response that reports no settlement.
+  // (i) lesson mastery pays while the ACTIVITY's own reward is 0 — this must still sync, because
+  //     gating on `rewarded` is exactly the stale-gold-bar bug Phase 7C.2 fixed.
+  const cM = makeCtx({ learningRegistry: REG, manifest: MANIFEST });
+  cM._fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve(
+    { ok: true, passed: true, qualifications: [], rewarded: false, rewardAmount: 0,
+      lessonRewarded: true, lessonRewardAmount: 640, lessonCompletedNow: true, gold: 2100 }) });
+  vm.runInContext("maybeSubmitLearningAttempt", cM)("Pre-A1/taipei/zoo", "quiz3", []);
+  await settle();
+  assert.strictEqual(cM.myEcon.gold, 2100,
+    "lesson mastery gold syncs even though the activity itself paid nothing");
+  assert(cM.log.includes("renderEmpire"), "…and the gold bar is redrawn");
+
+  // (ii) a retry settles nothing: every granted amount is 0, so no response-driven gold update,
+  //      even if the response still carries a balance.
+  const cR = makeCtx({ learningRegistry: REG, manifest: MANIFEST });
+  cR._fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve(
+    { ok: true, passed: true, qualifications: ["q.zoo"], rewarded: false, rewardAmount: 0,
+      lessonRewarded: false, lessonRewardAmount: 0, gold: 987654 }) });
+  vm.runInContext("maybeSubmitLearningAttempt", cR)("Pre-A1/taipei/zoo", "quiz3", []);
+  await settle();
+  assert.strictEqual(cR.myEcon.gold, 0,
+    "a replay grants nothing, so no balance is taken from the response");
+  assert(!cR.log.includes("renderEmpire"), "…and the gold bar is not redrawn");
+
+  // (iii) campaign completion is cosmetic: courseRewardAmount 0 means no economic sync is needed.
+  const cC = makeCtx({ learningRegistry: REG, manifest: MANIFEST });
+  cC._fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve(
+    { ok: true, passed: true, qualifications: [], rewarded: false, rewardAmount: 0,
+      lessonRewardAmount: 0, courseCompletedNow: true, courseRewardAmount: 0,
+      courseRewardItemId: "trophy.campaign.complete", gold: 555 }) });
+  vm.runInContext("maybeSubmitLearningAttempt", cC)("Pre-A1/taipei/zoo", "quiz3", []);
+  await settle();
+  assert.strictEqual(cC.myEcon.gold, 0,
+    "a cosmetic campaign completion moves no gold, so nothing is synced from it");
 
   // a partially-satisfied return context does NOT offer the return yet
   const c3 = makeCtx({ learningRegistry: REG, manifest: MANIFEST });

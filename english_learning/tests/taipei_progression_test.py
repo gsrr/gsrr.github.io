@@ -89,8 +89,14 @@ for slug in ("mrt", "market", "park"):
     assert svc.grade_attempt(aid, wrong)[0]["passed"] is False
     st, out = svc.record_attempt({}, aid, res, 1000)
     assert out["granted"] == ["english.prea1.taipei.%s.quiz3.pass" % slug]
-    assert out["rewarded"] is False and out["rewardAmount"] == 0, "new gates pay no gold"
-ok("§34 the 3 new activities grade their real lesson content and grant exactly their qualification")
+    # Phase 7C.2a: these gates now pay the SAME gate reward as Zoo — the amount is whatever the
+    # server injected, never a number named here — and, as always, exactly once.
+    zoo_gate = svc.reward_for("english.prea1.taipei.zoo.quiz3")["amount"]
+    assert out["rewarded"] is True and out["rewardAmount"] == zoo_gate > 0, (aid, out)
+    _, again = svc.record_attempt(st, aid, res, 2000)
+    assert again["rewarded"] is False and again["rewardAmount"] == 0, "a replayed gate pays nothing"
+ok("§34 the 3 new activities grade their real lesson content, grant exactly their qualification, "
+   "and pay the shared gate reward exactly once")
 
 # ============================== §35 territory gates ==============================
 STORE = {START: {"owner": "ALICE", "troops": [{"type": "cav", "hp": 100}]}}
@@ -200,17 +206,23 @@ ok("§38 backward compatibility: Daan/Zoo gate unchanged and old progress still 
    "four v2 lesson policies now active — conquest never depended on lesson completion")
 
 # ============================== §39 reward neutrality ==============================
-paying = [a for a in reg.activities if reg.reward_policy_of(a) != "none"]
-assert paying == ["english.prea1.taipei.zoo.quiz3"], paying
-assert svc.reward_for("english.prea1.taipei.zoo.quiz3")["amount"] == 10000
-for slug in ("mrt", "market", "park"):
-    assert svc.reward_for("english.prea1.taipei.%s.quiz3" % slug)["amount"] == 0
+GATES = sorted("english.prea1.taipei.%s.quiz3" % s
+               for s in ("zoo", "mrt", "market", "park"))
+paying = sorted(a for a in reg.activities if reg.reward_policy_of(a) != "none")
+assert paying == GATES, paying
+# Phase 7C.2a: the three gates added in this content phase now pay the SAME gate reward as
+# Zoo, through the same policy and the same injected amount. Nothing here names a number.
+for aid in GATES:
+    assert reg.reward_policy_of(aid) == "standard_activity_pass", aid
+    assert svc.reward_for(aid)["amount"] == svc.reward_for(GATES[0])["amount"] > 0, aid
 # Phase 5F: lessons now carry a cosmetic badge. Reward NEUTRALITY is about gold, so the check is
 # that no lesson reward is economic — not that no lesson reward exists.
-assert [l for l in reg.lessons if W.is_economic(reg.lesson_reward_policy_of(l))] == []
+# A campaign still moves no gold at all. A lesson may carry AT MOST ONE economic policy (7C.2).
+for l in reg.lessons:
+    assert len([p for p in reg.lesson_reward_policies_of(l) if W.is_economic(p)]) <= 1, l
 assert [c for c in reg.courses if W.is_economic(reg.course_reward_policy_of(c))] == []
-ok("§39 reward neutrality: still exactly 1 gold-bearing activity; the 3 new gates pay 0; the "
-   "cosmetic lesson/campaign rewards move no gold")
+ok("§39 reward shape: the 4 quiz3 gates share one gate policy, each lesson carries at most "
+   "one economic mastery reward, and campaign completion still moves no gold")
 
 # ============================== §40 world invariants ==============================
 assert len(TAIPEI) == 12

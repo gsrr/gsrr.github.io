@@ -257,8 +257,11 @@ assert o["rewarded"] is False and o["rewardAmount"] == 0 and o["granted"] == []
 assert (st4.get("qualifications") or {}) == {}
 assert svc.registry.reward_policy_of(ZOO) == "none" and svc.registry.qualification_ids_for(ZOO) == []
 assert svc.reward_for(ZOO)["amount"] == 0
-assert [a for a in svc.registry.activities if svc.registry.reward_policy_of(a) != "none"] == \
-    ["english.prea1.taipei.zoo.quiz3"], "Zoo quiz3 is still the only paying activity"
+# Phase 7C.2a: the paying set is exactly the four quiz3 gates — matching itself still pays nothing.
+assert sorted(a for a in svc.registry.activities
+              if svc.registry.reward_policy_of(a) != "none") == \
+    sorted("english.prea1.taipei.%s.quiz3" % s for s in ("zoo", "mrt", "market", "park")), \
+    "the paying set must be exactly the four quiz3 gates"
 assert o["lessonCompleted"] is False and o["lessonCompletedNow"] is False
 assert st4.get("lessonCompletions") is None or st4["lessonCompletions"] == {}
 active = sorted(l for l in svc.registry.lessons if svc.registry.completion_available(l))

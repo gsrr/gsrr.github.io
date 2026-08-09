@@ -100,6 +100,11 @@ Additive only — no existing entry changes:
 Every new activity uses **`rewardPolicy: "none"`** so the gold-bearing set stays exactly
 `{english.prea1.taipei.zoo.quiz3}` and PASS_GOLD is untouched (§18).
 
+> Superseded by Phase 7C.2a: these three gates were deliberately given
+> `rewardPolicy: "standard_activity_pass"`, making the gold-bearing set all four quiz3 activities.
+> The reasoning above still describes why the *content* phase kept them inert — reward activation was
+> a separate, later decision, not a side effect of registering content.
+
 Zoo is **not** given a lesson-scope qualification: the existing activity qualification already
 provides the gate, so §19's "prefer minimal changes" applies and no migration is needed (§12).
 

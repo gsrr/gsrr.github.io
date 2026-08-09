@@ -209,8 +209,11 @@ ok("§19/§20 old readers unaffected: completed/completedAt/policyVersion keep f
    "while the new active-policy fields carry the truth; no internals leak")
 
 # ====================== 8. neutrality: reward, qualification, passcnt, gates ======================
+# Phase 7C.2a: all FOUR gate activities are gold-bearing. Identity, not merely count.
+GATES = sorted("english.prea1.taipei.%s.quiz3" % s
+               for s in ("zoo", "mrt", "market", "park"))
 gold_bearing = sorted(a for a in reg.activities if svc.reward_for(a)["amount"] > 0)
-assert gold_bearing == ["english.prea1.taipei.zoo.quiz3"], gold_bearing
+assert gold_bearing == GATES, gold_bearing
 assert svc.reward_for("english.prea1.taipei.zoo.quiz3")["amount"] == 10000
 st = {}
 for slug, lid in LIDS.items():

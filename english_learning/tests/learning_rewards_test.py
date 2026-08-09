@@ -32,8 +32,13 @@ TAIPEI = "english.prea1.taipei"
 ZOO = "english.prea1.taipei.zoo"
 
 # ============================== production is UNCHANGED ==============================
+# Phase 7C.2a: every Taipei gate activity pays, through the ONE shared policy.
+GATES = sorted("english.prea1.taipei.%s.quiz3" % s
+               for s in ("zoo", "mrt", "market", "park"))
 gold_bearing = sorted(a for a in reg.activities if svc.reward_for(a)["amount"] > 0)
-assert gold_bearing == [ZOO + ".quiz3"], gold_bearing
+assert gold_bearing == GATES, gold_bearing
+assert {reg.reward_policy_of(a) for a in GATES} == {"standard_activity_pass"}, \
+    "the gates must share one policy - no per-lesson reward ids"
 assert svc.reward_for(ZOO + ".quiz3") == {"type": "gold", "amount": 10000, "itemId": None,
                                           "once": True}
 # Phase 5F activated the first production rewards. They are COSMETIC: the four Taipei lessons grant
@@ -42,10 +47,13 @@ badged = sorted(l for l in reg.lessons if reg.lesson_reward_policy_of(l) == "les
 assert badged == sorted("english.prea1.taipei." + s for s in ("zoo", "mrt", "market", "park")), badged
 assert [c for c in reg.courses if reg.course_reward_policy_of(c) == "campaign_trophy"] == \
     ["english.prea1.taipei"]
+# Phase 7C.2: a lesson carries a LIST of policies, so checking only reward_policy_of() (the
+# first) would silently ignore the economic one. Check every declared policy.
 for lid in reg.lessons:
-    pid = reg.lesson_reward_policy_of(lid)
-    assert pid in ("none", "lesson_mastery_badge"), (lid, pid)
-    assert not W.is_economic(pid), (lid, pid)         # a lesson may never move the economy
+    pids = reg.lesson_reward_policies_of(lid)
+    assert set(pids) <= {"none", "lesson_mastery_badge", "lesson_mastery_gold"}, (lid, pids)
+    econ = [p for p in pids if W.is_economic(p)]
+    assert len(econ) <= 1, (lid, econ)                # never two gold policies on one lesson
 for cid in reg.courses:
     pid = reg.course_reward_policy_of(cid)
     assert pid in ("none", "campaign_trophy"), (cid, pid)
@@ -61,8 +69,9 @@ used = ({reg.reward_policy_of(a) for a in reg.activities}
 assert used <= set(W.ACTIVE_POLICY_IDS), "production references a framework-only policy: %s" % (
     used - set(W.ACTIVE_POLICY_IDS))
 assert R.validate(R.DATA) == [], R.validate(R.DATA)
-ok("production economy unchanged: 1 gold-bearing activity @10000, 4 COSMETIC lesson rewards, 1 "
-   "COSMETIC campaign reward, no gameplay/profile reward, nothing framework-only referenced")
+ok("production economy: 4 gold-bearing gate activities sharing one policy, 4 lessons carrying "
+   "a cosmetic badge + at most one economic mastery reward, 1 COSMETIC campaign reward, no "
+   "gameplay/profile reward, nothing framework-only referenced")
 
 # ============================== the policy table ==============================
 assert set(W.TYPES) == {"none", "gold", "cosmetic", "profile", "gameplay"}, sorted(W.TYPES)

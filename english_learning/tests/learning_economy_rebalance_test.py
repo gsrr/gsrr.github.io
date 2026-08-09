@@ -47,17 +47,22 @@ assert GC.MASTERY_GOLD == 640, GC.MASTERY_GOLD
 assert GC.PASS_GOLD + GC.MASTERY_GOLD == 800
 assert not hasattr(GC, "LESSON_MASTERY_GOLD"), (
     "game/ must not carry learning vocabulary — see the §20 content-independence regression")
+GATES = sorted("english.prea1.taipei.%s.quiz3" % s
+               for s in ("zoo", "mrt", "market", "park"))
 gold_bearing = sorted(a for a in reg.activities if svc.reward_for(a)["amount"] > 0)
-assert gold_bearing == [QUIZ3], gold_bearing
-assert svc.reward_for(QUIZ3)["amount"] == 160
+assert gold_bearing == GATES, gold_bearing          # Phase 7C.2a: all four gates
+assert {reg.reward_policy_of(a) for a in GATES} == {"standard_activity_pass"}
+for aid in GATES:
+    assert svc.reward_for(aid)["amount"] == 160, aid
 for lid in TAIPEI4:
     ps = reg.lesson_reward_policies_of(lid)
     assert ps == ["lesson_mastery_badge", "lesson_mastery_gold"], (lid, ps)
     econ = [p for p in ps if W.is_economic(p)]
     assert len(econ) == 1 and W.resolve(econ[0], AMOUNTS)["amount"] == 640, (lid, econ)
 assert R.validate(R.DATA) == [], R.validate(R.DATA)
-ok("production shape: one gold-bearing activity at 160, four lessons paying 640 at mastery "
-   "alongside the unchanged cosmetic badge, total 800 per lesson")
+ok("production shape: four gold-bearing gate activities at 160 sharing one policy, four "
+   "lessons paying 640 at mastery alongside the cosmetic badge - 800 per lesson, 3200 per "
+   "campaign")
 
 # the completion contract itself is untouched
 for lid in TAIPEI4:

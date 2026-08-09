@@ -6455,7 +6455,19 @@
     // (quiz, matching, read-along, role-play), and on the quiz path it arrives even when that
     // activity itself paid nothing. Every one of them already routes through here, so the balance is
     // synced in exactly one place. Display only — the value is whatever the server just said it is.
-    if (j.gold != null && myEcon) { myEcon.gold = j.gold; renderEmpire(); }
+    //
+    // Phase 7C.2a-fix: sync ONLY when the response reports an actual server-side settlement. The
+    // gate is the granted AMOUNTS, never `rewarded` alone — lesson mastery pays while the activity's
+    // own `rewarded` is false, so gating on that flag would reintroduce the stale-bar bug. This
+    // mirrors the server's own rule exactly: it sends a balance iff
+    // (rewardAmount + lessonRewardAmount + courseRewardAmount) > 0, and null otherwise. So this can
+    // never suppress a real payout — it only refuses to take a figure from a response that claims no
+    // settlement happened. courseRewardAmount is inert today (the campaign reward is cosmetic, and
+    // the field is not yet published); it is included so an activated campaign payout works unchanged.
+    const settled = (j.rewardAmount || 0) > 0
+                 || (j.lessonRewardAmount || 0) > 0
+                 || (j.courseRewardAmount || 0) > 0;
+    if (settled && j.gold != null && myEcon) { myEcon.gold = j.gold; renderEmpire(); }
     // Phase 6B STEP 4: refresh on EVERY authoritative response, not only on the completing one, so
     // the lesson page progress is correct after each activity. The celebration is still decided by
     // checkMasteryTransitions() inside loadLearningProgress, so it fires exactly once per transition.

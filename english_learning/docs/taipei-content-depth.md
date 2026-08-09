@@ -317,6 +317,6 @@ decision and was not made here. See [§10](#10-product-observation) for why it n
 | `validate_content_coverage.py --strict` | VALIDATION OK (5 notes — the documented level-10 gap) |
 | Game config fingerprint | `bd773cc3298c14eb` unchanged |
 | `git diff` on `game/`, `server.py`, `index.html`, `world-data/` | empty |
-| Gold-bearing activities | 1 |
+| Gold-bearing activities | 1 at the time of this report — **4 since Phase 7C.2a**, which attached the same `standard_activity_pass` policy to the MRT/Market/Park gates |
 | Active production completion policies | **4** (Phase 4D: Zoo/MRT/Market/Park at v2) |
 | Qualifications | 4 |

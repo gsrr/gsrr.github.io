@@ -93,12 +93,14 @@ for lid in LESSONS:
         assert reg.is_server_scored(aid), aid
         # a grader and a scorer are mutually exclusive (§7)
         assert bool(spec.get("graderType")) != bool(spec.get("scorerType")), aid
-        # §13/§14: no new rewards, no new qualifications
-        assert reg.reward_policy_of(aid) == "none", (aid, reg.reward_policy_of(aid))
+        # §13/§14: the gate carries the shared gate reward (Phase 7C.2a; it was "none" when this
+        # content phase landed). Every non-gate activity still carries no reward at all.
+        assert reg.reward_policy_of(aid) == ("standard_activity_pass" if suffix == "quiz3"
+                                             else "none"), (aid, reg.reward_policy_of(aid))
         expect_grants = [GATE[lid]] if suffix == "quiz3" else []
         assert reg.qualification_ids_for(aid) == expect_grants, (aid, reg.qualification_ids_for(aid))
-ok("§32 all 18 Taipei activities across MRT/Market/Park registered, server-scored, reward=none, "
-   "grants only the Phase 4A quiz3 gate")
+ok("§32 all 18 Taipei activities across MRT/Market/Park registered and server-scored; only the "
+   "quiz3 gate carries a reward or grants a qualification, and it uses the shared gate policy")
 
 # content exists and grades to the exact expected score through the EXISTING generic graders
 for lid in LESSONS:
@@ -243,23 +245,30 @@ ok("§26 progress API: MRT/Market/Park reported as completion-unavailable; no ke
    "reward detail or round internals in the payload")
 
 # ====================== §37 the reward set did not grow ======================
+# Phase 7C.2a retired the "exactly one gold-bearing activity" invariant: all four gates pay.
+GATES = sorted("english.prea1.taipei.%s.quiz3" % s
+               for s in ("zoo", "mrt", "market", "park"))
 gold_bearing = sorted(a for a in reg.activities
                       if svc.reward_for(a)["amount"] > 0)
-assert gold_bearing == ["english.prea1.taipei.zoo.quiz3"], gold_bearing
+assert gold_bearing == GATES, gold_bearing
 assert svc.reward_for("english.prea1.taipei.zoo.quiz3")["amount"] == 10000, "PASS_GOLD unchanged"
 for lid in LESSONS:
     for suffix in SUFFIXES:
+        if "%s.%s" % (lid, suffix) in GATES:
+            continue                              # the gate itself pays since Phase 7C.2a
         assert svc.reward_for("%s.%s" % (lid, suffix))["amount"] == 0, (lid, suffix)
     pol = reg.completion_policy_of(lid)
     assert pol and pol["version"] == 2, "%s carries the Phase 4D v2 policy" % lid
-    assert reg.lesson_reward_policy_of(lid) == "lesson_mastery_badge", lid    # 5F: cosmetic only
-    assert not W.is_economic(reg.lesson_reward_policy_of(lid)), lid
+    # 5F cosmetic badge + 7C.2 mastery gold - check the whole list, not just the first entry
+    assert reg.lesson_reward_policies_of(lid) == ["lesson_mastery_badge",
+                                                  "lesson_mastery_gold"], lid
     assert reg.lesson_qualification_ids_for(lid) == [], lid
 active = sorted(l for l in reg.lessons if reg.completion_available(l))
 assert active == sorted(LESSONS + ["english.prea1.taipei.zoo"]), active
 assert reg.retired_policy_versions("english.prea1.taipei.zoo") == [1]
-ok("§14/§37 exactly one gold-bearing activity (zoo.quiz3 @ 10000); the four Taipei v2 policies are "
-   "active and all pay nothing and grant nothing; Zoo v1 stays retired")
+ok("§14/§37 the four quiz3 gates are the gold-bearing set (Phase 7C.2a); every non-gate "
+   "activity still pays nothing and grants nothing; the four Taipei v2 policies are active; "
+   "Zoo v1 stays retired")
 
 # ============ historical lessonCompletions survive the policy retirement, unmodified ============
 # A learner who completed Zoo under v1 keeps that record verbatim. It grants nothing (no gold, no
@@ -430,25 +439,39 @@ assert st["lessonCompletions"] == {}, st["lessonCompletions"]
 ok("§15 activityScores persisted for every new activity on a FAILING attempt, with no "
    "activityCompletion, no qualification and no lessonCompletion")
 
-# §33 quiz3 alone earns the Phase 4A gate, with the rest of the lesson unfinished
+# §33 quiz3 alone earns the Phase 4A gate, with the rest of the lesson unfinished.
+# Phase 7C.2a: these three gates now also pay the shared gate reward, over HTTP, exactly once each.
+# The first credit also SEEDS the economy account with its room starting balance, so the very first
+# delta is (starting balance + gate reward). The reward itself is read from the deltas after that.
+balances = []
 for lid in LESSONS:
     aid = "%s.quiz3" % lid
     n = len(content(lid)["quiz3"])
+    was = gold()
     code, r = attempt(aid, answers(lid, "quiz3", n))
     assert code == 200 and r["passed"] is True and r["pct"] == 100, (aid, r)
     assert r["qualifications"] == [GATE[lid]] and r["qualification"] == GATE[lid], (aid, r)
     assert r["grantedNow"] is True and r["grantedNowIds"] == [GATE[lid]], (aid, r)
-    assert r["rewarded"] is False and r["gold"] is None, "a gate pass must pay no gold"
+    assert r["rewarded"] is True and r["gold"] == gold() > was, (aid, r)
     assert r["lessonCompleted"] is False and r["lessonQualifications"] == [], (aid, r)
+    balances.append(gold())
+    # a replay over HTTP pays nothing more, and does not re-grant
+    _, again = attempt(aid, answers(lid, "quiz3", n))
+    assert again["rewarded"] is False, (aid, again)
+    assert gold() == balances[-1], "a replayed gate moved the balance"
+deltas = [balances[i] - balances[i - 1] for i in range(1, len(balances))]
+assert len(set(deltas)) == 1 and deltas[0] > 0, deltas   # every gate pays the SAME amount
+gate_reward = deltas[0]
 st = lstate()
 for lid in LESSONS:
     assert GATE[lid] in st["qualifications"], lid
     # the lesson is demonstrably NOT complete: wh/cloze/quiz4 are still failing and 2/5 are unscored
     assert "%s.wh" % lid not in st["activityCompletions"], lid
 assert st["lessonCompletions"] == {}, "no lesson completion exists in production Phase 4B"
-assert gold() == g0, "the three progression gates still pay no gold"
+assert gold() == balances[0] + 2 * gate_reward, "each of the three gates paid once, and only once"
 ok("§33 quiz3 pass alone grants each Phase 4A gate qualification with the rest of the lesson "
-   "unfinished; 0 gold; still no lesson completion")
+   "unfinished; each gate pays the same shared reward (%d) exactly once over HTTP, and a replay "
+   "moves nothing; still no lesson completion" % gate_reward)
 
 # the gate really does open the territory, exactly as in Phase 4A — checked through the real
 # conquest rule with the qualifications the learner actually earned above.

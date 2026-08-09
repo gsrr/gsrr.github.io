@@ -124,7 +124,7 @@
       "graderType": "yes_no",
       "title": "Taipei · On the MRT — Yes/No reading comprehension",
       "grants": ["english.prea1.taipei.mrt.quiz3.pass"],
-      "rewardPolicy": "none"
+      "rewardPolicy": "standard_activity_pass"
     },
     "english.prea1.taipei.market.quiz3": {
       "lessonId": "english.prea1.taipei.market",
@@ -132,7 +132,7 @@
       "graderType": "yes_no",
       "title": "Taipei · The Night Market — Yes/No reading comprehension",
       "grants": ["english.prea1.taipei.market.quiz3.pass"],
-      "rewardPolicy": "none"
+      "rewardPolicy": "standard_activity_pass"
     },
     "english.prea1.taipei.park.quiz3": {
       "lessonId": "english.prea1.taipei.park",
@@ -140,7 +140,7 @@
       "graderType": "yes_no",
       "title": "Taipei · At the Park — Yes/No reading comprehension",
       "grants": ["english.prea1.taipei.park.quiz3.pass"],
-      "rewardPolicy": "none"
+      "rewardPolicy": "standard_activity_pass"
     },
     "english.prea1.taipei.zoo.read_along": {
       "lessonId": "english.prea1.taipei.zoo",

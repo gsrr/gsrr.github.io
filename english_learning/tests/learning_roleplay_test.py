@@ -265,8 +265,10 @@ for slug in SLUGS:
     combined.setdefault("roleplayProgress", {}).update(
         finals[slug].get("roleplayProgress") or {})
 assert (combined.get("qualifications") or {}) == {}
+GATES = sorted("english.prea1.taipei.%s.quiz3" % s
+               for s in ("zoo", "mrt", "market", "park"))
 gold_bearing = sorted(a for a in reg.activities if svc.reward_for(a)["amount"] > 0)
-assert gold_bearing == ["english.prea1.taipei.zoo.quiz3"], gold_bearing
+assert gold_bearing == GATES, gold_bearing   # Phase 7C.2a: four gates, still no role-play gold
 for aid in AIDS.values():
     assert svc.reward_for(aid)["amount"] == 0, aid
 assert sorted(reg.qualifications) == [
@@ -286,7 +288,7 @@ for slug, lid in ((s, LIDS_[s]) for s in SLUGS):
     assert "%s.roleplay" % lid not in row["missingActivityIds"], "roleplay evidence IS present"
     assert len(row["missingActivityIds"]) == 6, row["missingActivityIds"]
 ok("§23/§24/§37/§38 Role-play pays 0 gold, grants 0 qualifications, adds no lesson policy: "
-   "gold-bearing activities still 1, qualifications still 4, active policies still 0")
+   "gold-bearing activities are the 4 quiz3 gates, qualifications still 4, active policies 0")
 
 # ============================== HTTP: the real trust boundary ==============================
 import tempfile  # noqa: E402

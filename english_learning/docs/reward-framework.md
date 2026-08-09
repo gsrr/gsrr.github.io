@@ -13,7 +13,7 @@ Active today:
 | lesson (×4 Taipei) | `lesson_mastery_badge` | cosmetic | `badge.lesson.mastered`, once per lesson |
 | lesson (×4 Taipei) | `lesson_mastery_gold` | gold | `MASTERY_GOLD` = 640, once per lesson (Phase 7C.2) |
 | course (Taipei) | `campaign_trophy` | cosmetic | `trophy.campaign.complete`, once |
-| activity (Zoo quiz3) | `standard_activity_pass` | gold | `PASS_GOLD` = 160 (Phase 7C.2; was 10000) |
+| activity (×4 quiz3 gates) | `standard_activity_pass` | gold | `PASS_GOLD` = 160 (Phase 7C.2; was 10000) |
 
 A lesson carries **two** policies at once — the badge and the gold — because they are independent
 grants with independent ledger keys, so each stays exactly-once on its own. The validator allows at
@@ -21,10 +21,20 @@ most one *economic* policy per lesson, which is what prevents mastery being paid
 
 Phase 7C.2 moved the learning economy from "the gate activity pays everything" to "mastery pays most
 of it": passing the gate is a token acknowledgement (160) and finishing the whole lesson under Rule A
-is the substantial reward (640). Still exactly one gold-bearing *activity*; the campaign trophy is
-still worth nothing mechanically. Per-lesson learning value is therefore 800 for the Zoo (the only
-lesson whose gate activity is gold-bearing) and 640 for the other three — 2720 for the whole Taipei
-campaign.
+is the substantial reward (640). Phase 7C.2a then completed the coverage, so this is uniform:
+
+    every lesson:  quiz3 gate 160  +  mastery 640  =  800
+    four lessons:  3200 learning gold  (a fresh learner ends at 500 + 3200 = 3700)
+
+**The old "exactly one gold-bearing activity" invariant is retired.** The gold-bearing set is now
+exactly the four quiz3 gates:
+
+    english.prea1.taipei.zoo.quiz3      english.prea1.taipei.market.quiz3
+    english.prea1.taipei.mrt.quiz3      english.prea1.taipei.park.quiz3
+
+They are the same four activities that certify the four qualifications, and they all resolve through
+the **one** shared `standard_activity_pass` policy — there are no per-lesson reward ids. Campaign
+completion is still worth nothing mechanically: the trophy is cosmetic and records amount 0.
 
 ---
 
