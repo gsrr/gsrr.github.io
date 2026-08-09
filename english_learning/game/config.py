@@ -11,7 +11,12 @@ GROW_SECONDS = 3600
 ECON_MAX_CATCHUP = 72
 ECON_START_POP = 100
 ECON_START_TROOPS = 100
-PASS_GOLD = 10000
+# Phase 7C.2: study payouts are split between the gate and full mastery. Passing the gate proves
+# eligibility and pays a token acknowledgement (20%); completing the whole unit pays the substantial
+# reward (80%). Total study-derived value per newly mastered unit = 800.
+# Deliberately neutral names: this module knows economic amounts, never what is being studied.
+PASS_GOLD = 160                  # gate task passed: 20% of a unit's study value
+MASTERY_GOLD = 640               # whole unit mastered, once ever: the other 80%
 DEFEND_GOLD = 50
 ATTACK_FAIL_GOLD = 50
 
@@ -62,7 +67,8 @@ def fingerprint():
     import json
     payload = {
         "GOLD_RATE": GOLD_RATE, "GROW_SECONDS": GROW_SECONDS, "ECON_MAX_CATCHUP": ECON_MAX_CATCHUP,
-        "PASS_GOLD": PASS_GOLD, "DEFEND_GOLD": DEFEND_GOLD, "ATTACK_FAIL_GOLD": ATTACK_FAIL_GOLD,
+        "PASS_GOLD": PASS_GOLD, "MASTERY_GOLD": MASTERY_GOLD,
+        "DEFEND_GOLD": DEFEND_GOLD, "ATTACK_FAIL_GOLD": ATTACK_FAIL_GOLD,
         "UNIT_ATK": UNIT_ATK, "UNIT_DEF": UNIT_DEF, "UNIT_COST": UNIT_COST, "RECRUIT_BATCH": RECRUIT_BATCH,
         "UNIT_BUILDING": UNIT_BUILDING, "BUILD_COST": BUILD_COST,
         "TECH_COST": TECH_COST, "TECH_MAX": TECH_MAX,

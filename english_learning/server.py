@@ -433,14 +433,18 @@ def user_region_pop(tstore, user):
 # ---- 領地建設：兵工廠(armory) + 科技樹(鍛造+攻 / 鎧甲+防)，用「金幣」研發 ----
 # 金幣：每塊領地依人口每小時產金，累積在該區(h["gold"])。研發即時完成、只惠及該區守軍。
 GOLD_RATE = 0.10                                   # 每小時金幣 = round(pop * GOLD_RATE)
-PASS_GOLD = 10000                                   # 通過一課 +10000 金幣（重賞上課）
+PASS_GOLD = game_config.PASS_GOLD                   # Phase 7C.2: 關卡活動(quiz3) 的小額確認獎勵
+# 遊戲設定只認中性的經濟金額(MASTERY_GOLD)；「整課精通」這個學習概念只存在於這一行的對應關係，
+# 由 server.py 把它餵給 Learning Domain 的 amountKey。game/ 永遠不認識課程詞彙。
+LESSON_MASTERY_GOLD = game_config.MASTERY_GOLD      # 整課精通(Rule A)的主要獎勵
 DEFEND_GOLD = 50                                    # 防守成功 +50 金幣
 # Phase 3A：後端權威地重新批改課程活動時，讀取「與前端相同」的課程 JSON(答案鍵)。容器內內容在
 # /var/www/html(Dockerfile 設 CONTENT_ROOT)；本機/測試預設為 server.py 所在的專案根目錄。
 CONTENT_ROOT = os.environ.get("CONTENT_ROOT") or os.path.dirname(os.path.abspath(__file__))
 # Learning Domain 單一入口。獎勵「金額」在這裡由遊戲設定注入(內容包只能指名 policy，不能指定金額 §15)。
 LEARNING = learning_api.LearningService(content_root=CONTENT_ROOT,
-                                        reward_amounts={"PASS_GOLD": PASS_GOLD})
+                                        reward_amounts={"PASS_GOLD": PASS_GOLD,
+                                                        "LESSON_MASTERY_GOLD": LESSON_MASTERY_GOLD})
 ATTACK_FAIL_GOLD = 50                               # 攻打失敗 −50 金幣
 # 蓋建築的金幣花費：兵工廠(科技) + 三種生產建築
 BUILD_COST = {"armory": 50, "barracks": 60, "archery": 80, "stable": 120}
@@ -976,7 +980,11 @@ def _lesson_status_fields(out):
 # Phase 5F：第一個正式獎勵是「純外觀(cosmetic)」。只回傳前端顯示得到的東西——這次是否真的發放、
 # 發了哪一個 itemId——不外洩 ledger 內部(grantKey/grantedAt/金額)。itemId 只有在「這一次」真的
 # 授予時才存在(見 learning/api.py grant_reward)，所以前端不需要自己判斷重複。
-_REWARD_FIELDS = ("lessonRewardType", "lessonRewardItemId", "courseId", "courseCompleted",
+# Phase 7C.2a：金額也一起回傳。這不是「洩漏」——這是學習者剛剛賺到的錢，介面要能誠實說出數字，
+# 而不是含糊的「+gold」。金額仍然完全由後端決定(遊戲設定 → 政策白名單)，client 無法影響。
+# ledger 內部(grantKey/grantedAt)依舊不外流。
+_REWARD_FIELDS = ("lessonRewardType", "lessonRewardItemId", "rewardAmount", "lessonRewardAmount",
+                  "courseId", "courseCompleted",
                   "courseCompletedNow", "courseRewardType", "courseRewardItemId")
 
 
@@ -1901,8 +1909,9 @@ class Handler(BaseHTTPRequestHandler):
             _, out = LEARNING.record_attempt(learning, aid, result, int(time.time()))
             save_progress(user, p)
         # 獎勵金額來自遊戲設定(LEARNING 建構時注入)，內容包無法指定金額。在 acct_lock 外呼叫避免巢狀鎖。
-        # Phase 3D：活動獎勵與「整課完成」獎勵是分開的政策，一次結算。目前沒有任何正式課程啟用
-        # completionPolicy，所以 lessonRewardAmount 恆為 0。
+        # Phase 3D：活動獎勵與「整課完成」獎勵是分開的政策，一次結算。
+        # Phase 7C.2：lessonRewardAmount 不再恆為 0——四堂 Taipei 課程已啟用 lesson_mastery_gold，
+        # 所以同一次提交可能同時帶著「關卡活動」與「整課精通」兩筆金額，兩筆都由後端政策決定。
         delta = (clampi(out["rewardAmount"]) + clampi(out["lessonRewardAmount"])
                  + clampi(out.get("courseRewardAmount", 0)))
         newgold = econ_add_gold(user, delta) if delta else None

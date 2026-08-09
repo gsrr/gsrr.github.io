@@ -262,7 +262,7 @@ strongest available evidence for §3 (no lesson-specific scoring branches).
 | Matching | unchanged: server-owned round, server-selected sample of 5, independent shuffles, firstTry/n, latest-wins |
 | Score resolution | the existing `authoritative_activity_score` fan-in (`activityScores` / `sttProgress` / `matchingProgress`) — the policy never learns where a score lives |
 | `lessonCompletions` | no lesson can produce one: there is no active policy anywhere. Pre-existing Zoo records under retired `policyVersion: 1` are preserved verbatim and grant nothing |
-| Gold | 0 from every new activity. Gold-bearing activities: **1** (`english.prea1.taipei.zoo.quiz3` @ PASS_GOLD 10000) |
+| Gold | 0 from every new activity. Gold-bearing activities: **1** (`english.prea1.taipei.zoo.quiz3` @ PASS_GOLD, 10000 at the time of this report, **160 since Phase 7C.2**, which also began paying 640 at lesson mastery) |
 | Qualifications | unchanged at 4. Only `quiz3` grants anything |
 | `passcnt` | untouched; still the separate legacy Rule B counter |
 | Territory gates | unchanged. All five curated gates byte-identical |

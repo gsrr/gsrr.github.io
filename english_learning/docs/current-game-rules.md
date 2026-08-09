@@ -12,7 +12,7 @@ copied verbatim; nothing here is a proposal. File:line references are approximat
 ## A. Gold / Economy  (backend-authoritative)
 
 - Stored in per-room `economy.json`: `{ user: { population, gold, lastGold, troops{cav,archer,inf,spear}, buildings, tech, passcnt, conscript, conscriptBudget } }`.
-- Constants (`server.py`): `GOLD_RATE = 0.10`, `GROW_SECONDS = 3600`, `ECON_MAX_CATCHUP = 72`, `ECON_START_POP = 100`, `ECON_START_TROOPS = 100`, `PASS_GOLD = 10000`, `DEFEND_GOLD = 50`, `ATTACK_FAIL_GOLD = 50`.
+- Constants (`server.py`): `GOLD_RATE = 0.10`, `GROW_SECONDS = 3600`, `ECON_MAX_CATCHUP = 72`, `ECON_START_POP = 100`, `ECON_START_TROOPS = 100`, `PASS_GOLD = 160`, `MASTERY_GOLD = 640`, `DEFEND_GOLD = 50`, `ATTACK_FAIL_GOLD = 50`.
 - New player seeded from the room config (`startPop/startGold/startTroops`) via `econ_get`.
 - **Passive gold (per settlement in `econ_get`):**
   ```
@@ -23,7 +23,7 @@ copied verbatim; nothing here is a proposal. File:line references are approximat
   where `regionPop` = sum of `pop` over territories owned by the user (`user_region_pop`).
 - Population does **not** grow (hourly pop growth was removed; gold accrual only).
 - **Gold sinks:** buildings `BUILD_COST = {armory:50, barracks:60, archery:80, stable:120}`; recruitment (§D); technology (§E); conscription budget.
-- **Gold sources:** passive settlement; `PASS_GOLD` (+10000) per lesson pass via `/api/economy/pass`; `DEFEND_GOLD` (+50) on successful defense; (attacker −`ATTACK_FAIL_GOLD` 50 on failed attack).
+- **Gold sources:** passive settlement; `DEFEND_GOLD` (+50) on successful defense; (attacker −`ATTACK_FAIL_GOLD` 50 on failed attack); and **learning**, which since Phase 7C.2 pays in two places — `PASS_GOLD` (+160) once for the first server-verified pass of a gold-bearing activity, and `MASTERY_GOLD` (+640) once for mastering a whole lesson under Rule A. `/api/economy/pass` is the legacy Rule B counter and mints **no** gold at all.
 - Offline income: catch-up capped at `ECON_MAX_CATCHUP` (72 h). No other income cap.
 
 ## B. Population

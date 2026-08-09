@@ -20,17 +20,20 @@ Design notes:
     progress file can never crash a lesson — and can never fabricate ownership either.
 
 CORRUPTION POLICY — see docs/reward-framework.md §8. Since Phase 5F this ledger IS the idempotency
-gate for the two live COSMETIC rewards, so "corruption reads as empty" does mean "corruption permits
-a re-grant". That was decided and accepted for cosmetics: the worst case is re-earning a badge and
-seeing the banner twice, and nothing cosmetic can be spent, traded or fought with. Gold is still NOT
-gated here — `standard_activity_pass` keeps its historical per-activity `rewarded` flag, so a wiped
-ledger cannot re-pay it.
+gate for the live COSMETIC rewards, so "corruption reads as empty" does mean "corruption permits a
+re-grant". That was decided and accepted for cosmetics: the worst case is re-earning a badge and
+seeing the banner twice, and nothing cosmetic can be spent, traded or fought with.
 
-SAFETY BOUNDARY: this read FAILS OPEN, and that is accepted for cosmetics ONLY. It must not be
-applied automatically to gold, profile or gameplay rewards. Before activating any non-cosmetic
-ledger-backed reward, a fail-closed or recoverable corruption policy has to be defined and
-implemented first — refuse to grant while the ledger is unreadable, or rebuild it from durable
-recovery data. Activating such a reward on top of today's fail-open read is a defect.
+SAFETY BOUNDARY: the tolerant reads below FAIL OPEN, and that is accepted for cosmetics ONLY. They
+must never be used to decide a gold, profile or gameplay grant. Anything economic goes through
+`is_corrupt()` instead, which fails CLOSED — an unreadable ledger refuses the grant rather than
+paying it twice, and nothing is repaired or erased, so the damaged bytes stay diagnosable.
+
+That precondition is why the ordering of the last two phases matters. Phase 7C.1 built the
+fail-closed path first; only then did Phase 7C.2 activate `lesson_mastery_gold`, the first
+ledger-backed ECONOMIC reward. `standard_activity_pass` is gated by its own per-activity `rewarded`
+flag rather than by this ledger, and is likewise read strictly (qualifications.completion_state).
+Activating a further economic reward on top of the fail-open reads alone would be a defect.
 """
 
 LEDGER_KEY = "rewardLedger"

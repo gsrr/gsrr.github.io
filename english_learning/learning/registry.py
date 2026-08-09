@@ -211,6 +211,10 @@ class Registry:
     def lesson_reward_policy_of(self, lesson_id):
         return completion.reward_policy_of(self.completion_policy_of(lesson_id))
 
+    def lesson_reward_policies_of(self, lesson_id):
+        """Every reward policy this lesson's mastery grants (Phase 7C.2: cosmetic + economic)."""
+        return completion.reward_policies_of(self.completion_policy_of(lesson_id))
+
     def approved_content_paths(self):
         """The ONLY content paths the backend may ever read (§28). Registry == filesystem allowlist."""
         return {l.get("contentPath") for l in self.lessons.values() if l.get("contentPath")}
@@ -403,13 +407,18 @@ def validate(data):
             if money in cp:                 # §15 again: content may NAME a policy, never an amount
                 err("lesson %s completionPolicy may not set %r — reward amounts come from game config "
                     "only" % (lid, money))
-        if not rewards.is_policy(completion.reward_policy_of(cp)):
-            err("lesson %s completionPolicy has invalid rewardPolicy %r (allowed: %s)"
-                % (lid, cp.get("rewardPolicy"), rewards.policy_ids()))
-        elif not rewards.allows_scope(completion.reward_policy_of(cp), "lesson"):
-            err("lesson %s completionPolicy uses rewardPolicy %r, which is only valid at scope(s) %s"
-                % (lid, completion.reward_policy_of(cp),
-                   list(rewards.scopes_of(completion.reward_policy_of(cp)))))
+        # Phase 7C.2: every declared policy is validated, not just the first.
+        for _rp in completion.reward_policies_of(cp):
+            if not rewards.is_policy(_rp):
+                err("lesson %s completionPolicy has invalid rewardPolicy %r (allowed: %s)"
+                    % (lid, _rp, rewards.policy_ids()))
+            elif not rewards.allows_scope(_rp, "lesson"):
+                err("lesson %s completionPolicy uses rewardPolicy %r, which is only valid at "
+                    "scope(s) %s" % (lid, _rp, list(rewards.scopes_of(_rp))))
+        _econ = [p for p in completion.reward_policies_of(cp) if rewards.is_economic(p)]
+        if len(_econ) > 1:      # two gold policies on one lesson would double-pay mastery
+            err("lesson %s completionPolicy declares %d economic reward policies (%s); at most one "
+                "is allowed" % (lid, len(_econ), _econ))
         lg = cp.get("grants", [])
         if not isinstance(lg, list):
             err("lesson %s completionPolicy grants must be a list (may be empty)" % lid)

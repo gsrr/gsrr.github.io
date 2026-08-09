@@ -620,6 +620,8 @@
   /* Phase 5F: the cosmetic unlock line. Same banner, one extra row — no new popup, no animation. */
   .comp-banner .cb-u { font-size: 12px; font-weight: 700; color: #b45309; margin-top: 6px;
                        padding-top: 6px; border-top: 1px dashed #e2e8f0; }
+  /* Phase 7C.2a: the mastery payout, stated as a figure. Same row treatment as the unlock line. */
+  .comp-banner .cb-g { font-size: 13px; font-weight: 800; color: #b45309; margin-top: 6px; }
   .rw-owned { margin-top: 6px; font-size: 12px; color: #b45309; font-weight: 700; }
   /* Phase 5G — Owned Achievement Cabinet */
   .ach-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
@@ -5227,7 +5229,7 @@
     if (myEcon) { myEcon.passcnt = myEcon.passcnt || {}; myEcon.passcnt[file] = (myEcon.passcnt[file] || 0) + 1; }   // 先樂觀更新，讓佔領判定即時可用
     fetch(withRoom("/api/economy/pass?token=" + encodeURIComponent(t)), { method: "POST", body: JSON.stringify({ file: file }) })
       .then(r => r.ok ? r.json() : null)
-      .then(j => { if (j && j.count != null && myEcon) { myEcon.passcnt = myEcon.passcnt || {}; myEcon.passcnt[j.file] = j.count; if (j.gold != null) myEcon.gold = j.gold; renderEmpire(); } })   // 通過一課 +100 金幣
+      .then(j => { if (j && j.count != null && myEcon) { myEcon.passcnt = myEcon.passcnt || {}; myEcon.passcnt[j.file] = j.count; if (j.gold != null) myEcon.gold = j.gold; renderEmpire(); } })   // 舊闖關計數端點：只回傳計數，不鑄造金幣(見 /api/economy/pass)
       .catch(() => {});
   }
   let pending = null;   // 挑戰中：{key, file, base(通過cnt), article, i}
@@ -6382,7 +6384,7 @@
   // once, by renderLearningHome(). campaignGroups() above survives because checkMasteryTransitions()
   // still needs "which lessons belong together" to decide when to celebrate a completed campaign.
   // STEP 5/6: lightweight, non-blocking celebrations. No persistence, no reward, no library.
-  function showBanner(title, sub, msg, isCamp, unlocked) {
+  function showBanner(title, sub, msg, isCamp, unlocked, gold) {
     const el = document.getElementById("compBanner") || (function () {
       const b = document.createElement("div"); b.id = "compBanner"; b.className = "comp-banner";
       document.body.appendChild(b); return b;
@@ -6391,8 +6393,12 @@
     // Phase 5F: `unlocked` is whatever the SERVER said it granted on this response — never derived
     // here. No line at all when nothing was granted (e.g. a lesson re-mastered after a dip).
     const un = (unlocked || []).filter(Boolean);
+    // Phase 7C.2a: same rule for the gold — the amount shown is the one the server just reported
+    // granting on THIS response, so a re-mastered lesson (which grants nothing) shows no figure.
+    const g = (typeof gold === "number" && gold > 0) ? gold : 0;
     el.innerHTML = '<div class="cb-t">' + title + '</div><div class="cb-s">' + sub + '</div>' +
       '<div class="cb-m">' + escapeHtml(msg) + '</div>' +
+      (g ? '<div class="cb-g">🪙 +' + g + ' gold</div>' : '') +
       (un.length ? '<div class="cb-u">Unlocked:<br>' +
         un.map(i => escapeHtml(rewardItemLabel(i))).join("<br>") + '</div>' : '');
     el.classList.add("show");
@@ -6403,7 +6409,7 @@
   function showCompletionBanner(lessonId) {
     const les = (learningRegistry.lessons || {})[lessonId] || {};
     showBanner("⭐ Lesson Mastered", "SERVER VERIFIED", les.title || lessonId, false,
-               [_grantedNow.lesson]);
+               [_grantedNow.lesson], _grantedNow.gold);
   }
   // Celebrate on the TRANSITION into mastery, computed from the authoritative rows themselves, so a
   // lesson re-mastered after a dip is celebrated too (lessonCompletedNow only fires the first time).
@@ -6426,9 +6432,10 @@
       // Finishing the last lesson grants BOTH its badge and the campaign trophy; the single banner
       // reports both, because both really were unlocked.
       showBanner("🏆 Campaign Complete", "EVERY LESSON MASTERED",
-                 nowC[gainedC[0]] + " Campaign", true, [_grantedNow.lesson, _grantedNow.course]);
+                 nowC[gainedC[0]] + " Campaign", true, [_grantedNow.lesson, _grantedNow.course],
+                 _grantedNow.gold);   // the final lesson's mastery gold; the campaign itself pays 0
     } else if (gainedL.length) showCompletionBanner(gainedL[0]);
-    _grantedNow = { lesson: null, course: null };     // consumed — never celebrated twice
+    _grantedNow = { lesson: null, course: null, gold: 0 };   // consumed — never celebrated twice
   }
   // Any authoritative response may report a newly-recorded completion. Never derived here — the
   // ONLY input is the server's own lessonCompletedNow flag.
@@ -6437,12 +6444,18 @@
   // to that response would be a backend change, which this phase does not make.)
   // Phase 5F: what the server actually granted on THIS response. Set here, consumed once by the
   // next checkMasteryTransitions(). Absent => nothing was granted => no unlock line.
-  let _grantedNow = { lesson: null, course: null };
+  let _grantedNow = { lesson: null, course: null, gold: 0 };
   function noteLessonCompletion(j) {
     if (!j) return;
     if (j.lessonCompletedNow === true) {
-      _grantedNow = { lesson: j.lessonRewardItemId || null, course: j.courseRewardItemId || null };
+      _grantedNow = { lesson: j.lessonRewardItemId || null, course: j.courseRewardItemId || null,
+                      gold: j.lessonRewardAmount || 0 };   // 7C.2a: server-reported, never inferred
     }
+    // Phase 7C.2: mastery gold can be granted by ANY of the four authoritative activity endpoints
+    // (quiz, matching, read-along, role-play), and on the quiz path it arrives even when that
+    // activity itself paid nothing. Every one of them already routes through here, so the balance is
+    // synced in exactly one place. Display only — the value is whatever the server just said it is.
+    if (j.gold != null && myEcon) { myEcon.gold = j.gold; renderEmpire(); }
     // Phase 6B STEP 4: refresh on EVERY authoritative response, not only on the completing one, so
     // the lesson page progress is correct after each activity. The celebration is still decided by
     // checkMasteryTransitions() inside loadLearningProgress, so it fires exactly once per transition.
@@ -6523,9 +6536,16 @@
         noteLessonCompletion(j);
         if (!j || !j.ok || !j.passed) return;
         (j.qualifications || []).forEach(q => myQualifications.add(q));   // 解鎖(顯示用)；權威仍在後端
-        if (j.rewarded && j.gold != null && myEcon) { myEcon.gold = j.gold; renderEmpire(); }
+        // (the gold balance itself is synced by noteLessonCompletion above, on every path)
         const names = (j.qualifications || []).map(qualTitle).join(", ");
-        showLockedMsg("✅ Learned: " + names + (j.rewarded ? " (+gold!)" : ""));
+        // Phase 7C.2: two independent payouts can land on one submission — the gate activity's small
+        // acknowledgement and, if this attempt completed the lesson, the mastery reward. Both flags
+        // are the server's; neither is inferred from the amount.
+        // Phase 7C.2a: name the actual figures. Both come from the server's own settlement report.
+        const paid = (j.rewarded && j.rewardAmount ? " 🪙 +" + j.rewardAmount + " gold" : "")
+          + (j.lessonRewarded && j.lessonRewardAmount
+             ? " ⭐ Lesson mastered 🪙 +" + j.lessonRewardAmount + " gold" : "");
+        showLockedMsg("✅ Learned: " + names + paid);
         offerStudyReturn();
       }).catch(() => {});
   }

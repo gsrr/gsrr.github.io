@@ -118,6 +118,10 @@ also have `reorder` and `dictation`. Attaching the existing `standard_activity_p
 newly migrated activity would create **~270 additional one-time 10000-gold payouts** (≈2.7M gold)
 versus the single payout that exists today — a material economy change and squarely outside Phase 3C.
 
+> Superseded in part by Phase 7C.2: `PASS_GOLD` is now **160**, so the same fan-out would be ≈43k gold
+> rather than ≈2.7M. The *decision* below is unchanged — 43k is still a material economy change, and
+> grading support still stays separate from reward eligibility.
+
 Therefore, per §23, every activity registered in Phase 3C uses `rewardPolicy: "none"`. Grading support
 and reward eligibility stay separate registry concepts. The Zoo `quiz3` slice keeps
 `standard_activity_pass` and remains the only gold-bearing activity.

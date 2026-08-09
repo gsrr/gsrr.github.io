@@ -85,9 +85,29 @@ def grants_of(policy):
     return [q for q in ((policy or {}).get("grants") or []) if isinstance(q, str) and q]
 
 
-def reward_policy_of(policy):
+def reward_policies_of(policy):
+    """Every reward policy a lesson's completion carries, in declaration order.
+
+    Phase 7C.2: `rewardPolicy` accepts a string (historical) or a LIST, because a mastered lesson now
+    grants two independent things — a cosmetic badge and gold. They are separate policies with
+    separate ledger keys, so each stays exactly-once on its own. Duplicates collapse; unknown shapes
+    fall back to the inert default rather than guessing.
+    """
     rp = (policy or {}).get("rewardPolicy")
-    return rp if isinstance(rp, str) and rp else DEFAULT_REWARD_POLICY
+    if isinstance(rp, str):
+        return [rp] if rp else [DEFAULT_REWARD_POLICY]
+    if isinstance(rp, list):
+        out = []
+        for p in rp:
+            if isinstance(p, str) and p and p not in out:
+                out.append(p)
+        return out or [DEFAULT_REWARD_POLICY]
+    return [DEFAULT_REWARD_POLICY]
+
+
+def reward_policy_of(policy):
+    """The FIRST declared reward policy. Kept for callers that want a single label."""
+    return reward_policies_of(policy)[0]
 
 
 def evaluate(lesson_id, lesson, passed_activity_ids, activity_scores=None):

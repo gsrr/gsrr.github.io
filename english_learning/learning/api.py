@@ -598,6 +598,18 @@ class LearningService:
         if not ev["completed"]:
             out.update(self.lesson_status(lesson_id, state, ev))
             return state
+        # Phase 7C.2: economic readability is established BEFORE the completion record is
+        # written. Checking here means a corrupt history is REPORTED as corrupt, instead of being
+        # swallowed by the container guard in record_lesson_completion() and looking like an
+        # ordinary "already recorded" no-op. It also avoids writing a completion into a store we
+        # have just judged untrustworthy.
+        lesson_policies = self.registry.lesson_reward_policies_of(lesson_id)
+        if any(rewards.is_economic(p) for p in lesson_policies) and \
+                not self.economic_state_is_readable(state, lesson_id=lesson_id):
+            out["lessonRewardBlocked"] = "corrupt_payment_history"
+            out.update(self.lesson_status(lesson_id, state, ev))
+            self._settle_course(state, self.registry.course_of_lesson(lesson_id), now, out)
+            return state
         state, newly = completion.record_lesson_completion(
             state, lesson_id, now, ev["policyVersion"])
         out["lessonCompletedNow"] = newly
@@ -607,20 +619,19 @@ class LearningService:
         qids = self.registry.lesson_qualification_ids_for(lesson_id)
         state, granted_now = qualifications.grant_qualifications(state, qids, now)
         out["lessonQualifications"], out["lessonGrantedNow"] = qids, granted_now
-        lesson_policy = self.registry.lesson_reward_policy_of(lesson_id)
-        # Phase 7C.1: same rule one level up. `newly` above already blocks a replay; this blocks the
-        # case where the record that produced `newly` is itself untrustworthy.
-        if rewards.is_economic(lesson_policy) and not self.economic_state_is_readable(
-                state, lesson_id=lesson_id):
-            out["lessonRewardBlocked"] = "corrupt_payment_history"
-            self._settle_course(state, self.registry.course_of_lesson(lesson_id), now, out)
-            return state
-        state, reward = self.grant_reward(state, "lesson", lesson_id, lesson_policy, now)
-        if reward:
-            out["lessonRewardType"] = reward["type"]
-            out["lessonRewardItemId"] = reward["itemId"]
-            if reward["amount"] > 0:
+        # Phase 7C.2: a mastered lesson grants several independent rewards (a cosmetic badge and
+        # gold). Each is its own policy with its own ledger key, so each is exactly-once on its own.
+        # Economic readability was established above, before anything was written.
+        for lesson_policy in lesson_policies:
+            state, reward = self.grant_reward(state, "lesson", lesson_id, lesson_policy, now)
+            if not reward:
+                continue
+            if reward["amount"] > 0:            # the economic one
                 out["lessonRewardAmount"], out["lessonRewarded"] = reward["amount"], True
+                out["lessonRewardGoldType"] = reward["type"]
+            else:                               # the cosmetic one
+                out["lessonRewardType"] = reward["type"]
+                out["lessonRewardItemId"] = reward["itemId"]
         # A finished lesson may finish its campaign. Derived here; never asserted by the client.
         self._settle_course(state, self.registry.course_of_lesson(lesson_id), now, out)
         return state

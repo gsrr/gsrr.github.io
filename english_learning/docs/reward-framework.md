@@ -11,12 +11,20 @@ Active today:
 | Scope | Policy | Type | Grants |
 |---|---|---|---|
 | lesson (×4 Taipei) | `lesson_mastery_badge` | cosmetic | `badge.lesson.mastered`, once per lesson |
+| lesson (×4 Taipei) | `lesson_mastery_gold` | gold | `MASTERY_GOLD` = 640, once per lesson (Phase 7C.2) |
 | course (Taipei) | `campaign_trophy` | cosmetic | `trophy.campaign.complete`, once |
-| activity (Zoo quiz3) | `standard_activity_pass` | gold | PASS_GOLD — **pre-existing, unchanged** |
+| activity (Zoo quiz3) | `standard_activity_pass` | gold | `PASS_GOLD` = 160 (Phase 7C.2; was 10000) |
 
-The economy is byte-for-byte what it was before Phase 5E: still exactly one gold-bearing activity,
-still zero gold from any lesson or campaign. Reward *tuning* — whether mastery should ever pay
-anything mechanical — remains a separate product decision.
+A lesson carries **two** policies at once — the badge and the gold — because they are independent
+grants with independent ledger keys, so each stays exactly-once on its own. The validator allows at
+most one *economic* policy per lesson, which is what prevents mastery being paid twice.
+
+Phase 7C.2 moved the learning economy from "the gate activity pays everything" to "mastery pays most
+of it": passing the gate is a token acknowledgement (160) and finishing the whole lesson under Rule A
+is the substantial reward (640). Still exactly one gold-bearing *activity*; the campaign trophy is
+still worth nothing mechanically. Per-lesson learning value is therefore 800 for the Zoo (the only
+lesson whose gate activity is gold-bearing) and 640 for the other three — 2720 for the whole Taipei
+campaign.
 
 ---
 
@@ -101,14 +109,16 @@ reward framework: 8 policies defined, types ['cosmetic', 'gameplay', 'gold', 'no
   campaign_trophy            type=cosmetic  scopes=course                 REFERENCED by 1
   lesson_mastery_badge       type=cosmetic  scopes=lesson                 REFERENCED by 4
   lesson_mastery_boost       type=gameplay  scopes=lesson                 inert (unreferenced)
-  lesson_mastery_gold        type=gold      scopes=lesson                 inert (unreferenced)
+  lesson_mastery_gold        type=gold      scopes=lesson                 REFERENCED by 4
   none                       type=none      scopes=activity,lesson,course REFERENCED by 32
   standard_activity_pass     type=gold      scopes=activity               REFERENCED by 1
-economic policies in use: ['standard_activity_pass']
+economic policies in use: ['lesson_mastery_gold', 'standard_activity_pass']
 ```
 
-`lesson_mastery_gold` and `campaign_complete_gold` name amount keys the game config does **not**
-supply, so even if something did reference them today they would resolve to zero.
+`campaign_complete_gold` still names an amount key the game config does **not** supply, so even if
+something referenced it today it would resolve to zero. `lesson_mastery_gold` was in exactly that
+state until Phase 7C.2, which activated it by adding `MASTERY_GOLD` to `game/config.py` — the amount
+came from the game, never from the registry.
 
 ## 7. Campaign (course) scope
 
@@ -137,12 +147,14 @@ Phase 5E listed, and it is the cheapest failure mode for this reward type. If a 
 ever damaged, the worst outcome is that they re-earn a badge they already had and see the unlock
 banner a second time. Nothing is duplicated that anyone can spend, trade or fight with.
 
-What makes that acceptable is specifically that the two live policies are **non-economic**:
+What makes that acceptable is specifically that it applies to **cosmetics**:
 
-- gold is still **not** gated by the ledger. `standard_activity_pass` keeps its historical
-  per-activity `rewarded` flag, so a wiped ledger cannot re-pay Zoo quiz3.
 - a cosmetic item confers nothing mechanical, so owning it twice is indistinguishable from owning it
   once — `owned_items()` de-duplicates by item id.
+- `standard_activity_pass` is not gated by the ledger at all; it keeps its historical per-activity
+  `rewarded` flag, so a wiped ledger cannot re-pay Zoo quiz3.
+- since Phase 7C.2 one economic policy (`lesson_mastery_gold`) *is* ledger-gated — and it does **not**
+  use these tolerant reads. It goes through the fail-closed path added in Phase 7C.1, below.
 
 ### The safety boundary (do not cross without a new decision)
 
@@ -175,8 +187,9 @@ the grant, not to every store. A corrupt *cosmetic* ledger must not block the ac
 is gated by its own per-activity `rewarded` flag — otherwise unrelated damage would deny a learner
 money they had genuinely earned.
 
-No reward is activated by this phase: `lesson_mastery_gold` and the other non-cosmetic policies stay
-inert, and `PASS_GOLD` is unchanged. This phase only makes their future activation safe.
+**Phase 7C.2 then activated `lesson_mastery_gold`** — the first ledger-backed economic reward, and the
+first one for which the fail-open read above would have been unsafe. It went live only after the
+paragraph above was true. The fail-open behaviour itself is unchanged for cosmetics.
 
 ## 9. What Phase 5F deliberately did not do
 

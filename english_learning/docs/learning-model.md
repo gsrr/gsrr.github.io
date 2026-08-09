@@ -155,7 +155,10 @@ registry (untrusted content)          server (authoritative)
 - An unknown/forged policy, or a policy whose `amountKey` the server did not inject, resolves to a
   **zero** reward — fail closed.
 - The validator rejects any activity carrying `rewardGold` / `gold` / `rewardAmount` / `amount`.
-- `PASS_GOLD` remains `10000`, in `server.py`/`game/config.py`, unchanged.
+- Amounts live in `game/config.py` and are injected by `server.py`. Since Phase 7C.2 there are two:
+  `PASS_GOLD` = `160` (gate activity) and `MASTERY_GOLD` = `640` (whole-lesson mastery, injected under
+  the learning-side key `LESSON_MASTERY_GOLD`). `game/` names the amounts but never the curriculum —
+  the mapping from "lesson mastery" to `MASTERY_GOLD` exists only in `server.py`.
 
 So a future user-uploaded pack cannot mint gold: the worst it can do is name `none` or an unknown
 policy and get nothing.
