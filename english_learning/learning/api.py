@@ -82,6 +82,33 @@ class LearningService:
         """{'type','amount','itemId','once'} for this activity — from the server-owned allowlist."""
         return rewards.resolve(self.registry.reward_policy_of(activity_id), self.reward_amounts)
 
+    def economic_state_is_readable(self, state, activity_id=None, lesson_id=None):
+        """Can this learner's payment history answer "already paid?" with certainty?
+
+        Strictness is scoped to the store that AUTHORITATIVELY records the payment for that grant:
+
+          activity gold -> activityCompletions[key].rewarded
+          lesson  gold -> lessonCompletionHistory (+ the legacy lessonCompletions record)
+
+        The reward ledger is deliberately NOT consulted here. Phase 5E documents it as the audit
+        trail written alongside the activity payout, not its gate, and it also holds cosmetics — so
+        letting a damaged COSMETIC ledger veto a legitimate gold payment would punish the learner for
+        an unrelated record. reward_ledger.record_grant() separately refuses to overwrite a corrupt
+        ledger, so the evidence still survives.
+
+        Returns False on corruption, which callers turn into "no payout" — never into "pay again".
+        Nothing is repaired or erased: the damaged bytes stay on disk so the problem stays
+        diagnosable.
+        """
+        if activity_id is not None:
+            if qualifications.completions_state(
+                    state, self.completion_keys(activity_id)) == qualifications.CORRUPT:
+                return False
+        if lesson_id is not None:
+            if completion.history_is_corrupt(state, lesson_id):
+                return False
+        return True
+
     def grant_reward(self, state, scope, source_id, policy_id, now):
         """Resolve a policy and record it in the learner's ledger. Returns (state, granted_or_None).
 
@@ -144,7 +171,14 @@ class LearningService:
         out["grantedNow"] = newly
         reward = self.reward_for(activity_id)
         already_rewarded = bool(prior and prior.get("rewarded"))
+        # Phase 7C.1: an ECONOMIC payout may only proceed when the payment history is readable.
+        # A missing record still pays (the learner genuinely has not passed before); a malformed one
+        # refuses, because we cannot prove the money was not already handed over.
         pay = reward["amount"] > 0 and not (reward["once"] and already_rewarded)
+        if pay and rewards.is_economic(self.registry.reward_policy_of(activity_id)):
+            if not self.economic_state_is_readable(state, activity_id=activity_id):
+                out["rewardBlocked"] = "corrupt_payment_history"
+                pay = False
         if pay:
             out["rewardType"], out["rewardAmount"], out["rewarded"] = reward["type"], reward["amount"], True
         # Phase 5E: the activity payout keeps its historical `rewarded` idempotency EXACTLY as it was
@@ -573,8 +607,15 @@ class LearningService:
         qids = self.registry.lesson_qualification_ids_for(lesson_id)
         state, granted_now = qualifications.grant_qualifications(state, qids, now)
         out["lessonQualifications"], out["lessonGrantedNow"] = qids, granted_now
-        state, reward = self.grant_reward(state, "lesson", lesson_id,
-                                          self.registry.lesson_reward_policy_of(lesson_id), now)
+        lesson_policy = self.registry.lesson_reward_policy_of(lesson_id)
+        # Phase 7C.1: same rule one level up. `newly` above already blocks a replay; this blocks the
+        # case where the record that produced `newly` is itself untrustworthy.
+        if rewards.is_economic(lesson_policy) and not self.economic_state_is_readable(
+                state, lesson_id=lesson_id):
+            out["lessonRewardBlocked"] = "corrupt_payment_history"
+            self._settle_course(state, self.registry.course_of_lesson(lesson_id), now, out)
+            return state
+        state, reward = self.grant_reward(state, "lesson", lesson_id, lesson_policy, now)
         if reward:
             out["lessonRewardType"] = reward["type"]
             out["lessonRewardItemId"] = reward["itemId"]

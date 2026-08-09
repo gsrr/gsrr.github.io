@@ -205,6 +205,40 @@ def merged_history(state, lesson_id):
     return [{"policyVersion": v, "completedAt": best[v]} for v in sorted(best)]
 
 
+def history_is_corrupt(state, lesson_id):
+    """True when this learner's completion history cannot be trusted to answer "already paid?".
+
+    merged_history() deliberately DROPS malformed entries so a damaged file can never fabricate a
+    completion. That is right for display and for granting, but for an ECONOMIC reward the same
+    silence reads as "never completed" and would mint value twice. This is the strict counterpart:
+    it reports uncertainty instead of hiding it. Phase 7C.1.
+    """
+    st = state if isinstance(state, dict) else {}
+    legacy = st.get("lessonCompletions")
+    if legacy is not None:
+        if not isinstance(legacy, dict):
+            return True
+        rec = legacy.get(lesson_id)
+        if rec is not None and not isinstance(rec, dict):
+            return True
+        if isinstance(rec, dict) and (_version_of(rec) is None or _at_of(rec) is None):
+            return True
+    table = st.get(HISTORY_KEY)
+    if table is None:
+        return False
+    if not isinstance(table, dict):
+        return True
+    entries = table.get(lesson_id)
+    if entries is None:
+        return False
+    if not isinstance(entries, list):
+        return True
+    for e in entries:
+        if not isinstance(e, dict) or _version_of(e) is None or _at_of(e) is None:
+            return True
+    return False
+
+
 def completion_for_version(state, lesson_id, version):
     """The completedAt for one policy version, or None if that version was never completed."""
     for e in merged_history(state, lesson_id):
@@ -231,7 +265,12 @@ def record_lesson_completion(state, lesson_id, completed_at, policy_version_valu
         state = {}
     if completion_for_version(state, lesson_id, policy_version_value) is not None:
         return state, False
-    hist = state.setdefault(HISTORY_KEY, {})
+    hist = state.get(HISTORY_KEY)
+    if hist is None:
+        hist = {}
+        state[HISTORY_KEY] = hist
+    if not isinstance(hist, dict):
+        return state, False              # corrupt container: never "newly", never a fresh payout
     existing = hist.get(lesson_id) if isinstance(hist.get(lesson_id), list) else []
     # Normalise only what is already IN the history list. The legacy record is deliberately NOT
     # folded in here: it stays where it is and is merged virtually on read, so this write can never
@@ -242,8 +281,11 @@ def record_lesson_completion(state, lesson_id, completed_at, policy_version_valu
         if v is not None and at is not None and (v not in best or at < best[v]):
             best[v] = at
     hist[lesson_id] = [{"policyVersion": v, "completedAt": best[v]} for v in sorted(best)]
-    table = state.setdefault("lessonCompletions", {})
-    if lesson_id not in table:                  # first-ever completion of this lesson, any version
+    table = state.get("lessonCompletions")
+    if table is None:
+        table = {}
+        state["lessonCompletions"] = table
+    if isinstance(table, dict) and lesson_id not in table:                  # first-ever completion of this lesson, any version
         table[lesson_id] = {"completedAt": completed_at, "policyVersion": policy_version_value}
     return state, True
 

@@ -73,15 +73,44 @@ def record_grant(state, scope, source_id, policy_id, reward, now):
         return state, False                       # inert policy: nothing to record
     key = grant_key(scope, source_id, policy_id)
     table = state.get(LEDGER_KEY)
-    if not isinstance(table, dict):
+    if table is None:
         table = {}
         state[LEDGER_KEY] = table
+    if not isinstance(table, dict):
+        # Phase 7C.1: a clobbered ledger is evidence. Replacing it would destroy the only trace of
+        # what went wrong and would silently reset every "already granted" answer it held. Refuse
+        # the write and leave it exactly as found.
+        return state, False
     if key in table and isinstance(table[key], dict):
         return state, False                       # already granted -> never re-granted, never re-dated
     table[key] = {"policyId": policy_id, "rewardType": reward.get("type"), "scope": scope,
                   "sourceId": source_id, "amount": int(reward.get("amount") or 0),
                   "itemId": reward.get("itemId"), "grantedAt": now}
     return state, True
+
+
+def is_corrupt(state):
+    """True when the ledger cannot be trusted to answer "was this already granted?".
+
+    The tolerant reads below normalise a damaged ledger to empty, which Phase 5F accepted for
+    COSMETIC rewards because a duplicate badge is inert. An economic grant may not use that answer:
+    "unreadable" must never resolve to "unpaid". Phase 7C.1.
+    """
+    table = (state or {}).get(LEDGER_KEY)
+    if table is None:
+        return False
+    if not isinstance(table, dict):
+        return True
+    for k, e in table.items():
+        if not isinstance(k, str) or not isinstance(e, dict):
+            return True
+        if not isinstance(e.get("policyId"), str) or not isinstance(e.get("scope"), str):
+            return True
+        if not isinstance(e.get("rewardType"), str):
+            return True
+        if isinstance(e.get("amount"), bool) or not isinstance(e.get("amount"), int):
+            return True
+    return False
 
 
 def entries(state):

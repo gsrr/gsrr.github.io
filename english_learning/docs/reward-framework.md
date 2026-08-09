@@ -160,6 +160,24 @@ implemented first — refuse to grant while the ledger is unreadable, or rebuild
 recovery data before granting. Activating such a reward on top of today's fail-open read is a defect,
 not a configuration choice.
 
+### Phase 7C.1 — the precondition, met
+
+`reward_ledger.is_corrupt()` is the fail-closed counterpart to the tolerant reads, and
+`LearningService.economic_state_is_readable()` folds it together with the strict reads of the two
+other stores that gate a payment (`qualifications.completion_state`,
+`completion.history_is_corrupt`). An economic grant proceeds only when the store that authoritatively
+gates *that* grant is readable; a missing record still pays (genuinely never paid), a malformed one
+refuses. Corruption is preserved rather than repaired, so it stays diagnosable, and `grant_reward()`
+re-checks independently as a last line of defence.
+
+Note the scoping, which cost one iteration to get right: strictness applies to the store that gates
+the grant, not to every store. A corrupt *cosmetic* ledger must not block the activity payout, which
+is gated by its own per-activity `rewarded` flag — otherwise unrelated damage would deny a learner
+money they had genuinely earned.
+
+No reward is activated by this phase: `lesson_mastery_gold` and the other non-cosmetic policies stay
+inert, and `PASS_GOLD` is unchanged. This phase only makes their future activation safe.
+
 ## 9. What Phase 5F deliberately did not do
 
 - No gold, gameplay or profile reward was activated; those four policies remain unreferenced.

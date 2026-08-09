@@ -45,7 +45,9 @@ def grant_qualification(state, qid, earned_at):
     """Idempotent grant. Returns (state, granted_now). A repeat leaves the original earnedAt intact."""
     if not isinstance(state, dict):
         state = {}
-    quals = state.setdefault("qualifications", {})
+    quals = _dict_slot(state, "qualifications")
+    if quals is None:
+        return state, False              # corrupt container: refuse the write, preserve the evidence
     if not qid or qid in quals:
         return state, False
     quals[qid] = {"earnedAt": earned_at}
@@ -66,8 +68,78 @@ def grant_qualifications(state, qids, earned_at):
 
 
 # ---- activity completion records -------------------------------------------------------------
+# Phase 7C.1: reads come in two flavours.
+#   * the tolerant read (get_completion) keeps its historical behaviour — malformed means "no
+#     evidence" — because display and grading must never crash on a damaged file;
+#   * the STRICT read (completion_state) distinguishes ABSENT from CORRUPT, and is what anything
+#     that mints economic value must use. "We cannot tell whether this was paid" is not the same
+#     answer as "this was never paid".
+VALID_PRESENT, VALID_ABSENT, CORRUPT = "valid_present", "valid_absent", "corrupt"
+
+
+def _is_wellformed_completion(rec):
+    """A completion record written by record_completion(): all three fields, correct types.
+
+    record_completion() is the ONLY writer and has always written passedAt, pct and a bool
+    `rewarded` together (Phase 3A wrote the same shape under a legacy key). A dict missing
+    `rewarded`, or carrying a non-bool, therefore never came from this system and cannot be used to
+    decide whether money was already paid.
+    """
+    return (isinstance(rec, dict)
+            and isinstance(rec.get("rewarded"), bool)
+            and not isinstance(rec.get("passedAt"), bool)
+            and isinstance(rec.get("passedAt"), int)
+            and not isinstance(rec.get("pct"), bool)
+            and isinstance(rec.get("pct"), int))
+
+
+def completion_state(state, key):
+    """(status, record) for ONE key. See VALID_PRESENT / VALID_ABSENT / CORRUPT."""
+    table = (state or {}).get("activityCompletions")
+    if table is None:
+        return VALID_ABSENT, None
+    if not isinstance(table, dict):
+        return CORRUPT, None                       # the whole table was clobbered
+    if key not in table:
+        return VALID_ABSENT, None
+    rec = table[key]
+    return (VALID_PRESENT, rec) if _is_wellformed_completion(rec) else (CORRUPT, None)
+
+
+def completions_state(state, keys):
+    """Fold the strict read across canonical + legacy aliases.
+
+    CORRUPT anywhere wins: if any alias for this activity is unreadable we cannot prove the reward
+    was not already paid through it, so the answer is "uncertain", never "unpaid".
+    """
+    status = VALID_ABSENT
+    for k in (keys or []):
+        s, _ = completion_state(state, k)
+        if s == CORRUPT:
+            return CORRUPT
+        if s == VALID_PRESENT:
+            status = VALID_PRESENT
+    return status
+
+
+def _dict_slot(state, key):
+    """The dict stored at `key`, creating it when absent.
+
+    Returns None when the slot holds something that is NOT a dict. Phase 7C.1: a clobbered container
+    must neither crash the writer nor be silently replaced — replacing it would destroy the very
+    evidence an operator needs, and crashing would turn a damaged file into a denial of service.
+    The caller skips the write and the damaged bytes stay exactly where they are.
+    """
+    cur = state.get(key)
+    if cur is None:
+        cur = {}
+        state[key] = cur
+    return cur if isinstance(cur, dict) else None
+
+
 def get_completion(state, key):
-    rec = ((state or {}).get("activityCompletions") or {}).get(key)
+    table = (state or {}).get("activityCompletions")
+    rec = table.get(key) if isinstance(table, dict) else None
     return rec if isinstance(rec, dict) else None
 
 
@@ -93,7 +165,15 @@ def record_completion(state, key, passed_at, pct, rewarded):
     """Write/refresh one activity-completion record. Returns the stored record."""
     if not isinstance(state, dict):
         state = {}
-    acts = state.setdefault("activityCompletions", {})
+    acts = _dict_slot(state, "activityCompletions")
+    if acts is None:
+        return None                      # corrupt container: refuse the write, preserve the evidence
+    prior = acts.get(key)
+    if prior is not None and not _is_wellformed_completion(prior):
+        # Phase 7C.1: a malformed record is the ONLY evidence that something went wrong here.
+        # Overwriting it would erase that evidence AND silently convert an unpayable state into a
+        # payable one on the next attempt. Refuse the write; the settlement already refused the gold.
+        return None
     acts[key] = {"passedAt": passed_at, "pct": pct, "rewarded": bool(rewarded)}
     return acts[key]
 
@@ -116,7 +196,9 @@ def record_activity_score(state, activity_id, correct, total, pct, now):
     """Latest-wins. Keeps exact correct/total so Rule A can average unrounded percentages."""
     if not isinstance(state, dict):
         state = {}
-    table = state.setdefault("activityScores", {})
+    table = _dict_slot(state, "activityScores")
+    if table is None:
+        return None                      # corrupt container: refuse the write, preserve the evidence
     table[activity_id] = {"correct": int(correct), "total": int(total), "pct": int(pct),
                           "updatedAt": now}
     return table[activity_id]
