@@ -1846,8 +1846,12 @@ class Handler(BaseHTTPRequestHandler):
             buildings, tech = e["buildings"], e["tech"]
             conscript, cbudget = bool(e.get("conscript")), clampi(e.get("conscriptBudget", 0))
         income = int(round((pop + region_pop) * GOLD_RATE))   # 金幣/小時 = (家鄉+領地人口) × 比例
+        # Phase 7E.2：把「學習獎勵金額」唯讀地告訴前端，讓 Learning Home 能顯示真實數字。
+        # 這不是新的獎勵、也不是新的權威來源——金額仍然只存在於 game/config.py，由這裡讀出來。
+        # 前端永遠不自己算金額(否則就變成第二份經濟真相)，只是把伺服器說的數字顯示出來。
         self._send({"population": pop, "troops": troops, "troopsTotal": troops_total(troops),
                     "gold": gold, "goldIncome": income,
+                    "passGold": PASS_GOLD, "masteryGold": LESSON_MASTERY_GOLD,
                     "passcnt": passcnt, "buildings": buildings, "tech": tech,
                     "conscript": conscript, "conscriptBudget": cbudget})
 

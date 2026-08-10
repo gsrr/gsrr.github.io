@@ -623,6 +623,14 @@
   /* Phase 7C.2a: the mastery payout, stated as a figure. Same row treatment as the unlock line. */
   .comp-banner .cb-g { font-size: 13px; font-weight: 800; color: #b45309; margin-top: 6px; }
   .rw-owned { margin-top: 6px; font-size: 12px; color: #b45309; font-weight: 700; }
+  /* Phase 7E.2 — the learning economy strip and the per-lesson world consequence. One compact line
+     each: the row must not grow into a requirement checklist. */
+  .lh-econ { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0 0 10px; }
+  .lh-econ .lh-gold { font-size: 15px; font-weight: 800; color: #b45309; }
+  .lh-econ .lh-rw { font-size: 12px; color: #64748b; font-weight: 600; }
+  .lh-world { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 600; color: #7c3aed;
+              white-space: normal; line-height: 1.35; }
+  .lh-world .lh-w-ok { color: #15803d; }
   /* Phase 5G — Owned Achievement Cabinet */
   .ach-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
               margin: 6px 0 14px; }
@@ -1599,10 +1607,10 @@
     <!-- 畫面 1：選等級 -->
     <div id="screenLevel" class="hidden">
       <div class="learn-top">
-        <button class="back-btn" id="backToProfile">🏠 Home</button>
+        <button class="back-btn" id="backToProfile">🎮 Lobby</button>
         <span class="learn-title" id="greetTitle"></span>
       </div>
-      <p class="screen-intro">Choose a level to start 📚</p>
+      <p class="screen-intro">Choose a map / level 🗺 — your room stays the same</p>
       <div id="guestHint" class="hidden" style="text-align:center;font-size:13px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:8px;margin-bottom:10px;cursor:pointer">🔒 Guest mode — tap to log in & save your progress</div>
       <div id="dailyBanner" class="daily-banner"></div>
       <div id="energyBar" class="energy"></div>
@@ -1632,7 +1640,7 @@
     <!-- 畫面：Learning Home（Phase 6C）—— 學習的唯一入口，只回答「接下來做什麼／我到哪了」 -->
     <div id="screenHome" class="hidden">
       <div class="learn-top">
-        <button class="back-btn" id="backFromHome">← Back to Map</button>
+        <button class="back-btn" id="backFromHome">🗺 Go to Map</button>
         <span class="learn-title">Learning</span>
       </div>
       <div id="homeBody"></div>
@@ -4306,8 +4314,11 @@
 
     statsBody.innerHTML =
       '<p class="screen-intro">' + (userName ? 'Hi, ' + userName + ' 👋' : '') + '</p>' +
-      // Phase 6C: the Profile is retrospective; "what next" lives in Learning Home, one tap away.
-      '<button type="button" id="homeOpen" class="lh-open">📚 Learning Home — what to do next</button>' +
+      // Phase 7E.3: the Learning Home CTA is gone. Profile is retrospective — it must not be the
+      // way anyone REACHES the learning loop. Since 7E.2 the map's own Back leads to Learning Home,
+      // so removing this creates no dead end. What Profile does host is the explicit way to change
+      // map/level, which is otherwise never reached from gameplay.
+      '<button type="button" id="pickLevelOpen" class="lh-open">🗺 Change map / level · rooms · leaderboard</button>' +
       // Phase 6B STEP 5 order: campaign roll-up, then what has been earned, then statistics.
       verifiedHtml + achievementCabinetHTML() + statCards + badgeHtml + levelHtml;
   }
@@ -4323,7 +4334,22 @@
       '<div class="daily-today">' + (info.today > 0 ? ('✅ Today: ' + info.today + (info.today > 1 ? ' articles read' : ' article read')) : '⬜ Not read today yet — read 1 to keep your streak!') + '</div>' +
       '<div class="daily-cal">' + dots + '</div>';
   }
+  // ===== Phase 7E.3 — ONE ephemeral opener context for Profile =====
+  // Same philosophy as lessonReturnTo: a single value describing the surface that opened Profile,
+  // consumed when Profile closes. No router, no history, no localStorage. Profile is retrospective,
+  // so it must hand the player back to whatever they were doing — never to the level grid.
+  let profileReturnTo = null;                 // null | {to:"home"|"map"|"lesson"}
+  function currentSurfaceKey() {
+    if (!screenHome.classList.contains("hidden")) return "home";
+    if (!screenLearn.classList.contains("hidden")) return "lesson";
+    if (!screenArticle.classList.contains("hidden")) return "map";
+    return null;
+  }
+  const PROFILE_BACK_LABEL = { home: "← Learning", map: "← Map", lesson: "← Lesson" };
   function openProfileStats() {
+    profileReturnTo = { to: currentSurfaceKey() };
+    const b = document.getElementById("backFromStats");
+    if (b) b.textContent = PROFILE_BACK_LABEL[profileReturnTo.to] || "← Back";
     renderProfileStats();
     renderDailyReport();
     renderPanelAvatar();
@@ -4333,7 +4359,19 @@
   }
   userChip.addEventListener("click", () => { if (userName) openProfileStats(); });   // 老師(無 userName)點名字不動作
   document.getElementById("backFromStats").addEventListener("click", () => {
-    renderLevelGrid();
+    // Phase 7E.3: return to the surface that opened Profile. The map case restores the exact
+    // altitude the player was on — including a drill-down sub-map — by replaying drawGeo's own
+    // last arguments, so Taipei does not silently become Taiwan.
+    const to = profileReturnTo && profileReturnTo.to;
+    profileReturnTo = null;
+    if (to === "home") { openLearningHome(); return; }
+    if (to === "lesson") { showScreen(screenLearn); return; }
+    if (to === "map") {
+      showScreen(screenArticle);
+      if (curDrawArgs && curDrawArgs[2] === selLevelIdx) drawGeo.apply(null, curDrawArgs);
+      return;
+    }
+    renderLevelGrid();                       // opened from the level grid itself (or unknown)
     showScreen(screenLevel);
   });
 
@@ -5271,8 +5309,15 @@
     return lessonTitleByFile(key);
   }
   // 進入某等級的地理地圖（頂層）
+  // Phase 7E.3: name the destination truthfully — "Learning" in a room that has a campaign,
+  // "Levels" in one that does not.
+  function syncMapBackLabel() {
+    const b = document.getElementById("backToLevels");
+    if (b) b.textContent = homeCampaigns().length ? "← Learning" : "← Levels";
+  }
   function renderGeoMap(i, spec) {
     clearMapTimers();
+    syncMapBackLabel();
     selLevelIdx = i;
     const lv = manifest.levels[i];
     let banner = document.getElementById("terrBanner");
@@ -6195,7 +6240,17 @@
           ? '<div class="lh-camp-done">\ud83c\udfc6 ' + escapeHtml(c.name) + ' Campaign Complete</div>'
           : '') + '</div>';
     };
-    let out = campCard(camps[0]);
+    // Phase 7E.2: the learning economy, where learning decisions are actually made. The balance is
+    // the SAME authoritative myEcon.gold shown on the map bar — never recomputed here — and the
+    // amounts are the server's own (delivered by /api/economy), never hard-coded in the client.
+    const ec = myEcon || {};
+    let out = '<div class="lh-econ">' +
+      '<span class="lh-gold">🪙 <b>' + (ec.gold || 0) + '</b> gold</span>' +
+      ((ec.passGold || ec.masteryGold)
+        ? '<span class="lh-rw">Quiz +' + (ec.passGold || 0) +
+          ' · Mastery +' + (ec.masteryGold || 0) + '</span>'
+        : '') + '</div>';
+    out += campCard(camps[0]);
     if (camps.length > 1) {
       out += '<details class="lh-more"><summary>' + (camps.length - 1) +
              ' more campaign' + (camps.length > 2 ? 's' : '') + '</summary>' +
@@ -6233,7 +6288,8 @@
         (m.key === "mastered" ? " is-done" : "") + (rev ? " is-review" : "") +
         '" data-home-lesson="' + escapeHtml(x.lid) + '">' +
         '<span class="ic">' + (rev ? "\u26a0" : m.icon) + '</span>' +
-        '<span class="nm">' + escapeHtml(String(x.row.title || x.lid)) + '</span>' +
+        '<span class="nm">' + escapeHtml(String(x.row.title || x.lid)) +
+          lessonWorldLineHTML(x.lid) + '</span>' +
         '<span class="st">' + escapeHtml(state) + ' \u00b7 ' + have + ' / ' + req + '</span></button>';
     }));
     out += homeAchievementsHTML();
@@ -6241,6 +6297,65 @@
   }
   function contentPathForLessonId(lid) {
     return contentPathForLesson(lid);
+  }
+  // ===== Phase 7E.2 — what does this lesson unlock in the world? =====
+  // DISPLAY ONLY. This reverses the ONE authoritative relationship that already exists —
+  //   territory.requirements.attackQualificationIds -> qualification -> studyTarget.lessonId
+  // — and invents no second qualification engine, no new ownership and no new ordering. Catalog
+  // order is designer-owned and preserved. Nothing here authorises anything: the server still
+  // decides every claim (Phase 7D-0).
+  function territoriesForLesson(lid) {
+    const out = [], terr = (TERR_CATALOG && TERR_CATALOG.terrById) || {};
+    Object.keys(terr).forEach(key => {
+      const reqs = territoryRequirements(key);
+      if (!reqs.length) return;
+      const ours = reqs.filter(q => { const st = studyTargetFor(q); return st && st.lessonId === lid; });
+      if (!ours.length) return;
+      out.push({
+        key: key,
+        name: regionDisplayName(key),
+        total: reqs.length,                                   // how many requirements it has
+        held: ours.every(q => myQualifications.has(q)),        // has THIS lesson's part been earned?
+        otherMissing: reqs.filter(q => ours.indexOf(q) < 0 && !myQualifications.has(q)).length,
+      });
+    });
+    return out;
+  }
+  // One compact, honest line. "Unlocks" only when this lesson's qualification is the WHOLE gate;
+  // a territory that needs more than this lesson says "Helps unlock", and once earned it reports
+  // what is still outstanding rather than implying the territory is open.
+  function lessonWorldLineHTML(lid) {
+    const ts = territoriesForLesson(lid);
+    if (!ts.length) return "";
+    const part = ts.map(x => {
+      if (x.held) {
+        return x.otherMissing
+          ? '<span class="lh-w-ok">✓ earned</span> · ' + escapeHtml(x.name) +
+            ' still needs ' + x.otherMissing
+          : '<span class="lh-w-ok">✓ ' + escapeHtml(x.name) + ' unlocked</span>';
+      }
+      return (x.total > 1 ? "Helps unlock " : "Unlocks ") + escapeHtml(x.name);
+    });
+    const shown = part.slice(0, 2).join(" · ") +
+                  (part.length > 2 ? " · +" + (part.length - 2) + " more" : "");
+    return '<span class="lh-world">🗺 ' + shown + '</span>';
+  }
+  // The map altitude Learning Home should open: the map CONTAINING this campaign's territories,
+  // found through the same reverse mapping. No hard-coded campaign, no hard-coded map.
+  function campaignMapAnchor() {
+    const camps = homeCampaigns();
+    for (let i = 0; i < camps.length; i++) {
+      for (let k = 0; k < camps[i].list.length; k++) {
+        const ts = territoriesForLesson(camps[i].list[k].lid);
+        if (ts.length) return ts[0].key;
+      }
+    }
+    return null;
+  }
+  function goToCampaignMap() {
+    const key = campaignMapAnchor();
+    if (key) { showMapForTerritory(key); return; }   // reuses the Phase 7E.1 resolver
+    selectLevel(selLevelIdx);                        // no mapped campaign -> the level's own map
   }
   // ===== Phase 7E.1 — ONE ephemeral navigation context: who opened this lesson? =====
   //   null | {to:"home"} | {to:"map"} | {to:"region", key, reopen}
@@ -6308,6 +6423,7 @@
     showScreen(screenHome);
     renderLearningHome();
     refreshLearning(renderLearningHome);      // authoritative refresh, then re-render
+    loadEconomy(renderLearningHome);          // 7E.2: the same authoritative balance as the map bar
   }
   document.addEventListener("click", function (e) {
     const c = e.target && e.target.closest && e.target.closest("[data-home-continue]");
@@ -6315,7 +6431,7 @@
     const r = e.target && e.target.closest && e.target.closest("[data-home-lesson]");
     if (r) { openLessonFromHome(r.getAttribute("data-home-lesson")); return; }
     if (e.target && e.target.id === "homeCollection") { openProfileStats(); return; }
-    if (e.target && e.target.id === "homeOpen") { openLearningHome(); }
+    if (e.target && e.target.id === "pickLevelOpen") { renderLevelGrid(); showScreen(screenLevel); }
   });
 
   function renderLessonProgress() {
@@ -6752,10 +6868,12 @@
       return;
     }
     // 無主：當場過關一課，過了才出兵佔領。
+    // Phase 6H: a gated region occupies with its OWN mapped lesson; an ungated one keeps the
+    // legacy random pick. Only the choice of lesson differs.
     const plan = occupyLessonPlan(key);
     // Phase 7D: a GATED region whose requirements the player already holds needs no replay. The
     // credential is the qualification, which was earned authoritatively and is enforced by the
-    // server on /api/territory/claim (Phase 7D-0) - so re-passing the same lesson proved nothing,
+    // server on /api/territory/claim (Phase 7D-0) — so re-passing the same lesson proved nothing,
     // granted nothing and cost 20 energy. `plan.missing === 0` means every required qualification
     // is held; an ungated region has no credential to have earned, so it keeps its challenge.
     // This is a convenience only: the server still decides, and a client that is wrong here simply
@@ -6764,14 +6882,13 @@
     const cleared = pending && pending.key === key && passCount(pending.file) > pending.base;
     if (cleared || requirementMet) {
       if (T <= 0) { terr.innerHTML = noTroops; return; }
-      // Phase 6I: "Challenge" now names the RANDOM mode only, so a gated region says "Lesson passed".
+      // Phase 6I: "Challenge" names the RANDOM mode only, so a gated region says "Lesson passed".
       terr.innerHTML = '<p class="op-hint">✅ ' +
         (cleared ? (territoryRequirements(key).length ? 'Lesson passed!' : 'Challenge cleared!')
                  : 'Learning requirement complete.') +
         ' 🚩 Occupy — assign troops by type:</p>';
-      // ONE deployment path for both routes - the cleared-challenge one and the
-      // already-qualified one. Nothing about the claim is rebuilt, and no lesson state is
-      // fabricated to reach it.
+      // ONE deployment path for both routes — the cleared-challenge one and the already-qualified
+      // one. Nothing about the claim is rebuilt, and no lesson state is fabricated to reach it.
       deployPanel(terr, poolAvail(), { label: "🚩 Occupy", onGo: g => { poolSpend(g); pending = null; pendingOccupy = null; claimTroops(key, g, pop, function () {}); logEvent("occupy", { region: name, key: key }); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); } });
       return;
     }
@@ -6820,6 +6937,7 @@
   }
 
   function selectLevel(i) {
+    syncMapBackLabel();
     const lv0 = manifest.levels[i];
     if (lv0 && GEO_MAPS[lv0.id]) { renderGeoMap(i, GEO_MAPS[lv0.id]); return; }   // 有地理地圖的等級走引擎
     clearMapTimers();
@@ -7546,8 +7664,13 @@
   }
 
   document.getElementById("backToProfile").addEventListener("click", () => { if (authToken() && authUser()) openRooms(); else showScreen(screenLanding); });
+  // Phase 7E.3: the map's "up" is the room's canonical home — Learning Home — not the level grid.
+  // That closes the Home <-> Map pair (7E.2 gave Home its "Go to Map") and stops gameplay Back from
+  // landing on a screen that behaves like a second app root. A room with no learning content still
+  // falls back to the selector, so this is not campaign-specific.
   document.getElementById("backToLevels").addEventListener("click", () => {
     synth.cancel(); stopListenL1(); stopRecordingIfAny();
+    if (homeCampaigns().length) { openLearningHome(); return; }
     renderLevelGrid();
     showScreen(screenLevel);
   });
@@ -7564,8 +7687,10 @@
   });
   // Phase 6F: Home is the entry, so its back action reveals the Map rather than the Profile.
   // The Profile stays reachable from the user chip, exactly as on every other in-app screen.
+  // Phase 7E.2: Learning Home is the room-entry destination, so the world is not "back" — it is the
+  // other half of the product. This opens the map that actually contains the campaign's territories.
   document.getElementById("backFromHome").addEventListener("click", () => {
-    selectLevel(selLevelIdx);
+    goToCampaignMap();
   });
 
   /* ================= 老師/家長帳號 + 雲端進度後台 ================= */
