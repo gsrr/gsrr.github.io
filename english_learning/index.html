@@ -7055,12 +7055,25 @@
     fetch(withRoom("/api/territory/claim?token=" + encodeURIComponent(t)), {
       method: "POST", body: JSON.stringify({ file: file, avatar: avatarOf(userName), pop: pop, troops: troops })
     }).then(r => {
-        if (r.status === 401 || r.status === 403) return { __auth: true };   // token 失效（server 重啟會清空）
+        // Phase 7D-0: the server now refuses a gated claim with 403 + qualification_required. That is
+        // NOT an expired token, so it must not produce the "log out and back in" advice below.
+        if (r.status === 403) {
+          return r.json().catch(() => ({})).then(j =>
+            (j && j.reason === "qualification_required") ? { __gated: j } : { __auth: true });
+        }
+        if (r.status === 401) return { __auth: true };   // token 失效（server 重啟會清空）
         if (!r.ok) throw new Error("HTTP " + r.status);
         return r.json();
       })
       .then(j => {
         if (j && j.__auth) { alert("Your login expired (the server was likely restarted — logins reset).\n\nTap 🚪 top-right to log out, then log in again and retry."); if (cb) cb(); return; }
+        if (j && j.__gated) {
+          // Truthful and minimal: name the requirement, send them to the lesson that grants it.
+          const names = (j.__gated.missingQualificationIds || []).map(qualTitle).join(", ");
+          alert("🔒 Learning requirement not met yet.\n\nYou still need: " + (names || "a learning requirement") +
+                "\n\nPass that lesson first, then occupy this region.");
+          if (cb) cb(); return;
+        }
         if (j && j.ok) { loadTerritory(() => { if (cb) cb(); }); }
         else { alert("Deploy failed: " + ((j && j.error) || "unknown")); if (cb) cb(); }
       })

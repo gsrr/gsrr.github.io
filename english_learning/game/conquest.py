@@ -80,6 +80,35 @@ def _subtract_squad(garrison, squad):
 # non-learning-gated caller. It never bypasses ownership/adjacency/garrison. Game Domain treats the
 # IDs as FULLY OPAQUE strings: it never parses, splits or classifies them, and nothing in game/ knows
 # what any of them certify or how one is earned — see the content-independence regression test.
+def missing_qualifications(world, territory_id, player_qualifications):
+    """Required qualification IDs the player does NOT hold, for ONE territory. Never raises.
+
+    THE single qualification rule for taking a territory, by any route. Phase 3A wrote it inline in
+    can_attack(); Phase 7D-0 lifted it out unchanged so neutral CLAIM enforces the identical rule
+    from the identical world-data, instead of a second engine that could drift.
+
+    ALL semantics (no OR groups): every required ID must be held. Junk entries (non-string/empty) are
+    ignored rather than treated as unmeetable gates, and a duplicated requirement is reported once —
+    the returned list is what the UI renders, so it must be clean and order-stable. An empty or
+    missing requirement list means unrestricted.
+
+    The IDs stay FULLY OPAQUE here: nothing in game/ parses, splits or classifies them, and nothing
+    knows what any of them certify or how one is earned (content-independence regression).
+    """
+    try:
+        required = world.attack_requirements(territory_id) or []
+    except Exception:
+        required = []
+    held = player_qualifications or set()
+    missing, seen = [], set()
+    for q in required:
+        if isinstance(q, str) and q and q not in seen:
+            seen.add(q)
+            if q not in held:
+                missing.append(q)
+    return missing
+
+
 def can_attack(player_id, source_id, target_id, squad, world, territories,
                player_qualifications=None, require_qualifications=True):
     """Pure eligibility rule. No HTTP, no DOM, no I/O. Returns AttackEligibility."""
@@ -111,20 +140,7 @@ def can_attack(player_id, source_id, target_id, squad, world, territories,
     # Phase 3A: learning-qualification gate (player state). ALL required IDs must be held.
     # Missing/empty requirement list == unrestricted. Bypassed only when require_qualifications=False.
     if require_qualifications:
-        try:
-            required = world.attack_requirements(target_id) or []
-        except Exception:
-            required = []
-        held = player_qualifications or set()
-        # ALL semantics (no OR groups in this phase). Junk entries (non-string/empty) are ignored
-        # rather than treated as unmeetable gates, and a duplicated requirement is reported once —
-        # `missing` is the exact list the UI renders, so it must be clean and order-stable.
-        missing, seen = [], set()
-        for q in required:
-            if isinstance(q, str) and q and q not in seen:
-                seen.add(q)
-                if q not in held:
-                    missing.append(q)
+        missing = missing_qualifications(world, target_id, player_qualifications)
         if missing:
             return AttackEligibility(False, "qualification_required", missing)
     return AttackEligibility(True, None)

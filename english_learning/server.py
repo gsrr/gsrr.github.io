@@ -1403,6 +1403,11 @@ class Handler(BaseHTTPRequestHandler):
             hp = int(t.get("hp", 0) or 0)
             troops.append({"type": ty, "hp": max(0, min(100000, hp))})
         region_pop = clampi(cpop)          # 人口以目錄為權威(不信任 client 的 pop)
+        # Phase 7D-0：學習資格門檻在這裡才變成「伺服器權威」。在此之前，無主據點的資格檢查只存在於
+        # 前端(passCount(file) > base)，所以任何 client 都能直接 POST /claim 拿下有門檻的地區。
+        # 資格集合取自帳號的權威學習狀態；client 送來的任何東西(passcnt、pendingOccupy、完成回應、
+        # 課程身分)一律不採信。在 terr_lock 之外先取得，維持全站鎖順序(acct → terr → econ)。
+        pq = self._player_qualifications(user)
         # 佔領只發生在「無主」據點：有主據點要先打贏(/api/territory/attack 後端權威地清成無主)才能佔領。
         # 後端強制此規則 → client 不能用 /claim 直接奪取敵方領地(繞過戰鬥)。只能佔無主或重部署自己的。
         with terr_lock:
@@ -1411,6 +1416,14 @@ class Handler(BaseHTTPRequestHandler):
             if prev.get("owner") and prev.get("owner") != user:   # 有主且非本人 → 必須先攻打
                 self._send({"error": "Territory is held — attack it first", "reason": "held"}, 403)
                 return
+            # 只有「取得」新領地要過資格門檻；重新部署自己已持有的領地不受影響(既有行為不變)。
+            # 用的是與 /attack 完全相同的規則與同一份 world-data，不是第二套判定。
+            if prev.get("owner") != user:
+                missing = game_conquest.missing_qualifications(terr_catalog, f, pq)
+                if missing:                                   # 資格不符 → 一切狀態零變動(原子拒絕)
+                    self._send({"error": "Claim not allowed", "reason": "qualification_required",
+                                "missingQualificationIds": missing}, 403)
+                    return
             keep = {}
             if prev.get("owner") == user:                # 重新部署自己的守軍 → 保留建築/科技/人口/徵兵設定
                 keep = {"buildings": prev.get("buildings") or {}, "tech": prev.get("tech") or {}}
