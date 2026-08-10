@@ -6675,20 +6675,30 @@
       return;
     }
     // 無主：當場過關一課，過了才出兵佔領。
+    const plan = occupyLessonPlan(key);
+    // Phase 7D: a GATED region whose requirements the player already holds needs no replay. The
+    // credential is the qualification, which was earned authoritatively and is enforced by the
+    // server on /api/territory/claim (Phase 7D-0) - so re-passing the same lesson proved nothing,
+    // granted nothing and cost 20 energy. `plan.missing === 0` means every required qualification
+    // is held; an ungated region has no credential to have earned, so it keeps its challenge.
+    // This is a convenience only: the server still decides, and a client that is wrong here simply
+    // gets a truthful 403 from claimTroops().
+    const requirementMet = !plan.random && !plan.error && plan.missing === 0;
     const cleared = pending && pending.key === key && passCount(pending.file) > pending.base;
-    if (cleared) {
+    if (cleared || requirementMet) {
       if (T <= 0) { terr.innerHTML = noTroops; return; }
       // Phase 6I: "Challenge" now names the RANDOM mode only, so a gated region says "Lesson passed".
       terr.innerHTML = '<p class="op-hint">✅ ' +
-        (territoryRequirements(key).length ? 'Lesson passed!' : 'Challenge cleared!') +
+        (cleared ? (territoryRequirements(key).length ? 'Lesson passed!' : 'Challenge cleared!')
+                 : 'Learning requirement complete.') +
         ' 🚩 Occupy — assign troops by type:</p>';
-      deployPanel(terr, poolAvail(), { label: "🚩 Occupy", onGo: g => { poolSpend(g); pending = null; claimTroops(key, g, pop, function () {}); logEvent("occupy", { region: name, key: key }); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); } });
+      // ONE deployment path for both routes - the cleared-challenge one and the
+      // already-qualified one. Nothing about the claim is rebuilt, and no lesson state is
+      // fabricated to reach it.
+      deployPanel(terr, poolAvail(), { label: "🚩 Occupy", onGo: g => { poolSpend(g); pending = null; pendingOccupy = null; claimTroops(key, g, pop, function () {}); logEvent("occupy", { region: name, key: key }); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); } });
       return;
     }
     // 無主：佔領時隨機挑一課（全域世界不分等級），過關才出兵佔領。
-    // Phase 6H: a gated region occupies with its OWN mapped lesson; an ungated one keeps the
-    // legacy random pick. Only the choice of lesson differs — everything below is unchanged.
-    const plan = occupyLessonPlan(key);
     if (plan.error) {
       terr.innerHTML = '<p class="op-hint">⚠️ This region\'s learning requirement points at a ' +
         'qualification with no lesson (' + escapeHtml(plan.error) + '). Occupation is unavailable ' +
