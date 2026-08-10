@@ -33,7 +33,7 @@ function extractFn(src, sig) {
 // never computed" — so the REAL one is extracted and run, with only its collaborators stubbed.
 const FNS = ["renderRequirementPanel", "territoryRequirements", "missingQualifications", "qualTitle",
   "studyTargetFor", "studyArticleFor", "activityIdForContent", "maybeSubmitLearningAttempt",
-  "offerStudyReturn", "findArticleByFile", "noteLessonCompletion"]
+  "offerStudyReturn", "findArticleByFile", "noteLessonCompletion", "returnCtx"]
   .map(n => extractFn(html, "function " + n + "("));
 
 // ---- a minimal DOM good enough for the renderer (element + classList + appendChild) ----
@@ -77,6 +77,15 @@ function makeCtx(over) {
     // observe that it was called.
     __log: m => { ctx.log.push(m); },
     _grantedNow: { lesson: null, course: null, gold: 0 },
+    // Phase 7E.1: the lesson now carries the surface that opened it. returnCtx() is the REAL
+    // normalizer (extracted above); returnToRegion is the navigation effect, stubbed like every
+    // other collaborator so the test can observe it without a map.
+    lessonReturnTo: null,
+    returnToRegion: c => { ctx.log.push("returnToRegion:" + (c && c.key)); },
+    // the region return is deferred so the learner can read the consequence toast; run the
+    // scheduled callback immediately so the test observes it deterministically.
+    setTimeout: (fn) => { fn(); return 0; },
+    clearTimeout: () => {},
     loadLearningProgress: () => { ctx.log.push("loadLearningProgress"); },
     refreshLessonSurfaces: () => {},
     authToken: () => "tok",
@@ -344,6 +353,38 @@ const settle = () => new Promise(r => setImmediate(r));
   assert(c2.log.includes("selectLevel") && c2.log.includes("reopen"),
     "clicking it goes back to the map and reopens the originating territory");
   assert.strictEqual(c2.pendingStudy, null, "the return context is consumed once");
+
+  // Phase 7E.1: when the lesson was opened BY a region and that region's last requirement just
+  // landed, the learner is told the consequence and taken back to that region instead of being
+  // offered the generic study-return button.
+  const cRegionCtx = makeCtx({ learningRegistry: REG, manifest: MANIFEST });
+  cRegionCtx.lessonReturnTo = { to: "region", key: "t:target" };
+  cRegionCtx.TERR_CATALOG.terrById["t:target"] = { requirements: { attackQualificationIds: ["q.zoo"] } };
+  cRegionCtx._fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve(
+    { ok: true, passed: true, qualifications: ["q.zoo"], rewarded: true, rewardAmount: 160,
+      lessonRewardAmount: 0, gold: 660 }) });
+  vm.runInContext("maybeSubmitLearningAttempt", cRegionCtx)("Pre-A1/taipei/zoo", "quiz3", []);
+  await settle();
+  assert(cRegionCtx.log.includes("returnToRegion:t:target"),
+    "a region-opened lesson returns to that region once its requirement is met: " + cRegionCtx.log);
+  assert(cRegionCtx.log.some(l => /^toast:/.test(l) && /Requirement complete/.test(l)),
+    "…and states the conquest consequence: " + cRegionCtx.log);
+  assert(!cRegionCtx.document.body.children.some(x => x.id === "studyReturn"),
+    "…instead of the generic study-return offer");
+
+  // still-missing requirement -> no region return, the ordinary path runs
+  const cPart = makeCtx({ learningRegistry: REG, manifest: MANIFEST });
+  cPart.lessonReturnTo = { to: "region", key: "t:target" };
+  cPart.TERR_CATALOG.terrById["t:target"] =
+    { requirements: { attackQualificationIds: ["q.zoo", "q.greetings"] } };
+  cPart._fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve(
+    { ok: true, passed: true, qualifications: ["q.zoo"], rewarded: true, rewardAmount: 160,
+      lessonRewardAmount: 0, gold: 660 }) });
+  vm.runInContext("maybeSubmitLearningAttempt", cPart)("Pre-A1/taipei/zoo", "quiz3", []);
+  await settle();
+  assert(!cPart.log.some(l => /^returnToRegion/.test(l)),
+    "a region whose OTHER requirement is still missing does not pull the learner away: "
+    + cPart.log);
 
   // Phase 7C.2a-fix: the balance is synced on an ECONOMIC SETTLEMENT, identified by the granted
   // amounts — never by `rewarded` alone, and never from a response that reports no settlement.

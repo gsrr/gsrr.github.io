@@ -6092,16 +6092,19 @@
       '<div data-comp-for="' + escapeHtml(f) + '" data-comp-mode="region">' +
       lessonCompactHTML(f, { study: true }) + '</div>').join("");
     if (!cards.replace(/<div[^>]*><\/div>/g, "").trim()) return "";
-    return '<div class="op-learn"><div class="op-learn-h">Learning</div>' + cards + '</div>';
+    return '<div class="op-learn" data-region-key="' + escapeHtml(targetKey) + '">' +
+           '<div class="op-learn-h">Learning</div>' + cards + '</div>';
   }
   document.addEventListener("click", function (e) {
     const b = e.target && e.target.closest && e.target.closest("[data-region-study]");
     if (!b) return;
     const art = findArticleByFile(b.getAttribute("data-region-study"));
     if (!art) return;
-    // Phase 6G STEP 5: a contextual Study shortcut FROM THE MAP, so Back returns to the map.
-    // Set explicitly rather than relying on whatever the previous navigation left behind.
-    lessonReturnTo = null;
+    // Phase 7E.1: this Study shortcut was rendered FOR a region, so Back returns to that region
+    // rather than to whatever map selectLevel() happens to draw.
+    const host = b.closest("[data-region-key]");
+    const rkey = host && host.getAttribute("data-region-key");
+    lessonReturnTo = rkey ? { to: "region", key: rkey, reopen: regionReopenFor(rkey) } : null;
     closeModal();
     selectArticle(art);
   });
@@ -6239,14 +6242,59 @@
   function contentPathForLessonId(lid) {
     return contentPathForLesson(lid);
   }
-  // Opening a lesson FROM here must come back to here (STEP 3). One value, no router.
+  // ===== Phase 7E.1 — ONE ephemeral navigation context: who opened this lesson? =====
+  //   null | {to:"home"} | {to:"map"} | {to:"region", key, reopen}
+  // Not a router, not a stack, not history, never persisted. It describes the surface that
+  // initiated the CURRENT lesson visit and is consumed when that visit ends. Legacy "home"/null
+  // are still understood by returnCtx() so no caller is forced to change at once.
   let lessonReturnTo = null;
+  function returnCtx() {
+    const c = lessonReturnTo;
+    if (!c) return { to: "map" };
+    if (typeof c === "string") return { to: c };
+    return c;
+  }
+  // Render the geo map that actually CONTAINS this territory — the level's top map, or the
+  // drill-down sub-map it lives in. Derived from world-data (TERR_CATALOG + GEO_MAPS.drill), so a
+  // future campaign on another map needs no code change here.
+  function showMapForTerritory(key) {
+    const i = levelIdxForKey(key);
+    const lv = manifest && manifest.levels[i], spec = lv && GEO_MAPS[lv.id];
+    if (!spec) { selectLevel(i); return; }
+    renderGeoMap(i, spec);                       // screen + banner + economy, then the top map
+    const s = String(key);
+    const mapId = s.indexOf(":") >= 0 ? s.split(":")[0] : null;
+    const file = mapId && TERR_CATALOG.maps[mapId] ? TERR_CATALOG.maps[mapId].svgFile : null;
+    if (!file || file === spec.file || !spec.drill) return;
+    const sub = Object.keys(spec.drill).map(d => spec.drill[d])
+                      .filter(x => x && x.file === file)[0];
+    if (sub) drawGeo(sub, () => renderGeoMap(i, spec), i, lv);   // the existing drill renderer
+  }
+  // Put the player back exactly where they were: the right map, then the SAME region modal, drawn
+  // by the normal renderer so it shows whatever the requirement state now is.
+  function returnToRegion(ctx) {
+    lessonReturnTo = null;
+    showMapForTerritory(ctx.key);
+    if (typeof ctx.reopen === "function") ctx.reopen();
+  }
+  // ---- challenge-transaction lifetime (Phase 7E.1) ----
+  // INVARIANT: `pending`/`pendingOccupy` exist only while ONE challenge transaction is in flight
+  // for ONE territory. They survive the lesson only while that challenge is still redeemable —
+  // i.e. it was satisfied and the deploy step has not happened yet. An explicit exit from the
+  // challenge (Back without satisfying it, or leaving for Learning Home) ends the transaction.
+  // Random Challenge depends on a SATISFIED pending surviving back to the region, so a satisfied
+  // one is deliberately left alone.
+  function endChallengeIfUnsatisfied() {
+    if (pending && passCount(pending.file) > pending.base) return;   // satisfied -> still redeemable
+    pending = null;
+    pendingOccupy = null;
+  }
   // `continue` reuses the Phase 5B continueLesson(), so Home lands the player on the NEXT MISSING
   // activity (server order), not merely on the lesson. Tapping a lesson ROW just opens the lesson.
   function openLessonFromHome(lid, andContinue) {
     const path = contentPathForLessonId(lid), a = path && findArticleByFile(path);
     if (!a) return;
-    lessonReturnTo = "home";
+    lessonReturnTo = { to: "home" };
     // continueLesson() jumps to the next MISSING activity. When nothing is missing (the lesson is
     // attempted in full but not yet mastered) it has no target, so fall back to opening the lesson.
     const row = (learningProgress.lessons || {})[lid];
@@ -6256,6 +6304,7 @@
   }
   function openLearningHome() {
     lessonReturnTo = null;
+    endChallengeIfUnsatisfied();          // leaving for Home ends any unfinished region challenge
     showScreen(screenHome);
     renderLearningHome();
     refreshLearning(renderLearningHome);      // authoritative refresh, then re-render
@@ -6294,10 +6343,13 @@
   }
   // Jump straight to the FIRST missing activity. The order is the server's: missingActivityIds is
   // already emitted in requiredActivityIds order, so nothing is sorted or prioritised here.
-  async function continueLesson(contentPath) {
+  // `targetActivityId` (Phase 7E.1) lands on a SPECIFIC activity instead of the server's next
+  // missing one — used when a gated region sends the player at the activity that grants its
+  // qualification. Everything below is the existing machinery; only the target differs.
+  async function continueLesson(contentPath, targetActivityId) {
     const row = progressForContent(contentPath);
     if (!row) return;
-    const aid = (row.missingActivityIds || [])[0];
+    const aid = targetActivityId || (row.missingActivityIds || [])[0];
     const art = findArticleByFile(contentPath);
     if (!aid || !art) return;
     closeModal();
@@ -6502,6 +6554,15 @@
   }
   // 資格 → 可前往的課程文章（完全由 Learning metadata 決定：qualification → studyTarget → contentPath）
   function studyArticleFor(qid) { const t = studyTargetFor(qid); return t && t.contentPath ? findArticleByFile(t.contentPath) : null; }
+  // A reopen closure for a territory we know only by key (the card link and the requirement panel
+  // do not carry the opener's name/pop). Name and population come from the same catalog openRegion
+  // itself trusts, so the reopened modal is identical to the original.
+  function regionReopenFor(key) {
+    return function () {
+      const ct = TERR_CATALOG.terrById[key] || {};
+      openRegion(key, regionDisplayName(key), ct.gamePopulation || 0, levelIdxForKey(key));
+    };
+  }
   function territoryRequirements(targetKey) {   // designer-owned learning gate from the catalog (advisory copy)
     const ct = TERR_CATALOG.terrById[targetKey];
     return (ct && ct.requirements && ct.requirements.attackQualificationIds) || [];
@@ -6523,7 +6584,10 @@
       b.textContent = art ? "📖 Study: " + qualTitle(qid) : "📖 Not available yet: " + qualTitle(qid);
       if (art) b.addEventListener("click", () => {
         pendingStudy = { qualificationIds: missing.slice(), label: regionDisplayName(targetKey), reopen: reopen || null };
-        lessonReturnTo = null;              // Phase 6G: started from the map -> Back returns there
+        // Phase 7E.1: same contextual return as the neutral path — Back goes to this region.
+        // Both callers of renderAttackPanel() always pass their own reopen closure, so there is no
+        // fallback to invent here; returnToRegion() degrades to "show the right map" without one.
+        lessonReturnTo = { to: "region", key: targetKey, reopen: reopen || null };
         closeModal(); selectArticle(art);
       });
       else b.disabled = true;
@@ -6558,6 +6622,19 @@
           + (j.lessonRewarded && j.lessonRewardAmount
              ? " ⭐ Lesson mastered 🪙 +" + j.lessonRewardAmount + " gold" : "");
         showLockedMsg("✅ Learned: " + names + paid);
+        // Phase 7E.1: the region became takeable the moment the SERVER granted the qualification —
+        // not when the whole lesson averages >= 80%. `j.qualifications` is the server's own grant
+        // list (mirrored into myQualifications above); nothing here is inferred from score, pct,
+        // passCount, mastery or reward amount. Learning UNLOCKS conquest; it never performs it, so
+        // this only navigates — the player still chooses troops and the server still authorises.
+        const rc = returnCtx();
+        if (rc.to === "region" && rc.key && territoryRequirements(rc.key).length
+            && !missingQualifications(rc.key).length) {
+          showLockedMsg("✓ Requirement complete — " + regionDisplayName(rc.key) +
+                        " can now be occupied.");
+          setTimeout(function () { returnToRegion(rc); }, 900);
+          return;
+        }
         offerStudyReturn();
       }).catch(() => {});
   }
@@ -6722,9 +6799,23 @@
       const sel = selectOccupyLesson(key, i);
       const ch = sel.article;
       if (!ch) { alert("No lessons available for this map."); return; }
+      const reopen = function () { openRegion(key, name, pop, i); };
       pending = { key: key, file: ch.file, base: passCount(ch.file), article: ch, i: i };
-      pendingOccupy = { file: ch.file, reopen: function () { openRegion(key, name, pop, i); } };   // 過關後直接跳回這個據點佔領
-      closeModal(); selectArticle(ch);
+      pendingOccupy = { file: ch.file, reopen: reopen };   // 過關後直接跳回這個據點佔領
+      // Phase 7E.1: remember WHICH region sent the player here, so Back and the unlock moment can
+      // both come home to it. Separate from pendingOccupy, which is the Random-Challenge counter
+      // transaction and means something else.
+      // ONLY for a GATED region: an ungated one has no qualification credential, so it must keep the
+      // legacy Random-Challenge return (pendingOccupy on a full pass) and must never be treated as
+      // "requirement satisfied" simply because it has no requirements.
+      lessonReturnTo = plan.random ? { to: "map" } : { to: "region", key: key, reopen: reopen };
+      closeModal();
+      // Phase 7E.1: a gated region sends the player at the activity that GRANTS its missing
+      // qualification, not at the passive listen screen. The mapping is the registry's own
+      // qualification -> studyTarget, and the landing uses the existing continueLesson machinery.
+      const st = sel.qid ? studyTargetFor(sel.qid) : null;
+      if (st && st.activityId && st.contentPath === ch.file) continueLesson(ch.file, st.activityId);
+      else selectArticle(ch);
     });
   }
 
@@ -6977,7 +7068,7 @@
     // Phase 6G: pin the return target explicitly. Without this the lesson would inherit whatever
     // lessonReturnTo the previous navigation left behind, so a Study started from the MAP could send
     // Back to Learning Home. pendingOccupy and every conquest behaviour are unchanged.
-    ov.querySelector("#opStudy").addEventListener("click", () => { pendingOccupy = { file: a.file, reopen: function () { openOutpost(a); } }; lessonReturnTo = null; closeModal(); selectArticle(a); });
+    ov.querySelector("#opStudy").addEventListener("click", () => { pendingOccupy = { file: a.file, reopen: function () { openOutpost(a); } }; lessonReturnTo = { to: "map" }; closeModal(); selectArticle(a); });
     const terr = ov.querySelector("#opTerr");
     if (!authToken()) { terr.innerHTML = '<p class="op-hint">🔒 Log in to raise an army and battle for territory.</p>'; return; }
     if (mine) {
@@ -7462,9 +7553,13 @@
   });
   document.getElementById("backToList").addEventListener("click", () => {
     synth.cancel(); stopListenL1(); stopRecordingIfAny();
-    // Phase 6C STEP 3: back returns to wherever the lesson was opened from. A lesson reached through
-    // Learning Home goes back to Learning Home (refreshed), never out to the level list.
-    if (lessonReturnTo === "home") { openLearningHome(); return; }
+    // Phase 6C STEP 3 / 7E.1: Back returns to whatever OPENED the lesson. "Return to what I was
+    // doing" — including when the player abandons a region's lesson before satisfying its gate.
+    const ctx = returnCtx();
+    endChallengeIfUnsatisfied();
+    if (ctx.to === "home") { openLearningHome(); return; }
+    if (ctx.to === "region" && ctx.key) { returnToRegion(ctx); return; }
+    lessonReturnTo = null;
     selectLevel(selLevelIdx);   // 回課程列表（順便刷新完成度）
   });
   // Phase 6F: Home is the entry, so its back action reveals the Map rather than the Profile.
