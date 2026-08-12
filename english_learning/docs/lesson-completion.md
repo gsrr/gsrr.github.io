@@ -1,5 +1,10 @@
 # Whole-lesson completion
 
+> **Phase 7F.3 (2026-08-12).** "Rule B" below is the client-side localStorage average. It is no
+> longer a completion authority anywhere in the product except the single documented `openOutpost`
+> exception; it survives as **practice** data and practice milestones. Read the Rule A / Rule B
+> framing below as history. Current state: `docs/current-game-rules.md` → "Learning authority".
+
 > ## Phase 4D — ACTIVE: four Taipei lessons, policy version 2
 >
 > | | |

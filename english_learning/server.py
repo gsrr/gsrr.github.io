@@ -1301,7 +1301,32 @@ class Handler(BaseHTTPRequestHandler):
                                  "created": u.get("created"), "students": students})
         self._send({"accounts": accounts})
 
-    # ---- 公開排行榜：依每個帳號 sdata.stats（前端算好的通過課數/英雄等級）----
+    # ---- 公開排行榜 ----
+    # Phase 7F.3: the learning number here is the SERVER's own count of mastered lessons, not the
+    # client-computed `sdata.stats.passed`. That field was a local Rule B average over localStorage
+    # and was therefore forgeable by anyone; it reached this public endpoint verbatim. Ranking never
+    # used it (the sort is population -> regions -> name) and the UI never showed it, so replacing
+    # the source changes no ordering and no visible row — it only stops a forgeable number being
+    # published as though it were progress. `avatar` still comes from sdata: it is cosmetic.
+    # No new completion model: this reuses LEARNING.progress_view()'s activePolicyCompleted.
+    @staticmethod
+    def _mastered_lesson_count(progress):
+        """Lessons this account has authoritatively mastered. Never raises, never trusts client data.
+
+        Phase 7F.3: the ONE authoritative learning number the public leaderboard publishes. Counts
+        rows whose ACTIVE policy version is completed — the same activePolicyCompleted the lesson UI
+        shows — so there is exactly one meaning of "mastered" in the product.
+        """
+        try:
+            view = LEARNING.progress_view((progress or {}).get("learning") or {})
+        except Exception:
+            return 0
+        n = 0
+        for row in (view.get("lessons") or {}).values():
+            if row.get("authoritativeCompletionAvailable") and row.get("activePolicyCompleted"):
+                n += 1
+        return n
+
     def _handle_leaderboard(self):
         with terr_lock:
             tstore = load_territory_store()
@@ -1317,12 +1342,13 @@ class Handler(BaseHTTPRequestHandler):
             for user in db.get("users", {}):
                 if user == "testaccount":
                     continue
-                stats = (load_progress(user).get("sdata") or {}).get("stats") or {}
+                prog = load_progress(user)
+                stats = (prog.get("sdata") or {}).get("stats") or {}
                 e = estore.get(user) if isinstance(estore, dict) else None
                 pop = clampi((e or {}).get("population", ECON_START_POP)) if isinstance(e, dict) else ECON_START_POP
                 out.append({"name": user, "avatar": stats.get("avatar", "👦"),
                             "population": pop, "regions": regions.get(user, 0),
-                            "passed": int(stats.get("passed", 0) or 0), "level": int(stats.get("level", 1) or 1)})
+                            "passed": self._mastered_lesson_count(prog), "level": 1})
         out.sort(key=lambda x: (-x["population"], -x["regions"], x["name"].lower()))
         self._send({"leaders": out[:50]})
 

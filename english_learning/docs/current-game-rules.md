@@ -12,6 +12,45 @@ copied verbatim; nothing here is a proposal. File:line references are approximat
 ## A. Gold / Economy  (backend-authoritative)
 
 - Stored in per-room `economy.json`: `{ user: { population, gold, lastGold, troops{cav,archer,inf,spear}, buildings, tech, conscript, conscriptBudget } }`.
+
+## Learning authority (Phase 7F.3)
+
+There is exactly ONE meaning for each learning concept, and it lives on the server.
+
+| Concept | Authoritative source | Player wording |
+|---|---|---|
+| Current passing state | `currentPolicySatisfied` | Passing / Needs Review (live; may fall after a worse retry) |
+| Permanent mastery | `activePolicyCompleted` | ⭐ Mastered (sticky — a worse retry never removes it) |
+| Progress | `completedActivityIds` / `requiredActivityIds` / `missingActivityIds` | `x / y activities completed` |
+| Conquest eligibility | server-held qualifications | requirement met / missing |
+| Official shared completion | server-side count of `activePolicyCompleted` (`server.py _mastered_lesson_count`) | leaderboard |
+
+**Client-local, non-authoritative.** `localStorage["score:<user>:<contentPath>"]` and the average over
+it (historically "Rule B") are **practice data only**. They may mean: practice score, practice
+average, personal best, immediate in-activity feedback, local navigation state (level-tab locking),
+practice statistics and practice milestones. They may **not** mean: lesson completed, lesson
+mastered, current passing state, qualification earned, territory unlocked, campaign completion,
+reward eligibility, or official shared completion count.
+
+Why: the local average is player-editable, carries no policy version, keys off manifest levels rather
+than registry activity ids, and is all-or-nothing over levels that may never have been scored. Phase
+7F.3 demonstrated five concrete divergences from the authoritative state (forged pass vs
+unsatisfied policy; local fail vs earned mastery; real evidence with an empty cache; unreconciled
+stale keys for retired content; version blindness).
+
+### The one Phase 7F.3 exception — `openOutpost`
+
+`openOutpost()` (the board-map lesson-node panel used by levels with no geo map: A1 / A2 / B1) still
+gates its Occupy panel on the local average. This is **deliberate and deferred**, not an oversight:
+the conquest action behind that gate cannot succeed at all, because lesson-file ids are not canonical
+territories (`resolve_any('A1/001') -> None`, and `POST /api/territory/claim` answers
+`400 unresolved`). Removing the gate would expose a broken deploy path; making it authoritative would
+dress up a dead action. Phase 7G decides whether that feature is removed or connected to canonical
+territories with real server requirements.
+
+The exception is narrow and does not leak: the canonical geo-map path (`openRegion`) never reads the
+local average, and claim/attack eligibility is server-verified in both cases.
+
 - `passcnt` is **retired** (Phase 7F.2). Files saved before it may still contain the key; nothing reads, normalises, serves or rewrites it — it is inert data left in place.
 - Constants (`server.py`): `GOLD_RATE = 0.10`, `GROW_SECONDS = 3600`, `ECON_MAX_CATCHUP = 72`, `ECON_START_POP = 100`, `ECON_START_TROOPS = 100`, `PASS_GOLD = 160`, `MASTERY_GOLD = 640`, `DEFEND_GOLD = 50`, `ATTACK_FAIL_GOLD = 50`.
 - New player seeded from the room config (`startPop/startGold/startTroops`) via `econ_get`.

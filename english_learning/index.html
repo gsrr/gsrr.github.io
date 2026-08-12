@@ -2260,6 +2260,36 @@
     return lv;
   }
   // 從一個 scores 物件算出某課狀態（後台 dashboard 也用，故抽出來）
+  // ===== Phase 7F.3 — THE authoritative lesson-state accessors =====
+  // Rule B (the localStorage average below) is no longer a completion authority. It survives only
+  // as PRACTICE data. Anything that renders a VERDICT — mastered / passing / progress — must come
+  // through here, which reads the server's own per-lesson row.
+  //   masteredOf(file)   -> activePolicyCompleted   (sticky; a worse retry never removes it)
+  //   passingOf(file)    -> currentPolicySatisfied  (live; may fall after a worse retry)
+  //   authProgressOf(f)  -> {have, need} from completedActivityIds / requiredActivityIds
+  // `null` means "no authoritative row" (lesson not tracked) — callers must not invent a verdict.
+  function authRowOf(file) {
+    const row = (typeof progressForContent === "function") ? progressForContent(file) : null;
+    return (row && row.authoritativeCompletionAvailable) ? row : null;
+  }
+  function masteredOf(file) {
+    const row = authRowOf(file);
+    return row ? row.activePolicyCompleted === true : false;
+  }
+  function passingOf(file) {
+    const row = authRowOf(file);
+    return row ? row.currentPolicySatisfied === true : false;
+  }
+  function authProgressOf(file) {
+    const row = authRowOf(file);
+    if (!row) return null;
+    return { have: (row.completedActivityIds || []).length,
+             need: (row.requiredActivityIds || []).length };
+  }
+  // PRACTICE ONLY from here down. `statusFromScores`/`lessonStatus` read localStorage, which the
+  // player can edit, which carries no policy version, and which covers manifest levels rather than
+  // registry activities. Phase 7F.3 proved five concrete ways it diverges from the server. It may
+  // answer "how did practice go?" — never "is this lesson done?".
   function statusFromScores(a, scores) {
     const need = scoredLevelsFor(a);
     scores = scores || {};
@@ -2332,13 +2362,27 @@
               '</span><span class="sum-val">' + valHtml + '</span></div>';
     });
     const avg = pcts.length ? Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length) : 0;
-    const passed = avg >= PASS_MARK;
+    // Phase 7F.3: this screen reports PRACTICE, and says so. It used to announce "Lesson Complete!
+    // / Passed!" from the localStorage average — a verdict the server never agreed to and that a
+    // player could edit. The authoritative lesson state is shown underneath it, from the server.
+    const row = currentArticle ? authRowOf(currentArticle.file) : null;
+    let auth = "";
+    if (row) {
+      const have = (row.completedActivityIds || []).length,
+            need = (row.requiredActivityIds || []).length;
+      const state = row.activePolicyCompleted === true
+        ? '⭐ Mastered · ' + (row.currentPolicySatisfied === true
+            ? 'Current: Passing' : 'Current: Needs Review')
+        : (have > 0 ? '◐ In Progress' : '○ Not Started');
+      auth = '<div class="sum-auth"><b>Lesson state</b>: ' + state +
+             '<span class="sum-pct"> · ' + have + ' / ' + need + ' activities completed</span></div>';
+    }
     summaryEl.innerHTML =
-      '<div class="sum-title">🎉 Lesson Complete!</div>' +
-      '<div class="sum-stars">' + (passed ? "🟢 Passed!" : "🔴 Keep trying!") + '</div>' +
+      '<div class="sum-title">🎉 Practice finished!</div>' +
+      auth +
       '<div class="sum-rows">' + rows + '</div>' +
-      '<div class="sum-total">Total: ' + avg + ' / 100' +
-      ' <span class="sum-pct">(need ' + PASS_MARK + ' to pass)</span></div>';
+      '<div class="sum-total">Practice average: ' + avg + ' / 100' +
+      ' <span class="sum-pct">(practice only — lesson state comes from your saved progress)</span></div>';
     summaryEl.classList.remove("hidden");
   }
   function hideLessonSummary() { summaryEl.classList.add("hidden"); }
@@ -2384,8 +2428,13 @@
     } else {
       renderLessonSummary();   // 先結算整課總分（含通過計數 +1）
       // 最後一關完成、整課通過、且是從據點挑戰進來的 → 直接跳回地圖開啟佔領+部署，不用再按一次按鈕。
+      // Phase 7F.3: the auto-return used lessonStatus().passed — a localStorage average. The
+      // authoritative question is "has the learner actually done this lesson?", which is mastery or
+      // a currently-satisfied policy. The region panel it returns to decides eligibility itself
+      // (and the server decides the claim), so this stays pure navigation.
       const occupy = pendingOccupy && currentArticle &&
-        pendingOccupy.file === currentArticle.file && lessonStatus(currentArticle).passed;
+        pendingOccupy.file === currentArticle.file &&
+        (masteredOf(currentArticle.file) || passingOf(currentArticle.file));
       if (occupy) {
         const po = pendingOccupy;
         synth.cancel(); stopListenL1(); stopRecordingIfAny();
@@ -4209,17 +4258,21 @@
       btn.className = "pick-card";
       const n = lv.articles.length;
       // 這位使用者在本等級的完成狀況：通過的課數 / 總課數（用進度條呈現，課多也不會擠）
-      let passed = 0;
-      lv.articles.forEach(a => { if (lessonStatus(a).passed) passed++; });
-      const pct = n ? Math.round(passed / n * 100) : 0;
+      // Phase 7F.3: mastered lessons, counted from the SERVER's activePolicyCompleted. This line
+      // used to count lessonStatus().passed, so a hand-edited localStorage read "24 / 24 passed".
+      // Lessons with no authoritative policy are simply not counted rather than guessed at.
+      let passed = 0, tracked = 0;
+      lv.articles.forEach(a => { if (authRowOf(a.file)) { tracked++; if (masteredOf(a.file)) passed++; } });
+      const pct = tracked ? Math.round(passed / tracked * 100) : 0;
       const unlocked = levelUnlocked(i);
       const sub = !n ? 'Coming soon'
-        : (!unlocked ? '🔒 Pass the ' + manifest.levels[i - 1].name + ' test' : (passed > 0 ? '✅ ' + passed + ' / ' + n + ' passed' : n + ' lessons'));
+        : (!unlocked ? '🔒 Pass the ' + manifest.levels[i - 1].name + ' test'
+           : (passed > 0 ? '⭐ ' + passed + ' / ' + tracked + ' mastered' : n + ' lessons'));
       btn.innerHTML = (lv.icon ? '<span class="pick-icon">' + (unlocked ? lv.icon : '🔒') + '</span>' : '') +
                       '<span class="pick-title">' + (lv.name || lv.id) + '</span>' +
                       (lv.stars ? '<span class="pick-stars">' + '⭐'.repeat(lv.stars) + '</span>' : '') +
                       '<span class="pick-sub">' + sub + '</span>' +
-                      (n && unlocked ? '<span class="lvl-bar"><span class="lvl-bar-fill" style="width:' + pct + '%"></span></span>' : '');
+                      (n && unlocked && tracked ? '<span class="lvl-bar"><span class="lvl-bar-fill" style="width:' + pct + '%"></span></span>' : '');
       if (lv.desc) btn.title = lv.desc;
       if (!n || !unlocked) { btn.disabled = true; if (!unlocked) btn.classList.add("locked"); }
       else btn.addEventListener("click", () => selectLevel(i));
@@ -4228,7 +4281,10 @@
   }
 
   /* ===== 畫面 1b：學習歷程 / 成就 ===== */
-  // 從目前使用者的 score 紀錄統整出總覽（沿用 lessonStatus / PASS_MARK）
+  // PRACTICE statistics, computed locally from this device's score history (Phase 7F.3).
+  // Deliberately NOT authoritative: the Achievement Cabinet owns server-granted achievements, and
+  // the lesson cards own mastery. Everything this produces is labelled "Practice" in the UI so the
+  // two can never be read as the same thing.
   function computeProfileStats() {
     let total = 0, passed = 0, perfect = false, levelsCleared = 0;
     const pcts = [], levels = [];
@@ -4253,12 +4309,12 @@
   // 成就徽章：用目前已有的資料就能算（連續天數等需要時間戳，留待之後）
   function computeBadges(s) {
     return [
-      { icon: "🐣", name: "First Steps",   desc: "Pass 1 lesson",      earned: s.passed >= 1 },
-      { icon: "📚", name: "Bookworm",      desc: "Pass 5 lessons",     earned: s.passed >= 5 },
-      { icon: "🎓", name: "Scholar",       desc: "Pass 10 lessons",    earned: s.passed >= 10 },
-      { icon: "💯", name: "Perfect Score", desc: "Score 100 on a lesson", earned: s.perfect },
-      { icon: "🌟", name: "Level Cleared", desc: "Finish a whole level",  earned: s.levelsCleared >= 1 },
-      { icon: "🥇", name: "Champion",      desc: "Clear every level",  earned: s.total > 0 && s.passed === s.total }
+      { icon: "🐣", name: "First Steps",   desc: "Reach a passing practice score on 1 lesson",  earned: s.passed >= 1 },
+      { icon: "📚", name: "Bookworm",      desc: "Reach a passing practice score on 5 lessons", earned: s.passed >= 5 },
+      { icon: "🎓", name: "Scholar",       desc: "Reach a passing practice score on 10 lessons", earned: s.passed >= 10 },
+      { icon: "💯", name: "Perfect Practice", desc: "Score 100 in practice on a lesson", earned: s.perfect },
+      { icon: "🌟", name: "Level Practised", desc: "Passing practice scores across a whole level", earned: s.levelsCleared >= 1 },
+      { icon: "🥇", name: "Practice Champion", desc: "Passing practice scores on every lesson", earned: s.total > 0 && s.passed === s.total }
     ];
   }
 
@@ -4269,9 +4325,9 @@
 
     const statCards =
       '<div class="stat-grid">' +
-      '<div class="stat-box"><div class="stat-num">' + s.passed + ' / ' + s.total + '</div><div class="stat-label">Lessons passed</div></div>' +
-      '<div class="stat-box"><div class="stat-num">' + (s.avg == null ? '–' : s.avg) + '</div><div class="stat-label">Average score</div></div>' +
-      '<div class="stat-box"><div class="stat-num">' + s.levelsCleared + '</div><div class="stat-label">Levels cleared</div></div>' +
+      '<div class="stat-box"><div class="stat-num">' + s.passed + ' / ' + s.total + '</div><div class="stat-label">Practice passes</div></div>' +
+      '<div class="stat-box"><div class="stat-num">' + (s.avg == null ? '–' : s.avg) + '</div><div class="stat-label">Practice average</div></div>' +
+      '<div class="stat-box"><div class="stat-num">' + s.levelsCleared + '</div><div class="stat-label">Levels practised</div></div>' +
       '<div class="stat-box"><div class="stat-num">' + earnedCount + ' / ' + badges.length + '</div><div class="stat-label">Milestones</div></div>' +
       '</div>';
 
@@ -6916,7 +6972,10 @@
     banner.style.display = "none";
     // 世界地圖：關卡散落在一片蜿蜒的陸地上，一條平滑小徑（像河/路）串起每一關
     const COLS = 3, NW = 92, NH = 86, GX = 30, GY = 44, stepX = NW + GX, stepY = NH + GY, PAD = 44;
-    const passedArr = lv.articles.map(a => lessonStatus(a).passed);
+    // Phase 7F.3: the node's verdict is the SERVER's mastery. Before this, a node could show
+    // "💥 passed · 100" from localStorage while Learning Home said Needs Review for the same
+    // lesson — two contradictory verdicts on one lesson.
+    const passedArr = lv.articles.map(a => masteredOf(a.file));
     const items = lv.articles.map((a, idx) => ({ a: a, passed: passedArr[idx], boss: false }));
     items.push({ boss: true, passed: next ? examPassed(lv.id) : false });
     const rows = Math.ceil(items.length / COLS);
@@ -6997,8 +7056,12 @@
         node.addEventListener("click", () => moveHeroThenGo(k, () => startLevelExam(i)));
       } else {
         const st = lessonStatus(it.a), title = it.a.title ? it.a.title.split("·").pop().trim() : it.a.id;
-        node.innerHTML = '<span class="map-ico">' + (it.passed ? "💥" : "🏰") + '</span>' +
-          '<span class="map-num">#' + (k + 1) + (it.passed && st.avg != null ? ' · ' + st.avg : '') + '</span>' +
+        // Icon = authoritative mastery. The number is the local PRACTICE average and is labelled as
+        // such, so it can never be read as a completion verdict (Phase 7F.3 STEP 15).
+        const review = it.passed && !passingOf(it.a.file);
+        node.innerHTML = '<span class="map-ico">' + (it.passed ? (review ? "⚠" : "⭐") : "🏰") + '</span>' +
+          '<span class="map-num">#' + (k + 1) +
+            (st.avg != null ? ' · Practice ' + st.avg + '%' : '') + '</span>' +
           '<span class="map-lbl">' + title + '</span>';
         node.addEventListener("click", () => moveHeroThenGo(k, () => openOutpost(it.a)));
         fileNodes[it.a.file] = node;
@@ -7114,7 +7177,6 @@
     let h = 0; for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
     return 60 + (h % 241);
   }
-  function popOf(a) { return a._pop != null ? a._pop : popForName(a._region || (a.title ? a.title.split("·").pop().trim() : a.id)); }
   function aliveTroops(troops) { return (troops || []).filter(t => t && t.hp > 0); }
   function garrisonHTML(troops) {
     const al = aliveTroops(troops);
@@ -7127,6 +7189,7 @@
     return ' <span class="tech-badge">🏭' + (tech.atk ? " ⚔️+" + tech.atk : "") + (tech.def ? " 🛡️+" + tech.def : "") + '</span>';
   }
 
+  function popOf(a) { return a._pop != null ? a._pop : popForName(a._region || (a.title ? a.title.split("·").pop().trim() : a.id)); }
   function openOutpost(a) {
     const file = a.file, passed = lessonStatus(a).passed;
     const h = (territory && territory.holders && territory.holders[file]) || null;
@@ -7789,7 +7852,7 @@
       const rd = (st.read && st.read.dates) ? streakFromDates(st.read.dates) : null;
       const streakTxt = rd ? ' · 🔥' + rd.streak + 'd' + (rd.today > 0 ? ' ✅today' : '') : '';
       return '<div class="dash-card"><div class="dash-head">' + (st.avatar || "👦") + ' <b>' + name + '</b>' +
-             (avg != null ? ' · avg ' + avg + '%' : '') + streakTxt + '</div><div class="dash-lvs">' + rows + '</div></div>';
+             (avg != null ? ' · practice avg ' + avg + '%' : '') + streakTxt + '</div><div class="dash-lvs">' + rows + '</div></div>';
     }).join("");
   }
   function renderDashboard(data) {
@@ -7854,11 +7917,12 @@
   function fullLocalSnapshot() {
     return { profiles: loadProfiles(), userName: userName, students: collectLocalState(), stats: computeMyStats() };
   }
-  // 給排行榜用：通過課數 + 頭像
+  // Phase 7F.3: the leaderboard's learning number is computed by the SERVER from its own
+  // activePolicyCompleted (see server.py `_mastered_lesson_count`). This payload used to carry a
+  // Rule B count over localStorage, which meant a hand-edited file published "53 lessons passed" on
+  // a public endpoint. Only the cosmetic avatar is client-supplied now.
   function computeMyStats() {
-    let passed = 0;
-    (manifest ? manifest.levels : []).forEach(lv => lv.articles.forEach(a => { if (lessonStatus(a).passed) passed++; }));
-    return { passed: passed, level: 1, avatar: userName ? avatarOf(userName) : "👦" };
+    return { avatar: userName ? avatarOf(userName) : "👦" };
   }
   // 把雲端快照寫回本機 localStorage（換裝置登入時還原）
   function restoreSnapshot(blob) {
