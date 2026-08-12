@@ -97,8 +97,9 @@ An activity completion is **not** whole-lesson completion. The pre-existing clie
 rule (average ≥ `PASS_MARK`) is unrelated to it, and since **Phase 7F.3 it is not an authority at
 all** — it is practice data. Mastery is `activePolicyCompleted`, current pass state is
 `currentPolicySatisfied`, progress is the activity-id sets, and conquest eligibility is the
-server-held qualifications. See `docs/current-game-rules.md` → "Learning authority (Phase 7F.3)" for
-the full split and for the single named exception (`openOutpost`, deferred to Phase 7G). That rule used to write a per-lesson counter
+server-held qualifications. See `docs/current-game-rules.md` → "Learning authority" for the full split. Phase 7G closed the
+last exception: board-map lesson nodes are learning surfaces with no conquest, so local practice
+scores now unlock nothing anywhere. That rule used to write a per-lesson counter
 (`passcnt`) whose only consumer was the neutral-occupy bootstrap; **Phase 7F.2 retired both** — the
 counter, its `/api/economy/pass` write endpoint, and the client prerequisite they existed to serve.
 Occupying a territory now depends only on the qualifications the server verifies.

@@ -57,9 +57,10 @@ Phase 1C models **land adjacency only**, so many territories have zero neighbour
 Australia, New Zealand, most islands; UK, and cross-strait pairs like Taiwan↔Fujian). Under Phase 2B
 those territories **cannot be conquered by land** and cannot launch land attacks across the sea. This
 is an expected, documented limitation — **no fake adjacency was added**. Sea routes / ports / special
-connections are a future phase. The same applies to the legacy non-geo "trail" lesson nodes
-(`openOutpost`): their pseudo-territories are not in the adjacency graph, so they have no valid land
-source and can only be occupied while neutral.
+connections are a future phase. The legacy non-geo "trail" lesson nodes (`openOutpost`) used to
+share this limitation — their pseudo-territories were not in the adjacency graph. **Phase 7G removed
+that conquest surface entirely**: those nodes are keyed by lesson file, never resolved to a canonical
+territory (`/api/territory/claim` answered `400 unresolved`), and are now learning-only panels.
 
 ## Same-map rule
 

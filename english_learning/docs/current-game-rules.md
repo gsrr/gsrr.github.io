@@ -38,18 +38,23 @@ than registry activity ids, and is all-or-nothing over levels that may never hav
 unsatisfied policy; local fail vs earned mastery; real evidence with an empty cache; unreconciled
 stale keys for retired content; version blindness).
 
-### The one Phase 7F.3 exception — `openOutpost`
+**There is no Rule B exception. Phase 7G closed the last one.**
 
-`openOutpost()` (the board-map lesson-node panel used by levels with no geo map: A1 / A2 / B1) still
-gates its Occupy panel on the local average. This is **deliberate and deferred**, not an oversight:
-the conquest action behind that gate cannot succeed at all, because lesson-file ids are not canonical
-territories (`resolve_any('A1/001') -> None`, and `POST /api/territory/claim` answers
-`400 unresolved`). Removing the gate would expose a broken deploy path; making it authoritative would
-dress up a dead action. Phase 7G decides whether that feature is removed or connected to canonical
-territories with real server requirements.
+### Two map surfaces, two different concepts
 
-The exception is narrow and does not leak: the canonical geo-map path (`openRegion`) never reads the
-local average, and claim/attack eligibility is server-verified in both cases.
+| Surface | What it is | Conquest? |
+|---|---|---|
+| `openRegion()` — geo maps (Pre-A1 Taiwan, China, World) | **canonical territories** with catalog ids, populations and designer-owned learning requirements | yes — claim/attack, server-verified |
+| `openOutpost()` — board-map nodes (levels with no geo map: A1 / A2 / B1) | **learning nodes**: a lesson's identity, its authoritative state, and one way into it | **no** |
+
+A board-map node is **not a claimable territory** and never was: those nodes are keyed by lesson file
+(`A1/001`), which is not a canonical territory id — `resolve_any('A1/001')` returns `None` and
+`POST /api/territory/claim` answers `400 unresolved`. Until Phase 7G the panel nonetheless rendered
+population, garrison, owner, Occupy/Deploy, buildings and an attack panel, gated by the local
+practice average. Phase 7G removed that conquest half outright rather than disabling it, which also
+removed the last place a local score controlled a world action.
+
+Local practice scores unlock nothing anywhere in the product.
 
 - `passcnt` is **retired** (Phase 7F.2). Files saved before it may still contain the key; nothing reads, normalises, serves or rewrites it — it is inert data left in place.
 - Constants (`server.py`): `GOLD_RATE = 0.10`, `GROW_SECONDS = 3600`, `ECON_MAX_CATCHUP = 72`, `ECON_START_POP = 100`, `ECON_START_TROOPS = 100`, `PASS_GOLD = 160`, `MASTERY_GOLD = 640`, `DEFEND_GOLD = 50`, `ATTACK_FAIL_GOLD = 50`.
@@ -186,14 +191,12 @@ Win → no gold change. Loss → attacker `−ATTACK_FAIL_GOLD (50)`; if the def
 AI attacks from its **global pool** (`ae["troops"]`), targeting a **random** non-AI-owned territory (no adjacency, no source). Win → AI takes ownership immediately with survivors as garrison (AI is exempt from the lesson/claim gate). Loss → target owner keeps it, garrison set to defender survivors. The AI pool is cleared (`_norm_troops(0)`) after any attack. AI occupy places its whole pool as the new garrison.
 
 ### 10. Frontend attack UI flow
-Two target-first surfaces, both POST `{file, squad}` to `/api/territory/attack` and replay via `runBattle(..., preOrdered=true)` (non-authoritative):
-- `openRegion` (SVG geo-map drill-down), and
-- `openOutpost` (adventure-trail lesson nodes).
+ONE target-first surface — `openRegion` (SVG geo-map drill-down) — POSTs `{file, squad}` to `/api/territory/attack` and replays via `runBattle(..., preOrdered=true)` (non-authoritative). Phase 7G removed the second surface: `openOutpost` (board-map lesson nodes) had an attack branch over pseudo-territories that could never resolve, and is now a learning-only panel.
 Squad budget = the global pool (`poolAvail()`); the player picks any owned enemy region and assigns troops. After a win the frontend offers the neutral claim: for a **gated** region it names the lesson granting the missing qualification, and for an **ungated** one it goes straight to troop deployment (Phase 7F.2).
 
 ### 11. Files that Phase 2B modifies
 - `game/conquest.py` — add `can_attack()` + territorial state transition (`apply_territorial_attack`).
 - `server.py` — `_handle_territory_attack` (require source, enforce adjacency, commit from source garrison); `ai_move` (source/target selection).
-- `index.html` — `openRegion` / `openOutpost` attack branches (source selection, squad from source garrison).
+- `index.html` — `openRegion` attack branch (source selection, squad from source garrison). The `openOutpost` branch this phase also touched was removed in Phase 7G.
 - `tests/*` — new `game_conquest_test.py` cases; the "non-adjacent allowed" regression flips to "non-adjacent rejected".
 - `docs/conquest-rules.md` — new.

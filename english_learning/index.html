@@ -7189,60 +7189,43 @@
     return ' <span class="tech-badge">🏭' + (tech.atk ? " ⚔️+" + tech.atk : "") + (tech.def ? " 🛡️+" + tech.def : "") + '</span>';
   }
 
-  function popOf(a) { return a._pop != null ? a._pop : popForName(a._region || (a.title ? a.title.split("·").pop().trim() : a.id)); }
+  // ===== Phase 7G — the non-geo board-map node is a LEARNING node =====
+  // It used to render a full conquest panel: population, garrison, owner, Occupy/Deploy, buildings
+  // and an attack panel, gated by the local Rule B average. That conquest was never functional:
+  // these nodes are keyed by LESSON FILE (e.g. "A1/001"), which is not a canonical territory, so
+  // `terr_catalog.resolve_any()` returns None and /api/territory/claim answers 400 "unresolved".
+  // The panel therefore promised ownership it could never deliver, and the Rule B gate in front of
+  // it was the last place a local score controlled a world action (the Phase 7F.3 carve-out).
+  //
+  // 7G removes the conquest half outright rather than disabling it, and keeps what always worked:
+  // lesson identity, the SERVER's learning state, and one way into the lesson. Canonical conquest
+  // lives in openRegion() on the geo maps and is untouched — the two are now deliberately different
+  // concepts. Giving these nodes real territories is a separate, larger question (world-data).
   function openOutpost(a) {
-    const file = a.file, passed = lessonStatus(a).passed;
-    const h = (territory && territory.holders && territory.holders[file]) || null;
-    const me = (authUser() || userName || "").toLowerCase();
-    const mine = !!(h && h.owner && (h.owner || "").toLowerCase() === me);
     const title = a.title ? a.title.split("·").pop().trim() : a.id;
-    const regionPop = popOf(a);
-    const T = poolTotal();
-    const shownPop = (mine && h && h.pop != null) ? h.pop : regionPop;   // 已佔領顯示伺服器最新人口
-    let html = '<h3 class="modal-title">🏰 ' + title + '</h3>' +
-      '<div class="op-pop">👥 Region population <b>' + shownPop + '</b>' + (mine ? ' (in your empire · earns gold)' : ' — added to your empire if you take it') + '</div>';
-    if (h && h.owner) {
-      html += '<div class="op-def' + (mine ? ' op-mine' : '') + '">Held by ' + (h.avatar || "👦") + ' <b>' + dispName(h.owner) + '</b>' + techBadge(h.tech) + '<br>' +
-        (mine ? garrisonHTML(h.troops) : '<span class="op-card">🛡️ Garrison unknown (enemy)</span>') + '</div>';
-    } else { html += '<div class="op-def">🏳️ Unclaimed region</div>'; }
-    html += '<div class="op-econ">⚔️ Your troops: <b>' + T + '</b></div>' +
-      // Phase 6B STEP 6: the outpost does NOT own lesson detail. Title + state chip + Continue only;
-      // "Study lesson" below opens the lesson page, which owns the rest.
+    const ov = openModal(
+      '<h3 class="modal-title">📖 ' + escapeHtml(title) + '</h3>' +
+      // The one authoritative state renderer, shared with Learning Home and the region panel, so a
+      // board node can never disagree with them about the same lesson.
       '<div data-comp-for="' + escapeHtml(a.file) + '" data-comp-mode="compact">' +
         lessonCompactHTML(a.file) + '</div>' +
-      '<div class="op-btns"><button id="opStudy" class="dict-play">📖 Study lesson</button></div><div id="opTerr"></div>';
-    const ov = openModal(html);
-    // Phase 6G: pin the return target explicitly. Without this the lesson would inherit whatever
-    // lessonReturnTo the previous navigation left behind, so a Study started from the MAP could send
-    // Back to Learning Home. pendingOccupy and every conquest behaviour are unchanged.
-    ov.querySelector("#opStudy").addEventListener("click", () => { pendingOccupy = { file: a.file, reopen: function () { openOutpost(a); } }; lessonReturnTo = { to: "map" }; closeModal(); selectArticle(a); });
-    const terr = ov.querySelector("#opTerr");
-    if (!authToken()) { terr.innerHTML = '<p class="op-hint">🔒 Log in to raise an army and battle for territory.</p>'; return; }
-    if (mine) {
-      const avail = poolPlusGarrison(h.troops);
-      terr.innerHTML = '<p class="op-hint">✅ Yours. Re-deploy garrison (the rest stays in your pool):</p>';
-      deployPanel(terr, avail, { init: h.troops, label: "🚩 Deploy", allowEmpty: true, onGo: g => {
-        const gm = squadByType(g), p = poolObj();
-        TROOPS.forEach(t => { p[t.id] = Math.max(0, (avail[t.id] || 0) - (gm[t.id] || 0)); });
-        claimTroops(file, g, regionPop, function () {});
-        saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); });
-      } });
-      buildingsPanel(terr, file, h, function () { closeModal(); openOutpost(a); });
-    } else if (!h || !h.owner) {
-      if (!passed) { terr.innerHTML = '<p class="op-hint">🚩 Tap Study lesson above — pass it (80%+) and your troops deploy here automatically.</p>'; }
-      else if (T <= 0) { terr.innerHTML = '<p class="op-hint">⚠️ No troops yet — recruit or redeploy to free some up.</p>'; }
-      else {
-        terr.innerHTML = '<p class="op-hint">🚩 Occupy: assign troops by type:</p>';
-        deployPanel(terr, poolAvail(), { label: "🚩 Occupy", onGo: g => {
-          poolSpend(g);
-          claimTroops(file, g, regionPop, function () {}); logEvent("occupy", { region: title, key: file });
-          saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); });
-        } });
-      }
-    } else {
-      // Phase 2B：有主敵區 → 從相鄰的自有來源領地出兵攻打(與地理地圖 openRegion 同一條 source→target 路徑)。
-      renderAttackPanel(terr, file, title, h, function () { openOutpost(a); });
-    }
+      '<div class="op-btns"><button id="opStudy" class="dict-play"></button></div>');
+    // ONE action. lessonCompactHTML() renders its own Continue button when work is outstanding;
+    // inside this panel that would be a second control saying the same thing, so it is dropped and
+    // the single button below takes its label from the same authoritative row.
+    const card = ov.querySelector("[data-comp-for]");
+    if (card) Array.prototype.forEach.call(card.querySelectorAll(".comp-cont"), n => n.remove());
+    const prog = authProgressOf(a.file);
+    const started = !!(prog && prog.have > 0);
+    ov.querySelector("#opStudy").textContent = started ? "▶️ Continue lesson" : "📖 Study lesson";
+    // Phase 6G/7E.1 contextual return, kept: Back from this lesson comes home to the board map that
+    // opened it, not to Learning Home. No pendingOccupy — there is no occupation to return for, and
+    // setting it here would make an unrelated region auto-open after this lesson.
+    ov.querySelector("#opStudy").addEventListener("click", () => {
+      lessonReturnTo = { to: "map" };
+      closeModal();
+      selectArticle(a);
+    });
   }
 
   // 部署面板：4 張牌，每張可自選兵種（可重複，例如四張全弓兵）+ 分配兵力 HP（總和 ≤ 兵力預算）。

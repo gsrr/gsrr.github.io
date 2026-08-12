@@ -52,10 +52,20 @@ assert(!/poolAdd\s*\(/.test(launchAttack) && !/poolSpend\s*\(/.test(launchAttack
   "launchAttack must not mutate the client pool from the battle result");
 ok("battle replay stays non-authoritative (preOrdered=true; no client pool mutation)");
 
-// 4) Both attack UIs (geo-map openRegion + trail openOutpost) delegate to the shared renderAttackPanel.
+// 4) The attack UI delegates to the shared renderAttackPanel.
+// Phase 7G: this used to also require openOutpost to delegate. That assertion protected the
+// board-map trail's attack panel, which Phase 7G REMOVED: those nodes are keyed by lesson file, are
+// not canonical territories (resolve_any -> None, /claim -> 400 unresolved), so the conquest they
+// offered could never complete. There is no second attack UI left to route, and the replacement is
+// stronger for the current rule - openOutpost must now contain NO conquest surface whatsoever, so
+// it cannot route an attack correctly OR incorrectly.
 assert(/renderAttackPanel\(/.test(openRegion), "openRegion must delegate to renderAttackPanel");
-assert(/renderAttackPanel\(/.test(openOutpost), "openOutpost must delegate to renderAttackPanel");
-ok("both openRegion and openOutpost route attacks through the shared source→target panel");
+assert(!/renderAttackPanel\(|deployPanel\(|claimTroops\(|buildingsPanel\(/.test(openOutpost),
+  "openOutpost must expose no conquest surface at all (Phase 7G)");
+assert(!/lessonStatus\(|statusFromScores\(/.test(openOutpost),
+  "openOutpost must not gate anything on the local Rule B average (Phase 7G closes the 7F.3 carve-out)");
+ok("canonical attacks route through the shared source→target panel, and the board-map lesson node "
+   + "carries no conquest surface and no Rule B gate");
 
 // 5) Valid attack sources come from World-Domain adjacency (advisory), not SVG geometry/coordinates.
 assert(/adjacentTerritoryIds/.test(validAttackSources), "validAttackSources must read World-Domain adjacentTerritoryIds");
