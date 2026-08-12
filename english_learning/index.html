@@ -2333,7 +2333,6 @@
     });
     const avg = pcts.length ? Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length) : 0;
     const passed = avg >= PASS_MARK;
-    if (passed && currentArticle && !_passCounted) { _passCounted = true; bumpPassCount(currentArticle.file); }   // 通過cnt +1
     summaryEl.innerHTML =
       '<div class="sum-title">🎉 Lesson Complete!</div>' +
       '<div class="sum-stars">' + (passed ? "🟢 Passed!" : "🔴 Keep trying!") + '</div>' +
@@ -5258,21 +5257,11 @@
     ]
   };
   function artTitle(a) { return a && a.title ? a.title.split("·").pop().trim() : (a ? a.id : ""); }
-  // 每課通過次數(佔領解鎖用)改由後端統一保存(存在玩家經濟 myEcon.passcnt)，跨裝置一致、不易作弊
-  function passCntMap() { return (myEcon && myEcon.passcnt) || {}; }
-  function passCount(file) { return passCntMap()[file] || 0; }
-  function bumpPassCount(file) {
-    if (!file) return;
-    const t = authToken(); if (!t) return;   // 未登入者不佔領，不需計數
-    if (myEcon) { myEcon.passcnt = myEcon.passcnt || {}; myEcon.passcnt[file] = (myEcon.passcnt[file] || 0) + 1; }   // 先樂觀更新，讓佔領判定即時可用
-    fetch(withRoom("/api/economy/pass?token=" + encodeURIComponent(t)), { method: "POST", body: JSON.stringify({ file: file }) })
-      .then(r => r.ok ? r.json() : null)
-      .then(j => { if (j && j.count != null && myEcon) { myEcon.passcnt = myEcon.passcnt || {}; myEcon.passcnt[j.file] = j.count; if (j.gold != null) myEcon.gold = j.gold; renderEmpire(); } })   // 舊闖關計數端點：只回傳計數，不鑄造金幣(見 /api/economy/pass)
-      .catch(() => {});
-  }
-  let pending = null;   // 挑戰中：{key, file, base(通過cnt), article, i}
+  // Phase 7F.2: the per-lesson "pass count" is retired. It existed only to make an ungated
+  // territory look like it required a lesson; the client incremented it from a localStorage average
+  // and no server authority ever read it. Legacy `passcnt` still sitting in saved economy files is
+  // simply ignored — nothing reads it, and nothing rewrites it.
   let pendingOccupy = null;   // 上完課要直接跳佔領的據點：{ file, reopen() }（取代舊的小遊戲賺點數升級卡片流程）
-  let _passCounted = false;   // 本次進課是否已計過一次通過（避免總結重繪重複累加）
   // THE ONE resolver: SVG path -> canonical territory id. Catalog-driven (svgPathKeys index
   // already encodes china multi-path grouping); documented offline fallback strips the china
   // suffix so pLN_1/pLN_2 still collapse to china:pLN even if the catalog didn't load.
@@ -5765,17 +5754,6 @@
       .catch(() => { wrap.innerHTML = '<p class="op-hint">Could not load map ' + spec.file + '. (Needs the server or GitHub Pages.)</p>'; });
   }
 
-  // 佔領時可用的課程池：全域世界 → 所有等級的課；其他(私人房/練習) → 該地圖對應等級的課
-  function lessonPool(i) {
-    if (roomCode === "GLOBAL") {
-      const all = [];
-      (manifest.levels || []).forEach(l => (l.articles || []).forEach(a => all.push(a)));
-      return all;
-    }
-    const lv = (manifest.levels || [])[i];
-    return (lv && lv.articles) || [];
-  }
-  function randomLesson(i) { const p = lessonPool(i); return p.length ? p[Math.floor(Math.random() * p.length)] : null; }
 
   // ===== Phase 3B — learning progression (advisory display only; backend can_attack is authoritative) =====
   // 登錄簿是「內容中立」的：前端只認 qualification id、標題與 studyTarget，不認任何科目/課名寫死邏輯。
@@ -6087,8 +6065,8 @@
   // ===== Phase 6G — the region panel's read-only learning section =====
   // The lesson identity is the STABLE, designer-owned mapping the catalog already carries:
   //   territory.requirements.attackQualificationIds -> qualification.studyTarget -> contentPath
-  // exactly what renderRequirementPanel() already navigates to. It is NOT randomLesson(), so the
-  // chip does not change between openings, and it does not decide what \ud83c\udfb2 Occupy plays.
+  // exactly what renderRequirementPanel() already navigates to. so the
+  // chip does not change between openings.
   // THE resolver: a territory's attack requirements, in the catalog's own authoritative order,
   // each paired with the lesson its qualification points at. Never reordered, never invented.
   // `art` is null when a requirement has no mapped lesson — a configuration error, surfaced rather
@@ -6105,30 +6083,31 @@
     return out;
   }
   // ===== Phase 6H — which lesson does 占領 (Occupy) launch? =====
-  // Ungated territory              -> the legacy random pool, unchanged.
+  // Ungated territory              -> NO lesson at all (Phase 7F.2): it declares no requirement, so
+  //                                   there is nothing to launch and nothing to prove.
   // Gated, some requirement missing -> the FIRST MISSING requirement's lesson (catalog order).
   // Gated, all requirements held    -> the FIRST requirement's lesson (deterministic fallback).
   // A gated territory whose requirement has no mapped lesson is a CONFIG ERROR: it reports the
   // problem instead of silently falling back to a random lesson.
   //
-  // This decides selection only. Whether a lesson must be passed, the passCount bootstrap, the
-  // pending/pendingOccupy pair, claim authority and the attack gate are all untouched.
+  // This decides selection only. Claim authority and the attack gate are untouched; Phase 7F.2
+  // retired the passCount bootstrap, so a region with no requirements needs no lesson at all.
   function occupyLessonPlan(targetKey) {
     const reqs = territoryRequirements(targetKey);
-    if (!reqs.length) return { random: true };
+    if (!reqs.length) return { ungated: true };   // Phase 7F.2: was `random: true`
     const mapped = regionMappedLessons(targetKey);
     const unmapped = mapped.filter(m => !m.art || !m.art.file).map(m => m.qid);
     if (unmapped.length) return { error: unmapped.join(", ") };
     const missing = mapped.filter(m => !myQualifications.has(m.qid));
     const pick = missing.length ? missing[0] : mapped[0];
-    return { random: false, qid: pick.qid, article: pick.art, missing: missing.length };
+    return { ungated: false, qid: pick.qid, article: pick.art, missing: missing.length };
   }
-  // The one entry point used at click time. `randomLesson()` is called here and ONLY here for
-  // ungated territories, at the same moment it was called before.
-  function selectOccupyLesson(targetKey, i) {
-    const plan = occupyLessonPlan(targetKey);
-    if (plan.error) return plan;
-    return plan.random ? { random: true, article: randomLesson(i) } : plan;
+  // The one entry point used at click time — selection is re-evaluated on click, not at render.
+  // Phase 7F.2 retired the ungated random mode, so this only ever returns a GATED region's mapped
+  // requirement lesson. The old level-index parameter went with it: it existed solely to pick from
+  // randomLesson(i)'s pool, and a mapped requirement is resolved from the territory alone.
+  function selectOccupyLesson(targetKey) {
+    return occupyLessonPlan(targetKey);
   }
   function regionLearningHTML(targetKey) {
     const paths = regionLessonPaths(targetKey);
@@ -6392,16 +6371,13 @@
     showMapForTerritory(ctx.key);
     if (typeof ctx.reopen === "function") ctx.reopen();
   }
-  // ---- challenge-transaction lifetime (Phase 7E.1) ----
-  // INVARIANT: `pending`/`pendingOccupy` exist only while ONE challenge transaction is in flight
-  // for ONE territory. They survive the lesson only while that challenge is still redeemable —
-  // i.e. it was satisfied and the deploy step has not happened yet. An explicit exit from the
-  // challenge (Back without satisfying it, or leaving for Learning Home) ends the transaction.
-  // Random Challenge depends on a SATISFIED pending surviving back to the region, so a satisfied
-  // one is deliberately left alone.
+  // ---- challenge-transaction lifetime (Phase 7E.1, simplified in 7F.2) ----
+  // INVARIANT: `pendingOccupy` is pure NAVIGATION state — "which territory sent the player into this
+  // lesson, so a completed lesson can reopen it". It is never authority: eligibility is the
+  // qualification, which the server verifies. An explicit exit from the lesson ends it. Phase 7F.2
+  // removed the counter half of this transaction (`pending`), which was the only authority-shaped
+  // piece and is now provably redundant.
   function endChallengeIfUnsatisfied() {
-    if (pending && passCount(pending.file) > pending.base) return;   // satisfied -> still redeemable
-    pending = null;
     pendingOccupy = null;
   }
   // `continue` reuses the Phase 5B continueLesson(), so Home lands the player on the NEXT MISSING
@@ -6867,65 +6843,55 @@
       renderAttackPanel(terr, key, name, h, function () { openRegion(key, name, pop, i); });
       return;
     }
-    // 無主：當場過關一課，過了才出兵佔領。
-    // Phase 6H: a gated region occupies with its OWN mapped lesson; an ungated one keeps the
-    // legacy random pick. Only the choice of lesson differs.
+    // 無主：有學習門檻就先修完那一課，沒門檻就直接出兵佔領。
     const plan = occupyLessonPlan(key);
-    // Phase 7D: a GATED region whose requirements the player already holds needs no replay. The
-    // credential is the qualification, which was earned authoritatively and is enforced by the
-    // server on /api/territory/claim (Phase 7D-0) — so re-passing the same lesson proved nothing,
-    // granted nothing and cost 20 energy. `plan.missing === 0` means every required qualification
-    // is held; an ungated region has no credential to have earned, so it keeps its challenge.
-    // This is a convenience only: the server still decides, and a client that is wrong here simply
+    // Learning gates ONLY territories that declare requirements.
+    //   • GATED, all requirements held (`plan.missing === 0`) — occupy directly. The credential is the
+    //     qualification, earned authoritatively and enforced by the server on /api/territory/claim
+    //     (Phase 7D-0), so re-passing the same lesson proved nothing, granted nothing and cost 20
+    //     energy (Phase 7D removed that replay).
+    //   • GATED, something missing — study the lesson that grants the first missing qualification.
+    //   • UNGATED — occupy directly (Phase 7F.2). There is no prerequisite to satisfy. The old client
+    //     counter (`passCount > pending.base`) invented one the server never enforced, so an
+    //     unrestricted region asked the player to pass an unrelated random lesson for nothing.
+    // Client-side convenience only: the server still decides, and a client that is wrong here simply
     // gets a truthful 403 from claimTroops().
-    const requirementMet = !plan.random && !plan.error && plan.missing === 0;
-    const cleared = pending && pending.key === key && passCount(pending.file) > pending.base;
-    if (cleared || requirementMet) {
+    const gated = territoryRequirements(key).length > 0;
+    const canOccupy = !plan.error && (!gated || plan.missing === 0);
+    if (canOccupy) {
       if (T <= 0) { terr.innerHTML = noTroops; return; }
-      // Phase 6I: "Challenge" names the RANDOM mode only, so a gated region says "Lesson passed".
-      terr.innerHTML = '<p class="op-hint">✅ ' +
-        (cleared ? (territoryRequirements(key).length ? 'Lesson passed!' : 'Challenge cleared!')
-                 : 'Learning requirement complete.') +
-        ' 🚩 Occupy — assign troops by type:</p>';
-      // ONE deployment path for both routes — the cleared-challenge one and the already-qualified
-      // one. Nothing about the claim is rebuilt, and no lesson state is fabricated to reach it.
-      deployPanel(terr, poolAvail(), { label: "🚩 Occupy", onGo: g => { poolSpend(g); pending = null; pendingOccupy = null; claimTroops(key, g, pop, function () {}); logEvent("occupy", { region: name, key: key }); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); } });
+      terr.innerHTML = '<p class="op-hint">' + (gated
+          ? '✅ Learning requirement complete. 🚩 Occupy — assign troops by type:'
+          : '🚩 Occupy this region — choose the troops to deploy:') + '</p>';
+      // ONE deployment path, for a gated region whose requirements are met and for an ungated one
+      // alike. Nothing about the claim is rebuilt.
+      deployPanel(terr, poolAvail(), { label: "🚩 Occupy", onGo: g => { poolSpend(g); pendingOccupy = null; claimTroops(key, g, pop, function () {}); logEvent("occupy", { region: name, key: key }); saveEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); } });
       return;
     }
-    // 無主：佔領時隨機挑一課（全域世界不分等級），過關才出兵佔領。
     if (plan.error) {
       terr.innerHTML = '<p class="op-hint">⚠️ This region\'s learning requirement points at a ' +
         'qualification with no lesson (' + escapeHtml(plan.error) + '). Occupation is unavailable ' +
         'until the catalog is fixed.</p>';
       return;
     }
-    // Phase 6I: the two neutral-occupation modes are NAMED. A gated region occupies with its own
-    // lesson and says so; an ungated one launches a random lesson and is called a Random Challenge,
-    // so the label never implies a requirement that does not exist. Copy only — selection is 6H's.
-    const planTitle = plan.random ? null : lessonTitleOf(plan.article.file);
-    terr.innerHTML = '<p class="op-hint">🚩 ' + (plan.random
-        ? 'Pass a random lesson to occupy this region.'
-        : 'Pass this lesson to occupy this region.') + '</p>' +
-      '<div class="op-def" style="text-align:center">' + (plan.random
-        ? '🎲 A random lesson will be picked for you'
-          + (roomCode === "GLOBAL" ? " (any level)" : "") + ' · 80%+ to pass'
-        : '📖 <b>' + escapeHtml(planTitle) + '</b> · 80%+ to pass') + '</div>' +
-      '<div class="op-btns"><button id="chStudy" class="dict-play">' +
-        (plan.random ? '🎲 Random Challenge' : '📖 Occupy') + '</button></div>';
+    // Phase 7F.2: only one neutral mode survives — a GATED region naming the lesson that grants
+    // its missing requirement. The ungated "Random Challenge" is retired: it was never a server rule
+    // (docs called it a client-side bootstrap "deliberately not learning-gated"), so presenting it as
+    // a prerequisite told the player something untrue.
+    const planTitle = lessonTitleOf(plan.article.file);
+    terr.innerHTML = '<p class="op-hint">🚩 Pass this lesson to occupy this region.</p>' +
+      '<div class="op-def" style="text-align:center">' +
+        '📖 <b>' + escapeHtml(planTitle) + '</b> · 80%+ to pass</div>' +
+      '<div class="op-btns"><button id="chStudy" class="dict-play">📖 Occupy</button></div>';
     ov.querySelector("#chStudy").addEventListener("click", () => {
-      const sel = selectOccupyLesson(key, i);
+      const sel = selectOccupyLesson(key);
       const ch = sel.article;
       if (!ch) { alert("No lessons available for this map."); return; }
       const reopen = function () { openRegion(key, name, pop, i); };
-      pending = { key: key, file: ch.file, base: passCount(ch.file), article: ch, i: i };
       pendingOccupy = { file: ch.file, reopen: reopen };   // 過關後直接跳回這個據點佔領
       // Phase 7E.1: remember WHICH region sent the player here, so Back and the unlock moment can
-      // both come home to it. Separate from pendingOccupy, which is the Random-Challenge counter
-      // transaction and means something else.
-      // ONLY for a GATED region: an ungated one has no qualification credential, so it must keep the
-      // legacy Random-Challenge return (pendingOccupy on a full pass) and must never be treated as
-      // "requirement satisfied" simply because it has no requirements.
-      lessonReturnTo = plan.random ? { to: "map" } : { to: "region", key: key, reopen: reopen };
+      // both come home to it. Only a gated region can reach this handler now.
+      lessonReturnTo = { to: "region", key: key, reopen: reopen };
       closeModal();
       // Phase 7E.1: a gated region sends the player at the activity that GRANTS its missing
       // qualification, not at the passive listen screen. The mapping is the registry's own
@@ -7653,7 +7619,6 @@
 
   // 畫面 3：載入並開始學習
   async function selectArticle(a) {
-    _passCounted = false;   // 進新的一課 → 重置「本次已計通過」旗標
     await loadArticle(a);
     learnTitle.textContent = (manifest.levels[selLevelIdx].name || "") + " · " + (a.title || a.id);
     enterListenMode();   // 進入文章時先顯示 Level 1（聽力），不直接進測驗

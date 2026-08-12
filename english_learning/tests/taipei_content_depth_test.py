@@ -498,7 +498,7 @@ ok("§33/§22 the quiz3 qualifications earned above still satisfy the real can_a
 
 # §34 whole-lesson neutrality: passcnt is untouched by any of this
 assert passcnt() == p0, (passcnt(), p0)
-ok("§34 passcnt unchanged by 15 authoritative attempts — it remains a separate legacy counter")
+ok("§34 passcnt unchanged by 15 authoritative attempts — legacy values may still sit in stored data, but the counter is inert: nothing writes it and it is not conquest authority")
 
 print()
 print("All %d Taipei content-depth tests passed." % passed)

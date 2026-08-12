@@ -263,13 +263,18 @@ assert call("POST", "/api/learning/attempt",
 ok("§26 security: forged score/passed/qualification/gold/graderConfig ignored; unknown & traversal ids "
    "rejected with no filesystem detail")
 
-# /api/economy/pass still cannot mint gold (§39)
+# /api/economy/pass is retired — it cannot mint gold because it no longer exists (§39)
+# Phase 7C.x kept it alive as a gold-less legacy counter; Phase 7F.2 removed its last consumer (the
+# Random-Challenge conquest prerequisite) and with it the route. The property under test is the same
+# one — no client-asserted pass may move the economy — now enforced by absence rather than by a
+# neutered handler.
 g = gold()
 for f in ("Pre-A1/taipei/zoo", "A1/001", "anything/at/all"):
     code, body = call("POST", "/api/economy/pass?room=" + CODE, {"file": f})
-    assert code == 200 and "gold" not in body and body.get("legacy") is True, body
+    assert code == 404, "retired route answered %s for %r: %s" % (code, f, body)
+    assert "gold" not in body, body
 assert gold() == g
-ok("§39 /api/economy/pass still mints no gold for any lesson id")
+ok("§39 /api/economy/pass is retired: every lesson id 404s and no client-asserted pass moves gold")
 
 # ============================== §34 retries ==============================
 # fail -> retry -> pass on a fresh activity (use the multi-grader set on a fresh user)

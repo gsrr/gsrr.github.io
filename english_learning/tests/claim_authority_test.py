@@ -147,15 +147,27 @@ ok("the credential is the QUALIFICATION, not mastery: a qualified learner whose 
    "not mastered still claims — mastery keeps paying gold, it does not gate conquest")
 
 # ====================== forged client state cannot substitute ======================
+# Phase 7F.2 retired POST /api/economy/pass, so the counter can no longer even be written over HTTP.
+# The forgery is therefore staged one level DEEPER than any client could reach — straight into the
+# saved economy file — which makes this a strictly stronger test than bumping the old endpoint.
 user, tok, code = fresh()
-for _ in range(3):
-    api("POST", "/api/economy/pass?room=" + code, {"file": "Pre-A1/taipei/zoo"}, tok)
 server.set_room(code)
-pc = (server.load_econ_store().get(user) or {}).get("passcnt") or {}
-assert pc.get("Pre-A1/taipei/zoo") == 3, pc
+with server.econ_lock:
+    st = server.load_econ_store()
+    st.setdefault(user, {})["passcnt"] = {"Pre-A1/taipei/zoo": 999, "made/up/lesson": 42}
+    server.save_econ_store(st)
 assert denied(claim(tok, code, DAAN), ZOO_Q)
-ok("passcnt is NOT authority: the legacy counter can be bumped freely and still buys nothing — the "
-   "qualification store is the only gate")
+server.set_room(code)
+assert ((server.load_econ_store().get(user) or {}).get("passcnt") or {}).get("Pre-A1/taipei/zoo") == 999, \
+    "the legacy counter is ignored in place — the refused claim neither reads nor rewrites it"
+ok("passcnt is NOT authority: a hand-forged counter planted directly in the economy store buys "
+   "nothing — the qualification store is the only gate")
+
+st, _ = api("POST", "/api/economy/pass?room=" + code, {"file": "Pre-A1/taipei/zoo"}, tok)
+assert st == 404, "the endpoint that used to let a client assert its own passes must be GONE, %s" % st
+assert denied(claim(tok, code, DAAN), ZOO_Q)
+ok("the client-asserted pass endpoint is retired: there is no HTTP route left for a client to "
+   "declare a lesson passed, and the claim gate is unchanged by its absence")
 
 user, tok, code = fresh()
 api("POST", "/api/learning/attempt?room=" + code,

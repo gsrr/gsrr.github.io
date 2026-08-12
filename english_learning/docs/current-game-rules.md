@@ -11,7 +11,8 @@ copied verbatim; nothing here is a proposal. File:line references are approximat
 
 ## A. Gold / Economy  (backend-authoritative)
 
-- Stored in per-room `economy.json`: `{ user: { population, gold, lastGold, troops{cav,archer,inf,spear}, buildings, tech, passcnt, conscript, conscriptBudget } }`.
+- Stored in per-room `economy.json`: `{ user: { population, gold, lastGold, troops{cav,archer,inf,spear}, buildings, tech, conscript, conscriptBudget } }`.
+- `passcnt` is **retired** (Phase 7F.2). Files saved before it may still contain the key; nothing reads, normalises, serves or rewrites it — it is inert data left in place.
 - Constants (`server.py`): `GOLD_RATE = 0.10`, `GROW_SECONDS = 3600`, `ECON_MAX_CATCHUP = 72`, `ECON_START_POP = 100`, `ECON_START_TROOPS = 100`, `PASS_GOLD = 160`, `MASTERY_GOLD = 640`, `DEFEND_GOLD = 50`, `ATTACK_FAIL_GOLD = 50`.
 - New player seeded from the room config (`startPop/startGold/startTroops`) via `econ_get`.
 - **Passive gold (per settlement in `econ_get`):**
@@ -23,7 +24,7 @@ copied verbatim; nothing here is a proposal. File:line references are approximat
   where `regionPop` = sum of `pop` over territories owned by the user (`user_region_pop`).
 - Population does **not** grow (hourly pop growth was removed; gold accrual only).
 - **Gold sinks:** buildings `BUILD_COST = {armory:50, barracks:60, archery:80, stable:120}`; recruitment (§D); technology (§E); conscription budget.
-- **Gold sources:** passive settlement; `DEFEND_GOLD` (+50) on successful defense; (attacker −`ATTACK_FAIL_GOLD` 50 on failed attack); and **learning**, which since Phase 7C.2 pays in two places — `PASS_GOLD` (+160) once for the first server-verified pass of a gold-bearing activity, and `MASTERY_GOLD` (+640) once for mastering a whole lesson under Rule A. `/api/economy/pass` is the legacy Rule B counter and mints **no** gold at all.
+- **Gold sources:** passive settlement; `DEFEND_GOLD` (+50) on successful defense; (attacker −`ATTACK_FAIL_GOLD` 50 on failed attack); and **learning**, which since Phase 7C.2 pays in two places — `PASS_GOLD` (+160) once for the first server-verified pass of a gold-bearing activity, and `MASTERY_GOLD` (+640) once for mastering a whole lesson under Rule A. `/api/economy/pass` no longer exists (retired in Phase 7F.2) — there is no HTTP route by which a client can assert its own pass.
 - Offline income: catch-up capped at `ECON_MAX_CATCHUP` (72 h). No other income cap.
 
 ## B. Population
@@ -92,7 +93,7 @@ Flow: frontend `terrRecruit` → `POST /api/territory/recruit` → `_handle_terr
 ## G. Conquest
 
 - **Neutral claim** and **attack** are SEPARATE flows (should stay separate):
-  - Neutral claim: `POST /api/territory/claim` — only on an unowned territory (backend validates identity/map/population, sets owner + garrison from client-sent surviving troops; population from catalog). No battle.
+  - Neutral claim: `POST /api/territory/claim` — only on an unowned territory (backend validates identity/map/population, sets owner + garrison from client-sent surviving troops; population from catalog). No battle. Since Phase 7D-0 the backend also enforces the **learning-qualification gate** here, via the same `game.conquest.missing_qualifications()` rule and the same world-data as attack; an unqualified claim is refused with 403 `qualification_required`.
   - Attack (occupied): client `runBattle`; on win client calls `release` (territory → neutral) then `claim` (becomes owner with survivors). `attack-result` awards gold.
 - **Attack eligibility today:** attacker must be logged in and have troops; target must be owned by someone else. **No adjacency, no source territory, no course requirement.** Any territory may be attacked regardless of location.
 - Defeat: attacker survivors return to pool (client-side); owner unchanged; attacker −50 gold, defender +50.
@@ -134,7 +135,7 @@ Server-authoritative: `game.conquest.resolve_attack(squad, def_troops, attacker_
 On **both** win and loss, attacker survivors are returned to the **global pool** (`pool[type] += survivor.hp`). The committed squad was deducted from the pool first (server-side, validated against pool counts).
 
 ### 6. Ownership transfer
-On **win**: the target is **NEUTRALIZED** (`del store[target]`) — ownership does **not** transfer to the attacker. The attacker must subsequently pass a lesson (frontend gate) and use the separate **neutral claim** flow to occupy it. On **loss**: owner unchanged.
+On **win**: the target is **NEUTRALIZED** (`del store[target]`) — ownership does **not** transfer to the attacker. The attacker must then use the separate **neutral claim** flow to occupy it, which since Phase 7D-0 re-checks the territory's own learning requirements server-side. A territory that declares **no** requirements is claimed directly — Phase 7F.2 retired the client-side bootstrap that made an unrestricted territory appear to need a lesson. On **loss**: owner unchanged.
 
 ### 7. Neutralization behavior
 Win → `del store[target]` (garrison/growth discarded). Defender garrison is **not** wounded on a repelled attack in the human path (it stays at full pre-battle strength); the AI path *does* set `defender = defenderSurvivors` on its loss (minor human/AI inconsistency).
@@ -149,7 +150,7 @@ AI attacks from its **global pool** (`ae["troops"]`), targeting a **random** non
 Two target-first surfaces, both POST `{file, squad}` to `/api/territory/attack` and replay via `runBattle(..., preOrdered=true)` (non-authoritative):
 - `openRegion` (SVG geo-map drill-down), and
 - `openOutpost` (adventure-trail lesson nodes).
-Squad budget = the global pool (`poolAvail()`); the player picks any owned enemy region and assigns troops. After a win, the frontend guides the player to pass a lesson and claim the now-neutral region.
+Squad budget = the global pool (`poolAvail()`); the player picks any owned enemy region and assigns troops. After a win the frontend offers the neutral claim: for a **gated** region it names the lesson granting the missing qualification, and for an **ungated** one it goes straight to troop deployment (Phase 7F.2).
 
 ### 11. Files that Phase 2B modifies
 - `game/conquest.py` — add `can_attack()` + territorial state transition (`apply_territorial_attack`).

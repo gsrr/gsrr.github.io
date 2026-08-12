@@ -400,8 +400,8 @@ def econ_get(store, user, now, region_pop=0):
     gold, last = game_economy.calculate_passive_gold(gold, pop, clampi(region_pop), last, now)
     e["population"], e["gold"], e["lastGold"] = pop, gold, last
     e["troops"] = _norm_troops(e.get("troops", 0))   # 兵力池分兵種保存(舊的單一數字會自動轉)
-    if not isinstance(e.get("passcnt"), dict):       # 每課通過次數(佔領解鎖用)——改由後端統一保存
-        e["passcnt"] = {}
+    # Phase 7F.2: `passcnt` is no longer normalised, served or read. Legacy values already sitting in
+    # saved economy files are ignored in place — no migration, no rewrite, no deletion.
     if not isinstance(e.get("buildings"), dict):     # 家鄉基地的建築(蓋在自己的預設領地)
         e["buildings"] = {}
     if not isinstance(e.get("tech"), dict):          # 家鄉科技 → 加成你派出去的攻擊軍
@@ -1077,8 +1077,6 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_territory_conscript()
         elif path == "/api/economy/set":
             self._handle_economy_set()
-        elif path == "/api/economy/pass":
-            self._handle_economy_pass()
         elif path == "/api/learning/attempt":
             self._handle_learning_attempt()
         elif path == "/api/learning/matching/start":
@@ -1842,7 +1840,7 @@ class Handler(BaseHTTPRequestHandler):
             store = load_econ_store()
             e = econ_get(store, user, time.time(), region_pop)
             save_econ_store(store)
-            pop, troops, gold, passcnt = e["population"], e["troops"], e["gold"], e["passcnt"]
+            pop, troops, gold = e["population"], e["troops"], e["gold"]
             buildings, tech = e["buildings"], e["tech"]
             conscript, cbudget = bool(e.get("conscript")), clampi(e.get("conscriptBudget", 0))
         income = int(round((pop + region_pop) * GOLD_RATE))   # 金幣/小時 = (家鄉+領地人口) × 比例
@@ -1852,32 +1850,14 @@ class Handler(BaseHTTPRequestHandler):
         self._send({"population": pop, "troops": troops, "troopsTotal": troops_total(troops),
                     "gold": gold, "goldIncome": income,
                     "passGold": PASS_GOLD, "masteryGold": LESSON_MASTERY_GOLD,
-                    "passcnt": passcnt, "buildings": buildings, "tech": tech,
+                    "buildings": buildings, "tech": tech,
                     "conscript": conscript, "conscriptBudget": cbudget})
 
-    # Phase 3A — RETIRED as a gold source. This endpoint used to mint PASS_GOLD from a bare, unverified
-    # client `{file}` (unlimited-gold exploit). Gold + qualifications now come ONLY from the
-    # server-verified /api/learning/attempt. This endpoint no longer touches gold; it only records the
-    # neutral-claim occupy passcount (the bootstrap gate, which §Phase 3A does NOT tie to learning).
-    def _handle_economy_pass(self):
-        user = token_user(self._token())
-        if not user:
-            self._send({"error": "Not logged in"}, 401)
-            return
-        f = (self._body_json().get("file") or "").strip()
-        if not f:
-            self._send({"error": "missing file"}, 400)
-            return
-        with terr_lock:
-            region_pop = user_region_pop(load_territory_store(), user)
-        with econ_lock:
-            store = load_econ_store()
-            e = econ_get(store, user, time.time(), region_pop)
-            pc = e["passcnt"]
-            pc[f] = clampi(pc.get(f, 0)) + 1               # 佔領解鎖用的通過次數(不再發金幣)
-            save_econ_store(store)
-            cnt = pc[f]
-        self._send({"ok": True, "file": f, "count": cnt, "legacy": True})   # no gold: server-verified only
+    # Phase 7F.2: /api/economy/pass is GONE. It only ever incremented a per-lesson counter that
+    # made an ungated territory look like it required a lesson; no server authority read it, and
+    # it accepted any unvalidated `file` string. Retiring the Random-Challenge prerequisite
+    # removed its last consumer, so the write endpoint goes with it rather than lingering as a
+    # route that mutates state for nothing.
 
     def _player_qualifications(self, user):
         """The player's authoritative set of held qualification IDs (per-account, room-independent)."""

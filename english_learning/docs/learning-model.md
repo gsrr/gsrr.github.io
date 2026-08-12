@@ -93,8 +93,11 @@ create a second source of truth) and reward amounts (§5 below).
 | **Qualification** | an opaque certificate the Game Domain can gate on | `learning.qualifications["<id>"] = {earnedAt}` |
 | **Reward** | a one-time economy payout for a verified pass | not stored as such — `rewarded` on the completion record is the idempotency flag |
 
-An activity completion is **not** whole-lesson completion. The pre-existing whole-lesson rule (client
-average ≥ `PASS_MARK`, stored as `passcnt`) is untouched and unrelated.
+An activity completion is **not** whole-lesson completion. The pre-existing client-side whole-lesson
+rule (average ≥ `PASS_MARK`) is unrelated to it. That rule used to write a per-lesson counter
+(`passcnt`) whose only consumer was the neutral-occupy bootstrap; **Phase 7F.2 retired both** — the
+counter, its `/api/economy/pass` write endpoint, and the client prerequisite they existed to serve.
+Occupying a territory now depends only on the qualifications the server verifies.
 
 **Phase 3E2 update.** `matchingProgress[activityId] = {latestRoundId, correct, total, pct, updatedAt}`
 holds authoritative Matching evidence, **latest-wins** (a later round replaces an earlier one, exactly

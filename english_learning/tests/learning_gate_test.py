@@ -377,21 +377,41 @@ assert st["activityCompletions"][AID]["passedAt"] == 1000, \
 assert st["qualifications"][QID]["earnedAt"] == 1000, "earnedAt untouched"
 ok("E2E backward compat: Phase 3A completion key still resolves — additive, idempotent, no double reward")
 
-# --- RETIRED: /api/economy/pass still counts occupy-unlock passes but can no longer mint Gold ---
+# --- REMOVED (Phase 7F.2): /api/economy/pass is gone, and a legacy passcnt is inert data ---
+# The endpoint's last consumer was the client-side Random-Challenge prerequisite, which Phase 7F.2
+# retired: an ungated territory is occupied directly, and a gated one needs the qualification the
+# server itself verifies. Two properties replace the old "neutered handler" assertions:
+#   1. the route no longer exists, for any lesson id, valid or forged;
+#   2. legacy `passcnt` already sitting in a saved economy file is ignored IN PLACE — it is not read,
+#      not migrated, not converted into gold or a qualification, and not deleted.
 slice_state()
 g0 = gold()
-code, body = call("POST", "/api/economy/pass?room=" + CODE, "tALICE", {"file": "Pre-A1/taipei/zoo"})
-assert code == 200 and body["ok"] is True and body["count"] == 1 and body.get("legacy") is True, body
-assert "gold" not in body, "the retired endpoint must not even report a gold balance as a reward"
-assert gold() == g0, "the client-asserted pass endpoint mints NO gold"
-for f in ("anything/at/all", "made/up/lesson", "Pre-A1/taipei/zoo"):
-    call("POST", "/api/economy/pass?room=" + CODE, "tALICE", {"file": f})
-assert gold() == g0, "the old unlimited-gold exploit is closed for arbitrary lesson ids too"
+for f in ("Pre-A1/taipei/zoo", "anything/at/all", "made/up/lesson"):
+    code, body = call("POST", "/api/economy/pass?room=" + CODE, "tALICE", {"file": f})
+    assert code == 404, "retired route answered %s for %r: %s" % (code, f, body)
+    assert "gold" not in body and "count" not in body, body
+assert gold() == g0, "a route that does not exist cannot mint gold for any lesson id"
+
+# A pre-7F.2 save file: real ids, forged ids, and hostile value types side by side.
 server.set_room(CODE)
-assert server.load_econ_store()["ALICE"]["passcnt"]["Pre-A1/taipei/zoo"] == 2, "occupy passcount still recorded"
+with server.econ_lock:
+    st = server.load_econ_store()
+    st.setdefault("ALICE", {})["passcnt"] = {"Pre-A1/001": 5, "made/up": 999,
+                                            "Pre-A1/taipei/zoo": "not-a-number", "": 1}
+    server.save_econ_store(st)
+code, econ = call("GET", "/api/economy?room=" + CODE, "tALICE")
+assert code == 200, (code, econ)
+assert "passcnt" not in econ, "the retired counter must not be served to the client any more"
+assert econ["gold"] == g0, "loading a legacy passcnt mints nothing"
+server.set_room(CODE)
+saved = server.load_econ_store()["ALICE"]
+assert saved["passcnt"] == {"Pre-A1/001": 5, "made/up": 999,
+                            "Pre-A1/taipei/zoo": "not-a-number", "": 1}, \
+    "legacy passcnt is left byte-identical — no normalisation, no migration, no destructive cleanup"
 assert call("GET", "/api/learning/state?room=" + CODE, "tALICE")[1]["qualifications"].keys() == {QID}, \
-    "the retired endpoint can never grant a qualification"
-ok("E2E retired: /api/economy/pass keeps passcnt, mints 0 gold, grants 0 qualifications")
+    "a legacy counter can never grant a qualification"
+ok("E2E removed: /api/economy/pass 404s for every lesson id, and a legacy passcnt (including forged "
+   "ids and non-numeric values) loads cleanly, is never served, and mints no gold or qualification")
 
 # --- AI POLICY over HTTP: the AI conquers the gated territory (it holds no qualifications) ---
 server.set_room(CODE)

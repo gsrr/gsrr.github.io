@@ -8,6 +8,11 @@ length instead of only their gate.
 No new scoring code was written. No lesson-specific branch exists anywhere. The registry gained 15
 rows; `game/`, `server.py`, `index.html` and `world-data/` were not touched at all.
 
+> **Historical note (Phase 7F.2, 2026-08-10).** The `passcnt` rows below record that this phase left the
+> legacy Rule B counter untouched — true at the time. That counter has since been retired along with
+> `/api/economy/pass`; nothing reads or writes it now. The statements about *this* phase's neutrality
+> stand unchanged.
+
 **The headline finding is in [§6](#6-stop-review--why-no-lesson-policy-was-activated): legacy Rule A
 scores SEVEN levels per Taipei lesson, not six.** Level 10 Role-play is one of them, it has no
 server-authoritative implementation, and implementing it is out of Phase 4B scope. So the three

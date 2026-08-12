@@ -10,7 +10,7 @@
 > | Reward | `rewardPolicy: "none"` — completion pays **0 gold** |
 > | Qualifications | `grants: []` — completion grants **nothing** |
 > | Territory gates | **unchanged**, still `quiz3`-based; whole-lesson completion is NOT an attack requirement |
-> | `passcnt` | untouched; still written only by the legacy Rule B summary |
+> | `passcnt` | **retired in Phase 7F.2** — nothing writes or reads it; legacy values are inert |
 > | Zoo v1 | **retired** (`retiredCompletionPolicyVersions: [1]`); the validator rejects any reuse |
 >
 > **Rule A is SEVEN levels** — `["2","3","4","5","7","9","10"]`. Level 10 Role-play became
@@ -110,8 +110,8 @@ if (passed && currentArticle && !_passCounted) { _passCounted = true; bumpPassCo
 | Lesson green/🟢 state, per-level progress counts, dashboards | A | display only |
 | `pendingOccupy` auto-jump back to a territory after studying | A | UI routing |
 | Teacher/class overview aggregation | A | display only |
-| `bumpPassCount` → `POST /api/economy/pass` → `economy.json.passcnt[file]` | B | **neutral-claim occupy gate** |
-| Gold | — | **none** — `/api/economy/pass` was retired as a gold source in Phase 3A |
+| ~~`bumpPassCount` → `POST /api/economy/pass` → `economy.json.passcnt[file]`~~ | B | **removed in Phase 7F.2** — the neutral-claim occupy gate is now the server-verified qualification alone (Phase 7D-0), so the counter, the endpoint and the client-side prerequisite were all retired |
+| Gold | — | **none** — `/api/economy/pass` was retired as a gold source in Phase 3A and removed entirely in Phase 7F.2 |
 | Qualifications | — | **none** |
 | Territory attack requirements | — | **none** (those are activity-scope qualifications) |
 
@@ -190,6 +190,14 @@ levels 2 and 5 remain non-authoritative.
 ---
 
 ## 5. `passcnt` (§22)
+
+> **RETIRED — Phase 7F.2 (2026-08-10).** The recommendation below ("keep them separate") was accepted
+> and then made moot: Phase 7D-0 moved the neutral-occupy gate to a server-verified qualification, which
+> left this counter with no consumer, so Phase 7F.2 removed `passCount`/`bumpPassCount`, the
+> `/api/economy/pass` endpoint and the client prerequisite they supported. The analysis below is kept as
+> the record of *why* it was never bound to lesson completion — read it as history, not current state.
+> Legacy `passcnt` values in already-saved economy files are ignored in place: not read, not migrated,
+> not deleted.
 
 `economy.json → <user>.passcnt[<contentPath>]` is an integer counter, incremented by Rule B via the
 retired-for-gold `/api/economy/pass`. Its **only** consumer is the neutral-claim occupy bootstrap:

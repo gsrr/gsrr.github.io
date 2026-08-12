@@ -3,6 +3,13 @@
 *Inventory of the existing learning/pass flow as of commit `11d5ea6`, before any Phase 3A runtime
 change. This is the "before" reference and the basis for the STOP-and-ask determination (§41).*
 
+> **Historical — do not read as current state.** Every mention below of `passcnt`, `passCount`,
+> `bumpPassCount`, `_passCounted`, `POST /api/economy/pass` and the "occupy-unlock" counter describes a
+> mechanism that **no longer exists**. Phase 7D-0 (2026-08-10) made the neutral-claim gate a
+> server-verified qualification using the same rule as attack, and Phase 7F.2 (2026-08-10) then removed
+> the counter, its endpoint and the client-side Random Challenge prerequisite. For current behaviour see
+> `docs/current-game-rules.md`; this file is preserved as the audit that led there.
+
 ## A. How courses & lessons are represented
 
 - **Manifest**: `lessons.json` (top-level, fetched once by `initLessons()` → `fetch("lessons.json")`).
