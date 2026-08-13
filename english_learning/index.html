@@ -2720,10 +2720,13 @@
     pronResult.innerHTML = '<div style="font-size:13px;color:#94a3b8">🎯 Scoring…</div>';
     pronResult.classList.remove("hidden");
     const aid = readAlongActivityId(currentArticleKey), tok = authToken(), sIdx = idx;
-    const url = (aid && tok)
+    // Phase 8A.1: Read-Along in authoritative mode settles the lesson and can pay MASTERY gold into
+    // the current room's economy, but this URL was built by hand and never carried the room — so the
+    // reward went wherever the server defaulted. Both modes go through withRoom() now.
+    const url = withRoom((aid && tok)
       ? "/api/stt?activityId=" + encodeURIComponent(aid) + "&sentenceIndex=" + sIdx +
         "&token=" + encodeURIComponent(tok)
-      : "/api/stt?text=" + encodeURIComponent(target);
+      : "/api/stt?text=" + encodeURIComponent(target));
     fetch(url, { method: "POST", body: blob })
       .then(r => r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)))
       .then(d => {
@@ -4126,7 +4129,10 @@
         stream.getTracks().forEach(x => x.stop());
         rpRecording = false; m.textContent = "🎤"; m.classList.remove("recording");
         fb.className = "rp-fb rp-scoring"; fb.textContent = "🎯 Transcribing…"; rpSetInput(false);
-        fetch("/api/stt", { method: "POST", body: blob })   // no target text: free conversation, don't bias STT
+        // Phase 8A.1: this mode is non-authoritative (no activityId -> transcript only, no scoring,
+        // no reward), but /api/stt is one endpoint and the room-scoped guard is per endpoint, so it
+        // names its room like every other call.
+        fetch(withRoom("/api/stt"), { method: "POST", body: blob })   // no target text: free conversation, don't bias STT
           .then(r => r.ok ? r.json() : Promise.reject())
           .then(d => {
             const said = ((d && d.transcript) || "").trim();
@@ -5103,9 +5109,16 @@
   function setActiveRoom(code) { roomCode = (code || "").toUpperCase(); }
   function clearActiveRoom() { roomCode = ""; territory = null; myEcon = null; }
   // 把目前房間(?room=)接到任何「世界」API 上，讓後端讀到正確的房間世界
+  // Phase 8A.1: this ALWAYS names the target room now. Outside a room the player is in the
+  // single-player sandbox, whose world has always been the server's default room — so the sandbox
+  // says so explicitly instead of relying on the server's implicit fallback. The behaviour is
+  // identical; what changes is that "no room in the request" now means a broken client rather than
+  // a legitimate sandbox, which is what lets the server refuse room-scoped mutations that name no
+  // room. An explicit LOBBY stays perfectly legal — only the implicit one is gone.
+  const SANDBOX_ROOM = "LOBBY";                          // 需與 server.py DEFAULT_ROOM 一致
   function withRoom(url) {
-    if (!roomCode) return url;
-    return url + (url.indexOf("?") >= 0 ? "&" : "?") + "room=" + encodeURIComponent(roomCode);
+    return url + (url.indexOf("?") >= 0 ? "&" : "?") +
+           "room=" + encodeURIComponent(roomCode || SANDBOX_ROOM);
   }
   let aiNamesSet = new Set([TERR_AI_OWNER, TERR_AI_LEGACY]);
   function isAiOwner(n) { return aiNamesSet.has(n) || n === TERR_AI_OWNER || n === TERR_AI_LEGACY; }
@@ -7338,11 +7351,21 @@
             (j && j.reason === "qualification_required") ? { __gated: j } : { __auth: true });
         }
         if (r.status === 401) return { __auth: true };   // token 失效（server 重啟會清空）
+        // Phase 8A.1: the server now refuses a room-scoped mutation that names no room. A stale tab
+        // (one loaded before the Phase 8A fix, whose roomCode a renderer had cleared) is exactly how
+        // that reaches a real user — and the generic branch below would blame the network and tell
+        // them to rebuild the container, which is untrue and unactionable.
+        if (r.status === 400) {
+          return r.json().catch(() => ({})).then(j =>
+            (j && j.reason === "room_required") ? { __noRoom: true } : { __err: (j && j.error) || "HTTP 400" });
+        }
         if (!r.ok) throw new Error("HTTP " + r.status);
         return r.json();
       })
       .then(j => {
         if (j && j.__auth) { alert("Your login expired (the server was likely restarted — logins reset).\n\nTap 🚪 top-right to log out, then log in again and retry."); if (cb) cb(); return; }
+        if (j && j.__noRoom) { alert("Room context was lost. Return to the Lobby and re-enter the room, then try again.\n\nNothing was changed."); if (cb) cb(); return; }
+        if (j && j.__err) { alert("Deploy failed: " + j.__err); if (cb) cb(); return; }
         if (j && j.__gated) {
           // Truthful and minimal: name the requirement, send them to the lesson that grants it.
           const names = (j.__gated.missingQualificationIds || []).map(qualTitle).join(", ");

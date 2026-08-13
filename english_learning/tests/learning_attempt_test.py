@@ -366,8 +366,13 @@ ZOO_SENTENCES = server.LEARNING.read_along_sentences(ZOO_RA)
 _real_transcribe = server.transcribe
 
 
-def stt(query, body=b"AUDIO", tok="tALICE"):
-    url = B + "/api/stt?" + query + ("&" if query else "") + "token=" + tok
+def stt(query, body=b"AUDIO", tok="tALICE", room=CODE):
+    # Phase 8A.1: authoritative Read-Along settles the lesson and can pay MASTERY gold into the
+    # CURRENT ROOM's economy, so /api/stt is a room-scoped mutation and must name its room — exactly
+    # as the product now does (index.html routes both STT modes through withRoom()). Naming the room
+    # does not relax anything asserted below; it removes a silent dependency on the server default.
+    url = (B + "/api/stt?" + query + ("&" if query else "") + "token=" + tok
+           + ("&room=" + room if room else ""))
     try:
         r = U.urlopen(U.Request(url, data=body, method="POST"))
         return r.getcode(), json.loads(r.read())

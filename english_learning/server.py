@@ -77,6 +77,27 @@ def current_room():
     return getattr(_req, "room", DEFAULT_ROOM) or DEFAULT_ROOM
 
 
+# ---- Phase 8A.1 — explicit vs implicit room -----------------------------------
+# `?room=LOBBY` and a MISSING room parameter both resolve to LOBBY, so the fallback
+# is invisible to a handler that only reads current_room(). A mutation must be able
+# to tell them apart: an explicit LOBBY is a legitimate target, an implicit one is a
+# client that lost its room. The distinction is a property of the REQUEST, so it is
+# recorded once, here, at the only point a client-supplied room enters the process,
+# and is deliberately NOT touched by the internal set_room() calls that background
+# loops and room-lifecycle handlers use to walk from room to room.
+def set_request_room(raw):
+    _req.room_explicit = bool((raw or "").strip())
+    set_room(raw)
+
+
+def room_was_explicit():
+    return bool(getattr(_req, "room_explicit", False))
+
+
+def request_room_param(path):
+    return (parse_qs(urlparse(path).query).get("room", [""]) or [""])[0]
+
+
 def room_code_safe(code):
     safe = "".join(c for c in (code or "").upper() if c.isalnum())
     return safe or DEFAULT_ROOM
@@ -1001,9 +1022,51 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    # ---- Phase 8A.1 — room-scoped MUTATIONS must name their room --------------
+    # Every path below writes room-scoped world state: territory, room economy, or
+    # room events. The four learning endpoints are MIXED — they settle ACCOUNT-scoped
+    # learning progress and also credit the CURRENT ROOM's economy — which is exactly
+    # why they belong here: a once-only reward settled without a room paid its gold
+    # into LOBBY while the learner was elsewhere, and the reward cannot be earned twice.
+    #
+    # Deliberately NOT protected:
+    #   * reads (/api/economy, /api/territory, /api/room, /api/events, /api/leaderboard)
+    #     keep the legacy fallback — this phase is about mutation targeting. GET
+    #     /api/economy does write, but only lazy accrual/seeding of whatever room it
+    #     reads, never a client-directed change.
+    #   * room lifecycle (/api/room/{create,enter,join,start,stop}, /api/rooms) — these
+    #     CHOOSE a room and take it from the body, so requiring an active room first
+    #     would make it impossible to ever enter one.
+    #   * account-scoped writes (/api/sync, /api/student/save, register/login…) — no
+    #     room state is involved.
+    ROOM_MUTATIONS = frozenset({
+        "/api/economy/set", "/api/event",
+        "/api/territory/claim", "/api/territory/attack", "/api/territory/build",
+        "/api/territory/recruit", "/api/territory/research", "/api/territory/release",
+        "/api/territory/conscript",
+        "/api/learning/attempt", "/api/learning/matching/attempt",
+        "/api/learning/roleplay/respond", "/api/stt",
+    })
+
+    # Fails closed on a missing room. Called from the dispatcher BEFORE any handler
+    # runs, so a rejection happens before grading, before record_attempt() finalises a
+    # reward ledger, and before any territory/economy write — nothing is consumed and
+    # the request is safe to retry verbatim once the room is supplied. 400 (not 401/403)
+    # because this is a malformed request, not an authorisation failure.
+    def _require_room(self):
+        if room_was_explicit():
+            return True
+        # An unauthenticated request cannot mutate anything — its handler rejects it with 401 —
+        # so authorisation keeps precedence and a bad token still reads as a bad token rather
+        # than as a missing room. Deferring here costs no safety and keeps both errors truthful.
+        if not token_user(self._token()):
+            return True
+        self._send({"error": "Room required", "reason": "room_required"}, 400)
+        return False
+
     def do_GET(self):
         path = self.path.split("?")[0]
-        set_room((parse_qs(urlparse(self.path).query).get("room", [""]) or [""])[0])
+        set_request_room(request_room_param(self.path))
         if path == "/api/count":
             self._send({"count": read_count()})
         elif path == "/api/dashboard":
@@ -1035,7 +1098,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         path = self.path.split("?")[0]
-        set_room((parse_qs(urlparse(self.path).query).get("room", [""]) or [""])[0])
+        set_request_room(request_room_param(self.path))
+        if path in self.ROOM_MUTATIONS and not self._require_room():
+            return                      # Phase 8A.1: fail closed before ANY state change
         if path == "/api/visit":
             with lock:
                 n = read_count() + 1
