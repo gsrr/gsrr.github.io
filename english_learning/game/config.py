@@ -26,13 +26,24 @@ UNIT_ATK = 10
 UNIT_DEF = 8
 
 # --- recruitment ---
-UNIT_COST = {"inf": 2, "spear": 3, "archer": 4, "cav": 5}
+# Phase 8B.2: unit prices tripled. Until Phase 8B.1 a client could mint troops for free, so these
+# numbers priced nothing and were never load-bearing. With provisioning server-authoritative they
+# became the army's real cost — and at 2-5 gold they barely bit: a fresh 500 bought 220 infantry,
+# and the full campaign bought 1,850. Tripling makes an army a genuine competing sink against
+# technology without making a starting garrison unaffordable (barracks + 50 infantry = 360 < 500).
+UNIT_COST = {"inf": 6, "spear": 9, "archer": 12, "cav": 15}
 RECRUIT_BATCH = 10
 UNIT_BUILDING = {"inf": "barracks", "spear": "barracks", "archer": "archery", "cav": "stable"}
+# Buildings are deliberately UNCHANGED: they are one-off prerequisites that gate access rather than
+# an ongoing sink, and taxing entry was not the measured problem.
 BUILD_COST = {"armory": 50, "barracks": 60, "archery": 80, "stable": 120}
 
 # --- technology ---
-TECH_COST = {"atk": [80, 160, 280], "def": [80, 160, 280]}
+# Phase 8B.2: tech doubled. It is the deepest strategic axis, and one full study unit's payout (800,
+# so 1300 with the starting purse) used to max BOTH lines outright (armory + 1040). Doubling makes
+# that payout fund ONE full line (armory + 1040 = 1090) and leaves the second line as a real later
+# decision. A pleasant consequence: PASS_GOLD (160) is now exactly one level-1 upgrade.
+TECH_COST = {"atk": [160, 320, 560], "def": [160, 320, 560]}
 TECH_MAX = 3
 TECH_ATK_PER_LEVEL = 0.10   # forging: attack multiplier bonus per level
 TECH_DEF_PER_LEVEL = 0.10   # armor: canonical +10%/level (was 0.08 on the old AI path)

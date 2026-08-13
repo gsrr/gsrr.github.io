@@ -467,15 +467,19 @@ LEARNING = learning_api.LearningService(content_root=CONTENT_ROOT,
                                         reward_amounts={"PASS_GOLD": PASS_GOLD,
                                                         "LESSON_MASTERY_GOLD": LESSON_MASTERY_GOLD})
 ATTACK_FAIL_GOLD = 50                               # 攻打失敗 −50 金幣
+# Phase 8B.2: these were duplicated LITERALS here and in game/config.py. Two copies of a price is
+# one copy too many — the 8B.2 rebalance changed config.py and this file silently kept the old
+# numbers, which game_domain_test.py caught. They are aliases now, exactly like PASS_GOLD above, so
+# game/config.py is the single source of every balance constant.
 # 蓋建築的金幣花費：兵工廠(科技) + 三種生產建築
-BUILD_COST = {"armory": 50, "barracks": 60, "archery": 80, "stable": 120}
+BUILD_COST = game_config.BUILD_COST
 TECH_TRACKS = ("atk", "def")                       # 鍛造(+攻) / 鎧甲(+防)
-TECH_COST = {"atk": [80, 160, 280], "def": [80, 160, 280]}   # 第 1/2/3 級花費
-TECH_MAX = 3
+TECH_COST = game_config.TECH_COST                  # 第 1/2/3 級花費
+TECH_MAX = game_config.TECH_MAX
 # 招募：每名兵的金幣成本、該兵種需要哪棟建築、每次招募的數量(加進該領地守軍)
-UNIT_COST = {"inf": 2, "spear": 3, "archer": 4, "cav": 5}
-UNIT_BUILDING = {"inf": "barracks", "spear": "barracks", "archer": "archery", "cav": "stable"}
-RECRUIT_BATCH = 10
+UNIT_COST = game_config.UNIT_COST
+UNIT_BUILDING = game_config.UNIT_BUILDING
+RECRUIT_BATCH = game_config.RECRUIT_BATCH
 # 家鄉基地(預設領地)的特殊 key：蓋建築/研發存在玩家經濟裡；招募加進「自由兵力池」；科技加成你的攻擊軍。
 HOME_KEY = "@home"
 

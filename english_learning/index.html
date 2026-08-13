@@ -7401,9 +7401,12 @@
 
   // ===== 領地建設：兵工廠 + 科技（鍛造+攻 / 鎧甲+防），用玩家的「統一金幣池」研發（需與 server 常數一致）=====
   const BUILD_COST = { armory: 50, barracks: 60, archery: 80, stable: 120 };
-  const TECH_COST = { atk: [80, 160, 280], def: [80, 160, 280] };
+  // Phase 8B.2 rebalance — these MIRROR game/config.py and must stay identical to it. The server
+  // prices every purchase itself; these values only drive what the panels display, so a mismatch
+  // would mislead the player rather than change what they are charged.
+  const TECH_COST = { atk: [160, 320, 560], def: [160, 320, 560] };
   const TECH_MAX = 3;
-  const UNIT_COST = { inf: 2, spear: 3, archer: 4, cav: 5 };   // 每名兵金幣成本(需與 server 一致)
+  const UNIT_COST = { inf: 6, spear: 9, archer: 12, cav: 15 };   // 每名兵金幣成本(需與 server 一致)
   const RECRUIT_BATCH = 10;
   const HOME_KEY = "@home";   // 家鄉基地(預設領地)：招募→兵力池、科技→加成攻擊軍
   function terrPost(path, body, cb) {

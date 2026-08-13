@@ -107,7 +107,11 @@ nothing was locked. It is genuine practice progress and is presented as such.
 ## D. Recruitment  (backend-authoritative)
 
 Flow: frontend `terrRecruit` → `POST /api/territory/recruit` → `_handle_territory_recruit` validates + mutates + returns new gold/troops.
-- `UNIT_COST = {inf:2, spear:3, archer:4, cav:5}` (identical FE/BE), `RECRUIT_BATCH = 10`.
+- `UNIT_COST = {inf:6, spear:9, archer:12, cav:15}` (identical FE/BE), `RECRUIT_BATCH = 10`.
+  Tripled in Phase 8B.2. Until Phase 8B.1 made troop provisioning server-authoritative these prices
+  bound nothing (a client could mint troops for free), so they had never been balanced against real
+  spending; at 2–5 gold a fresh 500 bought 220 infantry. A starting garrison is still affordable
+  (barracks + 50 infantry = 360).
 - `cost = qty * UNIT_COST[unit]`; `qty` clamped 1..100000.
 - Requires the producing building: `UNIT_BUILDING = {inf:barracks, spear:barracks, archer:archery, cav:stable}`.
 - Territory recruit requires `owner == user`; home recruit (`@home`) needs the building in the economy.
@@ -116,7 +120,10 @@ Flow: frontend `terrRecruit` → `POST /api/territory/recruit` → `_handle_terr
 
 ## E. Technology  (backend-authoritative)
 
-- Tracks: `atk` (forging), `def` (armor). `TECH_COST = {atk:[80,160,280], def:[80,160,280]}`, `TECH_MAX = 3` (identical FE/BE).
+- Tracks: `atk` (forging), `def` (armor). `TECH_COST = {atk:[160,320,560], def:[160,320,560]}`, `TECH_MAX = 3` (identical FE/BE).
+  Doubled in Phase 8B.2: one mastered lesson (800, so 1300 with the starting purse) used to max BOTH
+  lines outright. One lesson now funds ONE full line (armory + 1040 = 1090) and the second line stays
+  a later decision. `PASS_GOLD` (160) is exactly one level-1 upgrade.
 - Scope: per-territory `tech{atk,def}` (region armory) and per-home `economy.tech`. Requires an `armory`.
 - `research_technology`: `cost = TECH_COST[track][level]`; needs gold ≥ cost; `level += 1`; returns new gold/tech. Backend-authoritative; frontend `TECH_COST` is display only.
 - **Effect (used only inside battle) DIVERGES** — see §F:
@@ -169,6 +176,11 @@ Flow: frontend `terrRecruit` → `POST /api/territory/recruit` → `_handle_terr
 
 ## Duplicated logic (candidates for centralization)
 - Counter multipliers, `UNIT_COST`, `TECH_COST`, `TECH_MAX`, `BUILD_COST`, `RECRUIT_BATCH` exist in **both** `index.html` and `server.py` (values identical → safe to centralize as backend-authoritative config; frontend keeps display copies).
+  **Resolved server-side in Phase 8B.2:** `server.py` no longer holds its own literals — it aliases
+  `game/config.py`, which is now the single source of every balance constant. The 8B.2 reprice
+  changed `config.py` while `server.py` silently kept the old numbers, and `game_domain_test.py`
+  caught the drift; aliasing makes that class of bug impossible. `index.html` still keeps display
+  copies (the server prices every purchase), so those two must be kept in step by hand.
 - Battle math exists twice and **differs materially** (above) → cannot be consolidated without changing behavior on one side.
 
 > The sections A–H above are the **pre-2A** snapshot. Phase 2A retired the client/AI battle divergence (single canonical engine) and made all combat server-authoritative. The section below is the **Phase 2A baseline** that Phase 2B builds on.

@@ -63,10 +63,15 @@ assert gcap == config.ECON_MAX_CATCHUP * 10
 ok("economy: zero/normal/region/zero-elapsed/multi-interval/no-double-count/catch-up cap")
 
 # ================= recruitment =================
-assert recruitment.unit_cost("cav", 10) == 50 and recruitment.unit_cost("inf", 10) == 20
-assert recruitment.can_recruit("inf", 10, 20, True) == (True, 20, None)         # exact gold
-assert recruitment.can_recruit("archer", 10, 39, True)[0] is False              # insufficient (needs 40)
-assert recruitment.can_recruit("cav", 10, 50, True)[0] is True
+# Phase 8B.2: derived from config, not hardcoded. These lines pinned `qty x UNIT_COST` with literal
+# 50/20/40, so the 8B.2 price change broke them even though the ARITHMETIC they test is unchanged.
+# Deriving keeps the assertion (and its exact-gold / one-short boundaries) while surviving a reprice.
+CAV10, INF10 = 10 * config.UNIT_COST["cav"], 10 * config.UNIT_COST["inf"]
+ARCH10 = 10 * config.UNIT_COST["archer"]
+assert recruitment.unit_cost("cav", 10) == CAV10 and recruitment.unit_cost("inf", 10) == INF10
+assert recruitment.can_recruit("inf", 10, INF10, True) == (True, INF10, None)   # exact gold
+assert recruitment.can_recruit("archer", 10, ARCH10 - 1, True)[0] is False      # one gold short
+assert recruitment.can_recruit("cav", 10, CAV10, True)[0] is True
 assert recruitment.can_recruit("dragon", 5, 999, True)[0] is False              # invalid unit
 assert recruitment.can_recruit("inf", 10, 999, True, owns_territory=False)[2] == "not_your_region"
 assert recruitment.can_recruit("inf", 10, 999, False)[2] == "need_barracks"     # missing building
@@ -75,10 +80,14 @@ assert recruitment.can_recruit("cav", 10, 50, True)[1] == 10 * config.UNIT_COST[
 ok("recruitment: costs/exact/insufficient/invalid-unit/ownership/building/cost-authoritative")
 
 # ================= technology =================
-assert technology.next_cost("atk", 0) == 80 and technology.next_cost("atk", 1) == 160 and technology.next_cost("atk", 2) == 280
+# Phase 8B.2: derived from config for the same reason as the recruitment costs above — the ladder
+# shape (per-level cost, maxed, exact gold, one short) is what is under test, not the literals.
+L1, L2, L3 = config.TECH_COST["atk"]
+assert technology.next_cost("atk", 0) == L1 and technology.next_cost("atk", 1) == L2 \
+    and technology.next_cost("atk", 2) == L3
 assert technology.next_cost("atk", 3) is None                                   # maxed
-assert technology.can_research("atk", 0, 80) == (True, 80, 1, None)
-assert technology.can_research("atk", 0, 79)[0] is False                        # insufficient
+assert technology.can_research("atk", 0, L1) == (True, L1, 1, None)
+assert technology.can_research("atk", 0, L1 - 1)[0] is False                    # one gold short
 assert technology.can_research("def", 3, 9999)[3] == "maxed"
 assert technology.can_research("magic", 0, 999)[3] == "unknown_tech"
 assert technology.can_research("atk", 0, 999, has_armory=False)[3] == "need_armory"
