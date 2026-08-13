@@ -56,6 +56,25 @@ removed the last place a local score controlled a world action.
 
 Local practice scores unlock nothing anywhere in the product.
 
+### Exam / checkpoint progression (Phase 7H.1)
+
+The per-level boss exam writes `localStorage["exam:<user>:<levelId>"]`. It is a **recommended local
+checkpoint**, and that is all:
+
+- stored in local browser/profile state, and carried between devices only inside the opaque `sdata`
+  snapshot the server stores **without interpreting**;
+- **not server-authoritative** — `server.py` contains no concept of an exam and never validates it;
+- **not** learning completion, mastery, qualification, campaign progress, reward, conquest authority
+  or economic authority;
+- **does not prevent access to a level.** Nothing in `selectLevel()` / `renderGeoMap()` consults it,
+  so a level was always reachable. Before Phase 7H.1 the level card nonetheless showed a padlock and
+  a disabled button; that presentation claimed a rule the code never enforced, so the padlock and the
+  disable were removed. A level whose checkpoint is not yet done is shown as
+  🧭 *"Recommended: pass the … test first"* and stays selectable.
+
+Passing it reads "Checkpoint complete — *next level* is ready for you", never "unlocked", because
+nothing was locked. It is genuine practice progress and is presented as such.
+
 - `passcnt` is **retired** (Phase 7F.2). Files saved before it may still contain the key; nothing reads, normalises, serves or rewrites it — it is inert data left in place.
 - Constants (`server.py`): `GOLD_RATE = 0.10`, `GROW_SECONDS = 3600`, `ECON_MAX_CATCHUP = 72`, `ECON_START_POP = 100`, `ECON_START_TROOPS = 100`, `PASS_GOLD = 160`, `MASTERY_GOLD = 640`, `DEFEND_GOLD = 50`, `ATTACK_FAIL_GOLD = 50`.
 - New player seeded from the room config (`startPop/startGold/startTroops`) via `econ_get`.

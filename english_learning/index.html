@@ -179,8 +179,9 @@
   .lvl-dot.done { background: #22c55e; border-color: #22c55e; color: #fff; }
   .lvl-dot.fail { background: #ef4444; border-color: #ef4444; color: #fff; }
   /* 上鎖的課程卡片 */
-  .pick-card.locked { background: #f1f5f9; border-color: #e2e8f0; cursor: not-allowed; }
-  .pick-card.locked .pick-title { color: #94a3b8; }
+  /* Phase 7H.1: a level whose checkpoint is not done is RECOMMENDED-LATER, not locked. It stays
+     fully clickable and readable; only the border hints that you are jumping ahead. */
+  .pick-card.ahead { border-style: dashed; }
   .lock-big { font-size: 40px; line-height: 1; filter: grayscale(.2); }
   .learn-top { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
   .back-btn { background: #e2e8f0; color: #334155; padding: 8px 14px; font-size: 14px; }
@@ -2311,8 +2312,16 @@
   function examKey(levelId) { return "exam:" + (userName || "guest") + ":" + levelId; }
   function examPassed(levelId) { try { return localStorage.getItem(examKey(levelId)) === "1"; } catch (e) { return false; } }
   function setExamPassed(levelId) { try { localStorage.setItem(examKey(levelId), "1"); } catch (e) {} scheduleStudentSave(); }
-  // 第一個等級永遠解鎖；之後要上一等級的大考過了才解鎖（測試者全開）
-  function levelUnlocked(i) {
+  // ===== Phase 7H.1 — the boss exam is a RECOMMENDED CHECKPOINT, not an unlock =====
+  // `exam:<user>:<levelId>` is local browser/profile state. The server has no concept of it (zero
+  // occurrences of "exam" in server.py), it is never validated, and it certifies nothing: no
+  // qualification, no mastery, no campaign progress, no reward, no territory. It also never actually
+  // blocked anything — nothing in selectLevel()/renderGeoMap() consults it, so the level was always
+  // reachable and the padlock was describing a rule that did not exist.
+  //
+  // So it is presented as what it is: a suggested order. `checkpointDone()` replaces the old
+  // `levelUnlocked()` name, because "unlocked" was the untrue part. Levels stay selectable.
+  function checkpointDone(i) {
     if (i <= 0 || adminMode) return true;
     return examPassed(manifest.levels[i - 1].id);
   }
@@ -4264,18 +4273,27 @@
       let passed = 0, tracked = 0;
       lv.articles.forEach(a => { if (authRowOf(a.file)) { tracked++; if (masteredOf(a.file)) passed++; } });
       const pct = tracked ? Math.round(passed / tracked * 100) : 0;
-      const unlocked = levelUnlocked(i);
+      // Phase 7H.1: a level whose checkpoint is not done is RECOMMENDED-LATER, not locked. It keeps
+      // its own icon and stays clickable, because it was always clickable — the padlock and the
+      // disabled state described an authority that never existed.
+      const ready = checkpointDone(i);
       const sub = !n ? 'Coming soon'
-        : (!unlocked ? '🔒 Pass the ' + manifest.levels[i - 1].name + ' test'
+        : (!ready ? '🧭 Recommended: pass the ' + manifest.levels[i - 1].name + ' test first'
            : (passed > 0 ? '⭐ ' + passed + ' / ' + tracked + ' mastered' : n + ' lessons'));
-      btn.innerHTML = (lv.icon ? '<span class="pick-icon">' + (unlocked ? lv.icon : '🔒') + '</span>' : '') +
+      btn.innerHTML = (lv.icon ? '<span class="pick-icon">' + lv.icon + '</span>' : '') +
                       '<span class="pick-title">' + (lv.name || lv.id) + '</span>' +
                       (lv.stars ? '<span class="pick-stars">' + '⭐'.repeat(lv.stars) + '</span>' : '') +
                       '<span class="pick-sub">' + sub + '</span>' +
-                      (n && unlocked && tracked ? '<span class="lvl-bar"><span class="lvl-bar-fill" style="width:' + pct + '%"></span></span>' : '');
+                      (n && tracked ? '<span class="lvl-bar"><span class="lvl-bar-fill" style="width:' + pct + '%"></span></span>' : '');
       if (lv.desc) btn.title = lv.desc;
-      if (!n || !unlocked) { btn.disabled = true; if (!unlocked) btn.classList.add("locked"); }
-      else btn.addEventListener("click", () => selectLevel(i));
+      // Only an EMPTY level is unclickable. Phase 7H.1 removed the checkpoint-based disable so that
+      // normal UI navigation and direct navigation agree — they always did in code, and now the UI
+      // admits it. `ahead` is presentation only: a soft "you are jumping ahead" tint, not a gate.
+      if (!n) btn.disabled = true;
+      else {
+        if (!ready) btn.classList.add("ahead");
+        btn.addEventListener("click", () => selectLevel(i));
+      }
       levelGrid.appendChild(btn);
     });
   }
@@ -4795,7 +4813,12 @@
     logEvent("boss", { level: lv.name || lv.id });
     document.getElementById("battleQ").textContent = ""; document.getElementById("battleOpts").innerHTML = ""; document.getElementById("battleLog").textContent = "";
     const rr = document.getElementById("battleResult"); rr.classList.remove("hidden");
-    rr.innerHTML = '<div class="battle-msg">🏆 Boss defeated! ' + (next ? next.name + " unlocked!" : "You are a Champion!") +
+    // Phase 7H.1: "A1 unlocked!" was untrue — A1 was never unavailable. The checkpoint is real
+    // practice progress, so it is still celebrated; it just no longer claims to have opened a door
+    // that was never shut, and it does not imply server-certified progression.
+    rr.innerHTML = '<div class="battle-msg">🏆 Boss defeated! ' +
+      (next ? 'Checkpoint complete — ' + next.name + ' is ready for you.'
+            : 'You cleared the final checkpoint!') +
       (surv > 0 ? '<br><span style="font-size:14px;color:#94a3b8">' + surv + ' troops return home.</span>' : '') + '</div>' +
       '<div class="battle-btns"><button id="examDone" class="back-btn">Back to Levels</button></div>';
     document.getElementById("examDone").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
