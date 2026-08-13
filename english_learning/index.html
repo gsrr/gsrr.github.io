@@ -3753,7 +3753,8 @@
     userName = name;
     try { localStorage.setItem("userName", userName); } catch (e) {}
     updateGreeting();
-    renderLevelGrid();
+    clearActiveRoom();          // Phase 8A: picking a local profile is a pre-room surface (was
+    renderLevelGrid();          // implicit in renderLevelGrid's old clear; now stated where it means it)
     showScreen(screenLevel);
   }
 
@@ -4254,7 +4255,12 @@
 
   // 畫面 1：等級卡片
   function renderLevelGrid() {
-    roomCode = "";                                 // 回到等級清單 = 離開競賽房間（單機/沙盒世界）
+    // Phase 8A: this used to clear roomCode ("showing the level list = leaving the room"). It was
+    // wrong on its own screen's terms — screenLevel reads "Choose a map / level 🗺 — your room stays
+    // the same" — and the level grid is reached from INSIDE a room by five paths (Profile → change
+    // map/level, boss exam Back, Leaderboard Back, lesson Back with no campaign, Profile Back).
+    // Each of those silently dropped the room. Leaving a room is now an explicit act: openRooms()
+    // (the Lobby) clears it, and nothing else does.
     updateEnergy();
     document.getElementById("guestHint").classList.toggle("hidden", !(userName === "guest"));
     const ri = readStreak(userName);
@@ -4940,6 +4946,10 @@
   const RES_PRESETS = { low: { pop: 100, gold: 300, troops: 60 }, medium: { pop: 150, gold: 500, troops: 100 }, high: { pop: 250, gold: 1000, troops: 180 } };
   function resLabel(k) { const p = RES_PRESETS[k]; return k.charAt(0).toUpperCase() + k.slice(1) + " · 👥" + p.pop + " 🪙" + p.gold + " ⚔️" + p.troops; }
   function openRooms() {
+    // Phase 8A: the Lobby is OUTSIDE every room — it is where a room is chosen. This is the single
+    // explicit room-exit boundary, so the world caches go with it and no room-scoped request can
+    // keep addressing the room the player just left.
+    clearActiveRoom();
     document.getElementById("hubTitle").textContent = "🎮 " + (dispName(authUser()) || "Lobby");
     document.getElementById("worldSub").textContent = "";
     document.getElementById("hubPanel").innerHTML = "";
@@ -5054,7 +5064,10 @@
       .then(r => r.json().catch(() => ({})).then(j => ({ ok: r.ok, j: j })))
       .then(o => {
         if (!o.ok || !o.j.ok) { const e = (o.j && o.j.error) || "Could not enter room."; if (onErr) onErr(e); else alert(e); return; }
-        roomCode = (o.j.code || "").toUpperCase();
+        // Phase 8A: the canonical room is set HERE, before selectLevel()/openLearningHome() fire the
+        // first room-scoped requests, and it is the server's own echoed code — never the requested
+        // one — so a redirect/normalisation cannot leave the client pointing at a different room.
+        setActiveRoom(o.j.code);
         territory = null; myEcon = null;                   // 換房間 → 清掉上一房的世界快取
         const idx = (manifest && manifest.levels) ? manifest.levels.findIndex(l => l.id === o.j.map) : -1;
         if (idx < 0) { alert("This room's map isn't available."); return; }
@@ -5080,6 +5093,15 @@
   const TERR_AI_LEGACY = "電腦 AI 帝國";                 // 舊中文名：仍相容尚未被伺服器換掉的舊資料
   let roomInfo = null;                                   // /api/room：地圖、AI 名單、起始資源、人數上限…
   let roomCode = "";                                     // 目前所在房間(老師的班級碼)；空=尚未進房
+  // ===== Phase 8A — the active room is APPLICATION STATE, not a property of the current screen =====
+  // `roomCode` is the ONE canonical client-side room. It is written on explicit room ENTRY and
+  // cleared on explicit room EXIT (returning to the Lobby), and by nothing else. In particular no
+  // rendering function may touch it: a renderer that cleared it produced a split brain where the UI
+  // still showed room A while every world API silently addressed the default LOBBY room — reading
+  // the wrong gold and, because a learning reward credits the CURRENT room's economy, paying a
+  // once-only reward into a room the player was not in.
+  function setActiveRoom(code) { roomCode = (code || "").toUpperCase(); }
+  function clearActiveRoom() { roomCode = ""; territory = null; myEcon = null; }
   // 把目前房間(?room=)接到任何「世界」API 上，讓後端讀到正確的房間世界
   function withRoom(url) {
     if (!roomCode) return url;
