@@ -1517,6 +1517,22 @@ class Handler(BaseHTTPRequestHandler):
                     self._send({"error": "Claim not allowed", "reason": "qualification_required",
                                 "missingQualificationIds": missing}, 403)
                     return
+                # ---- Phase 8B.3: ACQUIRING a territory costs at least one real troop ----
+                # A neutral claim used to accept an empty (or all-zero) garrison, so ownership — and
+                # with it the territory's passive income — was free: all seven ungated Taipei
+                # districts could be taken for 0 troops and 0 gold, worth ~110 gold/hour. The
+                # minimum is deliberately ONE, not a round number: it makes acquisition a real
+                # commitment out of the authoritative pool without becoming an economic barrier.
+                # Placed AFTER the qualification gate so an ineligible learner still hears the
+                # truthful qualification_required first, and BEFORE any mutation so a refusal costs
+                # nothing. `troops` is already sanitised above (bad types dropped, hp clamped >= 0),
+                # so this counts what would actually be deployed, not what was asked for.
+                # Deliberately NOT applied to redeploying a territory you already hold: leaving your
+                # own ground undefended stays legal (see docs/current-game-rules.md).
+                if sum(u["hp"] for u in troops) < 1:
+                    self._send({"error": "Claim not allowed", "reason": "troops_required",
+                                "minTroops": 1}, 400)
+                    return
             keep = {}
             if prev.get("owner") == user:                # 重新部署自己的守軍 → 保留建築/科技/人口/徵兵設定
                 keep = {"buildings": prev.get("buildings") or {}, "tech": prev.get("tech") or {}}

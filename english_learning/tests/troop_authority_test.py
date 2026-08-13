@@ -142,6 +142,55 @@ assert OPEN not in server.load_territory_store(), "a refused claim must not crea
 ok("§3 a garrison larger than the pool is refused with insufficient_troops — no ownership, no "
    "garrison, no pool change, and NO troops minted")
 
+# ============ §3b Phase 8B.3: ACQUIRING a territory costs at least one troop ============
+# Ownership carries the territory's passive income, and it used to be free: an empty (or all-zero)
+# garrison claimed a neutral district for 0 troops and 0 gold. The minimum is ONE.
+z_pool, z_total, z_gold = pool(), total(), gold()
+ZERO = [([], "empty list"),
+        ([{"type": "inf", "hp": 0}], "one zero entry"),
+        ([{"type": "inf", "hp": 0}, {"type": "cav", "hp": 0}], "several zero entries"),
+        ([{"type": "inf", "hp": -5}], "negative sanitised to zero"),
+        ([{"type": "inf", "hp": 0.4}], "fraction sanitised to zero"),
+        ([{"type": "dragon", "hp": 9}], "only an unknown type -> nothing deployable"),
+        ([{"nope": 1}], "only a malformed entry")]
+for troops, label in ZERO:
+    code, body = call("POST", "/api/territory/claim" + R, {"file": OPEN, "troops": troops})
+    assert code == 400 and body.get("reason") == "troops_required", (label, code, body)
+    assert body.get("minTroops") == 1, (label, body)
+    assert pool() == z_pool and total() == z_total and gold() == z_gold, label
+    server.set_room(CODE)
+    assert OPEN not in server.load_territory_store(), label
+ok("§3b a neutral claim that would deploy ZERO troops is refused with troops_required (%d shapes, "
+   "including negatives/fractions/unknown types that sanitise to nothing) — no ownership, no pool "
+   "or gold movement" % len(ZERO))
+
+# exactly one troop is enough, of any type, including a mixed request totalling 1
+for troops, label, key in (([{"type": "inf", "hp": 1}], "one infantry", OPEN),
+                           ([{"type": "cav", "hp": 1}], "one cavalry", "taipei:datong"),
+                           ([{"type": "inf", "hp": 0}, {"type": "spear", "hp": 1}],
+                            "mixed request totalling 1", "taipei:neihu")):
+    b_pool, b_total = pool(), total()
+    code, body = call("POST", "/api/territory/claim" + R, {"file": key, "troops": troops})
+    assert code == 200, (label, code, body)
+    server.set_room(CODE)
+    assert (server.load_territory_store().get(key) or {}).get("owner") == "ALICE", label
+    moved = sum(b_pool[k] - pool()[k] for k in TYPES)
+    assert moved == 1, (label, b_pool, pool())
+    assert total() == b_total, (label, total(), b_total)
+    call("POST", "/api/territory/release" + R, {"file": key})      # release destroys that troop
+ok("§3b exactly ONE troop acquires a territory — any single type, or a mixed request whose total is "
+   "1; the pool drops by exactly 1 and conservation holds")
+
+# the qualification gate still speaks FIRST for an ineligible learner
+code, body = call("POST", "/api/territory/claim" + R,
+                  {"file": "taipei:zhongshan", "troops": []})       # gated, unqualified, zero troops
+assert code == 403 and body.get("reason") == "qualification_required", (code, body)
+ok("§3b ordering: a gated territory the learner cannot claim yet answers qualification_required, "
+   "not troops_required — eligibility is the more truthful failure")
+
+# (the "gated + qualified + zero troops" case needs a gated territory ALICE does NOT already own —
+#  GATED is hers by now, so that claim would be a redeploy. It is covered in §9 below.)
+
 # ====================== §4 the claim failure matrix ======================
 snap_pool, snap_total, snap_gold = pool(), total(), gold()
 # Requests that must be REFUSED outright: they ask for more than the pool holds.
@@ -271,5 +320,40 @@ assert all(v >= 0 for v in pool().values()), pool()
 ok("§8 concurrency: two simultaneous claims for 80 of 100 cavalry — exactly one wins, the other "
    "gets insufficient_troops, the pool lands on 20 and 100 cavalry are conserved (no duplication, "
    "no negative pool)")
+
+# ====== §9 Phase 8B.3: the minimum applies to GATED acquisition too, and NOT to redeploy ======
+# A gated territory ALICE is qualified for but does NOT own: the qualification is satisfied, so the
+# troop minimum is the remaining requirement.
+XINYI = "taipei:xinyi"                       # requires english.prea1.taipei.mrt.quiz3.pass
+with server.acct_lock:
+    p = server.load_progress("ALICE")
+    p.setdefault("learning", {}).setdefault("qualifications", {})[
+        "english.prea1.taipei.mrt.quiz3.pass"] = {"earnedAt": 1}
+    server.save_progress("ALICE", p)
+server.set_room(CODE)
+_st = server.load_econ_store()
+_st["ALICE"]["troops"] = {"cav": 5, "archer": 0, "inf": 0, "spear": 0}
+server.save_econ_store(_st)
+code, body = call("POST", "/api/territory/claim" + R, {"file": XINYI, "troops": []})
+assert code == 400 and body.get("reason") == "troops_required", (code, body)
+server.set_room(CODE)
+assert XINYI not in server.load_territory_store(), "refused gated claim must not create ownership"
+code, body = call("POST", "/api/territory/claim" + R, {"file": XINYI, "troops": [{"type": "cav", "hp": 1}]})
+assert code == 200, (code, body)
+assert pool()["cav"] == 4, pool()
+ok("§9 the minimum applies uniformly: a gated territory whose qualification IS held still needs one "
+   "troop (troops_required), and one cavalry then acquires it")
+
+# redeploy KEEPS the documented right to leave your own ground undefended
+before = total()
+code, body = call("POST", "/api/territory/claim" + R, {"file": XINYI, "troops": []})
+assert code == 200, ("owned redeploy to zero must stay legal", code, body)
+server.set_room(CODE)
+h = server.load_territory_store().get(XINYI) or {}
+assert h.get("owner") == "ALICE" and not (h.get("troops") or []), h
+assert pool()["cav"] == 5, ("the garrison came home to the pool", pool())
+assert total() == before, (total(), before)
+ok("§9 redeploying a territory you ALREADY hold to zero troops remains legal — ownership kept, the "
+   "garrison returns to the pool, conservation holds; the minimum guards ACQUISITION only")
 
 print("\nAll %d troop-authority tests passed." % passed)

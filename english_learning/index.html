@@ -7366,6 +7366,10 @@
           return r.json().catch(() => ({})).then(j => {
             if (j && j.reason === "room_required") return { __noRoom: true };
             if (j && j.reason === "insufficient_troops") return { __noTroops: j };
+            // Phase 8B.3: occupying a NEW territory must commit at least one troop. The Occupy
+            // button is already disabled at a zero total, so this only arrives from a stale or
+            // modified client — it still deserves the truthful reason rather than the generic one.
+            if (j && j.reason === "troops_required") return { __zeroTroops: j };
             return { __err: (j && j.error) || "HTTP 400" };
           });
         }
@@ -7380,6 +7384,10 @@
           const line = Object.keys(want).map(k => k + " " + (a[k] || 0) + "/" + want[k]).join(", ");
           alert("⚔️ Not enough troops to deploy.\n\nYou have " + (line || "fewer than requested") +
                 ".\n\nRecruit more at your home base first. Nothing was changed.");
+          if (cb) cb(); return;
+        }
+        if (j && j.__zeroTroops) {
+          alert("Deploy at least 1 troop to occupy this territory.\n\nNothing was changed.");
           if (cb) cb(); return;
         }
         if (j && j.__err) { alert("Deploy failed: " + j.__err); if (cb) cb(); return; }
