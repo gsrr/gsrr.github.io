@@ -1519,6 +1519,33 @@ class Handler(BaseHTTPRequestHandler):
                 for k in ("pop", "lastPop", "conscript", "conscriptBudget", "lastConscript"):
                     if k in prev:
                         keep[k] = prev[k]
+            # ---- Phase 8B.1: the garrison is DEBITED from the authoritative troop pool ----
+            # A claim used to accept whatever garrison the request declared and never touch the pool,
+            # so it minted troops out of nothing. Troops may now only MOVE: a deployment costs the
+            # pool exactly what it puts on the map. Redeploying a territory you already hold returns
+            # its current garrison to the pool first, so the pool+garrisons total is conserved and
+            # the existing "the rest stays in your pool" behaviour is preserved — the client used to
+            # do this arithmetic itself, which is precisely why it was not binding.
+            # Lock order is the established acct -> terr -> econ (identical to recruitment).
+            with econ_lock:
+                estore = load_econ_store()
+                e = econ_get(estore, user, time.time(), user_region_pop(store, user))
+                avail = {k: clampi(e["troops"].get(k, 0)) for k in TROOP_ALL}
+                for u in (prev.get("troops") or []):      # redeploy: the old garrison comes home
+                    if isinstance(u, dict) and u.get("type") in avail:
+                        avail[u["type"]] += clampi(u.get("hp", 0))
+                need = {}
+                for u in troops:
+                    need[u["type"]] = need.get(u["type"], 0) + clampi(u["hp"])
+                short = {k: v - avail.get(k, 0) for k, v in need.items() if v > avail.get(k, 0)}
+                if short:                                 # 兵力不足 → 一切狀態零變動(原子拒絕)
+                    self._send({"error": "Not enough troops", "reason": "insufficient_troops",
+                                "available": avail, "requested": need, "short": short}, 400)
+                    return
+                for k, v in need.items():
+                    avail[k] -= v
+                e["troops"] = avail
+                save_econ_store(estore)
             store[f] = {"owner": user, "avatar": str(d.get("avatar", "👦"))[:8],
                         "troops": troops, "pop": region_pop, **keep}
             save_territory_store(store)                  # 一律以 canonical key 存檔
@@ -2163,8 +2190,13 @@ class Handler(BaseHTTPRequestHandler):
             store = load_econ_store()
             e = econ_get(store, user, time.time(), region_pop)
             # 人口改為伺服器管理 → 前端不再直接設定 population（招募已不扣人口）
-            if "troops" in d:
-                e["troops"] = _norm_troops(d.get("troops"))   # 前端回傳分兵種的兵力池
+            # Phase 8B.1: `troops` is IGNORED. It used to write the authoritative pool straight from
+            # the request body, so a client could mint 4,000,000 troops for 0 gold and UNIT_COST
+            # constrained nobody. The pool is now written only by the two server-side operations that
+            # own it: recruitment (which debits gold at UNIT_COST) and claim (which moves troops
+            # between the pool and a garrison). Ignoring rather than rejecting keeps every existing
+            # caller working — saveEconomy() still gets a 200 whose body carries the AUTHORITATIVE
+            # pool, so a client that thought otherwise is corrected by the response it already reads.
             save_econ_store(store)
             pop, troops, gold = e["population"], e["troops"], e["gold"]
         self._send({"ok": True, "population": pop, "troops": troops, "troopsTotal": troops_total(troops), "gold": gold})

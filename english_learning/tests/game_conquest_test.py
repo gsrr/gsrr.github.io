@@ -224,7 +224,10 @@ assert code == 400 and body["error"] == "maxed", "maxed track rejected via deleg
 ok("research handler delegates to game.technology (armory gate + success + level/cost + maxed)")
 
 # ---------- /claim CANNOT seize a HELD (enemy) territory — occupation is neutral/own only ----------
-set_state({"cav": 10, "archer": 0, "inf": 0, "spear": 0}, 100,
+# Phase 8B.1: a claim garrison is now DEBITED from the authoritative troop pool, so this block has to
+# actually own the infantry it re-deploys below. The subject under test is unchanged (held vs neutral
+# vs own); it is only stocked with the troops it always implicitly assumed it had.
+set_state({"cav": 10, "archer": 0, "inf": 5, "spear": 0}, 100,
           {"china:pHB": {"owner": "BOB", "troops": [{"type": "inf", "hp": 5}], "pop": 100}})
 code, body = call("POST", "/api/territory/claim?room=" + CODE, "tALICE",
                   {"file": "china:pHB", "troops": [{"type": "cav", "hp": 5}], "avatar": "\U0001F466"})

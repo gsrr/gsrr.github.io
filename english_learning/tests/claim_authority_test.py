@@ -90,6 +90,17 @@ def claim(tok, code, target, troops=None):
                {"file": target, "troops": troops or [{"type": "inf", "hp": 10}]}, tok)
 
 
+def stock(code, user, n=200):
+    """Phase 8B.1: a claim garrison is now debited from the authoritative troop pool, so a test that
+    deploys more than a room's starting troops has to own them first. These tests are about the
+    QUALIFICATION gate, not troop budgeting — stocking the pool keeps every assertion below about
+    exactly what it was written to prove."""
+    server.set_room(code)
+    es = server.load_econ_store()
+    es.setdefault(user, {})["troops"] = {"cav": n, "archer": n, "inf": n, "spear": n}
+    server.save_econ_store(es)
+
+
 def owner(code, target):
     server.set_room(code)
     return (server.load_territory_store().get(target) or {}).get("owner")
@@ -208,6 +219,8 @@ with server.acct_lock:
     p = server.load_progress("DEF1")
     p.setdefault("learning", {}).setdefault("qualifications", {})[MRT_Q] = {"earnedAt": 1}
     server.save_progress("DEF1", p)
+stock(code, "DEF1")
+stock(code, user)
 assert api("POST", "/api/territory/claim?room=" + code,
            {"file": "taipei:xinyi", "troops": [{"type": "inf", "hp": 20}]}, bob)[0] == 200
 assert claim(tok, code, DAAN, [{"type": "inf", "hp": 50}])[0] == 200
