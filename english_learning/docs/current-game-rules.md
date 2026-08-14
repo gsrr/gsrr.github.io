@@ -75,6 +75,34 @@ checkpoint**, and that is all:
 Passing it reads "Checkpoint complete — *next level* is ready for you", never "unlocked", because
 nothing was locked. It is genuine practice progress and is presented as such.
 
+### Boss / checkpoint battle (Phase 8D)
+
+The boss battle is a **client-local challenge simulation**. It has no authoritative consequence at
+all:
+
+- it does **not** consume, restore, damage or create the player's persistent troop pool. The squad
+  you pick is **copied** into challenge-local units; damage lands on the copy;
+- it grants **no** gold, qualification, mastery, territory or server progression;
+- winning sets only the local checkpoint (`setExamPassed`, above);
+- the boss army (`makeBossSquad`) and the question pool (`buildExamPool`) are assembled entirely on
+  the client from static content, and correctness is judged on the client. Nothing is submitted to
+  the server, so nothing can be forged into an authoritative result.
+
+Until Phase 8D the flow called `poolSpend()` on charge and `poolAdd()` on the way out, then pushed
+the adjusted pool to `/api/economy/set` — but Phase 8B.1 made the server **ignore** a client-declared
+`troops` field, so the write was discarded and the response overwrote the local decrement with the
+truth. The UI was charging a price the game never collected, and the result read "N troops return
+home" for troops that had never left. Phase 8C proved there was no authority hole (forging the boss
+yields nothing), so Phase 8D removed the pretence rather than introducing real attrition — which
+would have been a balance change worth roughly 1050 gold of troops per attempt at Phase 8B.2 prices.
+
+`poolSpend()`, `poolAdd()` and `saveEconomy()` are **deleted**; the boss was their only caller.
+`/api/economy/set` still ignores `troops` server-side, which is what keeps a stale tab harmless.
+Read-only helpers (`poolObj`, `poolTotal`, `poolAvail`, `poolBreakdown`) remain — they drive the
+troop display and deployment budgets. Pinned by `tests/boss_challenge.test.js`.
+
+Whether a boss attempt *should* cost troops remains an open product question, not a defect.
+
 - `passcnt` is **retired** (Phase 7F.2). Files saved before it may still contain the key; nothing reads, normalises, serves or rewrites it — it is inert data left in place.
 - Constants (`server.py`): `GOLD_RATE = 0.10`, `GROW_SECONDS = 3600`, `ECON_MAX_CATCHUP = 72`, `ECON_START_POP = 100`, `ECON_START_TROOPS = 100`, `PASS_GOLD = 160`, `MASTERY_GOLD = 640`, `DEFEND_GOLD = 50`, `ATTACK_FAIL_GOLD = 50`.
 - New player seeded from the room config (`startPop/startGold/startTroops`) via `econ_get`.

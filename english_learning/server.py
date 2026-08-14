@@ -2214,9 +2214,12 @@ class Handler(BaseHTTPRequestHandler):
             # the request body, so a client could mint 4,000,000 troops for 0 gold and UNIT_COST
             # constrained nobody. The pool is now written only by the two server-side operations that
             # own it: recruitment (which debits gold at UNIT_COST) and claim (which moves troops
-            # between the pool and a garrison). Ignoring rather than rejecting keeps every existing
-            # caller working — saveEconomy() still gets a 200 whose body carries the AUTHORITATIVE
-            # pool, so a client that thought otherwise is corrected by the response it already reads.
+            # between the pool and a garrison). Ignoring rather than rejecting kept every existing
+            # caller working at the time.
+            # Phase 8D: the product client no longer sends `troops` at all — saveEconomy() was its
+            # only caller and has been deleted, since the field it pushed was discarded here and its
+            # last user (the boss challenge) was charging a cost the game never collected. The ignore
+            # stays: it is what makes a stale tab or a non-standard client harmless.
             save_econ_store(store)
             pop, troops, gold = e["population"], e["troops"], e["gold"]
         self._send({"ok": True, "population": pop, "troops": troops, "troopsTotal": troops_total(troops), "gold": gold})

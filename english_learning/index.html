@@ -4760,17 +4760,24 @@
     host.innerHTML = '<div class="bt-vs">🐲 Boss army (' + B + ')</div>' + examSideHTML(bossSquad, -1);
     document.getElementById("battleLog").textContent = "Pick your squad, then charge the boss!";
     if (T <= 0) {
-      host.innerHTML += '<p class="op-hint">⚠️ No troops to fight with — win battles or redeploy a garrison to free some up.</p>';
+      host.innerHTML += '<p class="op-hint">⚠️ No army yet — your army size sets how hard you hit in this challenge. Recruit or take a region first.</p>';
       return;
     }
     const box = document.createElement("div");
     host.appendChild(box);
     deployPanel(box, poolAvail(), { attack: true, foe: bossSquad, label: "⚔️ Charge the Boss",
       help: '<b>Counters</b> (beats →): 🔱→🐎 · 🐎→🏹 · 🏹→🔱🛡️.<br>' +
-        'Answer <b>correctly</b> → your front troop attacks the boss; <b>wrong</b> → the boss attacks you. More troops = more damage.',
+        'Answer <b>correctly</b> → your front troop attacks the boss; <b>wrong</b> → the boss attacks you. More troops = more damage.<br>' +
+        'This is a <b>checkpoint challenge</b> — it copies your army to fight with and <b>never spends it</b>.',
       onGo: squad => {
-      poolSpend(squad);   // 出戰即扣兵力(分兵種)
-      saveEconomy(function () { renderEmpire(); });
+      // ===== Phase 8D — the challenge squad is a COPY. Your real army is never spent =====
+      // This used to call poolSpend(squad) + saveEconomy(), which looked like a deployment cost but
+      // was not one: Phase 8B.1 made /api/economy/set ignore client-declared troops, so the write
+      // was discarded and the response immediately overwrote the local decrement with the truth.
+      // The UI was therefore charging a price the game never collected. Phase 8C proved the boss has
+      // no authoritative consequence at all, so rather than invent real attrition (a balance change)
+      // the pretence is removed: `my` below is a copy, damage lands on the copy, and the persistent
+      // pool is untouched from start to finish.
       const my = squad.map(u => ({ type: u.type, hp: u.hp, max: u.hp }));
       exam = { pool: pool, qi: 0, boss: bossSquad, squad: my,
         bMax: bossSquad.reduce((s, u) => s + u.hp, 0), pMax: my.reduce((s, u) => s + u.hp, 0),
@@ -4820,7 +4827,7 @@
     bossEmojiEl.classList.add("defeated");
     const lv = manifest.levels[exam.levelIdx], next = exam.next;
     const surv = sumHp(exam.squad);
-    if (surv > 0 && myEcon) { poolAdd(exam.squad.filter(u => u.hp > 0)); saveEconomy(function () { renderEmpire(); }); }   // 生還者(分兵種)撤回兵力池
+    // Phase 8D: no poolAdd/saveEconomy — nothing was ever taken, so there is nothing to give back.
     setExamPassed(lv.id);
     logEvent("boss", { level: lv.name || lv.id });
     document.getElementById("battleQ").textContent = ""; document.getElementById("battleOpts").innerHTML = ""; document.getElementById("battleLog").textContent = "";
@@ -4831,17 +4838,21 @@
     rr.innerHTML = '<div class="battle-msg">🏆 Boss defeated! ' +
       (next ? 'Checkpoint complete — ' + next.name + ' is ready for you.'
             : 'You cleared the final checkpoint!') +
-      (surv > 0 ? '<br><span style="font-size:14px;color:#94a3b8">' + surv + ' troops return home.</span>' : '') + '</div>' +
+      // Phase 8D: was "N troops return home", which implied a refund of troops that were never
+      // spent. It reports the challenge squad's survivors — a result, not an economic movement.
+      (surv > 0 ? '<br><span style="font-size:14px;color:#94a3b8">Your challenge squad finished with '
+                  + surv + ' standing — your army is untouched.</span>' : '') + '</div>' +
       '<div class="battle-btns"><button id="examDone" class="back-btn">Back to Levels</button></div>';
     document.getElementById("examDone").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
   }
   function examLose() {
     heroEmojiEl.classList.add("defeated");
-    const surv = sumHp(exam.squad);
-    if (surv > 0 && myEcon) { poolAdd(exam.squad.filter(u => u.hp > 0)); saveEconomy(function () { renderEmpire(); }); }
+    // Phase 8D: no poolAdd/saveEconomy — the challenge never touched the persistent army.
     document.getElementById("battleQ").textContent = ""; document.getElementById("battleOpts").innerHTML = ""; document.getElementById("battleLog").textContent = "";
     const rr = document.getElementById("battleResult"); rr.classList.remove("hidden");
-    rr.innerHTML = '<div class="battle-msg" style="color:#b91c1c">💀 Your army fell! Conquer more regions (bigger army) & study the lessons, then retry.</div>' +
+    // Phase 8D: was "Your army fell!", which read as a real defeat with real losses. The challenge
+    // squad fell; the army it was copied from is exactly as it was.
+    rr.innerHTML = '<div class="battle-msg" style="color:#b91c1c">💀 Challenge squad defeated — your army is unharmed. Grow it (take more regions) &amp; study the lessons, then retry.</div>' +
       '<div class="battle-btns"><button id="examRetry" class="dict-play">Try again</button><button id="examBack" class="back-btn">Back to Levels</button></div>';
     document.getElementById("examRetry").addEventListener("click", () => startLevelExam(exam.levelIdx));
     document.getElementById("examBack").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
@@ -5171,19 +5182,16 @@
         if (cb) cb();
       }).catch(() => { if (cb) cb(); });
   }
-  function saveEconomy(cb) {
-    const t = authToken();
-    if (!t || !myEcon) { if (cb) cb(); return; }
-    const pool = poolObj();
-    fetch(withRoom("/api/economy/set?token=" + encodeURIComponent(t)), { method: "POST", body: JSON.stringify({ troops: pool }) })
-      .then(r => r.ok ? r.json() : null).then(j => { if (j && j.troops != null) { myEcon.troops = j.troops; if (j.gold != null) myEcon.gold = j.gold; } if (cb) cb(); }).catch(() => { if (cb) cb(); });
-  }
+  // Phase 8D removed saveEconomy(), poolSpend() and poolAdd(). They existed only to push a locally
+  // adjusted troop pool to /api/economy/set, which Phase 8B.1 made the server IGNORE — and their one
+  // remaining caller was the boss challenge, whose "cost" was therefore never collected. Troops now
+  // move only through the server operations that own them (recruit / claim), so a client-side pool
+  // mutator has no honest use and keeping one invites the pretence back. poolObj / poolTotal /
+  // poolAvail / poolBreakdown stay: they READ the pool for display and deployment budgets.
   // 兵力池改成「分兵種」：myEcon.troops = {cav,archer,inf,spear}
   function poolObj() { if (myEcon) { if (!myEcon.troops || typeof myEcon.troops !== "object") myEcon.troops = {}; return myEcon.troops; } return {}; }
   function poolTotal() { const p = poolObj(); return TROOPS.reduce((a, t) => a + (p[t.id] || 0), 0); }
   function poolAvail() { const p = poolObj(), a = {}; TROOPS.forEach(t => a[t.id] = p[t.id] || 0); return a; }
-  function poolSpend(squad) { const p = poolObj(); (squad || []).forEach(s => { p[s.type] = Math.max(0, (p[s.type] || 0) - s.hp); }); }
-  function poolAdd(list) { const p = poolObj(); (list || []).forEach(s => { p[s.type] = (p[s.type] || 0) + (s.hp || 0); }); }
   function poolBreakdown() { const p = poolObj(); return TROOPS.filter(t => (p[t.id] || 0) > 0).map(t => troopIcon(t.id) + (p[t.id] || 0)).join(" ") || "—"; }
   // 重新佈署可用量 = 兵力池 + 該區現有守軍(各兵種相加)
   function poolPlusGarrison(list) { const a = poolAvail(); (list || []).forEach(t => { if (t.hp > 0) a[t.type] = (a[t.type] || 0) + t.hp; }); return a; }
