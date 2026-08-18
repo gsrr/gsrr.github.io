@@ -7441,20 +7441,17 @@
   function terrResearch(key, track, cb) { terrPost("/api/territory/research", { file: key, track: track }, cb); }
   function terrRecruit(key, unit, qty, cb) { terrPost("/api/territory/recruit", { file: key, unit: unit, qty: qty }, cb); }
   function terrConscript(key, on, budget, cb) { terrPost("/api/territory/conscript", { file: key, on: !!on, budget: budget }, cb); }
-  // LEGACY / UNUSED (Phase 2A): the client-authoritative attack chain (terrEngage → client runBattle →
-  // terrAttackResult / releaseTerritory) has been retired. ALL territory combat now goes through the
-  // server-authoritative POST /api/territory/attack (see openRegion + openOutpost).
-  // Phase 8E deleted terrAttackResult() and, with it, the client's last reference to
-  // /api/territory/attack-result — the endpoint is gone server-side too. It had no callers (only its
-  // own definition), and the canonical attack response already carries everything the UI renders:
-  // attackerWon, defender, defenderOrder, defenderTech, gold, both garrisons and both survivor lists.
-  // There is no post-battle settlement callback; /api/territory/attack settles completely.
-  // terrEngage remains a read-only reveal on a still-routed endpoint and is out of 8E's scope.
-  function terrEngage(key, cb) {   // legacy fog-of-war reveal (read-only; no longer on any reachable path)
-    const t = authToken(); if (!t) { cb({ troops: [] }); return; }
-    fetch(withRoom("/api/territory/engage?token=" + encodeURIComponent(t)), { method: "POST", body: JSON.stringify({ file: key }) })
-      .then(r => r.ok ? r.json() : null).then(j => cb(j || { troops: [] })).catch(() => cb({ troops: [] }));
-  }
+  // RETIRED (Phase 2A -> 8E -> 8F.1): the client-authoritative attack chain
+  // (terrEngage -> client runBattle -> terrAttackResult / releaseTerritory) is gone. ALL territory
+  // combat goes through the server-authoritative POST /api/territory/attack, whose response already
+  // carries everything the UI renders: attackerWon, defender, defenderOrder, defenderTech, gold,
+  // both garrisons and both survivor lists. There is no pre-battle reveal and no post-battle
+  // settlement callback -- /api/territory/attack settles completely.
+  //
+  // Phase 8E removed terrAttackResult() and /api/territory/attack-result.
+  // Phase 8F.1 removed terrEngage() and /api/territory/engage. Engage had no callers, but it was
+  // not merely dead: it returned an enemy garrison and tech that /api/territory deliberately
+  // withholds (hidden: true), so retiring it also closes that fog-of-war bypass.
   // 世紀帝國式建築目錄：每棟建築一個圖示；tech=兵工廠(研發)、prod=生產建築(徵兵，兵種鎖定)
   const BUILDINGS = [
     { id: "armory",   icon: "🏭", name: "Armory",        kind: "tech" },

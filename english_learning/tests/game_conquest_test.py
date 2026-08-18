@@ -277,18 +277,29 @@ assert not hasattr(server.Handler, "_handle_territory_attack_result"), \
     "the handler itself must be gone, not merely unrouted"
 ok("attack-result RETIRED (Phase 8E): route and handler removed — 404, and no gold/ownership moved")
 
-# ---------- /engage is READ-ONLY — reveals the garrison but mutates nothing (no authority bypass) ----------
+# ---------- /engage is GONE (Phase 8F.1) - no pre-battle reveal endpoint exists ----------
+# This used to assert "engage reveals the garrison but mutates nothing". Phase 8F.1 removed the
+# route and handler, so the assertion moves from "harmless read" to "does not exist" - strictly
+# stronger. It was dead (no client caller since the openOutpost migration) AND it returned `troops`
+# and `tech` for ANY territory, which _handle_territory deliberately withholds from other players
+# (hidden: True); retiring it closes that fog-of-war bypass too.
 set_state({"cav": 7, "archer": 0, "inf": 0, "spear": 0}, 100,
           {"china:pHN": {"owner": "BOB", "troops": [{"type": "spear", "hp": 4}], "pop": 100}})
 server.set_room(CODE)
 snap_terr = json.dumps(server.load_territory_store(), sort_keys=True)
 snap_econ = json.dumps(server.load_econ_store(), sort_keys=True)
 code, body = call("POST", "/api/territory/engage?room=" + CODE, "tALICE", {"file": "china:pHN"})
-assert code == 200 and body.get("owner") == "BOB", (code, body)
+assert code == 404, ("engage must be an unknown route now", code, body)
+assert not hasattr(server.Handler, "_handle_territory_engage"), "engage handler must be gone too"
 server.set_room(CODE)
-assert json.dumps(server.load_territory_store(), sort_keys=True) == snap_terr, "engage must not mutate territory state"
-assert json.dumps(server.load_econ_store(), sort_keys=True) == snap_econ, "engage must not mutate economy/pool/gold"
-ok("engage is read-only: reveals garrison but mutates nothing (no authority bypass)")
+assert json.dumps(server.load_territory_store(), sort_keys=True) == snap_terr, "no territory mutation"
+assert json.dumps(server.load_econ_store(), sort_keys=True) == snap_econ, "no economy mutation"
+# and the fog of war it used to bypass is still enforced by the canonical read
+code, view = call("GET", "/api/territory?room=" + CODE, "tALICE")
+enemy = (view.get("holders") or {}).get("china:pHN") or {}
+assert enemy.get("hidden") is True and "troops" not in enemy and "tech" not in enemy, enemy
+ok("engage RETIRED (Phase 8F.1): route and handler removed - 404, no mutation, and the canonical "
+   "read still hides enemy troops/tech")
 
 # ============================ Phase 2B — can_attack() domain rule (pure) ============================
 W = server.terr_catalog                              # World Domain (authoritative adjacency from world-data)

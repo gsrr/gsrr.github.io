@@ -208,6 +208,12 @@ Flow: frontend `terrRecruit` → `POST /api/territory/recruit` → `_handle_terr
       both survivor lists, which is everything the UI renders (it replays `runBattle` with
       `preOrdered=true` for animation only). **Phase 8E removed `/api/territory/attack-result`**, so
       there is no settlement callback and no second settlement path.
+      **Phase 8F.1 removed `/api/territory/engage`** — the old pre-battle garrison reveal — so there
+      is no pre-battle preview endpoint either. It had no caller, and it returned `troops`/`tech` for
+      any territory, which the canonical `/api/territory` deliberately withholds from other players
+      (`hidden: true`); retiring it closed that fog-of-war bypass. The live conquest surface is now
+      `/api/territory` (read) plus claim / attack / build / recruit / research / release / conscript,
+      with **exactly one battle mutation endpoint**: `/api/territory/attack`.
 - **Attack eligibility today:** attacker must be logged in and have troops; target must be owned by someone else. **No adjacency, no source territory, no course requirement.** Any territory may be attacked regardless of location.
 - Defeat: attacker survivors return to pool (client-side); owner unchanged; attacker −50 gold, defender +50.
 

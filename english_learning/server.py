@@ -1136,8 +1136,6 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_territory_research()
         elif path == "/api/territory/recruit":
             self._handle_territory_recruit()
-        elif path == "/api/territory/engage":
-            self._handle_territory_engage()
         elif path == "/api/territory/attack":
             self._handle_territory_attack()
         elif path == "/api/territory/conscript":
@@ -1813,24 +1811,12 @@ class Handler(BaseHTTPRequestHandler):
             save_territory_store(store)
         self._send({"ok": True, "conscript": on, "conscriptBudget": budget})
 
-    # LEGACY / READ-ONLY (Phase 2A): the server-authoritative /api/territory/attack returns the
-    # defender order+tech itself, so the combat path no longer needs this pre-battle reveal. Kept as a
-    # READ-ONLY endpoint (it mutates nothing) — it cannot create an authority bypass. No reachable
-    # flow calls it after the openOutpost migration.
-    def _handle_territory_engage(self):
-        user = token_user(self._token())
-        if not user:
-            self._send({"error": "Not logged in"}, 401)
-            return
-        raw = self._body_json().get("file")
-        f = self._canon(raw) or (raw or "").strip()
-        with terr_lock:
-            store = load_territory_store()
-            h = store.get(f)
-        if not isinstance(h, dict) or not h.get("owner"):
-            self._send({"troops": [], "tech": {}})
-            return
-        self._send({"owner": h.get("owner"), "troops": h.get("troops") or [], "tech": h.get("tech") or {}})
+    # Phase 8F.1 REMOVED /api/territory/engage. It was a READ-ONLY pre-battle reveal from the old
+    # client-authoritative chain: the server-authoritative /api/territory/attack returns the defender
+    # order and tech itself, so no reachable flow had called it since the openOutpost migration. It
+    # mutated nothing, but it was not harmless either -- it returned `troops` and `tech` for ANY
+    # territory, which is exactly what _handle_territory withholds from other players (hidden: True).
+    # Retiring it removes a dead route AND closes that fog-of-war bypass.
 
     # Phase 8E REMOVED /api/territory/attack-result. Phase 2A had already made it authoritative-free —
     # battle gold (attacker −ATTACK_FAIL_GOLD / defender +DEFEND_GOLD) moved inside
