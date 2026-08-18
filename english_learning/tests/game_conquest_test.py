@@ -256,20 +256,26 @@ server.set_room(CODE)
 assert "china:pLN" not in server.load_territory_store(), "owner can self-abandon their own region"
 ok("release is owner-only: enemy neutralize blocked (403), self-abandon allowed")
 
-# ---------- /attack-result is a NON-AUTHORITATIVE no-op — cannot forge gold / ownership / outcome ----------
+# ---------- /attack-result is GONE (Phase 8E) — there is no post-battle settlement callback ----------
+# Phase 2A made this endpoint authoritative-free and it survived as a {"ok": true, "legacy": true}
+# no-op. Phase 8E removed the route entirely: nothing called it, and a routed endpoint that settles
+# nothing invites a second settlement path back. This assertion moved from "it is a harmless no-op"
+# to "it does not exist", which is strictly stronger — a no-op can be re-wired, a 404 cannot.
 set_state({"cav": 5, "archer": 0, "inf": 0, "spear": 0}, 100,
           {"china:pHE": {"owner": "BOB", "troops": [{"type": "inf", "hp": 1}], "pop": 100}})
 server.set_room(CODE)
 bob_gold0 = server.load_econ_store()["BOB"]["gold"]
-for win_flag in (True, False):                       # neither a claimed 'win' nor 'loss' may move any gold now
+for win_flag in (True, False):                       # neither a claimed 'win' nor 'loss' is routed at all
     code, body = call("POST", "/api/territory/attack-result?room=" + CODE, "tALICE",
                       {"file": "china:pHE", "win": win_flag})
-    assert code == 200 and "gold" not in body, (code, body)
+    assert code == 404, ("attack-result must be an unknown route now", code, body)
 server.set_room(CODE)
-assert server.load_econ_store()["ALICE"]["gold"] == 100, "attack-result must not change the attacker's gold"
-assert server.load_econ_store()["BOB"]["gold"] == bob_gold0, "attack-result must not change the defender's gold"
-assert server.load_territory_store()["china:pHE"]["owner"] == "BOB", "attack-result must not touch ownership"
-ok("attack-result retired: non-authoritative no-op (cannot forge gold / ownership / outcome)")
+assert server.load_econ_store()["ALICE"]["gold"] == 100, "the removed route moved no attacker gold"
+assert server.load_econ_store()["BOB"]["gold"] == bob_gold0, "the removed route moved no defender gold"
+assert server.load_territory_store()["china:pHE"]["owner"] == "BOB", "the removed route touched no ownership"
+assert not hasattr(server.Handler, "_handle_territory_attack_result"), \
+    "the handler itself must be gone, not merely unrouted"
+ok("attack-result RETIRED (Phase 8E): route and handler removed — 404, and no gold/ownership moved")
 
 # ---------- /engage is READ-ONLY — reveals the garrison but mutates nothing (no authority bypass) ----------
 set_state({"cav": 7, "archer": 0, "inf": 0, "spear": 0}, 100,

@@ -1140,8 +1140,6 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_territory_engage()
         elif path == "/api/territory/attack":
             self._handle_territory_attack()
-        elif path == "/api/territory/attack-result":
-            self._handle_territory_attack_result()
         elif path == "/api/territory/conscript":
             self._handle_territory_conscript()
         elif path == "/api/economy/set":
@@ -1834,16 +1832,14 @@ class Handler(BaseHTTPRequestHandler):
             return
         self._send({"owner": h.get("owner"), "troops": h.get("troops") or [], "tech": h.get("tech") or {}})
 
-    # LEGACY / RETIRED (Phase 2A): battle gold (attacker −ATTACK_FAIL_GOLD / defender +DEFEND_GOLD) is
-    # now applied AUTHORITATIVELY inside /api/territory/attack. This endpoint no longer mutates any
-    # gold/reward and cannot forge a battle outcome. Kept as a non-authoritative no-op purely so a
-    # stray old client does not error (it used to read `gold`, which is now simply omitted).
-    def _handle_territory_attack_result(self):
-        user = token_user(self._token())
-        if not user:
-            self._send({"error": "Not logged in"}, 401)
-            return
-        self._send({"ok": True, "legacy": True})   # 不再更動任何金幣/所有權/兵力
+    # Phase 8E REMOVED /api/territory/attack-result. Phase 2A had already made it authoritative-free —
+    # battle gold (attacker −ATTACK_FAIL_GOLD / defender +DEFEND_GOLD) moved inside
+    # /api/territory/attack — and it survived only as a `{"ok": true, "legacy": true}` no-op so a stray
+    # old client would not error. By Phase 8E nothing called it: its client helper (terrAttackResult)
+    # had no callers either, and the canonical attack response already carries everything the UI
+    # renders. A routed endpoint that settles nothing is a standing invitation to re-add a second
+    # settlement path, so it is gone; POST now falls through to the 404 every unknown path gets.
+    # There is NO post-battle settlement callback — /api/territory/attack settles completely.
 
     # Phase 2B — territorial conquest：攻擊必須「從自己的相鄰領地(source)出兵」打「敵方相鄰領地(target)」。
     #   出征兵取自 SOURCE 駐軍(不再是全域兵力池)；資格由 game.conquest.can_attack 權威判定(World-Domain 相鄰)。

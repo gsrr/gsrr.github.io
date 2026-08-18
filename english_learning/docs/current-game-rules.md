@@ -166,6 +166,10 @@ Flow: frontend `terrRecruit` → `POST /api/territory/recruit` → `_handle_terr
 - Per hit: `baseHit(A,D) = max(1, round(10*(atkBonus(A,D)+extraAtk) − 8*(defBonus(D,A)+extraDef)))`; `troopHit = max(1, round(baseHit * A.hp / DMG_SCALE))`, `DMG_SCALE = 12`. `extraAtk/extraDef` come from tech (0.10/level) plus a "closing +10%×engage" term for non-archer vs archer.
 - Round cap 16; then compare residual hp (attacker needs `sa > sd`, ties → defender holds). Winner: attacker wins only if defender wiped and attacker survives.
 - **Authority:** the client decides winner + survivors, then calls `POST /api/territory/attack-result` (which only awards gold from `win`) and, on a win, `release` + `claim` (client sends surviving troops). The backend **does not recompute or verify** the battle.
+  > **SUPERSEDED — historical (pre-Phase-2A).** Phase 2A made battle server-authoritative and moved
+  > battle gold inside `/api/territory/attack`. **Phase 8E deleted `/api/territory/attack-result`
+  > entirely** (route + handler); it had already been a `{"ok": true, "legacy": true}` no-op with no
+  > callers. **There is no post-battle settlement callback today** — see §Attack below.
 
 ### F2. Backend `ai_move` (`server.py`) — authoritative for AI attacks
 - Model: **aggregate force comparison**. `_force_power(force, enemy) = Σ hp * Σ_over_enemy_mix( frac * atkBonus(ty,ety) / defBonus(ety,ty) )`.
@@ -197,6 +201,13 @@ Flow: frontend `terrRecruit` → `POST /api/territory/recruit` → `_handle_terr
     - **Redeploying a territory you already own may leave it with ZERO garrison** — that is intentional and unchanged. The minimum guards ACQUISITION only, so your own ground can be stripped bare (and lost to an attacker) if you choose.
     - **Failure order** for a new territory: `room_required` → `held` → `qualification_required` → `troops_required` → `insufficient_troops`. Eligibility always answers before commitment, so an ineligible learner hears the qualification, not the troop count.
   - Attack (occupied): client `runBattle`; on win client calls `release` (territory → neutral) then `claim` (becomes owner with survivors). `attack-result` awards gold.
+    - **SUPERSEDED — historical.** Since Phase 2B a single `POST /api/territory/attack` **settles
+      completely**: it validates ownership/adjacency/source garrison and qualifications, resolves the
+      battle server-side, applies casualties, transfers ownership, moves gold, and persists — then
+      returns `attackerWon`, `defender`, `defenderOrder`, `defenderTech`, `gold`, both garrisons and
+      both survivor lists, which is everything the UI renders (it replays `runBattle` with
+      `preOrdered=true` for animation only). **Phase 8E removed `/api/territory/attack-result`**, so
+      there is no settlement callback and no second settlement path.
 - **Attack eligibility today:** attacker must be logged in and have troops; target must be owned by someone else. **No adjacency, no source territory, no course requirement.** Any territory may be attacked regardless of location.
 - Defeat: attacker survivors return to pool (client-side); owner unchanged; attacker −50 gold, defender +50.
 
