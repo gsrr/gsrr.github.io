@@ -138,10 +138,10 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.a1.core.002.read_along",
-          "english.a1.core.002.quiz3",
-          "english.a1.core.002.matching",
-          "english.a1.core.002.reorder",
+          "english.a1.core.002.read_along",
+          "english.a1.core.002.quiz3",
+          "english.a1.core.002.matching",
+          "english.a1.core.002.reorder",
           "english.a1.core.002.dictation"
         ]
       }
@@ -161,10 +161,10 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.a1.core.003.read_along",
-          "english.a1.core.003.quiz3",
-          "english.a1.core.003.matching",
-          "english.a1.core.003.reorder",
+          "english.a1.core.003.read_along",
+          "english.a1.core.003.quiz3",
+          "english.a1.core.003.matching",
+          "english.a1.core.003.reorder",
           "english.a1.core.003.dictation"
         ]
       }
@@ -184,10 +184,10 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.a1.core.004.read_along",
-          "english.a1.core.004.quiz3",
-          "english.a1.core.004.matching",
-          "english.a1.core.004.reorder",
+          "english.a1.core.004.read_along",
+          "english.a1.core.004.quiz3",
+          "english.a1.core.004.matching",
+          "english.a1.core.004.reorder",
           "english.a1.core.004.dictation"
         ]
       }
@@ -207,10 +207,10 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.a1.core.005.read_along",
-          "english.a1.core.005.quiz3",
-          "english.a1.core.005.matching",
-          "english.a1.core.005.reorder",
+          "english.a1.core.005.read_along",
+          "english.a1.core.005.quiz3",
+          "english.a1.core.005.matching",
+          "english.a1.core.005.reorder",
           "english.a1.core.005.dictation"
         ]
       }
@@ -230,10 +230,10 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.a1.core.006.read_along",
-          "english.a1.core.006.quiz3",
-          "english.a1.core.006.matching",
-          "english.a1.core.006.reorder",
+          "english.a1.core.006.read_along",
+          "english.a1.core.006.quiz3",
+          "english.a1.core.006.matching",
+          "english.a1.core.006.reorder",
           "english.a1.core.006.dictation"
         ]
       }
@@ -253,10 +253,10 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.a1.core.007.read_along",
-          "english.a1.core.007.quiz3",
-          "english.a1.core.007.matching",
-          "english.a1.core.007.reorder",
+          "english.a1.core.007.read_along",
+          "english.a1.core.007.quiz3",
+          "english.a1.core.007.matching",
+          "english.a1.core.007.reorder",
           "english.a1.core.007.dictation"
         ]
       }
@@ -276,10 +276,10 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.a1.core.008.read_along",
-          "english.a1.core.008.quiz3",
-          "english.a1.core.008.matching",
-          "english.a1.core.008.reorder",
+          "english.a1.core.008.read_along",
+          "english.a1.core.008.quiz3",
+          "english.a1.core.008.matching",
+          "english.a1.core.008.reorder",
           "english.a1.core.008.dictation"
         ]
       }
@@ -299,10 +299,10 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.a1.core.009.read_along",
-          "english.a1.core.009.quiz3",
-          "english.a1.core.009.matching",
-          "english.a1.core.009.reorder",
+          "english.a1.core.009.read_along",
+          "english.a1.core.009.quiz3",
+          "english.a1.core.009.matching",
+          "english.a1.core.009.reorder",
           "english.a1.core.009.dictation"
         ]
       }
@@ -322,10 +322,10 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.a1.core.010.read_along",
-          "english.a1.core.010.quiz3",
-          "english.a1.core.010.matching",
-          "english.a1.core.010.reorder",
+          "english.a1.core.010.read_along",
+          "english.a1.core.010.quiz3",
+          "english.a1.core.010.matching",
+          "english.a1.core.010.reorder",
           "english.a1.core.010.dictation"
         ]
       }
@@ -345,10 +345,10 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.a1.core.011.read_along",
-          "english.a1.core.011.quiz3",
-          "english.a1.core.011.matching",
-          "english.a1.core.011.reorder",
+          "english.a1.core.011.read_along",
+          "english.a1.core.011.quiz3",
+          "english.a1.core.011.matching",
+          "english.a1.core.011.reorder",
           "english.a1.core.011.dictation"
         ]
       }
@@ -368,10 +368,10 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.a1.core.012.read_along",
-          "english.a1.core.012.quiz3",
-          "english.a1.core.012.matching",
-          "english.a1.core.012.reorder",
+          "english.a1.core.012.read_along",
+          "english.a1.core.012.quiz3",
+          "english.a1.core.012.matching",
+          "english.a1.core.012.reorder",
           "english.a1.core.012.dictation"
         ]
       }
@@ -391,12 +391,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.005.read_along",
-          "english.prea1.core.005.quiz3",
-          "english.prea1.core.005.quiz4",
-          "english.prea1.core.005.matching",
-          "english.prea1.core.005.wh",
-          "english.prea1.core.005.cloze",
+          "english.prea1.core.005.read_along",
+          "english.prea1.core.005.quiz3",
+          "english.prea1.core.005.quiz4",
+          "english.prea1.core.005.matching",
+          "english.prea1.core.005.wh",
+          "english.prea1.core.005.cloze",
           "english.prea1.core.005.roleplay"
         ]
       }
@@ -416,12 +416,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.002.read_along",
-          "english.prea1.core.002.quiz3",
-          "english.prea1.core.002.quiz4",
-          "english.prea1.core.002.matching",
-          "english.prea1.core.002.wh",
-          "english.prea1.core.002.cloze",
+          "english.prea1.core.002.read_along",
+          "english.prea1.core.002.quiz3",
+          "english.prea1.core.002.quiz4",
+          "english.prea1.core.002.matching",
+          "english.prea1.core.002.wh",
+          "english.prea1.core.002.cloze",
           "english.prea1.core.002.roleplay"
         ]
       }
@@ -441,12 +441,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.001.read_along",
-          "english.prea1.core.001.quiz3",
-          "english.prea1.core.001.quiz4",
-          "english.prea1.core.001.matching",
-          "english.prea1.core.001.wh",
-          "english.prea1.core.001.cloze",
+          "english.prea1.core.001.read_along",
+          "english.prea1.core.001.quiz3",
+          "english.prea1.core.001.quiz4",
+          "english.prea1.core.001.matching",
+          "english.prea1.core.001.wh",
+          "english.prea1.core.001.cloze",
           "english.prea1.core.001.roleplay"
         ]
       }
@@ -466,12 +466,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.003.read_along",
-          "english.prea1.core.003.quiz3",
-          "english.prea1.core.003.quiz4",
-          "english.prea1.core.003.matching",
-          "english.prea1.core.003.wh",
-          "english.prea1.core.003.cloze",
+          "english.prea1.core.003.read_along",
+          "english.prea1.core.003.quiz3",
+          "english.prea1.core.003.quiz4",
+          "english.prea1.core.003.matching",
+          "english.prea1.core.003.wh",
+          "english.prea1.core.003.cloze",
           "english.prea1.core.003.roleplay"
         ]
       }
@@ -491,12 +491,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.004.read_along",
-          "english.prea1.core.004.quiz3",
-          "english.prea1.core.004.quiz4",
-          "english.prea1.core.004.matching",
-          "english.prea1.core.004.wh",
-          "english.prea1.core.004.cloze",
+          "english.prea1.core.004.read_along",
+          "english.prea1.core.004.quiz3",
+          "english.prea1.core.004.quiz4",
+          "english.prea1.core.004.matching",
+          "english.prea1.core.004.wh",
+          "english.prea1.core.004.cloze",
           "english.prea1.core.004.roleplay"
         ]
       }
@@ -516,12 +516,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.006.read_along",
-          "english.prea1.core.006.quiz3",
-          "english.prea1.core.006.quiz4",
-          "english.prea1.core.006.matching",
-          "english.prea1.core.006.wh",
-          "english.prea1.core.006.cloze",
+          "english.prea1.core.006.read_along",
+          "english.prea1.core.006.quiz3",
+          "english.prea1.core.006.quiz4",
+          "english.prea1.core.006.matching",
+          "english.prea1.core.006.wh",
+          "english.prea1.core.006.cloze",
           "english.prea1.core.006.roleplay"
         ]
       }
@@ -541,12 +541,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.007.read_along",
-          "english.prea1.core.007.quiz3",
-          "english.prea1.core.007.quiz4",
-          "english.prea1.core.007.matching",
-          "english.prea1.core.007.wh",
-          "english.prea1.core.007.cloze",
+          "english.prea1.core.007.read_along",
+          "english.prea1.core.007.quiz3",
+          "english.prea1.core.007.quiz4",
+          "english.prea1.core.007.matching",
+          "english.prea1.core.007.wh",
+          "english.prea1.core.007.cloze",
           "english.prea1.core.007.roleplay"
         ]
       }
@@ -566,12 +566,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.008.read_along",
-          "english.prea1.core.008.quiz3",
-          "english.prea1.core.008.quiz4",
-          "english.prea1.core.008.matching",
-          "english.prea1.core.008.wh",
-          "english.prea1.core.008.cloze",
+          "english.prea1.core.008.read_along",
+          "english.prea1.core.008.quiz3",
+          "english.prea1.core.008.quiz4",
+          "english.prea1.core.008.matching",
+          "english.prea1.core.008.wh",
+          "english.prea1.core.008.cloze",
           "english.prea1.core.008.roleplay"
         ]
       }
@@ -591,12 +591,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.009.read_along",
-          "english.prea1.core.009.quiz3",
-          "english.prea1.core.009.quiz4",
-          "english.prea1.core.009.matching",
-          "english.prea1.core.009.wh",
-          "english.prea1.core.009.cloze",
+          "english.prea1.core.009.read_along",
+          "english.prea1.core.009.quiz3",
+          "english.prea1.core.009.quiz4",
+          "english.prea1.core.009.matching",
+          "english.prea1.core.009.wh",
+          "english.prea1.core.009.cloze",
           "english.prea1.core.009.roleplay"
         ]
       }
@@ -616,12 +616,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.010.read_along",
-          "english.prea1.core.010.quiz3",
-          "english.prea1.core.010.quiz4",
-          "english.prea1.core.010.matching",
-          "english.prea1.core.010.wh",
-          "english.prea1.core.010.cloze",
+          "english.prea1.core.010.read_along",
+          "english.prea1.core.010.quiz3",
+          "english.prea1.core.010.quiz4",
+          "english.prea1.core.010.matching",
+          "english.prea1.core.010.wh",
+          "english.prea1.core.010.cloze",
           "english.prea1.core.010.roleplay"
         ]
       }
@@ -641,12 +641,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.011.read_along",
-          "english.prea1.core.011.quiz3",
-          "english.prea1.core.011.quiz4",
-          "english.prea1.core.011.matching",
-          "english.prea1.core.011.wh",
-          "english.prea1.core.011.cloze",
+          "english.prea1.core.011.read_along",
+          "english.prea1.core.011.quiz3",
+          "english.prea1.core.011.quiz4",
+          "english.prea1.core.011.matching",
+          "english.prea1.core.011.wh",
+          "english.prea1.core.011.cloze",
           "english.prea1.core.011.roleplay"
         ]
       }
@@ -666,12 +666,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.012.read_along",
-          "english.prea1.core.012.quiz3",
-          "english.prea1.core.012.quiz4",
-          "english.prea1.core.012.matching",
-          "english.prea1.core.012.wh",
-          "english.prea1.core.012.cloze",
+          "english.prea1.core.012.read_along",
+          "english.prea1.core.012.quiz3",
+          "english.prea1.core.012.quiz4",
+          "english.prea1.core.012.matching",
+          "english.prea1.core.012.wh",
+          "english.prea1.core.012.cloze",
           "english.prea1.core.012.roleplay"
         ]
       }
@@ -691,12 +691,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.013.read_along",
-          "english.prea1.core.013.quiz3",
-          "english.prea1.core.013.quiz4",
-          "english.prea1.core.013.matching",
-          "english.prea1.core.013.wh",
-          "english.prea1.core.013.cloze",
+          "english.prea1.core.013.read_along",
+          "english.prea1.core.013.quiz3",
+          "english.prea1.core.013.quiz4",
+          "english.prea1.core.013.matching",
+          "english.prea1.core.013.wh",
+          "english.prea1.core.013.cloze",
           "english.prea1.core.013.roleplay"
         ]
       }
@@ -716,12 +716,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.014.read_along",
-          "english.prea1.core.014.quiz3",
-          "english.prea1.core.014.quiz4",
-          "english.prea1.core.014.matching",
-          "english.prea1.core.014.wh",
-          "english.prea1.core.014.cloze",
+          "english.prea1.core.014.read_along",
+          "english.prea1.core.014.quiz3",
+          "english.prea1.core.014.quiz4",
+          "english.prea1.core.014.matching",
+          "english.prea1.core.014.wh",
+          "english.prea1.core.014.cloze",
           "english.prea1.core.014.roleplay"
         ]
       }
@@ -741,12 +741,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.015.read_along",
-          "english.prea1.core.015.quiz3",
-          "english.prea1.core.015.quiz4",
-          "english.prea1.core.015.matching",
-          "english.prea1.core.015.wh",
-          "english.prea1.core.015.cloze",
+          "english.prea1.core.015.read_along",
+          "english.prea1.core.015.quiz3",
+          "english.prea1.core.015.quiz4",
+          "english.prea1.core.015.matching",
+          "english.prea1.core.015.wh",
+          "english.prea1.core.015.cloze",
           "english.prea1.core.015.roleplay"
         ]
       }
@@ -766,12 +766,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.016.read_along",
-          "english.prea1.core.016.quiz3",
-          "english.prea1.core.016.quiz4",
-          "english.prea1.core.016.matching",
-          "english.prea1.core.016.wh",
-          "english.prea1.core.016.cloze",
+          "english.prea1.core.016.read_along",
+          "english.prea1.core.016.quiz3",
+          "english.prea1.core.016.quiz4",
+          "english.prea1.core.016.matching",
+          "english.prea1.core.016.wh",
+          "english.prea1.core.016.cloze",
           "english.prea1.core.016.roleplay"
         ]
       }
@@ -791,12 +791,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.017.read_along",
-          "english.prea1.core.017.quiz3",
-          "english.prea1.core.017.quiz4",
-          "english.prea1.core.017.matching",
-          "english.prea1.core.017.wh",
-          "english.prea1.core.017.cloze",
+          "english.prea1.core.017.read_along",
+          "english.prea1.core.017.quiz3",
+          "english.prea1.core.017.quiz4",
+          "english.prea1.core.017.matching",
+          "english.prea1.core.017.wh",
+          "english.prea1.core.017.cloze",
           "english.prea1.core.017.roleplay"
         ]
       }
@@ -816,12 +816,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.018.read_along",
-          "english.prea1.core.018.quiz3",
-          "english.prea1.core.018.quiz4",
-          "english.prea1.core.018.matching",
-          "english.prea1.core.018.wh",
-          "english.prea1.core.018.cloze",
+          "english.prea1.core.018.read_along",
+          "english.prea1.core.018.quiz3",
+          "english.prea1.core.018.quiz4",
+          "english.prea1.core.018.matching",
+          "english.prea1.core.018.wh",
+          "english.prea1.core.018.cloze",
           "english.prea1.core.018.roleplay"
         ]
       }
@@ -841,12 +841,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.019.read_along",
-          "english.prea1.core.019.quiz3",
-          "english.prea1.core.019.quiz4",
-          "english.prea1.core.019.matching",
-          "english.prea1.core.019.wh",
-          "english.prea1.core.019.cloze",
+          "english.prea1.core.019.read_along",
+          "english.prea1.core.019.quiz3",
+          "english.prea1.core.019.quiz4",
+          "english.prea1.core.019.matching",
+          "english.prea1.core.019.wh",
+          "english.prea1.core.019.cloze",
           "english.prea1.core.019.roleplay"
         ]
       }
@@ -866,12 +866,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.020.read_along",
-          "english.prea1.core.020.quiz3",
-          "english.prea1.core.020.quiz4",
-          "english.prea1.core.020.matching",
-          "english.prea1.core.020.wh",
-          "english.prea1.core.020.cloze",
+          "english.prea1.core.020.read_along",
+          "english.prea1.core.020.quiz3",
+          "english.prea1.core.020.quiz4",
+          "english.prea1.core.020.matching",
+          "english.prea1.core.020.wh",
+          "english.prea1.core.020.cloze",
           "english.prea1.core.020.roleplay"
         ]
       }
@@ -891,12 +891,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.021.read_along",
-          "english.prea1.core.021.quiz3",
-          "english.prea1.core.021.quiz4",
-          "english.prea1.core.021.matching",
-          "english.prea1.core.021.wh",
-          "english.prea1.core.021.cloze",
+          "english.prea1.core.021.read_along",
+          "english.prea1.core.021.quiz3",
+          "english.prea1.core.021.quiz4",
+          "english.prea1.core.021.matching",
+          "english.prea1.core.021.wh",
+          "english.prea1.core.021.cloze",
           "english.prea1.core.021.roleplay"
         ]
       }
@@ -916,12 +916,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.022.read_along",
-          "english.prea1.core.022.quiz3",
-          "english.prea1.core.022.quiz4",
-          "english.prea1.core.022.matching",
-          "english.prea1.core.022.wh",
-          "english.prea1.core.022.cloze",
+          "english.prea1.core.022.read_along",
+          "english.prea1.core.022.quiz3",
+          "english.prea1.core.022.quiz4",
+          "english.prea1.core.022.matching",
+          "english.prea1.core.022.wh",
+          "english.prea1.core.022.cloze",
           "english.prea1.core.022.roleplay"
         ]
       }
@@ -941,12 +941,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.023.read_along",
-          "english.prea1.core.023.quiz3",
-          "english.prea1.core.023.quiz4",
-          "english.prea1.core.023.matching",
-          "english.prea1.core.023.wh",
-          "english.prea1.core.023.cloze",
+          "english.prea1.core.023.read_along",
+          "english.prea1.core.023.quiz3",
+          "english.prea1.core.023.quiz4",
+          "english.prea1.core.023.matching",
+          "english.prea1.core.023.wh",
+          "english.prea1.core.023.cloze",
           "english.prea1.core.023.roleplay"
         ]
       }
@@ -966,12 +966,12 @@
         ],
         "grants": [],
         "requiredActivityIds": [
-          "english.prea1.core.024.read_along",
-          "english.prea1.core.024.quiz3",
-          "english.prea1.core.024.quiz4",
-          "english.prea1.core.024.matching",
-          "english.prea1.core.024.wh",
-          "english.prea1.core.024.cloze",
+          "english.prea1.core.024.read_along",
+          "english.prea1.core.024.quiz3",
+          "english.prea1.core.024.quiz4",
+          "english.prea1.core.024.matching",
+          "english.prea1.core.024.wh",
+          "english.prea1.core.024.cloze",
           "english.prea1.core.024.roleplay"
         ]
       }
