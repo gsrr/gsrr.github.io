@@ -465,3 +465,279 @@ retryable state and never silently falls back to local authoritative scoring.
 
 Reward and qualification neutrality: both matching activities use `rewardPolicy: "none"` with no
 grants, so gold-bearing activities remain **1/10** and production `completionPolicy` count remains **0**.
+
+# Phase 9B — curriculum lesson != conquest gate (the A1/001 pilot)
+
+Phase 9A inventoried **57 complete content units** on disk (24 Pre-A1 + 12 A1 + 12 A2 + 5 B1 + 4
+Taipei) but found only the **4 Taipei lessons** completable. `english.a1.core.001` was registered
+with no `completionPolicy` — so invisible on every surface — and carried A1/**002**'s title
+("My Weekend") while pointing at `A1/001` ("Yesterday at the Park").
+
+9B migrates that ONE lesson as the template for the other 52. It changes registry metadata only.
+
+## The decoupling this establishes
+
+`completionPolicy` (lesson), `rewardPolicy` (activity/lesson/course) and `grants` (activity) are
+three **independent** registry fields. Therefore:
+
+- A lesson can be **completable** and pay **both** learning rewards while granting **no
+  qualification**. Completion, mastery and reward do NOT imply a world unlock.
+- A **qualification is an optional game/world consequence**, not a property of learning. Only
+  `world-data/territories/*.json` decides what a qualification unlocks, and it names qualification
+  ids — never lesson ids.
+- A **CEFR course is not a game map.** `english.a1.core` is curriculum; the China map is a game
+  board. They are keyed alike today only by the client's `GEO_MAPS` convention, which 9B does not
+  touch and future migrations must not deepen.
+
+The four Taipei gates each grant a qualification because five Taipei territories are gated on them.
+The A1/001 gate grants nothing, and that is the point: it is curriculum, not a gate.
+
+## As-built
+
+| | Taipei x4 | A1/001 pilot |
+|---|---|---|
+| completion policy | `average_required_activities` v2, 7 activities | `average_required_activities` v1, 5 activities |
+| gate activity | `<lesson>.quiz3` | `english.a1.core.001.quiz3` |
+| gate reward | `standard_activity_pass` (PASS_GOLD) | `standard_activity_pass` (PASS_GOLD) |
+| mastery reward | badge + `lesson_mastery_gold` (MASTERY_GOLD) | badge + `lesson_mastery_gold` (MASTERY_GOLD) |
+| qualification granted | 1 each | **none** |
+| world consequence | 5 gated territories | **none** |
+
+Invariant transition: gold-bearing activities **4 -> 5**, active completion policies **4 -> 5**,
+qualifications **4 -> 4**, world-data **unchanged**. Amounts stay server-configured; the registry
+names policies and never states a number (§15).
+
+## Representation rule
+
+Only **migrated, authoritative** lessons may be presented as available modern lessons. The A1
+campaign therefore shows `0 / 1 Lessons Mastered`, not `1 / 12` — the other 11 A1 units are not yet
+registered, and claiming them would be untrue.
+
+The remaining **53** generic units are **content awaiting registry migration, not dead content**.
+They are still live today as the checkpoint question bank: `buildExamPool()` fetches all 57
+`<contentPath>.json` files for their `cloze` items (Pre-A1 112 / A1 48 / A2 48 / B1 20 questions).
+Deleting that content would empty the checkpoints, so content deletion and legacy-UI deletion are
+separate decisions.
+
+# Phase 9B.1 — migration infrastructure (no content migrated)
+
+9B migrated one lesson and had to edit **twelve** maintained test files, because each duplicated the
+current census in its own Python list. With 52 units still to migrate that cost is O(files) per
+phase. 9B.1 removes it, fixes a reward-validator blind spot, and records the template 9C will follow.
+No lesson was registered, no reward or qualification changed, world-data and lesson content are
+byte-identical.
+
+## Registry-derived invariant testing
+
+`tests/curriculum_expectations.py` draws one line:
+
+- **DERIVED** — which activities pay, which lessons are completable, which activities grant a
+  qualification. These populations grow every time curriculum is migrated, so a test that hardcodes
+  them asserts today's inventory rather than a product rule.
+- **FIXED** — the four Conquest qualification ids and the five territories that require them. That
+  *is* the product contract: it is the entire coupling between learning and the game world, and
+  world-data names those exact strings. Adding a qualification should cost a deliberate test edit.
+
+Two helpers assert semantics over whatever population exists: `assert_completion_model()` (policy
+type is implemented, the pass mark is the single global threshold, `requiredActivityIds` is non-empty,
+deduped, registered and belongs to that same lesson) and `assert_reward_model()` (paying == declaring,
+every gate pays exactly PASS_GOLD through the one shared policy, non-gates pay nothing, every gate's
+lesson is completable, every completable lesson carries the badge + at most one economic mastery
+reward, and qualifications are exactly the four Conquest ones).
+
+`tests/migration_invariants_test.py` proves those guards can actually fail: eight negative controls
+mutate the registry and require rejection. The deliberate loosening is scoped precisely — a new
+activity that *declares* the gate policy is accepted (that is what migration looks like), while a
+curriculum gate that *grants a qualification* is rejected.
+
+## Reward-policy validator discovery
+
+A lesson carries a **list** of reward policies. `lesson_reward_policy_of()` returns the **first**, and
+the Taipei lessons declare `["lesson_mastery_badge", "lesson_mastery_gold"]` — cosmetic first. Both
+the validator and `learning_rewards_test.py` collected usage through that singular accessor, so
+`lesson_mastery_gold` was reported *"inert (unreferenced)"*, `economic policies in use` listed only
+`standard_activity_pass`, and the "did a lesson start paying GOLD" warning could never fire — while
+four lessons had been paying MASTERY_GOLD since Phase 7C.2. `ACTIVE_POLICY_IDS` was stale for the
+same reason: nothing ever detected the reference.
+
+Fixed by collecting usage **per scope** from `lesson_reward_policies_of()` (plural), reporting
+`REFERENCED by activity xN, lesson xN, course xN`, validating that each policy is attached only where
+its own `scopes` allow, and adding `lesson_mastery_gold` to the production allowlist. The three truly
+unused policies (`campaign_complete_gold`, `campaign_profile_frame`, `lesson_mastery_boost`) still
+report inert and remain unreferenceable.
+
+## The Phase 9C migration template (descriptive — no generator yet)
+
+Derived from the A1/001 pilot. For each unit `<LEVEL>/<NNN>`:
+
+| Field | Value |
+|---|---|
+| lesson id | `english.<pack>.<course>.<NNN>` (e.g. `english.a1.core.002`) |
+| title | `<LEVEL> · <NNN> <the title in lessons.json>` — **verify against the content file** |
+| contentPath | `<LEVEL>/<NNN>` |
+| courseId / contentPack | `english.a1.core` / `english.a1` |
+| activities | `read_along` (stt), `quiz3` (yes_no), `matching` (vocab), `reorder`, `dictation` |
+| PASS_GOLD gate | `<lesson>.quiz3`, `rewardPolicy: standard_activity_pass`, `grants: []` |
+| other activities | `rewardPolicy: "none"`, `grants: []` |
+| completionPolicy | `average_required_activities`, `version: 1`, `passMark: 80` |
+| requiredActivityIds | the five above, in canonical tab order |
+| lesson rewardPolicy | `["lesson_mastery_badge", "lesson_mastery_gold"]` |
+| lesson grants | `[]` |
+| qualification | **none** — ordinary curriculum grants no world unlock |
+| world-data | **no change** |
+
+Per unit this yields PASS_GOLD 160 + MASTERY_GOLD 640 = 800, one new gold-bearing activity and one
+new completion policy, and **zero** new qualifications.
+
+## A1 activity-shape findings
+
+All twelve A1 units have a text file, a role-play scenario, and `quiz3`(5), `quiz4`(5), `wh`(5),
+`cloze`(4), `reorder`(4), `dictation`(4); `clozeType` is `category` throughout. The only variation is
+`vocab` item count — 10 (001), 7 (002), 6 (003-012) — which is a content quantity, not a structural
+variant. Per-item key shapes are identical to the registered Taipei reference for every grader-
+relevant block, every `quiz3`/`quiz4` answer is `Yes`/`No`, and every `wh`/`cloze` item carries
+distractors. **A1/002-012 can therefore use one template mechanically, and `quiz3` is available for
+all twelve.**
+
+The template registers 5 of the 8 available blocks. `quiz4`, `wh` and `cloze` are deliberately left
+unregistered: `cloze` is the checkpoint question source (`buildExamPool()`), and widening the required
+set is a separate product decision to take once for all 53 units, not per lesson.
+
+## Ordinary curriculum is qualification-free
+
+A paying gate is either a **world gate** (grants a Conquest qualification; today the four Taipei
+`quiz3` activities) or a **curriculum gate** (grants nothing, still pays PASS_GOLD; today only
+A1/001). The invariant is expressed over the derived split, never over a named list, so future A1,
+A2, B1 and Pre-A1 lessons need no test edit merely for being qualification-free.
+
+## Two open UI truthfulness items (documented, not fixed)
+
+**Course vs Campaign.** `index.html` appends the literal word `" Campaign"` to the server course
+title at four sites (`6335`, `6341`, `5915`, and `SCOPE_GROUPS` at `5901`). Course metadata carries
+only `contentPackId`, `title` and `rewardPolicy`, and the campaigns view emits only
+`title/lessonIds/completed/...`, so nothing distinguishes curriculum from campaign. The recommended
+model is for the **client to derive the term from world consequence** — a course whose lessons grant a
+qualification that world-data requires is a Campaign; otherwise it is a Course. That needs no new
+registry field and matches the 9B definition, but it does define a user-facing concept across four
+sites, so it belongs to a later UI phase rather than an infrastructure one.
+
+**Pre-A1 "24 lessons".** `index.html:4280` takes `n = lv.articles.length` from `lessons.json` (24 for
+Pre-A1) and `4294` renders `n + ' lessons'` whenever nothing is mastered, while `tracked` — the count
+of articles with an authoritative row — is 0. The card therefore advertises 24 lessons none of which
+is an openable modern lesson, and `lv.articles` does not even include the four Taipei lessons that
+are. The truthful form is to distinguish available *readings* from migrated *lessons*, e.g.
+`24 readings · 0 migrated`, deriving the second number from the registry. One line, but it is a
+user-facing copy decision, so it is recorded here rather than changed.
+
+# Phase 9C — the A1 course is migrated (12 authoritative curriculum lessons)
+
+A1/002-012 were registered using the Phase 9B.1 template verbatim. **Registry metadata only** — no
+server, client, world-data, `lessons.json` or content change.
+
+| | Before | After |
+|---|---|---|
+| registered lessons | 5 | **16** (Taipei x4 + A1 x12) |
+| registered activities | 33 | **88** |
+| gold-bearing activities | 5 | **16** |
+| active completion policies | 5 | **16** |
+| **qualifications** | 4 | **4** |
+| courses emitting a campaign | 2 | 2 |
+| A1 authoritative lessons | 1 | **12** |
+
+Each A1 lesson: five authoritative activities (`read_along`, `quiz3`, `matching`, `reorder`,
+`dictation`), `average_required_activities` v1 at passMark 80, `quiz3` as the only paying gate
+(`standard_activity_pass`), mastery paying the badge + `lesson_mastery_gold`. **Worth 800 total
+(160 + 640), and granting nothing.**
+
+`quiz4`, `wh` and `cloze` stay unregistered. `cloze` in particular is the checkpoint question source:
+`buildExamPool()` still reads all 57 `<contentPath>.json` files, and the A1 pool is still 48 questions
+with each A1 file contributing exactly once.
+
+## A1 lessons are curriculum, not gates
+
+No A1 lesson or activity grants a qualification; the registry total stays at **4**, all Taipei. No
+`world-data` file mentions `english.a1`, the same five Taipei territories remain gated by the same four
+qualifications, and a learner who masters all twelve A1 lessons unlocks no territory. A CEFR course is
+game-independent: it pays into the shared gold economy and stops there.
+
+## Remaining unmigrated content
+
+53 units at the start of 9C, **42 after it**: 24 generic Pre-A1, 12 A2, 5 B1 (plus the A1 `quiz4`/`wh`
+blocks that remain content-only). They are still live as the checkpoint question bank, so they are
+content awaiting migration, not dead content.
+
+## What the test-census work bought
+
+9B needed twelve test-file edits to migrate ONE lesson. 9C migrated ELEVEN and needed **nine**
+assertion conversions — all of them censuses that 9B.1 had missed, none a product invariant. The
+derived helpers introduced in 9B.1 absorbed the growth without change. The residual censuses were:
+`READ_ALONG`/`MATCHING` name sets and the deterministic-activity equality in
+`learning_attempt_test.py`, its `AVAILABLE` roster, `badged` in `learning_rewards_test.py`, the
+availability predicate in `learning_lesson_completion_test.py`, the completable-lesson lists in
+`learning_roleplay_test.py` and `learning_rule_a_parity_test.py`, and two censuses in
+`curriculum_pilot_test.py` itself. All are now derived; `ROLEPLAY`'s Taipei-only name census is the one
+known remaining census and will need attention only if role-play is ever registered elsewhere.
+
+# Phase 9E — Pre-A1 migrated: 40 authoritative curriculum lessons
+
+The 24 generic Pre-A1 units are now server-authoritative. **Registry metadata only** — no server,
+client, world-data, `lessons.json` or content change.
+
+| | Before | After |
+|---|---|---|
+| registered lessons | 16 | **40** (Taipei 4 + A1 12 + Pre-A1 24) |
+| registered activities | 88 | **256** |
+| gold-bearing activities | 16 | **40** |
+| active completion policies | 16 | **40** |
+| role-play activities | 4 | **28** |
+| **qualifications** | 4 | **4** |
+| courses emitting a campaign | 2 | **3** |
+
+## Pre-A1 uses the TAIPEI family, not A1's
+
+Pre-A1 carries no `reorder` and no `dictation`, and it *does* carry `quiz4`, `wh`, `cloze` and a
+role-play scenario. Its shape is Taipei's, so the family is the Taipei seven:
+
+`read_along · quiz3 · quiz4 · matching(vocab) · wh · cloze · roleplay`
+
+`average_required_activities` v1 at passMark 80 over those seven; `quiz3` is the single paying gate
+(`standard_activity_pass`); mastery pays the badge + `lesson_mastery_gold`. **800 per lesson, and no
+qualification.** New course `english.prea1.core` ("Pre-A1 Core Readings") in the existing
+`english.prea1` pack, with no campaign reward.
+
+The activity-set decision is therefore **per content family**, not global: A1 = five activities,
+Pre-A1/Taipei = seven. A2/B1 must be inspected on their own terms before 9F.
+
+## Pre-A1/002 keeps its four questions
+
+`Pre-A1/002` has 4 `quiz3` and 4 `quiz4` items where every sibling has 5. Nothing was padded, copied
+or invented: the engine has **no minimum-item rule** — `validate_learning_registry.shape_problems()`
+requires only non-empty, well-formed items — so a 4-item gate grades 100% and pays the same
+PASS_GOLD. Vocabulary counts likewise stay uneven (5×3, 6×19, 7×2). Content was not flattened to fit
+the registry.
+
+## Role-play census retired
+
+`learning_attempt_test.py` asserted the role-play set was *exactly* the four Taipei ids. That count
+has no product meaning — every migrated family brings its own role-play — while the real invariant is
+that a role-play is a stateful server-owned session and is therefore **not** reachable through the
+stateless attempt endpoint. The census is now semantic: unique ids, every `lessonId` resolves (no
+orphans), the id matches its lesson, no `contentKey`, grants nothing — plus the existing
+not-gradable-via-`/attempt` assertion. Future curriculum growth needs no edit.
+
+## Presentation
+
+The level grid's "24 lessons" for Pre-A1 is now **true**: all 24 articles have authoritative rows
+(measured 24/24, versus 0/24 before). Learning Home derives everything from the registry — no
+separate hardcoded count exists. Home expands one campaign card and collapses the rest behind
+"N more campaigns"; that is pre-existing behaviour and 9E did not redesign it.
+
+## Remaining unmigrated content
+
+**17 units: 12 A2 + 5 B1.** They stay live as part of the checkpoint question bank — `buildExamPool()`
+still reads all 57 `<contentPath>.json` files (Pre-A1 112 / A1 48 / A2 48 / B1 20 questions,
+unchanged) — so they are content awaiting migration, not dead content.
+
+`lessons.json`, `LEVEL_ARCS`, `screenLevel`, `screenArticle`, `findArticleByFile()` and
+`buildExamPool()` all remain **load-bearing**. The board-map branch and `openOutpost()` remain
+unreachable dead code, as they were before 9E. Retirement belongs to a dedicated cleanup phase.

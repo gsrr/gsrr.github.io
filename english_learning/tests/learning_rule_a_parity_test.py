@@ -22,6 +22,8 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, "tests"))   # Phase 9B.1 shared derived expectations
+import curriculum_expectations as CX  # noqa: E402
 from learning import completion as C, registry as R  # noqa: E402
 
 passed = 0
@@ -157,8 +159,9 @@ for lid in ARCS:
     assert pol and pol["version"] == 2 and pol["passMark"] == 80, (lid, pol)
     assert pol["requiredActivityIds"] == ["%s.%s" % (lid, COVERED[lv]) for lv in LEVELS], \
         (lid, pol["requiredActivityIds"])
-assert sorted(l for l in reg.lessons if reg.completion_available(l)) == sorted(ARCS), \
-    "exactly the four Taipei lessons are active"
+CX.assert_completion_model(reg)
+assert set(ARCS) <= set(l for l in reg.lessons if reg.completion_available(l)), \
+    "the four Taipei lessons are active; migrated curriculum may grow the population"
 assert reg.retired_policy_versions("english.prea1.taipei.zoo") == [1], "Zoo v1 is spent"
 ok("§39 all SEVEN legacy Rule A levels have a server-scored activity on all four Taipei lessons, and "
    "each active v2 policy requires exactly that set in level order; Zoo's retired v1 stays unusable")

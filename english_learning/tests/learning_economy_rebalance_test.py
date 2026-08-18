@@ -15,6 +15,8 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, "tests"))   # Phase 9B.1: shared registry-derived expectations
+import curriculum_expectations as CX  # noqa: E402
 from game import config as GC  # noqa: E402
 from learning import (api as L, completion as C, qualifications as Q,  # noqa: E402
                       registry as R, reward_ledger as LG, rewards as W)
@@ -50,7 +52,10 @@ assert not hasattr(GC, "LESSON_MASTERY_GOLD"), (
 GATES = sorted("english.prea1.taipei.%s.quiz3" % s
                for s in ("zoo", "mrt", "market", "park"))
 gold_bearing = sorted(a for a in reg.activities if svc.reward_for(a)["amount"] > 0)
-assert gold_bearing == GATES, gold_bearing          # Phase 7C.2a: all four gates
+# Phase 9B.1: the paying population is DERIVED from policy declarations, then the reward model is
+# asserted over every member. Migrating curriculum grows the population without editing this test.
+assert gold_bearing == CX.declared_gates(reg), gold_bearing
+CX.assert_reward_model(reg, svc, GC.PASS_GOLD)
 assert {reg.reward_policy_of(a) for a in GATES} == {"standard_activity_pass"}
 for aid in GATES:
     assert svc.reward_for(aid)["amount"] == 160, aid

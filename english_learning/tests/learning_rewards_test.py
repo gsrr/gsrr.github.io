@@ -14,6 +14,8 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, "tests"))   # Phase 9B.1: shared registry-derived expectations
+import curriculum_expectations as CX  # noqa: E402
 from learning import (api as L, completion as C, registry as R,  # noqa: E402
                       reward_ledger as LG, rewards as W)
 
@@ -36,7 +38,8 @@ ZOO = "english.prea1.taipei.zoo"
 GATES = sorted("english.prea1.taipei.%s.quiz3" % s
                for s in ("zoo", "mrt", "market", "park"))
 gold_bearing = sorted(a for a in reg.activities if svc.reward_for(a)["amount"] > 0)
-assert gold_bearing == GATES, gold_bearing
+assert gold_bearing == CX.declared_gates(reg), gold_bearing
+CX.assert_reward_model(reg, svc, 10000)   # this suite INJECTS 10000 to prove amounts are not in content
 assert {reg.reward_policy_of(a) for a in GATES} == {"standard_activity_pass"}, \
     "the gates must share one policy - no per-lesson reward ids"
 assert svc.reward_for(ZOO + ".quiz3") == {"type": "gold", "amount": 10000, "itemId": None,
@@ -44,7 +47,9 @@ assert svc.reward_for(ZOO + ".quiz3") == {"type": "gold", "amount": 10000, "item
 # Phase 5F activated the first production rewards. They are COSMETIC: the four Taipei lessons grant
 # a badge, the Taipei campaign grants a trophy, and nothing else grants anything.
 badged = sorted(l for l in reg.lessons if reg.lesson_reward_policy_of(l) == "lesson_mastery_badge")
-assert badged == sorted("english.prea1.taipei." + s for s in ("zoo", "mrt", "market", "park")), badged
+# Phase 9C: derived. `badged` filters on REWARD policy while completable_lessons filters on
+# COMPLETION availability — two independent registry fields, so this is a cross-check, not a tautology.
+assert badged == CX.completable_lessons(reg), badged
 assert [c for c in reg.courses if reg.course_reward_policy_of(c) == "campaign_trophy"] == \
     ["english.prea1.taipei"]
 # Phase 7C.2: a lesson carries a LIST of policies, so checking only reward_policy_of() (the

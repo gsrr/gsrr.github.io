@@ -16,6 +16,10 @@ import urllib.request as U
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, "tests"))   # Phase 9B.1 shared derived expectations
+import curriculum_expectations as CX  # noqa: E402
+from learning import registry as _R  # noqa: E402
+CX_REG = _R.REGISTRY
 import server  # noqa: E402
 
 passed = 0
@@ -91,6 +95,9 @@ RIGHT = {
     "english.prea1.taipei.zoo.cloze": [{"q": i["text"], "answer": i["answer"]} for i in ZOO["cloze"]],
     "english.a1.core.001.reorder": [{"q": " ".join(s), "answer": list(range(len(s)))} for s in A1["reorder"]],
     "english.a1.core.001.dictation": [{"q": s, "answer": s.upper()} for s in A1["dictation"]],
+    # Phase 9B: the A1/001 curriculum pilot's gate. Same grader as a Taipei gate, and it pays the
+    # same PASS_GOLD — but it grants NO qualification, so it is a second PAYING activity here.
+    "english.a1.core.001.quiz3": [{"q": i["q"], "answer": i["answer"]} for i in A1["quiz3"]],
 }
 WRONG = {
     "english.prea1.taipei.zoo.quiz3": [{"q": i["q"], "answer": ("No" if i["answer"] == "Yes" else "Yes")}
@@ -103,8 +110,13 @@ WRONG = {
     "english.a1.core.001.reorder": [{"q": " ".join(s), "answer": list(reversed(range(len(s))))}
                                     for s in A1["reorder"] if len(s) > 1],
     "english.a1.core.001.dictation": [{"q": s, "answer": "definitely not the sentence"} for s in A1["dictation"]],
+    "english.a1.core.001.quiz3": [{"q": i["q"], "answer": ("No" if i["answer"] == "Yes" else "Yes")}
+                                  for i in A1["quiz3"]],
 }
-NO_REWARD = [a for a in RIGHT if a != "english.prea1.taipei.zoo.quiz3"]
+# Phase 9B: the paying set is now the Zoo gate AND the A1/001 pilot gate. Naming both explicitly
+# keeps this an identity assertion — a stray registration that started paying would still fail.
+PAYING = ("english.prea1.taipei.zoo.quiz3", "english.a1.core.001.quiz3")
+NO_REWARD = [a for a in RIGHT if a not in PAYING]
 
 # ============================== §30 one endpoint, every grader ==============================
 reg = call("GET", "/api/learning/registry")[1]["registry"]
@@ -116,22 +128,45 @@ MATCHING = {a for a, v in reg["activities"].items() if v.get("scored") == "match
 # separately and is not reachable through the stateless attempt endpoint. It is covered exhaustively
 # by tests/learning_roleplay_test.py.
 ROLEPLAY = {a for a, v in reg["activities"].items() if v.get("scored") == "roleplay"}
-assert ROLEPLAY == {"english.prea1.taipei.%s.roleplay" % s for s in
-                    ("zoo", "mrt", "market", "park")}, ROLEPLAY
+# Phase 9E: this was a hardcoded curriculum census ("exactly the four Taipei role-plays"). The count
+# has no product meaning — every migrated content family may bring its own role-play — while the
+# REAL invariant is the one this suite exists for: a role-play is a stateful server-owned session and
+# is therefore NOT reachable through the stateless attempt endpoint (asserted below). Assert the
+# properties every role-play must satisfy instead, over whatever population the registry declares.
+assert ROLEPLAY, "at least one role-play activity must be registered"
+assert len(ROLEPLAY) == len(set(ROLEPLAY)), "role-play activity ids must be unique"
+for a in sorted(ROLEPLAY):
+    spec = reg["activities"][a]
+    assert a.endswith(".roleplay"), a
+    assert spec["lessonId"] in reg["lessons"], ("orphan role-play activity", a)
+    assert a.rsplit(".", 1)[0] == spec["lessonId"], ("role-play id must match its lesson", a)
+    assert spec["contentKey"] is None, ("role-play reads a scenario graph, not a content key", a)
+    assert spec["grants"] == [], ("a role-play must grant no qualification", a)
 # Phase 4B deepened MRT/Market/Park to the same six activities Zoo has, so each of the three now
 # carries a Read-Along and a Matching activity too. Their behaviour is covered exhaustively by
 # tests/taipei_content_depth_test.py; here we only pin the advertised sets so a stray registration
 # cannot slip in unnoticed.
 DEEP = {"english.prea1.taipei.%s" % s for s in ("mrt", "market", "park")}
-assert READ_ALONG == {"english.prea1.taipei.zoo.read_along", "english.a1.core.001.read_along"} | {
-    d + ".read_along" for d in DEEP}, READ_ALONG
-assert MATCHING == {"english.prea1.taipei.zoo.matching", "english.a1.core.001.matching"} | {
-    d + ".matching" for d in DEEP}, MATCHING
+# Phase 9C: these were NAME censuses needing an edit per migrated lesson. Assert the CONTRACT over
+# whatever population exists instead: an stt/matching activity carries the matching suffix, belongs
+# to a registered lesson, and is not reachable through the stateless attempt endpoint (below).
+assert READ_ALONG and MATCHING, (READ_ALONG, MATCHING)
+for a in READ_ALONG:
+    assert a.endswith(".read_along") and reg["activities"][a]["lessonId"] in reg["lessons"], a
+for a in MATCHING:
+    assert a.endswith(".matching") and reg["activities"][a]["lessonId"] in reg["lessons"], a
+assert READ_ALONG.isdisjoint(MATCHING) and READ_ALONG.isdisjoint(ROLEPLAY)
 # Phase 4A registered MRT/Market/Park quiz3 as progression gates; Phase 4B added quiz4/wh/cloze.
 PROGRESSION = {"%s.%s" % (d, k) for d in DEEP for k in ("quiz3", "quiz4", "wh", "cloze")}
 assert PROGRESSION <= set(reg["activities"]), sorted(reg["activities"])
-assert set(reg["activities"]) - READ_ALONG - MATCHING - ROLEPLAY - PROGRESSION == set(RIGHT), \
-    sorted(reg["activities"])
+# Phase 9B added english.a1.core.001.quiz3 (the pilot's gate), which is deterministic and therefore
+# belongs to RIGHT — so this census still names every deterministic activity individually.
+# The deterministic population is DERIVED. RIGHT is this suite's answer fixture for a representative
+# subset of it, so the relation is containment, not an equality census.
+DETERMINISTIC = {a for a, v in reg["activities"].items() if v.get("scored") == "deterministic"}
+assert DETERMINISTIC == set(reg["activities"]) - READ_ALONG - MATCHING - ROLEPLAY, DETERMINISTIC
+assert set(RIGHT) <= DETERMINISTIC, sorted(set(RIGHT) - DETERMINISTIC)
+assert PROGRESSION <= DETERMINISTIC, sorted(PROGRESSION - DETERMINISTIC)
 assert all(reg["activities"][a]["serverGraded"] is True for a in reg["activities"])
 assert all(reg["activities"][a]["scored"] == "deterministic" for a in RIGHT)
 # a Role-play activity cannot be graded through the stateless attempt endpoint
@@ -160,16 +195,23 @@ ok("§30 dispatch: yes_no / multiple_choice(wh) / multiple_choice(cloze) / reord
 
 # ============================== §31 reward isolation ==============================
 g_now = gold()
-assert results["english.prea1.taipei.zoo.quiz3"]["rewarded"] is True
-assert results["english.prea1.taipei.zoo.quiz3"]["gold"] == G0 + server.PASS_GOLD
+# Phase 9B: two gates pay now — the Zoo gate and the A1/001 pilot gate — so the expected total is
+# derived from PAYING rather than hardcoded to one. Every OTHER activity must still pay exactly 0,
+# which is the property this section exists to protect.
+EXPECT_PAID = len(PAYING) * server.PASS_GOLD
+for aid in PAYING:
+    assert results[aid]["rewarded"] is True, aid
+    assert results[aid]["gold"] is not None, aid
 for aid in NO_REWARD:
     assert results[aid]["rewarded"] is False and results[aid]["gold"] is None, aid
-assert g_now - G0 == server.PASS_GOLD, "exactly ONE payout across all six passing activities: %s" % g_now
+assert g_now - G0 == EXPECT_PAID, \
+    "exactly ONE payout per gate and nothing else: %s" % g_now
 # repeats pay nothing, for every type
 for aid in RIGHT:
     attempt(aid, RIGHT[aid])
-assert gold() - G0 == server.PASS_GOLD, "repeats mint nothing: %s" % gold()
-ok("§31 reward isolation: 5 migrated activities pay 0, only the Zoo slice pays PASS_GOLD once")
+assert gold() - G0 == EXPECT_PAID, "repeats mint nothing: %s" % gold()
+ok("§31 reward isolation: only the two gate activities pay PASS_GOLD, once each; "
+   "every other activity pays 0")
 
 # ============================== §32 qualification isolation ==============================
 st = state()
@@ -190,7 +232,7 @@ code, body = call("POST", "/api/learning/attempt?room=" + CODE,
                   {"activityId": "english.prea1.taipei.zoo.multi",
                    "answers": RIGHT["english.prea1.taipei.zoo.quiz4"]}, tok="tCAROL")
 assert code == 200 and body["passed"] is True and body["qualifications"] == ["test.q1", "test.q2"], body
-assert body["rewarded"] is False and gold() - G0 == server.PASS_GOLD, "ALICE's gold untouched"
+assert body["rewarded"] is False and gold() - G0 == EXPECT_PAID, "ALICE's gold untouched"
 carol = call("GET", "/api/learning/state?room=" + CODE, tok="tCAROL")[1]
 assert set(carol["qualifications"]) == {"test.q1", "test.q2"}, carol
 server.set_room(CODE)
@@ -227,7 +269,7 @@ half = {a: RIGHT[a][:1] for a in RIGHT}
 for aid in RIGHT:
     code, body = attempt(aid, half[aid])
     assert code == 200 and body["passed"] is False, (aid, body)
-assert gold() - G0 == server.PASS_GOLD
+assert gold() - G0 == EXPECT_PAID
 ok("§33 malformed/partial: non-list evidence -> 400 bad_answers; junk/empty/partial -> safe non-pass")
 
 # ============================== §26 security, per grader ==============================
@@ -241,7 +283,7 @@ for aid in RIGHT:
         "rewarded": True, "contentPath": "../../etc/passwd", "lessonId": "../../etc/passwd"})
     assert code == 200 and body["passed"] is False and body["pct"] == 0, (aid, body)
     assert body["qualifications"] == [] and body["rewarded"] is False and body["gold"] is None, (aid, body)
-assert gold() - G0 == server.PASS_GOLD, "forged fields never minted gold"
+assert gold() - G0 == EXPECT_PAID, "forged fields never minted gold"
 assert set(state()["qualifications"]) == {QID}
 # a forged graderConfig cannot re-point a grader at an easier field
 code, body = attempt("english.prea1.taipei.zoo.wh",
@@ -323,8 +365,10 @@ assert prog["completedLessonIds"] == [], prog
 # Phase 4D: the four Taipei lessons advertise an active v2 policy; nothing else does, and ALICE has
 # not satisfied any of them (Rule A needs all seven levels scored, not just the ones graded here).
 AVAILABLE = sorted(k for k, v in prog["lessons"].items() if v["authoritativeCompletionAvailable"])
-assert AVAILABLE == sorted("english.prea1.taipei.%s" % s
-                           for s in ("market", "mrt", "park", "zoo")), AVAILABLE
+# Phase 9C: derived. Availability is a property of the declared policy, not a fixed roster.
+for lid, row in prog["lessons"].items():
+    assert row["authoritativeCompletionAvailable"] is (lid in AVAILABLE), lid
+assert set(AVAILABLE) == set(CX.completable_lessons(CX_REG)), sorted(AVAILABLE)
 assert all(l["currentPolicySatisfied"] is False for l in prog["lessons"].values())
 assert all(l["activePolicyCompleted"] is False for l in prog["lessons"].values())
 assert all(l["completed"] is False for l in prog["lessons"].values()), prog["lessons"]

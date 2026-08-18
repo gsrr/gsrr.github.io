@@ -16,6 +16,8 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, "tests"))   # Phase 9B.1: shared registry-derived expectations
+import curriculum_expectations as CX  # noqa: E402
 from learning import (api as L, content as C, registry as R,  # noqa: E402
                       stt_scoring as S)
 
@@ -177,7 +179,7 @@ ok("§29 second real lesson (A1/001) scores and persists identically — no Zoo 
 
 # ============================== §30 Phase 3D dormancy ==============================
 active = sorted(lid for lid in svc.registry.lessons if svc.registry.completion_available(lid))
-assert active == ["english.prea1.taipei.market", "english.prea1.taipei.mrt", "english.prea1.taipei.park", "english.prea1.taipei.zoo"], active   # Phase 4D: the four Taipei v2 policies
+CX.assert_completion_model(svc.registry)   # shape of every completable lesson, not a fixed list
 everything = {"activityCompletions": {aid: {"passedAt": 1, "pct": 100, "rewarded": False}
                                       for aid in svc.registry.activities}}
 for lid in svc.registry.lessons:

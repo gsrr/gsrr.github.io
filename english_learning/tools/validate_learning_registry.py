@@ -208,21 +208,39 @@ def main():
             print("    retired versions: %-24s %s (never reusable)" % (lid, rv))
     # ---- Phase 5E: the reward framework, and what production actually references ----
     import learning.rewards as _W
-    used = {}
+    # Phase 9B.1: discovery is per SCOPE and reads every policy a scope declares. A lesson carries a
+    # LIST (Phase 7C.2 gave the Taipei lessons a cosmetic badge AND lesson_mastery_gold), so reading
+    # lesson_reward_policy_of() — the FIRST entry — silently hid the gold one: the validator called
+    # lesson_mastery_gold "inert (unreferenced)" and printed "economic policies in use:
+    # ['standard_activity_pass']" while four lessons were really paying MASTERY_GOLD. The alarm that
+    # exists to catch "a lesson started paying gold" could not fire. Use the plural accessor.
+    used, by_scope = {}, {"activity": {}, "lesson": {}, "course": {}}
+
+    def _use(scope, pid, ref):
+        used.setdefault(pid, []).append(scope + ":" + ref)
+        by_scope[scope].setdefault(pid, []).append(ref)
+
     for aid in reg.activities:
-        used.setdefault(reg.reward_policy_of(aid), []).append("activity:" + aid)
+        _use("activity", reg.reward_policy_of(aid), aid)
     for lid in reg.lessons:
-        rp = reg.lesson_reward_policy_of(lid)
         if reg.completion_available(lid):
-            used.setdefault(rp, []).append("lesson:" + lid)
+            for rp in reg.lesson_reward_policies_of(lid):      # EVERY policy, not just the first
+                _use("lesson", rp, lid)
     for cid in reg.courses:
-        used.setdefault(reg.course_reward_policy_of(cid), []).append("course:" + cid)
+        _use("course", reg.course_reward_policy_of(cid), cid)
+    # A policy may only be attached where its own spec allows it (rewards.SCOPES).
+    for scope, pids in by_scope.items():
+        for pid, refs in pids.items():
+            if not _W.allows_scope(pid, scope):
+                err("reward policy %r is not allowed at %s scope but is attached to %s"
+                    % (pid, scope, refs[:3]))
     print("  reward framework: %d policies defined, types %s"
           % (len(_W.policy_ids()), sorted({_W.type_of(x) for x in _W.policy_ids()})))
     for pid in _W.policy_ids():
-        refs = [r for r in used.get(pid, []) if not r.endswith(":none")]
         spec = _W.POLICIES[pid]
-        state = "REFERENCED by %d" % len(used.get(pid, [])) if used.get(pid) else "inert (unreferenced)"
+        where = ["%s x%d" % (s, len(by_scope[s][pid])) for s in ("activity", "lesson", "course")
+                 if by_scope[s].get(pid)]
+        state = ("REFERENCED by " + ", ".join(where)) if where else "inert (unreferenced)"
         print("    %-26s type=%-9s scopes=%-22s %s"
               % (pid, spec["type"], ",".join(spec["scopes"]), state))
     # An inert (framework-only) policy must never be referenced by production content.
@@ -236,7 +254,8 @@ def main():
     # This warning is the "did a lesson start paying GOLD" signal, so it must test the reward's
     # economics, not merely that a policy is set. Before Phase 5F the only non-'none' policy was
     # gold, so `!= "none"` happened to be equivalent; a cosmetic reward is not a payout.
-    paid_lessons = [l for l in with_policy if _W.is_economic(reg.lesson_reward_policy_of(l))]
+    paid_lessons = [l for l in with_policy
+                    if any(_W.is_economic(p) for p in reg.lesson_reward_policies_of(l))]
     if paid_lessons:
         warn("cross-domain: %d lesson(s) carry a gold-bearing completion reward: %s"
              % (len(paid_lessons), paid_lessons))

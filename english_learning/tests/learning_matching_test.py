@@ -14,6 +14,8 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, "tests"))   # Phase 9B.1: shared registry-derived expectations
+import curriculum_expectations as CX  # noqa: E402
 from learning import api as L, matching as M, registry as R  # noqa: E402
 
 passed = 0
@@ -260,12 +262,12 @@ assert svc.reward_for(ZOO)["amount"] == 0
 # Phase 7C.2a: the paying set is exactly the four quiz3 gates — matching itself still pays nothing.
 assert sorted(a for a in svc.registry.activities
               if svc.registry.reward_policy_of(a) != "none") == \
-    sorted("english.prea1.taipei.%s.quiz3" % s for s in ("zoo", "mrt", "market", "park")), \
-    "the paying set must be exactly the four quiz3 gates"
+    CX.declared_gates(svc.registry), \
+    "the paying set is the four Taipei gates plus the Phase 9B pilot gate — matching never pays"
 assert o["lessonCompleted"] is False and o["lessonCompletedNow"] is False
 assert st4.get("lessonCompletions") is None or st4["lessonCompletions"] == {}
 active = sorted(l for l in svc.registry.lessons if svc.registry.completion_available(l))
-assert active == ["english.prea1.taipei.market", "english.prea1.taipei.mrt", "english.prea1.taipei.park", "english.prea1.taipei.zoo"], active   # Phase 4D: the four Taipei v2 policies
+CX.assert_completion_model(svc.registry)   # shape of every completable lesson, not a fixed list
 # matching alone never completes a lesson: the other six required levels have no evidence here
 assert o["lessonCompleted"] is False
 ok("§37/§38 neutrality: matching pays 0 gold, grants 0 qualifications, production policies still 0")

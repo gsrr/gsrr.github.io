@@ -20,6 +20,8 @@ import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, "tests"))   # Phase 9B.1: shared registry-derived expectations
+import curriculum_expectations as CX  # noqa: E402
 from learning import (api as L, completion as C, qualifications as Q,   # noqa: E402
                       registry as R, rewards as W)
 
@@ -320,13 +322,14 @@ prod = L.LearningService(content_root=ROOT, reward_amounts={"PASS_GOLD": 10000})
 TAIPEI4 = ["english.prea1.taipei.zoo", "english.prea1.taipei.mrt",
            "english.prea1.taipei.market", "english.prea1.taipei.park"]
 active = sorted(lid for lid in prod.registry.lessons if prod.registry.completion_available(lid))
-assert active == sorted(TAIPEI4), active
+CX.assert_completion_model(prod.registry)
+assert set(TAIPEI4) <= set(active), active
 assert prod.registry.retired_policy_versions("english.prea1.taipei.zoo") == [1]
 assert R.validate(R.DATA) == [], R.validate(R.DATA)
 for lid in prod.registry.lessons:
     ev = prod.evaluate_lesson(lid, {})
     assert ev["completed"] is False, lid
-    assert ev["available"] is (lid in TAIPEI4), lid
+    assert ev["available"] is bool(prod.registry.completion_policy_of(lid)), lid   # derived
     # even a player who passed literally every registered activity completes no lesson: Rule A
     # averages SCORES, and a pass record carries no numerator/denominator
     everything = {"activityCompletions": {aid: {"passedAt": 1, "pct": 100, "rewarded": False}

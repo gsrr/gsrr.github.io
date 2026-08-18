@@ -23,6 +23,8 @@ import urllib.request as U
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, "tests"))   # Phase 9B.1: shared registry-derived expectations
+import curriculum_expectations as CX  # noqa: E402
 from learning import api as L, registry as R, roleplay as RP  # noqa: E402
 
 passed = 0
@@ -268,14 +270,16 @@ assert (combined.get("qualifications") or {}) == {}
 GATES = sorted("english.prea1.taipei.%s.quiz3" % s
                for s in ("zoo", "mrt", "market", "park"))
 gold_bearing = sorted(a for a in reg.activities if svc.reward_for(a)["amount"] > 0)
-assert gold_bearing == GATES, gold_bearing   # Phase 7C.2a: four gates, still no role-play gold
+assert gold_bearing == CX.declared_gates(reg), gold_bearing
+CX.assert_reward_model(reg, svc, 10000)   # injected amount, as above
 for aid in AIDS.values():
     assert svc.reward_for(aid)["amount"] == 0, aid
 assert sorted(reg.qualifications) == [
     "english.prea1.taipei.market.quiz3.pass", "english.prea1.taipei.mrt.quiz3.pass",
     "english.prea1.taipei.park.quiz3.pass", "english.prea1.taipei.zoo"], sorted(reg.qualifications)
-assert sorted(l for l in reg.lessons if reg.completion_available(l)) == ["english.prea1.taipei.market", "english.prea1.taipei.mrt", "english.prea1.taipei.park", "english.prea1.taipei.zoo"], \
-    "the four Taipei v2 policies are active (Phase 4D)"
+CX.assert_completion_model(reg)
+assert set(CX.TAIPEI4) <= set(l for l in reg.lessons if reg.completion_available(l)), \
+    "the four Taipei v2 policies are active; the curriculum population may grow freely"
 pv = svc.progress_view(combined)
 # Role-play evidence ALONE never completes a lesson: the other six required levels are unscored here.
 assert pv["completedLessonIds"] == [], pv["completedLessonIds"]

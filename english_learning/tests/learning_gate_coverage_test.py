@@ -18,6 +18,8 @@ import threading
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, "tests"))   # Phase 9B.1: shared registry-derived expectations
+import curriculum_expectations as CX  # noqa: E402
 from game import config as GC                                          # noqa: E402
 from learning import (api as L, completion as C, qualifications as Q,  # noqa: E402
                       registry as R, reward_ledger as LG, rewards as W)
@@ -56,14 +58,17 @@ def pay(state, slug, now=100):
 
 # ====================== the shape: four gates, one policy, one amount ======================
 gold_bearing = sorted(a for a in reg.activities if svc.reward_for(a)["amount"] > 0)
-assert gold_bearing == GATES, gold_bearing
-assert len(gold_bearing) == 4, gold_bearing
+# Phase 9B.1: derived population, not a count. `len == 5` was true of today's inventory only.
+assert gold_bearing == CX.declared_gates(reg), gold_bearing
+CX.assert_reward_model(reg, svc, GC.PASS_GOLD)
 # identity, not merely count — a regression that swapped one lesson's gate for another would keep
 # the count at 4 and must still fail here
-assert gold_bearing == ["english.prea1.taipei.market.quiz3",
-                        "english.prea1.taipei.mrt.quiz3",
-                        "english.prea1.taipei.park.quiz3",
-                        "english.prea1.taipei.zoo.quiz3"], gold_bearing
+# The FOUR Taipei gates stay pinned by identity: they are the world contract (each grants a
+# Conquest qualification). Curriculum gates are derived and may grow freely alongside them.
+assert CX.qualification_bearing(reg) == ["english.prea1.taipei.market.quiz3",
+                                        "english.prea1.taipei.mrt.quiz3",
+                                        "english.prea1.taipei.park.quiz3",
+                                        "english.prea1.taipei.zoo.quiz3"], CX.qualification_bearing(reg)
 assert {reg.reward_policy_of(a) for a in GATES} == {"standard_activity_pass"}, \
     "all four gates must resolve through ONE shared policy — no per-lesson reward ids"
 for aid in GATES:

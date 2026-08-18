@@ -27,10 +27,17 @@ A policy is `{type, scopes, amountKey?, itemId?, once}`:
     itemId    the opaque item the learner comes to own (cosmetic/profile/gameplay only)
     once      grant at most once per (scope, sourceId, policy)
 
-EVERYTHING EXCEPT `standard_activity_pass` IS UNUSED BY PRODUCTION CONTENT. The extra policies below
-exist so each reward TYPE has a reference implementation that validation and tests can exercise;
-they are inert until some registry entry names them, and `tools/validate_learning_registry.py`
-reports exactly which policies are actually referenced.
+Production references FOUR policies today: `standard_activity_pass` (activity gold),
+`lesson_mastery_badge` + `lesson_mastery_gold` (lesson cosmetic + gold, activated by Phase 7C.2) and
+`campaign_trophy` (course cosmetic). The rest exist so each reward TYPE has a reference
+implementation that validation and tests can exercise; they are inert until some registry entry
+names them, and `tools/validate_learning_registry.py` reports exactly which policies are actually
+referenced, per scope.
+
+A lesson carries a LIST of reward policies, so "what does production reference" must be collected
+from `lesson_reward_policies_of()` (plural). Phase 9B.1 fixed both the validator and this module's
+allowlist after they read only the FIRST policy of each lesson and therefore reported
+`lesson_mastery_gold` as inert while it was really paying MASTERY_GOLD on four lessons.
 """
 
 DEFAULT_POLICY = "standard_activity_pass"
@@ -51,12 +58,13 @@ POLICIES = {
     "standard_activity_pass": {"type": "gold", "scopes": ("activity",),
                                "amountKey": "PASS_GOLD", "itemId": None, "once": True},
 
-    # ---- INERT reference implementations, one per type (Phase 5E). Nothing names these. ----
-    # A lesson-scope gold reward. Its amount key is intentionally NOT PASS_GOLD: sizing a mastery
-    # reward is a product decision, and the key stays unsupplied until that decision is made, so
-    # resolve() yields 0 even if something did name it.
+    # A lesson-scope gold reward, ACTIVE since Phase 7C.2: server.py supplies LESSON_MASTERY_GOLD,
+    # so this resolves to MASTERY_GOLD for the lessons that name it. Its amount key is deliberately
+    # not PASS_GOLD — a mastery reward is sized independently of a gate reward.
     "lesson_mastery_gold": {"type": "gold", "scopes": ("lesson",),
                             "amountKey": "LESSON_MASTERY_GOLD", "itemId": None, "once": True},
+
+    # ---- INERT reference implementations (Phase 5E). Nothing names these. ----
     "campaign_complete_gold": {"type": "gold", "scopes": ("course",),
                                "amountKey": "CAMPAIGN_COMPLETE_GOLD", "itemId": None, "once": True},
     "lesson_mastery_badge": {"type": "cosmetic", "scopes": ("lesson",),
@@ -71,9 +79,14 @@ POLICIES = {
 
 # Policies production content is allowed to reference today. Anything else is framework-only and the
 # validator will say so, so "we shipped an inert policy by accident" cannot happen quietly.
-# Phase 5F activated the two COSMETIC policies as the first production use of the framework. The
-# remaining four (gold x2, profile, gameplay) stay off this list and therefore stay unreferenceable.
-ACTIVE_POLICY_IDS = ("none", "standard_activity_pass", "lesson_mastery_badge", "campaign_trophy")
+# Phase 5F activated the two COSMETIC policies as the first production use of the framework; Phase
+# 7C.2 activated `lesson_mastery_gold` when mastery started paying MASTERY_GOLD. That activation was
+# missing here until Phase 9B.1 — not because the payout was wrong (it was, and is, real) but because
+# the validator's discovery read only each lesson's FIRST policy, so nothing ever flagged the gap.
+# Still off this list, and therefore still unreferenceable: campaign_complete_gold,
+# campaign_profile_frame, lesson_mastery_boost.
+ACTIVE_POLICY_IDS = ("none", "standard_activity_pass", "lesson_mastery_badge",
+                     "lesson_mastery_gold", "campaign_trophy")
 
 
 def is_policy(policy_id):

@@ -24,6 +24,8 @@ import urllib.request as U
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, "tests"))   # Phase 9B.1: shared registry-derived expectations
+import curriculum_expectations as CX  # noqa: E402
 from game import conquest  # noqa: E402
 from learning import api as L, completion as C, registry as R, rewards as W  # noqa: E402
 import territory_catalog  # noqa: E402
@@ -67,7 +69,9 @@ FULL = [90] * 7
 
 # ====================== the four v2 policies are active and correctly shaped ======================
 active = sorted(l for l in reg.lessons if reg.completion_available(l))
-assert active == sorted(LIDS.values()), active
+# Phase 9B.1: assert the POLICY SHAPE of every completable lesson instead of naming the set.
+CX.assert_completion_model(reg)
+assert set(LIDS.values()) <= set(active), active
 for slug, lid in LIDS.items():
     pol = reg.completion_policy_of(lid)
     assert pol["type"] == "average_required_activities", lid
@@ -213,7 +217,7 @@ ok("§19/§20 old readers unaffected: completed/completedAt/policyVersion keep f
 GATES = sorted("english.prea1.taipei.%s.quiz3" % s
                for s in ("zoo", "mrt", "market", "park"))
 gold_bearing = sorted(a for a in reg.activities if svc.reward_for(a)["amount"] > 0)
-assert gold_bearing == GATES, gold_bearing
+assert gold_bearing == CX.declared_gates(reg), gold_bearing
 assert svc.reward_for("english.prea1.taipei.zoo.quiz3")["amount"] == 10000
 st = {}
 for slug, lid in LIDS.items():

@@ -12,6 +12,8 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, "tests"))   # Phase 9B.1: shared registry-derived expectations
+import curriculum_expectations as CX  # noqa: E402
 from game import conquest  # noqa: E402
 from learning import api as L, qualifications as Q, registry as R, rewards as W  # noqa: E402
 import territory_catalog  # noqa: E402
@@ -198,7 +200,8 @@ assert conquest.can_attack("ALICE", START, "taipei:daan", SQUAD, cat, STORE,
 assert reg.completion_available("english.prea1.taipei.zoo") is True, "Zoo now carries v2"
 assert reg.completion_policy_of("english.prea1.taipei.zoo")["version"] == 2
 assert reg.retired_policy_versions("english.prea1.taipei.zoo") == [1], "v1 stays retired"
-assert len([l for l in reg.lessons if reg.completion_available(l)]) == 4
+CX.assert_completion_model(reg)
+assert set(CX.TAIPEI4) <= set(l for l in reg.lessons if reg.completion_available(l))
 # Conquest has never depended on lesson completion, and Phase 4D did not change that: Daan's gate is
 # still the Zoo quiz3 qualification, so activating v2 cannot harden any territory.
 assert cat.attack_requirements("taipei:daan") == [ZOO_Q]
@@ -209,7 +212,7 @@ ok("§38 backward compatibility: Daan/Zoo gate unchanged and old progress still 
 GATES = sorted("english.prea1.taipei.%s.quiz3" % s
                for s in ("zoo", "mrt", "market", "park"))
 paying = sorted(a for a in reg.activities if reg.reward_policy_of(a) != "none")
-assert paying == GATES, paying
+assert paying == CX.declared_gates(reg), paying
 # Phase 7C.2a: the three gates added in this content phase now pay the SAME gate reward as
 # Zoo, through the same policy and the same injected amount. Nothing here names a number.
 for aid in GATES:

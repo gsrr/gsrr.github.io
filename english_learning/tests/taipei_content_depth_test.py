@@ -28,6 +28,8 @@ import urllib.request as U
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, "tests"))   # Phase 9B.1: shared registry-derived expectations
+import curriculum_expectations as CX  # noqa: E402
 from game import conquest  # noqa: E402
 from learning import api as L, completion as C, registry as R, rewards as W  # noqa: E402
 import territory_catalog  # noqa: E402
@@ -250,7 +252,7 @@ GATES = sorted("english.prea1.taipei.%s.quiz3" % s
                for s in ("zoo", "mrt", "market", "park"))
 gold_bearing = sorted(a for a in reg.activities
                       if svc.reward_for(a)["amount"] > 0)
-assert gold_bearing == GATES, gold_bearing
+assert gold_bearing == CX.declared_gates(reg), gold_bearing
 assert svc.reward_for("english.prea1.taipei.zoo.quiz3")["amount"] == 10000, "PASS_GOLD unchanged"
 for lid in LESSONS:
     for suffix in SUFFIXES:
@@ -264,7 +266,8 @@ for lid in LESSONS:
                                                   "lesson_mastery_gold"], lid
     assert reg.lesson_qualification_ids_for(lid) == [], lid
 active = sorted(l for l in reg.lessons if reg.completion_available(l))
-assert active == sorted(LESSONS + ["english.prea1.taipei.zoo"]), active
+CX.assert_completion_model(reg)
+assert set(LESSONS + ["english.prea1.taipei.zoo"]) <= set(active), active
 assert reg.retired_policy_versions("english.prea1.taipei.zoo") == [1]
 ok("§14/§37 the four quiz3 gates are the gold-bearing set (Phase 7C.2a); every non-gate "
    "activity still pays nothing and grants nothing; the four Taipei v2 policies are active; "
