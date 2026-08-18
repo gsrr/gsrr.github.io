@@ -45,14 +45,20 @@ stale keys for retired content; version blindness).
 | Surface | What it is | Conquest? |
 |---|---|---|
 | `openRegion()` — geo maps (Pre-A1 Taiwan, China, World) | **canonical territories** with catalog ids, populations and designer-owned learning requirements | yes — claim/attack, server-verified |
-| `openOutpost()` — board-map nodes (levels with no geo map: A1 / A2 / B1) | **learning nodes**: a lesson's identity, its authoritative state, and one way into it | **no** |
+| Learning Home lesson card — `openLessonFromHome()` | the **only** lesson door: a registry lessonId resolved to its content, with server-authoritative progress | **no** |
 
-A board-map node is **not a claimable territory** and never was: those nodes are keyed by lesson file
-(`A1/001`), which is not a canonical territory id — `resolve_any('A1/001')` returns `None` and
-`POST /api/territory/claim` answers `400 unresolved`. Until Phase 7G the panel nonetheless rendered
-population, garrison, owner, Occupy/Deploy, buildings and an attack panel, gated by the local
-practice average. Phase 7G removed that conquest half outright rather than disabling it, which also
-removed the last place a local score controlled a world action.
+Phase 9G **deleted the board map entirely.** Its nodes were keyed by lesson file (`A1/001`), which is
+not a canonical territory id — `resolve_any('A1/001')` returns `None` and `POST /api/territory/claim`
+answers `400 unresolved` — so the conquest half it once rendered (population, garrison, owner,
+Occupy/Deploy, buildings, and an attack panel gated by the local practice average) could never
+complete. Phase 7G removed that conquest half, leaving a learning-only node panel (`openOutpost()`).
+
+Phase 9G removed the rest, because the branch was **unreachable**: it was `selectLevel()`'s fallback
+for a level with no `GEO_MAPS` entry, and every level in `lessons.json` (Pre-A1, A1, A2, B1) has one.
+Proven at runtime on all four levels — `selectLevel()` always returns through `renderGeoMap()`, and
+zero `.map-node` elements are ever created. With all 57 curriculum units reachable from Learning Home,
+it was a second lesson-entry architecture with no way in. `selectLevel()` is now a four-line delegate
+to the geo engine, and `openOutpost()`, `moveHeroThenGo()` and the board-map CSS are gone.
 
 Local practice scores unlock nothing anywhere in the product.
 

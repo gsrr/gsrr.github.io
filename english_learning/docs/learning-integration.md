@@ -889,3 +889,75 @@ assertions rather than bumped 40 -> 57: `optional_activity_test.py` now asserts
 `completable == gates == len(reg.lessons)` and `catalogued >= required` for every lesson, and
 `prea1_migration_test.py` keeps its exact Pre-A1 figures (24 x 7 = 168) while deriving the global
 total. A sixth family will need no edit to either file.
+
+# Phase 9G — the legacy board-map lesson entry is deleted
+
+With all 57 known units migrated (Phase 9F), the product had **two** ways into a lesson. Phase 9G
+removed the one nobody could reach.
+
+## What was removed, and why it was dead
+
+`selectLevel(i)` opened the geo map when the level had a `GEO_MAPS` entry, and otherwise fell through
+to a 167-line "board map": a snaking path of lesson nodes with a walking hero token, whose lesson node
+opened `openOutpost()` (a lesson modal) and whose boss node started the checkpoint exam.
+
+Every level in `lessons.json` — Pre-A1, A1, A2, B1 — has a `GEO_MAPS` entry, so the fallback was
+unreachable for every level that exists. Re-proven at runtime on current HEAD: for all four levels
+`selectLevel()` returned through `renderGeoMap()`, the screen title was the map's ("Pre-A1 · Taiwan
+台灣", ...) and never the fallback's "Battle Map", and **zero `.map-node` elements** were created — a
+decisive discriminator, because `.map-node` was assigned at exactly one place in the file, inside that
+branch. Across all five families opened from Learning Home the count was also zero.
+
+| removed | lines | why it was dead |
+|---|---|---|
+| the board-map branch in `selectLevel()` | 167 | unreachable: every level has a geo map |
+| `openOutpost()` | 26 | its only caller was a `.map-node` click handler |
+| `moveHeroThenGo()` | 6 | defined inside the branch, used only by its two nodes |
+| `articleTotal()` / `articleDone()` | 6 | callerless since Phase 9E.2 |
+| `mapTo()` / `mapPosKey()` | 2 | orphaned by the branch removal (0 callers) |
+| board-map CSS: `.map-node`, `.map-boss`, `.map-hero-piece`, `.map-track`, `.map-deco`, `.map-compass`, `@keyframes heroHop`, and the `.map-node.terr-*` compounds | 33 | selectors that can never match, because nothing assigns those classes |
+
+`selectLevel()` is now a delegate:
+
+    function selectLevel(i) {
+      syncMapBackLabel();
+      const lv0 = manifest.levels[i];
+      if (lv0 && GEO_MAPS[lv0.id]) renderGeoMap(i, GEO_MAPS[lv0.id]);
+    }
+
+A level added later **without** a `GEO_MAPS` entry must add one; this deliberately leaves the current
+screen alone rather than rendering a half-built board.
+
+## What was audited and deliberately KEPT
+
+| surface | verdict | evidence |
+|---|---|---|
+| `lessons.json` | **load-bearing — keep** | one executable consumer (`fetch("lessons.json")`) builds `manifest`, which feeds `buildExamPool()`, `findArticleByFile()`, the level grid and the dashboards |
+| `buildExamPool()` | checkpoint load-bearing | pools measured unchanged at Pre-A1 112 / A1 48 / A2 48 / B1 20, still fed by all 57 content units |
+| `LEVEL_ARCS` | keep | two live consumers: `buildExamPool()` (checkpoint pool) and `findArticleByFile()`'s manifest scan |
+| `findArticleByFile()` | keep | five live callers, including `openLessonFromHome()` — every modern lesson door |
+| `scoredLevelsFor()` | keep | one live consumer, `statusFromScores()` -> `lessonStatus()`, which the level cards and dashboards display as **"Practice"**. Client-local practice statistics with live UI consumers are not retired merely for being client-local |
+| `screenLevel` | keep — it is the explicit map/level selector | reached from exam done/back, leaderboard back, the lobby Levels button and `#pickLevelOpen` ("Change map / level, rooms, leaderboard"). `renderLevelGrid()` renders one card per LEVEL, with mastery counts from the SERVER (`authRowOf`/`masteredOf`), and never lists lessons — so it had no legacy learning control to remove |
+| `screenArticle` | keep, **naming debt only** | now exclusively the map container: every `showScreen(screenArticle)` call comes from the geo renderer, and `returnCtx()` maps it to the literal string `"map"`. Its id and the `articleGrid` / `articleScreenTitle` names are legacy; renaming broad DOM architecture is out of scope for a cleanup phase |
+| `.terr-flag` / `.terr-sc` / `.terr-owner` / `.terr-nm` CSS | keep, reported | they lost their creator (`decorateTerritory()`, inside the deleted branch), but unlike the `.map-*` rules these are generic territory-badge styles a future geo decoration could reuse |
+| `clearMapTimers()` / `_mapTo` | keep | still called by `renderGeoMap()`. With `mapTo()` gone it can only ever clear an empty list — a vestige, flagged rather than expanded into a refactor |
+
+## Deferred, not fixed
+
+`selectArticle()` still labels the lesson header from `manifest.levels[selLevelIdx].name` — the level
+last *browsed*, not the lesson's own. Opening from Learning Home (which never sets `selLevelIdx`)
+therefore mislabels every family: A1/002 reads "Pre-A1 · 002 · My Weekend". Deleting the legacy branch
+did **not** eliminate it, so per the phase boundary it stays for the UI-copy phase, together with the
+tab copy ("Level N" on 10 activity tabs) and "Campaign" for curriculum courses.
+
+## Regression
+
+46/46 maintained suites and all four validators pass. In real Chrome: Learning Home still shows 57
+lessons in five campaigns; one lesson from each of the five families opens with its rendered activity
+set exactly equal to the registry set, its authoritative surface reading "0 of 7" (Pre-A1/Taipei) or
+"0 of 5" (A1/A2/B1), its gate still paying 160, and Back returning to Learning Home with no map
+detour; all four geo maps still render with clickable region targets; and the region panel still opens
+from a region button with Occupy and Attack intact.
+
+`tests/outpost_migration.test.js` was retargeted rather than deleted — see its check 4 comment for the
+old rule, why it is obsolete, and why the replacement is stronger.

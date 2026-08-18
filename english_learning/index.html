@@ -837,17 +837,6 @@
   .daily-cal { display: flex; gap: 4px; flex-wrap: wrap; }
   .day-dot { width: 16px; height: 16px; border-radius: 4px; background: #e2e8f0; }
   .day-dot.on { background: #22c55e; }
-  /* ===== 戰棋地圖 ===== */
-  .map-board { border-radius: 16px; overflow: hidden; box-shadow: inset 0 0 0 2px rgba(40,90,120,.3);
-    background-color: #aedcf0;                                  /* 海洋 */
-    background-image:
-      radial-gradient(circle at 25% 12%, rgba(255,255,255,.4), transparent 45%),
-      radial-gradient(rgba(120,190,225,.45) 1.5px, transparent 1.5px);
-    background-size: auto, 22px 22px; }
-  .map-track { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; }
-  .map-deco { position: absolute; z-index: 0; pointer-events: none; font-size: 24px; line-height: 1;
-    opacity: .78; filter: drop-shadow(0 1px 1px rgba(0,0,0,.18)); }
-  .map-compass { font-size: 26px; opacity: .9; }
   /* ===== 真實地理地圖（各等級不同國家/區域）===== */
   .card.map-wide { max-width: 1100px; }                     /* 地圖畫面在桌機上放寬(手機不受影響) */
   .geo-wrap { position: relative; }
@@ -940,37 +929,15 @@
   .geo-back { background: #334155; color: #e8edf5; padding: 7px 14px; border-radius: 10px;
     font-size: 13px; font-weight: 700; cursor: pointer; margin-bottom: 10px; }
   .gl-drill::before { background: #7c3aed; }
-  .map-node { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; overflow: hidden;
-    border: 2px solid #94a3b8; border-radius: 14px; background: #fff; cursor: pointer; padding: 6px 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 1; }
-  .map-node:active { transform: scale(0.94); }
-  .map-ico { font-size: 30px; line-height: 1; }
-  .map-num { font-size: 10px; color: #64748b; }
-  .map-lbl { font-size: 11px; color: #1e293b; text-align: center; line-height: 1.1; max-width: 84px; max-height: 26px; overflow: hidden; }
-  .map-node.cleared { background: #eef2f7; border-color: #cbd5e1; opacity: 0.8; }
-  .map-boss { border-color: #dc2626; background: #fef2f2; }
-  .map-boss.cleared { border-color: #22c55e; background: #f0fdf4; }
-  .map-hero-piece { position: absolute; z-index: 3; font-size: 30px; pointer-events: none;
-    transition: left .45s ease, top .45s ease; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
-  .map-hero-piece.hop { animation: heroHop .45s ease; }
-  @keyframes heroHop { 50% { transform: translateY(-12px); } }
   /* 占地盤 */
   .terr-banner { max-width: 360px; margin: 0 auto 10px; padding: 7px 12px; border-radius: 10px; background: #fff7ed; border: 1px solid #fed7aa; font-size: 13px; color: #7c2d12; text-align: center; }
   .terr-link { color: #2563eb; cursor: pointer; font-weight: 700; white-space: nowrap; }
-  .map-node.terr-mine { border-color: #16a34a; box-shadow: 0 0 0 2px #bbf7d0, 0 2px 5px rgba(0,0,0,.15); }
-  .map-node.terr-foe { border-color: #f59e0b; box-shadow: 0 0 0 2px #fde68a, 0 2px 5px rgba(0,0,0,.15); }
-  .map-node.terr-held { padding-bottom: 3px; }
-  .map-node.terr-held .map-ico { font-size: 34px; }        /* 防守卡放大，一眼看到用哪張守 */
-  .map-node.terr-held .map-num { display: none; }
-  .map-node.terr-held .map-lbl { font-size: 10px; font-weight: 700; color: #334155; max-height: 13px; }
   .terr-flag { position: absolute; top: -1px; right: -1px; display: flex; align-items: center; gap: 1px; padding: 1px 4px 2px 3px;
     background: rgba(255,255,255,.96); border-radius: 0 12px 0 9px; font-size: 13px; line-height: 1; box-shadow: -1px 1px 2px rgba(0,0,0,.18); }
   .terr-sc { font-size: 10px; font-weight: 800; color: #b45309; }
-  .map-node.terr-mine .terr-sc { color: #15803d; }
   .terr-owner { display: flex; align-items: center; justify-content: center; gap: 2px; max-width: 88px; margin-top: 1px;
     padding: 1px 6px; border-radius: 9px; font-size: 10px; font-weight: 800; line-height: 1.35; color: #fff; }
   .terr-owner .terr-nm { max-width: 58px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .map-node.terr-mine .terr-owner { background: #16a34a; }   /* 綠 = 你佔的 */
-  .map-node.terr-foe .terr-owner { background: #f59e0b; }    /* 橘 = 對手佔的 */
   /* 據點面板 / 卡片 / 占領對戰 */
   .modal-ov { position: fixed; inset: 0; background: rgba(15,23,42,.55); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
   .modal-card { position: relative; background: #fff; border-radius: 16px; padding: 18px; max-width: 360px; width: 100%; max-height: 86vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
@@ -4267,12 +4234,6 @@
     restoreProgress();
   }
 
-  // 計算一篇文章共有幾關、已完成幾關（給課程卡片顯示）
-  function articleTotal(a) { return scoredLevelsFor(a).length; }
-  function articleDone(a) {
-    try { return JSON.parse(localStorage.getItem(progKey(a.file)) || "[]").length; }
-    catch (e) { return 0; }
-  }
 
   // 畫面 1：等級卡片
   function renderLevelGrid() {
@@ -5115,8 +5076,6 @@
   // 畫面 2：課程卡片
   let _mapTo = [];
   function clearMapTimers() { _mapTo.forEach(clearTimeout); _mapTo = []; }
-  function mapTo(fn, ms) { const t = setTimeout(fn, ms); _mapTo.push(t); return t; }
-  function mapPosKey(levelId) { return "mappos:" + (userName || "guest") + ":" + levelId; }
   // 占地盤：每個據點歸目前「遊戲成績」最高（同分比最近達成）的玩家所有
   let territory = null;
   function dispName(n) { return (n || "").replace(/^@/, ""); }
@@ -7044,176 +7003,17 @@
     });
   }
 
+  // Phase 9G: every level in lessons.json has a GEO_MAPS entry, so this always delegates to the geo
+  // engine. It used to fall through to a 167-line "board map" — a snaking path of lesson nodes with
+  // a hero token, whose lesson node opened openOutpost() — a SECOND way into a lesson that competed
+  // with Learning Home. That branch was unreachable for every level that exists (proven at runtime:
+  // 0 .map-node created for Pre-A1/A1/A2/B1), so it was removed rather than left as a second
+  // lesson-entry architecture. A future level added WITHOUT a GEO_MAPS entry must add one; this
+  // deliberately leaves the current screen alone rather than rendering a half-built board.
   function selectLevel(i) {
     syncMapBackLabel();
     const lv0 = manifest.levels[i];
-    if (lv0 && GEO_MAPS[lv0.id]) { renderGeoMap(i, GEO_MAPS[lv0.id]); return; }   // 有地理地圖的等級走引擎
-    clearMapTimers();
-    selLevelIdx = i;
-    const lv = manifest.levels[i], next = manifest.levels[i + 1];
-    articleScreenTitle.textContent = (lv.name || lv.id) + " · Battle Map ⚔️";
-    const board = articleGrid; board.className = "map-board"; board.innerHTML = "";
-    let banner = document.getElementById("terrBanner");   // 地盤橫幅（地圖上方）
-    if (!banner) { banner = document.createElement("div"); banner.id = "terrBanner"; banner.className = "terr-banner"; board.parentNode.insertBefore(banner, board); }
-    banner.style.display = "none";
-    // 世界地圖：關卡散落在一片蜿蜒的陸地上，一條平滑小徑（像河/路）串起每一關
-    const COLS = 3, NW = 92, NH = 86, GX = 30, GY = 44, stepX = NW + GX, stepY = NH + GY, PAD = 44;
-    // Phase 7F.3: the node's verdict is the SERVER's mastery. Before this, a node could show
-    // "💥 passed · 100" from localStorage while Learning Home said Needs Review for the same
-    // lesson — two contradictory verdicts on one lesson.
-    const passedArr = lv.articles.map(a => masteredOf(a.file));
-    const items = lv.articles.map((a, idx) => ({ a: a, passed: passedArr[idx], boss: false }));
-    items.push({ boss: true, passed: next ? examPassed(lv.id) : false });
-    const rows = Math.ceil(items.length / COLS);
-    function rowShift(row) { return Math.round(Math.sin(row * 0.8) * 20); }   // 每列左右擺動 → 陸地蜿蜒
-    const boardW = PAD * 2 + (COLS - 1) * stepX + NW;
-    const boardH = PAD * 2 + (rows - 1) * stepY + NH;
-    board.style.position = "relative";
-    board.style.width = boardW + "px";
-    board.style.height = boardH + "px";
-    board.style.margin = "0 auto";
-    function cellXY(k) {                                  // 奇數列反向（蛇形）+ 每列擺動
-      const row = Math.floor(k / COLS); let col = k % COLS;
-      if (row % 2 === 1) col = COLS - 1 - col;
-      return { x: PAD + col * stepX + rowShift(row), y: PAD + row * stepY };
-    }
-    const centers = [], fileNodes = {};
-    for (let k = 0; k < items.length; k++) { const p = cellXY(k); centers.push({ x: p.x + NW / 2, y: p.y + NH / 2 }); }
-    // 平滑曲線（Catmull-Rom → 貝茲），讓陸地與小徑蜿蜒而非硬折角
-    function smoothPath(pts) {
-      if (pts.length < 2) return "M " + pts[0].x + " " + pts[0].y;
-      let d = "M " + pts[0].x + " " + pts[0].y;
-      for (let i = 0; i < pts.length - 1; i++) {
-        const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
-        d += " C " + (p1.x + (p2.x - p0.x) / 6) + " " + (p1.y + (p2.y - p0.y) / 6) + " " +
-             (p2.x - (p3.x - p1.x) / 6) + " " + (p2.y - (p3.y - p1.y) / 6) + " " + p2.x + " " + p2.y;
-      }
-      return d;
-    }
-    const dPath = smoothPath(centers);
-    // 陸地 + 小徑都畫在最底 SVG（海是 .map-board 的底色）
-    const NSU = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(NSU, "svg");
-    svg.setAttribute("class", "map-track"); svg.setAttribute("width", boardW); svg.setAttribute("height", boardH);
-    svg.setAttribute("viewBox", "0 0 " + boardW + " " + boardH);
-    function layer(stroke, w, dash) {
-      const p = document.createElementNS(NSU, "path");
-      p.setAttribute("d", dPath); p.setAttribute("fill", "none"); p.setAttribute("stroke", stroke);
-      p.setAttribute("stroke-width", w); p.setAttribute("stroke-linecap", "round"); p.setAttribute("stroke-linejoin", "round");
-      if (dash) p.setAttribute("stroke-dasharray", dash);
-      svg.appendChild(p);
-    }
-    layer("#e8d6a6", 92);                 // 沙灘海岸線
-    layer("#a9dc86", 72);                 // 陸地（草）
-    layer("#c6ef9d", 54);                 // 陸地亮面
-    layer("rgba(150,110,60,.5)", 12);     // 小徑底
-    layer("#6b3f10", 3.5, "1 13");        // 虛線腳印
-    board.appendChild(svg);
-    // 陸地上山/樹（沿小徑左右擺放），海上浪，右上角羅盤
-    const DECOS = ["🏔️", "🌲", "⛰️", "🌳", "🗻", "🌴", "🏕️", "🌲"];
-    for (let d = 0; d < DECOS.length; d++) {
-      const c = centers[Math.floor((d + 0.5) / DECOS.length * centers.length)] || centers[0];
-      const side = d % 2 ? 1 : -1;
-      const dec = document.createElement("span"); dec.className = "map-deco"; dec.textContent = DECOS[d];
-      dec.style.left = Math.max(2, Math.min(boardW - 28, c.x + side * 58 - 12)) + "px";
-      dec.style.top = Math.max(2, Math.min(boardH - 28, c.y - 46)) + "px";
-      board.appendChild(dec);
-    }
-    for (let wi = 0; wi < 3; wi++) {       // 海浪貼邊 = 海
-      const dec = document.createElement("span"); dec.className = "map-deco"; dec.textContent = "🌊";
-      dec.style.opacity = ".5";
-      dec.style.left = (wi % 2 ? boardW - 32 : 6) + "px";
-      dec.style.top = (24 + wi * (boardH - 70) / 2) + "px";
-      board.appendChild(dec);
-    }
-    const comp = document.createElement("span"); comp.className = "map-deco map-compass"; comp.textContent = "🧭";
-    comp.style.left = (boardW - 40) + "px"; comp.style.top = "8px"; board.appendChild(comp);
-    // 關卡節點
-    items.forEach((it, k) => {
-      const p = cellXY(k);
-      const node = document.createElement("button");
-      node.className = "map-node" + (it.boss ? " map-boss" : "") + (it.passed ? " cleared" : "");
-      node.style.position = "absolute"; node.style.left = p.x + "px"; node.style.top = p.y + "px";
-      node.style.width = NW + "px"; node.style.height = NH + "px";
-      if (it.boss) {
-        node.innerHTML = '<span class="map-ico">' + (it.passed ? "🏆" : "🐉") + '</span>' +
-          '<span class="map-lbl">' + (next ? "Level Boss" : "Final Boss") + '</span>' +
-          '<span class="map-num">' + (it.passed ? "cleared" : "20Q · 80") + '</span>';
-        node.addEventListener("click", () => moveHeroThenGo(k, () => startLevelExam(i)));
-      } else {
-        const st = lessonStatus(it.a), title = it.a.title ? it.a.title.split("·").pop().trim() : it.a.id;
-        // Icon = authoritative mastery. The number is the local PRACTICE average and is labelled as
-        // such, so it can never be read as a completion verdict (Phase 7F.3 STEP 15).
-        const review = it.passed && !passingOf(it.a.file);
-        node.innerHTML = '<span class="map-ico">' + (it.passed ? (review ? "⚠" : "⭐") : "🏰") + '</span>' +
-          '<span class="map-num">#' + (k + 1) +
-            (st.avg != null ? ' · Practice ' + st.avg + '%' : '') + '</span>' +
-          '<span class="map-lbl">' + title + '</span>';
-        node.addEventListener("click", () => moveHeroThenGo(k, () => openOutpost(it.a)));
-        fileNodes[it.a.file] = node;
-      }
-      board.appendChild(node);
-    });
-    const hero = document.createElement("div"); hero.className = "map-hero-piece"; hero.textContent = "🦸"; board.appendChild(hero);
-    function placeHero(k) { const c = centers[Math.max(0, Math.min(centers.length - 1, k))]; hero.style.left = (c.x - 16) + "px"; hero.style.top = (c.y - 40) + "px"; }
-    // 點哪個據點，英雄就走過去再進入（移動跟你的選擇綁定，無先後順序）
-    function moveHeroThenGo(k, go) {
-      placeHero(k);
-      hero.classList.remove("hop"); void hero.offsetWidth; hero.classList.add("hop");
-      try { localStorage.setItem(mapPosKey(lv.id), String(k)); } catch (e) {}
-      mapTo(go, 480);
-    }
-    let pos = passedArr.indexOf(false); if (pos < 0) pos = items.length - 1;
-    try { const p = localStorage.getItem(mapPosKey(lv.id)); if (p !== null) pos = Math.max(0, Math.min(items.length - 1, parseInt(p, 10))); } catch (e) {}
-    placeHero(pos);
-    // 標出每個據點目前守護的 boss 卡（卡片表情 + 戰力）
-    function decorateTerritory() {
-      if (!territory || !territory.holders) { banner.style.display = "none"; return; }
-      const me = (authUser() || userName || "").toLowerCase();
-      let mine = 0;
-      // 這張地圖上出現的擁有者 → 配色（同人同色、彼此不撞色）
-      const present = [], seen = {};
-      lv.articles.forEach(a => { const h = territory.holders[a.file]; if (!h || !h.owner) return;
-        const low = h.owner.toLowerCase(); if (!seen[low]) { seen[low] = 1; present.push(h.owner); } });
-      const cmap = ownerColorMap(present, me);
-      lv.articles.forEach(a => {
-        const node = fileNodes[a.file]; if (!node) return;
-        const ico = node.querySelector(".map-ico"), lbl = node.querySelector(".map-lbl");
-        if (ico && ico.dataset.orig == null) ico.dataset.orig = ico.textContent;   // 記住原本的 🏰/💥 與課名
-        if (lbl && lbl.dataset.orig == null) lbl.dataset.orig = lbl.textContent;
-        const old = node.querySelector(".terr-flag"); if (old) old.remove();
-        const oldOwn = node.querySelector(".terr-owner"); if (oldOwn) oldOwn.remove();
-        node.classList.remove("terr-mine", "terr-foe", "terr-held");
-        node.style.removeProperty("border-color"); node.style.removeProperty("box-shadow");
-        if (ico && ico.dataset.orig != null) ico.textContent = ico.dataset.orig;   // 先還原（此函式會被呼叫兩次）
-        if (lbl && lbl.dataset.orig != null) lbl.textContent = lbl.dataset.orig;
-        const h = territory.holders[a.file]; if (!h || !h.owner) return;
-        const isMine = (h.owner || "").toLowerCase() === me; if (isMine) mine++;
-        const col = cmap[(h.owner || "").toLowerCase()];
-        node.classList.add("terr-held", isMine ? "terr-mine" : "terr-foe");
-        if (!isMine) { node.style.borderColor = col; node.style.boxShadow = "0 0 0 2px " + col + "55, 0 2px 5px rgba(0,0,0,.15)"; }
-        const flag = document.createElement("span");       // 右上角標：守備兵力(戰霧：只顯示自己的)
-        flag.className = "terr-flag";
-        if (isMine) { const power = sumHp(h.troops); flag.innerHTML = '⚔️<span class="terr-sc">' + power + '</span>'; flag.title = "Garrison · " + power + " troops"; }
-        else { flag.innerHTML = '⚔️<span class="terr-sc">?</span>'; flag.title = "Enemy garrison — unknown"; }
-        node.appendChild(flag);
-        const own = document.createElement("span");         // 底部名條：誰佔的（每位擁有者一個固定色）
-        own.className = "terr-owner";
-        if (!isMine) own.style.background = col;
-        own.innerHTML = (h.avatar || "👦") + '<span class="terr-nm">' + dispName(h.owner) + '</span>';
-        own.title = (isMine ? "You hold" : dispName(h.owner) + " holds") + " this outpost"; node.appendChild(own);
-      });
-      const counts = territory.counts || {}; let top = null;
-      Object.keys(counts).forEach(n => { if (!top || counts[n] > counts[top]) top = n; });
-      banner.innerHTML = '🚩 You hold <b>' + mine + '</b> outpost' + (mine === 1 ? '' : 's') +
-        (top ? ' · 👑 ' + dispName(top) + ' (' + counts[top] + ')' : '') + ' <span class="terr-link">Ranking ▸</span>';
-      banner.style.display = "block";
-      const link = banner.querySelector(".terr-link"); if (link) link.addEventListener("click", openLeaderboard);
-    }
-    decorateTerritory();              // 先用快取畫
-    loadTerritory(decorateTerritory); // 再抓最新覆蓋
-    document.getElementById("examWrap").classList.add("hidden");
-    showScreen(screenArticle);
+    if (lv0 && GEO_MAPS[lv0.id]) renderGeoMap(i, GEO_MAPS[lv0.id]);
   }
 
   // ===== 占地盤：據點面板（讀書 / 插旗守護 / 用卡片攻打）=====
@@ -7275,44 +7075,6 @@
     return ' <span class="tech-badge">🏭' + (tech.atk ? " ⚔️+" + tech.atk : "") + (tech.def ? " 🛡️+" + tech.def : "") + '</span>';
   }
 
-  // ===== Phase 7G — the non-geo board-map node is a LEARNING node =====
-  // It used to render a full conquest panel: population, garrison, owner, Occupy/Deploy, buildings
-  // and an attack panel, gated by the local Rule B average. That conquest was never functional:
-  // these nodes are keyed by LESSON FILE (e.g. "A1/001"), which is not a canonical territory, so
-  // `terr_catalog.resolve_any()` returns None and /api/territory/claim answers 400 "unresolved".
-  // The panel therefore promised ownership it could never deliver, and the Rule B gate in front of
-  // it was the last place a local score controlled a world action (the Phase 7F.3 carve-out).
-  //
-  // 7G removes the conquest half outright rather than disabling it, and keeps what always worked:
-  // lesson identity, the SERVER's learning state, and one way into the lesson. Canonical conquest
-  // lives in openRegion() on the geo maps and is untouched — the two are now deliberately different
-  // concepts. Giving these nodes real territories is a separate, larger question (world-data).
-  function openOutpost(a) {
-    const title = a.title ? a.title.split("·").pop().trim() : a.id;
-    const ov = openModal(
-      '<h3 class="modal-title">📖 ' + escapeHtml(title) + '</h3>' +
-      // The one authoritative state renderer, shared with Learning Home and the region panel, so a
-      // board node can never disagree with them about the same lesson.
-      '<div data-comp-for="' + escapeHtml(a.file) + '" data-comp-mode="compact">' +
-        lessonCompactHTML(a.file) + '</div>' +
-      '<div class="op-btns"><button id="opStudy" class="dict-play"></button></div>');
-    // ONE action. lessonCompactHTML() renders its own Continue button when work is outstanding;
-    // inside this panel that would be a second control saying the same thing, so it is dropped and
-    // the single button below takes its label from the same authoritative row.
-    const card = ov.querySelector("[data-comp-for]");
-    if (card) Array.prototype.forEach.call(card.querySelectorAll(".comp-cont"), n => n.remove());
-    const prog = authProgressOf(a.file);
-    const started = !!(prog && prog.have > 0);
-    ov.querySelector("#opStudy").textContent = started ? "▶️ Continue lesson" : "📖 Study lesson";
-    // Phase 6G/7E.1 contextual return, kept: Back from this lesson comes home to the board map that
-    // opened it, not to Learning Home. No pendingOccupy — there is no occupation to return for, and
-    // setting it here would make an unrelated region auto-open after this lesson.
-    ov.querySelector("#opStudy").addEventListener("click", () => {
-      lessonReturnTo = { to: "map" };
-      closeModal();
-      selectArticle(a);
-    });
-  }
 
   // 部署面板：4 張牌，每張可自選兵種（可重複，例如四張全弓兵）+ 分配兵力 HP（總和 ≤ 兵力預算）。
   //   attack 時：牌 1→4 的順序 = 出戰順序。

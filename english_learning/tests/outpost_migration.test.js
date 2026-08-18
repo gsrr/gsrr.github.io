@@ -31,7 +31,6 @@ const launchAttack = extractFn(html, "function launchAttack(");
 const renderAttackPanel = extractFn(html, "function renderAttackPanel(");
 const validAttackSources = extractFn(html, "function validAttackSources(");
 const openRegion = extractFn(html, "function openRegion(key, name, pop, i)");
-const openOutpost = extractFn(html, "function openOutpost(a)");
 
 // 1) The attack request carries BOTH sourceTerritoryId and targetTerritoryId (Phase 2B), and NOTHING else
 //    authoritative — the exact POST body is {sourceTerritoryId, targetTerritoryId, squad, avatar}.
@@ -52,20 +51,49 @@ assert(!/poolAdd\s*\(/.test(launchAttack) && !/poolSpend\s*\(/.test(launchAttack
   "launchAttack must not mutate the client pool from the battle result");
 ok("battle replay stays non-authoritative (preOrdered=true; no client pool mutation)");
 
-// 4) The attack UI delegates to the shared renderAttackPanel.
-// Phase 7G: this used to also require openOutpost to delegate. That assertion protected the
-// board-map trail's attack panel, which Phase 7G REMOVED: those nodes are keyed by lesson file, are
-// not canonical territories (resolve_any -> None, /claim -> 400 unresolved), so the conquest they
-// offered could never complete. There is no second attack UI left to route, and the replacement is
-// stronger for the current rule - openOutpost must now contain NO conquest surface whatsoever, so
-// it cannot route an attack correctly OR incorrectly.
+// 4) The attack UI delegates to the shared renderAttackPanel — and there is only ONE attack UI.
+//
+// RETARGETED in Phase 9G. This check has evolved twice:
+//
+//   Phase 2A  OLD: openOutpost must ALSO delegate to renderAttackPanel.
+//   Phase 7G  OLD: openOutpost must expose no conquest surface at all, and must not gate anything on
+//                  the local Rule B average.
+//   Phase 9G  NEW: openOutpost does not exist, and neither does the board-map lesson node that was
+//                  its only caller.
+//
+// WHY THE 7G FORM IS OBSOLETE: it grepped the body of `function openOutpost(a)`. Phase 9G deleted
+// that function together with the 167-line board-map branch inside selectLevel() that wired its only
+// click handler, so the assertion can no longer even locate its subject. The branch was unreachable
+// for every level that exists — every level in lessons.json has a GEO_MAPS entry, so selectLevel()
+// always returns through renderGeoMap() — and all 57 curriculum lessons now enter through Learning
+// Home, so the board map was a second lesson-entry architecture with no way in.
+//
+// WHY THE NEW FORM IS NOT WEAKER: "the function is gone, and nothing can create the node that called
+// it" strictly implies the old property — a deleted function cannot expose a conquest surface or a
+// Rule B gate. The new form additionally pins what the old one never did: that exactly ONE conquest
+// surface exists (openRegion → renderAttackPanel), that selectLevel() has no second lesson entry,
+// and that no lesson-status helper reaches a world action.
 assert(/renderAttackPanel\(/.test(openRegion), "openRegion must delegate to renderAttackPanel");
-assert(!/renderAttackPanel\(|deployPanel\(|claimTroops\(|buildingsPanel\(/.test(openOutpost),
-  "openOutpost must expose no conquest surface at all (Phase 7G)");
-assert(!/lessonStatus\(|statusFromScores\(/.test(openOutpost),
-  "openOutpost must not gate anything on the local Rule B average (Phase 7G closes the 7F.3 carve-out)");
-ok("canonical attacks route through the shared source→target panel, and the board-map lesson node "
-   + "carries no conquest surface and no Rule B gate");
+assert(html.indexOf("function openOutpost") < 0,
+  "openOutpost() must stay deleted (Phase 9G removed the board-map lesson node)");
+assert(html.indexOf("moveHeroThenGo") < 0,
+  "the board-map hero-walk helper must stay deleted (its only callers were the board-map nodes)");
+assert(!/className\s*=\s*["'`]map-node/.test(html) && !/class="map-node/.test(html),
+  "nothing may create a .map-node — that class was the board-map lesson/boss node");
+// selectLevel() must be a pure delegate to the geo engine: one call, no second lesson entry.
+const selectLevel = extractFn(html, "function selectLevel(i)");
+assert(/renderGeoMap\(/.test(selectLevel), "selectLevel must delegate to renderGeoMap");
+["openOutpost", "selectArticle", "map-board", "articleTotal", "startLevelExam"].forEach(k =>
+  assert(selectLevel.indexOf(k) < 0,
+    "selectLevel must not reach '" + k + "' — it is a map delegate, not a lesson/exam entry"));
+// and no client surface may gate a world action on the local practice average
+["launchAttack", "renderAttackPanel"].forEach((sig, idx) => {
+  const fn = idx === 0 ? launchAttack : renderAttackPanel;
+  assert(!/lessonStatus\(|statusFromScores\(/.test(fn),
+    sig + " must not gate a world action on the local Rule B average");
+});
+ok("canonical attacks route through the shared source→target panel; openOutpost, moveHeroThenGo and "
+   + "the .map-node board-map lesson entry are gone, and selectLevel is a pure geo-map delegate");
 
 // 5) Valid attack sources come from World-Domain adjacency (advisory), not SVG geometry/coordinates.
 assert(/adjacentTerritoryIds/.test(validAttackSources), "validAttackSources must read World-Domain adjacentTerritoryIds");
@@ -82,5 +110,19 @@ assert(!/runBattle\(squad,\s*\(foe/.test(html), "client-shuffle runBattle(squad,
 assert(!/if \(win\) releaseTerritory/.test(html), "client 'if (win) releaseTerritory' must be gone");
 assert(!/terrAttackResult\(file, win\)/.test(html), "client 'terrAttackResult(file, win)' must be gone");
 ok("legacy client-authoritative attack patterns remain removed");
+
+// 8) Phase 9G positive invariant: the ONLY lesson-entry architecture left is the registry-driven
+//    Learning Home door. Without this, a future change could reintroduce a second entry surface and
+//    checks 4/7 above (which are absence-only) would still pass.
+assert(/function openLessonFromHome\(/.test(html), "Learning Home must own the lesson door");
+assert(/function applyRegistryTabs\(/.test(html) && /applyRegistryTabs\(article\.file\)/.test(html),
+  "activity availability must stay registry-driven (Phase 9E.2)");
+const openFromHome = extractFn(html, "function openLessonFromHome(");
+assert(/contentPathForLessonId\(/.test(openFromHome) && /findArticleByFile\(/.test(openFromHome),
+  "the lesson door must resolve a registry lessonId to its content path");
+assert(html.indexOf("function articleTotal") < 0 && html.indexOf("function articleDone") < 0,
+  "the callerless practice-count helpers must stay deleted (Phase 9G)");
+ok("the registry-driven Learning Home door is the only lesson entry, and the callerless practice "
+   + "helpers stay deleted");
 
 console.log("\nAll " + passed + " frontend attack-flow tests passed.");
