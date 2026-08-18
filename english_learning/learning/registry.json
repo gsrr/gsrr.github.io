@@ -3295,6 +3295,462 @@
       "title": "Pre-A1 · 024 — Role-play",
       "grants": [],
       "rewardPolicy": "none"
+    },
+
+    "english.a1.core.002.quiz4": {
+      "lessonId": "english.a1.core.002",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A1 · 002 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.002.wh": {
+      "lessonId": "english.a1.core.002",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A1 · 002 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.002.cloze": {
+      "lessonId": "english.a1.core.002",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A1 · 002 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.002.roleplay": {
+      "lessonId": "english.a1.core.002",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A1-002",
+      "title": "A1 · 002 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.001.quiz4": {
+      "lessonId": "english.a1.core.001",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A1 · 001 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.001.wh": {
+      "lessonId": "english.a1.core.001",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A1 · 001 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.001.cloze": {
+      "lessonId": "english.a1.core.001",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A1 · 001 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.001.roleplay": {
+      "lessonId": "english.a1.core.001",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A1-001",
+      "title": "A1 · 001 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.003.quiz4": {
+      "lessonId": "english.a1.core.003",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A1 · 003 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.003.wh": {
+      "lessonId": "english.a1.core.003",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A1 · 003 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.003.cloze": {
+      "lessonId": "english.a1.core.003",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A1 · 003 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.003.roleplay": {
+      "lessonId": "english.a1.core.003",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A1-003",
+      "title": "A1 · 003 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.004.quiz4": {
+      "lessonId": "english.a1.core.004",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A1 · 004 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.004.wh": {
+      "lessonId": "english.a1.core.004",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A1 · 004 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.004.cloze": {
+      "lessonId": "english.a1.core.004",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A1 · 004 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.004.roleplay": {
+      "lessonId": "english.a1.core.004",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A1-004",
+      "title": "A1 · 004 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.005.quiz4": {
+      "lessonId": "english.a1.core.005",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A1 · 005 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.005.wh": {
+      "lessonId": "english.a1.core.005",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A1 · 005 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.005.cloze": {
+      "lessonId": "english.a1.core.005",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A1 · 005 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.005.roleplay": {
+      "lessonId": "english.a1.core.005",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A1-005",
+      "title": "A1 · 005 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.006.quiz4": {
+      "lessonId": "english.a1.core.006",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A1 · 006 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.006.wh": {
+      "lessonId": "english.a1.core.006",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A1 · 006 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.006.cloze": {
+      "lessonId": "english.a1.core.006",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A1 · 006 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.006.roleplay": {
+      "lessonId": "english.a1.core.006",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A1-006",
+      "title": "A1 · 006 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.007.quiz4": {
+      "lessonId": "english.a1.core.007",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A1 · 007 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.007.wh": {
+      "lessonId": "english.a1.core.007",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A1 · 007 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.007.cloze": {
+      "lessonId": "english.a1.core.007",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A1 · 007 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.007.roleplay": {
+      "lessonId": "english.a1.core.007",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A1-007",
+      "title": "A1 · 007 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.008.quiz4": {
+      "lessonId": "english.a1.core.008",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A1 · 008 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.008.wh": {
+      "lessonId": "english.a1.core.008",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A1 · 008 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.008.cloze": {
+      "lessonId": "english.a1.core.008",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A1 · 008 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.008.roleplay": {
+      "lessonId": "english.a1.core.008",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A1-008",
+      "title": "A1 · 008 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.009.quiz4": {
+      "lessonId": "english.a1.core.009",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A1 · 009 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.009.wh": {
+      "lessonId": "english.a1.core.009",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A1 · 009 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.009.cloze": {
+      "lessonId": "english.a1.core.009",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A1 · 009 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.009.roleplay": {
+      "lessonId": "english.a1.core.009",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A1-009",
+      "title": "A1 · 009 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.010.quiz4": {
+      "lessonId": "english.a1.core.010",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A1 · 010 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.010.wh": {
+      "lessonId": "english.a1.core.010",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A1 · 010 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.010.cloze": {
+      "lessonId": "english.a1.core.010",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A1 · 010 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.010.roleplay": {
+      "lessonId": "english.a1.core.010",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A1-010",
+      "title": "A1 · 010 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.011.quiz4": {
+      "lessonId": "english.a1.core.011",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A1 · 011 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.011.wh": {
+      "lessonId": "english.a1.core.011",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A1 · 011 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.011.cloze": {
+      "lessonId": "english.a1.core.011",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A1 · 011 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.011.roleplay": {
+      "lessonId": "english.a1.core.011",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A1-011",
+      "title": "A1 · 011 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.012.quiz4": {
+      "lessonId": "english.a1.core.012",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A1 · 012 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.012.wh": {
+      "lessonId": "english.a1.core.012",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A1 · 012 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.012.cloze": {
+      "lessonId": "english.a1.core.012",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A1 · 012 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a1.core.012.roleplay": {
+      "lessonId": "english.a1.core.012",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A1-012",
+      "title": "A1 · 012 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
     }
   },
 

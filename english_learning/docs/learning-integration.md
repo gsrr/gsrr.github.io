@@ -741,3 +741,72 @@ unchanged) — so they are content awaiting migration, not dead content.
 `lessons.json`, `LEVEL_ARCS`, `screenLevel`, `screenArticle`, `findArticleByFile()` and
 `buildExamPool()` all remain **load-bearing**. The board-map branch and `openOutpost()` remain
 unreachable dead code, as they were before 9E. Retirement belongs to a dedicated cleanup phase.
+
+# Phase 9E.2 — catalogued vs required, and registry-driven activity availability
+
+Phase 9E.1 found that every A1 lesson offered four activities the registry did not declare — `quiz4`,
+`wh`, `cloze`, `roleplay`. They had real content and learners could work through them, but
+`maybeSubmitLearningAttempt()` dropped every submission (`if (!aid) return`), so they counted for
+nothing while the lesson read "0 / 5". The cause was a **second curriculum-shape schema**: the client
+decided tab availability by sniffing the content file (`content.reorder`, `content.wh`,
+`content.dictation`, `content.cloze`, dialogue length), not by asking the registry.
+
+9E.2 catalogued those activities instead of deleting them, and made availability registry-driven.
+
+## The distinction this establishes
+
+    CATALOGUED   the registry declares the activity exists
+    REQUIRED     completionPolicy.requiredActivityIds decides mastery
+
+They were identical in every family until now. They are not the same concept, and the model already
+supported the split — proven before any edit: adding activities outside `requiredActivityIds` left
+`registry.validate()` clean, kept the mastery denominator at 5, graded authoritatively at 0 gold and
+0 qualifications, and left mastery reachable without them.
+
+| | catalogued | required | gate |
+|---|---|---|---|
+| Taipei x4 | 7 | 7 | quiz3 |
+| Pre-A1 x24 | 7 | 7 | quiz3 |
+| **A1 x12** | **9** | **5** | quiz3 |
+
+A1's four extra are authoritative **optional practice**: they grade server-side and persist evidence,
+but pay 0, grant nothing, and never advance the mastery numerator. A learner who ignores them still
+masters the lesson for the same 800.
+
+Counts: lessons **40** (unchanged) · activities 256 -> **304** · gold-bearing **40** (unchanged) ·
+policies **40** (unchanged) · qualifications **4** (unchanged).
+
+## Registry-driven availability
+
+`applyRegistryTabs(contentPath)` + `registeredActivityTypes(contentPath)` replace the five content
+sniffs. An activity id is `<lessonId>.<type>`, so the last segment is the type; a tab is offered iff
+the registry declares that type for the lesson. Level 1 (Listen) is the article itself, not a registry
+activity, so it is always offered.
+
+The only client-side curriculum knowledge left is `TAB_ACTIVITY_TYPE` — a **type -> presentation** map
+(which tab renders which activity type). It never says which lessons have which activities. There is
+no course-specific or lesson-specific branch anywhere in the client.
+
+Measured, in real Chrome: rendered activity set **exactly equals** the registry set for Pre-A1/005,
+Pre-A1/002, Taipei Zoo, A1/002 and A1/007, with no duplicate visible numbering.
+
+`tests/activity_catalog.test.js` pins renderer coverage — every registry activity type must have a
+presenting tab, so a required activity can never be silently unshowable — plus the absence of all five
+content sniffs and of any course-id branch. `tests/optional_activity_test.py` pins the
+catalogued/required split and that catalogueing added no gold, no qualification and no difficulty.
+
+## What remains manifest-driven
+
+`lessons.json` `lv.articles` is still load-bearing for navigation and content: the level grid,
+`findArticleByFile()` (every modern lesson door), `buildExamPool()` (the checkpoint question bank) and
+the dashboards. The per-article `levels` field is now **compatibility-only**: it feeds
+`scoredLevelsFor()`, which the code marks "PRACTICE ONLY" and which reaches only `statusFromScores`
+(localStorage practice) and the callerless `articleTotal()`. Authority is `authRowOf()` — the server
+row. Availability no longer consults it.
+
+## A2/B1 readiness
+
+Both carry the same nine activity types (`read_along, quiz3, quiz4, matching, reorder, wh, dictation,
+cloze, roleplay`), all of which already have a tab mapping and a renderer. **Registering A2/B1 needs no
+lesson-player visibility change** — the remaining decision is which of the nine each family should
+require for mastery.

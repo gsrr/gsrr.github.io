@@ -179,9 +179,15 @@ ok("15. the same 5 Taipei territories are gated by the same 4 qualifications; a 
 # block is the checkpoint dependency Phase 9A flagged; registering activities cannot alter it.
 assert len(A1["cloze"]) == 4, len(A1["cloze"])
 assert all(set(("text", "answer", "wrong")) <= set(i) for i in A1["cloze"])
-assert "cloze" not in [a.rsplit(".", 1)[-1] for a in reg.activities if a.startswith(PILOT)], \
-    "9B did not register a cloze activity, so the checkpoint's question source is unchanged"
-ok("14. A1/001.json cloze block (the checkpoint question source) is unchanged and unregistered")
+# Phase 9E.2 catalogued cloze as an OPTIONAL activity. buildExamPool() reads the CONTENT file, not
+# the registry, so the checkpoint source is unaffected either way; what matters is that the content
+# block is untouched and that cloze never became mastery-required for the pilot.
+assert PILOT + ".cloze" in reg.activities, "9E.2 catalogues cloze as optional practice"
+assert PILOT + ".cloze" not in reg.completion_policy_of(PILOT)["requiredActivityIds"], \
+    "cloze must remain OPTIONAL - the pilot still requires exactly its five"
+assert svc.reward_for(PILOT + ".cloze")["amount"] == 0
+ok("14. A1/001.json cloze block is unchanged; cloze is catalogued as inert OPTIONAL practice and is "
+   "not mastery-required, so the checkpoint question source is unaffected")
 
 # ============================== Taipei semantics are byte-identical ==============================
 for lid in TAIPEI4:

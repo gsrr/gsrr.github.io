@@ -98,11 +98,17 @@ for lid in A1:
         aid = lid + "." + suf
         assert aid in reg.activities, aid
         assert reg.activities[aid]["lessonId"] == lid, aid
-    # deliberately NOT registered in 9C — quiz4/wh are unused, cloze is the checkpoint source
+    # Phase 9E.2 CATALOGUED the four practice activities A1 already showed learners, WITHOUT making
+    # them mastery-required. So they must now be present, absent from requiredActivityIds, and inert.
     for suf in ("quiz4", "wh", "cloze", "roleplay"):
-        assert lid + "." + suf not in reg.activities, lid + "." + suf
-ok("3. every A1 lesson uses the 5-activity template at v1/passMark 80 with both mastery policies; "
-   "quiz4/wh/cloze/roleplay stay unregistered")
+        aid = lid + "." + suf
+        assert aid in reg.activities, ("9E.2 catalogued this practice activity", aid)
+        assert aid not in pol["requiredActivityIds"], ("must stay OPTIONAL for mastery", aid)
+        assert reg.reward_policy_of(aid) == "none", aid
+        assert svc.reward_for(aid)["amount"] == 0, aid
+        assert reg.qualification_ids_for(aid) == [], aid
+ok("3. every A1 lesson requires the 5-activity template at v1/passMark 80 with both mastery "
+   "policies, and additionally CATALOGUES quiz4/wh/cloze/roleplay as inert optional practice")
 
 # ============================== 4. exactly one paying gate per lesson =========================
 for lid in A1:
@@ -163,8 +169,12 @@ for n in ("160", "640", "800"):
 # business — other content families may migrate freely — so assert only A1's own footprint.
 assert set(CX.TAIPEI4) <= set(reg.lessons), sorted(reg.lessons)
 a1_acts = [a for a in reg.activities if a.startswith("english.a1.core.")]
-assert len(a1_acts) == 12 * len(TEMPLATE) == 60, len(a1_acts)
-ok("8. registry names policies only (no amounts); A1 owns exactly 12 lessons x 5 = 60 activities "
-   "and Taipei is still registered alongside it")
+# Phase 9E.2: A1 CATALOGUES 9 activities per lesson (5 required + 4 optional practice), so the
+# footprint is 12 x 9. The mastery-required footprint is asserted separately.
+assert len(a1_acts) == 12 * 9 == 108, len(a1_acts)
+a1_required = [a for l in A1 for a in reg.completion_policy_of(l)["requiredActivityIds"]]
+assert len(a1_required) == 12 * len(TEMPLATE) == 60, len(a1_required)
+ok("8. registry names policies only (no amounts); A1 owns 12 lessons x 9 = 108 CATALOGUED "
+   "activities of which 12 x 5 = 60 are mastery-required; Taipei is still registered alongside it")
 
 print("\nAll %d A1-migration tests passed." % passed)

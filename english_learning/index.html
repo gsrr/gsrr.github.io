@@ -2078,6 +2078,46 @@
     if (act) levelNameEl.textContent = act.dataset.name || "";
   }
 
+  // ===== Phase 9E.2 — registry-driven activity availability =====
+  // The ONLY client-side curriculum knowledge left is this tab -> activity TYPE map. It says how to
+  // PRESENT a type (which tab renders it); it does not say which lessons have it. Availability comes
+  // from the registry, so migrating a new content family needs no change here.
+  // Level 1 (Listen) is the article itself, not a registry activity, so it has no type and is always
+  // offered. An activity type absent from the registry for this lesson is NOT offered.
+  const TAB_ACTIVITY_TYPE = {
+    "2": "read_along", "3": "quiz3", "4": "quiz4", "5": "matching",
+    "6": "reorder", "7": "wh", "8": "dictation", "9": "cloze", "10": "roleplay"
+  };
+  // An activity id is "<lessonId>.<type>", so the last segment IS the type. Keyed on contentPath
+  // because that is what the lesson player knows about the article it is showing.
+  function registeredActivityTypes(contentPath) {
+    const acts = (typeof learningRegistry !== "undefined" && learningRegistry.activities) || {};
+    const out = {};
+    for (const aid in acts) {
+      if (acts[aid].contentPath !== contentPath) continue;
+      out[aid.slice(aid.lastIndexOf(".") + 1)] = 1;
+    }
+    return out;
+  }
+  function applyRegistryTabs(contentPath) {
+    const have = registeredActivityTypes(contentPath);
+    let activeWentAway = false;
+    Object.keys(TAB_ACTIVITY_TYPE).forEach(lv => {
+      const tab = document.querySelector('.levelTab[data-level="' + lv + '"]');
+      if (!tab) return;
+      const off = !have[TAB_ACTIVITY_TYPE[lv]];
+      tab.classList.toggle("hidden", off);
+      if (off && tab.classList.contains("active")) activeWentAway = true;
+    });
+    // If the tab we were on is no longer offered, fall back to Level 1 exactly as the old
+    // content-sniffing branches did.
+    if (activeWentAway) {
+      const tab1 = document.querySelector('.levelTab[data-level="1"]');
+      if (tab1) tab1.click();
+    }
+    renumberTabs();
+  }
+
   // 初始顯示目前關卡名稱
   const activeTab = document.querySelector(".levelTab.active");
   if (activeTab) levelNameEl.textContent = activeTab.dataset.name || "";
@@ -4199,41 +4239,12 @@
     quiz4Ctl.setData(content.quiz4);
     matchCtl.setData(content.vocab);
 
-    // Level 6（重組句子）只在文章有 reorder 資料時顯示分頁
+    // Content is loaded into every controller unconditionally; which tabs are OFFERED is decided by
+    // the registry below, not by sniffing these blocks.
     reorderCtl.setData(content.reorder);
-    const tab6 = document.querySelector('.levelTab[data-level="6"]');
-    const hasReorder = !!(content.reorder && content.reorder.length);
-    tab6.classList.toggle("hidden", !hasReorder);
-    if (!hasReorder && tab6.classList.contains("active")) {
-      document.querySelector('.levelTab[data-level="1"]').click();
-    }
-
-    // Level 7（WH 問題）只在文章有 wh 資料時顯示分頁
     whCtl.setData(content.wh);
-    const tab7 = document.querySelector('.levelTab[data-level="7"]');
-    const hasWh = !!(content.wh && content.wh.length);
-    tab7.classList.toggle("hidden", !hasWh);
-    if (!hasWh && tab7.classList.contains("active")) {
-      document.querySelector('.levelTab[data-level="1"]').click();
-    }
-
-    // Level 8（聽寫，A1 以上）只在文章有 dictation 資料時顯示分頁
     dictCtl.setData(content.dictation);
-    const tab8 = document.querySelector('.levelTab[data-level="8"]');
-    const hasDict = !!(content.dictation && content.dictation.length);
-    tab8.classList.toggle("hidden", !hasDict);
-    if (!hasDict && tab8.classList.contains("active")) {
-      document.querySelector('.levelTab[data-level="1"]').click();
-    }
-
-    // Level 9（單字填空）只在文章有 cloze 資料時顯示分頁
     clozeCtl.setData(content.cloze);
-    const tab9 = document.querySelector('.levelTab[data-level="9"]');
-    const hasCloze = !!(content.cloze && content.cloze.length);
-    tab9.classList.toggle("hidden", !hasCloze);
-    if (!hasCloze && tab9.classList.contains("active")) {
-      document.querySelector('.levelTab[data-level="1"]').click();
-    }
     // 顯示填空題的難度類型標籤
     const clozeTypeLabel = {
       recognition: "Word recognition", category: "Same-category", synonym: "Synonyms",
@@ -4242,11 +4253,15 @@
     const badge = document.getElementById("clozeTypeBadge");
     badge.textContent = content.clozeType ? (clozeTypeLabel[content.clozeType] || content.clozeType) : "";
 
-    // Level 10（Role-play）：只要有對話(≥2 句)就顯示 → 所有課都有
-    const tab10 = document.querySelector('.levelTab[data-level="10"]');
-    if (tab10) tab10.classList.toggle("hidden", !(script && script.length >= 2));
-
-    renumberTabs();   // 依可見順序重編分頁號碼（Role-play 排最後一關）
+    // Phase 9E.2: activity availability is REGISTRY-DRIVEN.
+    // Until now each tab was shown by sniffing the content file (`content.reorder`, `content.wh`,
+    // `content.dictation`, `content.cloze`, dialogue length). That was a SECOND curriculum-shape
+    // schema living in the client, and it disagreed with the registry: every A1 lesson offered
+    // quiz4 / WH / cloze / role-play tabs that were not registered activities, so a learner could
+    // work through them while `maybeSubmitLearningAttempt()` dropped every submission (no aid ->
+    // return) and the lesson still read "0 / 5". The registry is the authority on what a lesson
+    // HAS; the completion policy is separately the authority on what mastery REQUIRES.
+    applyRegistryTabs(article.file);
 
     // 還原這篇文章已完成的關卡並更新進度條
     restoreProgress();
