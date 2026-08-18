@@ -7614,20 +7614,6 @@
     });
   }
 
-  // 打贏「有主」據點後：把它清成無主（前主人扣人口），不直接取得所有權——之後走過關→佔領流程。
-  // LEGACY / UNUSED (Phase 2A): winning an attack now neutralizes the region on the server inside
-  // /api/territory/attack. The backend restricts /release to the region's OWNER (self-abandon only),
-  // so this can no longer neutralize an enemy territory even if called directly.
-  function releaseTerritory(file, pop, cb) {
-    const t = authToken();
-    if (!t) { if (cb) cb(); return; }
-    fetch(withRoom("/api/territory/release?token=" + encodeURIComponent(t)), {
-      method: "POST", body: JSON.stringify({ file: file, pop: pop })
-    }).then(r => r.ok ? r.json() : null)
-      .then(() => { loadTerritory(() => { if (cb) cb(); }); })
-      .catch(() => { if (cb) cb(); });
-  }
-
   function lessonTitleByFile(file) {
     let t = file;
     (manifest ? manifest.levels : []).forEach(lv => lv.articles.forEach(a => { if (a.file === file) t = a.title ? a.title.split("·").pop().trim() : a.id; }));

@@ -458,7 +458,7 @@ PASS_GOLD = game_config.PASS_GOLD                   # Phase 7C.2: 關卡活動(q
 # 遊戲設定只認中性的經濟金額(MASTERY_GOLD)；「整課精通」這個學習概念只存在於這一行的對應關係，
 # 由 server.py 把它餵給 Learning Domain 的 amountKey。game/ 永遠不認識課程詞彙。
 LESSON_MASTERY_GOLD = game_config.MASTERY_GOLD      # 整課精通(Rule A)的主要獎勵
-DEFEND_GOLD = 50                                    # 防守成功 +50 金幣
+DEFEND_GOLD = game_config.DEFEND_GOLD               # 防守成功 +50 金幣
 # Phase 3A：後端權威地重新批改課程活動時，讀取「與前端相同」的課程 JSON(答案鍵)。容器內內容在
 # /var/www/html(Dockerfile 設 CONTENT_ROOT)；本機/測試預設為 server.py 所在的專案根目錄。
 CONTENT_ROOT = os.environ.get("CONTENT_ROOT") or os.path.dirname(os.path.abspath(__file__))
@@ -466,11 +466,13 @@ CONTENT_ROOT = os.environ.get("CONTENT_ROOT") or os.path.dirname(os.path.abspath
 LEARNING = learning_api.LearningService(content_root=CONTENT_ROOT,
                                         reward_amounts={"PASS_GOLD": PASS_GOLD,
                                                         "LESSON_MASTERY_GOLD": LESSON_MASTERY_GOLD})
-ATTACK_FAIL_GOLD = 50                               # 攻打失敗 −50 金幣
+ATTACK_FAIL_GOLD = game_config.ATTACK_FAIL_GOLD     # 攻打失敗 −50 金幣
 # Phase 8B.2: these were duplicated LITERALS here and in game/config.py. Two copies of a price is
 # one copy too many — the 8B.2 rebalance changed config.py and this file silently kept the old
 # numbers, which game_domain_test.py caught. They are aliases now, exactly like PASS_GOLD above, so
 # game/config.py is the single source of every balance constant.
+# Phase 8F.3: DEFEND_GOLD / ATTACK_FAIL_GOLD were the last two literals this comment already claimed
+# were aliases. They are aliases now too, so the claim is finally true for every balance constant.
 # 蓋建築的金幣花費：兵工廠(科技) + 三種生產建築
 BUILD_COST = game_config.BUILD_COST
 TECH_TRACKS = ("atk", "def")                       # 鍛造(+攻) / 鎧甲(+防)
