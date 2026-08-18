@@ -621,6 +621,17 @@ def room_ai_names(r=None):
     return set(a.get("name") for a in (r.get("ais") or []) if a.get("name"))
 
 
+# 「這個擁有者是不是 AI？」的唯一權威判斷。/api/room/start 把房內 AI 命名為 "AI 1".."AI 7"，所以只比對
+# AI_OWNER 會漏掉每一個真實房間的 AI(Phase 8F.3 修正的缺陷)。名單 = 房間名冊 ∪ {預設名, 舊中文名}，
+# 與前端 isAiOwner() 完全一致；舊資料/ai_move() 預設參數仍可能留下 AI_OWNER，因此兩者都要認。
+def is_ai_owner(name, names=None):
+    if not name:
+        return False
+    if name == AI_OWNER or name == AI_OWNER_LEGACY:
+        return True
+    return name in (room_ai_names() if names is None else names)
+
+
 # 學生加入名額控管：回傳是否可進場(已是成員/主持人=可；額滿=不可，否則登記為成員)
 def room_admit(user):
     with room_lock:
@@ -805,7 +816,7 @@ def ai_move(ai_name=AI_OWNER, difficulty=AI_DIFFICULTY, ai_names=None):
 
     if logged:
         _ai_log_event(ai_name, *logged)
-        if logged[0] == "attack_fail" and logged[2] and logged[2] not in ai_names:
+        if logged[0] == "attack_fail" and logged[2] and not is_ai_owner(logged[2], ai_names):
             econ_add_gold(logged[2], DEFEND_GOLD)      # 玩家成功擋下 AI → 防守成功 +50
     return logged
 
@@ -868,6 +879,7 @@ def _as_float(v, default):
 
 def conscript_tick():
     now = time.time()
+    ai_names = room_ai_names()                     # 先讀名冊(load_room 不取鎖)，避免在鎖內做檔案 I/O
     with terr_lock:
         store = load_territory_store()
         with econ_lock:
@@ -875,7 +887,7 @@ def conscript_tick():
             t_dirty = e_dirty = False
             # 1) 各領地徵兵 → 加進該區守軍，花擁有者金幣池(只花金幣，不扣人口)。人口不再自動成長。
             for f, h in store.items():
-                if not (isinstance(h, dict) and h.get("owner") and h.get("owner") != AI_OWNER):
+                if not (isinstance(h, dict) and h.get("owner") and not is_ai_owner(h["owner"], ai_names)):
                     continue
                 if not h.get("conscript"):
                     continue
@@ -1886,7 +1898,7 @@ class Handler(BaseHTTPRequestHandler):
         newgold = None
         if not result["attackerWon"]:
             newgold = econ_add_gold(user, -ATTACK_FAIL_GOLD)
-            if defender and defender != user and defender != AI_OWNER:
+            if defender and defender != user and not is_ai_owner(defender):
                 econ_add_gold(defender, DEFEND_GOLD)
         self._send({"ok": True,
                     "sourceTerritoryId": source, "targetTerritoryId": target,

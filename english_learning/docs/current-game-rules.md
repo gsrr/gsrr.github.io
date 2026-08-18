@@ -265,7 +265,9 @@ On **win**: the target is **NEUTRALIZED** (`del store[target]`) — ownership do
 Win → `del store[target]` (garrison/growth discarded). Defender garrison is **not** wounded on a repelled attack in the human path (it stays at full pre-battle strength); the AI path *does* set `defender = defenderSurvivors` on its loss (minor human/AI inconsistency).
 
 ### 8. Gold effects
-Win → no gold change. Loss → attacker `−ATTACK_FAIL_GOLD (50)`; if the defender is a real, non-AI player → defender `+DEFEND_GOLD (50)` (applied via `econ_add_gold` **outside** `terr_lock`).
+Win → no gold change. Loss → attacker `−ATTACK_FAIL_GOLD (50)`; if the defender is a real, non-AI player → defender `+DEFEND_GOLD (50)` (applied via `econ_add_gold` **outside** `terr_lock`). Losing to an AI therefore *destroys* the 50 rather than transferring it.
+
+"Non-AI" is decided by `is_ai_owner()` = the room's AI roster (`room_ai_names()`, which `/api/room/start` fills with `AI 1`…`AI 7`) **∪** `{AI_OWNER, AI_OWNER_LEGACY}` — the same union the client's `isAiOwner()` uses. Phase 8F.3 fixed a defect here: the guard previously compared only against `AI_OWNER` (`"AI Empire"`), a name no room AI ever has, so every room AI collected `DEFEND_GOLD` from a failed human attack and `_ai_recruit` turned it into troops. `conscript_tick` shared the same stale guard (latent — a captured region loses its `conscript` flag) and now uses `is_ai_owner()` too.
 
 ### 9. AI attack origin behavior (`ai_move`)
 AI attacks from its **global pool** (`ae["troops"]`), targeting a **random** non-AI-owned territory (no adjacency, no source). Win → AI takes ownership immediately with survivors as garrison (AI is exempt from the lesson/claim gate). Loss → target owner keeps it, garrison set to defender survivors. The AI pool is cleared (`_norm_troops(0)`) after any attack. AI occupy places its whole pool as the new garrison.
