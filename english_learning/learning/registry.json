@@ -3,14 +3,18 @@
 
   "contentPacks": {
     "english.prea1": { "title": "English · Pre-A1" },
-    "english.a1": { "title": "English · A1" }
+    "english.a1": { "title": "English · A1" },
+    "english.a2": { "title": "English · A2" },
+    "english.b1": { "title": "English · B1" }
   },
 
   "courses": {
     "english.prea1.taipei": { "contentPackId": "english.prea1", "title": "Taipei",
                               "rewardPolicy": "campaign_trophy" },
     "english.a1.core": { "contentPackId": "english.a1", "title": "A1 Core Readings" },
-    "english.prea1.core": { "contentPackId": "english.prea1", "title": "Pre-A1 Core Readings" }
+    "english.prea1.core": { "contentPackId": "english.prea1", "title": "Pre-A1 Core Readings" },
+    "english.a2.core": { "contentPackId": "english.a2", "title": "A2 Core Readings" },
+    "english.b1.core": { "contentPackId": "english.b1", "title": "B1 Core Readings" }
   },
 
   "units": {},
@@ -973,6 +977,397 @@
           "english.prea1.core.024.wh",
           "english.prea1.core.024.cloze",
           "english.prea1.core.024.roleplay"
+        ]
+      }
+    },
+
+    "english.a2.core.001": {
+      "courseId": "english.a2.core",
+      "contentPath": "A2/001",
+      "title": "A2 · 001 Summer Plans",
+      "completionPolicy": {
+        "type": "average_required_activities",
+        "version": 1,
+        "passMark": 80,
+        "rewardPolicy": [
+          "lesson_mastery_badge",
+          "lesson_mastery_gold"
+        ],
+        "grants": [],
+        "requiredActivityIds": [
+          "english.a2.core.001.read_along",
+          "english.a2.core.001.quiz3",
+          "english.a2.core.001.matching",
+          "english.a2.core.001.reorder",
+          "english.a2.core.001.dictation"
+        ]
+      }
+    },
+
+    "english.b1.core.001": {
+      "courseId": "english.b1.core",
+      "contentPath": "B1/001",
+      "title": "B1 · 001 A New Hobby",
+      "completionPolicy": {
+        "type": "average_required_activities",
+        "version": 1,
+        "passMark": 80,
+        "rewardPolicy": [
+          "lesson_mastery_badge",
+          "lesson_mastery_gold"
+        ],
+        "grants": [],
+        "requiredActivityIds": [
+          "english.b1.core.001.read_along",
+          "english.b1.core.001.quiz3",
+          "english.b1.core.001.matching",
+          "english.b1.core.001.reorder",
+          "english.b1.core.001.dictation"
+        ]
+      }
+    },
+
+    "english.a2.core.002": {
+      "courseId": "english.a2.core",
+      "contentPath": "A2/002",
+      "title": "A2 · 002 A Talk About the Ceasefire",
+      "completionPolicy": {
+        "type": "average_required_activities",
+        "version": 1,
+        "passMark": 80,
+        "rewardPolicy": [
+          "lesson_mastery_badge",
+          "lesson_mastery_gold"
+        ],
+        "grants": [],
+        "requiredActivityIds": [
+          "english.a2.core.002.read_along",
+          "english.a2.core.002.quiz3",
+          "english.a2.core.002.matching",
+          "english.a2.core.002.reorder",
+          "english.a2.core.002.dictation"
+        ]
+      }
+    },
+
+    "english.a2.core.003": {
+      "courseId": "english.a2.core",
+      "contentPath": "A2/003",
+      "title": "A2 · 003 My Future Job",
+      "completionPolicy": {
+        "type": "average_required_activities",
+        "version": 1,
+        "passMark": 80,
+        "rewardPolicy": [
+          "lesson_mastery_badge",
+          "lesson_mastery_gold"
+        ],
+        "grants": [],
+        "requiredActivityIds": [
+          "english.a2.core.003.read_along",
+          "english.a2.core.003.quiz3",
+          "english.a2.core.003.matching",
+          "english.a2.core.003.reorder",
+          "english.a2.core.003.dictation"
+        ]
+      }
+    },
+
+    "english.a2.core.004": {
+      "courseId": "english.a2.core",
+      "contentPath": "A2/004",
+      "title": "A2 · 004 The School Trip",
+      "completionPolicy": {
+        "type": "average_required_activities",
+        "version": 1,
+        "passMark": 80,
+        "rewardPolicy": [
+          "lesson_mastery_badge",
+          "lesson_mastery_gold"
+        ],
+        "grants": [],
+        "requiredActivityIds": [
+          "english.a2.core.004.read_along",
+          "english.a2.core.004.quiz3",
+          "english.a2.core.004.matching",
+          "english.a2.core.004.reorder",
+          "english.a2.core.004.dictation"
+        ]
+      }
+    },
+
+    "english.a2.core.005": {
+      "courseId": "english.a2.core",
+      "contentPath": "A2/005",
+      "title": "A2 · 005 Healthy Habits",
+      "completionPolicy": {
+        "type": "average_required_activities",
+        "version": 1,
+        "passMark": 80,
+        "rewardPolicy": [
+          "lesson_mastery_badge",
+          "lesson_mastery_gold"
+        ],
+        "grants": [],
+        "requiredActivityIds": [
+          "english.a2.core.005.read_along",
+          "english.a2.core.005.quiz3",
+          "english.a2.core.005.matching",
+          "english.a2.core.005.reorder",
+          "english.a2.core.005.dictation"
+        ]
+      }
+    },
+
+    "english.a2.core.006": {
+      "courseId": "english.a2.core",
+      "contentPath": "A2/006",
+      "title": "A2 · 006 A Rainy Picnic",
+      "completionPolicy": {
+        "type": "average_required_activities",
+        "version": 1,
+        "passMark": 80,
+        "rewardPolicy": [
+          "lesson_mastery_badge",
+          "lesson_mastery_gold"
+        ],
+        "grants": [],
+        "requiredActivityIds": [
+          "english.a2.core.006.read_along",
+          "english.a2.core.006.quiz3",
+          "english.a2.core.006.matching",
+          "english.a2.core.006.reorder",
+          "english.a2.core.006.dictation"
+        ]
+      }
+    },
+
+    "english.a2.core.007": {
+      "courseId": "english.a2.core",
+      "contentPath": "A2/007",
+      "title": "A2 · 007 Saving Money",
+      "completionPolicy": {
+        "type": "average_required_activities",
+        "version": 1,
+        "passMark": 80,
+        "rewardPolicy": [
+          "lesson_mastery_badge",
+          "lesson_mastery_gold"
+        ],
+        "grants": [],
+        "requiredActivityIds": [
+          "english.a2.core.007.read_along",
+          "english.a2.core.007.quiz3",
+          "english.a2.core.007.matching",
+          "english.a2.core.007.reorder",
+          "english.a2.core.007.dictation"
+        ]
+      }
+    },
+
+    "english.a2.core.008": {
+      "courseId": "english.a2.core",
+      "contentPath": "A2/008",
+      "title": "A2 · 008 Learning to Swim",
+      "completionPolicy": {
+        "type": "average_required_activities",
+        "version": 1,
+        "passMark": 80,
+        "rewardPolicy": [
+          "lesson_mastery_badge",
+          "lesson_mastery_gold"
+        ],
+        "grants": [],
+        "requiredActivityIds": [
+          "english.a2.core.008.read_along",
+          "english.a2.core.008.quiz3",
+          "english.a2.core.008.matching",
+          "english.a2.core.008.reorder",
+          "english.a2.core.008.dictation"
+        ]
+      }
+    },
+
+    "english.a2.core.009": {
+      "courseId": "english.a2.core",
+      "contentPath": "A2/009",
+      "title": "A2 · 009 The Science Project",
+      "completionPolicy": {
+        "type": "average_required_activities",
+        "version": 1,
+        "passMark": 80,
+        "rewardPolicy": [
+          "lesson_mastery_badge",
+          "lesson_mastery_gold"
+        ],
+        "grants": [],
+        "requiredActivityIds": [
+          "english.a2.core.009.read_along",
+          "english.a2.core.009.quiz3",
+          "english.a2.core.009.matching",
+          "english.a2.core.009.reorder",
+          "english.a2.core.009.dictation"
+        ]
+      }
+    },
+
+    "english.a2.core.010": {
+      "courseId": "english.a2.core",
+      "contentPath": "A2/010",
+      "title": "A2 · 010 A Visit to Grandma",
+      "completionPolicy": {
+        "type": "average_required_activities",
+        "version": 1,
+        "passMark": 80,
+        "rewardPolicy": [
+          "lesson_mastery_badge",
+          "lesson_mastery_gold"
+        ],
+        "grants": [],
+        "requiredActivityIds": [
+          "english.a2.core.010.read_along",
+          "english.a2.core.010.quiz3",
+          "english.a2.core.010.matching",
+          "english.a2.core.010.reorder",
+          "english.a2.core.010.dictation"
+        ]
+      }
+    },
+
+    "english.a2.core.011": {
+      "courseId": "english.a2.core",
+      "contentPath": "A2/011",
+      "title": "A2 · 011 Recycling at Home",
+      "completionPolicy": {
+        "type": "average_required_activities",
+        "version": 1,
+        "passMark": 80,
+        "rewardPolicy": [
+          "lesson_mastery_badge",
+          "lesson_mastery_gold"
+        ],
+        "grants": [],
+        "requiredActivityIds": [
+          "english.a2.core.011.read_along",
+          "english.a2.core.011.quiz3",
+          "english.a2.core.011.matching",
+          "english.a2.core.011.reorder",
+          "english.a2.core.011.dictation"
+        ]
+      }
+    },
+
+    "english.a2.core.012": {
+      "courseId": "english.a2.core",
+      "contentPath": "A2/012",
+      "title": "A2 · 012 The Football Match",
+      "completionPolicy": {
+        "type": "average_required_activities",
+        "version": 1,
+        "passMark": 80,
+        "rewardPolicy": [
+          "lesson_mastery_badge",
+          "lesson_mastery_gold"
+        ],
+        "grants": [],
+        "requiredActivityIds": [
+          "english.a2.core.012.read_along",
+          "english.a2.core.012.quiz3",
+          "english.a2.core.012.matching",
+          "english.a2.core.012.reorder",
+          "english.a2.core.012.dictation"
+        ]
+      }
+    },
+
+    "english.b1.core.002": {
+      "courseId": "english.b1.core",
+      "contentPath": "B1/002",
+      "title": "B1 · 002 Planning a Trip",
+      "completionPolicy": {
+        "type": "average_required_activities",
+        "version": 1,
+        "passMark": 80,
+        "rewardPolicy": [
+          "lesson_mastery_badge",
+          "lesson_mastery_gold"
+        ],
+        "grants": [],
+        "requiredActivityIds": [
+          "english.b1.core.002.read_along",
+          "english.b1.core.002.quiz3",
+          "english.b1.core.002.matching",
+          "english.b1.core.002.reorder",
+          "english.b1.core.002.dictation"
+        ]
+      }
+    },
+
+    "english.b1.core.003": {
+      "courseId": "english.b1.core",
+      "contentPath": "B1/003",
+      "title": "B1 · 003 My Favorite Book",
+      "completionPolicy": {
+        "type": "average_required_activities",
+        "version": 1,
+        "passMark": 80,
+        "rewardPolicy": [
+          "lesson_mastery_badge",
+          "lesson_mastery_gold"
+        ],
+        "grants": [],
+        "requiredActivityIds": [
+          "english.b1.core.003.read_along",
+          "english.b1.core.003.quiz3",
+          "english.b1.core.003.matching",
+          "english.b1.core.003.reorder",
+          "english.b1.core.003.dictation"
+        ]
+      }
+    },
+
+    "english.b1.core.004": {
+      "courseId": "english.b1.core",
+      "contentPath": "B1/004",
+      "title": "B1 · 004 Helping the Environment",
+      "completionPolicy": {
+        "type": "average_required_activities",
+        "version": 1,
+        "passMark": 80,
+        "rewardPolicy": [
+          "lesson_mastery_badge",
+          "lesson_mastery_gold"
+        ],
+        "grants": [],
+        "requiredActivityIds": [
+          "english.b1.core.004.read_along",
+          "english.b1.core.004.quiz3",
+          "english.b1.core.004.matching",
+          "english.b1.core.004.reorder",
+          "english.b1.core.004.dictation"
+        ]
+      }
+    },
+
+    "english.b1.core.005": {
+      "courseId": "english.b1.core",
+      "contentPath": "B1/005",
+      "title": "B1 · 005 A Difficult Decision",
+      "completionPolicy": {
+        "type": "average_required_activities",
+        "version": 1,
+        "passMark": 80,
+        "rewardPolicy": [
+          "lesson_mastery_badge",
+          "lesson_mastery_gold"
+        ],
+        "grants": [],
+        "requiredActivityIds": [
+          "english.b1.core.005.read_along",
+          "english.b1.core.005.quiz3",
+          "english.b1.core.005.matching",
+          "english.b1.core.005.reorder",
+          "english.b1.core.005.dictation"
         ]
       }
     }
@@ -3749,6 +4144,1400 @@
       "scorerType": "roleplay_local",
       "scenarioPath": "roleplay/scenarios/lesson/A1-012",
       "title": "A1 · 012 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.001.read_along": {
+      "lessonId": "english.a2.core.001",
+      "scorerType": "read_along_stt",
+      "title": "A2 · 001 — Read Along",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.001.quiz3": {
+      "lessonId": "english.a2.core.001",
+      "contentKey": "quiz3",
+      "graderType": "yes_no",
+      "title": "A2 · 001 — Yes/No reading comprehension",
+      "grants": [],
+      "rewardPolicy": "standard_activity_pass"
+    },
+
+    "english.a2.core.001.quiz4": {
+      "lessonId": "english.a2.core.001",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A2 · 001 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.001.matching": {
+      "lessonId": "english.a2.core.001",
+      "contentKey": "vocab",
+      "scorerType": "matching_first_try",
+      "title": "A2 · 001 — Word/Picture matching",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.001.reorder": {
+      "lessonId": "english.a2.core.001",
+      "contentKey": "reorder",
+      "graderType": "reorder",
+      "title": "A2 · 001 — Sentence reordering",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.001.wh": {
+      "lessonId": "english.a2.core.001",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A2 · 001 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.001.dictation": {
+      "lessonId": "english.a2.core.001",
+      "contentKey": "dictation",
+      "graderType": "dictation",
+      "title": "A2 · 001 — Dictation",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.001.cloze": {
+      "lessonId": "english.a2.core.001",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A2 · 001 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.001.roleplay": {
+      "lessonId": "english.a2.core.001",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A2-001",
+      "title": "A2 · 001 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.001.read_along": {
+      "lessonId": "english.b1.core.001",
+      "scorerType": "read_along_stt",
+      "title": "B1 · 001 — Read Along",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.001.quiz3": {
+      "lessonId": "english.b1.core.001",
+      "contentKey": "quiz3",
+      "graderType": "yes_no",
+      "title": "B1 · 001 — Yes/No reading comprehension",
+      "grants": [],
+      "rewardPolicy": "standard_activity_pass"
+    },
+
+    "english.b1.core.001.quiz4": {
+      "lessonId": "english.b1.core.001",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "B1 · 001 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.001.matching": {
+      "lessonId": "english.b1.core.001",
+      "contentKey": "vocab",
+      "scorerType": "matching_first_try",
+      "title": "B1 · 001 — Word/Picture matching",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.001.reorder": {
+      "lessonId": "english.b1.core.001",
+      "contentKey": "reorder",
+      "graderType": "reorder",
+      "title": "B1 · 001 — Sentence reordering",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.001.wh": {
+      "lessonId": "english.b1.core.001",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "B1 · 001 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.001.dictation": {
+      "lessonId": "english.b1.core.001",
+      "contentKey": "dictation",
+      "graderType": "dictation",
+      "title": "B1 · 001 — Dictation",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.001.cloze": {
+      "lessonId": "english.b1.core.001",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "B1 · 001 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.001.roleplay": {
+      "lessonId": "english.b1.core.001",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/B1-001",
+      "title": "B1 · 001 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.002.read_along": {
+      "lessonId": "english.a2.core.002",
+      "scorerType": "read_along_stt",
+      "title": "A2 · 002 — Read Along",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.002.quiz3": {
+      "lessonId": "english.a2.core.002",
+      "contentKey": "quiz3",
+      "graderType": "yes_no",
+      "title": "A2 · 002 — Yes/No reading comprehension",
+      "grants": [],
+      "rewardPolicy": "standard_activity_pass"
+    },
+
+    "english.a2.core.002.quiz4": {
+      "lessonId": "english.a2.core.002",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A2 · 002 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.002.matching": {
+      "lessonId": "english.a2.core.002",
+      "contentKey": "vocab",
+      "scorerType": "matching_first_try",
+      "title": "A2 · 002 — Word/Picture matching",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.002.reorder": {
+      "lessonId": "english.a2.core.002",
+      "contentKey": "reorder",
+      "graderType": "reorder",
+      "title": "A2 · 002 — Sentence reordering",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.002.wh": {
+      "lessonId": "english.a2.core.002",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A2 · 002 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.002.dictation": {
+      "lessonId": "english.a2.core.002",
+      "contentKey": "dictation",
+      "graderType": "dictation",
+      "title": "A2 · 002 — Dictation",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.002.cloze": {
+      "lessonId": "english.a2.core.002",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A2 · 002 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.002.roleplay": {
+      "lessonId": "english.a2.core.002",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A2-002",
+      "title": "A2 · 002 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.003.read_along": {
+      "lessonId": "english.a2.core.003",
+      "scorerType": "read_along_stt",
+      "title": "A2 · 003 — Read Along",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.003.quiz3": {
+      "lessonId": "english.a2.core.003",
+      "contentKey": "quiz3",
+      "graderType": "yes_no",
+      "title": "A2 · 003 — Yes/No reading comprehension",
+      "grants": [],
+      "rewardPolicy": "standard_activity_pass"
+    },
+
+    "english.a2.core.003.quiz4": {
+      "lessonId": "english.a2.core.003",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A2 · 003 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.003.matching": {
+      "lessonId": "english.a2.core.003",
+      "contentKey": "vocab",
+      "scorerType": "matching_first_try",
+      "title": "A2 · 003 — Word/Picture matching",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.003.reorder": {
+      "lessonId": "english.a2.core.003",
+      "contentKey": "reorder",
+      "graderType": "reorder",
+      "title": "A2 · 003 — Sentence reordering",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.003.wh": {
+      "lessonId": "english.a2.core.003",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A2 · 003 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.003.dictation": {
+      "lessonId": "english.a2.core.003",
+      "contentKey": "dictation",
+      "graderType": "dictation",
+      "title": "A2 · 003 — Dictation",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.003.cloze": {
+      "lessonId": "english.a2.core.003",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A2 · 003 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.003.roleplay": {
+      "lessonId": "english.a2.core.003",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A2-003",
+      "title": "A2 · 003 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.004.read_along": {
+      "lessonId": "english.a2.core.004",
+      "scorerType": "read_along_stt",
+      "title": "A2 · 004 — Read Along",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.004.quiz3": {
+      "lessonId": "english.a2.core.004",
+      "contentKey": "quiz3",
+      "graderType": "yes_no",
+      "title": "A2 · 004 — Yes/No reading comprehension",
+      "grants": [],
+      "rewardPolicy": "standard_activity_pass"
+    },
+
+    "english.a2.core.004.quiz4": {
+      "lessonId": "english.a2.core.004",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A2 · 004 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.004.matching": {
+      "lessonId": "english.a2.core.004",
+      "contentKey": "vocab",
+      "scorerType": "matching_first_try",
+      "title": "A2 · 004 — Word/Picture matching",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.004.reorder": {
+      "lessonId": "english.a2.core.004",
+      "contentKey": "reorder",
+      "graderType": "reorder",
+      "title": "A2 · 004 — Sentence reordering",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.004.wh": {
+      "lessonId": "english.a2.core.004",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A2 · 004 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.004.dictation": {
+      "lessonId": "english.a2.core.004",
+      "contentKey": "dictation",
+      "graderType": "dictation",
+      "title": "A2 · 004 — Dictation",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.004.cloze": {
+      "lessonId": "english.a2.core.004",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A2 · 004 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.004.roleplay": {
+      "lessonId": "english.a2.core.004",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A2-004",
+      "title": "A2 · 004 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.005.read_along": {
+      "lessonId": "english.a2.core.005",
+      "scorerType": "read_along_stt",
+      "title": "A2 · 005 — Read Along",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.005.quiz3": {
+      "lessonId": "english.a2.core.005",
+      "contentKey": "quiz3",
+      "graderType": "yes_no",
+      "title": "A2 · 005 — Yes/No reading comprehension",
+      "grants": [],
+      "rewardPolicy": "standard_activity_pass"
+    },
+
+    "english.a2.core.005.quiz4": {
+      "lessonId": "english.a2.core.005",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A2 · 005 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.005.matching": {
+      "lessonId": "english.a2.core.005",
+      "contentKey": "vocab",
+      "scorerType": "matching_first_try",
+      "title": "A2 · 005 — Word/Picture matching",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.005.reorder": {
+      "lessonId": "english.a2.core.005",
+      "contentKey": "reorder",
+      "graderType": "reorder",
+      "title": "A2 · 005 — Sentence reordering",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.005.wh": {
+      "lessonId": "english.a2.core.005",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A2 · 005 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.005.dictation": {
+      "lessonId": "english.a2.core.005",
+      "contentKey": "dictation",
+      "graderType": "dictation",
+      "title": "A2 · 005 — Dictation",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.005.cloze": {
+      "lessonId": "english.a2.core.005",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A2 · 005 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.005.roleplay": {
+      "lessonId": "english.a2.core.005",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A2-005",
+      "title": "A2 · 005 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.006.read_along": {
+      "lessonId": "english.a2.core.006",
+      "scorerType": "read_along_stt",
+      "title": "A2 · 006 — Read Along",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.006.quiz3": {
+      "lessonId": "english.a2.core.006",
+      "contentKey": "quiz3",
+      "graderType": "yes_no",
+      "title": "A2 · 006 — Yes/No reading comprehension",
+      "grants": [],
+      "rewardPolicy": "standard_activity_pass"
+    },
+
+    "english.a2.core.006.quiz4": {
+      "lessonId": "english.a2.core.006",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A2 · 006 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.006.matching": {
+      "lessonId": "english.a2.core.006",
+      "contentKey": "vocab",
+      "scorerType": "matching_first_try",
+      "title": "A2 · 006 — Word/Picture matching",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.006.reorder": {
+      "lessonId": "english.a2.core.006",
+      "contentKey": "reorder",
+      "graderType": "reorder",
+      "title": "A2 · 006 — Sentence reordering",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.006.wh": {
+      "lessonId": "english.a2.core.006",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A2 · 006 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.006.dictation": {
+      "lessonId": "english.a2.core.006",
+      "contentKey": "dictation",
+      "graderType": "dictation",
+      "title": "A2 · 006 — Dictation",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.006.cloze": {
+      "lessonId": "english.a2.core.006",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A2 · 006 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.006.roleplay": {
+      "lessonId": "english.a2.core.006",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A2-006",
+      "title": "A2 · 006 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.007.read_along": {
+      "lessonId": "english.a2.core.007",
+      "scorerType": "read_along_stt",
+      "title": "A2 · 007 — Read Along",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.007.quiz3": {
+      "lessonId": "english.a2.core.007",
+      "contentKey": "quiz3",
+      "graderType": "yes_no",
+      "title": "A2 · 007 — Yes/No reading comprehension",
+      "grants": [],
+      "rewardPolicy": "standard_activity_pass"
+    },
+
+    "english.a2.core.007.quiz4": {
+      "lessonId": "english.a2.core.007",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A2 · 007 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.007.matching": {
+      "lessonId": "english.a2.core.007",
+      "contentKey": "vocab",
+      "scorerType": "matching_first_try",
+      "title": "A2 · 007 — Word/Picture matching",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.007.reorder": {
+      "lessonId": "english.a2.core.007",
+      "contentKey": "reorder",
+      "graderType": "reorder",
+      "title": "A2 · 007 — Sentence reordering",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.007.wh": {
+      "lessonId": "english.a2.core.007",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A2 · 007 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.007.dictation": {
+      "lessonId": "english.a2.core.007",
+      "contentKey": "dictation",
+      "graderType": "dictation",
+      "title": "A2 · 007 — Dictation",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.007.cloze": {
+      "lessonId": "english.a2.core.007",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A2 · 007 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.007.roleplay": {
+      "lessonId": "english.a2.core.007",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A2-007",
+      "title": "A2 · 007 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.008.read_along": {
+      "lessonId": "english.a2.core.008",
+      "scorerType": "read_along_stt",
+      "title": "A2 · 008 — Read Along",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.008.quiz3": {
+      "lessonId": "english.a2.core.008",
+      "contentKey": "quiz3",
+      "graderType": "yes_no",
+      "title": "A2 · 008 — Yes/No reading comprehension",
+      "grants": [],
+      "rewardPolicy": "standard_activity_pass"
+    },
+
+    "english.a2.core.008.quiz4": {
+      "lessonId": "english.a2.core.008",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A2 · 008 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.008.matching": {
+      "lessonId": "english.a2.core.008",
+      "contentKey": "vocab",
+      "scorerType": "matching_first_try",
+      "title": "A2 · 008 — Word/Picture matching",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.008.reorder": {
+      "lessonId": "english.a2.core.008",
+      "contentKey": "reorder",
+      "graderType": "reorder",
+      "title": "A2 · 008 — Sentence reordering",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.008.wh": {
+      "lessonId": "english.a2.core.008",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A2 · 008 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.008.dictation": {
+      "lessonId": "english.a2.core.008",
+      "contentKey": "dictation",
+      "graderType": "dictation",
+      "title": "A2 · 008 — Dictation",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.008.cloze": {
+      "lessonId": "english.a2.core.008",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A2 · 008 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.008.roleplay": {
+      "lessonId": "english.a2.core.008",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A2-008",
+      "title": "A2 · 008 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.009.read_along": {
+      "lessonId": "english.a2.core.009",
+      "scorerType": "read_along_stt",
+      "title": "A2 · 009 — Read Along",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.009.quiz3": {
+      "lessonId": "english.a2.core.009",
+      "contentKey": "quiz3",
+      "graderType": "yes_no",
+      "title": "A2 · 009 — Yes/No reading comprehension",
+      "grants": [],
+      "rewardPolicy": "standard_activity_pass"
+    },
+
+    "english.a2.core.009.quiz4": {
+      "lessonId": "english.a2.core.009",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A2 · 009 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.009.matching": {
+      "lessonId": "english.a2.core.009",
+      "contentKey": "vocab",
+      "scorerType": "matching_first_try",
+      "title": "A2 · 009 — Word/Picture matching",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.009.reorder": {
+      "lessonId": "english.a2.core.009",
+      "contentKey": "reorder",
+      "graderType": "reorder",
+      "title": "A2 · 009 — Sentence reordering",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.009.wh": {
+      "lessonId": "english.a2.core.009",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A2 · 009 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.009.dictation": {
+      "lessonId": "english.a2.core.009",
+      "contentKey": "dictation",
+      "graderType": "dictation",
+      "title": "A2 · 009 — Dictation",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.009.cloze": {
+      "lessonId": "english.a2.core.009",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A2 · 009 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.009.roleplay": {
+      "lessonId": "english.a2.core.009",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A2-009",
+      "title": "A2 · 009 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.010.read_along": {
+      "lessonId": "english.a2.core.010",
+      "scorerType": "read_along_stt",
+      "title": "A2 · 010 — Read Along",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.010.quiz3": {
+      "lessonId": "english.a2.core.010",
+      "contentKey": "quiz3",
+      "graderType": "yes_no",
+      "title": "A2 · 010 — Yes/No reading comprehension",
+      "grants": [],
+      "rewardPolicy": "standard_activity_pass"
+    },
+
+    "english.a2.core.010.quiz4": {
+      "lessonId": "english.a2.core.010",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A2 · 010 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.010.matching": {
+      "lessonId": "english.a2.core.010",
+      "contentKey": "vocab",
+      "scorerType": "matching_first_try",
+      "title": "A2 · 010 — Word/Picture matching",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.010.reorder": {
+      "lessonId": "english.a2.core.010",
+      "contentKey": "reorder",
+      "graderType": "reorder",
+      "title": "A2 · 010 — Sentence reordering",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.010.wh": {
+      "lessonId": "english.a2.core.010",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A2 · 010 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.010.dictation": {
+      "lessonId": "english.a2.core.010",
+      "contentKey": "dictation",
+      "graderType": "dictation",
+      "title": "A2 · 010 — Dictation",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.010.cloze": {
+      "lessonId": "english.a2.core.010",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A2 · 010 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.010.roleplay": {
+      "lessonId": "english.a2.core.010",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A2-010",
+      "title": "A2 · 010 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.011.read_along": {
+      "lessonId": "english.a2.core.011",
+      "scorerType": "read_along_stt",
+      "title": "A2 · 011 — Read Along",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.011.quiz3": {
+      "lessonId": "english.a2.core.011",
+      "contentKey": "quiz3",
+      "graderType": "yes_no",
+      "title": "A2 · 011 — Yes/No reading comprehension",
+      "grants": [],
+      "rewardPolicy": "standard_activity_pass"
+    },
+
+    "english.a2.core.011.quiz4": {
+      "lessonId": "english.a2.core.011",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A2 · 011 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.011.matching": {
+      "lessonId": "english.a2.core.011",
+      "contentKey": "vocab",
+      "scorerType": "matching_first_try",
+      "title": "A2 · 011 — Word/Picture matching",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.011.reorder": {
+      "lessonId": "english.a2.core.011",
+      "contentKey": "reorder",
+      "graderType": "reorder",
+      "title": "A2 · 011 — Sentence reordering",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.011.wh": {
+      "lessonId": "english.a2.core.011",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A2 · 011 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.011.dictation": {
+      "lessonId": "english.a2.core.011",
+      "contentKey": "dictation",
+      "graderType": "dictation",
+      "title": "A2 · 011 — Dictation",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.011.cloze": {
+      "lessonId": "english.a2.core.011",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A2 · 011 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.011.roleplay": {
+      "lessonId": "english.a2.core.011",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A2-011",
+      "title": "A2 · 011 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.012.read_along": {
+      "lessonId": "english.a2.core.012",
+      "scorerType": "read_along_stt",
+      "title": "A2 · 012 — Read Along",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.012.quiz3": {
+      "lessonId": "english.a2.core.012",
+      "contentKey": "quiz3",
+      "graderType": "yes_no",
+      "title": "A2 · 012 — Yes/No reading comprehension",
+      "grants": [],
+      "rewardPolicy": "standard_activity_pass"
+    },
+
+    "english.a2.core.012.quiz4": {
+      "lessonId": "english.a2.core.012",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "A2 · 012 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.012.matching": {
+      "lessonId": "english.a2.core.012",
+      "contentKey": "vocab",
+      "scorerType": "matching_first_try",
+      "title": "A2 · 012 — Word/Picture matching",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.012.reorder": {
+      "lessonId": "english.a2.core.012",
+      "contentKey": "reorder",
+      "graderType": "reorder",
+      "title": "A2 · 012 — Sentence reordering",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.012.wh": {
+      "lessonId": "english.a2.core.012",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "A2 · 012 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.012.dictation": {
+      "lessonId": "english.a2.core.012",
+      "contentKey": "dictation",
+      "graderType": "dictation",
+      "title": "A2 · 012 — Dictation",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.012.cloze": {
+      "lessonId": "english.a2.core.012",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "A2 · 012 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.a2.core.012.roleplay": {
+      "lessonId": "english.a2.core.012",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/A2-012",
+      "title": "A2 · 012 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.002.read_along": {
+      "lessonId": "english.b1.core.002",
+      "scorerType": "read_along_stt",
+      "title": "B1 · 002 — Read Along",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.002.quiz3": {
+      "lessonId": "english.b1.core.002",
+      "contentKey": "quiz3",
+      "graderType": "yes_no",
+      "title": "B1 · 002 — Yes/No reading comprehension",
+      "grants": [],
+      "rewardPolicy": "standard_activity_pass"
+    },
+
+    "english.b1.core.002.quiz4": {
+      "lessonId": "english.b1.core.002",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "B1 · 002 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.002.matching": {
+      "lessonId": "english.b1.core.002",
+      "contentKey": "vocab",
+      "scorerType": "matching_first_try",
+      "title": "B1 · 002 — Word/Picture matching",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.002.reorder": {
+      "lessonId": "english.b1.core.002",
+      "contentKey": "reorder",
+      "graderType": "reorder",
+      "title": "B1 · 002 — Sentence reordering",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.002.wh": {
+      "lessonId": "english.b1.core.002",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "B1 · 002 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.002.dictation": {
+      "lessonId": "english.b1.core.002",
+      "contentKey": "dictation",
+      "graderType": "dictation",
+      "title": "B1 · 002 — Dictation",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.002.cloze": {
+      "lessonId": "english.b1.core.002",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "B1 · 002 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.002.roleplay": {
+      "lessonId": "english.b1.core.002",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/B1-002",
+      "title": "B1 · 002 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.003.read_along": {
+      "lessonId": "english.b1.core.003",
+      "scorerType": "read_along_stt",
+      "title": "B1 · 003 — Read Along",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.003.quiz3": {
+      "lessonId": "english.b1.core.003",
+      "contentKey": "quiz3",
+      "graderType": "yes_no",
+      "title": "B1 · 003 — Yes/No reading comprehension",
+      "grants": [],
+      "rewardPolicy": "standard_activity_pass"
+    },
+
+    "english.b1.core.003.quiz4": {
+      "lessonId": "english.b1.core.003",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "B1 · 003 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.003.matching": {
+      "lessonId": "english.b1.core.003",
+      "contentKey": "vocab",
+      "scorerType": "matching_first_try",
+      "title": "B1 · 003 — Word/Picture matching",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.003.reorder": {
+      "lessonId": "english.b1.core.003",
+      "contentKey": "reorder",
+      "graderType": "reorder",
+      "title": "B1 · 003 — Sentence reordering",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.003.wh": {
+      "lessonId": "english.b1.core.003",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "B1 · 003 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.003.dictation": {
+      "lessonId": "english.b1.core.003",
+      "contentKey": "dictation",
+      "graderType": "dictation",
+      "title": "B1 · 003 — Dictation",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.003.cloze": {
+      "lessonId": "english.b1.core.003",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "B1 · 003 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.003.roleplay": {
+      "lessonId": "english.b1.core.003",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/B1-003",
+      "title": "B1 · 003 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.004.read_along": {
+      "lessonId": "english.b1.core.004",
+      "scorerType": "read_along_stt",
+      "title": "B1 · 004 — Read Along",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.004.quiz3": {
+      "lessonId": "english.b1.core.004",
+      "contentKey": "quiz3",
+      "graderType": "yes_no",
+      "title": "B1 · 004 — Yes/No reading comprehension",
+      "grants": [],
+      "rewardPolicy": "standard_activity_pass"
+    },
+
+    "english.b1.core.004.quiz4": {
+      "lessonId": "english.b1.core.004",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "B1 · 004 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.004.matching": {
+      "lessonId": "english.b1.core.004",
+      "contentKey": "vocab",
+      "scorerType": "matching_first_try",
+      "title": "B1 · 004 — Word/Picture matching",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.004.reorder": {
+      "lessonId": "english.b1.core.004",
+      "contentKey": "reorder",
+      "graderType": "reorder",
+      "title": "B1 · 004 — Sentence reordering",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.004.wh": {
+      "lessonId": "english.b1.core.004",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "B1 · 004 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.004.dictation": {
+      "lessonId": "english.b1.core.004",
+      "contentKey": "dictation",
+      "graderType": "dictation",
+      "title": "B1 · 004 — Dictation",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.004.cloze": {
+      "lessonId": "english.b1.core.004",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "B1 · 004 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.004.roleplay": {
+      "lessonId": "english.b1.core.004",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/B1-004",
+      "title": "B1 · 004 — Role-play",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.005.read_along": {
+      "lessonId": "english.b1.core.005",
+      "scorerType": "read_along_stt",
+      "title": "B1 · 005 — Read Along",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.005.quiz3": {
+      "lessonId": "english.b1.core.005",
+      "contentKey": "quiz3",
+      "graderType": "yes_no",
+      "title": "B1 · 005 — Yes/No reading comprehension",
+      "grants": [],
+      "rewardPolicy": "standard_activity_pass"
+    },
+
+    "english.b1.core.005.quiz4": {
+      "lessonId": "english.b1.core.005",
+      "contentKey": "quiz4",
+      "graderType": "yes_no",
+      "title": "B1 · 005 — Tricky Yes/No quiz",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.005.matching": {
+      "lessonId": "english.b1.core.005",
+      "contentKey": "vocab",
+      "scorerType": "matching_first_try",
+      "title": "B1 · 005 — Word/Picture matching",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.005.reorder": {
+      "lessonId": "english.b1.core.005",
+      "contentKey": "reorder",
+      "graderType": "reorder",
+      "title": "B1 · 005 — Sentence reordering",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.005.wh": {
+      "lessonId": "english.b1.core.005",
+      "contentKey": "wh",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "q", "answerField": "a", "distractorsField": "wrong" },
+      "title": "B1 · 005 — WH questions",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.005.dictation": {
+      "lessonId": "english.b1.core.005",
+      "contentKey": "dictation",
+      "graderType": "dictation",
+      "title": "B1 · 005 — Dictation",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.005.cloze": {
+      "lessonId": "english.b1.core.005",
+      "contentKey": "cloze",
+      "graderType": "multiple_choice",
+      "graderConfig": { "promptField": "text", "answerField": "answer", "distractorsField": "wrong" },
+      "title": "B1 · 005 — Fill in the blank",
+      "grants": [],
+      "rewardPolicy": "none"
+    },
+
+    "english.b1.core.005.roleplay": {
+      "lessonId": "english.b1.core.005",
+      "scorerType": "roleplay_local",
+      "scenarioPath": "roleplay/scenarios/lesson/B1-005",
+      "title": "B1 · 005 — Role-play",
       "grants": [],
       "rewardPolicy": "none"
     }

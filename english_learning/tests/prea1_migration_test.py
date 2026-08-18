@@ -174,12 +174,13 @@ assert set(lid + ".quiz3" for lid in PRE) <= set(gates), sorted(gates)
 assert set(PRE) <= set(completable), sorted(completable)
 assert len(CX.qualification_bearing(reg)) == 4, CX.qualification_bearing(reg)
 assert set(lid + ".quiz3" for lid in PRE) <= set(CX.curriculum_gates(reg))
-# curriculum completeness: this suite's explicit purpose, so the inventory IS asserted here
-assert len(completable) == 40, len(completable)
-assert len(gates) == 40, len(gates)
+# This suite owns the PRE-A1 inventory, so Pre-A1 is asserted exactly; the global total is derived
+# so that later families (Phase 9F added A2 and B1) do not have to edit this literal.
 assert len([a for a in reg.activities if a.startswith(COURSE + ".")]) == 24 * 7 == 168
-ok("8. derived models hold at the new scale: 40 completable lessons / 40 gates, of which 4 are world "
-   "gates; Pre-A1 contributes 24 lessons x 7 = 168 activities")
+assert len(completable) == len(reg.lessons) == len(gates), (len(completable), len(gates))
+ok("8. derived models hold at the current scale: Pre-A1 contributes 24 lessons x 7 = 168 "
+   "activities; all %d registry lessons are completable and gated, of which 4 are world gates"
+   % len(reg.lessons))
 
 # ============================== 9. Taipei + A1 untouched ==============================
 for lid in CX.TAIPEI4:

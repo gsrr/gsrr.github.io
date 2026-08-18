@@ -810,3 +810,82 @@ Both carry the same nine activity types (`read_along, quiz3, quiz4, matching, re
 cloze, roleplay`), all of which already have a tab mapping and a renderer. **Registering A2/B1 needs no
 lesson-player visibility change** — the remaining decision is which of the nine each family should
 require for mastery.
+
+# Phase 9F — A2 and B1 migrated: 57 authoritative curriculum lessons
+
+Phase 9E.2 closed with A2/B1 "ready to register, one decision left: which of the nine each family
+should require". 9F took that decision and migrated both. Every unit already existed on disk with a
+complete nine-activity content set; **nothing was authored** and no Conquest surface was extended.
+
+## The required-subset decision
+
+Both families adopt **A1's model: 9 catalogued, 5 required** (`read_along, quiz3, matching, reorder,
+dictation`), with `quiz4, wh, cloze, roleplay` as authoritative optional practice.
+
+Taipei and Pre-A1 require 7 of 7, which looks like a precedent for "require everything" but is not:
+those families have no `reorder` and no `dictation`, so 7 is simply *everything they have*. A1 is the
+only nine-type precedent, and it was settled at 5 in Phase 9E.2. The five required cover one
+assessment per distinct skill — read aloud, comprehend, vocabulary, sentence structure, transcribe —
+while the optional four re-test skills already assessed. Since a mastered lesson pays the same 800
+regardless (§15: the registry names policies, never amounts), requiring nine would make the *harder*
+content demand ~80% more work for identical reward.
+
+| | catalogued | required | gate | qualifications |
+|---|---|---|---|---|
+| Taipei x4 | 7 | 7 | quiz3 | 4 |
+| Pre-A1 x24 | 7 | 7 | quiz3 | 0 |
+| A1 x12 | 9 | 5 | quiz3 | 0 |
+| **A2 x12** | **9** | **5** | quiz3 | **0** |
+| **B1 x5** | **9** | **5** | quiz3 | **0** |
+
+Counts: lessons 40 -> **57** · activities 304 -> **457** · gold-bearing gates 40 -> **57** · policies
+40 -> **57** · qualifications **4** (unchanged) · contentPacks 2 -> **4** · courses 3 -> **5**.
+
+## Curriculum, not Conquest
+
+A2/B1 add **zero** qualifications. All 153 new activities carry `grants: []`, and every new
+`completionPolicy` carries `grants: []`. The Conquest surface is still exactly the four Taipei gates,
+so the world map, adjacency, and `can_attack` are untouched by a 42% larger curriculum. This is the
+invariant that stops "add a reading level" from silently becoming "add a war objective".
+
+## Measured
+
+Per lesson: gate `quiz3` pays PASS_GOLD **160** once, mastering the five required pays MASTERY_GOLD
+**640** once, total **800** — identical to A1, Pre-A1 and Taipei. Replaying the gate or re-settling a
+mastered lesson pays **0** (ledger idempotency is keyed `<scope>:<sourceId>:<policyId>`, so it is
+amount-independent). A full-marks optional attempt grades authoritatively at **100%** and mints **0**,
+grants **0**, and leaves the mastery numerator at 0 of 5.
+
+119 forgery probes (17 lessons x 7 client-supplied shapes: `lessonCompletions`, practice `ruleB`,
+`checkpointDone`, `activityScores`, `rewardLedger`, `qualifications`, `pendingOccupy`) mint 0 gold,
+grant 0 qualifications and never report `completed`. An unregistered activity id is refused with
+HTTP 400; wrong answers on a real gate return `passed: false`.
+
+In real Chrome, for all five families: the rendered activity set **exactly equals** the registry set,
+with no duplicate tab numbering, and the authoritative surface reads "0 of 7" for Pre-A1/Taipei and
+"0 of 5" for A1/A2/B1. Learning Home carries five campaigns (4 / 24 / 12 / 12 / 5 = 57 rows).
+Checkpoint pools are **unchanged** at Pre-A1 112 / A1 48 / A2 48 / B1 20, still fed by all 57 content
+units — `buildExamPool()` reads `lessons.json` and the content files, so registration does not move it.
+
+## Pre-existing defect found, not fixed here (out of 9F scope)
+
+`selectArticle()` labels the lesson header from `manifest.levels[selLevelIdx].name` — the level the
+learner last *browsed*, not the lesson's own level. Opening any lesson from Learning Home (which
+bypasses the level grid) therefore mislabels it: A1/002 reads "Pre-A1 · 002 · My Weekend". This is
+**family-independent and predates 9F** — A1, accepted in 9C, behaves identically — but 9F widens its
+reach from 40 lessons to 57. Via the level grid the header is correct. Fixing it means changing header
+copy, which Phase 9F excludes.
+
+Separately, `#progText` shows "0/9" for a nine-tab lesson while mastery requires 5. That surface is the
+local **practice** counter (`scoredLevelsFor()`, marked PRACTICE ONLY); the authoritative surface,
+`#lessonProgress`, correctly reads "0 of 5 activities completed". A1 has read this way since 9E.2.
+
+## Tests
+
+`tests/a2b1_migration_test.py` (10 checks) owns the A2/B1 inventory and pins catalogued != required,
+the inert optional four, qualification-freedom, one paying gate per lesson, the 800-gold total, and
+content/title parity. Two suites that carried a **global** census were converted to derived
+assertions rather than bumped 40 -> 57: `optional_activity_test.py` now asserts
+`completable == gates == len(reg.lessons)` and `catalogued >= required` for every lesson, and
+`prea1_migration_test.py` keeps its exact Pre-A1 figures (24 x 7 = 168) while deriving the global
+total. A sixth family will need no edit to either file.

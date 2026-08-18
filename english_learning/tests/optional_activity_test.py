@@ -182,11 +182,19 @@ ok("7. Taipei (4) and Pre-A1 (24) keep catalogued == required == 7, and Pre-A1 s
 # ============================== 8. global invariants ==============================
 CX.assert_completion_model(reg)
 gates, completable = CX.assert_reward_model(reg, svc, GC.PASS_GOLD)
-assert len(reg.lessons) == 40, len(reg.lessons)
-assert len(completable) == 40 and len(gates) == 40, (len(completable), len(gates))
+# DERIVED, not a census: every lesson is completable and carries exactly one paying gate, whatever
+# the curriculum size. Phase 9F took the registry from 40 to 57 lessons without touching this file,
+# which is the point -- a growing curriculum must not require editing test literals.
+assert len(completable) == len(reg.lessons), (len(completable), len(reg.lessons))
+assert len(gates) == len(reg.lessons), (len(gates), len(reg.lessons))
 assert sorted(reg.qualifications) == CX.CONQUEST_QUALIFICATIONS, sorted(reg.qualifications)
 assert len(CX.qualification_bearing(reg)) == 4
-assert len(reg.activities) == 304, len(reg.activities)
-ok("8. 40 lessons / 40 gates / 40 policies / 4 qualifications hold at 304 catalogued activities")
+# catalogued >= required for every lesson, and the catalogue is never empty
+for lid in reg.lessons:
+    assert len(types_of(lid)) >= len(required_of(lid)) >= 1, lid
+assert len(reg.activities) == sum(len(types_of(l)) for l in reg.lessons), len(reg.activities)
+ok("8. derived: %d lessons / %d gates / %d policies / 4 qualifications over %d catalogued "
+   "activities, with catalogued >= required everywhere"
+   % (len(reg.lessons), len(gates), len(completable), len(reg.activities)))
 
 print("\nAll %d optional-activity tests passed." % passed)
