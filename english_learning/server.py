@@ -1084,6 +1084,11 @@ class Handler(BaseHTTPRequestHandler):
         "/api/territory/claim", "/api/territory/attack", "/api/territory/build",
         "/api/territory/recruit", "/api/territory/research", "/api/territory/release",
         "/api/territory/conscript",
+        # Phase 11A.1: re-entry spends gold and troops and takes ground, so it belongs here with
+        # every other territory mutation. It was omitted when Phase 10B added it, which let a
+        # room-less POST fall through to the implicit default room instead of failing closed --
+        # the exact stale-tab case Phase 8A.1 introduced this table to stop.
+        "/api/territory/reentry",
         "/api/learning/attempt", "/api/learning/matching/attempt",
         "/api/learning/roleplay/respond", "/api/stt",
     })

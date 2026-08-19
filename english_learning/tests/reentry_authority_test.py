@@ -65,6 +65,22 @@ def ok(name):
     print("  ok -", name)
 
 
+def api_noroom(method, path, body=None, tok=None):
+    """Same call, but deliberately WITHOUT ?room= -- the stale-tab case."""
+    url = BASE + path + ("?token=" + tok if tok else "")
+    req = urllib.request.Request(url, method=method,
+                                 data=json.dumps(body).encode() if body is not None else None)
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return r.status, json.loads(r.read() or b"{}")
+    except urllib.error.HTTPError as e:
+        raw = e.read()
+        try:
+            return e.code, json.loads(raw or b"{}")
+        except Exception:
+            return e.code, {"_raw": raw[:300].decode("utf8", "replace")}
+
+
 def api(method, path, body=None, tok=None):
     url = BASE + path + (("&" if "?" in path else "?") + "token=" + tok if tok else "")
     req = urllib.request.Request(url, method=method,
@@ -529,6 +545,74 @@ assert adj_before == adj_after, "re-entry must not touch adjacency data"
 assert len(WCAT) == 250
 ok("topology is untouched by re-entry: the World adjacency data is byte-identical before and after, "
    "and the map still has exactly 250 territories")
+
+# ============================ 9b. Phase 11A.1: an active room is REQUIRED ============================
+# Phase 8A.1 introduced ONE fail-closed table so that a stale tab -- one whose roomCode a renderer had
+# cleared -- can never mutate whichever room the request happens to resolve to. Re-entry spends gold
+# and troops and takes ground, so it belongs in that table; it was omitted when Phase 10B added the
+# route, and a room-less POST reached the implicit default room instead of being refused.
+NR, tokNR = account("ReNoRoom")
+api("POST", "/api/room/join", {"code": CODE}, tokNR)
+econ(CODE, NR, gold=5000, troops=FULL)
+fill_world(CODE, B, gar=1)                       # a board where re-entry WOULD otherwise apply
+
+# every territory mutation answers the same way without a room -- re-entry included
+for path, body in (
+        ("/api/territory/reentry", {"targetTerritoryId": WORLD[0], "squad": [{"type": "inf", "hp": 1}]}),
+        ("/api/territory/claim", {"file": WORLD[0], "troops": [{"type": "inf", "hp": 1}]}),
+        ("/api/territory/attack", {"sourceTerritoryId": WORLD[0], "targetTerritoryId": WORLD[1],
+                                   "squad": [{"type": "inf", "hp": 1}]}),
+        ("/api/territory/release", {"file": WORLD[0]}),
+        ("/api/territory/recruit", {"file": "@home", "unit": "inf", "qty": 1})):
+    st, r = api_noroom("POST", path, body, tokNR)
+    assert st == 400 and r.get("reason") == "room_required", (path, st, r)
+ok("room fail-closed: WITHOUT an active room, re-entry is refused 400 room_required -- exactly like "
+   "claim, attack, release and recruit. It no longer falls through to an implicit room.")
+
+# the refusal happens before ANY state is touched
+assert gold_of(CODE, NR) == 5000 and pool(CODE, NR) == FULL, (gold_of(CODE, NR), pool(CODE, NR))
+assert held_by(CODE, NR) == [], held_by(CODE, NR)
+ok("the room-less refusal is atomic: no gold spent, no troops moved, no ownership created")
+
+# ...and it is the SHARED table doing the work, not a hand-rolled check inside the handler
+assert "/api/territory/reentry" in server.Handler.ROOM_MUTATIONS
+for other in ("/api/territory/claim", "/api/territory/attack", "/api/territory/release",
+              "/api/territory/recruit", "/api/territory/build", "/api/territory/research",
+              "/api/territory/conscript"):
+    assert other in server.Handler.ROOM_MUTATIONS, other
+ok("re-entry is protected by the SAME canonical ROOM_MUTATIONS table as every other territory "
+   "mutation, not by a special case")
+
+# an unauthenticated room-less call still reads as an auth problem, not a room problem: the existing
+# policy keeps authorisation first so both errors stay truthful
+st, r = api_noroom("POST", "/api/territory/reentry",
+                   {"targetTerritoryId": WORLD[0], "squad": [{"type": "inf", "hp": 1}]})
+assert st == 401, (st, r)
+ok("authorisation still takes precedence over the room check: a room-less call with no token is 401, "
+   "not room_required")
+
+# WITH an active room, re-entry is completely unchanged -- same availability, same candidates, same
+# cost, and a real foothold still succeeds
+st, r = api("GET", "/api/territory/reentry?room=" + CODE, None, tokNR)
+assert st == 200 and r["available"] is True and r["reason"] is None, (st, r)
+cands_nr = [c["territoryId"] for c in r["candidates"]]
+assert 1 <= len(cands_nr) <= game_config.REENTRY_CANDIDATES
+assert r["cost"]["gold"] == game_config.REENTRY_GOLD_COST and r["cost"]["minTroops"] == 1
+g_before, p_before = gold_of(CODE, NR), pool(CODE, NR)
+st, res = api("POST", "/api/territory/reentry?room=" + CODE,
+              {"targetTerritoryId": cands_nr[0], "squad": [{"type": "cav", "hp": 45}]}, tokNR)
+assert st == 200 and res["attackerWon"] in (True, False), (st, res)
+assert gold_of(CODE, NR) <= g_before - game_config.REENTRY_GOLD_COST
+assert pool(CODE, NR)["cav"] <= p_before["cav"]
+ok("with an active room the whole re-entry contract is untouched: availability, %d candidates, the "
+   "120-gold levy and a real foothold battle all behave exactly as before" % len(cands_nr))
+
+# and the fix changed no topology
+_w = json.load(open(os.path.join(ROOT, "world-data", "territories", "world.json"), encoding="utf-8"))
+assert len(_w) == 250
+_ends = sum(len(t.get("adjacentTerritoryIds") or []) for t in _w)
+assert _ends == sum(len(t.get("adjacentTerritoryIds") or []) for t in WCAT.values())
+ok("the fix is routing only: World still has 250 territories and its adjacency is unchanged")
 
 # ============================ 10. the pure rule, without HTTP ============================
 IDS = ["m:a", "m:b", "m:c", "m:d"]
