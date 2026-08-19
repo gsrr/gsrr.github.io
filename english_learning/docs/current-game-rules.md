@@ -42,6 +42,47 @@ stale keys for retired content; version blindness).
 
 ### Two map surfaces, two different concepts
 
+## Learning and Game are separate systems (Phase 10A)
+
+**A learning level or course has ZERO authority over the game map.** It does not decide which map a
+player may open, browse, claim in, attack in, or own territory on.
+
+Until Phase 10A the server contradicted this. `_handle_territory_claim` called
+`allowed_maps_for_level(room["map"])`, which mapped a CEFR level id to exactly one canonical map and
+refused everything else with `400 wrong_map`:
+
+| room level | taiwan | taipei | china | world |
+|---|---|---|---|---|
+| Pre-A1 | claimable | `403 qualification_required` | `400 wrong_map` | `400 wrong_map` |
+| A1 | `400 wrong_map` | `400 wrong_map` | claimable | `400 wrong_map` |
+| A2 / B1 | `400 wrong_map` | `400 wrong_map` | `400 wrong_map` | claimable |
+
+`LEVEL_PRIMARY_MAP`, `allowed_maps_for_level()` and the `wrong_map` reason are **retired**. A claim's
+target is now established by the canonical territory catalog alone, and eligibility depends on game
+facts only:
+
+- the territory exists in the catalog (otherwise `unresolved` / `not_in_catalog`);
+- it has a population;
+- ownership, troop provisioning and stamina rules;
+- a **qualification** requirement, where the territory declares one;
+- room scope — ownership lives in `/data/rooms/<CODE>/`, which is what isolates one game instance
+  from another. That never depended on the level gate.
+
+**Qualification is not map selection.** A specific learning achievement may still gate a specific
+territory: the four Taipei districts require their Taipei qualifications, so an ungated player gets
+`403 qualification_required`. That is a game consequence of a named achievement. It is measured at
+every level identically — the gate belongs to the territory, never to the learner's course.
+
+The room's `map` field survives as compatibility and display metadata (room listings, the lobby
+subtitle) and controls nothing.
+
+On the client, map specs are keyed by **game map id** (`taiwan`, `china`, `world`) rather than by CEFR
+level, and the global "🗺 Go to Map" opens the game world map. It used to call `campaignMapAnchor()`,
+which scanned Learning Home campaigns for the first lesson with a mapped territory and deep-linked
+there — so the curriculum chose the game entry, and every room landed on the Taipei sub-map, including
+A1/A2/B1 rooms whose claims that same map then refused. `GEO_MAPS` remains only as "which map does the
+level grid open", i.e. curriculum navigation, and grants no eligibility.
+
 | Surface | What it is | Conquest? |
 |---|---|---|
 | `openRegion()` — geo maps (Pre-A1 Taiwan, China, World) | **canonical territories** with catalog ids, populations and designer-owned learning requirements | yes — claim/attack, server-verified |

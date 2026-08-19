@@ -1078,3 +1078,85 @@ with tap targets unchanged at 66×40 (the tab strip scrolls; the page does not).
 and 4/4 validators pass. `tests/activity_catalog.test.js` gained four checks (8–11) pinning the tab
 copy, the header source and the derived Campaign rule; check 8 was mutation-tested by reinstating
 "Level 2 · Read Along", which fails the suite.
+
+# Phase 10A — learning level decoupled from the game map
+
+The product model separates the two systems. Learning owns the curriculum (Pre-A1 / A1 / A2 / B1),
+authoritative completion and mastery, learning rewards and the gold they mint. The Game owns one world
+of territories: ownership, claim, attack, adjacency, troops, buildings, technology and stamina.
+
+**Core invariant: a learning level or course has zero authority over which game map a player may open,
+browse, claim in, attack in, or own territory on.** `Pre-A1` does not mean Taiwan, `A1` does not mean
+China, `A2`/`B1` do not mean World.
+
+## What actually enforced the coupling
+
+Exactly one server check, in `_handle_territory_claim`:
+
+    allowed = allowed_maps_for_level(load_room().get("map") or "")
+    if allowed is not None and terr_catalog.map_of(f) not in allowed:
+        self._send({"error": "Territory is not on this room's map", "reason": "wrong_map"}, 400)
+
+`LEVEL_PRIMARY_MAP` mapped `{Pre-A1: taiwan, A1: china, A2: world, B1: world}`, expanded by the
+catalog's `childMaps`. Measured before the change, the same account in rooms differing only by level:
+
+| room level | taiwan | taipei | china | world |
+|---|---|---|---|---|
+| Pre-A1 | `200 ok` | `403 qualification_required` | `400 wrong_map` | `400 wrong_map` |
+| A1 | `400 wrong_map` | `400 wrong_map` | `200 ok` | `400 wrong_map` |
+| A2 | `400 wrong_map` | `400 wrong_map` | `400 wrong_map` | `200 ok` |
+
+Attack, release, build, research, recruit and conscript were **never** level-gated — the coupling was
+this single check, plus the client-side choices described below.
+
+## After
+
+The catalog check immediately above it already establishes whether a target is part of the game world,
+so the gate was removed outright rather than replaced by another table. `allowed_maps_for_level()`,
+`LEVEL_PRIMARY_MAP` and the `wrong_map` reason no longer exist. Measured after, the same matrix is
+uniform: taiwan, china **and** world are all claimable from one room, at every level value, and Taipei
+still answers `403 qualification_required` at every level value.
+
+## Client
+
+- Map specs are keyed by **game map id** — `GAME_MAPS = {taiwan, china, world}` — with
+  `GAME_WORLD_MAP_ID = "world"` as the game's global surface. Same spec objects, same geography:
+  `GEO_MAPS["A2"] === GAME_MAPS.world` is still literally the same object.
+- `GEO_MAPS` survives as curriculum **navigation** only ("which map does the level grid open"). It
+  confers no eligibility, because the server no longer asks.
+- The global "🗺 Go to Map" now calls `goToGameMap()` → `openGameMap("world")`. It previously called
+  `campaignMapAnchor()`, a scan of Learning Home campaigns for the first lesson with a mapped
+  territory; that made learning CONTENT pick the game entry, landing every room on the Taipei sub-map
+  — including A1/A2/B1 rooms, whose claims that very map then refused. `campaignMapAnchor()` is
+  deleted. Contextual deep links keep their own resolver, `showMapForTerritory()`, untouched.
+- `renderGeoMap(i, spec)` accepts `i < 0` for "no curriculum level opened this map". In that case the
+  game map is titled by the map alone (a game surface is not named after a course) and the **boss /
+  checkpoint** widget is omitted, because that widget is a curriculum feature. The level grid still
+  passes a real level, so it still names its course and still shows the checkpoint — which remains the
+  only way to start a level exam, exactly as before.
+
+## Verified
+
+`tests/map_eligibility_test.py` (11 checks) is the regression guard: with identical game state and only
+the legacy level field varying across Pre-A1/A1/A2/B1, claim verdicts and attack verdicts are
+**identical**; no route answers `wrong_map`; the catalog still refuses non-catalog ids; troops are still
+required; the Taipei qualification gate still answers `403` at every level; adjacency and
+source-ownership are still enforced; two rooms with different hosts keep independent ownership of the
+same world territory; and none of the eight game routes reads the room level.
+
+In real Chrome (26 checks): all five courses — Pre-A1, A1, A2, B1 and Taipei — land on the **same**
+game map entry, which is World and carries no curriculum level in its title; deliberately poisoning
+`selLevelIdx` does not steer it; world, taiwan and china are all browsable from one Pre-A1 room; the
+taiwan → taipei drill-down still works; the level-grid path still shows the checkpoint; Profile → Back
+still restores map altitude; lesson Back still returns to Learning Home; no page overflow at 360px.
+
+## Not in this phase
+
+- **World → Country → Region hierarchy (10A.1).** `world-data/maps.json` declares `childMaps` and has
+  three roots (`taiwan`, `china`, `world`), with `world.childMaps` empty and no territory declaring a
+  child link. `world:tw` / `world:cn` are ordinary claimable territories, so making them containers
+  would change claim eligibility and adjacency. Untouched here.
+- **Zero-territory re-entry (10B).** Measured and carried forward unchanged: with zero territories
+  owned, claiming a neutral territory still succeeds (`200`), attacking from an unowned source is
+  refused `403 source_not_owned`, and a non-adjacent target is refused `400 target_not_attackable`. The
+  soft-lock risk — zero territories *and* no neutral foothold — is Phase 10B.

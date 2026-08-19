@@ -18,22 +18,11 @@ from game import (army as game_army, conquest as game_conquest, config as game_c
                   economy as game_economy, recruitment as game_recruit, technology as game_tech)
 from learning import api as learning_api                                                   # 學習領域(與遊戲領域分離)
 
-# 房間地圖(等級 id) -> 主 canonical mapId。子地圖(下鑽)改由 world-data/maps.json 的 childMaps 提供。
-LEVEL_PRIMARY_MAP = {"Pre-A1": "taiwan", "A1": "china", "A2": "world", "B1": "world"}
-
-
-def allowed_maps_for_level(level):
-    """房間某等級允許認領的 mapId 清單 = 主地圖 + 其子地圖(childMaps)。未知等級 -> None(不限制)。"""
-    prim = LEVEL_PRIMARY_MAP.get(level or "")
-    if not prim:
-        return None
-    maps = [prim]
-    if terr_catalog:
-        try:
-            maps += terr_catalog.child_maps(prim)
-        except Exception:
-            pass
-    return maps
+# Phase 10A retired LEVEL_PRIMARY_MAP / allowed_maps_for_level(). They mapped a CEFR level id
+# ("Pre-A1"/"A1"/"A2"/"B1") to one canonical mapId and gated territory claims to it. A learning level
+# now has ZERO authority over game-map eligibility. The room's `map` field survives as compatibility
+# and display metadata (room listings, the lobby subtitle) and controls nothing.
+# terr_catalog.child_maps() stays -- it is the catalog's own parent/child accessor, for map hierarchy.
 
 
 def canonize_keys(d):
@@ -1488,10 +1477,14 @@ class Handler(BaseHTTPRequestHandler):
         if not terr_catalog or not terr_catalog.is_canonical(f):
             self._send({"error": "Territory not in catalog", "reason": "not_in_catalog"}, 400)
             return
-        allowed = allowed_maps_for_level(load_room().get("map") or "")
-        if allowed is not None and terr_catalog.map_of(f) not in allowed:
-            self._send({"error": "Territory is not on this room's map", "reason": "wrong_map"}, 400)
-            return
+        # Phase 10A: a territory's GAME validity is established by the canonical catalog check
+        # directly above, and by nothing else. This used to ALSO require the territory's map to match
+        # the room's CEFR level (Pre-A1 -> taiwan, A1 -> china, A2/B1 -> world), answering
+        # 400 "wrong_map" otherwise -- which made a LEARNING level the authority over which game map
+        # a player could own territory on. Learning decides curriculum; the game decides the world.
+        # Everything below still gates on GAME facts only: existence, population, ownership,
+        # qualification, troops and stamina. Room isolation is unaffected -- ownership lives in
+        # /data/rooms/<CODE>/territory.json, so it never depended on this check.
         cpop = terr_catalog.game_population(f)
         if cpop is None:
             self._send({"error": "No population for territory", "reason": "no_population"}, 400)

@@ -127,11 +127,30 @@ code, body = call("POST", "/api/territory/claim?room=" + CODE,
 assert code == 400 and body.get("reason") in ("unresolved", "not_in_catalog"), (code, body)
 ok("unknown territory is rejected")
 
-# wrong map rejected (world territory in a china room)
+# RETARGETED in Phase 10A.
+#   OLD: a world territory claimed from an "A1" room had to fail with 400 wrong_map.
+#   WHY OBSOLETE: that rule was `allowed_maps_for_level(room["map"])` — a CEFR level id decided which
+#     canonical map the player could own territory on (Pre-A1 -> taiwan, A1 -> china, A2/B1 -> world).
+#     Learning and Game are separate systems: a learner's course must not choose the game world. The
+#     helper, the table and the wrong_map reason are all retired, so the old assertion pinned exactly
+#     the coupling the product removed.
+#   NEW: identity resolution is still authoritative — a canonical id from ANY map resolves and is
+#     accepted on its own game merits, and a non-catalog id is still refused. That is the invariant
+#     this suite actually owns (territory IDENTITY), and it is stronger here because it now proves
+#     resolution works across every map rather than only inside the room's level-assigned one.
+#   WHY NOT WEAKER: the rejection path is still asserted (below, and in the "unknown territory" check
+#     above); only the level-based rejection — which no longer exists — is gone. Full cross-map
+#     eligibility is pinned by tests/map_eligibility_test.py.
 code, body = call("POST", "/api/territory/claim?room=" + CODE,
-                  {"file": "world:us", "troops": troops})
-assert code == 400 and body.get("reason") == "wrong_map", (code, body)
-ok("territory from a different map is rejected")
+                  {"file": "world:us", "troops": [{"type": "inf", "hp": 1}]})
+assert code == 200, (code, body)
+assert server.load_territory_store().get("world:us", {}).get("owner"), server.load_territory_store()
+ok("a canonical territory from another map resolves and is claimable — the CEFR->map gate is gone")
+
+code, body = call("POST", "/api/territory/claim?room=" + CODE,
+                  {"file": "world:not-a-country", "troops": [{"type": "inf", "hp": 1}]})
+assert code == 400 and body.get("reason") in ("unresolved", "not_in_catalog"), (code, body)
+ok("a non-catalog id on a real map is still rejected (identity resolution stays authoritative)")
 
 # legacy store on disk still loads (read) and canonicalizes in memory
 server.set_room(CODE)

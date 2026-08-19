@@ -5285,13 +5285,17 @@
   WORLD_CONTINENTS.forEach(c => { WORLD_CONT_LABEL[c.key] = c.label; c.codes.split(/\s+/).forEach(cd => { WORLD_CODE_CONT[cd] = c.key; }); });
   function worldContinentKey(id) { return WORLD_CODE_CONT[(id || "").toLowerCase()] || "other"; }
 
-  // 各等級對應一張真實地理地圖（沒列到的等級 fallback 用蜿蜒小徑地圖）
+  // ===== Phase 10A — a game map is identified by its GAME map id, never by a curriculum level =====
+  // These specs used to be keyed by CEFR level, which is what made "which map am I playing on?" a
+  // learning question. They are now keyed by the same map ids world-data/maps.json uses, and the
+  // per-level table below is nothing more than "which map does the level grid open" — curriculum
+  // NAVIGATION, never authority. Same spec objects, same geography, no new maps.
   // drill: { 地區id: 子地圖 } → 該地區變「容器」，點進去看子地圖（例：台北市 → 12 行政區）
   // grouped:true → 分洲兩層下鑽（世界地圖）
-  const GEO_MAPS = {
-    "Pre-A1": { file: "maps/taiwan.svg", label: "Taiwan 台灣 🗺️",
+  const GAME_MAPS = {
+    "taiwan": { file: "maps/taiwan.svg", label: "Taiwan 台灣 🗺️",
                 drill: { "taipei-city": { file: "maps/taiwan-taipei.svg", label: "Taipei 台北 🗺️", viewBox: "0 0 350 461" } } },
-    "A1":     { file: "maps/china.svg",  label: "China 中國 🗺️", viewBox: "0 0 1000 850", region: id => /^p[A-Z]{2}(_.*)?$/.test(id),
+    "china":  { file: "maps/china.svg",  label: "China 中國 🗺️", viewBox: "0 0 1000 850", region: id => /^p[A-Z]{2}(_.*)?$/.test(id),
                 names: { pBJ:"Beijing 北京", pTJ:"Tianjin 天津", pSH:"Shanghai 上海", pCQ:"Chongqing 重慶",
                   pHE:"Hebei 河北", pSX:"Shanxi 山西", pNM:"Inner Mongolia 內蒙古", pLN:"Liaoning 遼寧", pJL:"Jilin 吉林",
                   pHJ:"Heilongjiang 黑龍江", pJS:"Jiangsu 江蘇", pZJ:"Zhejiang 浙江", pAH:"Anhui 安徽", pFJ:"Fujian 福建",
@@ -5299,9 +5303,14 @@
                   pGD:"Guangdong 廣東", pGX:"Guangxi 廣西", pHI:"Hainan 海南", pSC:"Sichuan 四川", pGZ:"Guizhou 貴州",
                   pYN:"Yunnan 雲南", pXZ:"Tibet 西藏", pSN:"Shaanxi 陝西", pGS:"Gansu 甘肅", pQH:"Qinghai 青海",
                   pNX:"Ningxia 寧夏", pXJ:"Xinjiang 新疆", pHK:"Hong Kong 香港", pMO:"Macau 澳門", pTW:"Taiwan 台灣" } },
-    "A2":     { file: "maps/world.svg",  label: "World 世界 🗺️", grouped: true },
-    "B1":     { file: "maps/world.svg",  label: "World 世界 🗺️", grouped: true }
+    "world":  { file: "maps/world.svg",  label: "World 世界 🗺️", grouped: true }
   };
+  // The game's global map surface. Game data, not curriculum: "Go to Map" resolves through this.
+  const GAME_WORLD_MAP_ID = "world";
+  // Curriculum NAVIGATION only — which game map the level grid opens for a level. It grants no
+  // eligibility: the server decides claims from the canonical catalog alone (Phase 10A).
+  const GEO_MAPS = { "Pre-A1": GAME_MAPS.taiwan, "A1": GAME_MAPS.china,
+                     "A2": GAME_MAPS.world, "B1": GAME_MAPS.world };
   // 地形風景（山🏔️/森林🌲），依現實位置近似擺放。座標為 viewBox 的比例(0~1)，畫成裝飾層(不吃點擊)。
   const TERRAIN = {
     "maps/taiwan.svg": {   // 台灣（依 refer/taiwan.jpg）：中央山脈沿島脊
@@ -5404,11 +5413,13 @@
     const b = document.getElementById("backToLevels");
     if (b) b.textContent = homeCampaigns().length ? "← Learning" : "← Levels";
   }
+  // i < 0 means "no curriculum level opened this map" (the global game entry). selLevelIdx is then
+  // left alone, so Profile->Back altitude restore and refreshMap() behave exactly as before.
   function renderGeoMap(i, spec) {
     clearMapTimers();
     syncMapBackLabel();
-    selLevelIdx = i;
-    const lv = manifest.levels[i];
+    if (i >= 0) selLevelIdx = i;
+    const lv = i >= 0 ? manifest.levels[i] : null;
     let banner = document.getElementById("terrBanner");
     if (!banner) { banner = document.createElement("div"); banner.id = "terrBanner"; banner.className = "terr-banner"; articleGrid.parentNode.insertBefore(banner, articleGrid); }
     document.getElementById("examWrap").classList.add("hidden");
@@ -5507,7 +5518,10 @@
     const wrap = articleGrid; wrap.className = "geo-wrap"; wrap.removeAttribute("style"); wrap.innerHTML = "";
     const banner = document.getElementById("terrBanner"); if (banner) banner.style.display = "none";
     const _card = document.querySelector(".card"); if (_card) _card.classList.add("map-wide");   // 地圖畫面加寬(桌機)
-    articleScreenTitle.textContent = (lv.name || lv.id) + " · " + spec.label;
+    // Phase 10A: `lv` is the CURRICULUM level that opened this map, and it is optional. The global
+    // game entry passes none, so the game map is titled by the map alone — a game surface is not
+    // named after a course. The level grid still passes one, so that path is unchanged.
+    articleScreenTitle.textContent = (lv ? (lv.name || lv.id) + " · " : "") + spec.label;
 
     function build(svgText) {
       wrap.innerHTML = "";
@@ -5693,7 +5707,10 @@
         r.idxEl = btn; r.idxLs = btn.querySelector(".gi-ls"); idx.appendChild(btn);
       });
       wrap.appendChild(idx);
-      if (!backFn) {   // 只有頂層顯示 Boss
+      // 只有頂層顯示 Boss。Phase 10A: the boss is a CURRICULUM checkpoint, so it appears only when a
+      // level opened this map (the level grid). The global game map has no course, hence no boss --
+      // the checkpoint stays reachable exactly where it always was, from the level grid.
+      if (!backFn && lv) {
         const bossWrap = document.createElement("div"); bossWrap.className = "geo-boss";
         const next = manifest.levels[i + 1], bp = examPassed(lv.id);
         const bBtn = document.createElement("button"); bBtn.className = "geo-boss-btn" + (bp ? " done" : "");
@@ -6439,21 +6456,20 @@
   }
   // The map altitude Learning Home should open: the map CONTAINING this campaign's territories,
   // found through the same reverse mapping. No hard-coded campaign, no hard-coded map.
-  function campaignMapAnchor() {
-    const camps = homeCampaigns();
-    for (let i = 0; i < camps.length; i++) {
-      for (let k = 0; k < camps[i].list.length; k++) {
-        const ts = territoriesForLesson(camps[i].list[k].lid);
-        if (ts.length) return ts[0].key;
-      }
-    }
-    return null;
+  // Phase 10A: the GLOBAL game entry is the game's world map, resolved from GAME data alone.
+  // It used to call campaignMapAnchor() — a scan of Learning Home campaigns for the first lesson
+  // with a mapped territory — and deep-link there, so the CURRICULUM chose the game entry: every
+  // room landed on the Taipei sub-map (the only territory-bearing campaign), including A1/A2/B1
+  // rooms, whose claims that very map then refused with 400 wrong_map. Its fallback,
+  // selectLevel(selLevelIdx), was coupled too: it opened whichever level was last browsed.
+  // Contextual deep links are untouched and keep their own resolver, showMapForTerritory().
+  function openGameMap(mapId) {
+    const spec = GAME_MAPS[mapId];
+    if (!spec) return false;
+    renderGeoMap(-1, spec);        // -1 = opened by the GAME, not by a course
+    return true;
   }
-  function goToCampaignMap() {
-    const key = campaignMapAnchor();
-    if (key) { showMapForTerritory(key); return; }   // reuses the Phase 7E.1 resolver
-    selectLevel(selLevelIdx);                        // no mapped campaign -> the level's own map
-  }
+  function goToGameMap() { openGameMap(GAME_WORLD_MAP_ID); }
   // ===== Phase 7E.1 — ONE ephemeral navigation context: who opened this lesson? =====
   //   null | {to:"home"} | {to:"map"} | {to:"region", key, reopen}
   // Not a router, not a stack, not history, never persisted. It describes the surface that
@@ -7595,7 +7611,7 @@
   // Phase 7E.2: Learning Home is the room-entry destination, so the world is not "back" — it is the
   // other half of the product. This opens the map that actually contains the campaign's territories.
   document.getElementById("backFromHome").addEventListener("click", () => {
-    goToCampaignMap();
+    goToGameMap();
   });
 
   /* ================= 老師/家長帳號 + 雲端進度後台 ================= */
