@@ -877,21 +877,26 @@
      Both are kept in the DOM because other screens still use them; both set an inline display, so
      the override has to be !important. Nothing is duplicated on screen. */
   .hud-mode #empireBar, .hud-mode #terrBanner { display: none !important; }
-  /* Two rows: plaques, then the board. The bottom slots share the BOARD row and align to its
-     bottom, so the territory card, the action bar and the holdings panel frame the map instead of
-     sitting below the fold. */
+  /* THREE rows: plaques, the board, then the HUD. Phase 10C.2R: the territory card, the action bar
+     and Holdings used to share the BOARD row and overlay its lower third. That looked like the
+     reference art but it cost real map: labels had to be suppressed underneath the plaques, and the
+     bottom of every continent was permanently behind furniture. They now own a row of their own, so
+     the map viewport and the HUD occupy separate layout space and no geometric overlap is possible.
+     The row is paid for out of the loose controls that used to sprawl below the board, which are now
+     one compact line -- so the component is only slightly taller and the board keeps its width. */
   .hud-grid { display: grid; gap: var(--hud-gap);
     grid-template-columns: minmax(200px, 1fr) minmax(0, 2.6fr) minmax(200px, 1fr);
-    grid-template-rows: auto minmax(0, 1fr); align-items: start; }
+    grid-template-rows: auto auto auto; align-items: start; }
   .hud-tl { grid-area: 1 / 1 / 2 / 2; } .hud-tc { grid-area: 1 / 2 / 2 / 3; }
   .hud-tr { grid-area: 1 / 3 / 2 / 4; }
   .hud-map { grid-area: 2 / 1 / 3 / 4; min-width: 0; position: relative; }
-  /* min-width:0 matters: without it a long territory name made the card wider than its column and
-     it slid under the action bar. Each overlay slot now stays inside its own column. */
-  .hud-bl  { grid-area: 2 / 1 / 3 / 2; align-self: end; z-index: 3; margin: 0 0 14px 8px; min-width: 0; }
-  .hud-bar { grid-area: 2 / 2 / 3 / 3; align-self: end; z-index: 3; margin: 0 0 14px; min-width: 0; }
-  .hud-br  { grid-area: 2 / 3 / 3 / 4; align-self: end; z-index: 3; margin: 0 8px 14px 0; min-width: 0; }
-  .hud-bl > .hud-plaque, .hud-br > .hud-plaque, .hud-bar > .hud-plaque { max-width: 100%; }
+  /* min-width:0 matters: without it a long territory name makes the card wider than its column. */
+  .hud-bl  { grid-area: 3 / 1 / 4 / 2; min-width: 0; }
+  .hud-bar { grid-area: 3 / 2 / 4 / 3; min-width: 0; }
+  .hud-br  { grid-area: 3 / 3 / 4 / 4; min-width: 0; }
+  .hud-bl > .hud-plaque, .hud-br > .hud-plaque, .hud-bar > .hud-plaque { max-width: 100%; height: 100%; }
+  /* the HUD row still reads as part of the same board component */
+  .hud-bl, .hud-bar, .hud-br { align-self: stretch; }
 
   /* --- the shared plaque look: chunky outline, warm surface, a real bevel --- */
   .hud-plaque { position: relative; border-radius: 16px; padding: 10px 12px; color: #fff4dd;
@@ -997,16 +1002,35 @@
      board ~254px wide inside a 360px viewport. In HUD mode the board is the play surface, so it
      takes the full available width and is bounded by HEIGHT instead (the svg keeps its own
      1010x666 aspect, so no geometry is touched): 92vh of width is about 61vh of height. */
-  /* The board is bounded by HEIGHT so it never pushes the bottom slots off screen, and by width
-     otherwise. 104vh of width is about 69vh of height for the 1010x666 board -- the space the
-     overlaid slots leave free once the masthead is gone. On a phone the 100% term wins, so the board
-     is as wide as the (now much smaller) gutters allow. */
+  /* The board is bounded by HEIGHT so the plaque row above it and the HUD row below it both stay on
+     screen, and by width otherwise. Measured on 1440x900: at 104vh the board is 936x617 -- exactly
+     the width it had while it was overlaying its own bottom third -- and the HUD row still ends at
+     y=835, inside the fold. So de-overlaying cost the board NOTHING in width and gained back the
+     third that was behind furniture. On a phone the 100% term wins, so the board is as wide as the
+     gutters allow. */
   .hud-mode .geo-svg { max-width: min(100%, 104vh) !important; margin: 0 auto; }
-  /* EMPTY decorative layers, reserved for Phase 10C.2. They are declared here so the layering
-     contract is fixed now and cannot be invented ad hoc later. */
-  .geo-deco-rear, .geo-deco-front { position: absolute; inset: 0; pointer-events: none; }
-  .geo-deco-rear { z-index: 0; } .geo-deco-front { z-index: 1; }
+  /* ===== Phase 10C.2 — decorative layers =========================================================
+     10C.1 reserved these as absolutely-positioned HTML divs over the board. That turned out to be the
+     WRONG coordinate space: pan/zoom is a CSS transform on the svg element, so anything in a sibling
+     div stays put while the geography moves under it. They are therefore SVG <g> groups INSIDE the
+     svg now, authored in the map's own viewBox units, which makes them anchored to geography for
+     free -- pan, zoom and the continent drill all move and clip them with the land. Same class names,
+     same documented layer order, same pointer-events:none contract.
+     Decoration is never a gameplay object: both layers are pointer-events:none, so a click always
+     reaches the territory path underneath. ============================================================ */
+  .geo-deco-rear, .geo-deco-front { pointer-events: none; }
   .geo-labels { z-index: 2; }
+  /* the shared illustrated look: chunky warm outline, soft depth, no photorealism */
+  .deco-ink   { stroke: #3b2a12; stroke-width: 1.1; stroke-linejoin: round; stroke-linecap: round;
+                vector-effect: non-scaling-stroke; }
+  .deco-shadow { fill: rgba(70, 45, 18, .22); }
+  .deco-rock  { fill: #9a8468; } .deco-rock-dark { fill: #7a674f; } .deco-snow { fill: #fdf6e4; }
+  .deco-tree  { fill: #4b8a52; } .deco-tree-dark { fill: #386b40; } .deco-trunk { fill: #6b4a26; }
+  .deco-hull  { fill: #7b4f26; } .deco-sail { fill: #fdf6e4; }
+  .deco-cloud { fill: #ffffff; opacity: .72; }
+  .deco-stone { fill: #d8c7a6; } .deco-stone-dark { fill: #b8a284; }
+  .deco-roof  { fill: #b4553c; } .deco-gold { fill: #e9c46a; }
+  .geo-deco-front, .geo-deco-rear { opacity: .95; }
 
   /* The 250-row directory is reference data. It stays complete and keeps every existing row action,
      but it is COLLAPSED by default so it stops competing with the board. The map remains the primary
@@ -1033,23 +1057,36 @@
        game surface is visible almost immediately. The player and the controls are NOT stacked below
        the map as full-width cards; they share the top row and shrink to fit. Below the board come
        only the things you act with. */
-    .hud-grid { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-rows: auto; }
+    /* [avatar+Gold] [WORLD CONQUEST] [menu] on one strip, then the board, then the HUD stack.
+       10C.2R: the title column was min-width:0, so with the player and the menu at their natural
+       widths it collapsed to nothing and WORLD CONQUEST vanished. It now has a floor and is allowed
+       to wrap onto two short lines rather than shrink to illegibility. */
+    .hud-grid { grid-template-columns: auto minmax(104px, 1fr) auto; grid-template-rows: auto; }
     .hud-tl  { grid-area: 1 / 1 / 2 / 2; }
-    .hud-tc  { grid-area: 1 / 2 / 2 / 3; min-width: 0; }
+    .hud-tc  { grid-area: 1 / 2 / 2 / 3; min-width: 104px; }
     .hud-tr  { grid-area: 1 / 3 / 2 / 4; }
     .hud-map { grid-area: 2 / 1 / 3 / 4; }
     .hud-bl  { grid-area: 3 / 1 / 4 / 4; margin: 0; }
     .hud-bar { grid-area: 4 / 1 / 5 / 4; margin: 0; }
     .hud-br  { grid-area: 5 / 1 / 6 / 4; margin: 0; }
+    /* wrap BETWEEN the two words only -- overflow-wrap:anywhere broke "CONQUEST" into "CONQUES/T" */
+    .hud-title .ht-t { white-space: normal; overflow-wrap: normal; word-break: normal;
+                       hyphens: none; }
+    /* Pin the menu to a 2x2 block. Giving the title column a floor squeezed this one until the four
+       icons wrapped one-per-row, making the strip tall and pushing the board down the screen. */
+    .hud-plaque.hud-ctrls { display: grid; grid-template-columns: repeat(2, auto);
+                            justify-content: end; }
+    /* the population stat goes: gold and army are what the player acts on */
+    .hud-player .hp-st span:nth-child(3) { display: none; }
     /* the compact top strip: avatar + gold only, no second username, no "My empire" row */
     .hud-plaque.hud-player { padding: 6px 8px; gap: 6px; }
     .hud-player .hp-nm, .hud-player button.hp-more { display: none; }
     .hud-player .hp-av { font-size: 22px; }
     .hud-player .hp-st { margin-top: 0; gap: 7px; font-size: 13px; }
     .hud-player .hp-st i { display: none; }
-    .hud-title .ht-t { font-size: 15px; letter-spacing: .6px; }
-    .hud-title .ht-s { font-size: 10px; }
-    .hud-plaque.hud-title { padding: 7px 8px; }
+    .hud-title .ht-t { font-size: 12px; letter-spacing: 0; line-height: 1.1; }
+    .hud-title .ht-s { display: none; }        /* the room code is not useful on a phone */
+    .hud-plaque.hud-title { padding: 6px 6px; }
     .hud-plaque.hud-ctrls { padding: 6px; gap: 5px; }
     .hud-ico { width: 34px; height: 34px; font-size: 15px; border-width: 2px; border-radius: 10px; }
     /* the board is the play surface: reclaim the 28px page gutters it was losing on a phone */
@@ -1082,8 +1119,12 @@
     border-radius: 20px; opacity: .22; mix-blend-mode: soft-light;
     background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.5) 0 1px, transparent 1px 4px),
                       repeating-linear-gradient(-45deg, rgba(0,0,0,.16) 0 1px, transparent 1px 5px); }
-  /* in HUD mode the bottom-right corner belongs to Holdings, so the hint moves to the top-right */
-  .hud-mode .geo-zoom-hint { top: 8px; bottom: auto; }
+  /* the HUD no longer overlays the board, so the hint returns to the bottom-right corner where it
+     covers nothing; on a phone it is terse and stays out of the initial label band */
+  .hud-mode .geo-zoom-hint { bottom: 8px; top: auto; }
+  @media (max-width: 560px) {
+    .geo-zoom-hint { font-size: 10px; padding: 2px 6px; right: 5px; bottom: 5px; }
+  }
   .geo-zoom-hint { position: absolute; right: 8px; bottom: 8px; z-index: 3; font-size: 11px; font-weight: 700;
     color: #e8edf5; background: rgba(15,23,42,.6); border-radius: 8px; padding: 3px 8px; pointer-events: none; }
   /* 縮放式標籤層：常數螢幕大小、只顯示不接收點擊(點擊由底下地區處理) */
@@ -1116,6 +1157,12 @@
   .geo-marker-pill.geo-marker-drill { fill: rgba(88,28,135,.9); }
   .geo-marker-t { fill: #fff; font-weight: 800; text-anchor: middle; dominant-baseline: central;
     paint-order: stroke; stroke: rgba(0,0,0,.4); stroke-width: 2px; pointer-events: none; }
+  /* 10C.2R: below the board these were four separate stacked rows (legend, owners, replay, visitor).
+     They are reference chrome, so in game mode they collapse into one quiet line and give their
+     vertical space to the HUD row instead. */
+  .hud-mode .geo-legend, .hud-mode .geo-owners { margin: 6px 0 2px; font-size: 11.5px; }
+  .hud-mode .geo-replay-btn { margin: 6px auto 0; padding: 5px 14px; font-size: 12px; }
+  .hud-mode .geo-boss { margin-top: 8px; }
   .geo-legend { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 12px 0 2px; font-size: 12px; }
   .geo-legend .gl { display: flex; align-items: center; gap: 5px; color: #cbd5e1; }
   .geo-legend .gl::before { content: ""; width: 12px; height: 12px; border-radius: 3px; display: inline-block;
@@ -5644,6 +5691,201 @@
     }
   };
   // 建一層裝飾地形（山/森林 emoji + 河流藍線），插在地區之上、標號之下；不接收點擊
+  // ================================ Phase 10C.2 — DECORATIVE WORLD BOARD ================================
+  // Ambient board-game art layered around the existing political geography. Everything here is
+  // PRESENTATION: it reads no game state, encodes no ownership, implies no adjacency, and can never
+  // receive a pointer event. maps/world.svg is untouched -- decorations are generated client-side and
+  // are never children of a territory path.
+  //
+  // Coordinates are the WORLD map's own viewBox units (0 0 1010 666), captured once from the real
+  // geometry, so a decoration stays on its landmass at every altitude: the continent drill only
+  // narrows the viewBox, which pans and clips this layer exactly like the land.
+  //
+  // `m` flags the pieces that survive on a phone. At 360px the board is ~330px wide, so instead of
+  // shrinking everything into noise the minor pieces are simply not built.
+  const DECO_SCALE = 1;
+  const WORLD_DECO = {
+    // --- mountains: broad ranges, decorative clusters rather than geographic polygons ---
+    mountains: [
+      { x: 118, y: 150, s: 1.15, m: 1 },   // northern Rockies
+      { x: 78,  y: 262, s: 1.10, m: 1 },   // Sierra / western USA
+      { x: 258, y: 478, s: 1.00, m: 1 },   // northern Andes
+      { x: 252, y: 566, s: 1.05, m: 1 },   // southern Andes
+      { x: 499, y: 311, s: 0.85, m: 1 },   // Alps
+      { x: 517, y: 203, s: 0.90, m: 0 },   // Scandinavian mountains
+      { x: 601, y: 331, s: 0.85, m: 0 },   // Caucasus
+      { x: 668, y: 328, s: 0.95, m: 0 },   // Central Asian ranges
+      { x: 710, y: 377, s: 1.20, m: 1 },   // Himalaya
+      { x: 736, y: 352, s: 0.95, m: 0 },   // Tibetan plateau edge
+      { x: 590, y: 434, s: 0.90, m: 1 },   // Ethiopian highlands
+      { x: 457, y: 367, s: 0.80, m: 0 },   // Atlas
+      { x: 851, y: 349, s: 0.80, m: 0 },   // Japan
+      { x: 893, y: 566, s: 0.90, m: 1 },   // Great Dividing Range
+      { x: 658, y: 238, s: 0.85, m: 0 },   // Urals
+    ],
+    // --- forests: small sparse tree clusters ---
+    forests: [
+      { x: 168, y: 158, s: 1.00, m: 1 }, { x: 248, y: 191, s: 0.95, m: 0 },
+      { x: 214, y: 289, s: 0.85, m: 0 }, { x: 302, y: 489, s: 1.05, m: 1 },
+      { x: 336, y: 501, s: 1.00, m: 1 }, { x: 531, y: 471, s: 1.00, m: 1 },
+      { x: 556, y: 464, s: 0.90, m: 0 }, { x: 497, y: 436, s: 0.85, m: 0 },
+      { x: 534, y: 285, s: 0.85, m: 0 }, { x: 529, y: 239, s: 0.90, m: 0 },
+      { x: 548, y: 219, s: 0.85, m: 0 }, { x: 700, y: 214, s: 1.00, m: 1 },
+      { x: 780, y: 204, s: 1.05, m: 1 }, { x: 858, y: 214, s: 0.95, m: 0 },
+      { x: 741, y: 249, s: 0.90, m: 0 }, { x: 760, y: 429, s: 0.85, m: 0 },
+      { x: 801, y: 467, s: 0.85, m: 0 }, { x: 879, y: 471, s: 0.85, m: 0 },
+      { x: 962, y: 599, s: 0.80, m: 0 }, { x: 241, y: 598, s: 0.85, m: 0 },
+    ],
+    // --- ships: OPEN water only, and deliberately never between two countries, so nothing can be
+    //     mistaken for a route or an adjacency ---
+    ships: [
+      { x: 392, y: 262, s: 1.00, m: 1 },   // mid North Atlantic
+      { x: 398, y: 545, s: 0.95, m: 0 },   // mid South Atlantic
+      { x: 662, y: 540, s: 0.95, m: 1 },   // mid Indian Ocean
+      { x: 105, y: 480, s: 0.95, m: 0 },   // eastern Pacific
+    ],
+    // --- clouds: only over empty water, and kept out of the band the HUD overlays ---
+    clouds: [
+      { x: 245, y: 112, s: 1.15, m: 0 }, { x: 645, y: 108, s: 1.05, m: 0 },
+      { x: 905, y: 285, s: 1.10, m: 1 }, { x: 95,  y: 330, s: 1.00, m: 0 },
+      { x: 430, y: 455, s: 0.95, m: 0 }, { x: 690, y: 500, s: 0.90, m: 0 },
+    ],
+    // --- landmarks: ambient illustration, a handful only, never one per country and never a status ---
+    landmarks: [
+      { k: "pagoda",   x: 792, y: 361, s: 1.00, m: 1 },
+      { k: "pyramid",  x: 562, y: 383, s: 1.00, m: 1 },
+      { k: "castle",   x: 506, y: 295, s: 0.95, m: 1 },
+      { k: "temple",   x: 541, y: 339, s: 0.90, m: 0 },
+      { k: "tower",    x: 481, y: 313, s: 0.90, m: 0 },
+      { k: "windmill", x: 494, y: 287, s: 0.85, m: 0 },
+      { k: "statue",   x: 233, y: 299, s: 0.90, m: 0 },
+      { k: "temple",   x: 707, y: 400, s: 0.90, m: 1 },
+    ],
+  };
+  // Reusable <defs> art. One definition per motif, instanced with <use>, so the node count stays
+  // small: ~53 <use> elements on desktop rather than hundreds of independent shapes.
+  const DECO_DEFS = [
+    // each motif is authored around (0,0) with its BASE on y=0, so placement is a plain translate
+    ['d-mtn',
+     '<ellipse class="deco-shadow" cx="1" cy="1" rx="11" ry="2.6"/>' +
+     '<path class="deco-rock-dark deco-ink" d="M-10 0 L-3.6 -11 L2 0 Z"/>' +
+     '<path class="deco-rock deco-ink" d="M-3 0 L4.4 -14.5 L11 0 Z"/>' +
+     '<path class="deco-snow deco-ink" d="M4.4 -14.5 L7.6 -9.9 L5.6 -10.7 L3.6 -9.4 L1.6 -10.4 Z"/>' +
+     '<path class="deco-snow" d="M-3.6 -11 L-1.8 -8.4 L-3.1 -8.9 L-4.6 -8.2 Z" opacity=".9"/>'],
+    ['d-tree',
+     '<ellipse class="deco-shadow" cx="0" cy="1" rx="8.5" ry="2.2"/>' +
+     '<rect class="deco-trunk" x="-4.9" y="-3.4" width="1.6" height="3.6"/>' +
+     '<path class="deco-tree-dark deco-ink" d="M-4.1 -3 L-7.2 -3 L-4.1 -11 L-1 -3 Z"/>' +
+     '<rect class="deco-trunk" x="0.6" y="-4" width="1.8" height="4.2"/>' +
+     '<path class="deco-tree deco-ink" d="M1.5 -3.6 L-2.4 -3.6 L1.5 -13.4 L5.4 -3.6 Z"/>' +
+     '<rect class="deco-trunk" x="5.4" y="-2.8" width="1.5" height="3"/>' +
+     '<path class="deco-tree-dark deco-ink" d="M6.1 -2.4 L3.4 -2.4 L6.1 -9 L8.8 -2.4 Z"/>'],
+    ['d-ship',
+     '<ellipse class="deco-shadow" cx="0" cy="1.6" rx="9" ry="1.8"/>' +
+     '<path class="deco-hull deco-ink" d="M-8 0 L8 0 L5.6 4.2 L-5.6 4.2 Z"/>' +
+     '<path class="deco-ink" stroke-width="1" d="M0 0 L0 -12"/>' +
+     '<path class="deco-sail deco-ink" d="M0.7 -11.4 L7.4 -1.6 L0.7 -1.6 Z"/>' +
+     '<path class="deco-sail deco-ink" d="M-0.7 -9.6 L-5.8 -1.6 L-0.7 -1.6 Z"/>'],
+    ['d-cloud',
+     '<g class="deco-cloud"><circle cx="-7" cy="0" r="5.2"/><circle cx="0" cy="-3.2" r="7"/>' +
+     '<circle cx="7.6" cy="0.4" r="5.6"/><rect x="-7.4" y="0" width="15.4" height="5" rx="2.5"/></g>'],
+    ['d-pagoda',
+     '<ellipse class="deco-shadow" cx="0" cy="1" rx="8" ry="2"/>' +
+     '<rect class="deco-stone deco-ink" x="-2.6" y="-7" width="5.2" height="7"/>' +
+     '<path class="deco-roof deco-ink" d="M-8 -6.4 L8 -6.4 L4.6 -10 L-4.6 -10 Z"/>' +
+     '<path class="deco-roof deco-ink" d="M-6.2 -10.4 L6.2 -10.4 L3.4 -13.6 L-3.4 -13.6 Z"/>' +
+     '<path class="deco-roof deco-ink" d="M-4.2 -14 L4.2 -14 L0 -17.6 Z"/>'],
+    ['d-pyramid',
+     '<ellipse class="deco-shadow" cx="1" cy="1" rx="10" ry="2.4"/>' +
+     '<path class="deco-stone-dark deco-ink" d="M-9 0 L0 -13.6 L0 0 Z"/>' +
+     '<path class="deco-stone deco-ink" d="M0 -13.6 L9 0 L0 0 Z"/>'],
+    ['d-castle',
+     '<ellipse class="deco-shadow" cx="0" cy="1" rx="9" ry="2.2"/>' +
+     '<rect class="deco-stone deco-ink" x="-7.4" y="-8" width="14.8" height="8"/>' +
+     '<path class="deco-stone deco-ink" d="M-7.4 -8 L-7.4 -11 L-4.9 -11 L-4.9 -9 L-2.4 -9 L-2.4 -11 ' +
+     'L0.1 -11 L0.1 -9 L2.6 -9 L2.6 -11 L5.1 -11 L5.1 -9 L7.4 -9 L7.4 -8 Z"/>' +
+     '<rect class="deco-stone-dark deco-ink" x="-2.2" y="-16" width="4.4" height="8"/>' +
+     '<path class="deco-roof deco-ink" d="M-3.4 -16 L3.4 -16 L0 -20.4 Z"/>'],
+    ['d-temple',
+     '<ellipse class="deco-shadow" cx="0" cy="1" rx="8" ry="2"/>' +
+     '<rect class="deco-stone deco-ink" x="-7" y="-1.6" width="14" height="1.8"/>' +
+     '<rect class="deco-stone" x="-5.4" y="-9" width="1.8" height="7.6"/>' +
+     '<rect class="deco-stone" x="-1.2" y="-9" width="1.8" height="7.6"/>' +
+     '<rect class="deco-stone" x="3" y="-9" width="1.8" height="7.6"/>' +
+     '<path class="deco-stone-dark deco-ink" d="M-7.6 -9.2 L7.6 -9.2 L0 -14 Z"/>'],
+    ['d-tower',
+     '<ellipse class="deco-shadow" cx="0" cy="1" rx="6.4" ry="1.8"/>' +
+     '<path class="deco-stone-dark deco-ink" d="M-4.4 0 L-1.5 -16 L1.5 -16 L4.4 0 Z"/>' +
+     '<path class="deco-ink" stroke-width="1" d="M-3 -6 L3 -6 M-2.2 -11 L2.2 -11"/>' +
+     '<path class="deco-gold deco-ink" d="M0 -16 L0 -20"/>'],
+    ['d-windmill',
+     '<ellipse class="deco-shadow" cx="0" cy="1" rx="6.6" ry="1.8"/>' +
+     '<path class="deco-stone deco-ink" d="M-4 0 L-2.6 -9.6 L2.6 -9.6 L4 0 Z"/>' +
+     '<path class="deco-roof deco-ink" d="M-3.6 -9.6 L3.6 -9.6 L0 -13.2 Z"/>' +
+     '<path class="deco-ink" stroke-width="1.2" d="M0 -10.4 L-6.4 -15.4 M0 -10.4 L6.4 -5.6 ' +
+     'M0 -10.4 L-4.6 -4.4 M0 -10.4 L4.6 -16.4"/>'],
+    ['d-statue',
+     '<ellipse class="deco-shadow" cx="0" cy="1" rx="6" ry="1.8"/>' +
+     '<rect class="deco-stone-dark deco-ink" x="-4" y="-4.6" width="8" height="4.8"/>' +
+     '<path class="deco-tree deco-ink" d="M-2 -4.8 L-2 -13 L-0.6 -14.4 L0.8 -13 L0.8 -4.8 Z"/>' +
+     '<path class="deco-gold deco-ink" d="M0.8 -12.6 L3.4 -18.2"/>'],
+  ];
+  const DECO_KIND = { pagoda: "d-pagoda", pyramid: "d-pyramid", castle: "d-castle",
+                      temple: "d-temple", tower: "d-tower", windmill: "d-windmill",
+                      statue: "d-statue" };
+
+  // Build the two decorative layers for the WORLD board. Returns {rear, front} SVG groups, or null.
+  function buildWorldDeco(svg, spec) {
+    if (!spec || spec.file !== "maps/world.svg") return null;      // authored in world coordinates
+    const NSU = "http://www.w3.org/2000/svg";
+    const lean = window.innerWidth <= 560;    // phone: keep the majors, drop the minor detail
+    // ---- altitude compensation (Phase 10C.2R) ----
+    // Decorations live in map coordinates, which is what anchors them to geography -- and it also
+    // means the continent drill magnifies them by however much it narrows the viewBox (~1.48x for
+    // Europe, ~2.7x for Asia, where mountains started to dominate the political map). Counteract
+    // most of that at BUILD time, from the viewBox alone: the translate is untouched, so anchoring,
+    // pan/zoom and click-through are all unaffected, and a drilled board simply shows slightly
+    // larger scenery instead of hugely larger scenery.
+    const _vb = (svg.getAttribute("viewBox") || "0 0 1010 666").split(/\s+/).map(Number);
+    const alt = 1010 / Math.max(1, _vb[2] || 1010);     // how much this altitude magnifies the map
+    const DECO_ALT_TARGET = 1.2;                        // desired apparent size vs world altitude
+    const comp = alt <= 1.02 ? 1 : Math.min(1, DECO_ALT_TARGET / alt);
+    let defs = svg.querySelector("defs.geo-deco-defs");
+    if (!defs) {
+      defs = document.createElementNS(NSU, "defs");
+      defs.setAttribute("class", "geo-deco-defs");
+      defs.innerHTML = DECO_DEFS.map(d => '<g id="' + d[0] + '">' + d[1] + '</g>').join("");
+      svg.appendChild(defs);
+    }
+    function layer(cls) {
+      const g = document.createElementNS(NSU, "g");
+      g.setAttribute("class", cls);
+      g.setAttribute("aria-hidden", "true");
+      g.style.pointerEvents = "none";        // belt AND braces: CSS says so too
+      return g;
+    }
+    const rear = layer("geo-deco-rear"), front = layer("geo-deco-front");
+    let count = 0;
+    function place(host, ref, item) {
+      if (lean && !item.m) return;
+      const u = document.createElementNS(NSU, "use");
+      u.setAttribute("href", "#" + ref);
+      u.setAttributeNS("http://www.w3.org/1999/xlink", "href", "#" + ref);   // older engines
+      u.setAttribute("transform", "translate(" + item.x + "," + item.y + ") scale(" +
+                     ((item.s || 1) * DECO_SCALE * comp).toFixed(3) + ")");
+      u.style.pointerEvents = "none";
+      host.appendChild(u); count++;
+    }
+    // REAR (behind land): open-water and sky ambience
+    WORLD_DECO.clouds.forEach(c => place(rear, "d-cloud", c));
+    WORLD_DECO.ships.forEach(c => place(rear, "d-ship", c));
+    // FRONT (over land): relief and landmarks
+    WORLD_DECO.mountains.forEach(c => place(front, "d-mtn", c));
+    WORLD_DECO.forests.forEach(c => place(front, "d-tree", c));
+    WORLD_DECO.landmarks.forEach(c => place(front, DECO_KIND[c.k] || "d-castle", c));
+    return { rear: rear, front: front, count: count, lean: lean };
+  }
+
   function buildTerrainLayer(svg, spec) {
     const T = TERRAIN[spec.file]; if (!T) return null;
     const NSU = "http://www.w3.org/2000/svg";
@@ -5856,7 +6098,12 @@
       const _vb = (svg.getAttribute("viewBox") || "0 0 1000 1000").split(/\s+/).map(Number);
       svg.style.maxWidth = Math.round(Math.max(320, window.innerHeight * 0.82 * (_vb[2] / (_vb[3] || 1)))) + "px";
       svg.style.margin = "0 auto";
-      const zh = document.createElement("div"); zh.className = "geo-zoom-hint"; zh.textContent = "🔍 scroll / pinch to zoom · drag to pan"; holder.appendChild(zh);
+      // 10C.2R: the long form spanned most of a 360px board and sat over a continent label. The
+      // phone gets a terse version; the desktop keeps the explanatory text.
+      const zh = document.createElement("div"); zh.className = "geo-zoom-hint";
+      zh.textContent = window.innerWidth <= 560 ? "🔍 Pinch / drag"
+                                                : "🔍 scroll / pinch to zoom · drag to pan";
+      holder.appendChild(zh);
       let labelState = { s: 1, tx: 0, ty: 0 };
       let relayoutLabels = function () {};
       attachPanZoom(svg, holder, (s, tx, ty) => { labelState = { s: s, tx: tx, ty: ty }; relayoutLabels(s, tx, ty); });
@@ -5900,6 +6147,15 @@
           c.setAttribute("cx", cx.toFixed(2)); c.setAttribute("cy", cy.toFixed(2));
           c.setAttribute("r", r.toFixed(2)); c.setAttribute("class", cls); ig.appendChild(c);
         });
+      }
+      // Phase 10C.2: decorative layers, in the documented order --
+      //   ocean/background | REAR deco | territory paths | FRONT deco | overlays | HUD
+      // rear goes before every territory path so land covers it; front goes after them but before
+      // the marker/label layers, so a label or a selection ring is never hidden by scenery.
+      const _deco = buildWorldDeco(svg, spec);
+      if (_deco) {
+        svg.insertBefore(_deco.rear, svg.querySelector("path"));
+        svg.appendChild(_deco.front);
       }
       const mg = document.createElementNS(NSU, "g"); mg.setAttribute("class", "geo-markers"); svg.appendChild(mg);
       const tg = spec.grouped ? null : buildTerrainLayer(svg, spec); if (tg) svg.insertBefore(tg, mg);   // 地形風景層(分洲地圖不畫，縮放會跑位)
@@ -6015,35 +6271,20 @@
       relayoutLabels = function (s, tx, ty) {
         s = s || 1; tx = tx || 0; ty = ty || 0;
         const FS = 13, PADX = 12;
-        // Phase 10C.1R: the HUD overlays the bottom of the board with the territory card, the action
-        // bar and Holdings. placeMapLabels() cannot see them, so a label underneath was simply
-        // hidden by a plaque. Measure the tallest bottom slot and treat that band as unavailable:
-        // a label that would land inside it is suppressed, exactly as an overlapping label is.
-        // The SELECTED label is still always shown, so nothing becomes unreachable.
-        let reserveBottom = 0, holderH = h0;
-        try {
-          const hb = holder.getBoundingClientRect();
-          holderH = hb.height || h0;      // label coords are HOLDER-relative, not svg-relative
-          [".hud-bl", ".hud-bar", ".hud-br"].forEach(function (sel) {
-            const el = wrap.querySelector(sel);
-            if (!el) return;
-            const r = el.getBoundingClientRect();
-            if (!r.height) return;
-            const overlap = hb.bottom - r.top;          // how far the slot reaches into the board
-            if (overlap > reserveBottom) reserveBottom = overlap;
-          });
-          reserveBottom = Math.max(0, Math.min(reserveBottom + 6, hb.height * 0.42));
-        } catch (e) { reserveBottom = 0; }
+        // Phase 10C.1R measured how far the bottom HUD plaques reached INTO the board and suppressed
+        // any label that would land beneath them. Phase 10C.2R moved those plaques into their own
+        // grid row, so they no longer intersect the board at any breakpoint and that measurement was
+        // always zero -- dead layout logic, removed here rather than left to confuse the next reader.
+        // What remains in placeMapLabels() is the pre-existing and still necessary handling: labels
+        // that overlap OTHER labels are dropped by priority, labels outside their zoom band are
+        // hidden, and the selected label is always exempt.
         const cands = markerSpecs.map(L => {
           const fx = offX + tx + ((L.cx - vx) / vw * w0) * s;
           const fy = offY + ty + ((L.cy - vy) / vh * h0) * s;
           const txt = (L.drill ? "🏙 " : "") + L.label;
           const w = txt.length * FS * 0.56 + PADX, h = FS * 1.8;
-          const occluded = reserveBottom > 0 && fy > (holderH - reserveBottom);
           return { L: L, fx: fx, fy: fy, priority: L.priority,
-            // an occluded label is treated as out-of-zoom-range, which placeMapLabels() already
-            // knows how to hide -- no new visibility concept is introduced
-            minZoom: occluded ? Infinity : L.minZoom, maxZoom: occluded ? -1 : L.maxZoom,
+            minZoom: L.minZoom, maxZoom: L.maxZoom,
             selected: !!(L.key && L.key === geoSelectedKey),
             box: { x0: fx - w / 2, y0: fy - h / 2, x1: fx + w / 2, y1: fy + h / 2 } };
         });
@@ -6168,11 +6409,9 @@
 
         // ---- centre: the board itself, moved in unchanged ----
         mapSlot.appendChild(holder);
-        // reserved, EMPTY decorative layers (Phase 10C.2 fills these; they must stay
-        // pointer-events:none so they can never intercept a territory click)
-        ["geo-deco-rear", "geo-deco-front"].forEach(c => {
-          const d = document.createElement("div"); d.className = c; holder.appendChild(d);
-        });
+        // Phase 10C.2: the decorative layers are SVG groups inside the svg (see buildWorldDeco),
+        // not HTML overlays -- that is the only way they can be anchored in map coordinates and move
+        // with pan/zoom. Nothing is added here.
 
         // ---- top-left: the player plaque. Values come from myEcon / the troop pool. ----
         const pl = hudSlot("hud-player"); tl.appendChild(pl);
@@ -6367,10 +6606,11 @@
       hudRefresh = function () {
         renderHudPlayer(); renderHudTitle(); renderHudControls();
         renderHudCard(); renderHudPlayers(); renderHudActions();
-        // The label layer is placed BEFORE the HUD is populated, so at that moment the bottom slots
-        // have no height and relayoutLabels() reserves nothing. Re-place the labels now that the
-        // plaques have real sizes, otherwise a label can sit under one of them.
-        if (_geoResel) _geoResel();
+        // The label layer is placed BEFORE the HUD is populated, and the plaque row ABOVE the board
+        // has no height until then -- which moves the board down and invalidates the offsets the
+        // label projection captured. Re-measure and re-place once the plaques are real. (This is a
+        // different reason from the 10C.1R overlay compensation, which is gone.)
+        if (_geoRelayout) _geoRelayout();
       };
       window.hudSelect = function (key) { hudSelKey = key; renderHudCard(); renderHudActions(); };
       hudRefresh();
