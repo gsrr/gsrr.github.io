@@ -835,6 +835,234 @@
   .daily-cal { display: flex; gap: 4px; flex-wrap: wrap; }
   .day-dot { width: 16px; height: 16px; border-radius: 4px; background: #e2e8f0; }
   .day-dot.on { background: #22c55e; }
+  /* ================================================================================================
+     Phase 10C.1 — STRATEGY GAME HUD SHELL
+     The map screen stops being "a web page containing a map" and becomes a game whose primary play
+     surface IS the map. This is layout + skin only: every panel below is an EXISTING element moved
+     into a named grid slot, so every click handler, every authority path and every server call is
+     the one that was already there. No second game state is created anywhere.
+
+     INTENDED LAYER ORDER (Phase 10C.2 will populate the two decorative layers, which must be
+     pointer-events:none; 10C.1 deliberately leaves them EMPTY):
+        1. ocean / background        .geo-holder background
+        2. decorative REAR layer     .geo-deco-rear   (empty in 10C.1)
+        3. territory SVG             svg.geo-svg      <- authoritative hitboxes, never decorated
+        4. decorative FRONT layer    .geo-deco-front  (empty in 10C.1)
+        5. territory overlays        .geo-labels, .geo-isles
+        6. HUD                       .hud-* slots
+     ================================================================================================ */
+  /* ============================ Phase 10C.1R: GAME MODE ============================
+     While the World board is on screen the page stops presenting itself as an app that happens to
+     contain a game: the "English Reading" masthead and the duplicate user chip step aside so
+     WORLD CONQUEST is the page's identity, and the page gutters shrink so the board can use the
+     width they were spending. Purely a UI state -- `body.game-mode` is added and removed alongside
+     the existing map-wide/card-hud flags, so leaving the board restores the ordinary chrome exactly.
+     No authentication or navigation semantics are touched: #userChip is only HIDDEN, and its
+     openProfileStats action is still reachable from the HUD's own Profile control. */
+  body.game-mode { padding: 12px; }
+  body.game-mode > .card > h1 { display: none !important; }
+  /* #userChip is the duplicate identity -- the player plaque already names the commander, and the
+     HUD carries its own Profile control. #logoutChip is a REAL capability with no HUD equivalent, so
+     it deliberately stays. (#userChip sits inside #topRight, not directly under .card.) */
+  body.game-mode #userChip { display: none !important; }
+  body.game-mode > .card { padding: 14px; }
+  @media (max-width: 900px) {
+    body.game-mode { padding: 6px; }
+    body.game-mode > .card { padding: 8px; }
+  }
+  .hud-mode { --hud-gap: 10px; }
+  .hud-mode .learn-top { display: none; }              /* the plaque row replaces the page header */
+  /* CLASS E, retired in HUD mode: #empireBar is now the player plaque (its openEmpire action lives
+     on the "My empire" button) and #terrBanner is now the Holdings panel plus the Ranking icon.
+     Both are kept in the DOM because other screens still use them; both set an inline display, so
+     the override has to be !important. Nothing is duplicated on screen. */
+  .hud-mode #empireBar, .hud-mode #terrBanner { display: none !important; }
+  /* Two rows: plaques, then the board. The bottom slots share the BOARD row and align to its
+     bottom, so the territory card, the action bar and the holdings panel frame the map instead of
+     sitting below the fold. */
+  .hud-grid { display: grid; gap: var(--hud-gap);
+    grid-template-columns: minmax(200px, 1fr) minmax(0, 2.6fr) minmax(200px, 1fr);
+    grid-template-rows: auto minmax(0, 1fr); align-items: start; }
+  .hud-tl { grid-area: 1 / 1 / 2 / 2; } .hud-tc { grid-area: 1 / 2 / 2 / 3; }
+  .hud-tr { grid-area: 1 / 3 / 2 / 4; }
+  .hud-map { grid-area: 2 / 1 / 3 / 4; min-width: 0; position: relative; }
+  /* min-width:0 matters: without it a long territory name made the card wider than its column and
+     it slid under the action bar. Each overlay slot now stays inside its own column. */
+  .hud-bl  { grid-area: 2 / 1 / 3 / 2; align-self: end; z-index: 3; margin: 0 0 14px 8px; min-width: 0; }
+  .hud-bar { grid-area: 2 / 2 / 3 / 3; align-self: end; z-index: 3; margin: 0 0 14px; min-width: 0; }
+  .hud-br  { grid-area: 2 / 3 / 3 / 4; align-self: end; z-index: 3; margin: 0 8px 14px 0; min-width: 0; }
+  .hud-bl > .hud-plaque, .hud-br > .hud-plaque, .hud-bar > .hud-plaque { max-width: 100%; }
+
+  /* --- the shared plaque look: chunky outline, warm surface, a real bevel --- */
+  .hud-plaque { position: relative; border-radius: 16px; padding: 10px 12px; color: #fff4dd;
+    background: linear-gradient(180deg, #6b4a24, #47301a);
+    border: 3px solid #2a1b0d;
+    box-shadow: inset 0 2px 0 rgba(255,225,180,.34), inset 0 -3px 0 rgba(0,0,0,.34),
+                0 5px 0 #241708, 0 9px 16px rgba(0,0,0,.42); }
+  .hud-plaque h3, .hud-plaque h4 { margin: 0; }
+
+  /* --- top-left: the player --- */
+  .hud-player { display: flex; align-items: center; gap: 10px; }
+  .hud-player .hp-av { font-size: 30px; line-height: 1; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5)); }
+  .hud-player .hp-nm { font-size: 14px; font-weight: 800; letter-spacing: .2px;
+    max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hud-player .hp-st { display: flex; gap: 12px; margin-top: 3px; font-size: 15px; font-weight: 800;
+    font-variant-numeric: tabular-nums; }
+  .hud-player .hp-st i { font-style: normal; font-size: 13px; color: #ffd9a8; font-weight: 700; }
+  .hud-player button.hp-more { margin-top: 6px; font-size: 11.5px; font-weight: 700; cursor: pointer;
+    color: #2a1b0d; background: #ffcf8a; border: 2px solid #2a1b0d; border-radius: 9px; padding: 3px 9px; }
+  .hud-player button.hp-more:hover { background: #ffe0ae; }
+
+  /* --- top-centre: the game title plaque --- */
+  .hud-title { text-align: center; }
+  .hud-title .ht-t { font-size: clamp(19px, 2.6vw, 30px); font-weight: 900; letter-spacing: 2.5px;
+    color: #ffe9bd; text-transform: uppercase;
+    text-shadow: 0 2px 0 #2a1b0d, 0 4px 10px rgba(0,0,0,.5); }
+  .hud-title .ht-s { font-size: 11.5px; font-weight: 700; color: #ffd9a8; margin-top: 2px; }
+
+  /* --- top-right: global controls, icon buttons --- */
+  .hud-ctrls { display: flex; flex-wrap: wrap; gap: 7px; justify-content: flex-end; align-items: center; }
+  .hud-ico { width: 42px; height: 42px; flex: 0 0 auto; cursor: pointer; font-size: 19px; line-height: 1;
+    border-radius: 12px; color: #2a1b0d; background: linear-gradient(180deg, #ffd79a, #e8b46a);
+    border: 3px solid #2a1b0d; box-shadow: inset 0 2px 0 rgba(255,255,255,.5), 0 4px 0 #8a5f2a; }
+  .hud-ico:hover { background: linear-gradient(180deg, #ffe6bb, #f2c383); }
+  .hud-ico:active { transform: translateY(3px); box-shadow: inset 0 2px 0 rgba(255,255,255,.4), 0 1px 0 #8a5f2a; }
+
+  /* --- bottom-left: the selected-territory card --- */
+  /* the territory NAME is the strongest text on the card; the status reads as a compact badge */
+  .hud-card .hc-hd { display: flex; align-items: center; gap: 8px; font-size: 19px; font-weight: 900;
+    letter-spacing: .3px; margin-bottom: 7px; line-height: 1.15; min-width: 0;
+    text-shadow: 0 2px 0 rgba(0,0,0,.35); }
+  /* a long name wraps inside the card instead of widening it */
+  .hud-card .hc-nm { min-width: 0; overflow-wrap: anywhere; }
+  .hud-card .hc-row { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px;
+    padding: 2px 0; }
+  .hud-card .hc-row b { font-variant-numeric: tabular-nums; font-size: 13.5px; }
+  .hud-card .hc-k { color: #ffd9a8; font-weight: 700; }
+  .hud-card .hc-empty { font-size: 12.5px; color: #ffd9a8; }
+  .hud-card .hc-tag { font-size: 10.5px; font-weight: 800; border-radius: 999px; padding: 2px 8px;
+    border: 2px solid #2a1b0d; text-shadow: none; letter-spacing: .3px; text-transform: uppercase;
+    flex: 0 0 auto; }
+  .hud-card .hc-mine { background: #45c46a; color: #06280f; }
+  .hud-card .hc-foe  { background: #f59e0b; color: #2a1b0d; }
+  .hud-card .hc-open { background: #f2ddb0; color: #2a1b0d; }
+  .hud-card .hc-iso { color: #ffc9c9; font-weight: 700; font-size: 11.5px; }
+
+  /* --- bottom-right: players / holdings --- */
+  /* Holdings is reference information: quieter than the card and the action bar. */
+  .hud-plaque.hud-players { padding: 8px 10px; opacity: .93; }
+  .hud-players .hpl-t { font-size: 11px; font-weight: 800; color: #ffd9a8; margin-bottom: 4px;
+    text-transform: uppercase; letter-spacing: .8px; }
+  .hud-players .hpl-r { display: flex; align-items: center; gap: 7px; font-size: 12.5px; padding: 2.5px 0; }
+  .hud-players .hpl-sw { width: 13px; height: 13px; border-radius: 4px; flex: 0 0 auto;
+    border: 2px solid #2a1b0d; }
+  .hud-players .hpl-nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hud-players .hpl-n { font-weight: 800; font-variant-numeric: tabular-nums; }
+  .hud-players .hpl-me { color: #b6f5c6; }
+  /* a one-line empty state instead of a full plaque saying nothing */
+  .hud-players .hpl-none { font-size: 11.5px; color: #ffd9a8; opacity: .85; }
+  .hud-plaque.hud-players.is-empty { padding: 6px 10px; }
+  .hud-plaque.hud-players.is-empty .hpl-t { margin-bottom: 0; display: inline; margin-right: 6px; }
+  .hud-plaque.hud-players.is-empty .hpl-none { display: inline; }
+
+  /* --- bottom-centre: the action bar --- */
+  .hud-actions { display: flex; gap: 8px; justify-content: center; align-items: flex-end; flex-wrap: wrap; }
+  /* SECONDARY actions: smaller, cooler, clearly subordinate. */
+  .hud-act { min-width: 80px; padding: 7px 11px; cursor: pointer; border-radius: 13px;
+    font-size: 12px; font-weight: 800; letter-spacing: .2px; color: #2a1b0d;
+    background: linear-gradient(180deg, #e8c79a, #cfa471); border: 3px solid #2a1b0d;
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.42), 0 4px 0 #8a5f2a; }
+  .hud-act .ha-ic { display: block; font-size: 17px; line-height: 1.15; }
+  /* the ONE primary contextual action is bigger, warmer and reads as the combat action. */
+  .hud-act.ha-primary, .hud-act.ha-danger { min-width: 128px; padding: 11px 18px; font-size: 15px;
+    border-radius: 15px; letter-spacing: .5px; }
+  .hud-act.ha-primary .ha-ic, .hud-act.ha-danger .ha-ic { font-size: 24px; }
+  .hud-act:hover { background: linear-gradient(180deg, #ffe6bb, #f2c383); }
+  .hud-act:active { transform: translateY(4px); box-shadow: inset 0 2px 0 rgba(255,255,255,.4), 0 1px 0 #8a5f2a; }
+  .hud-act[disabled] { cursor: not-allowed; filter: grayscale(.6) brightness(.82);
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.25), 0 3px 0 #6b4a24; }
+  /* the dominant action: used for ATTACK when the selection is an enemy holding, and for the
+     foothold when the player has been wiped out. Only ever applied to a REAL enabled action. */
+  .hud-act.ha-primary { color: #fff2ea; background: linear-gradient(180deg, #e2503c, #ad2f20);
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.34), 0 5px 0 #6d1a12; }
+  .hud-act.ha-primary:hover { background: linear-gradient(180deg, #ee6450, #c03826); }
+  .hud-act.ha-danger { color: #fff2ea; background: linear-gradient(180deg, #d9822b, #a55a13);
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.3), 0 5px 0 #6d3a08; }
+
+  /* --- the map slot: the dominant surface --- */
+  .card.card-hud.map-wide { max-width: min(1500px, 98vw); }
+  .hud-mode .geo-wrap { position: relative; }
+  .hud-map .geo-holder { width: 100%; }
+  /* drawGeo() sets an INLINE max-width derived from window.innerHeight, which on a phone left the
+     board ~254px wide inside a 360px viewport. In HUD mode the board is the play surface, so it
+     takes the full available width and is bounded by HEIGHT instead (the svg keeps its own
+     1010x666 aspect, so no geometry is touched): 92vh of width is about 61vh of height. */
+  /* The board is bounded by HEIGHT so it never pushes the bottom slots off screen, and by width
+     otherwise. 104vh of width is about 69vh of height for the 1010x666 board -- the space the
+     overlaid slots leave free once the masthead is gone. On a phone the 100% term wins, so the board
+     is as wide as the (now much smaller) gutters allow. */
+  .hud-mode .geo-svg { max-width: min(100%, 104vh) !important; margin: 0 auto; }
+  /* EMPTY decorative layers, reserved for Phase 10C.2. They are declared here so the layering
+     contract is fixed now and cannot be invented ad hoc later. */
+  .geo-deco-rear, .geo-deco-front { position: absolute; inset: 0; pointer-events: none; }
+  .geo-deco-rear { z-index: 0; } .geo-deco-front { z-index: 1; }
+  .geo-labels { z-index: 2; }
+
+  /* The 250-row directory is reference data. It stays complete and keeps every existing row action,
+     but it is COLLAPSED by default so it stops competing with the board. The map remains the primary
+     way to select a territory. */
+  .hud-mode .geo-index { grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); }
+  .hud-below { margin-top: 12px; }
+  .hud-drawer { border-radius: 14px; border: 2px solid rgba(255,255,255,.16);
+    background: rgba(255,255,255,.05); overflow: hidden; }
+  .hud-drawer > summary { cursor: pointer; list-style: none; padding: 9px 13px; font-size: 12.5px;
+    font-weight: 800; color: #e8edf5; letter-spacing: .3px; display: flex; align-items: center; gap: 8px; }
+  .hud-drawer > summary::-webkit-details-marker { display: none; }
+  .hud-drawer > summary::after { content: "\25BE"; margin-left: auto; transition: transform .18s; }
+  .hud-drawer[open] > summary::after { transform: rotate(180deg); }
+  .hud-drawer > summary:hover { background: rgba(255,255,255,.09); }
+  .hud-drawer .hd-body { padding: 0 11px 11px; }
+  /* Collapse EXPLICITLY. Relying on the UA's details behaviour was not enough here: the body kept
+     its boxes and painted below the 39px-tall summary, so the directory was still on screen while
+     the drawer reported itself closed. */
+  .hud-drawer:not([open]) .hd-body { display: none; }
+
+  @media (max-width: 900px) {
+    /* one column: map first, then the things you act with. Secondary panels move under the map. */
+    /* phone: ONE compact strip -- [player] [WORLD CONQUEST] [menu] -- and then the board, so the
+       game surface is visible almost immediately. The player and the controls are NOT stacked below
+       the map as full-width cards; they share the top row and shrink to fit. Below the board come
+       only the things you act with. */
+    .hud-grid { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-rows: auto; }
+    .hud-tl  { grid-area: 1 / 1 / 2 / 2; }
+    .hud-tc  { grid-area: 1 / 2 / 2 / 3; min-width: 0; }
+    .hud-tr  { grid-area: 1 / 3 / 2 / 4; }
+    .hud-map { grid-area: 2 / 1 / 3 / 4; }
+    .hud-bl  { grid-area: 3 / 1 / 4 / 4; margin: 0; }
+    .hud-bar { grid-area: 4 / 1 / 5 / 4; margin: 0; }
+    .hud-br  { grid-area: 5 / 1 / 6 / 4; margin: 0; }
+    /* the compact top strip: avatar + gold only, no second username, no "My empire" row */
+    .hud-plaque.hud-player { padding: 6px 8px; gap: 6px; }
+    .hud-player .hp-nm, .hud-player button.hp-more { display: none; }
+    .hud-player .hp-av { font-size: 22px; }
+    .hud-player .hp-st { margin-top: 0; gap: 7px; font-size: 13px; }
+    .hud-player .hp-st i { display: none; }
+    .hud-title .ht-t { font-size: 15px; letter-spacing: .6px; }
+    .hud-title .ht-s { font-size: 10px; }
+    .hud-plaque.hud-title { padding: 7px 8px; }
+    .hud-plaque.hud-ctrls { padding: 6px; gap: 5px; }
+    .hud-ico { width: 34px; height: 34px; font-size: 15px; border-width: 2px; border-radius: 10px; }
+    /* the board is the play surface: reclaim the 28px page gutters it was losing on a phone */
+    .card.card-hud { padding-left: 8px; padding-right: 8px; }
+    .hud-ctrls { justify-content: center; }
+    .hud-actions { gap: 6px; }
+    .hud-act { min-width: 0; flex: 1 1 30%; padding: 8px 6px; font-size: 11.5px; }
+    .hud-act .ha-ic { font-size: 17px; }
+    .hud-title .ht-t { letter-spacing: 1.4px; }
+    .hud-plaque { padding: 9px 10px; border-width: 2px; box-shadow: inset 0 2px 0 rgba(255,225,180,.3),
+      inset 0 -2px 0 rgba(0,0,0,.3), 0 3px 0 #241708, 0 6px 12px rgba(0,0,0,.4); }
+    .card.card-hud.map-wide { max-width: 100vw; }
+  }
   /* ===== 真實地理地圖（各等級不同國家/區域）===== */
   .card.map-wide { max-width: 1100px; }                     /* 地圖畫面在桌機上放寬(手機不受影響) */
   .geo-wrap { position: relative; }
@@ -854,6 +1082,8 @@
     border-radius: 20px; opacity: .22; mix-blend-mode: soft-light;
     background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.5) 0 1px, transparent 1px 4px),
                       repeating-linear-gradient(-45deg, rgba(0,0,0,.16) 0 1px, transparent 1px 5px); }
+  /* in HUD mode the bottom-right corner belongs to Holdings, so the hint moves to the top-right */
+  .hud-mode .geo-zoom-hint { top: 8px; bottom: auto; }
   .geo-zoom-hint { position: absolute; right: 8px; bottom: 8px; z-index: 3; font-size: 11px; font-weight: 700;
     color: #e8edf5; background: rgba(15,23,42,.6); border-radius: 8px; padding: 3px 8px; pointer-events: none; }
   /* 縮放式標籤層：常數螢幕大小、只顯示不接收點擊(點擊由底下地區處理) */
@@ -3896,7 +4126,9 @@
   function showScreen(el) {
     [screenLanding, screenRole, screenProfile, screenStudentAcct, screenLevel, screenRooms, screenProfileStats, screenHome, screenArticle, screenLearn, screenBattle, screenTeacher, screenAdmin, screenLeader].forEach(s => s.classList.add("hidden"));
     el.classList.remove("hidden");
-    const _card = document.querySelector(".card"); if (_card) _card.classList.remove("map-wide");   // 只有地圖畫面才加寬
+    const _card = document.querySelector(".card");
+    if (_card) { _card.classList.remove("map-wide"); _card.classList.remove("card-hud"); }   // 只有地圖畫面才加寬
+    document.body.classList.remove("game-mode");   // 10C.1R: leaving the board restores app chrome
     // 右上角區（使用者鈕 + 匯出）：只在學生 app 內的畫面顯示
     const inApp = [screenLevel, screenRooms, screenProfileStats, screenHome, screenArticle, screenLearn, screenBattle].indexOf(el) !== -1;
     const teacherView = (el === screenTeacher && !!authToken());   // 老師面板也用右上角顯示名字+登出
@@ -5205,7 +5437,11 @@
   function loadTerritory(cb) {
     const t = authToken();   // 帶 token → 伺服器才知道哪些是你的領地(戰霧：別人的守軍不回傳)
     fetch(withRoom("/api/territory" + (t ? "?token=" + encodeURIComponent(t) : "")))
-      .then(r => r.json()).then(j => { if (j && j.holders) territory = j; if (cb) cb(); }).catch(() => { if (cb) cb(); });
+      // Phase 10C.1: this is the ONE place `territory` is replaced, so refreshing the HUD here keeps
+      // every slot truthful no matter which caller triggered the load -- a claim, an attack, a
+      // re-entry or a plain poll -- instead of relying on each of them to remember.
+      .then(r => r.json()).then(j => { if (j && j.holders) territory = j; hudRefresh(); if (cb) cb(); })
+      .catch(() => { if (cb) cb(); });
   }
   // ===== 玩家經濟：人口(population) + 兵力(troops，打仗用) + 金幣(gold，統一資源) =====
   //   兵力不再自動成長；金幣每小時由(家鄉+所有領地人口)統一匯入，用來蓋建築/研發科技。
@@ -5520,6 +5756,10 @@
     rest.forEach(c => { c.visible = false; });                            // 縮放過濾掉的：不顯示
     return cands;
   }
+  // Phase 10C.1: the HUD's selected territory. This is a VIEW concern only -- it decides what the
+  // territory card renders, and nothing else. It grants nothing, and no server call reads it.
+  let hudSelKey = null;
+  let hudRefresh = function () {};   // set by the HUD builder for the current map draw
   let geoSelectedKey = null;        // 目前選取的地區 key（一律顯示其標籤）
   let _geoResel = null;             // 重新配置目前地圖標籤（選取改變時呼叫）
   let _geoRelayout = null;          // 視窗尺寸改變時重新配置
@@ -5590,7 +5830,11 @@
     curDrawArgs = [spec, backFn, i, lv];
     const wrap = articleGrid; wrap.className = "geo-wrap"; wrap.removeAttribute("style"); wrap.innerHTML = "";
     const banner = document.getElementById("terrBanner"); if (banner) banner.style.display = "none";
-    const _card = document.querySelector(".card"); if (_card) _card.classList.add("map-wide");   // 地圖畫面加寬(桌機)
+    const _card = document.querySelector(".card");
+    if (_card) { _card.classList.add("map-wide"); _card.classList.add("card-hud"); }   // 地圖畫面加寬(桌機)
+    // Phase 10C.1R: enter GAME MODE. The masthead and the duplicate user chip step aside so
+    // WORLD CONQUEST is the page identity, and the page gutters shrink for the board.
+    document.body.classList.add("game-mode");
     // Phase 10A: `lv` is the CURRICULUM level that opened this map, and it is optional. The global
     // game entry passes none, so the game map is titled by the map alone — a game surface is not
     // named after a course. The level grid still passes one, so that path is unchanged.
@@ -5720,6 +5964,9 @@
           haloIfTiny(p);                       // Phase 10C: make a tiny island findable
           addTitle(p, name + " · 👥" + pop);
           const open = () => openRegion(key, name, pop, i);
+          // Phase 10C.1: clicking still opens the authoritative region panel exactly as before; it
+          // additionally tells the HUD what to describe. Selection grants nothing.
+          p.addEventListener("click", () => { if (window.hudSelect) window.hudSelect(key); });
           p.addEventListener("click", open);   // 一個邏輯領地的每個 path 都可點、都會上色
           (partsByKey[key] || (partsByKey[key] = [])).push(p);   // 同一領地的所有 SVG path(多 path 國家)
           if (!seen[key]) {                    // 標籤/清單一領地只出現一次(如多 path 國家)
@@ -5768,12 +6015,35 @@
       relayoutLabels = function (s, tx, ty) {
         s = s || 1; tx = tx || 0; ty = ty || 0;
         const FS = 13, PADX = 12;
+        // Phase 10C.1R: the HUD overlays the bottom of the board with the territory card, the action
+        // bar and Holdings. placeMapLabels() cannot see them, so a label underneath was simply
+        // hidden by a plaque. Measure the tallest bottom slot and treat that band as unavailable:
+        // a label that would land inside it is suppressed, exactly as an overlapping label is.
+        // The SELECTED label is still always shown, so nothing becomes unreachable.
+        let reserveBottom = 0, holderH = h0;
+        try {
+          const hb = holder.getBoundingClientRect();
+          holderH = hb.height || h0;      // label coords are HOLDER-relative, not svg-relative
+          [".hud-bl", ".hud-bar", ".hud-br"].forEach(function (sel) {
+            const el = wrap.querySelector(sel);
+            if (!el) return;
+            const r = el.getBoundingClientRect();
+            if (!r.height) return;
+            const overlap = hb.bottom - r.top;          // how far the slot reaches into the board
+            if (overlap > reserveBottom) reserveBottom = overlap;
+          });
+          reserveBottom = Math.max(0, Math.min(reserveBottom + 6, hb.height * 0.42));
+        } catch (e) { reserveBottom = 0; }
         const cands = markerSpecs.map(L => {
           const fx = offX + tx + ((L.cx - vx) / vw * w0) * s;
           const fy = offY + ty + ((L.cy - vy) / vh * h0) * s;
           const txt = (L.drill ? "🏙 " : "") + L.label;
           const w = txt.length * FS * 0.56 + PADX, h = FS * 1.8;
-          return { L: L, fx: fx, fy: fy, priority: L.priority, minZoom: L.minZoom, maxZoom: L.maxZoom,
+          const occluded = reserveBottom > 0 && fy > (holderH - reserveBottom);
+          return { L: L, fx: fx, fy: fy, priority: L.priority,
+            // an occluded label is treated as out-of-zoom-range, which placeMapLabels() already
+            // knows how to hide -- no new visibility concept is introduced
+            minZoom: occluded ? Infinity : L.minZoom, maxZoom: occluded ? -1 : L.maxZoom,
             selected: !!(L.key && L.key === geoSelectedKey),
             box: { x0: fx - w / 2, y0: fy - h / 2, x1: fx + w / 2, y1: fy + h / 2 } };
         });
@@ -5796,6 +6066,9 @@
       // ordinary player never sees it here either.
       wrap.insertBefore(reWrap, wrap.firstChild);
       function renderReentry(st) {
+        // the re-entry answer is asynchronous, so the action bar has to be rebuilt when it lands --
+        // otherwise the Foothold action is decided before the server has spoken.
+        setTimeout(function () { if (typeof renderHudActions === "function") renderHudActions(); }, 0);
         if (!st || !st.available) { reWrap.style.display = "none"; reWrap.innerHTML = ""; return; }
         const cost = (st.cost || {}), pool = (st.troops || {});
         const total = TROOPS.reduce((a, t) => a + (pool[t.id] || 0), 0);
@@ -5872,6 +6145,236 @@
         } });
       }
       loadReentry();
+      // ================= Phase 10C.1: assemble the HUD =================
+      // Everything here MOVES existing nodes into grid slots. Nothing is cloned and no panel is
+      // reimplemented, so #empireBar keeps its openEmpire handler, .geo-index keeps its per-row
+      // hover+click handlers, the re-entry panel keeps its server-driven lifecycle, and so on.
+      function hudSlot(cls) {
+        const d = document.createElement("div"); d.className = "hud-plaque " + cls; return d;
+      }
+      function buildHud() {
+        const scr = document.getElementById("screenArticle");
+        if (scr) scr.classList.add("hud-mode");
+        const grid = document.createElement("div"); grid.className = "hud-grid";
+        const tl = document.createElement("div"); tl.className = "hud-tl";
+        const tc = document.createElement("div"); tc.className = "hud-tc";
+        const tr = document.createElement("div"); tr.className = "hud-tr";
+        const mapSlot = document.createElement("div"); mapSlot.className = "hud-map";
+        const bl = document.createElement("div"); bl.className = "hud-bl";
+        const bar = document.createElement("div"); bar.className = "hud-bar";
+        const br2 = document.createElement("div"); br2.className = "hud-br";
+        [tl, tc, tr, mapSlot, bl, bar, br2].forEach(x => grid.appendChild(x));
+        wrap.insertBefore(grid, wrap.firstChild);
+
+        // ---- centre: the board itself, moved in unchanged ----
+        mapSlot.appendChild(holder);
+        // reserved, EMPTY decorative layers (Phase 10C.2 fills these; they must stay
+        // pointer-events:none so they can never intercept a territory click)
+        ["geo-deco-rear", "geo-deco-front"].forEach(c => {
+          const d = document.createElement("div"); d.className = c; holder.appendChild(d);
+        });
+
+        // ---- top-left: the player plaque. Values come from myEcon / the troop pool. ----
+        const pl = hudSlot("hud-player"); tl.appendChild(pl);
+        // ---- top-centre: the title plaque (presentation) + a truthful room subtitle ----
+        const ti = hudSlot("hud-title"); tc.appendChild(ti);
+        // ---- top-right: existing global controls only ----
+        const ct = hudSlot("hud-ctrls"); tr.appendChild(ct);
+        // ---- bottom-left: the selected-territory card ----
+        const card = hudSlot("hud-card"); bl.appendChild(card);
+        // ---- bottom-centre: contextual actions ----
+        const acts = hudSlot("hud-actions"); bar.appendChild(acts);
+        // ---- bottom-right: who holds what ----
+        const pls = hudSlot("hud-players"); br2.appendChild(pls);
+
+        // reference/secondary rows stay, below the board
+        const below = document.createElement("div"); below.className = "hud-below";
+        wrap.appendChild(below);
+        return { pl: pl, ti: ti, ct: ct, card: card, acts: acts, pls: pls, below: below };
+      }
+      const HUD = buildHud();
+
+      function icoBtn(emoji, label, fn) {
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "hud-ico"; b.textContent = emoji;
+        b.title = label; b.setAttribute("aria-label", label);
+        b.addEventListener("click", fn);
+        return b;
+      }
+      function actBtn(emoji, label, fn, opts) {
+        opts = opts || {};
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "hud-act" + (opts.primary ? " ha-primary" : "") + (opts.danger ? " ha-danger" : "");
+        b.innerHTML = '<span class="ha-ic">' + emoji + '</span>' + escapeHtml(label);
+        b.title = opts.title || label; b.setAttribute("aria-label", opts.title || label);
+        if (opts.disabled) { b.disabled = true; }
+        else { b.addEventListener("click", fn); }
+        return b;
+      }
+
+      // ---------- the player plaque ----------
+      function renderHudPlayer() {
+        const e = myEcon || {};
+        const nm = userName || authUser() || "Commander";
+        HUD.pl.innerHTML = '<div class="hp-av">' + (userName ? avatarOf(userName) : "\u{1F9B8}") + '</div>' +
+          '<div style="min-width:0"><div class="hp-nm">' + escapeHtml(dispName(nm)) + '</div>' +
+          '<div class="hp-st"><span>\u{1FA99} ' + (e.gold || 0) +
+          ' <i>+' + (e.goldIncome || 0) + '/hr</i></span>' +
+          '<span>\u2694\uFE0F ' + poolTotal() + '</span>' +
+          '<span>\u{1F465} ' + (e.population || 0) + '</span></div></div>';
+        const more = document.createElement("button");
+        more.type = "button"; more.className = "hp-more"; more.textContent = "My empire \u25B8";
+        more.title = "Open my empire"; more.setAttribute("aria-label", "Open my empire");
+        more.addEventListener("click", openEmpire);          // the EXISTING empire panel
+        HUD.pl.appendChild(more);
+      }
+
+      // ---------- the title plaque ----------
+      function renderHudTitle() {
+        // "World Conquest" is the game's name for its own play surface. The subtitle carries only
+        // real session facts (the room code, and the course the room was opened with).
+        const sub = [];
+        if (typeof roomCode !== "undefined" && roomCode) sub.push("Room " + roomCode);
+        if (lv && (lv.name || lv.id)) sub.push(lv.name || lv.id);
+        HUD.ti.innerHTML = '<div class="ht-t">World Conquest</div>' +
+          (sub.length ? '<div class="ht-s">' + escapeHtml(sub.join(" \u00b7 ")) + '</div>' : '');
+      }
+
+      // ---------- global controls: existing actions only ----------
+      function renderHudControls() {
+        HUD.ct.innerHTML = "";
+        HUD.ct.appendChild(icoBtn("\u{1F4DA}", "Learning Home", openLearningHome));
+        if (userName) HUD.ct.appendChild(icoBtn("\u{1F9D1}", "My progress", openProfileStats));
+        HUD.ct.appendChild(icoBtn("\u{1F3C6}", "Ranking", openLeaderboard));
+        HUD.ct.appendChild(icoBtn("\u{1F3E0}", "Home base \u2014 recruit & build", openHomeBase));
+      }
+
+      // ---------- the selected-territory card ----------
+      // Fog of war is preserved exactly as the region panel preserves it: a garrison is shown only
+      // for territories the player owns. An enemy's composition is never revealed here.
+      function renderHudCard() {
+        const key = hudSelKey;
+        if (!key) {
+          HUD.card.innerHTML = '<div class="hc-hd">\u{1F3F0} No territory selected</div>' +
+            '<div class="hc-empty">Tap a territory on the board to inspect it.</div>';
+          return;
+        }
+        const ct = (TERR_CATALOG.terrById || {})[key] || {};
+        const h = (territory && territory.holders && territory.holders[key]) || null;
+        const me = (authUser() || userName || "").toLowerCase();
+        const mine = !!(h && h.owner && (h.owner || "").toLowerCase() === me);
+        const tag = !h || !h.owner ? '<span class="hc-tag hc-open">Unclaimed</span>'
+          : mine ? '<span class="hc-tag hc-mine">Yours</span>'
+                 : '<span class="hc-tag hc-foe">Enemy</span>';
+        const pop = (mine && h && h.pop != null) ? h.pop : (ct.gamePopulation || 0);
+        const iso = (ct.adjacentTerritoryIds || []).length === 0;
+        let rows = '<div class="hc-row"><span class="hc-k">Owner</span><b>' +
+          (h && h.owner ? escapeHtml((h.avatar || "") + dispName(h.owner)) : "\u{1F3F3}\uFE0F none") +
+          '</b></div>' +
+          '<div class="hc-row"><span class="hc-k">Population</span><b>' + pop + '</b></div>';
+        if (mine) {
+          rows += '<div class="hc-row"><span class="hc-k">Armies</span><b>' +
+            aliveTroops(h.troops).reduce((a, t) => a + t.hp, 0) + '</b></div>' +
+            '<div class="hc-row"><span class="hc-k"></span><span>' + garrisonHTML(h.troops) + '</span></div>';
+        } else if (h && h.owner) {
+          rows += '<div class="hc-row"><span class="hc-k">Armies</span><b>\u{1F6E1}\uFE0F unknown</b></div>';
+        }
+        rows += '<div class="hc-row"><span class="hc-k">Neighbours</span><b>' +
+          (ct.adjacentTerritoryIds || []).length + '</b></div>';
+        HUD.card.innerHTML = '<div class="hc-hd">\u{1F3F0} <span class="hc-nm">' +
+          escapeHtml(ct.displayName || regionDisplayName(key) || key) + '</span>' + tag + '</div>' + rows +
+          (iso ? '<div class="hc-iso">\u26A0\uFE0F No land neighbours \u2014 safe, but it cannot ' +
+            'attack out.</div>' : '');
+      }
+
+      // ---------- who holds what: straight from /api/territory ----------
+      function renderHudPlayers() {
+        const holders = (territory && territory.holders) || {};
+        const me = (authUser() || userName || "").toLowerCase();
+        const stats = {}, present = [];
+        Object.keys(holders).forEach(k => {
+          const h = holders[k]; if (!h || !h.owner) return;
+          const low = h.owner.toLowerCase();
+          if (!stats[low]) { stats[low] = { name: h.owner, avatar: h.avatar, n: 0 }; present.push(h.owner); }
+          stats[low].n++; if (h.avatar) stats[low].avatar = h.avatar;
+        });
+        const cmap = ownerColorMap(present, me);
+        const rows = present.map(nm => stats[nm.toLowerCase()])
+          .sort((a, b) => (a.name.toLowerCase() === me ? -1 : b.name.toLowerCase() === me ? 1 : b.n - a.n));
+        HUD.pls.classList.toggle("is-empty", rows.length === 0);
+        HUD.pls.innerHTML = '<div class="hpl-t">Holdings</div>' + (rows.length
+          ? rows.map(s => '<div class="hpl-r"><span class="hpl-sw" style="background:' +
+              cmap[s.name.toLowerCase()] + '"></span><span class="hpl-nm' +
+              (s.name.toLowerCase() === me ? ' hpl-me' : '') + '">' +
+              escapeHtml((s.avatar || "") + (s.name.toLowerCase() === me ? "You" : dispName(s.name))) +
+              '</span><span class="hpl-n">' + s.n + '</span></div>').join("")
+          : '<div class="hpl-none">no territory held yet</div>');
+      }
+
+      // ---------- the action bar ----------
+      // Every slot is an EXISTING action. There is deliberately no MOVE slot: troop movement does
+      // not exist yet, and a disabled "coming later" button would be clutter that teaches nothing.
+      function renderHudActions() {
+        HUD.acts.innerHTML = "";
+        const key = hudSelKey;
+        const h = key && territory && territory.holders ? territory.holders[key] : null;
+        const me = (authUser() || userName || "").toLowerCase();
+        const mine = !!(h && h.owner && (h.owner || "").toLowerCase() === me);
+        const enemy = !!(h && h.owner) && !mine;
+        const name = key ? (regionDisplayName(key) || key) : "";
+        const openSel = () => {
+          const ct = (TERR_CATALOG.terrById || {})[key] || {};
+          openRegion(key, regionDisplayName(key), ct.gamePopulation || 0, levelIdxForKey(key));
+        };
+        if (!key) {
+          HUD.acts.appendChild(actBtn("\u{1F5FA}", "Select a territory", null,
+            { disabled: true, title: "Tap a territory on the board first" }));
+        } else if (enemy) {
+          // the region panel is where the attack actually happens; ATTACK is the dominant action
+          HUD.acts.appendChild(actBtn("\u2694\uFE0F", "Attack", openSel,
+            { primary: true, title: "Attack " + name + " from an adjacent territory you own" }));
+        } else if (mine) {
+          HUD.acts.appendChild(actBtn("\u{1F6E1}\uFE0F", "Manage", openSel,
+            { title: "Manage " + name + ": garrison, buildings and research" }));
+        } else {
+          HUD.acts.appendChild(actBtn("\u{1F6A9}", "Occupy", openSel,
+            { primary: true, title: "Occupy " + name }));
+        }
+        if (key) {
+          HUD.acts.appendChild(actBtn("\u{2139}\uFE0F", "Info", openSel,
+            { title: "Open the full panel for " + name }));
+        }
+        HUD.acts.appendChild(actBtn("\u{1F396}\uFE0F", "Recruit", openHomeBase,
+          { title: "Recruit troops and build at your home base" }));
+        HUD.acts.appendChild(actBtn("\u{1F4DA}", "Learn", openLearningHome,
+          { title: "Go to Learning Home" }));
+        if (!backFn && lv) {
+          HUD.acts.appendChild(actBtn("\u{1F409}", examPassed(lv.id) ? "Boss \u2713" : "Boss",
+            () => startLevelExam(i), { title: "Level checkpoint battle" }));
+        }
+        // the foothold action appears only when the SERVER has said re-entry is available
+        if (reWrap && reWrap.style.display !== "none") {
+          HUD.acts.appendChild(actBtn("\u{1F3F3}\uFE0F", "Foothold", () => {
+            reWrap.scrollIntoView({ behavior: "smooth", block: "center" });
+            const first = reWrap.querySelector(".re-cand"); if (first) first.focus();
+          }, { danger: true, title: "Your empire has fallen \u2014 establish a foothold" }));
+        }
+      }
+
+      // one refresh entry point, so ownership/economy changes redraw every HUD slot from the
+      // authoritative caches and never from a local copy
+      hudRefresh = function () {
+        renderHudPlayer(); renderHudTitle(); renderHudControls();
+        renderHudCard(); renderHudPlayers(); renderHudActions();
+        // The label layer is placed BEFORE the HUD is populated, so at that moment the bottom slots
+        // have no height and relayoutLabels() reserves nothing. Re-place the labels now that the
+        // plaques have real sizes, otherwise a label can sit under one of them.
+        if (_geoResel) _geoResel();
+      };
+      window.hudSelect = function (key) { hudSelKey = key; renderHudCard(); renderHudActions(); };
+      hudRefresh();
+
       const legend = document.createElement("div"); legend.className = "geo-legend";
       legend.innerHTML = '<span class="gl gl-mine">You</span><span class="gl gl-open">Open</span>' +
         (Object.keys(drill).length ? '<span class="gl gl-drill">Zoom in</span>' : '');
@@ -5888,11 +6391,24 @@
           '<span class="gi-ls">' + (r.drill ? "zoom in ▸" : ("👥 " + r.pop)) + '</span></span>';
         btn.addEventListener("click", r.open);
         const hi = r.group || r.parts || (r.p ? [r.p] : []);   // 洲：整組；多 path 領地：所有 path；否則單塊
-        btn.addEventListener("mouseenter", () => { hi.forEach(pp => pp.classList.add("geo-hi")); if (r.key) { geoSelectedKey = r.key; if (_geoResel) _geoResel(); } });   // 選取 → 該標籤一律顯示
+        btn.addEventListener("click", () => { if (r.key && window.hudSelect) window.hudSelect(r.key); });
+        btn.addEventListener("mouseenter", () => { hi.forEach(pp => pp.classList.add("geo-hi")); if (r.key) { geoSelectedKey = r.key; if (_geoResel) _geoResel(); if (window.hudSelect) window.hudSelect(r.key); } });   // 選取 → 該標籤一律顯示
         btn.addEventListener("mouseleave", () => { hi.forEach(pp => pp.classList.remove("geo-hi")); if (r.key && geoSelectedKey === r.key) { geoSelectedKey = null; if (_geoResel) _geoResel(); } });
         r.idxEl = btn; r.idxLs = btn.querySelector(".gi-ls"); idx.appendChild(btn);
       });
-      wrap.appendChild(idx);
+      // reference directory: complete and fully functional, but collapsed so it does not compete
+      // with the board. Every row keeps the hover/click handlers wired above.
+      const drawer = document.createElement("details");
+      drawer.className = "hud-drawer";
+      const sum = document.createElement("summary");
+      const nReg = regionList.filter(r => !r.dup).length;
+      sum.textContent = "\u{1F5C2} Region index \u00b7 " + nReg +
+        (nReg === 1 ? " territory" : " territories");
+      sum.title = "Browse every territory on this view (the map is the primary way to select one)";
+      drawer.appendChild(sum);
+      const dbody = document.createElement("div"); dbody.className = "hd-body";
+      dbody.appendChild(idx); drawer.appendChild(dbody);
+      HUD.below.appendChild(drawer);
       // 只有頂層顯示 Boss。Phase 10A: the boss is a CURRICULUM checkpoint, so it appears only when a
       // level opened this map (the level grid). The global game map has no course, hence no boss --
       // the checkpoint stays reachable exactly where it always was, from the level grid.
@@ -6050,7 +6566,9 @@
         }
       }
       colorize();
-      loadTerritory(colorize);
+      hudRefresh();                       // Phase 10C.1: HUD reads the same authoritative caches
+      // when fresh territory data lands, repaint the board AND the HUD from it -- one source
+      loadTerritory(function () { colorize(); hudRefresh(); });
     }
 
     fetchMap(spec.file).then(build)
