@@ -1668,16 +1668,16 @@
     </div>
 
     <div class="levels">
-      <div class="levelTab active" data-level="1" data-name="Level 1 · Listen 👂"><span class="lvl">1</span><span class="emoji">👂</span></div>
-      <div class="levelTab" data-level="2" data-name="Level 2 · Read Along 🎤"><span class="lvl">2</span><span class="emoji">🎤</span></div>
-      <div class="levelTab" data-level="3" data-name="Level 3 · Quiz ✅"><span class="lvl">3</span><span class="emoji">✅</span></div>
-      <div class="levelTab" data-level="4" data-name="Level 4 · Tricky Quiz 🤔"><span class="lvl">4</span><span class="emoji">🤔</span></div>
-      <div class="levelTab" data-level="5" data-name="Level 5 · Match 🖼️"><span class="lvl">5</span><span class="emoji">🖼️</span></div>
-      <div class="levelTab hidden" data-level="6" data-name="Level 6 · Reorder 🧩"><span class="lvl">6</span><span class="emoji">🧩</span></div>
-      <div class="levelTab hidden" data-level="7" data-name="Level 7 · WH Questions ❓"><span class="lvl">7</span><span class="emoji">❓</span></div>
-      <div class="levelTab hidden" data-level="8" data-name="Level 8 · Dictation ✍️"><span class="lvl">8</span><span class="emoji">✍️</span></div>
-      <div class="levelTab hidden" data-level="9" data-name="Level 9 · Fill Blank 📝"><span class="lvl">9</span><span class="emoji">📝</span></div>
-      <div class="levelTab hidden" data-level="10" data-name="Level 10 · Role-play 🎭"><span class="lvl">10</span><span class="emoji">🎭</span></div>
+      <div class="levelTab active" data-level="1" data-name="Listen 👂"><span class="lvl">1</span><span class="emoji">👂</span></div>
+      <div class="levelTab" data-level="2" data-name="Read Along 🎤"><span class="lvl">2</span><span class="emoji">🎤</span></div>
+      <div class="levelTab" data-level="3" data-name="Quiz ✅"><span class="lvl">3</span><span class="emoji">✅</span></div>
+      <div class="levelTab" data-level="4" data-name="Tricky Quiz 🤔"><span class="lvl">4</span><span class="emoji">🤔</span></div>
+      <div class="levelTab" data-level="5" data-name="Matching 🖼️"><span class="lvl">5</span><span class="emoji">🖼️</span></div>
+      <div class="levelTab hidden" data-level="6" data-name="Reorder 🧩"><span class="lvl">6</span><span class="emoji">🧩</span></div>
+      <div class="levelTab hidden" data-level="7" data-name="WH Questions ❓"><span class="lvl">7</span><span class="emoji">❓</span></div>
+      <div class="levelTab hidden" data-level="8" data-name="Dictation ✍️"><span class="lvl">8</span><span class="emoji">✍️</span></div>
+      <div class="levelTab hidden" data-level="9" data-name="Fill in the Blank 📝"><span class="lvl">9</span><span class="emoji">📝</span></div>
+      <div class="levelTab hidden" data-level="10" data-name="Role-play 🎭"><span class="lvl">10</span><span class="emoji">🎭</span></div>
     </div>
     <div class="level-name" id="levelName"></div>
 
@@ -2037,9 +2037,13 @@
       if (t.classList.contains("hidden")) return;
       pos++;
       const lvlSpan = t.querySelector(".lvl"); if (lvlSpan) lvlSpan.textContent = pos;
-      const nm = t.dataset.name || "";
-      const act = nm.indexOf("·") >= 0 ? nm.split("·").slice(1).join("·").trim() : nm;
-      t.dataset.name = "Level " + pos + " · " + act;
+      // Phase 9H: the tab's NAME is the activity ("Read Along"), and its NUMBER is the position in
+      // the strip, rendered separately in .lvl just above. The name used to be rewritten to
+      // "Level <pos> · <activity>", which was wrong twice over: the ordinal is a tab position, not a
+      // curriculum level (Pre-A1 has no Reorder, so the same activity sat at different numbers in
+      // different families), and it duplicated the number already visible on the tab. Renumbering
+      // .lvl is still all this function does — which also removes the stale-data-name artefact that
+      // outlived hidden tabs.
     });
     const act = document.querySelector(".levelTab.active");
     if (act) levelNameEl.textContent = act.dataset.name || "";
@@ -5886,7 +5890,7 @@
     const les = (learningRegistry.lessons || {})[id];
     if (les && les.title) return les.title;
     const camp = ((learningProgress || {}).campaigns || {})[id];
-    if (camp && camp.title) return camp.title + " Campaign";
+    if (camp && camp.title) return camp.title + " " + courseKindLabel(id);
     const act = (learningRegistry.activities || {})[id];
     if (act && act.title) return act.title;
     return id;
@@ -6255,6 +6259,23 @@
   //
   // Lessons are listed in the SERVER's own key order (the registry's authoring order), grouped by the
   // server's campaigns block. No client-side ordering rule, and nothing Taipei-specific.
+  // ===== Phase 9H — "Campaign" or "Course", decided from the registry, never from a hard-coded id ==
+  // A course whose lessons GRANT QUALIFICATIONS is a campaign: mastering it unlocks territory on the
+  // world map. Exactly one course qualifies today — Taipei, whose 4 lessons carry all 4 qualifications
+  // and which is the only course with a course-level reward policy (campaign_trophy). Every other
+  // course unlocks nothing in the world, so "campaign" overstated an ordinary reading course.
+  // Derived from `grants`, which the public registry view already sends, so a second
+  // qualification-bearing course needs no change here and no course id is named.
+  function courseIsCampaign(cid) {
+    const acts = learningRegistry.activities || {}, les = learningRegistry.lessons || {};
+    for (const aid in acts) {
+      if (!(acts[aid].grants || []).length) continue;
+      const l = les[acts[aid].lessonId];
+      if (l && l.courseId === cid) return true;
+    }
+    return false;
+  }
+  function courseKindLabel(cid) { return courseIsCampaign(cid) ? "Campaign" : "Course"; }
   function homeCampaigns() {
     const rows = learningProgress.lessons || {}, camps = learningProgress.campaigns || {};
     const out = [];
@@ -6306,13 +6327,14 @@
       const done = c.list.filter(x => x.row.activePolicyCompleted === true).length;
       const pct = Math.round(done * 100 / c.list.length);
       return '<div class="lh-camp' + (c.completed ? ' is-done' : '') + '">' +
-        '<div class="lh-camp-nm">' + escapeHtml(c.name) + ' Campaign</div>' +
+        '<div class="lh-camp-nm">' + escapeHtml(c.name) + ' ' + courseKindLabel(c.cid) + '</div>' +
         '<div class="lh-stars">' + new Array(done + 1).join("\u2605") +
           new Array(c.list.length - done + 1).join("\u2606") + '</div>' +
         '<div class="lh-bar"><span style="width:' + pct + '%"></span></div>' +
         '<div class="lh-sub"><b>' + done + ' / ' + c.list.length + '</b> Lessons Mastered</div>' +
         (done === c.list.length
-          ? '<div class="lh-camp-done">\ud83c\udfc6 ' + escapeHtml(c.name) + ' Campaign Complete</div>'
+          ? '<div class="lh-camp-done">\ud83c\udfc6 ' + escapeHtml(c.name) + ' ' +
+              courseKindLabel(c.cid) + ' Complete</div>'
           : '') + '</div>';
     };
     // Phase 7E.2: the learning economy, where learning decisions are actually made. The balance is
@@ -6671,9 +6693,10 @@
     if (gainedC.length) {
       // Finishing the last lesson grants BOTH its badge and the campaign trophy; the single banner
       // reports both, because both really were unlocked.
-      showBanner("🏆 Campaign Complete", "EVERY LESSON MASTERED",
-                 nowC[gainedC[0]] + " Campaign", true, [_grantedNow.lesson, _grantedNow.course],
-                 _grantedNow.gold);   // the final lesson's mastery gold; the campaign itself pays 0
+      const kind = courseKindLabel(gainedC[0]);
+      showBanner("🏆 " + kind + " Complete", "EVERY LESSON MASTERED",
+                 nowC[gainedC[0]] + " " + kind, true, [_grantedNow.lesson, _grantedNow.course],
+                 _grantedNow.gold);   // the final lesson's mastery gold; the course itself pays 0
     } else if (gainedL.length) showCompletionBanner(gainedL[0]);
     _grantedNow = { lesson: null, course: null, gold: 0 };   // consumed — never celebrated twice
   }
@@ -7529,7 +7552,15 @@
   // 畫面 3：載入並開始學習
   async function selectArticle(a) {
     await loadArticle(a);
-    learnTitle.textContent = (manifest.levels[selLevelIdx].name || "") + " · " + (a.title || a.id);
+    // Phase 9H: the header is the OPENED LESSON's identity, not the level the learner last browsed.
+    // It used to read `manifest.levels[selLevelIdx].name`, and Learning Home never sets selLevelIdx —
+    // so every lesson opened from Home inherited a stale family: A1/002 rendered "Pre-A1 · 002 · My
+    // Weekend", and Taipei Zoo rendered "Pre-A1 · Taipei 1 · At the Zoo" on BOTH entry paths.
+    // lessonTitleOf() is the resolver the completion card already uses: it takes the title from the
+    // authoritative progress row (the registry's own lesson title) and falls back to the manifest
+    // article. No new mapping table, no selLevelIdx synchronisation, and the lesson page and the
+    // completion card can no longer disagree about the same lesson's name.
+    learnTitle.textContent = lessonTitleOf(a.file);
     enterListenMode();   // 進入文章時先顯示 Level 1（聽力），不直接進測驗
     // Phase 6B STEP 4: the lesson page owns progress, so it is rendered on entry and then refreshed
     // by refreshLessonSurfaces() after every authoritative response — never by leaving the lesson.

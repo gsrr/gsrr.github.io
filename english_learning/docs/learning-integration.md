@@ -610,7 +610,7 @@ A paying gate is either a **world gate** (grants a Conquest qualification; today
 A1/001). The invariant is expressed over the derived split, never over a named list, so future A1,
 A2, B1 and Pre-A1 lessons need no test edit merely for being qualification-free.
 
-## Two open UI truthfulness items (documented, not fixed)
+## Two open UI truthfulness items (documented in 9B.1; BOTH CLOSED in Phase 9H — see below)
 
 **Course vs Campaign.** `index.html` appends the literal word `" Campaign"` to the server course
 title at four sites (`6335`, `6341`, `5915`, and `SCOPE_GROUPS` at `5901`). Course metadata carries
@@ -961,3 +961,120 @@ from a region button with Occupy and Attack intact.
 
 `tests/outpost_migration.test.js` was retargeted rather than deleted — see its check 4 comment for the
 old rule, why it is obsolete, and why the replacement is stronger.
+
+# Phase 9H — lesson header identity and learner-facing terminology
+
+Three learner-facing copy defects, all presentation-only. No curriculum, authority, reward, routing or
+schema change: the diff is `index.html` plus one UI test.
+
+## H1 — the lesson header showed the wrong family
+
+`selectArticle()` built the header from `manifest.levels[selLevelIdx].name` — the level the learner
+last *browsed*. Learning Home never sets `selLevelIdx`, so every lesson opened from Home inherited a
+stale family. Measured before the fix, with `selLevelIdx` sitting on Pre-A1:
+
+| opened from Home | header shown (before) | registry title |
+|---|---|---|
+| `english.prea1.taipei.zoo` | `Pre-A1 · Taipei 1 · At the Zoo` | `Taipei · At the Zoo` |
+| `english.a1.core.002` | `Pre-A1 · 002 · My Weekend` | `A1 · 002 My Weekend` |
+| `english.a2.core.002` | `Pre-A1 · 002 · A Talk About the Ceasefire` | `A2 · 002 A Talk About the Ceasefire` |
+| `english.b1.core.002` | `Pre-A1 · 002 · Planning a Trip` | `B1 · 002 Planning a Trip` |
+
+Four of five families were wrong; Pre-A1 was right only by coincidence. Taipei was wrong on **both**
+entry paths, because Taipei lessons live under the Pre-A1 level, so no level-derived prefix could ever
+name them.
+
+The fix is one line: the header now calls `lessonTitleOf(a.file)` — the resolver the completion card
+already used, which takes the title from the authoritative progress row (the registry's own lesson
+title) and falls back to the manifest article. Canonical identity belongs to the opened lesson, so no
+`selLevelIdx` synchronisation and no second mapping table were introduced, and the lesson page and the
+completion card can no longer disagree about the same lesson's name. Verified over first/middle/last of
+all five families, and with deliberately poisoned navigation state (browse B1 then open A1 from Home,
+and so on): the header follows the opened lesson every time.
+
+## H2 — activity tabs said "Level N"
+
+The ten tab definitions carried `data-name="Level N · <activity>"`, and `renumberTabs()` rewrote that
+string on every visibility change. `N` is a **tab position**, not a curriculum level: Pre-A1 has no
+Reorder, so the same activity sat at different numbers in different families, and the number was
+already rendered in `.lvl` on the tab itself. Labels are now the activity, taken from the terminology
+the registry already uses for these activity types:
+
+| tab | before | after |
+|---|---|---|
+| 1 | Level 1 · Listen 👂 | Listen 👂 |
+| 2 | Level 2 · Read Along 🎤 | Read Along 🎤 |
+| 3 | Level 3 · Quiz ✅ | Quiz ✅ |
+| 4 | Level 4 · Tricky Quiz 🤔 | Tricky Quiz 🤔 |
+| 5 | Level 5 · Match 🖼️ | Matching 🖼️ |
+| 6 | Level 6 · Reorder 🧩 | Reorder 🧩 |
+| 7 | Level 7 · WH Questions ❓ | WH Questions ❓ |
+| 8 | Level 8 · Dictation ✍️ | Dictation ✍️ |
+| 9 | Level 9 · Fill Blank 📝 | Fill in the Blank 📝 |
+| 10 | Level 10 · Role-play 🎭 | Role-play 🎭 |
+
+`renumberTabs()` still renumbers `.lvl`; it simply no longer rewrites `data-name` — which also retires
+the stale-`data-name` artefact that used to outlive hidden tabs. `data-level`, `TAB_ACTIVITY_TYPE`,
+grader routing, activity ids and the server payload are untouched, and `#levelName` plus the practice
+summary inherit the new labels because both already read `data-name`.
+
+## H3 — "Campaign" for ordinary reading courses
+
+Every course heading read `<title> Campaign`, including four ordinary reading courses that unlock
+nothing in the world. Phase 9B.1 recommended deriving the term **from world consequence**; that is what
+this phase implements. `courseIsCampaign(cid)` returns true when any of the course's activities carries
+a qualification `grant` — a field the public registry view already sends — so no course id is named in
+the client and a second qualification-bearing course would need no code change.
+
+The registry backs the distinction unambiguously: `english.prea1.taipei` is the only course whose
+lessons grant qualifications (4 of them) and the only course carrying a course-level reward policy
+(`campaign_trophy`). The other four carry `none` and grant nothing.
+
+| course | kind | heading | completion |
+|---|---|---|---|
+| `english.prea1.taipei` | **Campaign** | Taipei Campaign | 🏆 Taipei Campaign Complete |
+| `english.prea1.core` | Course | Pre-A1 Core Readings Course | 🏆 … Course Complete |
+| `english.a1.core` | Course | A1 Core Readings Course | 🏆 … Course Complete |
+| `english.a2.core` | Course | A2 Core Readings Course | 🏆 … Course Complete |
+| `english.b1.core` | Course | B1 Core Readings Course | 🏆 … Course Complete |
+
+Four sites now take the word from `courseKindLabel()`: the Home heading, the Home completion badge, the
+mastery banner (title and body) and the reward-grant source title. **No internal name changed** —
+course ids, contentPack ids, `campaign_trophy`, `trophy.campaign.complete`, the campaign completion
+keys, `homeCampaigns()` and `goToCampaignMap()` are all as they were. Presentation says "Course" while
+the field stays `campaign`, so no schema migration was needed.
+
+### "Campaign" that is left alone, deliberately
+
+`"Campaign Trophy"` (the achievement's display name) and `SCOPE_GROUPS.course = "Campaign Rewards"`
+both describe course-scope rewards, and the only course-scope reward in the product is Taipei's
+campaign trophy — so both are accurate today. If an ordinary course ever gains a course-scope reward,
+`SCOPE_GROUPS.course` becomes the one heading that would need revisiting.
+
+## Deliberately NOT changed
+
+- **The practice counter.** `#progText` still reads `0/9` for a nine-tab lesson while mastery requires
+  five, because it counts practice tabs; the authoritative surface `#lessonProgress` reads "0 of 5
+  activities completed". Merging them is a semantic redesign, not copy.
+- **"Level Practised"** (achievement) and **"Level Boss" / "Final Boss"** (checkpoint) genuinely refer
+  to curriculum levels, so they keep the word.
+- **`screenArticle` / `articleGrid`** naming debt, and the Phase 9G leftovers (`clearMapTimers()` as a
+  no-op, the creator-less `.terr-*` CSS).
+
+## Also closed by measurement
+
+The second 9B.1 open item — the level card's `n lessons` coming from `lessons.json` while `tracked`
+came from the registry — can no longer disagree: with all 57 units migrated the two counts are equal
+for every level (Pre-A1 24/24, A1 12/12, A2 12/12, B1 5/5).
+
+## Verification
+
+86 real-Chrome checks passed, 0 failed: the header matrix over first/middle/last of all five families,
+five poisoned-navigation cases, registry == rendered activity sets with the required denominator
+unchanged (7 for Pre-A1/Taipei, 5 for A1/A2/B1), gates still grading and paying 160, completion copy
+rendered by the real Home renderer against a completed state for all five courses, checkpoint pools
+still 112/48/48/20 with no "locked" copy, no `title`/`aria` attribute left saying "Level N", and 360px
+with tap targets unchanged at 66×40 (the tab strip scrolls; the page does not). 46/46 maintained suites
+and 4/4 validators pass. `tests/activity_catalog.test.js` gained four checks (8–11) pinning the tab
+copy, the header source and the derived Campaign rule; check 8 was mutation-tested by reinstating
+"Level 2 · Read Along", which fails the suite.
