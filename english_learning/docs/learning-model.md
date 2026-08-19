@@ -217,22 +217,31 @@ domain tests rather than by inventing curriculum.
 
 ## 8. Game / Learning boundary
 
+Phase 10A.3R made this boundary a **one-way** one: Learning reads nothing from Game, and Game reads
+nothing from Learning.
+
 ```
 Game Domain (game/*)                    Learning Domain (learning/*)
 ────────────────────                    ────────────────────────────
-can_attack(..., player_qualifications,  LearningService: identity, content,
-           require_qualifications)      grading, completion, grants, reward policy
-   ↓ returns
-reason: "qualification_required"
-missingQualificationIds: [opaque ids]   →  UI resolves ids → titles + studyTarget
+can_attack(...)  — identity, ownership, LearningService: identity, content,
+  adjacency, garrison, squad ONLY       grading, completion, grants, reward policy
+   ↓ returns                                        ↓ grants
+reason: one of REASONS                  qualifications = ACHIEVEMENTS (credentials,
+  (no qualification reason exists)        Gold, mastery, cosmetics) — no world effect
 ```
+
+`player_qualifications` and `require_qualifications` remain in `can_attack`'s signature as
+accepted-and-ignored parameters so existing call sites keep working.
+`game.conquest.missing_qualifications()` survives as a pure REPORTING resolver over
+`requirements.attackQualificationIds` — declared metadata that gates nothing — with no caller in the
+authority path.
 
 - `game/` contains **no** content vocabulary and never imports `learning` — enforced by a regression
   test that greps every `game/*.py` for `english|zoo|pre-a1|quiz|lesson|course|activity|subject|…`.
 - `can_attack` never returns display text; the frontend resolves titles from
   `GET /api/learning/registry`.
 - Qualification is **player** state: independent of territory, army and room, so losing every
-  territory does not cost a qualification.
+  territory does not cost a qualification — and, since Phase 10A.3R, holding one wins none.
 
 ## 9. Study navigation
 

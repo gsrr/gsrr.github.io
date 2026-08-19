@@ -18,6 +18,24 @@ from game import (army as game_army, conquest as game_conquest, config as game_c
                   economy as game_economy, recruitment as game_recruit, technology as game_tech)
 from learning import api as learning_api                                                   # 學習領域(與遊戲領域分離)
 
+# ---- Phase 10A.3: ONE conquest map ------------------------------------------------------------
+# The game has a single playable surface. This is GAME configuration: it is not derived from a
+# course, a CEFR level, a lesson, a campaign or player progress, and no request can widen it.
+# Non-World maps (taiwan / taipei / china) stay in world-data as dormant data — catalogued and
+# renderable, but not part of the active conquest surface.
+GAME_WORLD_MAP_ID = "world"
+
+
+def allowed_game_maps():
+    """The map ids conquest operations may touch. One entry today; still a set so that opening a
+    second surface later is a data/config change rather than a rewrite of every call site."""
+    return {GAME_WORLD_MAP_ID}
+
+
+def territory_on_active_map(territory_id):
+    return bool(terr_catalog) and terr_catalog.map_of(territory_id) in allowed_game_maps()
+
+
 # Phase 10A retired LEVEL_PRIMARY_MAP / allowed_maps_for_level(). They mapped a CEFR level id
 # ("Pre-A1"/"A1"/"A2"/"B1") to one canonical mapId and gated territory claims to it. A learning level
 # now has ZERO authority over game-map eligibility. The room's `map` field survives as compatibility
@@ -786,8 +804,9 @@ def ai_move(ai_name=AI_OWNER, difficulty=AI_DIFFICULTY, ai_names=None):
                 def_troops = th.get("troops") or []
                 atk_force = sum(u["hp"] for u in squad)
                 def_force = sum(clampi(t.get("hp", 0)) for t in def_troops if isinstance(t, dict))
-                # 與真人同一條 Game-Domain 規則：擁有權/相鄰/駐軍/戰鬥完全相同。唯一差別 =
-                # require_qualifications=False：人類的「學習資格」不適用於 AI(明確政策，非散落的 if-ai)。
+                # 與真人同一條 Game-Domain 規則：擁有權/相鄰/駐軍/戰鬥完全相同。Phase 10A.3R 之後
+                # 連「學習資格」這個差別也沒有了(真人同樣不受資格限制)；require_qualifications=False
+                # 保留為明確的無效參數，讓這條 AI 路徑不必因為簽名而改動。
                 elig = game_conquest.can_attack(ai_name, source, target, squad, terr_catalog, store,
                                                 require_qualifications=False)
                 if not elig.allowed:                   # 已預篩，理論上不會發生 → 保守跳過，狀態零變動
@@ -1477,13 +1496,20 @@ class Handler(BaseHTTPRequestHandler):
         if not terr_catalog or not terr_catalog.is_canonical(f):
             self._send({"error": "Territory not in catalog", "reason": "not_in_catalog"}, 400)
             return
+        if not territory_on_active_map(f):
+            # Phase 10A.3: only the active game map is playable. This replaces nothing that a course
+            # controls -- the room's level is not consulted here and cannot widen or narrow the set.
+            self._send({"error": "Territory is not on the active game map",
+                        "reason": "inactive_map"}, 400)
+            return
         # Phase 10A: a territory's GAME validity is established by the canonical catalog check
         # directly above, and by nothing else. This used to ALSO require the territory's map to match
         # the room's CEFR level (Pre-A1 -> taiwan, A1 -> china, A2/B1 -> world), answering
         # 400 "wrong_map" otherwise -- which made a LEARNING level the authority over which game map
         # a player could own territory on. Learning decides curriculum; the game decides the world.
-        # Everything below still gates on GAME facts only: existence, population, ownership,
-        # qualification, troops and stamina. Room isolation is unaffected -- ownership lives in
+        # Everything below still gates on GAME facts only: existence, active map, population,
+        # ownership, troops and stamina -- Phase 10A.3R removed the learning-qualification gate from
+        # this list as well. Room isolation is unaffected -- ownership lives in
         # /data/rooms/<CODE>/territory.json, so it never depended on this check.
         cpop = terr_catalog.game_population(f)
         if cpop is None:
@@ -1503,7 +1529,7 @@ class Handler(BaseHTTPRequestHandler):
         # 前端(passCount(file) > base)，所以任何 client 都能直接 POST /claim 拿下有門檻的地區。
         # 資格集合取自帳號的權威學習狀態；client 送來的任何東西(passcnt、pendingOccupy、完成回應、
         # 課程身分)一律不採信。在 terr_lock 之外先取得，維持全站鎖順序(acct → terr → econ)。
-        pq = self._player_qualifications(user)
+        # Phase 10A.3R: no learning qualification is read here any more — claiming is GAME state only.
         # 佔領只發生在「無主」據點：有主據點要先打贏(/api/territory/attack 後端權威地清成無主)才能佔領。
         # 後端強制此規則 → client 不能用 /claim 直接奪取敵方領地(繞過戰鬥)。只能佔無主或重部署自己的。
         with terr_lock:
@@ -1512,23 +1538,17 @@ class Handler(BaseHTTPRequestHandler):
             if prev.get("owner") and prev.get("owner") != user:   # 有主且非本人 → 必須先攻打
                 self._send({"error": "Territory is held — attack it first", "reason": "held"}, 403)
                 return
-            # 只有「取得」新領地要過資格門檻；重新部署自己已持有的領地不受影響(既有行為不變)。
-            # 用的是與 /attack 完全相同的規則與同一份 world-data，不是第二套判定。
+            # Phase 10A.3R retired the learning-qualification gate that stood here. Acquiring a
+            # territory is a GAME decision: ownership, troops and the normal economy. Learning still
+            # awards progress, mastery and Gold — it just no longer unlocks ground.
             if prev.get("owner") != user:
-                missing = game_conquest.missing_qualifications(terr_catalog, f, pq)
-                if missing:                                   # 資格不符 → 一切狀態零變動(原子拒絕)
-                    self._send({"error": "Claim not allowed", "reason": "qualification_required",
-                                "missingQualificationIds": missing}, 403)
-                    return
                 # ---- Phase 8B.3: ACQUIRING a territory costs at least one real troop ----
                 # A neutral claim used to accept an empty (or all-zero) garrison, so ownership — and
                 # with it the territory's passive income — was free: all seven ungated Taipei
                 # districts could be taken for 0 troops and 0 gold, worth ~110 gold/hour. The
                 # minimum is deliberately ONE, not a round number: it makes acquisition a real
                 # commitment out of the authoritative pool without becoming an economic barrier.
-                # Placed AFTER the qualification gate so an ineligible learner still hears the
-                # truthful qualification_required first, and BEFORE any mutation so a refusal costs
-                # nothing. `troops` is already sanitised above (bad types dropped, hp clamped >= 0),
+                # Placed BEFORE any mutation so a refusal costs nothing. `troops` is already sanitised above (bad types dropped, hp clamped >= 0),
                 # so this counts what would actually be deployed, not what was asked for.
                 # Deliberately NOT applied to redeploying a territory you already hold: leaving your
                 # own ground undefended stays legal (see docs/current-game-rules.md).
@@ -1838,7 +1858,7 @@ class Handler(BaseHTTPRequestHandler):
     #   出征兵取自 SOURCE 駐軍(不再是全域兵力池)；資格由 game.conquest.can_attack 權威判定(World-Domain 相鄰)。
     #   贏 → target 直接易主、生還者成為 target 新駐軍；輸 → 生還者退回 source 駐軍、守方保留。金幣規則不變。
     # HTTP 情境對照：source_not_owned → 403；其餘資格失敗 → 400，皆附穩定 reason。
-    _ATTACK_STATUS = {"source_not_owned": 403, "qualification_required": 403}   # 其餘 reason 一律 400
+    _ATTACK_STATUS = {"source_not_owned": 403}   # 其餘 reason 一律 400
 
     def _handle_territory_attack(self):
         user = token_user(self._token())
@@ -1856,6 +1876,11 @@ class Handler(BaseHTTPRequestHandler):
         if not target:
             self._send({"error": "Unknown target territory", "reason": "target_not_found"}, 400)
             return
+        # Phase 10A.3: both ends of an attack must sit on the active game map.
+        if not territory_on_active_map(source) or not territory_on_active_map(target):
+            self._send({"error": "Territory is not on the active game map",
+                        "reason": "inactive_map"}, 400)
+            return
         squad = []
         for t in (d.get("squad") or d.get("troops") or [])[:4]:
             if isinstance(t, dict) and str(t.get("type")) in self.TROOP_TYPES:
@@ -1865,15 +1890,13 @@ class Handler(BaseHTTPRequestHandler):
         avatar = str(d.get("avatar", "\U0001F466"))[:8]
         defender = None
         result = None
-        pq = self._player_qualifications(user)           # 玩家(權威)學習資格；AI 走另一條(bypass)
+        # Phase 10A.3R: attack reads no learning state at all.
         with terr_lock:
             store = load_territory_store()
             elig = game_conquest.can_attack(user, source, target, squad, terr_catalog, store,
-                                            player_qualifications=pq, require_qualifications=True)
+                                            player_qualifications=None, require_qualifications=False)
             if not elig.allowed:                         # 資格不符 → 一切狀態零變動(原子拒絕)
                 resp = {"error": "Attack not allowed", "reason": elig.reason}
-                if elig.reason == "qualification_required":   # 附上缺哪些資格(給前端顯示/導向學習)
-                    resp["missingQualificationIds"] = elig.missing_qualifications
                 self._send(resp, self._ATTACK_STATUS.get(elig.reason, 400))
                 return
             src, tgt = store[source], store[target]
@@ -1986,13 +2009,6 @@ class Handler(BaseHTTPRequestHandler):
     # removed its last consumer, so the write endpoint goes with it rather than lingering as a
     # route that mutates state for nothing.
 
-    def _player_qualifications(self, user):
-        """The player's authoritative set of held qualification IDs (per-account, room-independent)."""
-        with acct_lock:
-            p = load_progress(user)
-        return LEARNING.player_qualification_ids(p.get("learning") or {})
-
-    # 學習登錄簿(公開)：資格 id→標題/學習去處、活動 id→課程對照。不含答案鍵、不含獎勵金額。
     def _handle_learning_registry(self):
         self._send({"registry": LEARNING.public_registry_view()})
 

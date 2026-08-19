@@ -1,35 +1,38 @@
-"""Phase 10A — a learning level has ZERO authority over game-map eligibility.
+"""Phase 10A.3R — ONE active conquest map, and Learning has ZERO authority over it.
 
     python tests/map_eligibility_test.py
 
-Learning and Game are separate systems. Learning owns curriculum, mastery, learning rewards and gold;
-the Game owns one world of territories, ownership, claim, attack, adjacency, troops and stamina.
+Learning and Game are separate systems. Learning owns curriculum, mastery, learning rewards and the
+Gold they mint. The Game owns one world of territories: ownership, claim, attack, adjacency, troops
+and stamina. This suite is the anti-regression guard for that separation, and it has now protected
+two different couplings in turn:
 
-Until Phase 10A the server contradicted that: `_handle_territory_claim` called
-`allowed_maps_for_level(room["map"])`, which mapped a CEFR level id to exactly one canonical map
-(Pre-A1 -> taiwan, A1 -> china, A2/B1 -> world) and answered **400 wrong_map** for anything else. A
-learner's course therefore decided which game map they could own territory on:
+  Phase 10A    retired `allowed_maps_for_level()`. A CEFR level id used to select exactly one
+               canonical map (Pre-A1 -> taiwan, A1 -> china, A2/B1 -> world) and refuse everything
+               else, so a learner's COURSE decided which map they could own territory on.
 
-    room level   taiwan            taipei                     china             world
-    Pre-A1       200 ok            403 qualification_required  400 wrong_map     400 wrong_map
-    A1           400 wrong_map     400 wrong_map               200 ok            400 wrong_map
-    A2           400 wrong_map     400 wrong_map               400 wrong_map     200 ok
+  Phase 10A.3R retired the learning-qualification gate. Holding (or lacking) a learning achievement
+               used to decide whether a territory could be claimed or attacked, answering
+               403 qualification_required. Learning no longer unlocks ground at all.
 
-What this suite pins:
+What is pinned here:
 
-  1. NO CEFR->MAP AUTHORITY. With identical game state, the room's legacy `map`/level field can be
-     any of Pre-A1/A1/A2/B1 and the claim verdict for a given territory is IDENTICAL. This is the
-     regression guard: if the coupling is ever reintroduced, the matrix stops being uniform.
+  1. THE ACTIVE MAP IS GAME CONFIGURATION. `allowed_game_maps()` is a single-element set decided by
+     the game, never by a course. World territories are playable; the dormant taiwan/taipei/china
+     datasets answer `inactive_map` for everyone.
 
-  2. NO wrong_map FROM A LEVEL. A territory that exists in the canonical catalog is never refused
-     because of the room's level. `wrong_map` is not produced by the server at all any more.
+  2. THE LEGACY LEVEL FIELD IS INERT. With identical game state, a room's `map`/level value can be
+     any of Pre-A1/A1/A2/B1 and every verdict is IDENTICAL. If the coupling is ever reintroduced,
+     the matrix stops being uniform.
 
-  3. GAME RULES STILL APPLY. Removing the level gate must not weaken anything: a territory outside
-     the catalog is still refused, a qualification-gated territory still answers
-     403 qualification_required, and troops are still required.
+  3. QUALIFICATION HAS ZERO CONQUEST EFFECT. The same World territory returns the same verdict with
+     no qualification, with a FORGED client-supplied one, and with every real server-granted one.
+     This is deliberately stronger than deleting the old gate assertion: it actively guards against
+     re-coupling instead of merely noting that the gate is gone.
 
-  4. ROOM ISOLATION IS UNTOUCHED. Ownership lives in /data/rooms/<CODE>/, so two rooms do not see
-     each other's claims. That never depended on the map gate, and must not start depending on it.
+  4. GAME RULES STILL APPLY. Removing learning authority must not weaken anything: non-catalog ids
+     are refused, troops are still required, adjacency and source-ownership still decide attacks,
+     and two rooms keep independent ownership.
 """
 import json, os, sys, tempfile, threading, time
 import urllib.error, urllib.request as U
@@ -51,8 +54,7 @@ server.LEARNING.content_root = ROOT
 json.dump({"users": {"S": {"code": "c"}, "T": {"code": "d"}},
            "codes": {"c": "S", "d": "T"}}, open(server.ACCT, "w"))
 server._tokens["tok"] = {"user": "S", "exp": time.time() + 9999, "admin": False}
-# a SECOND host: /api/room/start resolves the caller's own room (find_user_room), so one account can
-# only ever host one room -- proving isolation therefore needs a second account, not a second start.
+# /api/room/start resolves the CALLER's own room, so proving isolation needs a second account.
 server._tokens["tok2"] = {"user": "T", "exp": time.time() + 9999, "admin": False}
 
 from http.server import ThreadingHTTPServer
@@ -82,152 +84,176 @@ def call(method, path, body=None, tok="tok"):
             return e.code, {}
 
 
-def first_territory(map_id):
-    p = os.path.join(ROOT, "world-data", "territories", map_id + ".json")
-    return json.load(open(p, encoding="utf-8"))[0]["id"]
+def terrs(map_id):
+    return json.load(open(os.path.join(ROOT, "world-data", "territories", map_id + ".json"),
+                          encoding="utf-8"))
 
 
 TROOPS = [{"type": "inf", "hp": 3}]
 LEVELS = ["Pre-A1", "A1", "A2", "B1"]
-# one existing territory per canonical map; taipei is separated out because it is qualification-gated
-PLAIN = {m: first_territory(m) for m in ("taiwan", "china", "world")}
-GATED = "taipei:daan"
+ACTIVE = "world"
+DORMANT = ["taiwan", "taipei", "china"]
+
+# A real adjacent pair on the active map, taken from the catalog rather than assumed.
+_by = {t["id"]: t for t in terrs(ACTIVE)}
+SRC = ADJ = None
+for _t in terrs(ACTIVE):
+    for _a in (_t.get("adjacentTerritoryIds") or []):
+        if _a in _by:
+            SRC, ADJ = _t["id"], _a
+            break
+    if SRC:
+        break
+assert SRC and ADJ, "the active map must contain at least one adjacent pair"
+FAR = next(t for t in _by
+           if t not in (SRC, ADJ) and t not in (_by[SRC].get("adjacentTerritoryIds") or []))
+DORMANT_SAMPLE = {m: terrs(m)[0]["id"] for m in DORMANT}
 
 
 def fresh_room(level, tok="tok"):
-    """Restart this host's room at `level`. /api/room/start resets that room's world (territories,
-    economy, events), so every call yields the SAME room with a clean slate and a new level field --
-    which is exactly the control we want: only the legacy level differs between measurements."""
+    """Restart this host's room at `level`. /api/room/start resets that room's world, so each call
+    gives the SAME room with a clean slate and a new legacy level — exactly the control we want."""
     call("POST", "/api/room/create", {}, tok)
     code = call("POST", "/api/room/start", {"map": level, "aiCount": 0}, tok)[1]["code"]
-    call("GET", "/api/economy?room=" + code, None, tok)     # provision the starting economy
+    call("GET", "/api/economy?room=" + code, None, tok)
     return code
 
 
-# ============================== 1. the level field cannot change a claim verdict ==============================
+# ============================== 1. the active map is game configuration ==============================
+assert server.allowed_game_maps() == {ACTIVE}, server.allowed_game_maps()
+assert not hasattr(server, "allowed_maps_for_level"), "the CEFR->map helper must stay retired"
+assert not hasattr(server, "LEVEL_PRIMARY_MAP"), "the CEFR->map table must stay retired"
+ok("1. allowed_game_maps() == {%r}: one active map, decided by the game — the CEFR->map helper and "
+   "table stay retired" % ACTIVE)
+
+# ============================== 2. the legacy level field is inert ==============================
 matrix = {}
 for level in LEVELS:
     code = fresh_room(level)
-    assert (server.load_room(code) or {}).get("map") == level, level   # the legacy field IS set
+    assert (server.load_room(code) or {}).get("map") == level, level      # the legacy field IS set
     row = {}
-    for map_id, tid in PLAIN.items():
+    c, b = call("POST", "/api/territory/claim?room=" + code, {"file": SRC, "troops": TROOPS})
+    row[ACTIVE] = (c, b.get("reason") or "ok")
+    for m, tid in DORMANT_SAMPLE.items():
         c, b = call("POST", "/api/territory/claim?room=" + code, {"file": tid, "troops": TROOPS})
-        row[map_id] = (c, b.get("reason") or "ok")
+        row[m] = (c, b.get("reason") or "ok")
     matrix[level] = row
 
 base = matrix[LEVELS[0]]
 for level in LEVELS[1:]:
-    assert matrix[level] == base, ("level changed the verdict", level, matrix[level], base)
-ok("1. claim verdicts are IDENTICAL across rooms whose legacy level field is %s" % "/".join(LEVELS))
+    assert matrix[level] == base, ("the level changed a verdict", level, matrix[level], base)
+ok("2. claim verdicts are IDENTICAL across rooms whose legacy level field is %s" % "/".join(LEVELS))
 
-for map_id, (c, reason) in base.items():
-    assert c == 200 and reason == "ok", (map_id, c, reason)
-ok("2. a valid ungated territory on taiwan, china AND world is claimable from the same room "
-   "(the old matrix allowed exactly one of the three)")
+assert base[ACTIVE] == (200, "ok"), base
+for m in DORMANT:
+    assert base[m] == (400, "inactive_map"), (m, base[m])
+ok("3. the active map is claimable and every dormant map answers 400 inactive_map, for all four "
+   "level values alike (%s)" % ", ".join("%s=%s" % (m, base[m][1]) for m in [ACTIVE] + DORMANT))
 
-# ============================== 2. wrong_map is gone as a level verdict ==============================
-for level in LEVELS:
-    for map_id, (c, reason) in matrix[level].items():
-        assert reason != "wrong_map", (level, map_id, reason)
-assert not hasattr(server, "allowed_maps_for_level"), "the CEFR->map helper must stay retired"
-assert not hasattr(server, "LEVEL_PRIMARY_MAP"), "the CEFR->map table must stay retired"
-src = open(os.path.join(ROOT, "server.py"), encoding="utf-8").read()
-exe = "\n".join(l for l in src.split("\n") if not l.strip().startswith("#"))
-assert "wrong_map" not in exe, "no executable line may still answer wrong_map"
-ok("3. no claim answers wrong_map, and neither the CEFR->map table nor its helper exists any more")
-
-# ============================== 3. the game's own rules still hold ==============================
-code = fresh_room("A2")
-c, b = call("POST", "/api/territory/claim?room=" + code, {"file": "china:zzz", "troops": TROOPS})
-assert c == 400 and b.get("reason") in ("unresolved", "not_in_catalog"), (c, b)
-ok("4. a territory outside the canonical catalog is still refused (%s)" % b.get("reason"))
-
-c, b = call("POST", "/api/territory/claim?room=" + code, {"file": PLAIN["world"]})
-assert c == 400 and "troops" in json.dumps(b), (c, b)
-ok("5. troops are still required")
-
-c, b = call("POST", "/api/territory/claim?room=" + code, {"file": GATED, "troops": TROOPS})
-assert c == 403 and b.get("reason") == "qualification_required", (c, b)
-ok("6. a qualification-gated territory still answers 403 qualification_required — from an A2 room, "
-   "which the old gate would have refused with wrong_map before ever checking the qualification")
-
-# the gate is a property of the TERRITORY, not of the room's level: same answer at every level
-for level in LEVELS:
-    code_l = fresh_room(level)
-    c, b = call("POST", "/api/territory/claim?room=" + code_l, {"file": GATED, "troops": TROOPS})
-    assert c == 403 and b.get("reason") == "qualification_required", (level, c, b)
-ok("7. that qualification gate answers identically at every level: learning ACHIEVEMENT gates a "
-   "territory, learning LEVEL gates nothing")
-
-# ============================== 4. room isolation still comes from the room store ==============================
-a = fresh_room("Pre-A1")
-b_ = fresh_room("A2", "tok2")          # a DIFFERENT host, hence a genuinely different room
-assert a != b_, (a, b_)
-tid = PLAIN["world"]
-ca, _ = call("POST", "/api/territory/claim?room=" + a, {"file": tid, "troops": TROOPS})
-assert ca == 200, ca
-_, sa = call("GET", "/api/territory?room=" + a)
-_, sb = call("GET", "/api/territory?room=" + b_, None, "tok2")
-ha, hb = (sa.get("holders") or {}), (sb.get("holders") or {})     # {holders:{id:{owner,...}}, counts:{}}
-assert (ha.get(tid) or {}).get("owner"), ha.get(tid)
-assert not (hb.get(tid) or {}).get("owner"), hb.get(tid)
-cb, _ = call("POST", "/api/territory/claim?room=" + b_, {"file": tid, "troops": TROOPS}, "tok2")
-assert cb == 200, cb          # the same territory is independently free in the other room
-ok("8. two rooms (different hosts) keep independent ownership of the same world territory — "
-   "isolation comes from /data/rooms/<CODE>/, never from the retired map gate")
-
-# ============================== 5. attack is decided by adjacency, never by a level ==============================
-# Attack was never level-gated (allowed_maps_for_level lived only in the claim handler). The point of
-# this block is that removing the claim gate did not leak into attack, and that adjacency still rules.
-world = json.load(open(os.path.join(ROOT, "world-data", "territories", "world.json"), encoding="utf-8"))
-by_id = {t["id"]: t for t in world}
-pair = None
-for t in world:
-    for adj in (t.get("adjacentTerritoryIds") or []):
-        if adj in by_id:
-            pair = (t["id"], adj)
-            break
-    if pair:
-        break
-assert pair, "world.json should contain at least one adjacent pair"
-SRC, ADJ = pair
-FAR = next(t["id"] for t in world
-           if t["id"] not in (SRC, ADJ)
-           and t["id"] not in (by_id[SRC].get("adjacentTerritoryIds") or []))
-
+# ============================== 3. attack obeys the same rule ==============================
 atk = {}
 for level in LEVELS:
     code = fresh_room(level)
     call("POST", "/api/territory/claim?room=" + code,
          {"file": SRC, "troops": [{"type": "inf", "hp": 9}]})
     a1 = call("POST", "/api/territory/attack?room=" + code,
-              {"sourceTerritoryId": SRC, "targetTerritoryId": ADJ, "squad": [{"type": "inf", "hp": 3}]})
+              {"sourceTerritoryId": SRC, "targetTerritoryId": ADJ, "squad": TROOPS})
     a2 = call("POST", "/api/territory/attack?room=" + code,
-              {"sourceTerritoryId": SRC, "targetTerritoryId": FAR, "squad": [{"type": "inf", "hp": 3}]})
+              {"sourceTerritoryId": SRC, "targetTerritoryId": FAR, "squad": TROOPS})
     a3 = call("POST", "/api/territory/attack?room=" + code,
-              {"sourceTerritoryId": ADJ, "targetTerritoryId": SRC, "squad": [{"type": "inf", "hp": 3}]})
+              {"sourceTerritoryId": ADJ, "targetTerritoryId": SRC, "squad": TROOPS})
+    a4 = call("POST", "/api/territory/attack?room=" + code,
+              {"sourceTerritoryId": SRC, "targetTerritoryId": DORMANT_SAMPLE["taipei"],
+               "squad": TROOPS})
     atk[level] = {"adjacent": (a1[0], a1[1].get("reason") or "ok"),
                   "non_adjacent": (a2[0], a2[1].get("reason") or "ok"),
-                  "unowned_source": (a3[0], a3[1].get("reason") or "ok")}
-
+                  "unowned_source": (a3[0], a3[1].get("reason") or "ok"),
+                  "dormant_target": (a4[0], a4[1].get("reason") or "ok")}
 base_atk = atk[LEVELS[0]]
 for level in LEVELS[1:]:
-    assert atk[level] == base_atk, ("the level changed an attack verdict", level, atk[level], base_atk)
-ok("9. attack verdicts are IDENTICAL across all four legacy level values (%s -> %s, non-adjacent %s, "
-   "unowned source %s)" % (SRC, base_atk["adjacent"][1], base_atk["non_adjacent"][1],
-                           base_atk["unowned_source"][1]))
+    assert atk[level] == base_atk, ("the level changed an attack verdict", level, atk[level])
+ok("4. attack verdicts are IDENTICAL across all four legacy level values")
 
+assert base_atk["dormant_target"] == (400, "inactive_map"), base_atk
 assert base_atk["non_adjacent"][1] != "ok", base_atk
 assert base_atk["unowned_source"][1] == "source_not_owned", base_atk
-ok("10. adjacency and source ownership are still enforced, so nothing was weakened to decouple the map")
+ok("5. an attack into a dormant map is refused inactive_map, while adjacency (%r) and source "
+   "ownership (%r) still decide attacks on the active map"
+   % (base_atk["non_adjacent"][1], base_atk["unowned_source"][1]))
 
-# ============================== 6. no game route reads the room's level ==============================
+# ============================== 4. qualification has ZERO conquest effect ==============================
+# The most important guard in this file: same territory, same game state, three different learning
+# qualification states, one identical verdict.
+QUALS = sorted(server.LEARNING.registry.qualifications)
+assert QUALS, "the registry should still declare learning qualifications (they are achievements now)"
+
+
+def verdict_with(qualifications):
+    """Claim SRC in a clean room whose ACCOUNT holds exactly `qualifications`."""
+    code = fresh_room("A2")
+    prog = server.load_progress("S") or {}
+    learning = prog.get("learning") or {}
+    learning["qualifications"] = {q: {"grantedAt": 1} for q in qualifications}
+    prog["learning"] = learning
+    server.save_progress("S", prog)
+    c, b = call("POST", "/api/territory/claim?room=" + code, {"file": SRC, "troops": TROOPS})
+    return c, (b.get("reason") or "ok")
+
+
+none_v = verdict_with([])
+forged_v = verdict_with(QUALS + ["forged.qualification.that.does.not.exist"])
+real_v = verdict_with(QUALS)
+assert none_v == forged_v == real_v == (200, "ok"), (none_v, forged_v, real_v)
+ok("6. claiming the SAME World territory gives an IDENTICAL verdict with no qualification, with a "
+   "FORGED one, and with every real one held: %r — learning cannot unlock ground" % (none_v,))
+
+import game.conquest as gc
+assert "qualification_required" not in gc.AttackEligibility.REASONS, gc.AttackEligibility.REASONS
+_store = {SRC: {"owner": "S", "troops": [{"type": "inf", "hp": 9}], "pop": 100},
+          ADJ: {"owner": "X", "troops": [{"type": "inf", "hp": 1}], "pop": 100}}
+_squad = [{"type": "inf", "hp": 3}]
+e_none = gc.can_attack("S", SRC, ADJ, _squad, server.terr_catalog, _store,
+                       player_qualifications=set())
+e_all = gc.can_attack("S", SRC, ADJ, _squad, server.terr_catalog, _store,
+                      player_qualifications=set(QUALS + ["forged.one"]))
+assert (e_none.allowed, e_none.reason) == (e_all.allowed, e_all.reason), (e_none, e_all)
+ok("7. the pure attack rule returns the same eligibility with an empty and a full qualification set, "
+   "and 'qualification_required' is no longer even a possible reason")
+
+# ============================== 5. the game's own rules still hold ==============================
+code = fresh_room("A2")
+c, b = call("POST", "/api/territory/claim?room=" + code,
+            {"file": "world:not-a-country", "troops": TROOPS})
+assert c == 400 and b.get("reason") in ("unresolved", "not_in_catalog"), (c, b)
+ok("8. a territory outside the canonical catalog is still refused (%s)" % b.get("reason"))
+
+c, b = call("POST", "/api/territory/claim?room=" + code, {"file": SRC})
+assert c == 400 and "troops" in json.dumps(b), (c, b)
+ok("9. troops are still required to acquire a territory")
+
+# ============================== 6. room isolation is unchanged ==============================
+a = fresh_room("Pre-A1")
+b_ = fresh_room("A2", "tok2")
+assert a != b_, (a, b_)
+ca, _ = call("POST", "/api/territory/claim?room=" + a, {"file": SRC, "troops": TROOPS})
+assert ca == 200, ca
+_, sa = call("GET", "/api/territory?room=" + a)
+_, sb = call("GET", "/api/territory?room=" + b_, None, "tok2")
+ha, hb = (sa.get("holders") or {}), (sb.get("holders") or {})
+assert (ha.get(SRC) or {}).get("owner"), ha.get(SRC)
+assert not (hb.get(SRC) or {}).get("owner"), hb.get(SRC)
+cb, _ = call("POST", "/api/territory/claim?room=" + b_, {"file": SRC, "troops": TROOPS}, "tok2")
+assert cb == 200, cb
+ok("10. two rooms with different hosts keep independent ownership of the same World territory — "
+   "isolation comes from /data/rooms/<CODE>/, never from the map rule")
+
+# ============================== 7. no game route reads the room's level ==============================
 src_txt = open(os.path.join(ROOT, "server.py"), encoding="utf-8").read()
 handlers, cur = {}, None
 for line in src_txt.splitlines():
     st = line.strip()
     if st.startswith("def _handle_"):
-        cur = st.split("(")[0][len("def _handle_"):]      # "_handle_territory_claim" -> "territory_claim"
+        cur = st.split("(")[0][len("def _handle_"):]
         handlers[cur] = []
     elif cur is not None:
         handlers[cur].append(line)
@@ -236,12 +262,11 @@ GAME_ROUTES = ["territory", "territory_claim", "territory_attack", "territory_re
 for h in GAME_ROUTES:
     assert h in handlers, h
     body = os.linesep.join(x for x in handlers[h] if not x.strip().startswith("#"))
-    for bad in ("allowed_maps_for_level", "LEVEL_PRIMARY_MAP", "wrong_map"):
+    for bad in ("allowed_maps_for_level", "LEVEL_PRIMARY_MAP", "qualification_required",
+                "_player_qualifications", 'load_room().get("map")'):
         assert bad not in body, (h, bad)
-    assert 'load_room().get("map")' not in body, (h, "still reads the room level")
-ok("11. none of the %d game routes (%s) reads the room level or the retired map table"
-   % (len(GAME_ROUTES), ", ".join(GAME_ROUTES)))
+ok("11. none of the %d game routes reads the room level, the retired map table, or any learning "
+   "qualification" % len(GAME_ROUTES))
 
-
-print("\nAll %d map-eligibility tests passed." % passed)
+print("\nAll %d single-world map-eligibility tests passed." % passed)
 _srv.shutdown()

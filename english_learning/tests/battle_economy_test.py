@@ -51,7 +51,7 @@ B = "http://127.0.0.1:%d" % srv.server_address[1]
 
 DEFEND = game_cfg.DEFEND_GOLD
 FAIL = game_cfg.ATTACK_FAIL_GOLD
-SRC, TGT = "china:pBJ", "china:pHE"          # adjacent pair on the A1 map
+SRC, TGT = "world:cn", "world:ru"          # adjacent pair on the A1 map
 
 
 def call(method, path, tok, body=None):

@@ -1,31 +1,60 @@
-#!/usr/bin/env python3
-"""Phase 7D-0 — neutral territory CLAIM is qualification-gated by the SERVER.
+"""Phase 10A.3R.1 — claim authority is GAME state only; no client state can buy territory.
 
-    python3 tests/claim_authority_test.py
+    python tests/claim_authority_test.py
 
-Attacking a gated territory has been server-authoritative since Phase 3A. Claiming a *neutral* one
-was not: the only gate was a client-side comparison of a client-bumped counter
-(`passCount(file) > base`), and `/api/territory/claim` checked nothing at all — so any client could
-POST one request and take a gated district while holding zero qualifications.
+This suite used to prove that a learning QUALIFICATION gated a claim: an unqualified client got
+403 qualification_required, a qualified one succeeded, multi-requirement territories were
+ALL-required, and various forged client states could not substitute for the real credential.
 
-Both routes now resolve the SAME rule from the SAME world-data through
-`game.conquest.missing_qualifications()`. These tests speak straight to the API the way a forged
-client would, and assert the rule from the outside rather than from the helper.
+Phase 10A.3R retired that contract. Learning and Game are separate systems: learning awards
+progress, mastery, Gold and achievements, and none of it decides who may take ground. So the gate
+this file was built around no longer exists.
+
+What survives, and why the suite is not weaker for the change:
+
+  * The FORGERY invariants were never really about qualifications — they were about the server
+    refusing to believe client-supplied state. They are kept, retargeted at the World claim verdict:
+    a planted `passcnt`, hand-written qualifications, and the retired self-assert endpoint must all
+    leave the verdict exactly as it was.
+
+  * The GATE assertions are replaced by something strictly stronger: a zero-effect matrix. The same
+    World territory, from identical game state, must give an IDENTICAL verdict with no
+    qualification, with forged ones, and with every real one held. The old form proved a specific
+    gate behaved; this proves no learning state can influence a claim in any direction — which is
+    what actually guards against the coupling coming back.
+
+  * The GAME-side authority checks (ownership mutation, troop requirement, malformed ids, the
+    dormant-map rule, replay) are preserved and now run on the active map.
 """
-import json
-import os
-import sys
-import tempfile
-import threading
-import urllib.error
-import urllib.request
+import json, os, sys, tempfile, threading, time
+import urllib.error, urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
-import server                                                        # noqa: E402
-from game import conquest as game_conquest                           # noqa: E402
+os.chdir(ROOT)
+sys.stdout.reconfigure(encoding="utf-8")
+
+import server
+from game import conquest as game_conquest
+
+_d = tempfile.mkdtemp()
+server.ROOMS_DIR = os.path.join(_d, "rooms")
+server.ACCT = os.path.join(_d, "accounts.json")
+server.PROG_DIR = os.path.join(_d, "progress")
+server.DATA = os.path.join(_d, "visits.json")
+server.TERR_CATALOG = os.path.join(_d, "learned.json")
+server.LEARNING.content_root = ROOT
+os.makedirs(server.ROOMS_DIR, exist_ok=True)
+os.makedirs(server.PROG_DIR, exist_ok=True)
+json.dump({"users": {}, "codes": {}}, open(server.ACCT, "w"))
+
+from http.server import ThreadingHTTPServer
+_srv = ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
+BASE = "http://127.0.0.1:%d" % _srv.server_address[1]
+threading.Thread(target=_srv.serve_forever, daemon=True).start()
 
 passed = 0
+_n = [0]
 
 
 def ok(name):
@@ -34,35 +63,26 @@ def ok(name):
     print("  ok -", name)
 
 
-DATA = tempfile.mkdtemp(prefix="claimauth-")
-server.ROOMS_DIR = os.path.join(DATA, "rooms")
-server.ACCT = os.path.join(DATA, "accounts.json")
-server.PROG_DIR = os.path.join(DATA, "progress")
-for d in (server.ROOMS_DIR, server.PROG_DIR):
-    os.makedirs(d, exist_ok=True)
-
-from http.server import ThreadingHTTPServer                          # noqa: E402
-httpd = ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
-threading.Thread(target=httpd.serve_forever, daemon=True).start()
-BASE = "http://127.0.0.1:%d" % httpd.server_address[1]
-
-DAAN, ZHONGSHAN, WENSHAN = "taipei:daan", "taipei:zhongshan", "taipei:wenshan"
-ZOO_Q = "english.prea1.taipei.zoo"
-MARKET_Q = "english.prea1.taipei.market.quiz3.pass"
-MRT_Q = "english.prea1.taipei.mrt.quiz3.pass"
-_n = [0]
-
-
 def api(method, path, body=None, tok=None):
-    sep = "&" if "?" in path else "?"
-    req = urllib.request.Request(
-        BASE + path + ((sep + "token=" + tok) if tok else ""), method=method,
-        data=json.dumps(body).encode() if body is not None else None)
+    url = BASE + path + (("&" if "?" in path else "?") + "token=" + tok if tok else "")
+    req = urllib.request.Request(url, method=method,
+                                 data=json.dumps(body).encode() if body is not None else None)
     try:
         with urllib.request.urlopen(req) as r:
             return r.status, json.loads(r.read() or b"{}")
     except urllib.error.HTTPError as e:
         return e.code, json.loads(e.read() or b"{}")
+
+
+# ---- fixtures on the ACTIVE map, resolved from the catalog rather than assumed ----
+_W = json.load(open(os.path.join(ROOT, "world-data", "territories", "world.json"), encoding="utf-8"))
+_by = {t["id"]: t for t in _W}
+TARGET = _W[0]["id"]
+OTHER = _W[1]["id"]
+DORMANT = json.load(open(os.path.join(ROOT, "world-data", "territories", "taipei.json"),
+                         encoding="utf-8"))[0]["id"]
+QUALS = sorted(server.LEARNING.registry.qualifications)
+assert QUALS, "the registry should still declare learning qualifications (achievements now)"
 
 
 def fresh(quals=()):
@@ -87,18 +107,8 @@ def fresh(quals=()):
 
 def claim(tok, code, target, troops=None):
     return api("POST", "/api/territory/claim?room=" + code,
-               {"file": target, "troops": troops or [{"type": "inf", "hp": 10}]}, tok)
-
-
-def stock(code, user, n=200):
-    """Phase 8B.1: a claim garrison is now debited from the authoritative troop pool, so a test that
-    deploys more than a room's starting troops has to own them first. These tests are about the
-    QUALIFICATION gate, not troop budgeting — stocking the pool keeps every assertion below about
-    exactly what it was written to prove."""
-    server.set_room(code)
-    es = server.load_econ_store()
-    es.setdefault(user, {})["troops"] = {"cav": n, "archer": n, "inf": n, "spear": n}
-    server.save_econ_store(es)
+               {"file": target,
+                "troops": [{"type": "inf", "hp": 10}] if troops is None else troops}, tok)
 
 
 def owner(code, target):
@@ -106,146 +116,124 @@ def owner(code, target):
     return (server.load_territory_store().get(target) or {}).get("owner")
 
 
-def denied(res, *expect_missing):
-    st, r = res
-    return (st == 403 and r.get("reason") == "qualification_required"
-            and (not expect_missing or r.get("missingQualificationIds") == list(expect_missing)))
+def verdict(quals=()):
+    """Claim TARGET from a brand-new room whose account holds exactly `quals`."""
+    user, tok, code = fresh(quals)
+    st, r = claim(tok, code, TARGET)
+    return (st, r.get("reason") or "ok"), user, code
 
 
-# ====================== single requirement ======================
-user, tok, code = fresh()
-res = claim(tok, code, DAAN)
-assert denied(res, ZOO_Q), res
-assert owner(code, DAAN) is None, "a refused claim must not change ownership"
-ok("single requirement: an unqualified client is refused 403 qualification_required, is told exactly "
-   "which id is missing, and the territory stays unowned (atomic refusal)")
+# ====================== 1. learning qualification has ZERO effect ======================
+none_v, u1, c1 = verdict([])
+forged_v, u2, c2 = verdict(QUALS + ["forged.qualification.that.does.not.exist"])
+real_v, u3, c3 = verdict(QUALS)
+assert none_v == forged_v == real_v == (200, "ok"), (none_v, forged_v, real_v)
+assert owner(c1, TARGET) == u1 and owner(c3, TARGET) == u3
+ok("the SAME World claim gives an IDENTICAL verdict with no qualification, with forged ones, and "
+   "with every real one held — learning cannot buy or block ground")
 
-user, tok, code = fresh([ZOO_Q])
-st, r = claim(tok, code, DAAN)
-assert st == 200 and r.get("ok"), (st, r)
-assert owner(code, DAAN) == user
-ok("single requirement: a genuinely qualified client claims normally — the gate adds no new "
-   "obstacle to an honest player")
+# and the pure rule agrees, from both directions
+assert "qualification_required" not in game_conquest.AttackEligibility.REASONS
+ok("'qualification_required' is not even a possible Conquest reason any more")
 
-# ====================== ALL-required, never first-missing ======================
-user, tok, code = fresh()
-assert denied(claim(tok, code, ZHONGSHAN), MARKET_Q, ZOO_Q)
-user, tok, code = fresh([MARKET_Q])
-assert denied(claim(tok, code, ZHONGSHAN), ZOO_Q)
-user, tok, code = fresh([ZOO_Q])
-assert denied(claim(tok, code, ZHONGSHAN), MARKET_Q)
-user, tok, code = fresh([MARKET_Q, ZOO_Q])
-st, r = claim(tok, code, ZHONGSHAN)
-assert st == 200 and owner(code, ZHONGSHAN) == user, (st, r)
-ok("Zhongshan multi-requirement is ALL-required at the server: neither/either held is refused with "
-   "the FULL missing list, both held is allowed — first-missing stays a client lesson-picking rule")
-
-# ====================== ungated is untouched ======================
-user, tok, code = fresh()
-st, r = claim(tok, code, WENSHAN)
-assert st == 200 and owner(code, WENSHAN) == user, (st, r)
-assert game_conquest.missing_qualifications(server.terr_catalog, WENSHAN, set()) == []
-ok("an ungated territory invents no requirement: claimed with zero qualifications, exactly as before")
-
-# ====================== qualification, NOT mastery ======================
-user, tok, code = fresh([ZOO_Q])
-st, pv = api("GET", "/api/learning/progress?room=" + code, None, tok)
-row = (pv.get("lessons") or {}).get("english.prea1.taipei.zoo") or {}
-assert row.get("activePolicyCompleted") is False, row
-st, r = claim(tok, code, DAAN)
-assert st == 200 and owner(code, DAAN) == user, (st, r)
-ok("the credential is the QUALIFICATION, not mastery: a qualified learner whose lesson is provably "
-   "not mastered still claims — mastery keeps paying gold, it does not gate conquest")
-
-# ====================== forged client state cannot substitute ======================
-# Phase 7F.2 retired POST /api/economy/pass, so the counter can no longer even be written over HTTP.
-# The forgery is therefore staged one level DEEPER than any client could reach — straight into the
-# saved economy file — which makes this a strictly stronger test than bumping the old endpoint.
+# ====================== 2. forged client state is still worthless ======================
+# These were the strongest assertions in the old suite and they survive unchanged in spirit: the
+# server believes its own state, never the client's.
 user, tok, code = fresh()
 server.set_room(code)
-with server.econ_lock:
-    st = server.load_econ_store()
-    st.setdefault(user, {})["passcnt"] = {"Pre-A1/taipei/zoo": 999, "made/up/lesson": 42}
-    server.save_econ_store(st)
-assert denied(claim(tok, code, DAAN), ZOO_Q)
+es = server.load_econ_store()
+es.setdefault(user, {})["passcnt"] = {"Pre-A1/taipei/zoo": 999}
+server.save_econ_store(es)
+st, r = claim(tok, code, TARGET)
+assert st == 200, (st, r)                       # allowed on GAME merit, not because of the counter
 server.set_room(code)
-assert ((server.load_econ_store().get(user) or {}).get("passcnt") or {}).get("Pre-A1/taipei/zoo") == 999, \
-    "the legacy counter is ignored in place — the refused claim neither reads nor rewrites it"
-ok("passcnt is NOT authority: a hand-forged counter planted directly in the economy store buys "
-   "nothing — the qualification store is the only gate")
+assert ((server.load_econ_store().get(user) or {}).get("passcnt") or {}).get("Pre-A1/taipei/zoo") == 999
+ok("a hand-planted passcnt in the economy store changes nothing: it neither grants nor blocks a "
+   "claim, and the server never consults it")
 
-st, _ = api("POST", "/api/economy/pass?room=" + code, {"file": "Pre-A1/taipei/zoo"}, tok)
-assert st == 404, "the endpoint that used to let a client assert its own passes must be GONE, %s" % st
-assert denied(claim(tok, code, DAAN), ZOO_Q)
-ok("the client-asserted pass endpoint is retired: there is no HTTP route left for a client to "
-   "declare a lesson passed, and the claim gate is unchanged by its absence")
+st, _ = api("POST", "/api/economy/pass", {"file": "Pre-A1/taipei/zoo"}, tok)
+assert st == 404, "the endpoint that let a client assert its own passes must stay GONE, got %s" % st
+ok("the client-asserted pass endpoint is still retired — no HTTP route lets a client vouch for "
+   "itself")
 
 user, tok, code = fresh()
-api("POST", "/api/learning/attempt?room=" + code,
-    {"activityId": "english.prea1.taipei.zoo.quiz3", "answers": [],
-     "passed": True, "pct": 100, "qualifications": [ZOO_Q], "rewarded": True,
-     "rewardAmount": 10000}, tok)
-st, learn = api("GET", "/api/learning/state?room=" + code, None, tok)
-assert not (learn.get("qualifications") or {}), learn
-assert denied(claim(tok, code, DAAN), ZOO_Q)
-ok("a forged completion payload grants no qualification and therefore no territory: the claim gate "
-   "reads authoritative learning state, never anything the client asserted")
-
-user, tok, code = fresh()
-assert denied(claim(tok, code, DAAN, [{"type": "cav", "hp": 100000}]), ZOO_Q)
-assert denied(claim(tok, code, DAAN, []), ZOO_Q) or claim(tok, code, DAAN, [])[0] == 400
-ok("neither a huge forged squad nor a malformed one buys past the gate")
-
-# ====================== redeploying your OWN territory still works ======================
-user, tok, code = fresh([ZOO_Q])
-assert claim(tok, code, DAAN)[0] == 200
-with server.acct_lock:                                   # simulate losing the qualification later
-    p = server.load_progress(user)
-    p["learning"]["qualifications"] = {}
-    server.save_progress(user, p)
-st, r = claim(tok, code, DAAN, [{"type": "inf", "hp": 25}])
+st, r = api("POST", "/api/territory/claim?room=" + code,
+            {"file": TARGET, "troops": [{"type": "inf", "hp": 10}],
+             "qualifications": QUALS, "qualification": QUALS[0], "passed": True}, tok)
 assert st == 200, (st, r)
+p = server.load_progress(user)
+assert not ((p.get("learning") or {}).get("qualifications") or {}), \
+    "a claim body must never write qualifications into authoritative learning state"
+ok("qualification fields smuggled into the claim body are ignored and never persisted")
+
+# ====================== 3. game-side claim authority is intact ======================
+user, tok, code = fresh()
+st, r = claim(tok, code, TARGET, troops=[])
+assert st == 400 and r.get("reason") == "troops_required", (st, r)
+assert owner(code, TARGET) is None, "a refused claim must not change ownership"
+ok("a zero-troop claim is refused troops_required and mutates nothing")
+
+st, r = claim(tok, code, "world:not-a-real-country")
+assert st == 400 and r.get("reason") in ("unresolved", "not_in_catalog"), (st, r)
+ok("a malformed/unknown territory id is refused truthfully")
+
+# RETAINED FROM THE OLD SUITE. Its "neither a huge forged squad nor a malformed one buys past the
+# gate" check carried a second property that had nothing to do with qualifications: an oversized or
+# ill-shaped squad must be refused on the server's own figures, atomically. That still holds and is
+# asserted here directly rather than left to troop_authority_test.py.
+for squad, why in (([{"type": "cav", "hp": 10 ** 9}], "a squad larger than the whole pool"),
+                   ([{"type": "bogus", "hp": 5}], "an unknown troop type"),
+                   ("not-a-list", "a squad that is not a list")):
+    st, r = claim(tok, code, OTHER, troops=squad)
+    assert st == 400, (why, st, r)
+    # a machine `reason` where the request was well-formed but unaffordable; a plain troop error
+    # where the payload itself was the problem. Either way it names troops, never something else.
+    assert (r.get("reason") in ("insufficient_troops", "troops_required")
+            or "troops" in (r.get("error") or "")), (why, st, r)
+    assert owner(code, OTHER) is None, "%s must not create ownership" % why
+ok("a forged squad buys nothing: oversized, unknown-type and non-list squads are all refused on the "
+   "server's own figures, and none of them creates the territory")
+
+# RETAINED FROM THE OLD SUITE. Its final check proved the shared requirement helper was TOTAL, so a
+# world-data fault could never brick claiming. The helper no longer gates anything, but claim's own
+# totality is still worth pinning: a catalog whose requirement lookup EXPLODES must not stop an
+# otherwise valid claim, because nothing consults it any more.
+_orig = server.terr_catalog.attack_requirements
+
+
+def _boom(_tid):
+    raise RuntimeError("world-data unavailable")
+
+
+server.terr_catalog.attack_requirements = _boom
+try:
+    user4, tok4, code4 = fresh()
+    st, r = claim(tok4, code4, TARGET)
+    assert st == 200, ("a raising attack_requirements must not affect a claim", st, r)
+    assert owner(code4, TARGET) == user4
+finally:
+    server.terr_catalog.attack_requirements = _orig
+ok("claim is total with respect to requirement metadata: even an attack_requirements that RAISES "
+   "cannot block a valid claim, because the claim route never consults it")
+
+st, r = claim(tok, code, DORMANT)
+assert st == 400 and r.get("reason") == "inactive_map", (st, r)
+assert owner(code, DORMANT) is None
+ok("a territory on a dormant (non-active) map is refused inactive_map and mutates nothing")
+
+st, r = claim(tok, code, TARGET)
+assert st == 200 and owner(code, TARGET) == user, (st, r)
+st2, _ = claim(tok, code, TARGET)
+assert owner(code, TARGET) == user, "re-claiming your own territory must not hand it away"
+ok("a valid neutral claim takes ownership authoritatively, and re-claiming your own ground is safe")
+
+# a second account cannot take a held territory by claiming it
+user2, tok2, code2 = fresh()
 server.set_room(code)
-assert (server.load_territory_store().get(DAAN) or {}).get("troops") == [{"type": "inf", "hp": 25}]
-ok("the gate guards ACQUISITION, not garrison management: re-deploying troops into a territory you "
-   "already hold is unaffected, so the new rule cannot strand an existing holding")
-
-# ====================== attack is unchanged and shares the rule ======================
-user, tok, code = fresh([ZOO_Q])
-bob = api("POST", "/api/register", {"user": "DEF1", "pass": "pw"})[1]["token"]
-api("POST", "/api/room/enter?room=" + code, {"code": code}, bob)
-api("GET", "/api/economy?room=" + code, None, bob)
-with server.acct_lock:
-    p = server.load_progress("DEF1")
-    p.setdefault("learning", {}).setdefault("qualifications", {})[MRT_Q] = {"earnedAt": 1}
-    server.save_progress("DEF1", p)
-stock(code, "DEF1")
-stock(code, user)
-assert api("POST", "/api/territory/claim?room=" + code,
-           {"file": "taipei:xinyi", "troops": [{"type": "inf", "hp": 20}]}, bob)[0] == 200
-assert claim(tok, code, DAAN, [{"type": "inf", "hp": 50}])[0] == 200
-st, r = api("POST", "/api/territory/attack?room=" + code,
-            {"sourceTerritoryId": DAAN, "targetTerritoryId": "taipei:xinyi",
-             "squad": [{"type": "inf", "hp": 40}]}, tok)
-assert st == 403 and r.get("reason") == "qualification_required"
-assert r.get("missingQualificationIds") == [MRT_Q], r
-ok("attack behaviour is unchanged and now provably shares one rule with claim: the same missing-id "
-   "list, from the same world-data, through the same helper")
-
-# ====================== the helper itself is content-independent ======================
-assert game_conquest.missing_qualifications(server.terr_catalog, DAAN, set()) == [ZOO_Q]
-assert game_conquest.missing_qualifications(server.terr_catalog, DAAN, {ZOO_Q}) == []
-assert game_conquest.missing_qualifications(server.terr_catalog, "no:such:place", set()) == []
-
-
-class _Boom(object):
-    def attack_requirements(self, _):
-        raise RuntimeError("world unavailable")
-
-
-assert game_conquest.missing_qualifications(_Boom(), DAAN, set()) == []
-ok("the shared helper is total: unknown territory and a raising world both yield 'unrestricted' "
-   "rather than an exception, so a world-data fault can never brick claiming")
+st, r = claim(tok2, code, TARGET)
+assert st == 403 and r.get("reason") == "held", (st, r)
+assert owner(code, TARGET) == user, "a refused claim must not transfer ownership"
+ok("a held territory cannot be claimed out from under its owner — it must be attacked (403 held)")
 
 print("\nAll %d claim-authority tests passed." % passed)
-httpd.shutdown()
+_srv.shutdown()

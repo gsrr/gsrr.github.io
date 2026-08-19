@@ -71,8 +71,11 @@ call("GET", "/api/economy" + R)                      # materialise the economy r
 
 ZOO = json.load(open(os.path.join(ROOT, "Pre-A1", "taipei", "zoo.json"), encoding="utf-8"))
 QUIZ3 = [{"q": i["q"], "answer": i["answer"]} for i in ZOO["quiz3"]]
-GATED = "taipei:daan"        # requires english.prea1.taipei.zoo
-OPEN = "taipei:wenshan"      # ungated
+# Phase 10A.3R: no territory is learning-gated any more, so these are simply two neutral
+# active-map territories. Two distinct subjects are still needed so that claiming one cannot be
+# confused with claiming the other.
+TARGET = "world:af"
+OTHER = "world:tm"
 TYPES = ("cav", "archer", "inf", "spear")
 
 
@@ -124,7 +127,7 @@ call("POST", "/api/learning/attempt" + R,
      {"activityId": "english.prea1.taipei.zoo.quiz3", "answers": QUIZ3})   # qualify + gold
 N0 = total()
 assert N0 == {"cav": 25, "archer": 25, "inf": 25, "spear": 25}, N0
-code, body = claim(GATED, [{"type": "cav", "hp": 10}, {"type": "inf", "hp": 5}])
+code, body = claim(TARGET, [{"type": "cav", "hp": 10}, {"type": "inf", "hp": 5}])
 assert code == 200, (code, body)
 assert pool() == {"cav": 15, "archer": 25, "inf": 20, "spear": 25}, pool()
 assert garrisons() == {"cav": 10, "archer": 0, "inf": 5, "spear": 0}, garrisons()
@@ -133,12 +136,12 @@ ok("§2 conservation: a claim MOVES troops — pool+garrisons is identical per t
 
 # ====================== §3 the forged-garrison exploit is closed ======================
 before_pool, before_total = pool(), total()
-code, body = claim(OPEN, [{"type": "cav", "hp": 500000}])
+code, body = claim(OTHER, [{"type": "cav", "hp": 500000}])
 assert code == 400 and body["reason"] == "insufficient_troops", (code, body)
 assert body["available"]["cav"] == before_pool["cav"], body
 assert pool() == before_pool and total() == before_total, (pool(), total())
 server.set_room(CODE)
-assert OPEN not in server.load_territory_store(), "a refused claim must not create the territory"
+assert OTHER not in server.load_territory_store(), "a refused claim must not create the territory"
 ok("§3 a garrison larger than the pool is refused with insufficient_troops — no ownership, no "
    "garrison, no pool change, and NO troops minted")
 
@@ -154,21 +157,21 @@ ZERO = [([], "empty list"),
         ([{"type": "dragon", "hp": 9}], "only an unknown type -> nothing deployable"),
         ([{"nope": 1}], "only a malformed entry")]
 for troops, label in ZERO:
-    code, body = call("POST", "/api/territory/claim" + R, {"file": OPEN, "troops": troops})
+    code, body = call("POST", "/api/territory/claim" + R, {"file": OTHER, "troops": troops})
     assert code == 400 and body.get("reason") == "troops_required", (label, code, body)
     assert body.get("minTroops") == 1, (label, body)
     assert pool() == z_pool and total() == z_total and gold() == z_gold, label
     server.set_room(CODE)
-    assert OPEN not in server.load_territory_store(), label
+    assert OTHER not in server.load_territory_store(), label
 ok("§3b a neutral claim that would deploy ZERO troops is refused with troops_required (%d shapes, "
    "including negatives/fractions/unknown types that sanitise to nothing) — no ownership, no pool "
    "or gold movement" % len(ZERO))
 
 # exactly one troop is enough, of any type, including a mixed request totalling 1
-for troops, label, key in (([{"type": "inf", "hp": 1}], "one infantry", OPEN),
-                           ([{"type": "cav", "hp": 1}], "one cavalry", "taipei:datong"),
+for troops, label, key in (([{"type": "inf", "hp": 1}], "one infantry", OTHER),
+                           ([{"type": "cav", "hp": 1}], "one cavalry", "world:kp"),
                            ([{"type": "inf", "hp": 0}, {"type": "spear", "hp": 1}],
-                            "mixed request totalling 1", "taipei:neihu")):
+                            "mixed request totalling 1", "world:mn")):
     b_pool, b_total = pool(), total()
     code, body = call("POST", "/api/territory/claim" + R, {"file": key, "troops": troops})
     assert code == 200, (label, code, body)
@@ -181,15 +184,22 @@ for troops, label, key in (([{"type": "inf", "hp": 1}], "one infantry", OPEN),
 ok("§3b exactly ONE troop acquires a territory — any single type, or a mixed request whose total is "
    "1; the pool drops by exactly 1 and conservation holds")
 
-# the qualification gate still speaks FIRST for an ineligible learner
-code, body = call("POST", "/api/territory/claim" + R,
-                  {"file": "taipei:zhongshan", "troops": []})       # gated, unqualified, zero troops
-assert code == 403 and body.get("reason") == "qualification_required", (code, body)
-ok("§3b ordering: a gated territory the learner cannot claim yet answers qualification_required, "
-   "not troops_required — eligibility is the more truthful failure")
+# RETARGETED (Phase 10A.3R).
+#   OLD: a gated territory answered qualification_required BEFORE troops_required, proving the
+#        learning gate spoke first.
+#   WHY OBSOLETE: learning qualifications no longer gate Conquest at all, so the ordering it pinned
+#        cannot occur; there is no qualification_required reason left to order.
+#   NEW: troop authority is the ONLY thing that speaks here — the same request answers
+#        troops_required whatever the learner holds.
+#   WHY NOT WEAKER: it still pins the truthful refusal for a zero-troop claim, and additionally
+#        proves that learning state cannot change that verdict, which the old form never checked.
+code, body = call("POST", "/api/territory/claim" + R, {"file": "world:cn", "troops": []})
+assert code == 400 and body.get("reason") == "troops_required", (code, body)
+ok("§3b a zero-troop claim answers troops_required — troop authority is the only gate, and no "
+   "learning state can pre-empt or override it")
 
 # (the "gated + qualified + zero troops" case needs a gated territory ALICE does NOT already own —
-#  GATED is hers by now, so that claim would be a redeploy. It is covered in §9 below.)
+#  TARGET is hers by now, so that claim would be a redeploy. It is covered in §9 below.)
 
 # ====================== §4 the claim failure matrix ======================
 snap_pool, snap_total, snap_gold = pool(), total(), gold()
@@ -198,11 +208,11 @@ OVER = [([{"type": "cav", "hp": snap_pool["cav"] + 1}], "one troop too many"),
         ([{"type": "cav", "hp": 10 ** 9}], "forged huge count"),
         ([{"type": "cav", "hp": snap_pool["cav"]}, {"type": "cav", "hp": 1}], "split over budget")]
 for troops, label in OVER:
-    code, body = call("POST", "/api/territory/claim" + R, {"file": OPEN, "troops": troops})
+    code, body = call("POST", "/api/territory/claim" + R, {"file": OTHER, "troops": troops})
     assert code == 400 and body.get("reason") == "insufficient_troops", (label, code, body)
     assert pool() == snap_pool and total() == snap_total and gold() == snap_gold, label
     server.set_room(CODE)
-    assert OPEN not in server.load_territory_store(), label
+    assert OTHER not in server.load_territory_store(), label
 ok("§4 over-budget requests (%d shapes) are refused with insufficient_troops; ownership, garrison, "
    "pool and gold all untouched" % len(OVER))
 
@@ -215,24 +225,24 @@ MALFORMED = [([{"type": "cav", "hp": -5}], "negative count"),
              (["cav"], "non-dict entry"),
              ([{"type": "cav", "hp": 2.9}], "fractional count")]
 for troops, label in MALFORMED:
-    code, body = call("POST", "/api/territory/claim" + R, {"file": OPEN, "troops": troops})
+    code, body = call("POST", "/api/territory/claim" + R, {"file": OTHER, "troops": troops})
     assert code in (200, 400), (label, code, body)
     assert total() == snap_total, (label, total(), snap_total)      # never mints, never destroys
     assert all(v >= 0 for v in pool().values()), (label, pool())
     if code == 200:                                                 # sanitised claim -> undo it
-        call("POST", "/api/territory/release" + R, {"file": OPEN})
+        call("POST", "/api/territory/release" + R, {"file": OTHER})
         snap_total = total()                                        # release destroys the garrison
 ok("§4 malformed troop shapes (%d) keep their existing sanitisation and mint nothing — the total "
    "never rises and the pool never goes negative" % len(MALFORMED))
 
-code, body = call("POST", "/api/territory/claim" + R, {"file": OPEN, "troops": "not-a-list"})
+code, body = call("POST", "/api/territory/claim" + R, {"file": OTHER, "troops": "not-a-list"})
 assert code == 400, (code, body)
 ok("§4 a non-list troops field is still rejected outright (existing rule preserved)")
 snap_pool, snap_total, snap_gold = pool(), total(), gold()
 
 # a claim of exactly the available troops succeeds and empties that type
 avail_spear = pool()["spear"]
-code, body = claim(OPEN, [{"type": "spear", "hp": avail_spear}])
+code, body = claim(OTHER, [{"type": "spear", "hp": avail_spear}])
 assert code == 200, (code, body)
 assert pool()["spear"] == 0, pool()
 assert total() == snap_total, (total(), snap_total)
@@ -240,10 +250,10 @@ ok("§4 claiming EXACTLY the available troops succeeds, empties that type and st
 
 # ====================== §5 redeploy returns the old garrison to the pool ======================
 before = total()
-code, body = claim(GATED, [{"type": "cav", "hp": 2}])       # was cav 10 + inf 5
+code, body = claim(TARGET, [{"type": "cav", "hp": 2}])       # was cav 10 + inf 5
 assert code == 200, (code, body)
 g = garrisons()
-assert g["cav"] == 2 + 0 and g["inf"] == 0, g               # OPEN holds spear only
+assert g["cav"] == 2 + 0 and g["inf"] == 0, g               # OTHER holds spear only
 assert total() == before, (total(), before)
 ok("§5 redeploying a held territory returns its garrison to the pool first — conserved, and the "
    "unassigned remainder stays in the pool exactly as before")
@@ -288,15 +298,15 @@ ok("§7 a recruit beyond the authoritative gold is refused; gold never goes nega
 # ====================== §8 concurrency: two claims racing for the same pool ======================
 # terr_lock serialises every claim and the econ debit is nested inside it (acct -> terr -> econ,
 # the same order recruitment uses), so the read-check-write of the pool cannot interleave.
-call("POST", "/api/territory/release" + R, {"file": OPEN})
-call("POST", "/api/territory/release" + R, {"file": GATED})
+call("POST", "/api/territory/release" + R, {"file": OTHER})
+call("POST", "/api/territory/release" + R, {"file": TARGET})
 server.set_room(CODE)
 _st = server.load_econ_store()
 _st["ALICE"]["troops"] = {"cav": 100, "archer": 0, "inf": 0, "spear": 0}
 server.save_econ_store(_st)
 assert pool()["cav"] == 100, pool()
 
-RACE = ["taipei:beitou", "taipei:shilin"]       # both ungated, both neutral
+RACE = ["world:pl", "world:ru"]       # both ungated, both neutral
 results = {}
 
 
@@ -321,10 +331,15 @@ ok("§8 concurrency: two simultaneous claims for 80 of 100 cavalry — exactly o
    "gets insufficient_troops, the pool lands on 20 and 100 cavalry are conserved (no duplication, "
    "no negative pool)")
 
-# ====== §9 Phase 8B.3: the minimum applies to GATED acquisition too, and NOT to redeploy ======
-# A gated territory ALICE is qualified for but does NOT own: the qualification is satisfied, so the
-# troop minimum is the remaining requirement.
-XINYI = "taipei:xinyi"                       # requires english.prea1.taipei.mrt.quiz3.pass
+# ====== §9 Phase 8B.3: the acquisition minimum applies uniformly, and NOT to redeploy ======
+# RETARGETED (Phase 10A.3R). OLD: this block took a learning-gated territory, granted the required
+# qualification, and proved the troop minimum was the one remaining requirement — i.e. that the two
+# requirements composed. WHY OBSOLETE: qualifications are no longer a claim requirement at all.
+# NEW: the same territory is claimed while the account holds that qualification anyway, proving the
+# troop minimum is the ONLY acquisition requirement and that holding learning credentials neither
+# waives it nor adds to it. WHY NOT WEAKER: every assertion below is unchanged; the qualification is
+# still granted, so this now also pins that granting it changes nothing.
+ACQUIRE = "world:ir"
 with server.acct_lock:
     p = server.load_progress("ALICE")
     p.setdefault("learning", {}).setdefault("qualifications", {})[
@@ -334,22 +349,22 @@ server.set_room(CODE)
 _st = server.load_econ_store()
 _st["ALICE"]["troops"] = {"cav": 5, "archer": 0, "inf": 0, "spear": 0}
 server.save_econ_store(_st)
-code, body = call("POST", "/api/territory/claim" + R, {"file": XINYI, "troops": []})
+code, body = call("POST", "/api/territory/claim" + R, {"file": ACQUIRE, "troops": []})
 assert code == 400 and body.get("reason") == "troops_required", (code, body)
 server.set_room(CODE)
-assert XINYI not in server.load_territory_store(), "refused gated claim must not create ownership"
-code, body = call("POST", "/api/territory/claim" + R, {"file": XINYI, "troops": [{"type": "cav", "hp": 1}]})
+assert ACQUIRE not in server.load_territory_store(), "a refused claim must not create ownership"
+code, body = call("POST", "/api/territory/claim" + R, {"file": ACQUIRE, "troops": [{"type": "cav", "hp": 1}]})
 assert code == 200, (code, body)
 assert pool()["cav"] == 4, pool()
-ok("§9 the minimum applies uniformly: a gated territory whose qualification IS held still needs one "
-   "troop (troops_required), and one cavalry then acquires it")
+ok("§9 the acquisition minimum applies uniformly: holding a learning qualification does not "
+   "waive it (troops_required on an empty squad), and one cavalry then acquires the territory")
 
 # redeploy KEEPS the documented right to leave your own ground undefended
 before = total()
-code, body = call("POST", "/api/territory/claim" + R, {"file": XINYI, "troops": []})
+code, body = call("POST", "/api/territory/claim" + R, {"file": ACQUIRE, "troops": []})
 assert code == 200, ("owned redeploy to zero must stay legal", code, body)
 server.set_room(CODE)
-h = server.load_territory_store().get(XINYI) or {}
+h = server.load_territory_store().get(ACQUIRE) or {}
 assert h.get("owner") == "ALICE" and not (h.get("troops") or []), h
 assert pool()["cav"] == 5, ("the garrison came home to the pool", pool())
 assert total() == before, (total(), before)

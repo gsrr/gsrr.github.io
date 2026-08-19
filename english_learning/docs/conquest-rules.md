@@ -20,8 +20,17 @@ Pure Game-Domain function returning `AttackEligibility(allowed, reason)`. Stable
 UI/tests): `source_not_found`, `target_not_found`, `same_territory`, `source_not_owned`,
 `target_already_owned`, `target_not_attackable` (neutral → use claim), `not_adjacent`,
 `invalid_squad`, `insufficient_source_garrison`. Adjacency comes **only** from World-Domain
-`are_adjacent()` (world-data `adjacentTerritoryIds`) — never SVG geometry or coordinates. A future
-Learning/qualification gate has a reserved (currently inert) hook at the end of this function.
+`are_adjacent()` (world-data `adjacentTerritoryIds`) — never SVG geometry or coordinates.
+
+Phase 3A added a tenth reason, `qualification_required`, for a Learning gate at the end of this
+function. **Phase 10A.3R retired it**: the reason is gone from `REASONS`, the gate is gone from the
+body, and `player_qualifications` / `require_qualifications` remain in the signature only as
+accepted-and-ignored parameters. The nine reasons above are the complete set again.
+
+Map scope is enforced by the HTTP routes rather than by this pure function: since Phase 10A.3 both
+`/api/territory/claim` and **both ends** of `/api/territory/attack` refuse a territory outside
+`server.allowed_game_maps()` — today `{"world"}` — with `400 {"reason": "inactive_map"}`, before any
+state changes.
 
 ## Source territory
 

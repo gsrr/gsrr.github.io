@@ -22,15 +22,16 @@ There is exactly ONE meaning for each learning concept, and it lives on the serv
 | Current passing state | `currentPolicySatisfied` | Passing / Needs Review (live; may fall after a worse retry) |
 | Permanent mastery | `activePolicyCompleted` | ⭐ Mastered (sticky — a worse retry never removes it) |
 | Progress | `completedActivityIds` / `requiredActivityIds` / `missingActivityIds` | `x / y activities completed` |
-| Conquest eligibility | server-held qualifications | requirement met / missing |
+| Earned achievements | server-held qualifications | requirement met / missing |
 | Official shared completion | server-side count of `activePolicyCompleted` (`server.py _mastered_lesson_count`) | leaderboard |
 
 **Client-local, non-authoritative.** `localStorage["score:<user>:<contentPath>"]` and the average over
 it (historically "Rule B") are **practice data only**. They may mean: practice score, practice
 average, personal best, immediate in-activity feedback, local navigation state (level-tab locking),
 practice statistics and practice milestones. They may **not** mean: lesson completed, lesson
-mastered, current passing state, qualification earned, territory unlocked, campaign completion,
-reward eligibility, or official shared completion count.
+mastered, current passing state, qualification earned, campaign completion, reward eligibility, or
+official shared completion count. (Nothing at all unlocks territory any more — see Phase 10A.3R
+below — so the local average could not mean that even in principle.)
 
 Why: the local average is player-editable, carries no policy version, keys off manifest levels rather
 than registry activity ids, and is all-or-nothing over levels that may never have been scored. Phase
@@ -63,29 +64,58 @@ facts only:
 
 - the territory exists in the catalog (otherwise `unresolved` / `not_in_catalog`);
 - it has a population;
+- it is on the **active game map** (otherwise `400 inactive_map` — see Phase 10A.3 below);
 - ownership, troop provisioning and stamina rules;
-- a **qualification** requirement, where the territory declares one;
 - room scope — ownership lives in `/data/rooms/<CODE>/`, which is what isolates one game instance
   from another. That never depended on the level gate.
-
-**Qualification is not map selection.** A specific learning achievement may still gate a specific
-territory: the four Taipei districts require their Taipei qualifications, so an ungated player gets
-`403 qualification_required`. That is a game consequence of a named achievement. It is measured at
-every level identically — the gate belongs to the territory, never to the learner's course.
 
 The room's `map` field survives as compatibility and display metadata (room listings, the lobby
 subtitle) and controls nothing.
 
-On the client, map specs are keyed by **game map id** (`taiwan`, `china`, `world`) rather than by CEFR
-level, and the global "🗺 Go to Map" opens the game world map. It used to call `campaignMapAnchor()`,
-which scanned Learning Home campaigns for the first lesson with a mapped territory and deep-linked
-there — so the curriculum chose the game entry, and every room landed on the Taipei sub-map, including
-A1/A2/B1 rooms whose claims that same map then refused. `GEO_MAPS` remains only as "which map does the
-level grid open", i.e. curriculum navigation, and grants no eligibility.
+## Phase 10A.3 — ONE conquest map
+
+The playable surface is **World**, and only World. `server.allowed_game_maps()` returns
+`{"world"}`; `territory_on_active_map()` checks membership; and both `/api/territory/claim` and
+**both ends** of `/api/territory/attack` refuse anything else with `400`
+`{"reason": "inactive_map"}` before mutating any state.
+
+The Taiwan, China and Taipei datasets remain in `world-data/` as **dormant data**: their ids still
+resolve (identity is catalog-wide, which is why a dormant id is refused `inactive_map` and never
+mislabelled `unresolved`), but there is deliberately no gameplay route into them. `GAME_MAPS` in the
+client holds one entry, `GEO_MAPS` / `BOSS_MAP_SPECS` / `mapPopSum()` are gone, and the map picker
+went with them.
+
+Checkpoint boss difficulty was the last course→map association in the client: it was the population
+sum of a per-course map. It is now the table `BOSS_ARMY_BY_LEVEL` — **Pre-A1 2468 · A1 9677 · A2
+45878 · B1 45878**, the exact sums measured immediately before the change, so every level's boss is
+preserved to the unit. Pinned by `tests/boss_challenge.test.js` §6.
+
+## Phase 10A.3R — learning qualification has ZERO conquest authority
+
+**No learning achievement is a prerequisite for taking ground.** Not a course, lesson, activity,
+mastery, badge or campaign trophy.
+
+- `qualification_required` is **removed** from `AttackEligibility.REASONS`; nothing can produce it.
+- `can_attack()` accepts `player_qualifications` / `require_qualifications` and **ignores both** —
+  the parameters remain only so existing call sites (including the AI's explicit bypass) still work.
+- `_handle_territory_claim` no longer loads player qualifications at all.
+- `game.conquest.missing_qualifications()` survives as a **pure reporting resolver** with no caller
+  in the authority path. It still answers "what does this territory declare?" for Learning-side
+  display, with its full semantics (ALL required, declaration order preserved, duplicates collapsed,
+  junk ignored, ids opaque) pinned by `tests/learning_requirements_test.py`.
+- `requirements.attackQualificationIds` in `world-data/` is **declared metadata**. All five
+  requirement-bearing territories sit on dormant Taipei; **zero** of the 250 World territories
+  declare one, so the requirement UI has no reachable subject and renders nothing.
+- The client's `403 qualification_required` handling is gone: the only 403 a claim can now return is
+  `held`. The Learning Home "🗺 Unlocks &lt;region&gt;" line is gone too — it promised ground that no
+  longer exists to win.
+
+What learning still gives: verified progress, permanent mastery, Gold (PASS_GOLD 160 + MASTERY_GOLD
+640), achievements/qualifications as **credentials**, cosmetics and the campaign trophy.
 
 | Surface | What it is | Conquest? |
 |---|---|---|
-| `openRegion()` — geo maps (Pre-A1 Taiwan, China, World) | **canonical territories** with catalog ids, populations and designer-owned learning requirements | yes — claim/attack, server-verified |
+| `openRegion()` — the World map | **canonical territories** with catalog ids and populations | yes — claim/attack, server-verified on game facts only |
 | Learning Home lesson card — `openLessonFromHome()` | the **only** lesson door: a registry lessonId resolved to its content, with server-authoritative progress | **no** |
 
 Phase 9G **deleted the board map entirely.** Its nodes were keyed by lesson file (`A1/001`), which is
@@ -242,14 +272,14 @@ Flow: frontend `terrRecruit` → `POST /api/territory/recruit` → `_handle_terr
 ## G. Conquest
 
 - **Neutral claim** and **attack** are SEPARATE flows (should stay separate):
-  - Neutral claim: `POST /api/territory/claim` — only on an unowned territory (backend validates identity/map/population, sets owner + garrison from client-sent surviving troops; population from catalog). No battle. Since Phase 7D-0 the backend also enforces the **learning-qualification gate** here, via the same `game.conquest.missing_qualifications()` rule and the same world-data as attack; an unqualified claim is refused with 403 `qualification_required`.
+  - Neutral claim: `POST /api/territory/claim` — only on an unowned territory (backend validates identity, active map and population, sets owner + garrison from client-sent surviving troops; population from catalog). No battle. Phase 7D-0 enforced a **learning-qualification gate** here via `game.conquest.missing_qualifications()`; **Phase 10A.3R retired it** — the claim route reads no learning state whatsoever, and `qualification_required` no longer exists as a reason.
     - **Phase 8B.1:** the garrison is **debited from the authoritative troop pool** — a claim MOVES troops, it cannot declare them. Over-budget → 400 `insufficient_troops`.
     - **Phase 8B.3:** **acquiring** a territory must deploy **at least one troop** (`sum(hp) >= 1`); a claim that would deploy nothing is refused with 400 `troops_required` (`minTroops: 1`). Ownership carries the territory's passive income, and it used to be free — all seven ungated Taipei districts could be taken for 0 troops and 0 gold. The minimum is exactly one: a real commitment, not an economic barrier.
     - **Redeploying a territory you already own may leave it with ZERO garrison** — that is intentional and unchanged. The minimum guards ACQUISITION only, so your own ground can be stripped bare (and lost to an attacker) if you choose.
-    - **Failure order** for a new territory: `room_required` → `held` → `qualification_required` → `troops_required` → `insufficient_troops`. Eligibility always answers before commitment, so an ineligible learner hears the qualification, not the troop count.
+    - **Failure order** for a new territory: `room_required` → `unresolved` → `inactive_map` → `held` → `troops_required` → `insufficient_troops`. Eligibility always answers before commitment, so a refusal costs nothing. (`qualification_required` used to sit between `held` and `troops_required`; Phase 10A.3R removed it.)
   - Attack (occupied): client `runBattle`; on win client calls `release` (territory → neutral) then `claim` (becomes owner with survivors). `attack-result` awards gold.
     - **SUPERSEDED — historical.** Since Phase 2B a single `POST /api/territory/attack` **settles
-      completely**: it validates ownership/adjacency/source garrison and qualifications, resolves the
+      completely**: it validates ownership/adjacency/source garrison, resolves the
       battle server-side, applies casualties, transfers ownership, moves gold, and persists — then
       returns `attackerWon`, `defender`, `defenderOrder`, `defenderTech`, `gold`, both garrisons and
       both survivor lists, which is everything the UI renders (it replays `runBattle` with
@@ -321,7 +351,7 @@ AI attacks from its **global pool** (`ae["troops"]`), targeting a **random** non
 
 ### 10. Frontend attack UI flow
 ONE target-first surface — `openRegion` (SVG geo-map drill-down) — POSTs `{file, squad}` to `/api/territory/attack` and replays via `runBattle(..., preOrdered=true)` (non-authoritative). Phase 7G removed the second surface: `openOutpost` (board-map lesson nodes) had an attack branch over pseudo-territories that could never resolve, and is now a learning-only panel.
-Squad budget = the global pool (`poolAvail()`); the player picks any owned enemy region and assigns troops. After a win the frontend offers the neutral claim: for a **gated** region it names the lesson granting the missing qualification, and for an **ungated** one it goes straight to troop deployment (Phase 7F.2).
+Squad budget = the global pool (`poolAvail()`); the player picks any owned enemy region and assigns troops. After a win the frontend offers the neutral claim, which goes straight to troop deployment. (Phase 7F.2 kept a second branch that named the lesson granting a gated region's missing qualification; Phase 10A.3R made it unreachable — no territory on the active map declares a requirement.)
 
 ### 11. Files that Phase 2B modifies
 - `game/conquest.py` — add `can_attack()` + territorial state transition (`apply_territorial_attack`).

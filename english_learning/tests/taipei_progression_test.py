@@ -115,24 +115,33 @@ def can(target, held=(), source=START):
                                player_qualifications=Q.earned_qualification_ids(state))
 
 
-# single-requirement gates adjacent to the start
-for tid, qid in (("taipei:daan", ZOO_Q), ("taipei:xinyi", MRT_Q), ("taipei:zhongzheng", MKT_Q)):
-    e = can(tid)
-    assert not e and e.reason == "qualification_required" and e.missing_qualifications == [qid], (tid, e.reason)
-    assert can(tid, [qid]).allowed, tid
-    assert can(tid, [PARK_Q]).missing_qualifications == [qid], "an unrelated qualification does not help"
-# the multi-requirement gate (reachable from daan once owned)
+# RETARGETED (Phase 10A.3R).
+#   OLD: each Taipei territory's qualification gate was asserted in detail — single gates blocked with
+#        the exact missing id, an unrelated qualification did not help, Zhongshan required BOTH ids,
+#        and the sandbox territory needed none.
+#   WHY OBSOLETE: Learning has zero Conquest authority. No territory has a learning gate, so none of
+#        those verdicts can occur and `qualification_required` is not a possible reason.
+#   NEW: for every territory the old suite gated — single-requirement, multi-requirement and
+#        sandbox alike — the verdict is IDENTICAL no matter which qualifications are held.
+#   WHY NOT WEAKER: the old form pinned one gate's shape; this pins that learning state cannot move
+#        the verdict for ANY of them, in either direction, which is what stops the coupling coming
+#        back. The qualifications themselves are still granted and asserted Learning-side below.
+assert "qualification_required" not in conquest.AttackEligibility.REASONS
+GATED_BEFORE = ["taipei:daan", "taipei:xinyi", "taipei:zhongzheng", "taipei:nangang"]
+for tid in GATED_BEFORE:
+    none_e = can(tid)
+    all_e = can(tid, [ZOO_Q, MRT_Q, MKT_Q, PARK_Q])
+    one_e = can(tid, [PARK_Q])
+    assert (none_e.allowed, none_e.reason) == (all_e.allowed, all_e.reason) == (one_e.allowed, one_e.reason),         (tid, none_e, all_e, one_e)
+# the formerly multi-requirement territory behaves the same way from an owned neighbour
 STORE["taipei:daan"] = {"owner": "ALICE", "troops": [{"type": "cav", "hp": 100}]}
-e = can("taipei:zhongshan", source="taipei:daan")
-assert e.reason == "qualification_required", e.reason
-assert e.missing_qualifications == [MKT_Q, ZOO_Q], e.missing_qualifications
-assert can("taipei:zhongshan", [ZOO_Q], source="taipei:daan").missing_qualifications == [MKT_Q]
-assert can("taipei:zhongshan", [MKT_Q], source="taipei:daan").missing_qualifications == [ZOO_Q]
-assert can("taipei:zhongshan", [MKT_Q, ZOO_Q], source="taipei:daan").allowed
+z_none = can("taipei:zhongshan", source="taipei:daan")
+z_all = can("taipei:zhongshan", [MKT_Q, ZOO_Q], source="taipei:daan")
+assert (z_none.allowed, z_none.reason) == (z_all.allowed, z_all.reason), (z_none, z_all)
 STORE["taipei:daan"] = {"owner": "BOB", "troops": [{"type": "inf", "hp": 3}]}
-# sandbox territories need nothing
-assert can("taipei:nangang").allowed, "nangang is an open sandbox territory"
-ok("§35 gates: single gates block with the exact missing id; Zhongshan needs BOTH; sandbox is open")
+ok("§35 no territory carries a learning gate any more: for every formerly gated territory — single, "
+   "multi-requirement and sandbox — the attack verdict is identical with none, one or all "
+   "qualifications held")
 
 # curriculum order is RECOMMENDED, not enforced: MRT does not additionally require Zoo
 assert cat.attack_requirements("taipei:xinyi") == [MRT_Q], "no cumulative prerequisite was added"

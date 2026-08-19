@@ -160,7 +160,8 @@ class TerritoryCatalog:
 
     def attack_requirements(self, territory_id):
         """Phase 3A: designer-owned learning gate for attacking this territory — the list of opaque
-        qualification IDs a player must hold. Missing/empty -> [] (unrestricted). Never raises."""
+        qualification IDs a territory DECLARES. Since Phase 10A.3R this is Learning-side metadata
+        only — it is not a play prerequisite. Missing/empty -> []. Never raises."""
         self._ensure()
         t = self.territories.get(territory_id)
         if not t:

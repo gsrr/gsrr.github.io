@@ -494,10 +494,16 @@ def can(target, held, source=START):
 
 for tid in ("taipei:xinyi", "taipei:zhongzheng"):
     assert can(tid, EARNED).allowed, tid            # adjacent to the start, gate now satisfied
-e = can("taipei:daan", EARNED)
-assert not e.allowed and e.missing_qualifications == ["english.prea1.taipei.zoo"], e.reason
-ok("§33/§22 the quiz3 qualifications earned above still satisfy the real can_attack rule for "
-   "Xinyi/Zhongzheng; Daan still requires the Zoo qualification these players never earned")
+# RETARGETED (Phase 10A.3R): learning qualifications no longer gate Conquest, so "Daan still needs
+# the Zoo qualification" cannot be asserted — there is no gate. What this block now proves is the
+# replacement invariant: the qualifications earned above are recorded by LEARNING and change no
+# Conquest verdict at all. Stronger than the old form, which only pinned one gate's behaviour.
+e_earned = can("taipei:daan", EARNED)
+e_none = can("taipei:daan", [])
+assert (e_earned.allowed, e_earned.reason) == (e_none.allowed, e_none.reason), (e_earned, e_none)
+assert "qualification_required" not in conquest.AttackEligibility.REASONS
+ok("§33/§22 the quiz3 qualifications earned above are recorded by Learning and leave the real "
+   "can_attack verdict IDENTICAL with or without them — learning does not gate ground")
 
 # §34 whole-lesson neutrality: passcnt is untouched by any of this
 assert passcnt() == p0, (passcnt(), p0)

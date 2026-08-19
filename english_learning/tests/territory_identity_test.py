@@ -2,6 +2,18 @@
 """Phase 1B — territory identity: migration + backend authority.
 
     python3 tests/territory_identity_test.py
+
+Identity is a CATALOG-WIDE concern and stays that way under the single-World model (Phase 10A.3):
+every canonical id, legacy `maps/<map>.svg#<path>` key and `mapId#pathId` form must resolve to
+exactly one canonical territory, whatever map it belongs to. Whether that territory may then be
+PLAYED is a separate question owned by tests/map_eligibility_test.py — this suite proves the two
+layers are distinct, so a dormant-map id is refused as `inactive_map` rather than mislabelled
+`unresolved`.
+
+The pure migrate_store() section below is map-agnostic and unchanged, so the real multi-path China
+data (china:pLN x2 paths, china:pSH x3) still backs the collapse and collision invariants. The HTTP
+claim path can no longer reach those territories, so multi-path claiming is exercised against a
+synthetic catalog on the ACTIVE map, with a mutation proof that the check has teeth.
 """
 import json
 import os
@@ -91,74 +103,144 @@ def call(method, path, body=None):
         return e.code, json.loads(e.read())
 
 
-# start a china (A1) room hosted by ALICE
+# start a room hosted by ALICE. Phase 10A: the course id is Learning-side only — it selects no map,
+# and every room plays the same single World.
 assert call("POST", "/api/room/create", {})[0] == 200
 st = call("POST", "/api/room/start", {"map": "A1", "aiCount": 0, "resources": "medium", "capacity": 4})
 assert st[0] == 200, st
 CODE = st[1]["code"]
 
 troops = [{"type": "inf", "hp": 10}]
+ACTIVE = json.load(open(os.path.join(ROOT, "world-data", "territories", "world.json"),
+                        encoding="utf-8"))[0]["id"]
+DORMANT = json.load(open(os.path.join(ROOT, "world-data", "territories", "china.json"),
+                         encoding="utf-8"))[0]["id"]
 
 # claim by canonical id -> stored under canonical
+# RETARGETED (Phase 10A.3): the subject moves from china:pBJ to an active-map id. The assertion is
+# unchanged in substance — a canonical id must be stored verbatim as the store key — and it now runs
+# on the map claims actually happen on.
 code, body = call("POST", "/api/territory/claim?room=" + CODE,
-                  {"file": "china:pBJ", "troops": troops, "avatar": "👦"})
-assert code == 200 and body.get("territory") == "china:pBJ", (code, body)
+                  {"file": ACTIVE, "troops": troops, "avatar": "👦"})
+assert code == 200 and body.get("territory") == ACTIVE, (code, body)
 server.set_room(CODE)
 store = server.load_territory_store()
-assert "china:pBJ" in store and store["china:pBJ"]["owner"] == "ALICE", list(store)
+assert ACTIVE in store and store[ACTIVE]["owner"] == "ALICE", list(store)
 ok("claim by canonical id stores under canonical key")
 
-# claim by LEGACY multi-path key -> resolves to one canonical (china:pLN)
-code, body = call("POST", "/api/territory/claim?room=" + CODE,
-                  {"file": "maps/china.svg#pLN_1", "troops": troops, "avatar": "👦"})
-assert code == 200 and body.get("territory") == "china:pLN", (code, body)
-server.set_room(CODE)
-store = server.load_territory_store()
-assert "china:pLN" in store and "maps/china.svg#pLN_1" not in store, list(store)
-ok("legacy multi-path claim resolves + stores as china:pLN (never raw path)")
-
 # population is authoritative from the catalog, not the client
-assert store["china:pLN"]["pop"] == server.terr_catalog.game_population("china:pLN")
+assert store[ACTIVE]["pop"] == server.terr_catalog.game_population(ACTIVE)
 ok("claim population comes from the catalog (client pop ignored)")
 
-# unknown territory rejected
-code, body = call("POST", "/api/territory/claim?room=" + CODE,
-                  {"file": "china:zzz", "troops": troops})
-assert code == 400 and body.get("reason") in ("unresolved", "not_in_catalog"), (code, body)
-ok("unknown territory is rejected")
+# unknown territory rejected. Checked on the active map AND behind a dormant map prefix: an id that
+# is not in the catalog must be reported as unresolved, never as a map-eligibility problem, because
+# identity resolution runs first.
+for junk in ("world:zzz", "world:not-a-country", "china:zzz"):
+    code, body = call("POST", "/api/territory/claim?room=" + CODE, {"file": junk, "troops": troops})
+    assert code == 400 and body.get("reason") in ("unresolved", "not_in_catalog"), (junk, code, body)
+ok("an id absent from the catalog is rejected as unresolved, whichever map its prefix names")
 
-# RETARGETED in Phase 10A.
-#   OLD: a world territory claimed from an "A1" room had to fail with 400 wrong_map.
-#   WHY OBSOLETE: that rule was `allowed_maps_for_level(room["map"])` — a CEFR level id decided which
-#     canonical map the player could own territory on (Pre-A1 -> taiwan, A1 -> china, A2/B1 -> world).
-#     Learning and Game are separate systems: a learner's course must not choose the game world. The
-#     helper, the table and the wrong_map reason are all retired, so the old assertion pinned exactly
-#     the coupling the product removed.
-#   NEW: identity resolution is still authoritative — a canonical id from ANY map resolves and is
-#     accepted on its own game merits, and a non-catalog id is still refused. That is the invariant
-#     this suite actually owns (territory IDENTITY), and it is stronger here because it now proves
-#     resolution works across every map rather than only inside the room's level-assigned one.
-#   WHY NOT WEAKER: the rejection path is still asserted (below, and in the "unknown territory" check
-#     above); only the level-based rejection — which no longer exists — is gone. Full cross-map
-#     eligibility is pinned by tests/map_eligibility_test.py.
+# RETARGETED TWICE — the history matters, because each rewrite tracked a real product change.
+#   ORIGINAL (Phase 1B): a world territory claimed from an "A1" room had to fail 400 wrong_map,
+#     because allowed_maps_for_level() let a CEFR course pick the canonical map (Pre-A1 -> taiwan,
+#     A1 -> china, A2/B1 -> world).
+#   PHASE 10A: Learning and Game were separated, that helper/table/reason were deleted, and the
+#     assertion became "any canonical id resolves and is claimable".
+#   PHASE 10A.3: conquest runs on ONE map (World); the other maps are dormant content.
+#   NEW: identity and eligibility are proven to be SEPARATE layers. A dormant-map id — canonical or
+#     legacy — still RESOLVES, which is the invariant this suite owns, and is then refused
+#     `inactive_map` by the game layer rather than mislabelled `unresolved`.
+#   WHY NOT WEAKER: this asserts strictly more than either earlier form — a positive resolution
+#     result AND a truthful, specific rejection AND that the refusal writes no key of any shape.
+#     Which maps are playable is pinned by tests/map_eligibility_test.py.
+assert server.terr_catalog.resolve_any(DORMANT) == DORMANT
+assert server.terr_catalog.map_of(DORMANT) == "china"
 code, body = call("POST", "/api/territory/claim?room=" + CODE,
-                  {"file": "world:us", "troops": [{"type": "inf", "hp": 1}]})
-assert code == 200, (code, body)
-assert server.load_territory_store().get("world:us", {}).get("owner"), server.load_territory_store()
-ok("a canonical territory from another map resolves and is claimable — the CEFR->map gate is gone")
+                  {"file": DORMANT, "troops": [{"type": "inf", "hp": 1}]})
+assert code == 400 and body.get("reason") == "inactive_map", (code, body)
+server.set_room(CODE)
+assert DORMANT not in server.load_territory_store()
+ok("a dormant-map canonical id still resolves in the catalog and is refused inactive_map, not "
+   "unresolved — identity and map eligibility are separate layers")
 
+# the same for a LEGACY MULTI-PATH dormant key: one canonical id out of the resolver, then refused
+assert server.terr_catalog.resolve_any("maps/china.svg#pLN_1") == "china:pLN"
+assert server.terr_catalog.resolve_any("maps/china.svg#pLN_2") == "china:pLN"
 code, body = call("POST", "/api/territory/claim?room=" + CODE,
-                  {"file": "world:not-a-country", "troops": [{"type": "inf", "hp": 1}]})
-assert code == 400 and body.get("reason") in ("unresolved", "not_in_catalog"), (code, body)
-ok("a non-catalog id on a real map is still rejected (identity resolution stays authoritative)")
+                  {"file": "maps/china.svg#pLN_1", "troops": troops})
+assert code == 400 and body.get("reason") == "inactive_map", (code, body)
+server.set_room(CODE)
+assert not [k for k in server.load_territory_store() if "#" in k or k.startswith("china:")], \
+    "a refused claim must not leave a key of ANY shape behind"
+ok("a legacy multi-path dormant key resolves to one canonical id and is then refused inactive_map, "
+   "never stored raw")
 
-# legacy store on disk still loads (read) and canonicalizes in memory
+# ---- multi-path identity ON THE ACTIVE MAP, via a synthetic catalog ----
+# All 8 multi-path territories live on dormant China (china:pTW/pLN/pHE/pSH/pFJ/pGD/pHK/pMO), and
+# production World has none, so the HTTP claim path can no longer reach a multi-path territory
+# through shipped data. It is exercised here against a purpose-built catalog whose active-map
+# territory owns THREE svg paths — the same shape as china:pSH — proving the claim route collapses
+# every accepted identifier form to the one canonical key before storing.
+from territory_catalog import TerritoryCatalog       # noqa: E402
+
+
+def synth_catalog(path_keys):
+    """A minimal one-map catalog on the ACTIVE map id, with a single multi-path territory."""
+    sd = tempfile.mkdtemp()
+    os.makedirs(os.path.join(sd, "territories"))
+    json.dump({"catalogVersion": "synthetic-test"}, open(os.path.join(sd, "catalog.json"), "w"))
+    json.dump([{"id": server.GAME_WORLD_MAP_ID, "svgFile": "maps/world.svg", "name": "World"}],
+              open(os.path.join(sd, "maps.json"), "w"))
+    json.dump([{"id": "world:synthia", "mapId": server.GAME_WORLD_MAP_ID,
+                "displayName": "Synthia", "svgPathKeys": list(path_keys),
+                "gamePopulation": 4242, "adjacentTerritoryIds": []}],
+              open(os.path.join(sd, "territories", "world.json"), "w"))
+    return TerritoryCatalog(sd).load()
+
+
+# a one-soldier squad, because the room's real army is finite and this block claims four times
+SYN_SQUAD = [{"type": "cav", "hp": 1}]
+_real_catalog = server.terr_catalog
+try:
+    server.terr_catalog = synth_catalog(["syn_1", "syn_2", "syn_3"])
+    for key in ("maps/world.svg#syn_1", "maps/world.svg#syn_3", "world#syn_2", "world:synthia"):
+        server.set_room(CODE)                      # each form starts from the territory unowned
+        st_ = server.load_territory_store()
+        st_.pop("world:synthia", None)
+        server.save_territory_store(st_)
+        code, body = call("POST", "/api/territory/claim?room=" + CODE,
+                          {"file": key, "troops": SYN_SQUAD, "avatar": "👦"})
+        assert code == 200 and body.get("territory") == "world:synthia", (key, code, body)
+        server.set_room(CODE)
+        st_ = server.load_territory_store()
+        assert "world:synthia" in st_ and not [k for k in st_ if "#" in k], (key, list(st_))
+        assert st_["world:synthia"]["pop"] == 4242, st_["world:synthia"]
+    ok("every svg path of a multi-path ACTIVE-map territory — legacy key, mapId#pathId, and the "
+       "canonical id alike — collapses to one canonical store key with catalog population")
+
+    # MUTATION PROOF that the check above has teeth: drop syn_3 from the catalog and its legacy key
+    # must stop resolving. If the claim route were deriving ids by string surgery instead of reading
+    # svgPathKeys, this claim would still be accepted and the test would fail here.
+    server.terr_catalog = synth_catalog(["syn_1", "syn_2"])
+    code, body = call("POST", "/api/territory/claim?room=" + CODE,
+                      {"file": "maps/world.svg#syn_3", "troops": SYN_SQUAD})
+    assert code == 400 and body.get("reason") in ("unresolved", "not_in_catalog"), (code, body)
+    ok("mutation proof: a path key removed from the catalog stops resolving — the claim route really "
+       "reads svgPathKeys rather than parsing the identifier")
+finally:
+    server.terr_catalog = _real_catalog
+
+# Legacy store on disk still loads (read) and canonicalizes in memory. Deliberately kept on a
+# DORMANT multi-path subject (china:pSH has 3 svg paths): reading and canonicalizing a store is an
+# identity operation with no eligibility opinion, so an old room's data must never be silently
+# dropped just because its map is no longer playable.
 server.set_room(CODE)
 p = server.room_path("territory.json")
-json.dump({"maps/china.svg#pSH_1": H("ALICE")}, open(p, "w"))
+json.dump({"maps/china.svg#pSH_1": H("ALICE"), "maps/china.svg#pSH_2": H("ALICE")}, open(p, "w"))
 store = server.load_territory_store()
-assert "china:pSH" in store, list(store)
-ok("legacy room JSON still loads and canonicalizes on read")
+assert list(store) == ["china:pSH"], list(store)
+ok("legacy room JSON still loads and canonicalizes on read — including collapsing several svg paths "
+   "of a dormant-map territory into one canonical key")
 
 srv.shutdown()
 print("\nAll %d identity tests passed." % passed)

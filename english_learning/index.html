@@ -624,14 +624,12 @@
   /* Phase 7C.2a: the mastery payout, stated as a figure. Same row treatment as the unlock line. */
   .comp-banner .cb-g { font-size: 13px; font-weight: 800; color: #b45309; margin-top: 6px; }
   .rw-owned { margin-top: 6px; font-size: 12px; color: #b45309; font-weight: 700; }
-  /* Phase 7E.2 — the learning economy strip and the per-lesson world consequence. One compact line
-     each: the row must not grow into a requirement checklist. */
+  /* Phase 7E.2 — the learning economy strip. One compact line: the row must not grow into a
+     checklist. (The per-lesson "world consequence" line it used to share this block with was
+     removed in Phase 10A.3R, along with its .lh-world rules.) */
   .lh-econ { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0 0 10px; }
   .lh-econ .lh-gold { font-size: 15px; font-weight: 800; color: #b45309; }
   .lh-econ .lh-rw { font-size: 12px; color: #64748b; font-weight: 600; }
-  .lh-world { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 600; color: #7c3aed;
-              white-space: normal; line-height: 1.35; }
-  .lh-world .lh-w-ok { color: #15803d; }
   /* Phase 5G — Owned Achievement Cabinet */
   .ach-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
               margin: 6px 0 14px; }
@@ -4673,21 +4671,6 @@
     }
     return shuffle(qs);
   }
-  async function mapPopSum(spec) {
-    if (!spec || !spec.file) return 500;
-    try {
-      const txt = await fetchMap(spec.file);
-      const doc = new DOMParser().parseFromString(txt, "image/svg+xml");
-      const isRegion = spec.region || ((id, p) => !!p.getAttribute("aria-label"));
-      let sum = 0;
-      Array.prototype.forEach.call(doc.querySelectorAll("path"), p => {
-        if (!isRegion(p.id, p)) return;
-        const name = spec.names ? (spec.names[p.id] || p.id) : (p.getAttribute("aria-label") || p.id);
-        sum += popForName(name);
-      });
-      return sum || 500;
-    } catch (e) { return 500; }
-  }
   // Boss 對戰 = 領土佔領的兵種 4v4 對戰，唯一差別：每回合「誰出手」由答題結果決定
   //   答對 → 你的前排攻擊 Boss 前排；答錯 → Boss 前排攻擊你的前排。傷害公式/克制/兵力係數與 runBattle 相同。
   function makeBossSquad(budget) {
@@ -4717,7 +4700,7 @@
     document.getElementById("heroHpFill").style.width = (exam.pMax ? Math.max(0, pAlive / exam.pMax * 100) : 0) + "%";
   }
   async function startLevelExam(levelIdx) {
-    const lv = manifest.levels[levelIdx], next = manifest.levels[levelIdx + 1], spec = GEO_MAPS[lv.id];
+    const lv = manifest.levels[levelIdx], next = manifest.levels[levelIdx + 1];
     clearGame();
     document.getElementById("bossWrap").classList.remove("hidden");
     document.getElementById("gameArea").classList.add("hidden");
@@ -4731,7 +4714,7 @@
     showScreen(screenBattle);
     await new Promise(res => loadEconomy(res));
     const T = poolTotal();   // 你出戰的兵力（從兵力池扣，分兵種）
-    const B = await mapPopSum(spec);                         // Boss 兵力總量 = 地圖人口總和
+    const B = bossArmyFor(lv.id);      // Boss 兵力總量：課程難度值，與遊戲地圖無關
     const pool = await buildExamPool(lv);
     if (pool.length < 1) { document.getElementById("battleLog").textContent = "No questions for this level."; return; }
     const bossSquad = makeBossSquad(B);
@@ -4933,10 +4916,13 @@
 
   // ===== 遊戲大廳：建立自己的房間(隨機 hash 代碼)，或加入別人的房間 =====
   //   地圖與課程是 1:1 對應(Pre-A1→台灣、A1→中國、A2→世界)；房間就照該地圖/課程競爭。
-  const ROOM_MAPS = [["Pre-A1", "🇹🇼 Taiwan 台灣", "Pre-A1"], ["A1", "🇨🇳 China 中國", "A1"], ["A2", "🌍 World 世界", "A2"]];
-  const MAP_LABELS = {}; ROOM_MAPS.forEach(m => MAP_LABELS[m[0]] = m[1]);
-  const COURSE_LABELS = {}; ROOM_MAPS.forEach(m => COURSE_LABELS[m[0]] = m[2]);
-  function mapLabel(id) { return MAP_LABELS[id] || id || "?"; }
+  // Phase 10A.3: a room chooses a COURSE, never a geography. This list used to read
+  // "Pre-A1 -> 🇹🇼 Taiwan", "A1 -> 🇨🇳 China", "A2 -> 🌍 World", which implied the curriculum picked
+  // the game world; it never does, and since Phase 10A it controls nothing at all. The room's `map`
+  // field is retained as compatibility metadata carrying the course id.
+  const ROOM_COURSES = ["Pre-A1", "A1", "A2"];
+  const WORLD_MAP_LABEL = "🌍 World 世界";
+  function mapLabel() { return WORLD_MAP_LABEL; }   // the game map is always World
   const ROOM_MAX_PLAYERS = 8;                            // 房間總人數(含 AI)上限，對齊後端
   // 起始資源三檔(對齊後端 RES_PRESETS)：pop / gold / troops
   const RES_KEYS = ["low", "medium", "high"];
@@ -5004,8 +4990,7 @@
   function renderMyRoom(box, r) {
     r = r || {};
     const started = !!r.started;
-    const mapOpts = ROOM_MAPS.map(m => '<option value="' + m[0] + '"' + ((r.map || "Pre-A1") === m[0] ? " selected" : "") + '>' + m[1] + '</option>').join("");
-    const courseOpts = ROOM_MAPS.map(m => '<option value="' + m[0] + '"' + ((r.map || "Pre-A1") === m[0] ? " selected" : "") + '>' + m[2] + '</option>').join("");
+    const courseOpts = ROOM_COURSES.map(c => '<option value="' + c + '"' + ((r.map || "Pre-A1") === c ? " selected" : "") + '>' + c + '</option>').join("");
     box.innerHTML = '<div class="room-setup">' +
       '<div class="room-h">🎮 Your Room <span class="room-code-chip">🎟️ ' + escapeHtml(r.code || "") + '</span> ' +
         (started ? '<span class="room-live">● LIVE · ' + (r.players || 0) + '/' + (r.maxStudents || 0) + ' · ' + escapeHtml(r.map || "") + '</span>' : '<span class="room-off">setting up…</span>') + '</div>' +
@@ -5014,23 +4999,19 @@
       '<label># AIs<input type="number" id="rmNai" min="0" max="' + (ROOM_MAX_PLAYERS - 1) + '" value="' + (r.ais != null ? r.ais : 1) + '"></label>' +
       '<label>AI difficulty<select id="rmDiff">' + ["easy", "normal", "hard"].map(v => '<option value="' + v + '"' + ((r.difficulty || "normal") === v ? " selected" : "") + '>' + v.charAt(0).toUpperCase() + v.slice(1) + '</option>').join("") + '</select></label>' +
       '<label>Resources<select id="rmRes">' + RES_KEYS.map(k => '<option value="' + k + '"' + ((r.resources || "medium") === k ? " selected" : "") + '>' + resLabel(k) + '</option>').join("") + '</select></label>' +
-      '<label>Map<select id="rmMap">' + mapOpts + '</select></label>' +
       '<label>Course<select id="rmCourse">' + courseOpts + '</select></label>' +
       '</div>' +
       '<div class="acct-btns"><button id="rmStart" class="dict-play">' + (started ? '🔄 Restart / apply' : '🚀 Start') + '</button>' +
         (started ? ' <button id="rmEnter" style="background:#16a34a;color:#fff">▶ Enter</button> <button id="rmStop" class="back-btn">■ Stop</button>' : '') + '</div>' +
       '<p class="op-hint">Total players includes the AIs (human seats = total − AIs). Starting resets this room\'s world.</p></div>';
-    // 地圖 ↔ 課程 連動（1:1）
-    const mapSel = box.querySelector("#rmMap"), courseSel = box.querySelector("#rmCourse");
-    mapSel.addEventListener("change", () => { courseSel.value = mapSel.value; });
-    courseSel.addEventListener("change", () => { mapSel.value = courseSel.value; });
+    // Phase 10A.3: there is no map picker to keep in sync — the course stands alone.
     box.querySelector("#rmStart").addEventListener("click", function () {
       const cap = Math.max(1, Math.min(ROOM_MAX_PLAYERS, parseInt(box.querySelector("#rmCap").value, 10) || ROOM_MAX_PLAYERS));
       const body = {
         capacity: cap,
         aiCount: Math.max(0, Math.min(cap - 1, parseInt(box.querySelector("#rmNai").value, 10) || 0)),
         difficulty: box.querySelector("#rmDiff").value,
-        map: box.querySelector("#rmMap").value,
+        map: box.querySelector("#rmCourse").value,   // compatibility field: carries the COURSE id
         resources: box.querySelector("#rmRes").value
       };
       if (started && !confirm("Restart this room? It RESETS everyone's territory & resources.")) return;
@@ -5266,9 +5247,8 @@
     if (!file) return selLevelIdx;
     const levels = manifest ? manifest.levels : [];
     for (let k = 0; k < levels.length; k++) {
-      const g = GEO_MAPS[levels[k].id]; if (!g) continue;
-      if (g.file === file) return k;
-      if (g.drill && Object.keys(g.drill).some(d => g.drill[d].file === file)) return k;
+      const g = GAME_MAPS[GAME_WORLD_MAP_ID];              // one playable map
+      if (g && g.file === file) return k;
     }
     return selLevelIdx;
   }
@@ -5288,29 +5268,32 @@
   // ===== Phase 10A — a game map is identified by its GAME map id, never by a curriculum level =====
   // These specs used to be keyed by CEFR level, which is what made "which map am I playing on?" a
   // learning question. They are now keyed by the same map ids world-data/maps.json uses, and the
-  // per-level table below is nothing more than "which map does the level grid open" — curriculum
-  // NAVIGATION, never authority. Same spec objects, same geography, no new maps.
-  // drill: { 地區id: 子地圖 } → 該地區變「容器」，點進去看子地圖（例：台北市 → 12 行政區）
+  // ===== Phase 10A.3 — ONE conquest map =====
+  // GAME_MAPS is the set of PLAYABLE surfaces. There is one: World. Learning is curriculum only and
+  // selects no geography, so nothing here is keyed by a course. The Taiwan/China/Taipei datasets stay
+  // in world-data as dormant data — there is deliberately no gameplay route into them, and the old
+  // Taiwan->Taipei drill container is gone with the rest.
   // grouped:true → 分洲兩層下鑽（世界地圖）
   const GAME_MAPS = {
-    "taiwan": { file: "maps/taiwan.svg", label: "Taiwan 台灣 🗺️",
-                drill: { "taipei-city": { file: "maps/taiwan-taipei.svg", label: "Taipei 台北 🗺️", viewBox: "0 0 350 461" } } },
-    "china":  { file: "maps/china.svg",  label: "China 中國 🗺️", viewBox: "0 0 1000 850", region: id => /^p[A-Z]{2}(_.*)?$/.test(id),
-                names: { pBJ:"Beijing 北京", pTJ:"Tianjin 天津", pSH:"Shanghai 上海", pCQ:"Chongqing 重慶",
-                  pHE:"Hebei 河北", pSX:"Shanxi 山西", pNM:"Inner Mongolia 內蒙古", pLN:"Liaoning 遼寧", pJL:"Jilin 吉林",
-                  pHJ:"Heilongjiang 黑龍江", pJS:"Jiangsu 江蘇", pZJ:"Zhejiang 浙江", pAH:"Anhui 安徽", pFJ:"Fujian 福建",
-                  pJX:"Jiangxi 江西", pSD:"Shandong 山東", pHA:"Henan 河南", pHB:"Hubei 湖北", pHN:"Hunan 湖南",
-                  pGD:"Guangdong 廣東", pGX:"Guangxi 廣西", pHI:"Hainan 海南", pSC:"Sichuan 四川", pGZ:"Guizhou 貴州",
-                  pYN:"Yunnan 雲南", pXZ:"Tibet 西藏", pSN:"Shaanxi 陝西", pGS:"Gansu 甘肅", pQH:"Qinghai 青海",
-                  pNX:"Ningxia 寧夏", pXJ:"Xinjiang 新疆", pHK:"Hong Kong 香港", pMO:"Macau 澳門", pTW:"Taiwan 台灣" } },
     "world":  { file: "maps/world.svg",  label: "World 世界 🗺️", grouped: true }
   };
-  // The game's global map surface. Game data, not curriculum: "Go to Map" resolves through this.
   const GAME_WORLD_MAP_ID = "world";
-  // Curriculum NAVIGATION only — which game map the level grid opens for a level. It grants no
-  // eligibility: the server decides claims from the canonical catalog alone (Phase 10A).
-  const GEO_MAPS = { "Pre-A1": GAME_MAPS.taiwan, "A1": GAME_MAPS.china,
-                     "A2": GAME_MAPS.world, "B1": GAME_MAPS.world };
+  function worldMapSpec() { return GAME_MAPS[GAME_WORLD_MAP_ID]; }
+  // Phase 10A.3R — checkpoint boss difficulty is a CURRICULUM value, never geography.
+  // It used to be the population sum of a per-level GAME map (Pre-A1 -> taiwan.svg, A1 -> china.svg,
+  // A2/B1 -> world.svg), which made a learning checkpoint depend on the game world and was the last
+  // course->map association in the client. These are those exact sums, measured immediately before
+  // the change, so every level's boss is preserved to the unit:
+  //   Pre-A1 2468 · A1 9677 · A2 45878 · B1 45878
+  // A new level just adds a number here; no map is consulted.
+  const BOSS_ARMY_BY_LEVEL = { "Pre-A1": 2468, "A1": 9677, "A2": 45878, "B1": 45878 };
+  // A level with no entry above still gets a real boss; 500 is the fallback the retired
+  // population-sum helper used, so an unlisted level behaves exactly as it did before.
+  const BOSS_ARMY_DEFAULT = 500;
+  function bossArmyFor(levelId) {
+    const v = BOSS_ARMY_BY_LEVEL[levelId];
+    return (typeof v === "number" && v > 0) ? v : BOSS_ARMY_DEFAULT;
+  }
   // 地形風景（山🏔️/森林🌲），依現實位置近似擺放。座標為 viewBox 的比例(0~1)，畫成裝飾層(不吃點擊)。
   const TERRAIN = {
     "maps/taiwan.svg": {   // 台灣（依 refer/taiwan.jpg）：中央山脈沿島脊
@@ -6277,10 +6260,12 @@
   // Lessons are listed in the SERVER's own key order (the registry's authoring order), grouped by the
   // server's campaigns block. No client-side ordering rule, and nothing Taipei-specific.
   // ===== Phase 9H — "Campaign" or "Course", decided from the registry, never from a hard-coded id ==
-  // A course whose lessons GRANT QUALIFICATIONS is a campaign: mastering it unlocks territory on the
-  // world map. Exactly one course qualifies today — Taipei, whose 4 lessons carry all 4 qualifications
-  // and which is the only course with a course-level reward policy (campaign_trophy). Every other
-  // course unlocks nothing in the world, so "campaign" overstated an ordinary reading course.
+  // A course whose lessons GRANT QUALIFICATIONS is a campaign: finishing it awards a credential of
+  // its own, on top of the per-lesson mastery every course gives. Exactly one course qualifies today
+  // — Taipei, whose 4 lessons carry all 4 qualifications and which is the only course with a
+  // course-level reward policy (campaign_trophy). Every other course awards no credential, so
+  // "campaign" overstated an ordinary reading course. (Phase 10A.3R: a qualification is an
+  // ACHIEVEMENT and no longer unlocks territory, so the label rests on the award, not on conquest.)
   // Derived from `grants`, which the public registry view already sends, so a second
   // qualification-bearing course needs no change here and no course id is named.
   function courseIsCampaign(cid) {
@@ -6402,8 +6387,7 @@
         (m.key === "mastered" ? " is-done" : "") + (rev ? " is-review" : "") +
         '" data-home-lesson="' + escapeHtml(x.lid) + '">' +
         '<span class="ic">' + (rev ? "\u26a0" : m.icon) + '</span>' +
-        '<span class="nm">' + escapeHtml(String(x.row.title || x.lid)) +
-          lessonWorldLineHTML(x.lid) + '</span>' +
+        '<span class="nm">' + escapeHtml(String(x.row.title || x.lid)) + '</span>' +
         '<span class="st">' + escapeHtml(state) + ' \u00b7 ' + have + ' / ' + req + '</span></button>';
     }));
     out += homeAchievementsHTML();
@@ -6412,48 +6396,14 @@
   function contentPathForLessonId(lid) {
     return contentPathForLesson(lid);
   }
-  // ===== Phase 7E.2 — what does this lesson unlock in the world? =====
-  // DISPLAY ONLY. This reverses the ONE authoritative relationship that already exists —
-  //   territory.requirements.attackQualificationIds -> qualification -> studyTarget.lessonId
-  // — and invents no second qualification engine, no new ownership and no new ordering. Catalog
-  // order is designer-owned and preserved. Nothing here authorises anything: the server still
-  // decides every claim (Phase 7D-0).
-  function territoriesForLesson(lid) {
-    const out = [], terr = (TERR_CATALOG && TERR_CATALOG.terrById) || {};
-    Object.keys(terr).forEach(key => {
-      const reqs = territoryRequirements(key);
-      if (!reqs.length) return;
-      const ours = reqs.filter(q => { const st = studyTargetFor(q); return st && st.lessonId === lid; });
-      if (!ours.length) return;
-      out.push({
-        key: key,
-        name: regionDisplayName(key),
-        total: reqs.length,                                   // how many requirements it has
-        held: ours.every(q => myQualifications.has(q)),        // has THIS lesson's part been earned?
-        otherMissing: reqs.filter(q => ours.indexOf(q) < 0 && !myQualifications.has(q)).length,
-      });
-    });
-    return out;
-  }
-  // One compact, honest line. "Unlocks" only when this lesson's qualification is the WHOLE gate;
-  // a territory that needs more than this lesson says "Helps unlock", and once earned it reports
-  // what is still outstanding rather than implying the territory is open.
-  function lessonWorldLineHTML(lid) {
-    const ts = territoriesForLesson(lid);
-    if (!ts.length) return "";
-    const part = ts.map(x => {
-      if (x.held) {
-        return x.otherMissing
-          ? '<span class="lh-w-ok">✓ earned</span> · ' + escapeHtml(x.name) +
-            ' still needs ' + x.otherMissing
-          : '<span class="lh-w-ok">✓ ' + escapeHtml(x.name) + ' unlocked</span>';
-      }
-      return (x.total > 1 ? "Helps unlock " : "Unlocks ") + escapeHtml(x.name);
-    });
-    const shown = part.slice(0, 2).join(" · ") +
-                  (part.length > 2 ? " · +" + (part.length - 2) + " more" : "");
-    return '<span class="lh-world">🗺 ' + shown + '</span>';
-  }
+  // ===== Phase 7E.2 "what does this lesson unlock in the world?" — RETIRED in Phase 10A.3R =====
+  // territoriesForLesson()/lessonWorldLineHTML() rendered a "🗺 Unlocks <region>" line on every
+  // Learning Home lesson card, reversing territory.requirements.attackQualificationIds back to the
+  // lesson that granted them. It was accurate when learning gated conquest. It is not any more:
+  // learning grants achievements and Gold and unlocks NO ground, and the only requirement-bearing
+  // territories left sit on a dormant map that cannot be played at all — so the line promised the
+  // player something twice untrue. Removed rather than reworded; a lesson's own reward is shown by
+  // the mastery/achievement UI, which is authoritative.
   // The map altitude Learning Home should open: the map CONTAINING this campaign's territories,
   // found through the same reverse mapping. No hard-coded campaign, no hard-coded map.
   // Phase 10A: the GLOBAL game entry is the game's world map, resolved from GAME data alone.
@@ -6482,21 +6432,10 @@
     if (typeof c === "string") return { to: c };
     return c;
   }
-  // Render the geo map that actually CONTAINS this territory — the level's top map, or the
-  // drill-down sub-map it lives in. Derived from world-data (TERR_CATALOG + GEO_MAPS.drill), so a
-  // future campaign on another map needs no code change here.
+  // Phase 10A.3: there is one playable map, so a contextual return resolves to it. It keeps the
+  // caller's level context (the checkpoint boss lives on this screen) but no longer drills anywhere.
   function showMapForTerritory(key) {
-    const i = levelIdxForKey(key);
-    const lv = manifest && manifest.levels[i], spec = lv && GEO_MAPS[lv.id];
-    if (!spec) { selectLevel(i); return; }
-    renderGeoMap(i, spec);                       // screen + banner + economy, then the top map
-    const s = String(key);
-    const mapId = s.indexOf(":") >= 0 ? s.split(":")[0] : null;
-    const file = mapId && TERR_CATALOG.maps[mapId] ? TERR_CATALOG.maps[mapId].svgFile : null;
-    if (!file || file === spec.file || !spec.drill) return;
-    const sub = Object.keys(spec.drill).map(d => spec.drill[d])
-                      .filter(x => x && x.file === file)[0];
-    if (sub) drawGeo(sub, () => renderGeoMap(i, spec), i, lv);   // the existing drill renderer
+    renderGeoMap(levelIdxForKey(key), worldMapSpec());
   }
   // Put the player back exactly where they were: the right map, then the SAME region modal, drawn
   // by the normal renderer so it shows whatever the requirement state now is.
@@ -6790,13 +6729,16 @@
       openRegion(key, regionDisplayName(key), ct.gamePopulation || 0, levelIdxForKey(key));
     };
   }
-  function territoryRequirements(targetKey) {   // designer-owned learning gate from the catalog (advisory copy)
+  // Designer-authored requirement metadata from the catalog. Phase 10A.3R: DISPLAY ONLY and empty
+  // for every active-map territory — it is not a gate on either side of the wire.
+  function territoryRequirements(targetKey) {
     const ct = TERR_CATALOG.terrById[targetKey];
     return (ct && ct.requirements && ct.requirements.attackQualificationIds) || [];
   }
   function missingQualifications(targetKey) { return territoryRequirements(targetKey).filter(q => !myQualifications.has(q)); }
   // 可重用的「需求清單」renderer：0 個需求 → 回 false(照常顯示攻擊 UI)；1 或多個 → 逐條顯示 ✓/✗ 與各自的學習入口。
-  // ALL 語意：任一未取得即上鎖。純顯示用途，真正授權一律在後端 can_attack。
+  // Phase 10A.3R：DORMANT。作用中的地圖上沒有任何領地宣告 attackQualificationIds，所以這裡對每個玩家
+  // 到得了的領地都直接回 false；後端也已經不做資格判定。保留(未被觸發)是因為它只是顯示層。
   function renderRequirementPanel(terr, targetKey, reopen) {
     const reqs = territoryRequirements(targetKey), missing = missingQualifications(targetKey);
     if (!reqs.length || !missing.length) return false;
@@ -6849,11 +6791,14 @@
           + (j.lessonRewarded && j.lessonRewardAmount
              ? " ⭐ Lesson mastered 🪙 +" + j.lessonRewardAmount + " gold" : "");
         showLockedMsg("✅ Learned: " + names + paid);
-        // Phase 7E.1: the region became takeable the moment the SERVER granted the qualification —
-        // not when the whole lesson averages >= 80%. `j.qualifications` is the server's own grant
-        // list (mirrored into myQualifications above); nothing here is inferred from score, pct,
-        // passCount, mastery or reward amount. Learning UNLOCKS conquest; it never performs it, so
-        // this only navigates — the player still chooses troops and the server still authorises.
+        // Phase 7E.1 navigated straight back to a region the new qualification had just unlocked.
+        // DORMANT since Phase 10A.3R: learning unlocks no ground, and no territory on the active map
+        // declares a requirement, so territoryRequirements() is empty for every reachable region and
+        // this branch cannot be taken. It is left in place, unreached, because it only ever
+        // NAVIGATED — it never authorised anything — and it would become correct again the day a
+        // playable territory declares a requirement. Everything it reads is server state:
+        // `j.qualifications` is the server's own grant list, never inferred from score, pct,
+        // passCount, mastery or reward amount.
         const rc = returnCtx();
         if (rc.to === "region" && rc.key && territoryRequirements(rc.key).length
             && !missingQualifications(rc.key).length) {
@@ -6982,19 +6927,16 @@
       renderAttackPanel(terr, key, name, h, function () { openRegion(key, name, pop, i); });
       return;
     }
-    // 無主：有學習門檻就先修完那一課，沒門檻就直接出兵佔領。
+    // 無主：直接出兵佔領(Phase 10A.3R 之後沒有學習門檻)。
     const plan = occupyLessonPlan(key);
-    // Learning gates ONLY territories that declare requirements.
-    //   • GATED, all requirements held (`plan.missing === 0`) — occupy directly. The credential is the
-    //     qualification, earned authoritatively and enforced by the server on /api/territory/claim
-    //     (Phase 7D-0), so re-passing the same lesson proved nothing, granted nothing and cost 20
-    //     energy (Phase 7D removed that replay).
-    //   • GATED, something missing — study the lesson that grants the first missing qualification.
-    //   • UNGATED — occupy directly (Phase 7F.2). There is no prerequisite to satisfy. The old client
-    //     counter (`passCount > pending.base`) invented one the server never enforced, so an
-    //     unrestricted region asked the player to pass an unrelated random lesson for nothing.
+    // Phase 10A.3R: `gated` is FALSE for every territory the player can reach — no active-map
+    // territory declares attackQualificationIds, and the server enforces no qualification on
+    // /api/territory/claim either. So the only live path below is "occupy directly": choose troops
+    // and let the server authorise. The gated branches are kept but unreached; they would become
+    // correct again only if a playable territory were given a requirement AND the server were given
+    // a gate back, which is deliberately not the case.
     // Client-side convenience only: the server still decides, and a client that is wrong here simply
-    // gets a truthful 403 from claimTroops().
+    // gets a truthful refusal from claimTroops().
     const gated = territoryRequirements(key).length > 0;
     const canOccupy = !plan.error && (!gated || plan.missing === 0);
     if (canOccupy) {
@@ -7042,17 +6984,12 @@
     });
   }
 
-  // Phase 9G: every level in lessons.json has a GEO_MAPS entry, so this always delegates to the geo
-  // engine. It used to fall through to a 167-line "board map" — a snaking path of lesson nodes with
-  // a hero token, whose lesson node opened openOutpost() — a SECOND way into a lesson that competed
-  // with Learning Home. That branch was unreachable for every level that exists (proven at runtime:
-  // 0 .map-node created for Pre-A1/A1/A2/B1), so it was removed rather than left as a second
-  // lesson-entry architecture. A future level added WITHOUT a GEO_MAPS entry must add one; this
-  // deliberately leaves the current screen alone rather than rendering a half-built board.
+  // Phase 9G removed a 167-line unreachable "board map" fallback here. Phase 10A.3 removes the last
+  // course->country association: every level opens the SAME single playable map. The level index is
+  // still passed because the checkpoint boss is hosted on this screen, not because it picks geography.
   function selectLevel(i) {
     syncMapBackLabel();
-    const lv0 = manifest.levels[i];
-    if (lv0 && GEO_MAPS[lv0.id]) renderGeoMap(i, GEO_MAPS[lv0.id]);
+    renderGeoMap(i, worldMapSpec());
   }
 
   // ===== 占地盤：據點面板（讀書 / 插旗守護 / 用卡片攻打）=====
@@ -7173,11 +7110,13 @@
     fetch(withRoom("/api/territory/claim?token=" + encodeURIComponent(t)), {
       method: "POST", body: JSON.stringify({ file: file, avatar: avatarOf(userName), pop: pop, troops: troops })
     }).then(r => {
-        // Phase 7D-0: the server now refuses a gated claim with 403 + qualification_required. That is
-        // NOT an expired token, so it must not produce the "log out and back in" advice below.
+        // Phase 7D-0 added a 403 + qualification_required branch here. Phase 10A.3R deleted that
+        // reason from the server, so the only 403 a claim can now return is `held` — someone else
+        // already owns the territory. Reporting it as an expired login would be untrue, so it keeps
+        // its own message.
         if (r.status === 403) {
           return r.json().catch(() => ({})).then(j =>
-            (j && j.reason === "qualification_required") ? { __gated: j } : { __auth: true });
+            (j && j.reason === "held") ? { __held: j } : { __auth: true });
         }
         if (r.status === 401) return { __auth: true };   // token 失效（server 重啟會清空）
         // 400 carries three distinct meanings, each with its own truthful message. The generic
@@ -7215,11 +7154,9 @@
           if (cb) cb(); return;
         }
         if (j && j.__err) { alert("Deploy failed: " + j.__err); if (cb) cb(); return; }
-        if (j && j.__gated) {
-          // Truthful and minimal: name the requirement, send them to the lesson that grants it.
-          const names = (j.__gated.missingQualificationIds || []).map(qualTitle).join(", ");
-          alert("🔒 Learning requirement not met yet.\n\nYou still need: " + (names || "a learning requirement") +
-                "\n\nPass that lesson first, then occupy this region.");
+        if (j && j.__held) {
+          alert("🚩 Someone already holds this territory.\n\nAttack it from one of your adjacent " +
+                "territories instead. Nothing was changed.");
           if (cb) cb(); return;
         }
         if (j && j.ok) { loadTerritory(() => { if (cb) cb(); }); }

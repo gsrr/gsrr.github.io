@@ -70,6 +70,7 @@ def main():
     per_map = {}
     all_terr_ids = set()
     schema_versions = set()
+    global_adj = {}          # Phase 10A.2.1: territoryId -> set(neighbourIds), across every map
 
     for m in maps:
         svg_ids = svg_regions(m["id"], m["svgFile"])
@@ -110,6 +111,7 @@ def main():
                 err("%s: duplicate regionCode '%s' within map %s" % (tid, rc, m["id"]))
             region_codes.add(rc)
             adj = t.get("adjacentTerritoryIds") or []
+            global_adj[tid] = set(adj)
             if adj != sorted(adj):
                 err("%s: adjacentTerritoryIds must be sorted deterministically" % tid)
             if len(adj) != len(set(adj)):
@@ -119,8 +121,15 @@ def main():
                     err("%s: self-adjacency" % tid)
                 if "#" in nb or "/" in nb:
                     err("%s: non-canonical neighbor id %r (legacy/SVG key)" % (tid, nb))
-                if ":" not in nb or not nb.startswith(m["id"] + ":"):
-                    err("%s: neighbor %r is not a same-map canonical id" % (tid, nb))
+                if ":" not in nb:
+                    err("%s: neighbor %r is not a canonical territory id" % (tid, nb))
+                # Phase 10A.2.1: a neighbour NO LONGER has to live on the declaring map. Conquest
+                # adjacency is a graph over globally unique territory ids; the navigation hierarchy
+                # (maps) is a separate graph. A land border that happens to cross a map boundary --
+                # e.g. taiwan:new-taipei-city <-> taipei:beitou -- is legitimate. Existence and
+                # symmetry are therefore checked once, GLOBALLY, after every map is loaded.
+                if nb.split(":", 1)[0] not in map_by_id:
+                    err("%s: neighbor %r names an unknown map" % (tid, nb))
             if t.get("terrainType") is not None or t.get("settlementType") is not None:
                 err("%s: terrain/settlement must be null in this phase" % tid)
             # Phase 3A: optional designer-owned learning gate. Missing == unrestricted (fine).
@@ -168,15 +177,11 @@ def main():
             err("map %s: %d rendered SVG regions missing from catalog: %s"
                 % (m["id"], len(missing), ", ".join(sorted(missing))[:200]))
 
-        # ---- adjacency graph checks (exists, symmetry, components) ----
+        # ---- adjacency components (per map, informational) ----
+        # Existence and symmetry moved to the GLOBAL pass after this loop (Phase 10A.2.1): a
+        # cross-map neighbour is legitimate and cannot be resolved while only one map is in scope.
         ids = {t["id"] for t in terrs}
         adjm = {t["id"]: set(t.get("adjacentTerritoryIds") or []) for t in terrs}
-        for tid, ns in adjm.items():
-            for nb in ns:
-                if nb not in ids:
-                    err("%s: neighbor %r does not exist in map %s" % (tid, nb, m["id"]))
-                elif tid not in adjm.get(nb, set()):
-                    err("adjacency not symmetric: %s -> %s but not back" % (tid, nb))
         # connected components + isolated (INFO/warning, not error — islands are legitimate)
         seen, comps = set(), 0
         for t in ids:
@@ -197,6 +202,23 @@ def main():
 
     if len(schema_versions) > 1:
         err("mixed schema versions across territories: %s" % sorted(schema_versions))
+    # ---- Phase 10A.2.1: GLOBAL adjacency graph checks ----
+    # Conquest adjacency is a graph over globally unique territory ids. Checking existence and
+    # symmetry once, across every map, is what makes a cross-map land border expressible; it is
+    # strictly stronger than the old per-map form, which could only ever see one map at a time.
+    for tid, ns in sorted(global_adj.items()):
+        for nb in sorted(ns):
+            if nb not in global_adj:
+                err("%s: neighbor %r does not exist in any map" % (tid, nb))
+            elif tid not in global_adj[nb]:
+                err("adjacency not symmetric: %s -> %s but not back" % (tid, nb))
+    _cross = sorted((a, b) for a, ns in global_adj.items() for b in ns
+                    if b in global_adj and b.split(":", 1)[0] != a.split(":", 1)[0])
+    if _cross:
+        print("  info: %d cross-map adjacency edge-end(s): %s"
+              % (len(_cross), ", ".join("%s->%s" % e for e in _cross[:6])))
+
+    # ---- cross-map / summary ----
     print("Catalog v%s schema v%s: %d maps, %d territories (%s)"
           % (catalog_meta.get("catalogVersion", "?"), cat_schema, len(maps), total,
              ", ".join("%s=%d" % (k, per_map.get(k, 0)) for k in map_ids)))

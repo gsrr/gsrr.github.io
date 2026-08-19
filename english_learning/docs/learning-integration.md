@@ -130,7 +130,7 @@ The pre-existing whole-lesson rule is untouched and still lives in the client
 |---|---|---|---|
 | Whole-lesson pass (green light, occupy-unlock passcnt) | client (average ≥ 80%) | `economy.json → passcnt` | client-asserted (unchanged) |
 | Activity completion (`quiz3`) | **server** (re-grades against the lesson JSON) | `progress → learning.activityCompletions` | **server-verified** |
-| Qualification (conquest gate) | **server** (granted only by the above) | `progress → learning.qualifications` | **server-authoritative** |
+| Qualification (achievement) | **server** (granted only by the above) | `progress → learning.qualifications` | **server-authoritative** |
 
 A future authoritative *whole-lesson* completion can be added as a separate key
 (e.g. `learning.lessonCompletions`) **without changing the meaning of any record written today**.
@@ -229,7 +229,15 @@ changes; `title` is the only thing that may change. `GET /api/learning/registry`
 
 The Game Domain (`game/conquest.py`) sees only opaque strings — no "english" special-casing.
 
-## 8. Attack-unlock end-to-end test result — PASS
+## 8. Attack-unlock end-to-end test result — PASS *(Phase 3A record; SUPERSEDED)*
+
+> **Superseded by Phase 10A.3R (2026-08).** Everything in this section and in the manual recipe that
+> follows it describes the learning-qualification gate as it behaved when it existed. It no longer
+> exists: `qualification_required` is not a possible reason, `can_attack()` ignores
+> `player_qualifications`, and the claim route reads no learning state. Taipei is also dormant under
+> Phase 10A.3, so its territories answer `400 inactive_map`. `tests/learning_gate_test.py` has been
+> migrated accordingly (now **19/19**), proving qualifications have ZERO effect rather than proving
+> the gate fires. Kept as the record of why the gate was built and how it was verified.
 
 `tests/learning_gate_test.py` — **17/17 pass** (pure gate + real HTTP against the real Taipei catalog):
 
@@ -482,14 +490,16 @@ three **independent** registry fields. Therefore:
 
 - A lesson can be **completable** and pay **both** learning rewards while granting **no
   qualification**. Completion, mastery and reward do NOT imply a world unlock.
-- A **qualification is an optional game/world consequence**, not a property of learning. Only
-  `world-data/territories/*.json` decides what a qualification unlocks, and it names qualification
+- A **qualification is an achievement**, not a property of learning and — since Phase 10A.3R — not a
+  game consequence either. `world-data/territories/*.json` still names qualification
   ids — never lesson ids.
 - A **CEFR course is not a game map.** `english.a1.core` is curriculum; the China map is a game
   board. They are keyed alike today only by the client's `GEO_MAPS` convention, which 9B does not
   touch and future migrations must not deepen.
 
-The four Taipei gates each grant a qualification because five Taipei territories are gated on them.
+The four Taipei gates each grant a qualification because five Taipei territories were gated on them.
+Phase 10A.3R retired conquest gating entirely and Phase 10A.3 made Taipei dormant, so those
+`attackQualificationIds` are now inert declared metadata and the qualifications are pure credentials.
 The A1/001 gate grants nothing, and that is the point: it is curriculum, not a gate.
 
 ## As-built
@@ -1116,6 +1126,12 @@ so the gate was removed outright rather than replaced by another table. `allowed
 `LEVEL_PRIMARY_MAP` and the `wrong_map` reason no longer exist. Measured after, the same matrix is
 uniform: taiwan, china **and** world are all claimable from one room, at every level value, and Taipei
 still answers `403 qualification_required` at every level value.
+
+> **Later change — Phase 10A.3 / 10A.3R.** That "uniform" row did not last: conquest was narrowed to
+> the single World map, so taiwan, china and taipei now answer `400 inactive_map` instead of being
+> claimable, and the qualification gate that produced Taipei's `403` was retired outright. The Phase
+> 10A conclusion still holds and is in fact stronger — a learning level decides nothing about the map
+> — but the map set is now a GAME decision (`allowed_game_maps()`), not "all catalog maps".
 
 ## Client
 

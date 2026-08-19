@@ -13,13 +13,14 @@ class AttackEligibility:
     """Structured result of can_attack(). Truthy iff the attack is allowed.
     `reason` is a stable machine string (see REASONS) or None when allowed — safe to expose to
     the frontend/UI and to assert on in tests. Never carries internal exception detail.
-    `missing_qualifications` is populated only for reason == 'qualification_required'."""
+    Phase 10A.3R retired `qualification_required`: Learning and Game are separate systems, so no
+    learning achievement is a Conquest prerequisite. `missing_qualifications` is retained as an
+    always-empty field purely so existing callers/serialisers keep working."""
     __slots__ = ("allowed", "reason", "missing_qualifications")
     REASONS = (
         "source_not_found", "target_not_found", "same_territory",
         "source_not_owned", "target_already_owned", "target_not_attackable",
         "not_adjacent", "invalid_squad", "insufficient_source_garrison",
-        "qualification_required",
     )
 
     def __init__(self, allowed, reason=None, missing_qualifications=None):
@@ -73,19 +74,21 @@ def _subtract_squad(garrison, squad):
 # `world` is any object exposing is_canonical(id), map_of(id), are_adjacent(a, b) — pass the
 # territory catalog. Adjacency comes ONLY from World Domain (world-data adjacentTerritoryIds); this
 # function never touches SVG geometry, map coordinates, or a duplicated adjacency table.
-# Phase 3A: the Learning/qualification gate is now active (last check). It is a PLAYER-state gate:
-# `player_qualifications` is the set of opaque qualification IDs the player holds; the target's
-# required IDs come from World Domain (world.attack_requirements). `require_qualifications=False`
-# bypasses ONLY this layer — used for AI (human learning does not apply to the AI) and any future
-# non-learning-gated caller. It never bypasses ownership/adjacency/garrison. Game Domain treats the
-# IDs as FULLY OPAQUE strings: it never parses, splits or classifies them, and nothing in game/ knows
-# what any of them certify or how one is earned — see the content-independence regression test.
+# Phase 3A added a Learning/qualification gate here; Phase 10A.3R RETIRED it. Eligibility is decided
+# by GAME state alone. `player_qualifications` and `require_qualifications` remain in the signature as
+# accepted-and-ignored parameters so every existing call site (including the AI's explicit bypass)
+# still works, and `missing_qualifications()` below survives as a pure REPORTING resolver with no
+# caller in the authority path. Game Domain still treats requirement IDs as FULLY OPAQUE strings: it
+# never parses, splits or classifies them, and nothing in game/ knows what any of them certify or how
+# one is earned — see the content-independence regression test.
 def missing_qualifications(world, territory_id, player_qualifications):
     """Required qualification IDs the player does NOT hold, for ONE territory. Never raises.
 
-    THE single qualification rule for taking a territory, by any route. Phase 3A wrote it inline in
-    can_attack(); Phase 7D-0 lifted it out unchanged so neutral CLAIM enforces the identical rule
-    from the identical world-data, instead of a second engine that could drift.
+    REPORTING ONLY since Phase 10A.3R. This answers "what does this territory still ask of me?" for
+    Learning-side reporting; it decides nothing. It used to be THE single rule for taking a
+    territory (inline in can_attack() from Phase 3A, lifted out in Phase 7D-0 so neutral CLAIM ran the
+    identical rule), and neither can_attack() nor the claim route calls it any more. It is kept, and
+    kept tested, because the requirement metadata it reads is still authored in world-data.
 
     ALL semantics (no OR groups): every required ID must be held. Junk entries (non-string/empty) are
     ignored rather than treated as unmeetable gates, and a duplicated requirement is reported once —
@@ -137,12 +140,11 @@ def can_attack(player_id, source_id, target_id, squad, world, territories,
     for ty, n in need.items():
         if avail.get(ty, 0) < n:
             return AttackEligibility(False, "insufficient_source_garrison")
-    # Phase 3A: learning-qualification gate (player state). ALL required IDs must be held.
-    # Missing/empty requirement list == unrestricted. Bypassed only when require_qualifications=False.
-    if require_qualifications:
-        missing = missing_qualifications(world, target_id, player_qualifications)
-        if missing:
-            return AttackEligibility(False, "qualification_required", missing)
+    # Phase 10A.3R: the learning-qualification gate that used to sit here is GONE. Attack eligibility
+    # is decided by GAME state only — identity, ownership, adjacency, garrison and squad. No
+    # learning achievement, credential or reward makes a territory reachable or unreachable.
+    # `player_qualifications` / `require_qualifications` are kept as accepted-and-ignored parameters
+    # so existing call sites (including the AI's explicit bypass) need no change.
     return AttackEligibility(True, None)
 
 

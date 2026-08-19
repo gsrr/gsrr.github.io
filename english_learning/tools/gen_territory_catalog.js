@@ -36,15 +36,28 @@ function loadAppData() {
   };
   const fn = name => { const i = html.indexOf("function " + name), s = html.indexOf("{", i); let d = 0, k = s; for (; k < html.length; k++) { if (html[k] === "{") d++; else if (html[k] === "}") { d--; if (!d) { k++; break; } } } return html.slice(i, k); };
   const sb = {};
-  const chinaLit = (() => { const sub = html.slice(html.indexOf('"A1":')); const i = sub.indexOf("names:"), s = sub.indexOf("{", i); let d = 0, k = s; for (; k < sub.length; k++) { if (sub[k] === "{") d++; else if (sub[k] === "}") { d--; if (!d) { k++; break; } } } return sub.slice(s, k); })();
+  // Phase 10A.3R.1: China province labels come from world-data, the curated source, NOT from
+  // index.html. This used to slice the client from `html.indexOf('"A1":')` to reach the `names:`
+  // table that lived inside the old GAME_MAPS["A1"] china spec. That anchor was never about China —
+  // it was a CEFR course key — so when Single-World consolidation removed the china spec the search
+  // silently landed on BOSS_ARMY_BY_LEVEL's "A1" and produced un-evaluable JS. Catalog generation
+  // must not depend on Learning course names or on any client map table.
+  const chinaNames = (() => {
+    const out = {};
+    try {
+      const rows = JSON.parse(fs.readFileSync(
+        path.join(OUT, "territories", "china.json"), "utf8"));
+      rows.forEach(t => { if (t.regionCode && t.displayName) out[t.regionCode] = t.displayName; });
+    } catch (e) { /* first-ever generation: labels fall back to the svg path id */ }
+    return out;
+  })();
   vm.runInNewContext(
     "POP_TABLE = " + lit("const POP_TABLE", "{") + ";\n" +
-    "CHINA_NAMES = " + chinaLit + ";\n" +
     "WORLD_CONTINENTS = " + lit("const WORLD_CONTINENTS", "[") + ";\n" +
     fn("popForName") + ";\n" +
-    "this.POP_TABLE=POP_TABLE;this.CHINA_NAMES=CHINA_NAMES;this.WORLD_CONTINENTS=WORLD_CONTINENTS;this.popForName=popForName;", sb);
+    "this.POP_TABLE=POP_TABLE;this.WORLD_CONTINENTS=WORLD_CONTINENTS;this.popForName=popForName;", sb);
   const codeCont = {}; sb.WORLD_CONTINENTS.forEach(c => c.codes.split(/\s+/).forEach(cd => { codeCont[cd] = c.key; }));
-  return { POP_TABLE: sb.POP_TABLE, CHINA_NAMES: sb.CHINA_NAMES, popForName: sb.popForName, codeCont };
+  return { POP_TABLE: sb.POP_TABLE, CHINA_NAMES: chinaNames, popForName: sb.popForName, codeCont };
 }
 const APP = loadAppData();
 const splitName = s => { const m = s.match(/[一-鿿].*$/); return { en: (s.replace(/[一-鿿].*$/, "").trim()) || s, zh: m ? m[0].trim() : null }; };

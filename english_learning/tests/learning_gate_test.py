@@ -68,20 +68,24 @@ def elig(target, quals=None, require=True, source="m:home", squad=SQUAD):
     return conquest.can_attack("ALICE", source, target, squad, WORLD, STORE,
                                player_qualifications=quals, require_qualifications=require)
 
-# no qualifications at all -> blocked, and the response names every missing id (in requirement order)
-e = elig("m:gated")
-assert not e and e.reason == "qualification_required", (e.allowed, e.reason)
-assert e.missing_qualifications == ["biology.cell.unit03", "chem.atoms.unit01"], e.missing_qualifications
-# PARTIAL qualification is still blocked, and only the genuinely missing id is reported
-e = elig("m:gated", {"biology.cell.unit03"})
-assert not e and e.missing_qualifications == ["chem.atoms.unit01"], e.missing_qualifications
-# holding ALL required ids -> allowed; extra unrelated ids are harmless
-assert elig("m:gated", {"biology.cell.unit03", "chem.atoms.unit01"}).allowed
-assert elig("m:gated", {"biology.cell.unit03", "chem.atoms.unit01", "unrelated.x"}).allowed
-# a territory with NO requirements is unrestricted for a player holding nothing
-e_open = elig("m:open")
-assert e_open.allowed and e_open.reason is None and e_open.missing_qualifications == []
-ok("gate: blocks with none/partial, allows with all, unrestricted target needs nothing, ids are opaque")
+# RETARGETED (Phase 10A.3R).
+#   OLD: a requirement-carrying target blocked with none/partial qualifications, named every missing
+#        id in requirement order, and allowed once ALL were held.
+#   WHY OBSOLETE: Learning has zero Conquest authority. A target's declared requirements are no
+#        longer consulted, so none of those verdicts can occur.
+#   NEW: a requirement-carrying target and a requirement-free one behave IDENTICALLY, and holding
+#        none / some / all / unrelated qualifications makes no difference to either.
+#   WHY NOT WEAKER: the old form pinned one gate's shape; this pins that the requirement metadata and
+#        the player's qualifications are both inert for Conquest — the property that keeps them apart.
+SETS = [None, {"biology.cell.unit03"}, {"biology.cell.unit03", "chem.atoms.unit01"},
+        {"biology.cell.unit03", "chem.atoms.unit01", "unrelated.x"}]
+for target in ("m:gated", "m:open"):
+    verdicts = {(elig(target, q).allowed, elig(target, q).reason) for q in SETS}
+    assert len(verdicts) == 1, (target, verdicts)
+    assert next(iter(verdicts))[0] is True, (target, verdicts)
+    assert elig(target).missing_qualifications == [], target
+ok("gate retired: a requirement-carrying target and a requirement-free one behave identically, and "
+   "none/partial/all/unrelated qualifications never change the verdict")
 
 # the gate is the LAST check — it never masks (or is masked by) the structural rules
 assert elig("m:gated", None, True, source="m:nope").reason == "source_not_found"
@@ -110,8 +114,9 @@ class BrokenWorld(FakeWorld):
 
 
 assert conquest.can_attack("ALICE", "m:home", "m:open", SQUAD, BrokenWorld(WORLD.adjacency, {}), STORE).allowed
-assert "qualification_required" in conquest.AttackEligibility.REASONS
-ok("gate robustness: a raising attack_requirements degrades to unrestricted, reason string is stable")
+assert "qualification_required" not in conquest.AttackEligibility.REASONS,     "the retired learning gate must not reappear as an eligibility reason"
+ok("robustness: a raising attack_requirements is harmless because requirements are never consulted, "
+   "and qualification_required is no longer a possible reason")
 
 # real catalog wiring: the designer-owned Taipei requirement is actually readable by the Game Domain
 import territory_catalog  # noqa: E402
@@ -230,21 +235,37 @@ for leak in ("PASS_GOLD", "rewardPolicy", "graderType", "10000"):
     assert leak not in blob, "the public view must not leak reward amounts or grader internals: " + leak
 ok("E2E registry: identity + title + studyTarget published; no answer keys, no reward/grader internals")
 
-# --- LOCKED: no qualification -> attack on taipei:daan refused, nothing changes ---
+# --- RETARGETED: the E2E gate is gone; taipei is now a DORMANT map, refused on game grounds ---
+#   OLD: attacking taipei:daan with no qualification gave 403 qualification_required + missing ids.
+#   WHY OBSOLETE: no learning gate exists, and taipei is not the active conquest map at all.
+#   NEW: the request is refused as inactive_map, and the refusal is still atomic.
+#   WHY NOT WEAKER: it keeps the atomicity guarantee (no owner change, no gold change, source
+#        garrison untouched) and additionally pins the single-active-map rule.
 slice_state()
 g0 = gold()
 code, body = atk("taipei:daan")
-assert code == 403 and body["reason"] == "qualification_required", (code, body)
-assert body["missingQualificationIds"] == [QID], body
+assert code == 400 and body["reason"] == "inactive_map", (code, body)
+assert "missingQualificationIds" not in body, body
 assert owner_of("taipei:daan") == "BOB" and gold() == g0, "a refused attack is atomic: no owner, no gold change"
 server.set_room(CODE)
 assert server.load_territory_store()["taipei:wenshan"]["troops"][0]["hp"] == 300, "source garrison untouched"
-ok("E2E locked: taipei:daan -> 403 qualification_required + missing ids, zero state change")
+ok("E2E: a dormant-map attack is refused inactive_map with no qualification vocabulary, and the "
+   "refusal remains atomic")
 
-# --- SIDE-BY-SIDE control: the ungated neighbour is conquerable with the same (empty) learning state ---
-code, body = atk("taipei:nangang")
-assert code == 200 and body["attackerWon"] is True and owner_of("taipei:nangang") == "ALICE", (code, body)
-ok("E2E control: taipei:nangang (no requirement) conquers normally — the gate is targeted, not global")
+# --- RETARGETED control: the refusal is about the MAP, not about any territory's requirements ---
+#   OLD: the ungated neighbour taipei:nangang conquered normally, proving the gate was targeted rather
+#        than global.
+#   WHY OBSOLETE: there is no gate to be targeted, and taipei is dormant, so nothing on that map is
+#        conquerable regardless of requirements.
+#   NEW: the formerly GATED and formerly UNGATED taipei territories are refused identically.
+#   WHY NOT WEAKER: it proves the refusal is a property of the active-map rule alone and cannot be
+#        confused with a per-territory learning requirement — the distinction the old control drew.
+code_gated, body_gated = atk("taipei:daan")
+code_open, body_open = atk("taipei:nangang")
+assert (code_gated, body_gated["reason"]) == (code_open, body_open["reason"]) == (400, "inactive_map"),     (code_gated, body_gated, code_open, body_open)
+assert owner_of("taipei:nangang") != "ALICE", "a refused attack must not transfer ownership"
+ok("E2E control: the formerly gated and formerly ungated taipei territories are refused identically "
+   "as inactive_map — the rule is the active map, never a learning requirement")
 
 # --- FAILED attempt: server grading rejects it, and forged passed/score/qualification are ignored ---
 slice_state()
@@ -258,8 +279,14 @@ assert body["qualification"] is None and body["qualifications"] == [] and body["
 assert body["rewarded"] is False and body["activityId"] == AID
 assert gold() == g0, "a failed attempt mints no gold, even when the client claims passed=true"
 assert call("GET", "/api/learning/state?room=" + CODE, "tALICE")[1]["qualifications"] == {}
-assert atk("taipei:daan")[0] == 403, "still locked after a failed attempt"
-ok("E2E forge-proof: client-sent passed/pct/qualification/gold ignored — server grading decides")
+# RETARGETED (Phase 10A.3R): the old line asserted the territory was "still locked" because the
+# failed attempt granted no qualification. There is no lock to be still-locked: Conquest never reads
+# learning state. What remains true and worth pinning is that the FAILED attempt changed no Conquest
+# verdict at all — the refusal is the active-map rule, before and after, identically.
+_before_fail = atk("taipei:daan")
+assert (_before_fail[0], _before_fail[1].get("reason")) == (400, "inactive_map"), _before_fail
+ok("E2E forge-proof: client-sent passed/pct/qualification/gold ignored — server grading decides, and "
+   "the failed attempt leaves the Conquest verdict untouched")
 
 # --- PASSING attempt: qualification granted + one-time PASS_GOLD ---
 g0 = gold()
@@ -322,11 +349,19 @@ assert st["matchingProgress"] == {}, "this player has played no matching round"
 assert "unitCompletions" not in st and "courseCompletions" not in st
 ok("E2E persistence: activityCompletions['<activityId>'] + qualifications['<id>'], no faked aggregates")
 
-# --- UNLOCK: the same attack that was 403 now succeeds ---
+# --- RETARGETED: earning the qualification unlocks NOTHING ---
+#   OLD: the same attack that was 403 now succeeded, proving pass -> unlock end-to-end.
+#   WHY OBSOLETE: Learning has zero Conquest authority, so a verified pass cannot open ground. The
+#        qualification is still granted and asserted above; it is simply an achievement now.
+#   NEW: after the verified pass, the very same attack returns the very same verdict as before it.
+#   WHY NOT WEAKER: the old form proved one unlock path worked; this proves no learning success can
+#        change Conquest eligibility — the property that keeps the systems separate.
 code, body = atk("taipei:daan")
-assert code == 200 and body["attackerWon"] is True, (code, body)
-assert owner_of("taipei:daan") == "ALICE", "the gated territory is conquered after the verified pass"
-ok("E2E UNLOCK: locked taipei:daan -> pass quiz3 -> same attack now conquers (end-to-end)")
+assert (code, body.get("reason")) == (_before_fail[0], _before_fail[1].get("reason")),     (code, body, _before_fail)
+assert owner_of("taipei:daan") != "ALICE", "a verified learning pass must not hand over territory"
+assert call("GET", "/api/learning/state?room=" + CODE, "tALICE")[1]["qualifications"].get(QID),     "the qualification IS earned and recorded — it just has no Conquest effect"
+ok("E2E: a verified quiz3 pass grants the qualification but leaves the Conquest verdict IDENTICAL — "
+   "earning unlocks no ground")
 
 # --- qualification is PLAYER state: it survives losing every territory, and is room-independent ---
 server.set_room(CODE)

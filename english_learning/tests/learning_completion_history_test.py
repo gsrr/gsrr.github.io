@@ -248,11 +248,18 @@ for tid, qids in EXPECTED_GATES.items():
 # a learner who completed all four lessons but earned no quiz3 qualification still cannot attack
 STORE = {"taipei:wenshan": {"owner": "ALICE", "troops": [{"type": "cav", "hp": 100}]},
          "taipei:xinyi": {"owner": "BOB", "troops": [{"type": "inf", "hp": 3}]}}
-e = conquest.can_attack("ALICE", "taipei:wenshan", "taipei:xinyi", [{"type": "cav", "hp": 10}],
-                        cat, STORE, player_qualifications=[])
-assert not e.allowed and e.missing_qualifications == ["english.prea1.taipei.mrt.quiz3.pass"], e.reason
-ok("§15/§16/§17/§18 four lesson completions pay 0 gold, grant 0 qualifications, never write passcnt, "
-   "and territory gates remain quiz3-based (whole-lesson completion is NOT an attack requirement)")
+# RETARGETED (Phase 10A.3R): the old form proved whole-lesson completion was NOT an attack
+# requirement while quiz3 qualifications WERE. The second half is retired — nothing learning-side is
+# an attack requirement now — so this asserts the general rule instead: no learning state, whether
+# completion history or a held qualification, changes the Conquest verdict.
+e_none = conquest.can_attack("ALICE", "taipei:wenshan", "taipei:xinyi", [{"type": "cav", "hp": 10}],
+                             cat, STORE, player_qualifications=[])
+e_full = conquest.can_attack("ALICE", "taipei:wenshan", "taipei:xinyi", [{"type": "cav", "hp": 10}],
+                             cat, STORE,
+                             player_qualifications=["english.prea1.taipei.mrt.quiz3.pass"])
+assert (e_none.allowed, e_none.reason) == (e_full.allowed, e_full.reason), (e_none, e_full)
+ok("§15/§16/§17/§18 four lesson completions pay 0 gold, grant 0 qualifications and never write "
+   "passcnt; and neither completion history nor a held qualification changes the attack verdict")
 
 # ====================== §25 exact Rule A goldens under v2, per lesson ======================
 CASES = [
