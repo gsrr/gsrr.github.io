@@ -925,6 +925,29 @@
     border: 2px solid rgba(255,255,255,.2); background: rgba(255,255,255,.08); color: #e8edf5; cursor: pointer; }
   .geo-extra-btn.geo-mine { background: #16a34a; color: #fff; } .geo-extra-btn.geo-foe { background: #f59e0b; color: #fff; }
   .geo-extra-btn.geo-open { background: #2563eb; color: #fff; } .geo-extra-btn.geo-todo { opacity: .65; }
+  /* ===== Phase 10B — zero-territory re-entry ==================================================
+     This panel exists ONLY while the server reports re-entry as available, which means only for a
+     player who holds nothing on a fully-claimed map. A player with territory, or one who can still
+     make an ordinary neutral claim, never sees any of it. ===================================== */
+  .geo-reentry { margin: 12px 0 4px; padding: 13px 14px; border-radius: 14px; color: #fff3e0;
+    background: linear-gradient(180deg, rgba(120,25,25,.92), rgba(70,14,14,.92));
+    border: 2px solid rgba(255,180,120,.55); box-shadow: 0 6px 18px rgba(0,0,0,.35); }
+  .geo-reentry h4 { margin: 0 0 4px; font-size: 16px; font-weight: 800; }
+  .geo-reentry .re-sub { font-size: 12.5px; color: #ffd9b8; margin-bottom: 10px; line-height: 1.45; }
+  .geo-reentry .re-cost { font-size: 12.5px; font-weight: 700; color: #ffe9c9; margin-bottom: 10px; }
+  .geo-reentry .re-list { display: grid; gap: 7px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  .re-cand { display: flex; align-items: center; gap: 8px; text-align: left; padding: 9px 11px;
+    border-radius: 11px; cursor: pointer; font-size: 12.5px; line-height: 1.25; color: #fff6e2;
+    background: rgba(255,255,255,.10); border: 2px solid rgba(255,210,160,.45); }
+  .re-cand:hover { background: rgba(255,255,255,.20); border-color: #ffd9a8; }
+  .re-cand .rc-nm { font-weight: 800; display: block; }
+  .re-cand .rc-ls { font-size: 11.5px; color: #ffd9b8; }
+  .re-cand .rc-iso { color: #ffc9c9; font-weight: 700; }
+  .geo-reentry .re-none { font-size: 12.5px; color: #ffd9b8; }
+  @media (max-width: 520px) {
+    .geo-reentry { padding: 11px; }
+    .geo-reentry .re-list { grid-template-columns: 1fr; }
+  }
   .geo-boss { text-align: center; margin-top: 14px; }
   .geo-boss-btn { background: #dc2626; color: #fff; font-weight: 800; padding: 12px 24px; border-radius: 14px; font-size: 16px; cursor: pointer; }
   .geo-boss-btn.done { background: #16a34a; }
@@ -5761,6 +5784,94 @@
       _geoRelayout = function () { if (labelState.s === 1) captureGeom(); _geoResel(); };
       if (!_geoResizeHooked) { window.addEventListener("resize", () => { if (_geoRelayout) _geoRelayout(); }); _geoResizeHooked = true; }
       relayoutLabels(1, 0, 0);   // 初次配置
+      // ===== Phase 10B: the re-entry panel, driven entirely by the server =====
+      // The client NEVER decides whether re-entry applies. It asks, and it renders only what comes
+      // back. A player who owns ground, or who can still claim a neutral territory, gets `available:
+      // false` and therefore no panel at all -- ordinary gameplay is not cluttered.
+      const reWrap = document.createElement("div");
+      reWrap.className = "geo-reentry"; reWrap.style.display = "none";
+      // FIRST child, above the map: when a player has been wiped out this is the only action they
+      // have, and appending it after the map, the legend and a 250-row index list buried it below
+      // several screens of scrolling. It is hidden entirely unless the server offers re-entry, so an
+      // ordinary player never sees it here either.
+      wrap.insertBefore(reWrap, wrap.firstChild);
+      function renderReentry(st) {
+        if (!st || !st.available) { reWrap.style.display = "none"; reWrap.innerHTML = ""; return; }
+        const cost = (st.cost || {}), pool = (st.troops || {});
+        const total = TROOPS.reduce((a, t) => a + (pool[t.id] || 0), 0);
+        const afford = (st.gold || 0) >= (cost.gold || 0) && total >= (cost.minTroops || 1);
+        let html = '<h4>\u{1F3F3}\uFE0F Your empire has fallen</h4>' +
+          '<div class="re-sub">Every territory on the World is held, so there is nothing left to ' +
+          'claim. Choose a foothold to re-enter the World \u2014 your force attacks it directly.</div>' +
+          '<div class="re-cost">Cost \u{1FA99} ' + (cost.gold || 0) + ' gold + the troops you commit' +
+          ' \u00b7 you have \u{1FA99} ' + (st.gold || 0) + ' and ' + total + ' troops' +
+          (afford ? '' : ' \u2014 <b>not enough yet; recruit at your home base first</b>') + '</div>';
+        if (!st.candidates || !st.candidates.length) {
+          html += '<div class="re-none">No foothold is available right now.</div>';
+          reWrap.innerHTML = html; reWrap.style.display = "block"; return;
+        }
+        html += '<div class="re-list"></div>';
+        reWrap.innerHTML = html; reWrap.style.display = "block";
+        const list = reWrap.querySelector(".re-list");
+        st.candidates.forEach(c => {
+          const b = document.createElement("button");
+          b.className = "re-cand"; b.type = "button";
+          b.disabled = !afford;
+          b.innerHTML = '<span>\u{1F6A9}</span><span><span class="rc-nm">' +
+            escapeHtml(c.displayName || c.territoryId) + '</span><span class="rc-ls">\u{1F465} ' +
+            (c.population || 0) + ' \u00b7 held by ' + escapeHtml((c.avatar || "") +
+            dispName(c.owner || "?")) +
+            (c.isolated ? ' \u00b7 <span class="rc-iso">isolated \u2014 safe, but you cannot ' +
+              'attack out of it</span>' : '') + '</span></span>';
+          b.addEventListener("click", () => openReentry(c, st));
+          list.appendChild(b);
+        });
+      }
+      function loadReentry() {
+        const t = authToken(); if (!t) { renderReentry(null); return; }
+        fetch(withRoom("/api/territory/reentry?token=" + encodeURIComponent(t)))
+          .then(r => r.ok ? r.json() : null).then(renderReentry).catch(() => renderReentry(null));
+      }
+      // The confirmation names the price and the target before anything is spent. "Establish
+      // Foothold" is deliberately NOT called Claim or Attack: it is neither, and mislabelling it
+      // would teach the player the wrong rule.
+      function openReentry(cand, st) {
+        const cost = (st.cost || {});
+        const ov = openModal('<h3 class="modal-title">\u{1F6A9} Establish Foothold</h3>' +
+          '<div class="op-pop">\u{1F3F0} <b>' + escapeHtml(cand.displayName || cand.territoryId) +
+          '</b> \u00b7 \u{1F465} ' + (cand.population || 0) + '</div>' +
+          '<div class="op-def">Held by ' + escapeHtml((cand.avatar || "") + dispName(cand.owner || "?")) +
+          '<br><span class="op-card">\u{1F6E1}\uFE0F Garrison unknown (enemy)</span></div>' +
+          (cand.isolated ? '<p class="op-hint">\u26A0\uFE0F This territory has no land neighbours. ' +
+            'It is safe from attack, but you will not be able to attack out of it either.</p>' : '') +
+          '<p class="op-hint">This costs \u{1FA99} <b>' + (cost.gold || 0) + ' gold</b> plus the troops ' +
+          'you commit, and it is decided by a battle \u2014 if you lose, the territory stays theirs.</p>');
+        const host = document.createElement("div"); ov.querySelector(".modal-card").appendChild(host);
+        deployPanel(host, poolAvail(), { label: "\u{1F6A9} Re-enter", onGo: g => {
+          const t = authToken(); if (!t) return;
+          fetch(withRoom("/api/territory/reentry?token=" + encodeURIComponent(t)), {
+            method: "POST", body: JSON.stringify({ targetTerritoryId: cand.territoryId,
+                                                   squad: g, avatar: avatarOf(userName) })
+          }).then(r => r.json().catch(() => ({})).then(j => ({ status: r.status, j: j })))
+            .then(o => {
+              const j = o.j || {};
+              if (o.status !== 200) {
+                alert("Re-entry failed: " + (j.error || ("HTTP " + o.status)) +
+                      (j.reason ? "\n\n(" + j.reason + ")" : "") + "\n\nNothing was changed.");
+                closeModal(); loadReentry(); return;
+              }
+              alert(j.attackerWon
+                ? "\u{1F389} Foothold established at " + (cand.displayName || cand.territoryId) +
+                  "!\n\nOrdinary rules apply again: you can attack from here to its neighbours."
+                : "\u{1F6E1}\uFE0F The foothold assault failed. " +
+                  (cand.displayName || cand.territoryId) + " stays with its owner.\n\n" +
+                  "Your surviving troops returned to your pool.");
+              closeModal();
+              loadEconomy(function () { loadTerritory(function () { refreshMap(); }); });
+            }).catch(() => { alert("Re-entry failed: network error. Nothing was changed."); closeModal(); });
+        } });
+      }
+      loadReentry();
       const legend = document.createElement("div"); legend.className = "geo-legend";
       legend.innerHTML = '<span class="gl gl-mine">You</span><span class="gl gl-open">Open</span>' +
         (Object.keys(drill).length ? '<span class="gl gl-drill">Zoom in</span>' : '');

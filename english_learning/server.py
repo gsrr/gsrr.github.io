@@ -32,6 +32,18 @@ def allowed_game_maps():
     return {GAME_WORLD_MAP_ID}
 
 
+def playable_territory_ids():
+    """Every canonical id on the active game map. Phase 10B needs the FULL set, not the store's keys:
+    a territory nobody has touched has no store entry, and that absence is precisely what makes it
+    neutral, so 'is any territory still claimable?' cannot be answered from the store alone."""
+    if not terr_catalog:
+        return []
+    allowed = allowed_game_maps()
+    if not terr_catalog.loaded:
+        terr_catalog.load()
+    return [tid for tid, t in terr_catalog.territories.items() if t.get("mapId") in allowed]
+
+
 def territory_on_active_map(territory_id):
     return bool(terr_catalog) and terr_catalog.map_of(territory_id) in allowed_game_maps()
 
@@ -474,6 +486,8 @@ LEARNING = learning_api.LearningService(content_root=CONTENT_ROOT,
                                         reward_amounts={"PASS_GOLD": PASS_GOLD,
                                                         "LESSON_MASTERY_GOLD": LESSON_MASTERY_GOLD})
 ATTACK_FAIL_GOLD = game_config.ATTACK_FAIL_GOLD     # 攻打失敗 −50 金幣
+REENTRY_GOLD_COST = game_config.REENTRY_GOLD_COST   # Phase 10B: 零領地重返的一次性金幣代價
+REENTRY_CANDIDATES = game_config.REENTRY_CANDIDATES # 伺服器提供幾個落腳點
 # Phase 8B.2: these were duplicated LITERALS here and in game/config.py. Two copies of a price is
 # one copy too many — the 8B.2 rebalance changed config.py and this file silently kept the old
 # numbers, which game_domain_test.py caught. They are aliases now, exactly like PASS_GOLD above, so
@@ -1103,6 +1117,8 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_admin_overview()
         elif path == "/api/leaderboard":
             self._handle_leaderboard()
+        elif path == "/api/territory/reentry":
+            self._handle_reentry_state()
         elif path == "/api/territory":
             self._handle_territory()
         elif path == "/api/economy":
@@ -1160,6 +1176,8 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_territory_recruit()
         elif path == "/api/territory/attack":
             self._handle_territory_attack()
+        elif path == "/api/territory/reentry":
+            self._handle_reentry()
         elif path == "/api/territory/conscript":
             self._handle_territory_conscript()
         elif path == "/api/economy/set":
@@ -1927,6 +1945,177 @@ class Handler(BaseHTTPRequestHandler):
                     "attackerSurvivors": result["attackerSurvivors"],
                     "defenderSurvivors": result["defenderSurvivors"],
                     "defenderOrder": result["defenderOrder"], "defenderTech": def_tech, "defender": defender})
+
+    # ======================= Phase 10B: zero-territory re-entry =======================
+    # A player who holds nothing on a fully-claimed map has NO legal conquest action: /claim answers
+    # `held` on every territory and /attack needs an owned source. Re-entry is the one bounded
+    # exception, and it is decided here, on the server, from GAME state only.
+    #
+    # What re-entry does NOT do: it does not weaken adjacency for anybody who owns ground (the
+    # ordinary /attack path is untouched), it does not read any learning state, it does not mint
+    # troops, and it does not make every territory attackable — only the server's own bounded
+    # candidate set is accepted.
+    def _reentry_state(self, user, store):
+        """The authoritative offer. Recomputed on every request, GET and POST alike, so the POST can
+        validate a target without trusting the client and without storing session state."""
+        return game_conquest.reentry_state(
+            user, playable_territory_ids(), store,
+            seed=current_room(),                     # per-room, so two rooms are independent
+            limit=REENTRY_CANDIDATES,
+            degree_of=(terr_catalog.degree if terr_catalog else None))
+
+    def _reentry_public(self, state, store, user, econ):
+        """The client's view. Deliberately omits garrison composition: the map already hides an
+        enemy's troops (fog of war), and an eligibility endpoint must not become a scouting tool."""
+        out = []
+        for tid in state.candidates:
+            h = store.get(tid) or {}
+            t = (terr_catalog.territories.get(tid) if terr_catalog else None) or {}
+            out.append({"territoryId": tid,
+                        "displayName": t.get("displayName") or tid,
+                        "population": clampi(h.get("pop", 0)) or clampi(t.get("gamePopulation", 0)),
+                        "owner": h.get("owner"),
+                        "avatar": h.get("avatar"),
+                        # presentation-only: an isolated foothold cannot attack out, and the client
+                        # says so plainly rather than letting the player find out afterwards.
+                        "isolated": bool(terr_catalog and terr_catalog.degree(tid) == 0)})
+        return {"available": state.available, "reason": state.reason, "candidates": out,
+                "cost": {"gold": REENTRY_GOLD_COST, "minTroops": 1},
+                "gold": clampi((econ or {}).get("gold", 0)),
+                "troops": {k: clampi(((econ or {}).get("troops") or {}).get(k, 0)) for k in TROOP_ALL}}
+
+    def _handle_reentry_state(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        with terr_lock:
+            store = load_territory_store()
+            state = self._reentry_state(user, store)
+        with econ_lock:
+            estore = load_econ_store()
+            e = econ_get(estore, user, time.time(), user_region_pop(store, user))
+            save_econ_store(estore)
+        self._send(self._reentry_public(state, store, user, e))
+
+    def _handle_reentry(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        d = self._body_json()
+        target = self._canon(d.get("targetTerritoryId") or d.get("target") or d.get("file"))
+        squad = []
+        for t in (d.get("squad") or d.get("troops") or [])[:4]:
+            if isinstance(t, dict) and str(t.get("type")) in self.TROOP_TYPES:
+                hp = int(t.get("hp", 0) or 0)
+                if hp > 0:
+                    squad.append({"type": t["type"], "hp": max(0, min(100000, hp))})
+        avatar = str(d.get("avatar", "👦"))[:8]
+        if not squad:
+            self._send({"error": "Deploy at least one troop to establish a foothold",
+                        "reason": "troops_required"}, 400)
+            return
+        defender = None
+        result = None
+        new_target = None
+        returned = None
+        # ONE critical section covers eligibility, the candidate check, the gold+troop debit and the
+        # ownership write, so a duplicate POST or two tabs cannot double-spend or double-land. Lock
+        # order is the established terr -> econ (identical to /claim).
+        with terr_lock:
+            store = load_territory_store()
+            state = self._reentry_state(user, store)
+            if not state.available:
+                # `owns_territory` and `neutral_available` are not errors, they are "use the ordinary
+                # rules"; 409 says the request contradicts current state rather than being malformed.
+                self._send({"error": "Re-entry is not available", "reason": state.reason}, 409)
+                return
+            if not target:
+                self._send({"error": "targetTerritoryId is required", "reason": "target_not_found"}, 400)
+                return
+            if target not in state.candidates:
+                # covers a forged id, an unresolvable id, a dormant-map id, and a real World territory
+                # that simply was not offered. The candidate set is the whole authority.
+                self._send({"error": "That territory is not one of your re-entry footholds",
+                            "reason": "target_not_candidate", "candidates": state.candidates}, 403)
+                return
+            tgt = store.get(target)
+            if not isinstance(tgt, dict) or not tgt.get("owner"):
+                self._send({"error": "Foothold target is no longer held", "reason": "not_held"}, 409)
+                return
+            with econ_lock:
+                estore = load_econ_store()
+                e = econ_get(estore, user, time.time(), user_region_pop(store, user))
+                if clampi(e.get("gold", 0)) < REENTRY_GOLD_COST:
+                    self._send({"error": "Not enough gold to re-enter", "reason": "insufficient_gold",
+                                "gold": clampi(e.get("gold", 0)), "cost": REENTRY_GOLD_COST}, 400)
+                    return
+                avail = {k: clampi(e["troops"].get(k, 0)) for k in TROOP_ALL}
+                need = {}
+                for u in squad:
+                    need[u["type"]] = need.get(u["type"], 0) + clampi(u["hp"])
+                short = {k: v - avail.get(k, 0) for k, v in need.items() if v > avail.get(k, 0)}
+                if short:                              # 兵力不足 → 一切狀態零變動(原子拒絕)
+                    self._send({"error": "Not enough troops", "reason": "insufficient_troops",
+                                "available": avail, "requested": need, "short": short}, 400)
+                    return
+                for k, v in need.items():
+                    avail[k] -= v
+                e["troops"] = avail                    # troops MOVE out of the pool, never minted
+                e["gold"] = clampi(e.get("gold", 0)) - REENTRY_GOLD_COST
+                home_tech = e.get("tech") or {}        # 家鄉科技加成你派出去的軍隊(與招募路徑同義)
+                save_econ_store(estore)
+            defender = tgt.get("owner")
+            def_tech = tgt.get("tech") or {}
+            # THE CANONICAL BATTLE ENGINE. Identical call as /attack: same resolve_attack, same
+            # apply_territorial_attack, same casualties and same defender handling. The ONLY thing
+            # that differs is where the attacking force came from, because there is no owned source
+            # to march it out of -- so a synthetic source carries the squad and the home tech.
+            synth_source = {"owner": user, "troops": [dict(u) for u in squad], "tech": home_tech}
+            result = game_conquest.resolve_attack(squad, tgt.get("troops") or [], home_tech,
+                                                  def_tech, random.Random())
+            new_source, new_target = game_conquest.apply_territorial_attack(
+                synth_source, tgt, squad, result, user, avatar)
+            if result["attackerWon"]:
+                if not clampi(new_target.get("pop", 0)):
+                    cpop = terr_catalog.game_population(target) if terr_catalog else None
+                    new_target["pop"] = clampi(cpop if cpop is not None else tgt.get("pop", 0))
+                store[target] = new_target
+                save_territory_store(store)
+            else:
+                # LOSS: canonically the survivors return to the SOURCE garrison. There is no source,
+                # so they go back where they came from -- the pool. Only casualties are lost, exactly
+                # as in an ordinary failed attack; nothing is duplicated and nothing vanishes.
+                with econ_lock:
+                    estore = load_econ_store()
+                    e2 = econ_get(estore, user, time.time(), user_region_pop(store, user))
+                    for s in (new_source.get("troops") or []):
+                        if isinstance(s, dict) and s.get("type") in e2["troops"]:
+                            e2["troops"][s["type"]] = clampi(e2["troops"].get(s["type"], 0)) + clampi(s.get("hp", 0))
+                    returned = dict(e2["troops"])
+                    save_econ_store(estore)
+                store[target] = new_target             # defender keeps it, garrison = its survivors
+                save_territory_store(store)
+        # 金幣獎懲與 /attack 完全相同(規則不變)：輸 → 攻方 −50、真人守方 +50。在 terr_lock 外呼叫。
+        newgold = None
+        if not result["attackerWon"]:
+            newgold = econ_add_gold(user, -ATTACK_FAIL_GOLD)
+            if defender and defender != user and not is_ai_owner(defender):
+                econ_add_gold(defender, DEFEND_GOLD)
+        else:
+            with econ_lock:
+                estore = load_econ_store()
+                newgold = clampi(econ_get(estore, user, time.time(), 0).get("gold", 0))
+                save_econ_store(estore)
+        self._send({"ok": True, "reentry": True, "targetTerritoryId": target,
+                    "attackerWon": result["attackerWon"], "owner": new_target.get("owner"),
+                    "targetGarrison": new_target.get("troops") or [],
+                    "attackerSurvivors": result["attackerSurvivors"],
+                    "defenderSurvivors": result["defenderSurvivors"],
+                    "defenderOrder": result["defenderOrder"], "defenderTech": def_tech,
+                    "defender": defender, "goldSpent": REENTRY_GOLD_COST, "gold": newgold,
+                    "troops": returned})
 
     # 全站事件牆：GET 取最近事件（所有人共見）
     def _handle_events(self):

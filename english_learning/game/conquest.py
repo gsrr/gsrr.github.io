@@ -5,6 +5,9 @@ defender shuffle; this returns a BattleResult plus the intended state changes. T
 performs persistence. Adjacency is intentionally NOT enforced here in Phase 2A (structured so a
 future `are_adjacent(source,target)` gate can be added without touching battle math).
 """
+import hashlib
+import random as _random
+
 from . import army, battle, config
 from .army import clampi
 
@@ -174,6 +177,102 @@ def apply_territorial_attack(source, target, squad, result, attacker, attacker_a
         new_target = dict(target)
         new_target["troops"] = [{"type": s["type"], "hp": clampi(s["hp"])} for s in result["defenderSurvivors"]]
     return new_source, new_target
+
+
+# ================================ Phase 10B: zero-territory re-entry ================================
+# A player who holds nothing on a fully-claimed map cannot act: claiming answers `held`, and attacking
+# demands an owned source. Re-entry is the ONE bounded exception, and it is decided here so the rule is
+# testable without HTTP. Everything about it is derived from GAME state that is passed in; this
+# function reads no player progress of any kind, and it never mutates.
+class ReentryState:
+    """Structured result of reentry_state(). Truthy iff the player may establish a foothold.
+
+    `reason` is a stable machine string (see REASONS) or None when available. `candidates` is the
+    ONLY set of territory ids the server will accept as a foothold target; it is empty unless
+    available."""
+    __slots__ = ("available", "reason", "candidates")
+    REASONS = (
+        "owns_territory",      # holds at least one playable territory -> ordinary rules apply
+        "neutral_available",   # an unowned playable territory exists -> ordinary claim is the way back
+        "no_candidates",       # nothing eligible to land on (e.g. an empty or single-player board)
+    )
+
+    def __init__(self, available, reason=None, candidates=None):
+        self.available = bool(available)
+        self.reason = reason
+        self.candidates = list(candidates or [])
+
+    def __bool__(self):
+        return self.available
+
+    def __repr__(self):
+        return "ReentryState(available=%r, reason=%r, candidates=%r)" % (
+            self.available, self.reason, self.candidates)
+
+
+def _garrison_strength(holding):
+    return sum(clampi(u.get("hp", 0)) for u in ((holding or {}).get("troops") or [])
+               if isinstance(u, dict))
+
+
+def reentry_state(player_id, playable_ids, territories, seed="", limit=None,
+                  degree_of=None, fair_pool=None):
+    """Which footholds, if any, a zero-territory player may take. PURE — never raises, never mutates.
+
+    `playable_ids` is the caller's full set of ids on the active map, so this stays map-agnostic:
+    a territory absent from `territories` is UNOWNED, which is exactly why the neutral check cannot
+    be done from the store alone.
+
+    Availability requires ALL of: the player owns zero playable territories, no playable territory is
+    unowned, and at least one enemy-held playable territory exists. Owning even one, or any neutral
+    being claimable, makes re-entry unavailable — re-entry must never be a shortcut past the ordinary
+    rules.
+
+    Candidate policy (fairness): rank eligible enemy holdings by defensive burden (garrison first,
+    then population), keep the weakest `fair_pool` share as a pool, and take a bounded sample of it.
+    The sample is seeded from (seed, player, pool) so it is STABLE for a given board and player --
+    an offer can therefore be re-derived and validated on submit without storing session state -- yet
+    differs per player and moves as the board moves, so it cannot be scouted or farmed the way a
+    strict "weakest N" rule could. CONNECTED holdings are preferred: a zero-adjacency island is a
+    foothold you can never attack out of, so it is offered only when nothing connected is available.
+    """
+    limit = config.REENTRY_CANDIDATES if limit is None else limit
+    fair_pool = config.REENTRY_FAIR_POOL if fair_pool is None else fair_pool
+    owned, neutral, enemy = [], [], []
+    for tid in (playable_ids or []):
+        h = territories.get(tid) if isinstance(territories, dict) else None
+        owner = h.get("owner") if isinstance(h, dict) else None
+        if not owner:
+            neutral.append(tid)
+        elif owner == player_id:
+            owned.append(tid)
+        else:
+            enemy.append(tid)
+    if owned:
+        return ReentryState(False, "owns_territory")
+    if neutral:
+        return ReentryState(False, "neutral_available")
+    if not enemy:
+        return ReentryState(False, "no_candidates")
+
+    def _degree(tid):
+        if degree_of is None:
+            return 1                                  # unknown connectivity -> treat as connected
+        try:
+            return clampi(degree_of(tid))
+        except Exception:
+            return 0
+
+    connected = [t for t in enemy if _degree(t) > 0]
+    source = connected or enemy                       # islands only when nothing connected exists
+    ranked = sorted(source, key=lambda t: (_garrison_strength(territories.get(t)),
+                                           clampi((territories.get(t) or {}).get("pop", 0)), t))
+    want = max(limit * 3, int(len(ranked) * fair_pool))
+    pool = ranked[:max(1, min(len(ranked), want))]
+    key = "|".join([str(seed), str(player_id)] + sorted(pool))
+    rng = _random.Random(hashlib.sha256(key.encode("utf-8")).hexdigest())
+    take = min(limit, len(pool))
+    return ReentryState(True, None, sorted(rng.sample(pool, take)))
 
 
 def shuffle_defender(defender, rng):

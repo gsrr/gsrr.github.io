@@ -20,6 +20,23 @@ MASTERY_GOLD = 640               # whole unit mastered, once ever: the other 80%
 DEFEND_GOLD = 50
 ATTACK_FAIL_GOLD = 50
 
+# ---- Phase 10B: zero-territory re-entry ----------------------------------------------------------
+# A player holding no territory on a fully-claimed map has no legal conquest action at all: a claim
+# answers `held`, and an attack needs an owned source. Re-entry is the bounded exception.
+#
+# REENTRY_GOLD_COST is a LEVY, not a purchase: it buys no troops (the foothold force is debited from
+# the player's existing pool, so troops still only ever move) and pays no reward. 120 is ~8 hours of
+# a home base's passive income (population 150 x GOLD_RATE 0.10 = 15/hr), so being wiped out stings
+# and is still recoverable without any second economy.
+#
+# DELIBERATELY OUTSIDE fingerprint(): that hash is an explicit allowlist of the constants that decide
+# BATTLE and REWARD outcomes, and its value is pinned by the migration tests. Re-entry changes
+# neither, so adding it to the payload would churn a published fingerprint for nothing. It is pinned
+# by tests/reentry_authority_test.py instead.
+REENTRY_GOLD_COST = 120
+REENTRY_CANDIDATES = 4            # how many footholds the server offers; small enough to reason about
+REENTRY_FAIR_POOL = 0.25          # candidates are sampled from the weakest quartile by defence
+
 # --- army / units (all four share base atk 10 / def 8; only counters differ) ---
 TROOP_KINDS = ("cav", "archer", "inf", "spear")
 UNIT_ATK = 10
