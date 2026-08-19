@@ -838,26 +838,47 @@
   /* ===== 真實地理地圖（各等級不同國家/區域）===== */
   .card.map-wide { max-width: 1100px; }                     /* 地圖畫面在桌機上放寬(手機不受影響) */
   .geo-wrap { position: relative; }
-  .geo-holder { overflow: hidden; border-radius: 16px; touch-action: none; position: relative; cursor: grab; }
+  /* ===== Phase 10C — CARTOON BOARD-GAME WORLD =====================================================
+     Presentation only. Nothing here encodes a territory identity, and no rule puts !important on a
+     path `fill` except the ownership states themselves, so the dynamic owner colour that colorize()
+     sets inline always wins over decoration. Gameplay state dominates.
+     The ocean lives on .geo-holder and the svg stays TRANSPARENT: that is what lets one drop-shadow
+     on the svg follow the coastline and read as a board-game cut-out. A shadow on an svg with an
+     opaque background would only shadow the frame. ============================================== */
+  .geo-holder { overflow: hidden; border-radius: 20px; touch-action: none; position: relative; cursor: grab;
+    background: radial-gradient(120% 90% at 50% 8%, #bfe9f7 0%, #8fd3ee 32%, #5fb6dd 62%, #3f97c4 100%), #5fb6dd;
+    box-shadow: inset 0 0 0 3px #2c6f92, inset 0 0 46px rgba(20,70,100,.34), 0 10px 26px rgba(12,40,60,.32); }
   .geo-holder:active { cursor: grabbing; }
+  /* a faint paper grain, so the sea reads as an illustrated board rather than flat vector */
+  .geo-holder::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    border-radius: 20px; opacity: .22; mix-blend-mode: soft-light;
+    background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.5) 0 1px, transparent 1px 4px),
+                      repeating-linear-gradient(-45deg, rgba(0,0,0,.16) 0 1px, transparent 1px 5px); }
   .geo-zoom-hint { position: absolute; right: 8px; bottom: 8px; z-index: 3; font-size: 11px; font-weight: 700;
     color: #e8edf5; background: rgba(15,23,42,.6); border-radius: 8px; padding: 3px 8px; pointer-events: none; }
   /* 縮放式標籤層：常數螢幕大小、只顯示不接收點擊(點擊由底下地區處理) */
   .geo-labels { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+  /* labels: wooden board-game pills */
   .geo-lab { position: absolute; transform: translate(-50%, -50%); white-space: nowrap; pointer-events: none;
-    font-size: 13px; font-weight: 800; line-height: 1; color: #fff; padding: 3px 7px; border-radius: 9px;
-    background: rgba(15,23,42,.72); border: 1px solid rgba(255,255,255,.5); paint-order: stroke;
-    text-shadow: 0 1px 2px rgba(0,0,0,.6); }
-  .geo-lab.drill { background: rgba(88,28,135,.9); font-size: 14px; }
-  .geo-lab.sel { background: #16a34a; border-color: #fff; z-index: 4; }
-  .geo-svg { width: 100%; height: auto; display: block; border-radius: 16px;
-    background: #aedcf0; box-shadow: inset 0 0 0 2px rgba(40,90,120,.3); }
-  .geo-svg path { fill: #dbe7f1; stroke: #1f3d57; stroke-width: 1.3; stroke-linejoin: round; vector-effect: non-scaling-stroke; transition: fill .2s, filter .15s; }
+    font-size: 13px; font-weight: 800; line-height: 1; color: #fff6e2; padding: 3px 8px; border-radius: 11px;
+    background: linear-gradient(#5b4326, #3e2c17); border: 1.5px solid rgba(255,236,200,.85);
+    box-shadow: 0 2px 0 rgba(0,0,0,.35), 0 3px 7px rgba(0,0,0,.3); letter-spacing: .2px;
+    paint-order: stroke; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+  .geo-lab.drill { background: linear-gradient(#7a4bbd, #52308a); border-color: #f4e9ff; font-size: 14px; }
+  .geo-lab.sel { background: linear-gradient(#3fae5f, #1d7c3c); border-color: #fff; z-index: 4; }
+  .geo-svg { width: 100%; height: auto; display: block; border-radius: 20px; background: transparent; position: relative; z-index: 0;
+    /* ONE shadow for the whole land layer: thick EXTERNAL separation from the sea without
+       thickening a single internal border. */
+    filter: drop-shadow(0 2px 0 rgba(96,64,28,.5)) drop-shadow(0 5px 7px rgba(16,56,82,.35)); }
+  /* land: warm sand cut-outs with light internal borders */
+  .geo-svg path { fill: #f2ddb0; stroke: #8a6a3c; stroke-width: 1; stroke-linejoin: round; stroke-linecap: round;
+    vector-effect: non-scaling-stroke; transition: fill .18s ease, filter .15s ease, stroke .15s ease; }
   .geo-region { cursor: pointer; }
-  .geo-region:hover { filter: brightness(1.12) drop-shadow(0 0 3px rgba(0,0,0,.35)); }
-  .geo-mine   { fill: #16a34a !important; }   /* 你佔的 */
+  .geo-region:hover { filter: brightness(1.1) saturate(1.15) drop-shadow(0 0 5px rgba(255,255,255,.95));
+    stroke: #3b2a12; stroke-width: 2; }
+  .geo-mine   { fill: #45c46a !important; }   /* 你佔的 */
   .geo-foe    { fill: #f59e0b !important; }   /* 對手佔的 */
-  .geo-open   { fill: #60a5fa !important; }   /* 已通過、可佔領 */
+  .geo-open   { fill: #f2ddb0 !important; }   /* 無主：與中性陸地同色，好看但不搶戲 */
   .geo-todo   { fill: #cbd5e1 !important; }   /* 尚未通過 */
   .geo-locked { fill: #8fa1b3 !important; opacity: .4; }   /* 沒對應課、上鎖 */
   .geo-marker-c { fill: rgba(0,0,0,.28); pointer-events: none; }
@@ -867,9 +888,10 @@
     paint-order: stroke; stroke: rgba(0,0,0,.4); stroke-width: 2px; pointer-events: none; }
   .geo-legend { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 12px 0 2px; font-size: 12px; }
   .geo-legend .gl { display: flex; align-items: center; gap: 5px; color: #cbd5e1; }
-  .geo-legend .gl::before { content: ""; width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
-  .gl-mine::before { background: #16a34a; } .gl-foe::before { background: #f59e0b; }
-  .gl-open::before { background: #60a5fa; } .gl-todo::before { background: #cbd5e1; }
+  .geo-legend .gl::before { content: ""; width: 12px; height: 12px; border-radius: 3px; display: inline-block;
+    box-shadow: 0 0 0 1px rgba(0,0,0,.3); }
+  .gl-mine::before { background: #45c46a; } .gl-foe::before { background: #f59e0b; }
+  .gl-open::before { background: #f2ddb0; } .gl-todo::before { background: #cbd5e1; }
   /* 「誰佔了什麼」圖例：每位擁有者一枚色塊＋頭像＋名字＋佔領數 */
   .geo-owners { display: flex; flex-wrap: wrap; gap: 6px 10px; justify-content: center; margin: 2px 0 2px; font-size: 12px; }
   .geo-owners:empty { display: none; }
@@ -907,11 +929,48 @@
   .geo-boss-btn { background: #dc2626; color: #fff; font-weight: 800; padding: 12px 24px; border-radius: 14px; font-size: 16px; cursor: pointer; }
   .geo-boss-btn.done { background: #16a34a; }
   .geo-drill { fill: #7c3aed !important; }                    /* 可下鑽的地區（容器）*/
+  /* Phase 10C: at the WORLD top altitude every country is a continent drill trigger, so .geo-drill
+     painted the entire planet one solid purple slab -- the first screen of the game read as a UI
+     control, not a board. Continents now get their own friendly land tints, the way a board game
+     colours its territory groups. No ownership is rendered at this altitude (colorize() skips drill
+     entries), so these cannot compete with an owner colour. Declared AFTER .geo-drill so the same
+     specificity resolves in source order. */
+  .geo-cont-as { fill: #e9c46a !important; }   /* Asia        — warm gold  */
+  .geo-cont-eu { fill: #a8c686 !important; }   /* Europe      — soft sage  */
+  .geo-cont-af { fill: #e5a173 !important; }   /* Africa      — terracotta */
+  .geo-cont-na { fill: #8ecfae !important; }   /* N. America  — mint       */
+  .geo-cont-sa { fill: #eda9a0 !important; }   /* S. America  — coral      */
+  .geo-cont-oc { fill: #c3a7e0 !important; }   /* Oceania     — soft violet*/
+  .geo-cont-other { fill: #f2ddb0 !important; }
+  .geo-cont:hover { filter: brightness(1.12) saturate(1.1) drop-shadow(0 0 6px rgba(255,255,255,.95));
+    stroke: #3b2a12; stroke-width: 2; }
   .geo-marker-drill { fill: rgba(88,28,135,.92); }
   .geo-leader { stroke: rgba(15,23,42,.5); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
-  .geo-region.geo-hi { filter: brightness(1.25) drop-shadow(0 0 5px #fff); }   /* 滑清單時對應地區發亮 */
+  /* the highlighted/selected territory: a hard white ring plus a lift. Deliberately NOT a wide glow,
+     which bleached the neighbours in the prototype, and deliberately not colour-only. */
+  .geo-region.geo-hi { filter: brightness(1.22) drop-shadow(0 0 6px rgba(255,255,255,.95));
+    stroke: #fff !important; stroke-width: 2.6 !important; }
+  /* Phase 10C island discoverability: a decorative halo behind visually tiny territories. It is
+     pointer-events:none, so it cannot receive, steal or misroute a click -- the territory's own path
+     remains the only hit target, which is why no hit-area ambiguity is possible. */
+  .geo-isle-fill { fill: rgba(255,255,255,.30); pointer-events: none; }
+  .geo-isle-ring { fill: none; stroke: rgba(255,255,255,.85); stroke-width: 2;
+    vector-effect: non-scaling-stroke; pointer-events: none; }
   .geo-region.geo-adj-self { fill: #16a34a !important; }                        /* dev adjacency debug: hovered */
   .geo-region.geo-adj-nbr { fill: #f59e0b !important; }                         /* dev adjacency debug: neighbours */
+  /* at phone width the world is ~340px across, where a 1px non-scaling border dominates the land */
+  @media (max-width: 520px) {
+    .geo-svg path { stroke-width: .6; }
+    /* the world is only ~250px across on a phone, where full-size label pills covered the land they
+       were labelling. placeMapLabels() still decides WHICH labels survive (it measures from its own
+       font constant); this only shrinks what each surviving pill covers. */
+    .geo-lab { font-size: 10.5px; padding: 2px 6px; border-radius: 8px; border-width: 1px; }
+    .geo-lab.drill { font-size: 11px; }
+    .geo-region:hover { stroke-width: 1.4; }
+    .geo-region.geo-hi { stroke-width: 1.8 !important; }
+    .geo-isle-ring { stroke-width: 1.4; }
+    .geo-holder, .geo-holder::after, .geo-svg { border-radius: 14px; }
+  }
   .geo-index { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin: 12px 0 2px; }
   .geo-idx { display: flex; align-items: center; gap: 7px; text-align: left; padding: 7px 9px; border-radius: 10px;
     border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #e8edf5; cursor: pointer;
@@ -5256,10 +5315,18 @@
   const WORLD_CONTINENTS = [
     { key: "as", label: "Asia 亞洲",        codes: "ae af am az bd bh bn bt cc cn cx ge hk id il in io iq ir jo jp kg kh kp kr kw kz la lb lk mm mn mo mv my np om ph pk ps qa sa sg sy th tj tl tm tr tw uz vn ye" },
     { key: "eu", label: "Europe 歐洲",      codes: "ad al at ax ba be bg by ch cy cz de dk ee es fi fo fr gb gg gi gr hr hu ie im is it je li lt lu lv mc md me mk mt nl no pl pt ro rs ru se si sj sk sm ua va xk" },
-    { key: "af", label: "Africa 非洲",      codes: "ao bf bi bj bw cd cf cg ci cm cv dj dz eg eh er et ga gh gm gn gq gw ke km lr ls ly ma mg ml mr mu mw mz na ne ng re rw sc sd sh sl sn so ss st sz td tg tn tz ug yt za zm zw" },
+    // Phase 10C: bv/go/ju/tf were absent from every bucket, and because drawGeo() filters on this
+    // table they were UNREACHABLE in the UI even though the catalog has always carried them. Each is
+    // an isolated island with zero adjacency in both directions, so placing it in its nearest
+    // continent restores reachability without creating, implying or changing any adjacency:
+    //   bv Bouvet (South Atlantic) · go Glorioso + ju Juan de Nova (Mozambique Channel)
+    //   tf French Southern & Antarctic Lands (Indian Ocean, nearest landmass Africa/Madagascar)
+    { key: "af", label: "Africa 非洲",      codes: "ao bf bi bj bv bw cd cf cg ci cm cv dj dz eg eh er et ga gh gm gn go gq gw ju ke km lr ls ly ma mg ml mr mu mw mz na ne ng re rw sc sd sh sl sn so ss st sz td tf tg tn tz ug yt za zm zw" },
     { key: "na", label: "N. America 北美洲", codes: "ag ai aw bb bl bm bq bs bz ca cr cu cw dm do gd gl gp gt hn ht jm kn ky lc mf mq ms mx ni pa pm pr sv sx tc tt us vc vg vi" },
-    { key: "sa", label: "S. America 南美洲", codes: "ar bo br cl co ec fk gf gy pe py sr uy ve" },
-    { key: "oc", label: "Oceania 大洋洲",    codes: "as au ck fj fm gu ki mh mp nc nf nr nu nz pf pg pn pw sb tk to tv vu wf ws" }
+    // gs South Georgia & South Sandwich sits beside the Falklands (fk), already in this bucket.
+    { key: "sa", label: "S. America 南美洲", codes: "ar bo br cl co ec fk gf gs gy pe py sr uy ve" },
+    // hm Heard & McDonald is an Australian external territory in the Southern Ocean.
+    { key: "oc", label: "Oceania 大洋洲",    codes: "as au ck fj fm gu hm ki mh mp nc nf nr nu nz pf pg pn pw sb tk to tv vu wf ws" }
   ];
   const WORLD_CODE_CONT = {}, WORLD_CONT_LABEL = { other: "Other 其他" };
   WORLD_CONTINENTS.forEach(c => { WORLD_CONT_LABEL[c.key] = c.label; c.codes.split(/\s+/).forEach(cd => { WORLD_CODE_CONT[cd] = c.key; }); });
@@ -5546,6 +5613,27 @@
         if (x1 > x0) { const px = (x1 - x0) * 0.06, py = (y1 - y0) * 0.08; svg.setAttribute("viewBox", (x0 - px) + " " + (y0 - py) + " " + ((x1 - x0) + 2 * px) + " " + ((y1 - y0) + 2 * py)); }
         paths = paths.filter(p => worldContinentKey(p.id) === contFilter);
       }
+      // ===== Phase 10C: island discoverability (DECORATIVE ONLY) =====
+      // Many World territories are single tiny islands that are almost invisible at map scale. This
+      // draws a halo BEHIND such a territory so the eye can find it. It adds no hit area: the group
+      // is pointer-events:none, so the territory's own path stays the only click target and no halo
+      // can overlap into another territory's identity. Nothing here reads or implies adjacency.
+      const ig = document.createElementNS(NSU, "g");
+      ig.setAttribute("class", "geo-isles"); ig.style.pointerEvents = "none";
+      svg.insertBefore(ig, svg.firstChild);
+      function haloIfTiny(p) {
+        let b = null; try { b = p.getBBox(); } catch (e) {}
+        if (!b || !b.width) return;
+        const vbz = (svg.getAttribute("viewBox") || "0 0 1000 1000").split(/\s+/).map(Number);
+        const tiny = Math.min(vbz[2], vbz[3]) * 0.012;      // "small" is relative to the viewBox
+        if (Math.max(b.width, b.height) >= tiny) return;
+        const cx = b.x + b.width / 2, cy = b.y + b.height / 2, r = tiny * 0.62;
+        ["geo-isle-fill", "geo-isle-ring"].forEach(cls => {
+          const c = document.createElementNS(NSU, "circle");
+          c.setAttribute("cx", cx.toFixed(2)); c.setAttribute("cy", cy.toFixed(2));
+          c.setAttribute("r", r.toFixed(2)); c.setAttribute("class", cls); ig.appendChild(c);
+        });
+      }
       const mg = document.createElementNS(NSU, "g"); mg.setAttribute("class", "geo-markers"); svg.appendChild(mg);
       const tg = spec.grouped ? null : buildTerrainLayer(svg, spec); if (tg) svg.insertBefore(tg, mg);   // 地形風景層(分洲地圖不畫，縮放會跑位)
       const vb = (svg.getAttribute("viewBox") || "0 0 1000 1000").split(/\s+/).map(Number);
@@ -5574,7 +5662,10 @@
           let b = null; try { b = p.getBBox(); } catch (e) {} if (!b || !b.width) return;
           const g = groups[ck] || (groups[ck] = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity, paths: [] });
           g.x0 = Math.min(g.x0, b.x); g.y0 = Math.min(g.y0, b.y); g.x1 = Math.max(g.x1, b.x + b.width); g.y1 = Math.max(g.y1, b.y + b.height); g.paths.push(p);
-          p.setAttribute("class", "geo-region geo-drill"); p.style.cursor = "pointer";
+          // Phase 10C: tint by continent instead of one flat drill colour (see .geo-cont-* in CSS).
+          p.setAttribute("class", "geo-region geo-drill geo-cont geo-cont-" + ck);
+          p.style.cursor = "pointer";
+          haloIfTiny(p);                       // tiny islands are findable at continent level too
           addTitle(p, (WORLD_CONT_LABEL[ck] || ck) + " — zoom in ▸");
           p.addEventListener("click", () => drawGeo(Object.assign({}, spec, { groupFilter: ck }), () => renderGeoMap(i, spec), i, lv));
         });
@@ -5603,6 +5694,7 @@
           const territoryId = mapId ? canonicalTerritoryId(mapId, p.id) : null;
           rememberRegion(key, name);   // 記住地區名，供帝國清單等顯示
           p.setAttribute("class", "geo-region");
+          haloIfTiny(p);                       // Phase 10C: make a tiny island findable
           addTitle(p, name + " · 👥" + pop);
           const open = () => openRegion(key, name, pop, i);
           p.addEventListener("click", open);   // 一個邏輯領地的每個 path 都可點、都會上色
