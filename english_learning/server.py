@@ -1035,6 +1035,81 @@ def hash_pw(password, salt):
     return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), bytes.fromhex(salt), 100000).hex()
 
 
+# ===== Phase 12B.1.2 — authoritative class membership =====
+# Before this phase there was no server-provable relationship between a student ACCOUNT and a class.
+# A teacher's roster was a dict keyed by DISPLAY NAME inside the teacher's own progress file, and
+# /api/class/sync authenticated the class CODE only -- so an unauthenticated client that knew a code
+# could write any name into any teacher's roster (demonstrated: 'NotMyStudent' and 'STUDENT1' were
+# injected into a teacher's dashboard with no token at all). Names are not identities, and a code is
+# not authority.
+#
+# The canonical relation now lives on the STUDENT'S OWN ACCOUNT:
+#
+#     db["users"][student]["joinedClass"]   = <class code>
+#     db["users"][student]["joinedClassAt"] = <epoch seconds>
+#
+# and ownership is derived through the existing code index:
+#
+#     class code --> db["codes"][code] --> owning teacher account
+#
+# Nothing is trusted from the client except the code the student typed, which is validated against
+# that index. A display name is presentation only and never decides which account joined.
+
+
+def class_owner_of(db, code):
+    """The account that owns a class code, or None. The single derivation of class ownership."""
+    c = (code or "").strip().upper()
+    if not c:
+        return None
+    owner = (db.get("codes") or {}).get(c)
+    if not owner or owner not in (db.get("users") or {}):
+        return None                      # a dangling code index entry is not authority
+    return owner
+
+
+def class_membership_of(db, student_account):
+    """(code, owning teacher) for an account's authoritative membership, or (None, None)."""
+    u = (db.get("users") or {}).get(student_account)
+    if not u:
+        return None, None
+    code = u.get("joinedClass")
+    if not code:
+        return None, None
+    return code, class_owner_of(db, code)
+
+
+def may_manage(teacher_account, student_account, db=None):
+    """THE canonical answer to "may this teacher act on this student?".
+
+    Derived only from authoritative account state -- never from a roster, a display name, or any
+    client-supplied field. Phase 12B.2 must reuse this rather than compare code strings itself.
+    """
+    if not teacher_account or not student_account:
+        return False
+    # Teachers and students share one account namespace and EVERY account owns a class code, so an
+    # account could join its own class. Self-management would let a learner authorise themselves,
+    # which is exactly what an accessibility accommodation must never allow.
+    if teacher_account == student_account:
+        return False
+    if db is None:
+        db = load_accounts()
+    if teacher_account not in (db.get("users") or {}):
+        return False
+    _code, owner = class_membership_of(db, student_account)
+    return owner is not None and owner == teacher_account
+
+
+def class_members_of(teacher_account, db=None):
+    """Every account whose authoritative membership points at this teacher's class."""
+    if db is None:
+        db = load_accounts()
+    out = []
+    for acct in (db.get("users") or {}):
+        if may_manage(teacher_account, acct, db):
+            out.append(acct)
+    return sorted(out)
+
+
 def gen_code(db):
     codes = db.setdefault("codes", {})
     while True:
@@ -1398,22 +1473,58 @@ class Handler(BaseHTTPRequestHandler):
             save_progress(user, p)
         self._send({"ok": True})
 
-    # 學生裝置：只用班級碼上傳（不需老師密碼）
+    # Phase 12B.1.2: joining a class is an act by an AUTHENTICATED STUDENT ACCOUNT.
+    #
+    # Before: this endpoint took a class code and a dict of names, with no token at all. Anyone who
+    # learned a code could write arbitrary roster entries into a teacher's dashboard. The code was
+    # treated as authority and the names were treated as identities; neither is true.
+    #
+    # After: the token identifies the joining account, the code is validated against the code index,
+    # membership is persisted on the JOINING ACCOUNT, and the roster entry is keyed by that account.
+    # The client's `students` dict is ignored entirely for authority -- it named other people.
     def _handle_class_sync(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in", "reason": "auth_required"}, 401)
+            return
         d = self._body_json()
-        code = ((parse_qs(urlparse(self.path).query).get("code", [""]) or [""])[0] or d.get("code") or "").strip().upper()
-        incoming = d.get("students") or {}
+        code = ((parse_qs(urlparse(self.path).query).get("code", [""]) or [""])[0]
+                or d.get("code") or "").strip().upper()
         with acct_lock:
             db = load_accounts()
-            user = db["codes"].get(code)
-            if not user:
-                self._send({"error": "Invalid class code"}, 404)
+            owner = class_owner_of(db, code)
+            if not owner:
+                self._send({"error": "Invalid class code", "reason": "bad_class_code"}, 404)
                 return
-            p = load_progress(user)
-            for name, blob in incoming.items():
-                p["students"][name] = blob          # 以學生名為鍵，後寫覆蓋
-            save_progress(user, p)
-        self._send({"ok": True})
+            if owner == user:
+                # every account owns a code, so this is reachable; joining your own class would make
+                # you your own manager, which may_manage() refuses anyway. Refuse it at the source.
+                self._send({"error": "That is your own class code", "reason": "self_class"}, 400)
+                return
+            prev_code, prev_owner = class_membership_of(db, user)
+            db["users"][user]["joinedClass"] = code
+            db["users"][user]["joinedClassAt"] = time.time()
+            save_accounts(db)
+        # A move is authoritative the moment the account record changes; the roster copies follow so
+        # the previous teacher stops listing a learner they no longer manage.
+        if prev_owner and prev_code != code:
+            with acct_lock:
+                pp = load_progress(prev_owner)
+                if (pp.get("members") or {}).pop(user, None) is not None:
+                    save_progress(prev_owner, pp)
+        label = str(d.get("displayName") or user)[:40]
+        snap = d.get("progress")
+        with acct_lock:
+            p = load_progress(owner)
+            members = p.setdefault("members", {})
+            rec = members.get(user) or {}
+            rec["displayName"] = label
+            rec["joinedAt"] = rec.get("joinedAt") or time.time()
+            if isinstance(snap, dict):
+                rec["progress"] = snap          # the caller's OWN snapshot, never another account's
+            members[user] = rec
+            save_progress(owner, p)
+        self._send({"ok": True, "joinedClass": code, "account": user})
 
     def _handle_dashboard(self):
         user = token_user(self._token())
@@ -1424,7 +1535,21 @@ class Handler(BaseHTTPRequestHandler):
             db = load_accounts()
             code = (db["users"].get(user) or {}).get("code")
             p = load_progress(user)
-        self._send({"code": code, "students": p.get("students", {})})
+            # Phase 12B.1.2: `members` is the AUTHORITATIVE roster -- every key is an account whose
+            # own record points at this teacher's class, re-derived through may_manage() rather than
+            # trusted from the stored copy. `students` is the pre-phase name-keyed data: it is kept
+            # so no teacher loses history, but it is reported separately and marked non-authoritative
+            # because those keys were never bound to an account and cannot be retro-fitted to one.
+            authoritative = {}
+            stored = p.get("members") or {}
+            for acct in class_members_of(user, db):
+                rec = dict(stored.get(acct) or {})
+                authoritative[acct] = {"account": acct,
+                                       "displayName": rec.get("displayName") or acct,
+                                       "joinedAt": rec.get("joinedAt"),
+                                       "progress": rec.get("progress") or {}}
+        self._send({"code": code, "members": authoritative,
+                    "students": p.get("students", {}), "legacyStudents": True})
 
     # ---- 學生入口：跨裝置雲端存檔，存在個人進度檔的 sdata ----
     def _handle_student_save(self):

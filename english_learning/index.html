@@ -9962,12 +9962,26 @@
       .catch(() => { msg.textContent = "Server not available (needs the server; not on GitHub Pages)."; });
   }
   // 學生：用班級碼把這台裝置的所有 profile 進度上傳到該班
+  // Phase 12B.1.2: joining a class is an act by an AUTHENTICATED ACCOUNT.
+  //
+  // This used to POST with no token and a `students` dict built from every LOCAL profile name on the
+  // device -- so the server was told "these names are in your class" by an unauthenticated caller.
+  // Names are not identities. The request now carries the account's token, and sends only that
+  // account's own snapshot plus a display label the server treats as presentation.
   function joinClass() {
     const code = (document.getElementById("joinCode").value || "").trim().toUpperCase();
     const msg = document.getElementById("joinMsg");
     if (!code) { msg.textContent = "Enter your class code."; return; }
+    const tok = authToken(), me = authUser();
+    if (!tok || !me) { msg.textContent = "Log in first, then join your class."; return; }
     msg.textContent = "Joining…";
-    fetch("/api/class/sync?code=" + encodeURIComponent(code), { method: "POST", body: JSON.stringify({ students: collectLocalState() }) })
+    const mine = collectLocalState();
+    fetch("/api/class/sync?code=" + encodeURIComponent(code) +
+          "&token=" + encodeURIComponent(tok),
+      { method: "POST", body: JSON.stringify({
+          displayName: userName || me,
+          progress: mine[userName] || {}      // this account's own snapshot only
+        }) })
       .then(r => r.json().then(j => ({ ok: r.ok, j: j })))
       .then(o => {
         if (!o.ok || !o.j.ok) { msg.textContent = o.j.error || "Could not join."; return; }
@@ -10002,11 +10016,15 @@
     refreshMyRoom(host);
   }
   // 把一份 students map 畫成卡片 HTML（老師後台與總管後台共用）
-  function studentCardsHTML(students) {
+  // `useLabel` (Phase 12B.1.2) renders the account-keyed authoritative roster: the card is keyed by
+  // ACCOUNT -- so two learners with the same display name stay separate -- while the heading shows
+  // the friendly label the account supplied.
+  function studentCardsHTML(students, useLabel) {
     const names = Object.keys(students || {}).sort();
     if (!names.length) return '<p class="screen-intro" style="margin:4px 0">No students yet.</p>';
-    return names.map(name => {
-      const st = students[name] || {}, sc = st.scores || {};
+    return names.map(key => {
+      const st = students[key] || {}, sc = st.scores || {};
+      const name = useLabel ? (st.__label || key) : key;
       let pcts = [], rows = "";
       (manifest ? manifest.levels : []).forEach(lv => {
         let passed = 0;
@@ -10020,11 +10038,34 @@
              (avg != null ? ' · practice avg ' + avg + '%' : '') + streakTxt + '</div><div class="dash-lvs">' + rows + '</div></div>';
     }).join("");
   }
+  // Phase 12B.1.2: `members` is the authoritative roster -- each key is a student ACCOUNT whose own
+  // record points at this teacher's class. `students` is the pre-phase name-keyed data, which was
+  // writable by anyone holding the class code and was never bound to an account; it is still shown
+  // so no teacher loses history, but it is labelled and kept below the authoritative list. Nothing
+  // here confers authority: that is decided server-side by may_manage().
   function renderDashboard(data) {
-    const students = (data && data.students) || {};
-    document.getElementById("dashboard").innerHTML = Object.keys(students).length
-      ? studentCardsHTML(students)
-      : '<p class="screen-intro">No student data yet. Students join with your class code and their progress shows here.</p>';
+    const members = (data && data.members) || {};
+    const legacy = (data && data.students) || {};
+    const mKeys = Object.keys(members), lKeys = Object.keys(legacy);
+    let html = "";
+    if (mKeys.length) {
+      const byName = {};
+      mKeys.forEach(function (acct) {
+        const m = members[acct] || {};
+        // key the card by ACCOUNT so two learners sharing a display name stay distinct
+        byName[acct] = Object.assign({}, m.progress || {},
+          { __label: (m.displayName || acct) + " (" + acct + ")" });
+      });
+      html += '<div class="tp-h">Class members</div>' + studentCardsHTML(byName, true);
+    }
+    if (lKeys.length) {
+      html += '<div class="tp-h">Earlier records (not linked to an account)</div>' +
+        '<p class="screen-intro" style="margin:4px 0 8px">These rows came from before class joins ' +
+        'were signed in, so they are names rather than accounts. They are kept for reference and ' +
+        'confer no management authority.</p>' + studentCardsHTML(legacy);
+    }
+    document.getElementById("dashboard").innerHTML = html ||
+      '<p class="screen-intro">No students yet. Ask your students to sign in and join with your class code.</p>';
   }
   // 後台總管：看所有帳號/學生（需 ADMIN_KEY）
   function renderAdmin(data) {

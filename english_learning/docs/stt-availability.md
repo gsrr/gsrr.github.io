@@ -200,3 +200,9 @@ No accessibility accommodation. A learner with no microphone, a denied permissio
 limitation still cannot reach mastery, because read-along remains required in all 57 lessons. That is
 a real product gap, audited in Phase 12A and deliberately left for Phase 12B.2 — it needs a
 server-owned, non-self-asserted substitute, not an availability fix.
+
+**Phase 12B.2 was started and stopped during its authority audit**, because the server could not
+prove which learner a teacher was entitled to act on. That prerequisite is now repaired — see
+[class-authority.md](class-authority.md) for the authoritative membership model and the canonical
+`may_manage()` relation. The accommodation itself remains **not implemented**: there is no
+accommodation flag, no typed Read Along, no management endpoint and no educator control.
