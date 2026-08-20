@@ -1362,8 +1362,15 @@
   .room-live { color: #4ade80; font-size: 12px; font-weight: 700; }
   .room-off { color: #94a3b8; font-size: 12px; font-weight: 700; }
   .room-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; }
-  .room-grid label { display: flex; flex-direction: column; font-size: 12px; color: #aebacd; font-weight: 700; gap: 3px; }
-  .room-grid input, .room-grid select { font-size: 14px; padding: 5px 6px; border-radius: 8px; border: 1px solid #475569; background: #1e293b; color: #fff; }
+  .room-grid label { display: flex; flex-direction: column; font-size: 12px; color: #aebacd; font-weight: 700; gap: 3px; min-width: 0; }
+  .room-grid input, .room-grid select { font-size: 14px; padding: 5px 6px; border-radius: 8px; border: 1px solid #475569; background: #1e293b; color: #fff; width: 100%; min-width: 0; max-width: 100%; }
+  /* Phase 11B: this form was reachable only from the wide lobby, so it had never had to fit a phone
+     -- at 360px its two columns and unbounded inputs pushed the document to 390px. Multiplayer is a
+     board control now, so on a narrow viewport it collapses to a single column. */
+  @media (max-width: 560px) {
+    .room-grid { grid-template-columns: 1fr; }
+    .room-setup { padding: 10px; }
+  }
   .room-setup .op-hint { color: #94a3b8; }
   .hub-banner { display: block; width: 100%; border: none; border-radius: 16px; padding: 18px 18px; margin-bottom: 12px; font-size: 20px; font-weight: 800; color: #fff; text-align: left; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
   .hub-banner:active { transform: scale(.985); }
@@ -1952,12 +1959,16 @@
       <div class="learn-top">
         <span class="learn-title" id="hubTitle">🎮 Lobby</span>
       </div>
-      <button id="enterWorldBtn" class="hub-banner banner-world">🌍 Enter the World<small id="worldSub" class="hub-sub"></small></button>
-      <button id="createRoomBtn" class="hub-banner banner-create">🏗️ Create private room<small class="hub-sub">Your own map &amp; AIs · invite by code</small></button>
-      <button id="joinRoomBtn" class="hub-banner banner-join">🎟️ Join room<small class="hub-sub">Enter a friend's room code</small></button>
+      <!-- Phase 11B: this surface is no longer the game home. It is MULTIPLAYER: joining or hosting
+           a private game. Practice / Stats / Leaderboard / Events were duplicates of the Academy,
+           Profile and Ranking controls that now live in the World HUD, so they are retired from
+           here (the backend event log is untouched). "Back to the World" stays, because this is also
+           where teacher/parent accounts arrive and it is Multiplayer's return path. -->
+      <button id="joinRoomBtn" class="hub-banner banner-join">🎟️ Join Game<small class="hub-sub">Enter a friend&#39;s game code</small></button>
+      <button id="createRoomBtn" class="hub-banner banner-create">🏗️ Create Private Game<small class="hub-sub">Your own AIs · invite by game code</small></button>
       <div id="hubPanel"></div>
       <div class="hub-links">
-        <a id="lobbyLevelsBtn">📚 Practice</a><a id="hubStatsBtn">📊 Stats</a><a id="hubLeaderBtn">🏅 Leaderboard</a><a id="hubEventsBtn">📰 Events</a>
+        <a id="enterWorldBtn">🌍 Back to the World<small id="worldSub" class="hub-sub"></small></a>
       </div>
     </div>
 
@@ -1966,7 +1977,7 @@
     <div id="screenHome" class="hidden">
       <div class="learn-top">
         <button class="back-btn" id="backFromHome">🗺 Go to Map</button>
-        <span class="learn-title">Learning</span>
+        <span class="learn-title">🎓 Academy</span>
       </div>
       <div id="homeBody"></div>
     </div>
@@ -5260,13 +5271,15 @@
   }
   document.getElementById("openEventsBtn").addEventListener("click", openEvents);
   document.getElementById("openRoomsBtn").addEventListener("click", openRooms);
-  document.getElementById("lobbyLevelsBtn").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
   document.getElementById("enterWorldBtn").addEventListener("click", enterWorld);
   document.getElementById("createRoomBtn").addEventListener("click", openMyRoom);
   document.getElementById("joinRoomBtn").addEventListener("click", openJoin);
-  document.getElementById("hubStatsBtn").addEventListener("click", openTeacher);
-  document.getElementById("hubLeaderBtn").addEventListener("click", openLeaderboard);
-  document.getElementById("hubEventsBtn").addEventListener("click", openEvents);
+  // Phase 11B: #lobbyLevelsBtn / #hubStatsBtn / #hubLeaderBtn / #hubEventsBtn were retired along with
+  // the lobby's duplicate links, so their listeners go too -- binding to a removed element throws a
+  // TypeError at boot and would take the whole script with it. Nothing is lost: the teacher panel is
+  // still reached from the role screen, and the Academy, Ranking and Profile are HUD controls on the
+  // board. The backend event log is untouched; openEvents() itself still exists and is still bound to
+  // #openEventsBtn on the practice grid.
   // 記一筆全站事件（登入才記，fire-and-forget；文字由伺服器依 type 組成）
   function logEvent(type, params) {
     const t = authToken(); if (!t) return;
@@ -5281,7 +5294,9 @@
   // "Pre-A1 -> 🇹🇼 Taiwan", "A1 -> 🇨🇳 China", "A2 -> 🌍 World", which implied the curriculum picked
   // the game world; it never does, and since Phase 10A it controls nothing at all. The room's `map`
   // field is retained as compatibility metadata carrying the course id.
-  const ROOM_COURSES = ["Pre-A1", "A1", "A2"];
+  // Phase 11B: ROOM_COURSES is retired. It existed only to populate the private-game Course picker,
+  // and post-10A a course selects no map, no geography and no gameplay -- `room.map` is a
+  // compatibility label. The client no longer sends it and /api/room/start applies its own default.
   const WORLD_MAP_LABEL = "🌍 World 世界";
   function mapLabel() { return WORLD_MAP_LABEL; }   // the game map is always World
   const ROOM_MAX_PLAYERS = 8;                            // 房間總人數(含 AI)上限，對齊後端
@@ -5294,7 +5309,7 @@
     // explicit room-exit boundary, so the world caches go with it and no room-scoped request can
     // keep addressing the room the player just left.
     clearActiveRoom();
-    document.getElementById("hubTitle").textContent = "🎮 " + (dispName(authUser()) || "Lobby");
+    document.getElementById("hubTitle").textContent = "⚔️ Multiplayer";
     document.getElementById("worldSub").textContent = "";
     document.getElementById("hubPanel").innerHTML = "";
     showScreen(screenRooms);
@@ -5323,7 +5338,7 @@
   // 「加入房間」banner → 顯示輸入代碼列
   function openJoin() {
     const box = document.getElementById("hubPanel");
-    box.innerHTML = '<div class="room-join"><input id="roomJoinCode" type="text" placeholder="Friend\'s room code" autocomplete="off" maxlength="8" style="text-transform:uppercase"><button id="roomJoinBtn" class="dict-play">🎟️ Join</button></div><div id="roomJoinMsg" class="acct-msg"></div>';
+    box.innerHTML = '<div class="room-join"><input id="roomJoinCode" type="text" placeholder="Game code" autocomplete="off" maxlength="8" style="text-transform:uppercase"><button id="roomJoinBtn" class="dict-play">🎟️ Join Game</button></div><div id="roomJoinMsg" class="acct-msg"></div>';
     box.querySelector("#roomJoinBtn").addEventListener("click", joinByCode);
     const inp = box.querySelector("#roomJoinCode");
     inp.focus();
@@ -5351,16 +5366,18 @@
   function renderMyRoom(box, r) {
     r = r || {};
     const started = !!r.started;
-    const courseOpts = ROOM_COURSES.map(c => '<option value="' + c + '"' + ((r.map || "Pre-A1") === c ? " selected" : "") + '>' + c + '</option>').join("");
+    // Phase 11B: the Course selector is GONE from private-game creation. Post-10A a course selects
+    // no map and no geography -- `room.map` is a compatibility label only -- so asking the host to
+    // pick one presented a setting that decides nothing. The client simply stops sending `map`, and
+    // /api/room/start applies its own existing default ("Pre-A1"); no server contract changed.
     box.innerHTML = '<div class="room-setup">' +
-      '<div class="room-h">🎮 Your Room <span class="room-code-chip">🎟️ ' + escapeHtml(r.code || "") + '</span> ' +
+      '<div class="room-h">🎮 Your Private Game <span class="room-code-chip">🎟️ ' + escapeHtml(r.code || "") + '</span> ' +
         (started ? '<span class="room-live">● LIVE · ' + (r.players || 0) + '/' + (r.maxStudents || 0) + ' · ' + escapeHtml(r.map || "") + '</span>' : '<span class="room-off">setting up…</span>') + '</div>' +
       '<div class="room-grid">' +
       '<label>Total players (incl. AI)<input type="number" id="rmCap" min="1" max="' + ROOM_MAX_PLAYERS + '" value="' + Math.min(ROOM_MAX_PLAYERS, (r.capacity != null ? r.capacity : ROOM_MAX_PLAYERS)) + '"></label>' +
       '<label># AIs<input type="number" id="rmNai" min="0" max="' + (ROOM_MAX_PLAYERS - 1) + '" value="' + (r.ais != null ? r.ais : 1) + '"></label>' +
       '<label>AI difficulty<select id="rmDiff">' + ["easy", "normal", "hard"].map(v => '<option value="' + v + '"' + ((r.difficulty || "normal") === v ? " selected" : "") + '>' + v.charAt(0).toUpperCase() + v.slice(1) + '</option>').join("") + '</select></label>' +
       '<label>Resources<select id="rmRes">' + RES_KEYS.map(k => '<option value="' + k + '"' + ((r.resources || "medium") === k ? " selected" : "") + '>' + resLabel(k) + '</option>').join("") + '</select></label>' +
-      '<label>Course<select id="rmCourse">' + courseOpts + '</select></label>' +
       '</div>' +
       '<div class="acct-btns"><button id="rmStart" class="dict-play">' + (started ? '🔄 Restart / apply' : '🚀 Start') + '</button>' +
         (started ? ' <button id="rmEnter" style="background:#16a34a;color:#fff">▶ Enter</button> <button id="rmStop" class="back-btn">■ Stop</button>' : '') + '</div>' +
@@ -5372,7 +5389,8 @@
         capacity: cap,
         aiCount: Math.max(0, Math.min(cap - 1, parseInt(box.querySelector("#rmNai").value, 10) || 0)),
         difficulty: box.querySelector("#rmDiff").value,
-        map: box.querySelector("#rmCourse").value,   // compatibility field: carries the COURSE id
+        // `map` is deliberately NOT sent: it is a compatibility label with no game authority, and
+        // the server already defaults it. See the note above.
         resources: box.querySelector("#rmRes").value
       };
       if (started && !confirm("Restart this room? It RESETS everyone's territory & resources.")) return;
@@ -5389,10 +5407,25 @@
     });
   }
   function enterWorld() { enterRoom("GLOBAL"); }          // 進入常駐的全域世界
+  // Phase 11B — DIRECT RESUME. The normal student path is login -> World Conquest, with no lobby
+  // stop, no room choice, no course choice and no map choice. GLOBAL is the permanent public game:
+  // ensure_global_room() creates it already started, with AI, unlimited capacity and no host, so
+  // resuming needs no user input and no new API. A returning player gets the same GLOBAL state --
+  // ownership, economy and re-entry all live in that room's own files.
+  // Guests are deliberately NOT routed here: they hold no token, and every room-scoped route needs
+  // one. They keep the local practice route (see selectProfile).
+  function enterGameDirect(onErr) {
+    if (!authToken() || !authUser()) { showScreen(screenLanding); return; }
+    enterRoom("GLOBAL", onErr || function (e) {
+      // if the world cannot be reached, fall back to the Multiplayer surface rather than a dead end
+      alert(e || "Could not reach the world.");
+      openRooms();
+    });
+  }
   function joinByCode() {
     const code = (document.getElementById("roomJoinCode").value || "").trim().toUpperCase();
     const msg = document.getElementById("roomJoinMsg");
-    if (!code) { msg.textContent = "Enter a room code."; return; }
+    if (!code) { msg.textContent = "Enter a game code."; return; }
     msg.textContent = "Joining…";
     enterRoom(code, function (err) { if (err) msg.textContent = err; });
   }
@@ -5410,11 +5443,13 @@
         territory = null; myEcon = null;                   // 換房間 → 清掉上一房的世界快取
         const idx = (manifest && manifest.levels) ? manifest.levels.findIndex(l => l.id === o.j.map) : -1;
         if (idx < 0) { alert("This room's map isn't available."); return; }
-        // Phase 6F: selectLevel() still runs in full — it loads the room, the empire and the
-        // economy and draws the map — but the first screen of a world is now Learning Home, the
-        // canonical learning entry. "Back to Map" on Home reveals the map that is already drawn.
+        // Phase 11B: entering a game lands on the BOARD. selectLevel() already loads the room, the
+        // empire and the economy and draws the map, so this is simply the last screen not being
+        // overridden. Phase 6F used to show Learning Home first as "the canonical learning entry";
+        // the product decision is now that World Conquest is the destination and the Academy is one
+        // of its HUD controls. Every caller benefits: normal entry, Join Game and private rooms all
+        // arrive at the board with no intermediate stop.
         selectLevel(idx);
-        openLearningHome();
       })
       .catch(() => { const e = "Server not available."; if (onErr) onErr(e); else alert(e); });
   }
@@ -6463,8 +6498,9 @@
           '<span>\u2694\uFE0F ' + poolTotal() + '</span>' +
           '<span>\u{1F465} ' + (e.population || 0) + '</span></div></div>';
         const more = document.createElement("button");
-        more.type = "button"; more.className = "hp-more"; more.textContent = "My empire \u25B8";
-        more.title = "Open my empire"; more.setAttribute("aria-label", "Open my empire");
+        more.type = "button"; more.className = "hp-more"; more.textContent = "Empire \u25B8";
+        more.title = "Empire \u2014 your holdings and economy";
+        more.setAttribute("aria-label", "Empire: your holdings and economy");
         more.addEventListener("click", openEmpire);          // the EXISTING empire panel
         HUD.pl.appendChild(more);
       }
@@ -6473,9 +6509,14 @@
       function renderHudTitle() {
         // "World Conquest" is the game's name for its own play surface. The subtitle carries only
         // real session facts (the room code, and the course the room was opened with).
+        // Phase 11B: the subtitle carries only what a PLAYER can act on. The public game needs no
+        // identifier, a private game needs the code you would share, and the room's course label is
+        // dropped entirely -- post-10A it decides nothing, so showing it presented a setting that
+        // does not exist. "Room" was internal vocabulary; the player-facing word is Game.
         const sub = [];
-        if (typeof roomCode !== "undefined" && roomCode) sub.push("Room " + roomCode);
-        if (lv && (lv.name || lv.id)) sub.push(lv.name || lv.id);
+        if (typeof roomCode !== "undefined" && roomCode && roomCode !== "GLOBAL") {
+          sub.push("Game " + roomCode);
+        }
         HUD.ti.innerHTML = '<div class="ht-t">World Conquest</div>' +
           (sub.length ? '<div class="ht-s">' + escapeHtml(sub.join(" \u00b7 ")) + '</div>' : '');
       }
@@ -6483,10 +6524,13 @@
       // ---------- global controls: existing actions only ----------
       function renderHudControls() {
         HUD.ct.innerHTML = "";
-        HUD.ct.appendChild(icoBtn("\u{1F4DA}", "Learning Home", openLearningHome));
+        HUD.ct.appendChild(icoBtn("\u{1F4DA}", "Academy \u2014 learn to earn Gold", openLearningHome));
         if (userName) HUD.ct.appendChild(icoBtn("\u{1F9D1}", "My progress", openProfileStats));
         HUD.ct.appendChild(icoBtn("\u{1F3C6}", "Ranking", openLeaderboard));
-        HUD.ct.appendChild(icoBtn("\u{1F3E0}", "Home base \u2014 recruit & build", openHomeBase));
+        HUD.ct.appendChild(icoBtn("\u{1F3E0}", "Base \u2014 recruit & build", openHomeBase));
+        // Phase 11B: Multiplayer is reachable from the board, which is the student's home. It opens
+        // the existing room-management surface -- no new capability, only a way in.
+        HUD.ct.appendChild(icoBtn("\u2694\uFE0F", "Multiplayer \u2014 join or host a game", openRooms));
       }
 
       // ---------- the selected-territory card ----------
@@ -6586,8 +6630,8 @@
         }
         HUD.acts.appendChild(actBtn("\u{1F396}\uFE0F", "Recruit", openHomeBase,
           { title: "Recruit troops and build at your home base" }));
-        HUD.acts.appendChild(actBtn("\u{1F4DA}", "Learn", openLearningHome,
-          { title: "Go to Learning Home" }));
+        HUD.acts.appendChild(actBtn("\u{1F4DA}", "Academy", openLearningHome,
+          { title: "Academy \u2014 learn and master lessons to earn Gold" }));
         if (!backFn && lv) {
           HUD.acts.appendChild(actBtn("\u{1F409}", examPassed(lv.id) ? "Boss \u2713" : "Boss",
             () => startLevelExam(i), { title: "Level checkpoint battle" }));
@@ -8482,7 +8526,9 @@
     showScreen(screenLearn);
   }
 
-  document.getElementById("backToProfile").addEventListener("click", () => { if (authToken() && authUser()) openRooms(); else showScreen(screenLanding); });
+  // Phase 11B: the student's home is the World board, so a lesson exits there rather than to the
+  // room lobby. Signed-out visitors still fall back to the landing page.
+  document.getElementById("backToProfile").addEventListener("click", () => { if (authToken() && authUser()) enterGameDirect(); else showScreen(screenLanding); });
   // Phase 7E.3: the map's "up" is the room's canonical home — Learning Home — not the level grid.
   // That closes the Home <-> Map pair (7E.2 gave Home its "Go to Map") and stops gameplay Back from
   // landing on a screen that behaves like a second app root. A room with no learning content still
@@ -8509,7 +8555,7 @@
   // Phase 7E.2: Learning Home is the room-entry destination, so the world is not "back" — it is the
   // other half of the product. This opens the map that actually contains the campaign's territories.
   document.getElementById("backFromHome").addEventListener("click", () => {
-    goToGameMap();
+    goToGameMap();          // Phase 11B: the Academy returns to the World board
   });
 
   /* ================= 老師/家長帳號 + 雲端進度後台 ================= */
@@ -8687,7 +8733,7 @@
     if (authToken() && u) {
       userName = u; try { localStorage.setItem("userName", u); } catch (e) {}
       updateGreeting();
-      openRooms();
+      enterGameDirect();          // Phase 11B: an already-signed-in student goes to the World
       return;
     }
     openStudentAcct();
@@ -8799,7 +8845,7 @@
         if (!localStorage.getItem("avatar:" + user)) setAvatar(user, selectedAvatar);
         userName = user; try { localStorage.setItem("userName", user); } catch (e) {}
         updateGreeting();
-        openRooms();                                                   // 登入後直接進大廳(不分老師/學生)
+        enterGameDirect();                                             // Phase 11B: 直接進世界(不經大廳)
       })
       .catch(() => { msg.textContent = "Server not available (needs the server)."; });
   }
@@ -8850,7 +8896,7 @@
     if (authToken() && authUser()) {
       userName = authUser(); try { localStorage.setItem("userName", userName); } catch (e) {}
       updateGreeting();
-      openRooms();
+      enterGameDirect();          // Phase 11B: a stored session resumes the World directly
     } else showScreen(screenLanding);
   }
 
