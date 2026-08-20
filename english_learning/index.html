@@ -1180,6 +1180,11 @@
   @media (max-width: 560px) {
     body.entry-mode { padding: 8px; }
     body.entry-mode > .card { padding: 12px; }
+    /* Phase 11D: the Academy needs the same gutters back. On a 360px phone the default 24px body +
+       28px card padding left a course card only 238px -- a third of the viewport spent on margin,
+       with lesson rows squeezed inside that. */
+    body.academy-mode { padding: 8px; }
+    body.academy-mode > .card { padding: 12px; }
   }
   @media (max-width: 560px) {
     .brand-plaque { padding: 8px 14px; border-width: 2px; }
@@ -1188,6 +1193,135 @@
     .btn-play, .btn-guest { min-width: 0; width: 100%; }
     .btn-play { font-size: 17px; padding: 13px 18px; }
     .enter-fact { font-size: 11px; padding: 4px 9px; }
+  }
+  /* ================================================================================================
+     Phase 11D -- ACADEMY. The Academy worked, but it still looked like the old reading website
+     bolted to the side of a strategy game: a white h1 masthead reading "English Reading" above a
+     small "Academy" tab, thin grey cards, one course expanded with the other four hidden behind
+     "4 more campaigns", and all 57 lessons dumped into a single flat list.
+     It now uses the board own tokens -- parchment surfaces, chunky dark outlines, gold accent --
+     but deliberately calmer: no battle imagery, softer depth, and reading-sized text. Presentation
+     and information architecture only; every number still comes from the authoritative learning
+     progress and economy payloads. ============================================================== */
+  /* the reading masthead would sit ABOVE the Academy plaque and re-invert the hierarchy B2 sets, and
+     the Academy now names English Reading in its own supporting line, so it steps aside here too. */
+  body.academy-mode > .card > h1 { display: none !important; }
+  .ac-top { display: flex; align-items: center; margin: 0 0 10px; }
+  .ac-back { padding: 7px 14px; cursor: pointer; border-radius: 12px; font-size: 13px;
+    font-weight: 800; color: #ffe9bd; background: linear-gradient(180deg, #6b4a24, #47301a);
+    border: 2px solid #2a1b0d; box-shadow: inset 0 1px 0 rgba(255,225,180,.3), 0 3px 0 #241708; }
+  .ac-back:hover { background: linear-gradient(180deg, #7d5829, #533720); }
+  .ac-id { text-align: center; margin: 0 0 12px; }
+  .ac-sub { font-size: 12.5px; font-weight: 700; color: #cbb28a; margin-top: 8px;
+    line-height: 1.45; }
+  /* decorative only: books, a pencil, a speech bubble. Never a gameplay object. */
+  .ac-deco { display: block; width: 100%; max-width: 460px; height: auto; margin: 0 auto 14px;
+    pointer-events: none; }
+
+  /* the loop this whole module exists to serve, stated once */
+  .ac-loop { display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+    gap: 6px 10px; margin: 0 0 14px; padding: 9px 14px; border-radius: 14px;
+    background: rgba(107,74,36,.5); border: 2px solid #2a1b0d; }
+  .ac-loop-step { font-size: 12.5px; font-weight: 800; color: #f2ddb0; }
+  .ac-loop-arrow { font-size: 12px; color: #cbb28a; }
+  .ac-gold { font-size: 15px; font-weight: 900; color: #ffd257; }
+  .ac-rw { font-size: 11.5px; font-weight: 700; color: #cbb28a; width: 100%; text-align: center; }
+
+  /* the one next action */
+  .ac-cont { margin: 0 0 16px; padding: 14px 16px; border-radius: 16px;
+    background: linear-gradient(180deg, #f7e7c3, #e8d0a2); border: 3px solid #2a1b0d;
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.55), 0 5px 0 #8a6a3c, 0 9px 16px rgba(0,0,0,.3); }
+  .ac-cont-k { font-size: 11px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase;
+    color: #8a5f2a; }
+  .ac-cont-t { font-size: 18px; font-weight: 900; color: #2a1b0d; margin-top: 3px; line-height: 1.25; }
+  .ac-cont-s { font-size: 12.5px; font-weight: 700; color: #6b4a24; margin-top: 3px; }
+  .ac-cont button { margin-top: 11px; width: 100%; min-height: 50px; cursor: pointer;
+    border-radius: 14px; font-size: 17px; font-weight: 900; letter-spacing: .5px; color: #fff2ea;
+    background: linear-gradient(180deg, #e2503c, #ad2f20); border: 3px solid #2a1b0d;
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.32), 0 5px 0 #6d1a12; }
+  .ac-cont button:hover { background: linear-gradient(180deg, #ee6450, #c03826); }
+  .ac-cont button:active { transform: translateY(4px); box-shadow: inset 0 2px 0 rgba(255,255,255,.3), 0 1px 0 #6d1a12; }
+  .ac-done { margin: 0 0 16px; padding: 12px 15px; border-radius: 14px; font-size: 13.5px;
+    font-weight: 800; color: #2a1b0d; background: linear-gradient(180deg, #d8f0c0, #b7dd97);
+    border: 3px solid #2a1b0d; box-shadow: 0 4px 0 #6f8f52; }
+
+  .ac-h { font-size: 12px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase;
+    color: #cbb28a; margin: 0 0 8px; }
+
+  /* one card per curriculum family -- all of them, never hidden behind a disclosure */
+  .ac-card { margin: 0 0 12px; border-radius: 16px; overflow: hidden; border: 3px solid #2a1b0d;
+    background: linear-gradient(180deg, #f4e2ba, #e6cfa4);
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.5), 0 5px 0 #8a6a3c, 0 8px 14px rgba(0,0,0,.26); }
+  .ac-card.is-done { background: linear-gradient(180deg, #ecf7d8, #cfe8ae);
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.5), 0 5px 0 #6f8f52, 0 8px 14px rgba(0,0,0,.24); }
+  .ac-card-b { padding: 13px 15px; }
+  .ac-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+  .ac-chip { font-size: 10.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 999px; border: 2px solid #2a1b0d; color: #2a1b0d;
+    background: #ffd79a; }
+  .ac-chip.is-campaign { background: #f0b6b0; }
+  .ac-nm { font-size: 17px; font-weight: 900; color: #2a1b0d; line-height: 1.2; }
+  .ac-bar { position: relative; height: 12px; margin: 9px 0 6px; border-radius: 999px;
+    background: #c9ae7d; border: 2px solid #2a1b0d; overflow: hidden; }
+  .ac-bar span { position: absolute; inset: 0 auto 0 0;
+    background: linear-gradient(180deg, #7fc94a, #4f9a2a); }
+  .ac-meta { font-size: 12.5px; font-weight: 700; color: #6b4a24; }
+  .ac-meta b { color: #2a1b0d; font-weight: 900; }
+  .ac-trophy { margin-top: 6px; font-size: 12.5px; font-weight: 900; color: #8a5f2a; }
+  .ac-go { margin-top: 11px; width: 100%; min-height: 44px; cursor: pointer; border-radius: 12px;
+    font-size: 14.5px; font-weight: 900; letter-spacing: .4px; color: #2a1b0d;
+    background: linear-gradient(180deg, #ffd79a, #e8b46a); border: 3px solid #2a1b0d;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 4px 0 #8a5f2a; }
+  .ac-go:hover { background: linear-gradient(180deg, #ffe6bb, #f2c383); }
+  .ac-go:active { transform: translateY(3px); box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 1px 0 #8a5f2a; }
+
+  /* a family lessons live INSIDE that family, so the page is no longer one 57-row list */
+  .ac-les { border-top: 3px solid #2a1b0d; background: rgba(42,27,13,.06); }
+  .ac-les > summary { cursor: pointer; list-style: none; padding: 9px 15px; font-size: 12.5px;
+    font-weight: 900; color: #6b4a24; }
+  .ac-les > summary::-webkit-details-marker { display: none; }
+  .ac-les > summary::after { content: " \25be"; }
+  .ac-les[open] > summary::after { content: " \25b4"; }
+  .ac-les-b { padding: 0 10px 10px; }
+  .ac-les:not([open]) .ac-les-b { display: none; }
+  .ac-row { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
+    margin: 6px 0 0; padding: 9px 11px; cursor: pointer; border-radius: 11px;
+    border: 2px solid #8a6a3c; background: #fbf1da; }
+  .ac-row:hover { border-color: #2a1b0d; background: #fff8e8; }
+  .ac-row.is-done { border-color: #6f8f52; background: #eef8dd; }
+  .ac-row.is-review { border-color: #d08a2a; background: #fdeccb; }
+  .ac-row .ic { font-size: 15px; width: 20px; text-align: center; }
+  .ac-row .nm { flex: 1; font-size: 13.5px; font-weight: 800; color: #2a1b0d; }
+  .ac-row .st { font-size: 11.5px; font-weight: 800; color: #6b4a24; white-space: nowrap; }
+  .ac-row.is-review .st { color: #9a4a00; }
+
+  /* achievements: an Academy award, never an entitlement to ground */
+  .ac-ach { padding: 12px 14px; border-radius: 14px; border: 3px solid #2a1b0d;
+    background: linear-gradient(180deg, #f7e7c3, #e8d0a2); box-shadow: 0 4px 0 #8a6a3c; }
+  .ac-ach-li { font-size: 13.5px; font-weight: 800; color: #2a1b0d; padding: 2px 0; }
+  .ac-ach-none { font-size: 12.5px; font-weight: 700; color: #6b4a24; }
+  .ac-ach button { margin-top: 9px; min-height: 38px; padding: 0 14px; cursor: pointer;
+    border-radius: 10px; font-size: 13px; font-weight: 800; color: #2a1b0d;
+    background: #ffd79a; border: 2px solid #2a1b0d; }
+  .ac-note { margin: 0 0 14px; padding: 10px 13px; border-radius: 12px; font-size: 12.5px;
+    font-weight: 700; line-height: 1.5; color: #f2ddb0; background: rgba(107,74,36,.5);
+    border: 2px solid #2a1b0d; }
+  .ac-note b { color: #ffd257; }
+
+  @media (max-width: 560px) {
+    /* the user chip in the top-right corner is absolutely positioned, so at 360px the return button
+       ran underneath it (its right edge reached 182px, the chip started at 167px). Shrinking it
+       keeps the destination named -- "World Conquest", not a generic Back -- without a second row. */
+    .ac-back { font-size: 11.5px; padding: 6px 10px; }
+    .ac-deco { max-width: 100%; }
+    .ac-card { border-width: 2px; }
+    .ac-nm { font-size: 15.5px; }
+    .ac-cont { padding: 12px 13px; border-width: 2px; }
+    .ac-cont-t { font-size: 16.5px; }
+    .ac-loop { padding: 8px 10px; }
+    .ac-row { padding: 8px 9px; }
+    .ac-row .nm { font-size: 13px; }
+    .ac-row .st { font-size: 11px; }
   }
   /* ===== 真實地理地圖（各等級不同國家/區域）===== */
   .card.map-wide { max-width: 1100px; }                     /* 地圖畫面在桌機上放寬(手機不受影響) */
@@ -2107,7 +2241,7 @@
     <!-- 畫面 1：選等級 -->
     <div id="screenLevel" class="hidden">
       <div class="learn-top">
-        <button class="back-btn" id="backToProfile">🎮 Lobby</button>
+        <button class="back-btn" id="backToProfile">← Back</button>
         <span class="learn-title" id="greetTitle"></span>
       </div>
       <p class="screen-intro">Choose a map / level 🗺 — your room stays the same</p>
@@ -2142,11 +2276,42 @@
 
     <!-- 畫面 1b：學習歷程 / 成就 -->
     <!-- 畫面：Learning Home（Phase 6C）—— 學習的唯一入口，只回答「接下來做什麼／我到哪了」 -->
+    <!-- Phase 11D: the Academy is a MODULE of World Conquest, so it leads with its own name and
+         says, in one line, what it is for. "Go to Map" became the explicit product it returns to.
+         #backFromHome keeps its id and handler; renderLearningHome() hides it for a guest, who has
+         no world to go back to. -->
     <div id="screenHome" class="hidden">
-      <div class="learn-top">
-        <button class="back-btn" id="backFromHome">🗺 Go to Map</button>
-        <span class="learn-title">🎓 Academy</span>
+      <div class="ac-top">
+        <button class="ac-back" id="backFromHome">← World Conquest</button>
       </div>
+      <div class="ac-id">
+        <span class="brand-plaque"><span class="brand-t">Academy</span></span>
+        <div class="ac-sub">English Reading · Learn and master lessons to earn Gold for your empire.</div>
+      </div>
+      <!-- Decoration only: books, a pencil and a speech bubble. It carries no state, has no ids and
+           is pointer-events:none, so it can never become a gameplay object. Board geometry is
+           deliberately NOT reused here -- the Academy is not a map. -->
+      <svg class="ac-deco" viewBox="0 0 460 74" aria-hidden="true" focusable="false">
+        <g stroke="#2a1b0d" stroke-width="2.6" stroke-linejoin="round">
+          <rect x="150" y="34" width="58" height="13" rx="3" fill="#e2503c"/>
+          <rect x="146" y="47" width="66" height="13" rx="3" fill="#e8b46a"/>
+          <rect x="154" y="60" width="50" height="11" rx="3" fill="#7fc94a"/>
+          <path d="M226 71 L226 40 L252 33 L252 64 Z" fill="#f7e7c3"/>
+          <path d="M278 71 L278 40 L252 33 L252 64 Z" fill="#ecd7a8"/>
+          <path d="M252 33 L252 64" fill="none"/>
+          <path d="M300 71 L300 47 L312 41 L324 47 L324 71 Z" fill="#ffd79a"/>
+          <path d="M312 41 L312 27" fill="none"/>
+          <path d="M312 27 L330 31 L312 35 Z" fill="#e2503c"/>
+          <rect x="60" y="30" width="62" height="30" rx="9" fill="#f7e7c3"/>
+          <path d="M78 60 L74 71 L92 60 Z" fill="#f7e7c3"/>
+          <circle cx="76" cy="45" r="2.6" fill="#2a1b0d" stroke="none"/>
+          <circle cx="91" cy="45" r="2.6" fill="#2a1b0d" stroke="none"/>
+          <circle cx="106" cy="45" r="2.6" fill="#2a1b0d" stroke="none"/>
+          <rect x="361" y="26" width="18" height="31" rx="2" fill="#ffd79a"/>
+          <path d="M361 57 L370 71 L379 57 Z" fill="#f7e7c3"/>
+          <path d="M361 51 L379 51" fill="none"/>
+        </g>
+      </svg>
       <div id="homeBody"></div>
     </div>
 
@@ -4357,6 +4522,9 @@
     // every routing path agrees and no caller has to remember.
     document.body.classList.toggle("entry-mode",
       el === screenLanding || el === screenStudentAcct || el === screenRole);
+    // Phase 11D: the Academy names itself, and names English Reading in its own supporting line, so
+    // the h1 masthead above it would state the same thing twice and invert the hierarchy.
+    document.body.classList.toggle("academy-mode", el === screenHome);
     [screenLanding, screenRole, screenProfile, screenStudentAcct, screenLevel, screenRooms, screenProfileStats, screenHome, screenArticle, screenLearn, screenBattle, screenTeacher, screenAdmin, screenLeader].forEach(s => s.classList.add("hidden"));
     el.classList.remove("hidden");
     const _card = document.querySelector(".card");
@@ -7462,9 +7630,13 @@
     const rows = learningProgress.lessons || {}, camps = learningProgress.campaigns || {};
     const out = [];
     Object.keys(camps).forEach(cid => {
-      const member = {};
-      (camps[cid].lessonIds || []).forEach(l => { member[l] = 1; });
-      const list = Object.keys(rows).filter(l => member[l]).map(l => ({ lid: l, row: rows[l] }));
+      // Phase 11D: walk the campaign's OWN ordered lessonIds array. This used to filter
+      // Object.keys(rows) -- the progress map's incidental key order -- against a membership set,
+      // which listed Pre-A1 as 005, 002, 001, 003, 004, ... and therefore made "the first lesson
+      // not yet mastered" resolve to 005 for a brand-new student. lessonIds is an ordered array, so
+      // this is the server key order the surrounding comment always intended.
+      const list = (camps[cid].lessonIds || [])
+        .filter(l => rows[l]).map(l => ({ lid: l, row: rows[l] }));
       if (list.length) out.push({ cid: cid, name: camps[cid].title || cid,
                                   completed: camps[cid].completed === true, list: list });
     });
@@ -7474,103 +7646,236 @@
   //   1. a lesson already under way (some activities done, some missing)
   //   2. else the first lesson not yet mastered
   //   3. else the first lesson
+  // Phase 11D: the STEP 5 rule, factored out so a per-course Continue and the page-level Continue
+  // Learning are the same resolver applied to different lesson sets. Not a second algorithm.
+  function continueTargetIn(list) {
+    if (!list || !list.length) return null;
+    const started = list.find(x => (x.row.completedActivityIds || []).length > 0
+                                   && (x.row.missingActivityIds || []).length > 0);
+    const unmastered = list.find(x => x.row.activePolicyCompleted !== true);
+    return started || unmastered || list[0];
+  }
   function homeContinueTarget() {
     const all = [];
-    homeCampaigns().forEach(c => c.list.forEach(x => all.push(x)));
-    if (!all.length) return null;
-    const started = all.find(x => (x.row.completedActivityIds || []).length > 0
-                                  && (x.row.missingActivityIds || []).length > 0);
-    const unmastered = all.find(x => x.row.activePolicyCompleted !== true);
-    return started || unmastered || all[0];
+    // acFamilies() is the same lesson set, ordered the way the Academy displays it, so Continue and
+    // the course cards can never disagree about where a student is meant to start.
+    const F = acFamilies();
+    if (!F.tracked) return null;
+    F.fams.forEach(f => f.list.forEach(x => all.push(x)));
+    return continueTargetIn(all);
   }
-  function homeAchievementsHTML() {
+  // Phase 11D: homeAchievementsHTML() was replaced by acAchievementsHTML(), which renders the same
+  // authoritative ownedCosmetics() ledger in the Academy's own styling. Removed rather than left
+  // behind as a second, unreachable definition of the same panel.
+  // ===== Phase 11D — the Academy =====
+  // What changed here is presentation and information architecture, not authority:
+  //   * All FIVE curriculum families get a card. Before, the server's key order put "A1 Core
+  //     Readings" first and hid the other four -- including Pre-A1, where a beginner starts --
+  //     behind a "4 more campaigns" disclosure.
+  //   * A family's lessons live inside that family. Before, all 57 lessons were emitted into one
+  //     flat list under a single "LESSONS" heading, which pushed Achievements off the bottom of the
+  //     page and read like a spreadsheet.
+  //   * Cards are ordered by the AUTHORED level order in lessons.json (Pre-A1 -> A1 -> A2 -> B1),
+  //     resolved from each family's own contentPath. That is existing authored data, not a new
+  //     client-side ranking rule, and the server's order still breaks ties within a level.
+  // Every number below is still read from the authoritative payloads: lesson mastery from
+  // activePolicyCompleted, the denominator from requiredActivityIds (so optional activities cannot
+  // inflate it), and the Gold amounts from /api/economy.
+  function acLevelOrder() {
+    const ids = ((manifest && manifest.levels) || []).map(l => l.id);
+    return ids.length ? ids : ["Pre-A1", "A1", "A2", "B1"];
+  }
+  // the level a family belongs to, taken from its lessons' own content path ("Pre-A1/taipei/zoo")
+  function acLevelOf(lessonIds) {
+    const reg = (learningRegistry && learningRegistry.lessons) || {};
+    for (let i = 0; i < lessonIds.length; i++) {
+      const cp = (reg[lessonIds[i]] || {}).contentPath || "";
+      const seg = String(cp).split("/")[0];
+      if (seg) return seg;
+    }
+    return "";
+  }
+  function acSortFamilies(fams) {
+    const order = acLevelOrder();
+    return fams.map((f, i) => ({ f: f, i: i, li: order.indexOf(f.level) }))
+      .sort((a, b) => {
+        const ai = a.li < 0 ? 99 : a.li, bi = b.li < 0 ? 99 : b.li;
+        if (ai !== bi) return ai - bi;
+        // Inside one level, order by course id. The authenticated list arrives in the server's
+        // campaigns order and the guest list in the public registry's key order, so without this
+        // the same two Pre-A1 families were listed in a different order for the two cases.
+        return String(a.f.cid) < String(b.f.cid) ? -1 : (String(a.f.cid) > String(b.f.cid) ? 1 : 0);
+      }).map(x => x.f);
+  }
+  // "5 activities per lesson" is worth stating once per family, but only when the family agrees.
+  function acRequiredNote(list) {
+    const reqs = {};
+    list.forEach(x => { reqs[(x.row.requiredActivityIds || []).length] = 1; });
+    const keys = Object.keys(reqs);
+    return keys.length === 1 && keys[0] !== "0"
+      ? keys[0] + " required activities per lesson" : "";
+  }
+  function acLessonRowsHTML(list, tracked) {
+    return list.map(x => {
+      const m = lessonMastery(x.row), rev = tracked && needsReview(x.row);
+      const req = (x.row.requiredActivityIds || []).length;
+      const have = (x.row.completedActivityIds || []).length;
+      const st = tracked
+        ? escapeHtml(rev ? "Needs Review" : m.label) + (req ? " · " + have + " / " + req : "")
+        : "Practice";
+      return '<button type="button" class="ac-row' +
+        (tracked && m.key === "mastered" ? " is-done" : "") + (rev ? " is-review" : "") +
+        '" data-home-lesson="' + escapeHtml(x.lid) + '">' +
+        '<span class="ic">' + (rev ? "\u26a0" : (tracked ? (m.icon || "\u25cb") : "\ud83d\udcd6")) + '</span>' +
+        '<span class="nm">' + escapeHtml(String(x.title || x.lid)) + '</span>' +
+        '<span class="st">' + st + '</span></button>';
+    }).join("");
+  }
+  function acFamilyCardHTML(f, tracked, openIt) {
+    const done = tracked ? f.list.filter(x => x.row.activePolicyCompleted === true).length : 0;
+    const total = f.list.length;
+    const pct = (tracked && total) ? Math.round(done * 100 / total) : 0;
+    const isCamp = f.kind === "Campaign";
+    const allDone = tracked && total > 0 && done === total;
+    const next = tracked ? continueTargetIn(f.list) : null;
+    let h = '<div class="ac-card' + (allDone ? " is-done" : "") + '">' +
+      '<div class="ac-card-b">' +
+      '<div class="ac-chips">' +
+        (f.level ? '<span class="ac-chip">' + escapeHtml(f.level) + '</span>' : '') +
+        '<span class="ac-chip' + (isCamp ? " is-campaign" : "") + '">' + escapeHtml(f.kind) + '</span>' +
+      '</div>' +
+      '<div class="ac-nm">' + escapeHtml(f.name) + '</div>';
+    if (tracked) {
+      h += '<div class="ac-bar"><span style="width:' + pct + '%"></span></div>' +
+      '<div class="ac-meta"><b>' + done + ' / ' + total + '</b> lessons mastered' +
+        (acRequiredNote(f.list) ? ' \u00b7 ' + acRequiredNote(f.list) : '') + '</div>' +
+      (allDone
+        ? '<div class="ac-trophy">\ud83c\udfc6 ' + escapeHtml(f.name) + ' complete — an Academy award</div>'
+        : '');
+    } else {
+      h += '<div class="ac-meta"><b>' + total + '</b> lessons to practise</div>';
+    }
+    if (next) {
+      h += '<button type="button" class="ac-go" data-home-continue="' + escapeHtml(next.lid) + '">' +
+           (allDone ? "Review" : "Continue") + " \u00b7 " + escapeHtml(f.kind) + '</button>';
+    }
+    h += '</div>' +
+      '<details class="ac-les"' + (openIt ? " open" : "") + '><summary>' + total +
+        ' lesson' + (total === 1 ? "" : "s") + '</summary>' +
+      '<div class="ac-les-b">' + acLessonRowsHTML(f.list, tracked) + '</div></details></div>';
+    return h;
+  }
+  function acAchievementsHTML() {
     const owned = ownedCosmetics();
     const body = owned.length
-      ? owned.map(g => '<div class="lh-ach-li">' + escapeHtml(rewardItemLabel(g.itemId)) +
+      ? owned.map(g => '<div class="ac-ach-li">' + escapeHtml(rewardItemLabel(g.itemId)) +
           (g.count > 1 ? ' \u00d7' + g.count : '') + '</div>').join("")
-      : '<div class="lh-ach-none">Nothing unlocked yet \u2014 master a lesson to earn your first.</div>';
-    return '<div class="lh-h">Achievements</div><div class="lh-ach">' + body +
+      : '<div class="ac-ach-none">Nothing earned yet — master a lesson to win your first.</div>';
+    return '<div class="ac-h">Academy awards</div><div class="ac-ach">' + body +
       (owned.length ? '<button type="button" id="homeCollection">View Collection</button>' : '') +
       '</div>';
+  }
+  // A guest has no account-scoped progress, so there is no authoritative mastery or Continue target
+  // to show. The PUBLIC registry still describes the curriculum, so the guest sees the same five
+  // families and can practise any lesson -- with no invented progress and no promise of a world.
+  function acGuestFamilies() {
+    const reg = (learningRegistry && learningRegistry.lessons) || {};
+    const by = {};
+    Object.keys(reg).forEach(lid => {
+      const cid = reg[lid].courseId || "?";
+      (by[cid] = by[cid] || []).push({ lid: lid, title: reg[lid].title, row: {} });
+    });
+    Object.keys(by).forEach(cid => {
+      by[cid].sort((a, b) => (a.lid < b.lid ? -1 : (a.lid > b.lid ? 1 : 0)));
+    });
+    return acSortFamilies(Object.keys(by).map(cid => {
+      const ids = by[cid].map(x => x.lid);
+      const kind = courseKindLabel(cid);
+      const lvl = acLevelOf(ids);
+      // no course titles in the public registry, so name the family by what IS public: its level,
+      // or for a campaign the course's own final id segment.
+      const seg = String(cid).split(".").pop();
+      const name = kind === "Campaign"
+        ? seg.charAt(0).toUpperCase() + seg.slice(1) + " Campaign"
+        : (lvl || seg) + " Course";
+      return { cid: cid, name: name, kind: kind, level: lvl, list: by[cid] };
+    }));
+  }
+  function acFamilies() {
+    const camps = homeCampaigns();
+    if (!camps.length) return { tracked: false, fams: acGuestFamilies() };
+    const reg = (learningRegistry && learningRegistry.lessons) || {};
+    const fams = camps.map(c => {
+      const kind = courseKindLabel(c.cid);
+      return { cid: c.cid, kind: kind, level: acLevelOf(c.list.map(x => x.lid)),
+               name: c.name + " " + kind, completed: c.completed,
+               list: c.list.map(x => ({ lid: x.lid, row: x.row,
+                 title: x.row.title || (reg[x.lid] || {}).title || x.lid })) };
+    });
+    return { tracked: true, fams: acSortFamilies(fams) };
   }
   function renderLearningHome() {
     const el = document.getElementById("homeBody");
     if (!el) return;
-    const camps = homeCampaigns();
-    if (!camps.length) {
-      el.innerHTML = '<div class="lh-h">Learning</div>' +
-        '<div class="lh-camp"><div class="lh-sub">No tracked lessons yet.</div></div>';
+    const back = document.getElementById("backFromHome");
+    const F = acFamilies();
+    const tracked = F.tracked;
+    // B16: a guest cannot enter the world, so the Academy must not offer to take them there.
+    if (back) back.classList.toggle("hidden", !tracked);
+    if (!F.fams.length) {
+      el.innerHTML = '<div class="ac-note">No lessons are available yet.</div>';
       return;
     }
-    // Phase 6E STEP 15: the first (current) campaign stays expanded; any others collapse behind a
-    // single native disclosure. Presentation only — same data, same order, no Taipei-specific rule,
-    // and with one campaign the markup is byte-identical to before.
-    const campCard = (c) => {
-      const done = c.list.filter(x => x.row.activePolicyCompleted === true).length;
-      const pct = Math.round(done * 100 / c.list.length);
-      return '<div class="lh-camp' + (c.completed ? ' is-done' : '') + '">' +
-        '<div class="lh-camp-nm">' + escapeHtml(c.name) + ' ' + courseKindLabel(c.cid) + '</div>' +
-        '<div class="lh-stars">' + new Array(done + 1).join("\u2605") +
-          new Array(c.list.length - done + 1).join("\u2606") + '</div>' +
-        '<div class="lh-bar"><span style="width:' + pct + '%"></span></div>' +
-        '<div class="lh-sub"><b>' + done + ' / ' + c.list.length + '</b> Lessons Mastered</div>' +
-        (done === c.list.length
-          ? '<div class="lh-camp-done">\ud83c\udfc6 ' + escapeHtml(c.name) + ' ' +
-              courseKindLabel(c.cid) + ' Complete</div>'
-          : '') + '</div>';
-    };
-    // Phase 7E.2: the learning economy, where learning decisions are actually made. The balance is
-    // the SAME authoritative myEcon.gold shown on the map bar — never recomputed here — and the
-    // amounts are the server's own (delivered by /api/economy), never hard-coded in the client.
+    let out = "";
+    // ---- the loop, stated once. Amounts are the server's own, delivered by /api/economy. ----
     const ec = myEcon || {};
-    let out = '<div class="lh-econ">' +
-      '<span class="lh-gold">🪙 <b>' + (ec.gold || 0) + '</b> gold</span>' +
-      ((ec.passGold || ec.masteryGold)
-        ? '<span class="lh-rw">Quiz +' + (ec.passGold || 0) +
-          ' · Mastery +' + (ec.masteryGold || 0) + '</span>'
-        : '') + '</div>';
-    out += campCard(camps[0]);
-    if (camps.length > 1) {
-      out += '<details class="lh-more"><summary>' + (camps.length - 1) +
-             ' more campaign' + (camps.length > 2 ? 's' : '') + '</summary>' +
-             camps.slice(1).map(campCard).join("") + '</details>';
+    if (tracked) {
+      out += '<div class="ac-loop">' +
+        '<span class="ac-loop-step">\ud83d\udcda Learn</span>' +
+        '<span class="ac-loop-arrow">\u2192</span>' +
+        '<span class="ac-loop-step">\ud83e\ude99 Earn <span class="ac-gold">' +
+          (ec.gold || 0) + '</span> Gold</span>' +
+        '<span class="ac-loop-arrow">\u2192</span>' +
+        '<span class="ac-loop-step">\ud83c\udff0 Spend it in World Conquest</span>' +
+        ((ec.passGold || ec.masteryGold)
+          // "once per lesson" is the point: the reward is first-time only, so a replay earns
+          // nothing further and the copy must not suggest otherwise.
+          ? '<span class="ac-rw">Pass the quiz +' + (ec.passGold || 0) + ' \u00b7 master the lesson +' +
+            (ec.masteryGold || 0) + ' \u00b7 once per lesson, not per replay</span>'
+          : '') + '</div>';
+    } else {
+      out += '<div class="ac-note">You are practising as a <b>guest</b> on this device. ' +
+             'Lessons work, but progress, mastery and Gold need an account.</div>';
     }
-    // ---- Continue: the one next action ----
-    // "Finished" means every lesson is actually MASTERED \u2014 never merely that the chosen target has no
-    // activity left. A lesson can have all seven activities attempted and still not be mastered (the
-    // mean sits below the pass mark), and that lesson still needs work: Continue points at it and
-    // offers a retry rather than falsely reporting the campaign as done.
-    const next = homeContinueTarget();
-    const allMastered = camps.every(c => c.list.every(x => x.row.activePolicyCompleted === true));
+    // ---- ONE primary next action, from the authoritative resolver ----
+    const next = tracked ? homeContinueTarget() : null;
+    const allMastered = tracked &&
+      F.fams.every(f => f.list.every(x => x.row.activePolicyCompleted === true));
     if (allMastered) {
-      out += '<div class="lh-done">\u2705 Every lesson is mastered \u2014 nothing left to finish.</div>';
+      out += '<div class="ac-done">\u2705 Every lesson is mastered — nothing left to finish.</div>';
     } else if (next) {
       const req = (next.row.requiredActivityIds || []).length;
       const have = (next.row.completedActivityIds || []).length;
-      const retry = !(next.row.missingActivityIds || []).length;   // attempted in full, not yet mastered
-      out += '<div class="lh-cont"><div class="lh-cont-k">Continue Learning</div>' +
-        '<div class="lh-cont-t">' + escapeHtml(String(next.row.title || next.lid)) + '</div>' +
-        '<div class="lh-cont-s">' + (retry
-            ? 'All activities attempted \u2014 raise your score to master it'
-            : have + ' / ' + req + ' Activities Complete') + '</div>' +
+      const retry = !(next.row.missingActivityIds || []).length;
+      out += '<div class="ac-cont"><div class="ac-cont-k">Continue learning</div>' +
+        '<div class="ac-cont-t">' + escapeHtml(String(next.row.title || next.lid)) + '</div>' +
+        '<div class="ac-cont-s">' + (retry
+            ? "All activities attempted — raise your score to master it"
+            : have + " / " + req + " activities complete") + '</div>' +
         '<button type="button" data-home-continue="' + escapeHtml(next.lid) + '">' +
-        (retry ? 'Open Lesson' : 'Continue') + '</button></div>';
+        (retry ? "Open lesson" : "Continue") + '</button></div>';
     }
-    // ---- Lessons: icon, title, state, progress. Nothing else. ----
-    out += '<div class="lh-h">Lessons</div>';
-    camps.forEach(c => c.list.forEach(x => {
-      const m = lessonMastery(x.row), rev = needsReview(x.row);
-      const req = (x.row.requiredActivityIds || []).length;
-      const have = (x.row.completedActivityIds || []).length;
-      const state = rev ? "Needs Review" : m.label;
-      out += '<button type="button" class="lh-row' +
-        (m.key === "mastered" ? " is-done" : "") + (rev ? " is-review" : "") +
-        '" data-home-lesson="' + escapeHtml(x.lid) + '">' +
-        '<span class="ic">' + (rev ? "\u26a0" : m.icon) + '</span>' +
-        '<span class="nm">' + escapeHtml(String(x.row.title || x.lid)) + '</span>' +
-        '<span class="st">' + escapeHtml(state) + ' \u00b7 ' + have + ' / ' + req + '</span></button>';
-    }));
-    out += homeAchievementsHTML();
+    // ---- the five families ----
+    // The family holding the Continue target is the one expanded. With no authoritative progress
+    // (a guest) there is no such target, so the first family opens instead -- otherwise the guest
+    // lands on five collapsed cards with nothing to tap. That is a course choice, not a guess about
+    // progress the guest does not have.
+    const openCid = next
+      ? (F.fams.find(f => f.list.some(x => x.lid === next.lid)) || {}).cid
+      : F.fams[0].cid;
+    out += '<div class="ac-h">Courses &amp; campaigns</div>';
+    F.fams.forEach(f => { out += acFamilyCardHTML(f, tracked, f.cid === openCid); });
+    if (tracked) out += acAchievementsHTML();
     el.innerHTML = out;
   }
   function contentPathForLessonId(lid) {
@@ -9046,7 +9351,11 @@
   document.getElementById("toLogin").addEventListener("click", (e) => { e.preventDefault(); sShowLoginView(); });
   document.getElementById("logoutChip").addEventListener("click", () => { clearAuth(); userName = ""; try { localStorage.removeItem("userName"); } catch (e) {} showScreen(screenLanding); });
   // 著陸頁：免登入試玩 / 登入
-  function startGuest() { setAdminMode(false); selectProfile("guest"); }
+  function startGuest() {
+    setAdminMode(false);
+    selectProfile("guest");
+    openLearningHome();      // the Academy is the guest's learning home; the World is not theirs
+  }
   document.getElementById("landTryBtn").addEventListener("click", startGuest);
   document.getElementById("landLoginBtn").addEventListener("click", openStudentAcct);
   // teacher/parent access stays discoverable without competing with Play, and does NOT route these
