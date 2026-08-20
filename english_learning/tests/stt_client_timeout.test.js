@@ -68,7 +68,10 @@ assert(/let msg;/.test(c), "the outer catch handler was not located: " + c.slice
 assert(!/Docker build/.test(fn) && !/GitHub Pages/.test(fn),
   "the browser must not guess at deployment internals");
 const wanted = [
-  [/took too long/i, "timeout"],
+  // Phase 12B.1.1 replaced "took too long" -- which reads as a verdict on the attempt -- with a
+  // statement about the BROWSER, because the server may still be settling this very request. The
+  // requirement is unchanged: the timeout must still have its own distinct message.
+  [/taking longer than expected/i, "timeout"],
   [/busy right now/i, "server busy"],
   [/temporarily unavailable/i, "service unavailable"],
   [/Could not reach/i, "network"],
@@ -80,6 +83,14 @@ assert(/err\.reason === "stt_busy"/.test(fn) && /err\.reason === "stt_unavailabl
   "the server's own reason code must drive which message is shown");
 assert(/timedOut \|\| \(err && err\.name === "AbortError"\)/.test(fn),
   "a timeout must be recognised distinctly from a server error");
+// Phase 12B.1.1: and it must not pass judgement on the attempt, which may still be settling
+const tob = fn.slice(fn.indexOf("if (timedOut ||"),
+                     fn.indexOf('} else if (err && err.reason === "stt_busy")'));
+for (const claim of ["took too long", "failed", "Failed", "no Gold", "no mastery", "did not pass"]) {
+  assert(tob.indexOf(claim) < 0, "the timeout message must not claim: " + claim);
+}
+assert(/checked again shortly/.test(tob),
+  "the timeout must tell the learner their progress will be re-checked");
 // nothing internal may reach a child
 for (const leak of ["whisper", "Whisper", "base.en", "faster", "stack", "Traceback", "/api/stt?"]) {
   const shown = c;

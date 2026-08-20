@@ -109,8 +109,56 @@ already at its best score, so the retry is harmless.
 
 Accumulation is bounded structurally by `STT_MAX_WAITING` rather than by cancellation. True
 cancellation would need inference in a separate process, which is a larger architectural change and
-is out of scope for this phase. If the delayed-visibility window is ever considered a product problem,
-the fix belongs in the client (re-read progress after a timeout), not in discarding server work.
+is out of scope. The delayed-visibility window that this leaves is closed by the reconciliation
+described next — in the client, by re-reading authoritative state, never by discarding server work.
+
+## Reconciling a timed-out request (Phase 12B.1.1)
+
+**A client timeout means "the browser stopped waiting". It does not mean the attempt failed**, and it
+must never be presented as a failure — the request that just timed out may be settling as the message
+appears.
+
+What follows from the measurements above:
+
+- **the client timeout does not cancel server-side inference**, and it does not stop the handler;
+- a late settlement may therefore legitimately persist **a sentence score, an activity completion,
+  lesson mastery and Gold** — all of it genuine, none of it fabricated;
+- so after a timeout the lesson stays usable and a **bounded, read-only reconciliation** runs.
+
+Rules the reconciliation obeys:
+
+| rule | why |
+| --- | --- |
+| **never auto-resubmits the audio** | the original request may still be running; a retry must stay a deliberate act by the learner |
+| **read-only** | it re-reads `/api/learning/progress` and `/api/economy` through the existing `refreshLearning()` / `loadEconomy()` helpers. No new endpoint, no POST, no `activityId`/`sentenceIndex`/blob rebuilt |
+| **bounded** | `STT_RESYNC_DELAYS_MS = [2500, 7000, 15000]` ms after the timeout — three checks, then stop. Never `setInterval`, never open-ended polling |
+| **stops when answered** | the first observed authoritative settlement cancels the remaining checks, so a result cannot be reported twice |
+| **authoritative figures only** | activity completion and mastery come from comparing the authoritative row before and after; the Gold figure is the **balance delta**. No amount is hard-coded in this path |
+| **bound to its own surface** | a late callback is tied to the lesson, the account, the room and the lesson screen being on screen, re-checked after every async hop, and cancelled outright on leaving the lesson |
+
+### A resolved retry still gets one final check
+
+A later request resolving does not necessarily answer the question the earlier timeout asked.
+Measured case: the learner times out, retries deliberately, and the retry **succeeds while reporting
+`rewarded=false` and `gold=null`** — because the *original* request had already settled the mastery
+payment. Cancelling the reconciliation outright therefore left the visible balance stale at 660 while
+the server held 1300.
+
+So a resolved response supersedes the *schedule* but still earns one final silent check
+(`STT_RESYNC_SUPERSEDE_MS = 1200` ms), measured against the baseline the timed-out request captured.
+With that, the race settles once and displays once: Gold paid exactly once, mastery granted once, one
+reward chip, and exactly two POSTs — the original and the learner's deliberate retry.
+
+### What it does not promise
+
+Reconciliation does **not** guarantee visibility for work that takes longer than its bounded window.
+If nothing has arrived by the last check, the learner is told only that — *"Speech scoring did not
+come back in time. Nothing was lost — record the sentence again when you are ready."* — and the
+settlement, if it lands later, appears on the next Academy or lesson refresh as it always did.
+
+No curriculum or reward semantics changed in this work: `requiredActivityIds`, the completion
+policies, `PASS_GOLD` (160), `MASTERY_GOLD` (640) and the qualification set are untouched, and the
+frozen contract hash is identical before and after.
 
 ## What a learner is told
 
@@ -119,7 +167,9 @@ a model name, a path or a stack trace.
 
 | situation | message |
 | --- | --- |
-| request timed out | ⏱ Speech scoring took too long. Please try again. |
+| request timed out | ⏱ Speech scoring is taking longer than expected. Your progress will be checked again shortly. |
+| reconciliation found a late settlement | ✅ Your reading was scored after all — progress updated. |
+| reconciliation window elapsed with nothing | ⏱ Speech scoring did not come back in time. Nothing was lost — record the sentence again when you are ready. |
 | `stt_busy` | ⏳ Speech scoring is busy right now. Please try again in a moment. |
 | `stt_unavailable`, or any other server error | ⚠️ Speech scoring is temporarily unavailable. Please try again. |
 | network unreachable | ⚠️ Could not reach speech scoring. Check your connection and try again. |

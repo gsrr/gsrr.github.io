@@ -3685,6 +3685,9 @@
     try { synth.cancel(); } catch (e) {}
     stopAudio();
     if (typeof stopMyRecording === "function") stopMyRecording();
+    // Phase 12B.1.1: leaving the lesson drops any pending reconciliation too. The context guard
+    // would refuse a stale callback anyway; cancelling here leaves no timer running at all.
+    if (typeof sttCancelResync === "function") sttCancelResync();
   }
   function stopListenL1() { stopAllLessonAudio(); finishL1(); }
 
@@ -3845,6 +3848,118 @@
   function sttFailHTML(msg) {
     return '<div style="font-size:13px;color:#94a3b8">' + escapeHtml(msg) + '</div>';
   }
+
+  // ===== Phase 12B.1.1 — reconcile after a timeout =====
+  // A client timeout means "the browser stopped waiting". It does NOT mean the attempt failed:
+  // aborting the fetch does not stop the handler, which settles BEFORE it replies. Measured on the
+  // real server with a slow transcriber, a timed-out read-along persisted its score, and the request
+  // that crossed the pass mark granted mastery and paid MASTERY_GOLD -- while the browser still
+  // showed the old state. The learner only saw it on some later, unrelated refresh.
+  //
+  // So after a timeout the lesson stays usable and a BOUNDED, READ-ONLY reconciliation runs. It
+  // re-reads the authoritative progress and economy through the existing endpoints and, if the
+  // server did settle, shows what actually happened. It never resends audio: the original request
+  // may still be running, and a retry must remain a deliberate act by the learner.
+  const STT_RESYNC_DELAYS_MS = [2500, 7000, 15000];   // three bounded checks, then stop. No polling.
+  const STT_RESYNC_SUPERSEDE_MS = 1200;              // one check after a later response resolves
+  let _sttResyncTimers = [];
+  function sttCancelResync() {
+    _sttResyncTimers.forEach(function (t) { clearTimeout(t); });
+    _sttResyncTimers = [];
+  }
+  // The surface a resync belongs to. A late callback must never touch a different lesson, a
+  // different account or a different room -- so instead of a new counter, the identity of the
+  // surface IS the token, taken from state that already exists.
+  function sttContextNow() {
+    return { path: (typeof currentArticleKey === "string" && currentArticleKey) || "",
+             user: authUser(),
+             room: (typeof activeRoom === "function" ? (activeRoom() || "") : ""),
+             onLesson: !screenLearn.classList.contains("hidden") };
+  }
+  function sttSameContext(ctx) {
+    const now = sttContextNow();
+    return !!ctx && now.onLesson && ctx.path === now.path && ctx.user === now.user &&
+           ctx.room === now.room;
+  }
+  // What the client can see right now, so a later read can be compared against it.
+  function sttSnapshot(path) {
+    const lid = lessonIdForContent(path);
+    const row = (learningProgress.lessons || {})[lid] || {};
+    return { lid: lid,
+             done: ((row.completedActivityIds || []).length),
+             mastered: row.activePolicyCompleted === true,
+             pct: (row.roundedPct == null ? -1 : row.roundedPct),
+             gold: (myEcon && typeof myEcon.gold === "number") ? myEcon.gold : null };
+  }
+  function sttScheduleResync(ctx, before) {
+    sttCancelResync();
+    STT_RESYNC_DELAYS_MS.forEach(function (d, i) {
+      _sttResyncTimers.push(setTimeout(function () {
+        sttResyncOnce(ctx, before, i === STT_RESYNC_DELAYS_MS.length - 1);
+      }, d));
+    });
+  }
+  // A LATER request resolving does not necessarily answer the question an earlier timeout asked.
+  // Measured case: the learner times out, retries deliberately, and the retry succeeds -- but it
+  // reports rewarded=false and gold=null, because the ORIGINAL request had already settled the
+  // mastery payment. Cancelling outright therefore left the visible balance stale at 660 while the
+  // server held 1300. So a resolved response supersedes the SCHEDULE but still earns one final
+  // read-only check, measured against the baseline the timed-out request captured.
+  function sttSupersedeResync(ctx, before) {
+    if (!_sttResyncTimers.length) return;              // nothing was pending: nothing to do
+    sttCancelResync();
+    _sttResyncTimers.push(setTimeout(function () {
+      sttResyncOnce(ctx, before, false);               // isLast=false: silent when nothing changed
+    }, STT_RESYNC_SUPERSEDE_MS));
+  }
+  // One read-only check. refreshLearning() and loadEconomy() are the SAME authoritative GETs the
+  // Academy and the lesson page already use; no new endpoint, and nothing is submitted.
+  function sttResyncOnce(ctx, before, isLast) {
+    if (!sttSameContext(ctx)) { sttCancelResync(); return; }   // stale surface: do nothing at all
+    refreshLearning(function () {
+      if (!sttSameContext(ctx)) { sttCancelResync(); return; }
+      loadEconomy(function () {
+        if (!sttSameContext(ctx)) { sttCancelResync(); return; }
+        renderLessonProgress();                 // mastery card, stepper tags, required/optional
+        const now = sttSnapshot(ctx.path);
+        const settled = now.mastered !== before.mastered || now.done > before.done ||
+                        now.pct > before.pct;
+        const goldDelta = (before.gold != null && now.gold != null) ? (now.gold - before.gold) : 0;
+        if (settled || goldDelta > 0) {
+          sttCancelResync();                    // answered: stop the remaining checks
+          sttShowResyncResult(now, before, goldDelta);
+        } else if (isLast) {
+          // nothing arrived within the bounded window. Say only that, and invite a retry -- never
+          // claim the reading failed, because the server may still be working.
+          pronResult.innerHTML = sttFailHTML(
+            "\u23f1 Speech scoring did not come back in time. Nothing was lost \u2014 " +
+            "record the sentence again when you are ready.");
+          pronResult.classList.remove("hidden");
+        }
+      });
+    });
+  }
+  // Truthful, and built from the AUTHORITATIVE state that came back -- never from a client guess and
+  // never from a hard-coded amount.
+  function sttShowResyncResult(now, before, goldDelta) {
+    pronResult.innerHTML = sttFailHTML("\u2705 Your reading was scored after all \u2014 progress updated.");
+    pronResult.classList.remove("hidden");
+    const el = document.getElementById("lsFeedback");
+    if (!el) return;
+    const mastered = now.mastered && !before.mastered;
+    let h = '<div class="ls-feedback is-pass">' +
+      '<div class="ls-fb-k">' + (mastered ? "Mastered" : "Scored") + '</div>' +
+      '<div class="ls-fb-t">' + (mastered ? "Lesson mastered" : "Your reading was scored") + '</div>';
+    if (goldDelta > 0) {
+      h += '<div class="ls-fb-gold">\ud83e\ude99 +' + goldDelta + ' Gold</div>';
+    }
+    h += '<div class="ls-fb-note">Speech scoring finished after the page stopped waiting, so this ' +
+         'is the result the server had already saved.</div>' +
+         '<div class="ls-fb-acts">' +
+         '<button type="button" class="ls-fb-alt" data-ls-academy>Back to the Academy</button>' +
+         '</div></div>';
+    el.innerHTML = h;
+  }
   function scorePronunciation(target, blob) {
     isScoring = true;
     recBtn.disabled = true;        // 計分期間鎖住 Record，等分數回來
@@ -3860,6 +3975,9 @@
       ? "/api/stt?activityId=" + encodeURIComponent(aid) + "&sentenceIndex=" + sIdx +
         "&token=" + encodeURIComponent(tok)
       : "/api/stt?text=" + encodeURIComponent(target));
+    // captured BEFORE the request, so a later read can be compared against what the learner saw
+    const ctxAtStart = sttContextNow();
+    const snapAtStart = sttSnapshot(ctxAtStart.path);
     const ctl = (typeof AbortController === "function") ? new AbortController() : null;
     let timedOut = false;
     const timer = setTimeout(function () {
@@ -3894,7 +4012,12 @@
         // Truthful, distinct, and free of deployment internals: no model name, no path, no stack.
         let msg;
         if (timedOut || (err && err.name === "AbortError")) {
-          msg = "⏱ Speech scoring took too long. Please try again.";
+          // NOT a failure claim. Aborting the fetch does not stop the handler, which settles before
+          // it replies -- so this very attempt may still be scoring, and may still pay. Say only
+          // that the browser stopped waiting, and start the read-only reconciliation.
+          msg = "⏱ Speech scoring is taking longer than expected. " +
+                "Your progress will be checked again shortly.";
+          if (aid && tok) sttScheduleResync(ctxAtStart, snapAtStart);
         } else if (err && err.reason === "stt_busy") {
           msg = "⏳ Speech scoring is busy right now. Please try again in a moment.";
         } else if (err && err.reason === "stt_unavailable") {
@@ -3911,6 +4034,9 @@
       })
       .finally(() => {
         clearTimeout(timer);
+        // A resolved request supersedes any reconciliation still pending from an earlier timeout:
+        // this response is fresher than anything a scheduled check would find.
+        if (!timedOut) sttSupersedeResync(ctxAtStart, snapAtStart);
         isScoring = false;
         recBtn.disabled = false;            // 計分結束 -> 解鎖 Record
         prevBtn.disabled = idx === 0;       // 依 renderShadow 的規則恢復導覽
