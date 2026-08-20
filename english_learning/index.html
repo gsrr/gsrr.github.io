@@ -1100,6 +1100,95 @@
       inset 0 -2px 0 rgba(0,0,0,.3), 0 3px 0 #241708, 0 6px 12px rgba(0,0,0,.4); }
     .card.card-hud.map-wide { max-width: 100vw; }
   }
+  /* ================================================================================================
+     Phase 11C — ENTRY IDENTITY. The board says WORLD CONQUEST; the entry page still said "English
+     Reading", so the product introduced itself as a reading website and then handed the player a
+     strategy game. These screens now carry the same identity and the same visual tokens as the
+     board -- chunky dark outlines, parchment plaques, warm ocean, red primary action -- while
+     staying deliberately simpler than the HUD. Authentication is untouched: only presentation,
+     copy and routing-state classes change here. ============================================== */
+  .brand { text-align: center; margin: 2px 0 14px; }
+  .brand-plaque { display: inline-block; padding: 10px 22px; border-radius: 16px; position: relative;
+    background: linear-gradient(180deg, #6b4a24, #47301a); border: 3px solid #2a1b0d;
+    box-shadow: inset 0 2px 0 rgba(255,225,180,.34), inset 0 -3px 0 rgba(0,0,0,.34),
+                0 5px 0 #241708, 0 9px 16px rgba(0,0,0,.42); }
+  .brand-t { font-size: clamp(24px, 5vw, 40px); font-weight: 900; letter-spacing: 2.5px;
+    text-transform: uppercase; color: #ffe9bd; line-height: 1.05;
+    text-shadow: 0 2px 0 #2a1b0d, 0 4px 10px rgba(0,0,0,.5); }
+  .brand-s { font-size: clamp(12px, 1.6vw, 14.5px); font-weight: 700; color: #ffd9a8; margin-top: 5px; }
+  /* the Academy is named here as a SUPPORTING system, not as the product */
+  .brand-academy { font-size: 11.5px; font-weight: 700; color: #cbb28a; margin-top: 7px;
+    letter-spacing: .3px; }
+
+  /* the decorative hero: the board's own motifs, assembled small. Never interactive. */
+  .hero-wrap { max-width: 560px; margin: 0 auto 14px; border-radius: 18px; overflow: hidden;
+    border: 3px solid #2a1b0d; box-shadow: 0 6px 0 #241708, 0 10px 20px rgba(0,0,0,.4); }
+  .hero-svg { display: block; width: 100%; height: auto; pointer-events: none;
+    background: radial-gradient(120% 90% at 50% 6%, #bfe9f7 0%, #8fd3ee 34%, #5fb6dd 68%, #3f97c4 100%); }
+  .hero-land { fill: #f2ddb0; stroke: #8a6a3c; stroke-width: 1.4; stroke-linejoin: round; }
+
+  /* the entry actions: one obvious primary, everything else clearly subordinate */
+  .enter-cta { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 4px 0 12px; }
+  .btn-play { min-width: 260px; padding: 14px 26px; cursor: pointer; border-radius: 16px;
+    font-size: 19px; font-weight: 900; letter-spacing: .6px; color: #fff2ea;
+    background: linear-gradient(180deg, #e2503c, #ad2f20); border: 3px solid #2a1b0d;
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.34), 0 6px 0 #6d1a12, 0 10px 18px rgba(0,0,0,.35); }
+  .btn-play:hover { background: linear-gradient(180deg, #ee6450, #c03826); }
+  .btn-play:active { transform: translateY(5px); box-shadow: inset 0 2px 0 rgba(255,255,255,.3), 0 1px 0 #6d1a12; }
+  .btn-guest { min-width: 260px; padding: 10px 20px; cursor: pointer; border-radius: 14px;
+    font-size: 14px; font-weight: 800; color: #2a1b0d;
+    background: linear-gradient(180deg, #ffd79a, #e8b46a); border: 3px solid #2a1b0d;
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.5), 0 4px 0 #8a5f2a; }
+  .btn-guest:hover { background: linear-gradient(180deg, #ffe6bb, #f2c383); }
+  .enter-note { text-align: center; font-size: 12px; color: #94a3b8; margin: 2px 0 0; }
+  .enter-secondary { text-align: center; margin: 10px 0 0; font-size: 12.5px; }
+  .enter-secondary a { color: #93b4d8; font-weight: 700; cursor: pointer; text-decoration: none;
+    border-bottom: 1px dotted rgba(147,180,216,.6); }
+  .enter-secondary a:hover { color: #cfe2f5; }
+
+  /* three truthful one-line facts, not a feature grid competing with the product name */
+  .enter-facts { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 0 0 14px; }
+  .enter-fact { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700;
+    color: #e8dcc2; background: rgba(107,74,36,.55); border: 2px solid #2a1b0d;
+    border-radius: 999px; padding: 5px 12px; }
+
+  /* Phase 11C / B8: a stored session used to leave the LOGIN page on screen while the world
+     resolved, so a returning player was briefly invited to log in again. The token lives in
+     localStorage and is readable synchronously, so the boot script can decide before first paint:
+     with a session, show a loading plaque instead of the landing page. showScreen() clears the flag
+     the moment a real screen takes over. */
+  /* B0/B2/B10: on the entry surfaces the product name is WORLD CONQUEST, so the reading masthead
+     steps aside exactly as it already does in game mode. It remains on the Academy and
+     teacher/parent screens, which genuinely are English Reading. */
+  body.entry-mode > .card > h1, body.booting > .card > h1 { display: none !important; }
+  body.booting #screenLanding { display: none !important; }
+  @media (max-width: 560px) {
+    body.booting { padding: 8px; }
+    body.booting > .card { padding: 12px; }
+  }
+  #screenBoot { display: none; }
+  body.booting #screenBoot { display: block; }
+  .boot-msg { text-align: center; font-size: 14px; font-weight: 700; color: #cbb28a; margin-top: 4px; }
+  .boot-dots::after { content: "…"; animation: bootDots 1.1s steps(4, end) infinite; }
+  @keyframes bootDots { 0% { opacity: .3 } 50% { opacity: 1 } 100% { opacity: .3 } }
+  @media (prefers-reduced-motion: reduce) { .boot-dots::after { animation: none; } }
+
+  /* Phase 11C / B11: on a 360px phone the page gutters (24px body + 28px card) left the landing only
+     254px of content -- 29% of the viewport spent on margin. The entry screens reclaim it the same
+     way game mode does for the board, and only while they are showing, so the Academy and teacher
+     surfaces keep the reading layout they were designed for. */
+  @media (max-width: 560px) {
+    body.entry-mode { padding: 8px; }
+    body.entry-mode > .card { padding: 12px; }
+  }
+  @media (max-width: 560px) {
+    .brand-plaque { padding: 8px 14px; border-width: 2px; }
+    .brand-t { letter-spacing: 1.2px; }
+    .hero-wrap { max-width: 100%; border-width: 2px; }
+    .btn-play, .btn-guest { min-width: 0; width: 100%; }
+    .btn-play { font-size: 17px; padding: 13px 18px; }
+    .enter-fact { font-size: 11px; padding: 4px 9px; }
+  }
   /* ===== 真實地理地圖（各等級不同國家/區域）===== */
   .card.map-wide { max-width: 1100px; }                     /* 地圖畫面在桌機上放寬(手機不受影響) */
   .geo-wrap { position: relative; }
@@ -1793,7 +1882,21 @@
 </style>
 </head>
 <body>
+<script>
+  /* Phase 11C / B8 — decide BEFORE first paint whether this visitor already has a session. The token
+     lives in localStorage and is readable synchronously, so a returning player sees "Loading your
+     world" instead of being briefly invited to log in again. showScreen() clears the flag as soon as
+     a real screen takes over, and a visitor with no token never gets it at all. */
+  try {
+    if (localStorage.getItem("auth:token") && localStorage.getItem("auth:user")) {
+      document.body.classList.add("booting");
+    }
+  } catch (e) {}
+</script>
   <div class="card">
+    <!-- Phase 11C: the product name is WORLD CONQUEST, carried by the brand plaque on each entry
+         screen and by the board's own title. This masthead stays for the Academy/teacher surfaces
+         that are genuinely "English Reading", and game mode already hides it. -->
     <h1>🗣️ English Reading</h1>
     <div id="topRight" class="top-right hidden">
       <button id="userChip" class="user-chip" type="button" title="My Progress"></button>
@@ -1801,19 +1904,76 @@
     </div>
 
     <!-- 著陸頁（門面）：說明 + 免登入試玩 -->
+    <!-- Phase 11C: the product introduces itself as the game it is. English Reading is named as the
+         Academy that feeds it, not as the shell. No room, course or map choice appears here. -->
     <div id="screenLanding">
-      <p class="screen-intro" style="font-size:18px;font-weight:700">Fun English reading for ages 6–12 🎈</p>
-      <div class="land-feats">
-        <div class="land-feat">🔊<span>Listen &amp; read with natural voices</span></div>
-        <div class="land-feat">🎤<span>Speak &amp; get a pronunciation score</span></div>
-        <div class="land-feat">🎮<span>Quizzes, mini-games &amp; boss battles</span></div>
-        <div class="land-feat">📈<span>Pre-A1 → B1, tracked progress</span></div>
+      <div class="brand">
+        <span class="brand-plaque"><span class="brand-t">World Conquest</span></span>
+        <div class="brand-s">Learn English. Earn Gold. Grow your empire.</div>
+        <div class="brand-academy">📚 English Reading Academy · ages 6–12</div>
       </div>
-      <div class="land-cta">
-        <button id="landTryBtn" class="dict-play" style="font-size:18px">▶ Try it free</button>
-        <button id="landLoginBtn" class="back-btn">🔑 Log in / Sign up</button>
+      <div class="hero-wrap" aria-hidden="true">
+        <!-- decorative only: the board's own motifs assembled small. Not the interactive World map,
+             not maps/world.svg, and pointer-events:none so nothing here is ever clickable. -->
+        <svg class="hero-svg" viewBox="0 0 560 190" role="presentation" focusable="false">
+          <g class="hero-land">
+            <path d="M28 150 C40 118 72 104 104 110 C126 92 168 90 186 108 C216 104 236 118 240 142 C244 160 226 172 200 172 L58 172 C34 172 22 164 28 150 Z"/>
+            <path d="M300 158 C306 132 334 118 362 124 C382 106 424 106 442 124 C470 122 492 136 494 156 C496 170 480 178 456 178 L328 178 C306 178 296 170 300 158 Z"/>
+            <path d="M486 128 C492 114 512 108 524 116 C536 112 548 120 548 132 C548 142 538 148 522 148 L500 148 C488 148 482 138 486 128 Z"/>
+          </g>
+          <!-- mountains -->
+          <g class="deco-ink">
+            <path class="deco-rock-dark" d="M64 150 L84 110 L104 150 Z"/>
+            <path class="deco-rock" d="M92 150 L118 100 L144 150 Z"/>
+            <path class="deco-snow" d="M118 100 L129 116 L122 113 L115 118 L108 114 Z"/>
+            <path class="deco-rock" d="M348 158 L372 116 L396 158 Z"/>
+            <path class="deco-snow" d="M372 116 L382 130 L376 127 L370 131 L364 128 Z"/>
+          </g>
+          <!-- forests -->
+          <g class="deco-ink">
+            <path class="deco-tree" d="M176 150 L166 150 L176 126 L186 150 Z"/>
+            <path class="deco-tree-dark" d="M196 152 L188 152 L196 132 L204 152 Z"/>
+            <path class="deco-tree" d="M430 162 L420 162 L430 138 L440 162 Z"/>
+            <path class="deco-tree-dark" d="M450 164 L442 164 L450 144 L458 164 Z"/>
+            <path class="deco-tree" d="M516 140 L508 140 L516 122 L524 140 Z"/>
+          </g>
+          <!-- a ship in open water -->
+          <g class="deco-ink" transform="translate(258,150) scale(1.35)">
+            <path class="deco-hull" d="M-8 0 L8 0 L5.6 4.2 L-5.6 4.2 Z"/>
+            <path d="M0 0 L0 -12" stroke-width="1"/>
+            <path class="deco-sail" d="M0.7 -11.4 L7.4 -1.6 L0.7 -1.6 Z"/>
+            <path class="deco-sail" d="M-0.7 -9.6 L-5.8 -1.6 L-0.7 -1.6 Z"/>
+          </g>
+          <!-- clouds -->
+          <g class="deco-cloud">
+            <circle cx="96" cy="42" r="13"/><circle cx="114" cy="34" r="17"/><circle cx="134" cy="43" r="14"/>
+            <rect x="96" y="42" width="38" height="12" rx="6"/>
+            <circle cx="446" cy="52" r="11"/><circle cx="462" cy="45" r="14"/><circle cx="478" cy="53" r="12"/>
+            <rect x="446" y="52" width="32" height="10" rx="5"/>
+          </g>
+        </svg>
       </div>
-      <p class="screen-intro" style="font-size:12px;color:#94a3b8">No sign-up to try. Create an account to save progress across devices.</p>
+      <div class="enter-facts">
+        <span class="enter-fact">🗺 250 territories to take</span>
+        <span class="enter-fact">📚 Lessons earn Gold</span>
+        <span class="enter-fact">🎤 Speak &amp; get scored</span>
+      </div>
+      <div class="enter-cta">
+        <button id="landLoginBtn" class="btn-play">⚔️ Play — Log in or Sign up</button>
+        <button id="landTryBtn" class="btn-guest">📚 Try the Academy as a guest</button>
+      </div>
+      <p class="enter-note">A guest can practise lessons on this device. Create an account to keep your
+        progress and to play World Conquest.</p>
+      <p class="enter-secondary"><a id="landRoleBtn">For teachers &amp; parents ▸</a></p>
+    </div>
+
+    <!-- Phase 11C / B8: shown INSTEAD of the landing page when a stored session is being resolved,
+         so a returning player is never briefly asked to log in again. -->
+    <div id="screenBoot">
+      <div class="brand">
+        <span class="brand-plaque"><span class="brand-t">World Conquest</span></span>
+        <div class="boot-msg"><span class="boot-dots">Loading your world</span></div>
+      </div>
     </div>
 
     <!-- 畫面 0：選身分（老師 / 學生）— 從 My Account 的 ← Back 進入 -->
@@ -1845,12 +2005,20 @@
     </div>
 
     <!-- 畫面 0a2：登入 / 建立帳號 — 一進 app 的第一個畫面（根畫面，無 Back） -->
-    <div id="screenStudentAcct">
-      <div class="learn-top">
-        <span class="learn-title">☁️ Log in</span>
+    <!-- Phase 11C: `hidden` by default. This screen shipped with no hidden class, so on every cold
+         load the login form was painted underneath the landing page until showScreen() ran -- and
+         during a stored-session boot it meant a returning player was shown a login form next to
+         "Loading your world", which is exactly the stale CTA B8 exists to prevent. openStudentAcct()
+         reveals it through showScreen() as before. -->
+    <div id="screenStudentAcct" class="hidden">
+      <!-- Phase 11C: the account step keeps the game's identity instead of dropping the player onto a
+           plain form. The form itself, its ids, its handlers and the auth endpoints are untouched. -->
+      <div class="brand">
+        <span class="brand-plaque"><span class="brand-t">World Conquest</span></span>
+        <div class="brand-s">Log in to enter your world.</div>
       </div>
       <div id="sAcctLogin">
-        <p class="screen-intro">Save your progress so it follows you to any device. ☁️</p>
+        <p class="screen-intro">Your empire, Gold and lesson progress follow this account to any device.</p>
 
         <!-- 登入（預設只顯示這個） -->
         <div id="sLoginView">
@@ -4181,7 +4349,14 @@
   newProfileGo.addEventListener("click", addProfile);
   userNameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") addProfile(); });
 
+  // Phase 11C / B8: the first real screen ends the boot state. Doing it here means every routing
+  // path -- world, landing, teacher, admin -- clears it exactly once, with no per-caller bookkeeping.
   function showScreen(el) {
+    document.body.classList.remove("booting");
+    // Phase 11C: the entry surfaces get their own layout mode, mirroring game-mode. Set here so
+    // every routing path agrees and no caller has to remember.
+    document.body.classList.toggle("entry-mode",
+      el === screenLanding || el === screenStudentAcct || el === screenRole);
     [screenLanding, screenRole, screenProfile, screenStudentAcct, screenLevel, screenRooms, screenProfileStats, screenHome, screenArticle, screenLearn, screenBattle, screenTeacher, screenAdmin, screenLeader].forEach(s => s.classList.add("hidden"));
     el.classList.remove("hidden");
     const _card = document.querySelector(".card");
@@ -8874,6 +9049,9 @@
   function startGuest() { setAdminMode(false); selectProfile("guest"); }
   document.getElementById("landTryBtn").addEventListener("click", startGuest);
   document.getElementById("landLoginBtn").addEventListener("click", openStudentAcct);
+  // teacher/parent access stays discoverable without competing with Play, and does NOT route these
+  // roles into the student world.
+  document.getElementById("landRoleBtn").addEventListener("click", () => showScreen(screenRole));
   document.getElementById("guestHint").addEventListener("click", openStudentAcct);
 
   async function initLessons() {
