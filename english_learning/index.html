@@ -371,6 +371,10 @@
   .comp-check { margin-top: 8px; }
   /* Profile: the per-level breakdown is reference material, not a every-visit read. */
   .stats-det { margin-top: 10px; }
+  /* Phase 11F: .lesson-row/.lv-row carry an explicit `display: flex`, which overrides the collapse a
+     closed <details> is supposed to apply -- so this disclosure was open in effect since Phase 6D
+     and My Progress painted all 53 lesson rows on every visit. Stated explicitly instead. */
+  .stats-det:not([open]) .lesson-row, .stats-det:not([open]) .lv-row { display: none; }
   .stats-det > summary { cursor: pointer; font-size: 12.5px; font-weight: 700; color: #475569;
                          list-style: none; padding: 7px 2px; min-height: 34px; }
   .stats-det > summary::-webkit-details-marker { display: none; }
@@ -1311,7 +1315,7 @@
     /* the user chip in the top-right corner is absolutely positioned, so at 360px the return button
        ran underneath it (its right edge reached 182px, the chip started at 167px). Shrinking it
        keeps the destination named -- "World Conquest", not a generic Back -- without a second row. */
-    .ac-back { font-size: 11.5px; padding: 6px 10px; }
+    .ac-back { font-size: 11.5px; padding: 6px 10px; min-height: 38px; }
     .ac-deco { max-width: 100%; }
     .ac-card { border-width: 2px; }
     .ac-nm { font-size: 15.5px; }
@@ -1430,6 +1434,10 @@
      4. Nine steps do not fit one desktop row, so the stepper wraps when there is room and scrolls
         when there is not. */
   body.lesson-mode > .card > h1 { display: none !important; }
+  /* Phase 11F: My Progress and the management screens name themselves, so the reading masthead
+     above them would state a different product and invert the hierarchy -- the same fix the
+     Academy and lesson pages already carry. */
+  body.progress-mode > .card > h1, body.admin-mode > .card > h1 { display: none !important; }
 
   #lessonProgress .comp-card { border-radius: 15px; border: 3px solid #2a1b0d; padding: 13px 15px;
     background: linear-gradient(180deg, #f7e7c3, #e8d0a2);
@@ -1464,12 +1472,177 @@
        beside the chip. */
     /* full width on its own row, dropped just far enough to clear the chip's lower edge */
     .ls-world { flex: 1 1 100%; margin-top: 14px; }
-    .ac-back { font-size: 11.5px; padding: 6px 10px; }
+    .ac-back { font-size: 11.5px; padding: 6px 10px; min-height: 38px; }
     .ls-title { font-size: 18px; }
     .ls-step { min-width: 88px; padding: 7px 9px; border-width: 2px; }
     .ls-step .ls-s-nm { font-size: 11.5px; }
     .ls-mastery, .ls-feedback { padding: 11px 12px; border-width: 2px; }
     .ls-fb-acts button { flex: 1 1 100%; }
+  }
+  /* ================================================================================================
+     Phase 11F -- MY PROGRESS and TEACHER / PARENT. These were the last surfaces still wearing the
+     old application: white/grey web cards, tiny tables, and -- more importantly on My Progress -- a
+     page made almost entirely of LOCAL practice statistics, with no authoritative mastery anywhere
+     and a legacy "change map / level · rooms · leaderboard" button as its first control.
+     My Progress now leads with authoritative mastery and Academy awards and labels the practice
+     figures for what they are. Teacher/Parent gets a deliberately calmer administrative skin: the
+     same tokens, less depth, no battlefield. Presentation and IA only. ============================ */
+  .mp-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
+  .mp-id { text-align: center; margin: 0 0 14px; }
+  .mp-sub { font-size: 12.5px; font-weight: 700; color: #cbb28a; margin-top: 8px; line-height: 1.45; }
+  .mp-h { font-size: 12px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase;
+    color: #cbb28a; margin: 16px 0 8px; }
+  .mp-h:first-child { margin-top: 0; }
+
+  /* authoritative: mastery per family, and the awards the server granted */
+  .mp-fam { margin: 0 0 9px; padding: 11px 13px; border-radius: 14px; border: 3px solid #2a1b0d;
+    background: linear-gradient(180deg, #f4e2ba, #e6cfa4);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 4px 0 #8a6a3c; }
+  .mp-fam.is-done { background: linear-gradient(180deg, #ecf7d8, #cfe8ae); box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 4px 0 #6f8f52; }
+  .mp-fam-hd { display: flex; align-items: baseline; flex-wrap: wrap; gap: 7px; }
+  .mp-fam-nm { font-size: 14.5px; font-weight: 900; color: #2a1b0d; }
+  .mp-chip { font-size: 9.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase;
+    padding: 2px 8px; border-radius: 999px; border: 2px solid #2a1b0d; color: #2a1b0d;
+    background: #ffd79a; }
+  .mp-chip.is-campaign { background: #f0b6b0; }
+  .mp-bar { position: relative; height: 11px; margin: 8px 0 5px; border-radius: 999px;
+    background: #c9ae7d; border: 2px solid #2a1b0d; overflow: hidden; }
+  .mp-bar span { position: absolute; inset: 0 auto 0 0;
+    background: linear-gradient(180deg, #7fc94a, #4f9a2a); }
+  .mp-fam-m { font-size: 12.5px; font-weight: 700; color: #6b4a24; }
+  .mp-fam-m b { color: #2a1b0d; font-weight: 900; }
+  .mp-total { margin: 0 0 12px; padding: 11px 14px; border-radius: 14px; text-align: center;
+    background: rgba(107,74,36,.5); border: 2px solid #2a1b0d; }
+  .mp-total b { font-size: 19px; font-weight: 900; color: #ffd257; }
+  .mp-total span { font-size: 12.5px; font-weight: 700; color: #f2ddb0; }
+
+  /* the practice block: real, kept, and unmistakably NOT the authoritative figure */
+  .mp-practice { padding: 12px 14px; border-radius: 14px; border: 2px dashed #6b4a24;
+    background: rgba(107,74,36,.28); }
+  .mp-practice-note { font-size: 11.5px; font-weight: 700; color: #cbb28a; margin-bottom: 9px;
+    line-height: 1.45; }
+  .mp-secondary { display: block; width: 100%; min-height: 42px; margin: 14px 0 0; cursor: pointer;
+    border-radius: 12px; font-size: 13px; font-weight: 800; color: #f2ddb0;
+    background: rgba(107,74,36,.5); border: 2px solid #2a1b0d; }
+  .mp-secondary:hover { background: rgba(122,86,42,.7); }
+
+  /* ---- Teacher / Parent: the same family, quieter. No plaque glow, flatter cards. ---- */
+  .tp-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 12px; }
+  .tp-id { margin: 0 0 14px; padding-bottom: 12px; border-bottom: 2px solid rgba(203,178,138,.35); }
+  .tp-t { font-size: clamp(19px, 3vw, 24px); font-weight: 900; letter-spacing: 1.2px;
+    text-transform: uppercase; color: #f2ddb0; }
+  .tp-s { font-size: 12px; font-weight: 700; color: #cbb28a; margin-top: 5px; }
+  .tp-h { font-size: 11.5px; font-weight: 900; letter-spacing: .09em; text-transform: uppercase;
+    color: #cbb28a; margin: 16px 0 8px; }
+  .tp-card { padding: 13px 15px; border-radius: 13px; border: 2px solid #4a3a26;
+    background: rgba(107,74,36,.22); }
+  .tp-card + .tp-card { margin-top: 9px; }
+  .tp-btn { min-height: 44px; padding: 0 18px; cursor: pointer; border-radius: 11px;
+    font-size: 14px; font-weight: 800; color: #2a1b0d; border: 2px solid #2a1b0d;
+    background: linear-gradient(180deg, #ffd79a, #e8b46a); }
+  .tp-btn:hover { background: linear-gradient(180deg, #ffe6bb, #f2c383); }
+  .tp-btn.is-quiet { color: #f2ddb0; background: rgba(107,74,36,.5); border-color: #4a3a26; }
+  .tp-btn.is-quiet:hover { background: rgba(122,86,42,.7); }
+
+  /* The management surfaces reuse .acct-form / .dict-play / .back-btn / .dash-card, which are
+     SHARED with the student account screen Phase 11C signed off. So every rule below is scoped to
+     #screenTeacher / #screenAdmin: the management shell gets the product's tokens without touching
+     a single student surface. Nothing here changes a permission, an endpoint or a record. */
+  #screenTeacher .screen-intro, #screenAdmin .screen-intro { color: #cbb28a; }
+  #screenTeacher .field-label { color: #cbb28a; font-weight: 800; }
+  #screenTeacher .acct-form input {
+    background: rgba(20,14,8,.6); border: 2px solid #4a3a26; border-radius: 11px;
+    color: #f2ddb0; }
+  #screenTeacher .acct-form input:focus { border-color: #8a6a3c; outline: none; }
+  #screenTeacher .acct-btns { display: flex; flex-wrap: wrap; gap: 9px; justify-content: center; }
+  #screenTeacher .dict-play, #screenAdmin .dict-play {
+    min-height: 44px; padding: 0 20px; border-radius: 11px; font-size: 14px; font-weight: 800;
+    color: #2a1b0d; border: 2px solid #2a1b0d;
+    background: linear-gradient(180deg, #ffd79a, #e8b46a); }
+  #screenTeacher .dict-play:hover, #screenAdmin .dict-play:hover {
+    background: linear-gradient(180deg, #ffe6bb, #f2c383); }
+  /* "Create class" and "Refresh" used .back-btn, which reads as disabled next to a blue primary */
+  #screenTeacher .back-btn, #screenAdmin .back-btn {
+    min-height: 44px; padding: 0 18px; border-radius: 11px; font-size: 13.5px; font-weight: 800;
+    color: #f2ddb0; background: rgba(107,74,36,.5); border: 2px solid #4a3a26; }
+  #screenTeacher .back-btn:hover, #screenAdmin .back-btn:hover { background: rgba(122,86,42,.75); }
+  #screenTeacher .acct-code, #screenTeacher .room-setup {
+    padding: 12px 14px; border-radius: 13px; border: 2px solid #4a3a26;
+    background: rgba(107,74,36,.22); color: #f2ddb0; }
+  #screenTeacher .acct-code { font-weight: 900; color: #ffd257; }
+  #screenTeacher .room-setup + .acct-btns { margin-top: 10px; }
+  /* class roster cards: one per learner, wrapping instead of a wide table */
+  #screenTeacher .dash-card, #screenAdmin .dash-card {
+    padding: 11px 13px; margin: 9px 0 0; border-radius: 12px; border: 2px solid #4a3a26;
+    background: rgba(107,74,36,.22); }
+  #screenTeacher .dash-head, #screenAdmin .dash-head { color: #f2ddb0; font-weight: 800; }
+  #screenTeacher .dash-head b, #screenAdmin .dash-head b { color: #ffd257; }
+  #screenTeacher .dash-lvs, #screenAdmin .dash-lvs {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+  #screenTeacher .dash-lv, #screenAdmin .dash-lv {
+    font-size: 11.5px; font-weight: 700; color: #e8dcc2; padding: 3px 9px; border-radius: 999px;
+    background: rgba(42,27,13,.5); border: 1px solid #4a3a26; white-space: nowrap; }
+  #screenAdmin .admin-acct {
+    padding: 12px 14px; margin: 10px 0 0; border-radius: 13px; border: 2px solid #4a3a26;
+    background: rgba(107,74,36,.16); }
+  #screenAdmin .admin-acct-head { color: #f2ddb0; font-weight: 800; }
+  #screenAdmin .admin-acct-head b { color: #ffd257; }
+  #screenTeacher .acct-msg, #screenAdmin .acct-msg { color: #e0a89c; font-weight: 700; }
+
+  /* The blocks below are the ORIGINAL My Progress components -- the daily-reading banner, the
+     practice stat boxes, the milestone badges and the by-level rows. They were built for a white
+     page, so on this dark card the banner rendered near-invisible (white text on a white surface)
+     and the stat boxes floated as bright web cards inside the parchment practice block. Every rule
+     is scoped to #screenProfileStats so nothing else that uses these classes changes. */
+  /* The streak panel is #dailyReport, styled for a white page (background #f8fafc with dark slate
+     text). On this dark card it rendered as a bright block whose heading and stats were effectively
+     invisible. Its real classes are .daily-head / .daily-stats / .daily-today / .day-dot -- not
+     .daily-banner, which belongs to the level grid. */
+  #screenProfileStats #dailyReport {
+    background: rgba(107,74,36,.28); border: 2px solid #4a3a26; border-radius: 13px;
+    color: #f2ddb0; }
+  #screenProfileStats .daily-head { color: #ffd257; }
+  #screenProfileStats .daily-stats { color: #f2ddb0; }
+  #screenProfileStats .daily-stats b { color: #ffd257; }
+  #screenProfileStats .daily-today { color: #cbb28a; }
+  #screenProfileStats .day-dot { background: rgba(42,27,13,.55); border: 1px solid #4a3a26; }
+  #screenProfileStats .day-dot.on { background: #6f9a3c; border-color: #7fc94a; }
+  #screenProfileStats .screen-intro { color: #cbb28a; }
+  #screenProfileStats .stats-h { font-size: 12px; font-weight: 900; letter-spacing: .07em;
+    text-transform: uppercase; color: #cbb28a; margin: 10px 0 7px; }
+  #screenProfileStats .stat-grid { display: grid; gap: 8px;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+  #screenProfileStats .stat-box { background: rgba(42,27,13,.42); border: 2px solid #4a3a26;
+    border-radius: 12px; padding: 9px 11px; box-shadow: none; }
+  #screenProfileStats .stat-num { color: #ffd257; font-weight: 900; }
+  #screenProfileStats .stat-label { color: #cbb28a; font-weight: 700; }
+  #screenProfileStats .badge { background: rgba(42,27,13,.42); border: 2px solid #4a3a26;
+    border-radius: 12px; }
+  #screenProfileStats .badge.earned { background: rgba(127,201,74,.18); border-color: #6f8f52; }
+  #screenProfileStats .badge-name { color: #f2ddb0; }
+  #screenProfileStats .badge-desc { color: #b7a689; }
+  #screenProfileStats .ach-empty { border: 2px dashed #4a3a26; background: rgba(107,74,36,.2);
+    border-radius: 12px; color: #cbb28a; }
+  #screenProfileStats .ach-card { background: rgba(107,74,36,.28); border: 2px solid #4a3a26;
+    color: #f2ddb0; }
+  #screenProfileStats .stats-det > summary { color: #cbb28a; font-weight: 800; }
+  #screenProfileStats .stats-det > summary:hover { background: rgba(107,74,36,.28); }
+  #screenProfileStats .lv-row { color: #f2ddb0; }
+  #screenProfileStats .lesson-row { color: #cbb28a; }
+  #screenProfileStats .lesson-row .sc { color: #b7a689; }
+  #screenProfileStats .avatar-label { color: #cbb28a; font-weight: 800; }
+
+  @media (max-width: 560px) {
+    body.progress-mode { padding: 8px; }
+    body.progress-mode > .card { padding: 12px; }
+    body.admin-mode { padding: 8px; }
+    body.admin-mode > .card { padding: 12px; }
+    .mp-fam, .mp-practice { border-width: 2px; padding: 10px 11px; }
+    .mp-fam-nm { font-size: 13.5px; }
+    .tp-card { padding: 11px 12px; }
+    .tp-btn { width: 100%; }
+    /* the user chip is absolutely positioned, so a second control on the top row would run under it */
+    .mp-top .mp-world, .tp-top .tp-logout { flex: 1 1 100%; margin-top: 14px; }
   }
   /* ===== 真實地理地圖（各等級不同國家/區域）===== */
   .card.map-wide { max-width: 1100px; }                     /* 地圖畫面在桌機上放寬(手機不受影響) */
@@ -2337,10 +2510,16 @@
     </div>
 
     <!-- 畫面 0c：老師/家長後台 -->
+    <!-- Phase 11F: a management shell, deliberately calmer than the student surfaces -- same
+         tokens, flatter cards, no conquest imagery. The return goes to the role menu these accounts
+         actually came from, not into the student Multiplayer lobby. -->
     <div id="screenTeacher" class="hidden">
-      <div class="learn-top">
-        <button class="back-btn" id="backFromTeacher">← Back</button>
-        <span class="learn-title">👩‍🏫 Teacher / Parent</span>
+      <div class="tp-top">
+        <button class="ac-back" id="backFromTeacher">← Role menu</button>
+      </div>
+      <div class="tp-id">
+        <div class="tp-t">👩‍🏫 Teacher / Parent</div>
+        <div class="tp-s">English Reading Academy · class progress and management</div>
       </div>
       <div id="acctTeacher">
         <p class="screen-intro">Log in to see your class, or create a new class.</p>
@@ -2368,9 +2547,12 @@
 
     <!-- 畫面 0d：後台總管（看所有帳號/學生，需 ADMIN_KEY） -->
     <div id="screenAdmin" class="hidden">
-      <div class="learn-top">
-        <button class="back-btn" id="backFromAdmin">← Back</button>
-        <span class="learn-title">🛠 Admin — All Users</span>
+      <div class="tp-top">
+        <button class="ac-back" id="backFromAdmin">← Back</button>
+      </div>
+      <div class="tp-id">
+        <div class="tp-t">🛠 Admin</div>
+        <div class="tp-s">All accounts and learners</div>
       </div>
       <div class="acct-btns"><button id="adminRefreshBtn" class="back-btn">↻ Refresh</button></div>
       <div id="adminBody"></div>
@@ -2396,11 +2578,12 @@
       <div id="guestHint" class="hidden" style="text-align:center;font-size:13px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:8px;margin-bottom:10px;cursor:pointer">🔒 Guest mode — tap to log in & save your progress</div>
       <div id="dailyBanner" class="daily-banner"></div>
       <div id="energyBar" class="energy"></div>
-      <div style="text-align:center;margin-bottom:14px">
-        <button id="openRoomsBtn" style="background:#ef4444;color:#fff">🎮 Competition Rooms</button>
-        <button id="openLeaderBtn" style="background:#0ea5e9;color:#fff">🏅 Leaderboard</button>
-        <button id="openEventsBtn" style="background:#7c3aed;color:#fff">📰 Events</button>
-      </div>
+      <!-- Phase 11F: "Competition Rooms" and "Leaderboard" were the SAME actions as the board's
+           own Multiplayer and Ranking controls (openRooms / openLeaderboard), duplicated onto this
+           legacy practice grid. Retired here; both remain one tap away in the World HUD.
+           "Events" was not a duplicate -- #openEventsBtn was the only route to openEvents() in the
+           whole app -- so it moved to the HUD instead of being dropped. The backend event log and
+           openEvents() itself are untouched. -->
       <div id="levelGrid" class="pick-grid"></div>
     </div>
 
@@ -2463,10 +2646,17 @@
       <div id="homeBody"></div>
     </div>
 
+    <!-- Phase 11F: this screen is not "Levels" and not generic Stats -- it holds authoritative
+         mastery and the Academy's own awards alongside local practice figures. It says so, and its
+         return names the surface it will actually go back to (openProfileStats() sets it from
+         PROFILE_BACK_LABEL and the profileReturnTo context the opener recorded). -->
     <div id="screenProfileStats" class="hidden">
-      <div class="learn-top">
-        <button class="back-btn" id="backFromStats">← Levels</button>
-        <span class="learn-title">My Progress</span>
+      <div class="mp-top">
+        <button class="ac-back" id="backFromStats">← Back</button>
+      </div>
+      <div class="mp-id">
+        <span class="brand-plaque"><span class="brand-t">My Progress</span></span>
+        <div class="mp-sub">Your learning progress, mastery, and Academy achievements.</div>
       </div>
       <div id="dailyReport"></div>
       <div id="statsBody"></div>
@@ -4744,6 +4934,9 @@
     // Phase 11E: the lesson page reclaims the phone gutters the same way, so activity content and
     // input fields get the width they need at 360px.
     document.body.classList.toggle("lesson-mode", el === screenLearn);
+    // Phase 11F: the same phone-gutter reclaim for My Progress and the management screens.
+    document.body.classList.toggle("progress-mode", el === screenProfileStats);
+    document.body.classList.toggle("admin-mode", el === screenTeacher || el === screenAdmin);
     [screenLanding, screenRole, screenProfile, screenStudentAcct, screenLevel, screenRooms, screenProfileStats, screenHome, screenArticle, screenLearn, screenBattle, screenTeacher, screenAdmin, screenLeader].forEach(s => s.classList.add("hidden"));
     el.classList.remove("hidden");
     const _card = document.querySelector(".card");
@@ -5260,6 +5453,39 @@
     ];
   }
 
+  // ===== Phase 11F — My Progress =====
+  // Phase 6D.1 gave campaign progress a single owner (the Academy) and stripped it from here, which
+  // left this page made almost entirely of LOCAL practice statistics -- no authoritative mastery
+  // anywhere, and a "change map / level · rooms · leaderboard" button as its first control. A
+  // learner asking "how am I doing?" was shown device-local counters and nothing the server had
+  // verified.
+  // It now leads with a COMPACT authoritative roll-up: the same five families the Academy lists,
+  // with mastery counts read from the same authoritative rows. It deliberately does NOT reproduce
+  // the Academy's lesson lists or its Continue action -- the Academy still owns "what next"; this
+  // page answers "what have I actually earned".
+  function mpFamilySummaryHTML() {
+    const F = acFamilies();
+    if (!F.tracked || !F.fams.length) {
+      return '<div class="mp-practice-note">Sign in and study a lesson to start tracking mastery.</div>';
+    }
+    let done = 0, total = 0, out = "";
+    F.fams.forEach(function (f) {
+      const d = f.list.filter(function (x) { return x.row.activePolicyCompleted === true; }).length;
+      const t = f.list.length;
+      done += d; total += t;
+      const pct = t ? Math.round(d * 100 / t) : 0;
+      out += '<div class="mp-fam' + (t && d === t ? " is-done" : "") + '">' +
+        '<div class="mp-fam-hd"><span class="mp-fam-nm">' + escapeHtml(f.name) + '</span>' +
+        (f.level ? '<span class="mp-chip">' + escapeHtml(f.level) + '</span>' : '') +
+        '<span class="mp-chip' + (f.kind === "Campaign" ? " is-campaign" : "") + '">' +
+        escapeHtml(f.kind) + '</span></div>' +
+        '<div class="mp-bar"><span style="width:' + pct + '%"></span></div>' +
+        '<div class="mp-fam-m"><b>' + d + ' / ' + t + '</b> lessons mastered</div></div>';
+    });
+    const head = '<div class="mp-total"><b>' + done + ' / ' + total + '</b> ' +
+      '<span>lessons mastered — verified by the server</span></div>';
+    return head + out;
+  }
   function renderProfileStats() {
     const s = computeProfileStats();
     const badges = computeBadges(s);
@@ -5304,20 +5530,31 @@
         return head + rows;
       }).join("") + '</details>';
 
-    // Phase 6D.1: campaign progress has exactly ONE owner — Learning Home. The Profile used to
-    // repeat the whole campaign box (stars, bar, count, completion line); it no longer does. The
-    // Profile is retrospective only: what has already been earned, never "how far am I / what next".
-    const verifiedHtml = "";
+    // Phase 6D.1 made this an empty string when campaign progress was given a single owner; Phase
+    // 11F replaced it with mpFamilySummaryHTML(), a COMPACT roll-up that reports mastery without
+    // reproducing the Academy's lesson lists or its Continue action. The dead binding is gone.
 
+    // Phase 11F order: what the SERVER has verified, then what it awarded, then -- clearly
+    // separated and clearly labelled -- the device-local practice figures. The two must never read
+    // as one scale: "3 / 24 lessons mastered" and "18 / 90 practice passes" answer different
+    // questions and have different denominators, so they no longer sit in the same block.
+    // (Phase 7E.3's rule still holds: this page is retrospective and hosts no route INTO the
+    // learning loop -- the Academy owns "what next".)
     statsBody.innerHTML =
       '<p class="screen-intro">' + (userName ? 'Hi, ' + userName + ' 👋' : '') + '</p>' +
-      // Phase 7E.3: the Learning Home CTA is gone. Profile is retrospective — it must not be the
-      // way anyone REACHES the learning loop. Since 7E.2 the map's own Back leads to Learning Home,
-      // so removing this creates no dead end. What Profile does host is the explicit way to change
-      // map/level, which is otherwise never reached from gameplay.
-      '<button type="button" id="pickLevelOpen" class="lh-open">🗺 Change map / level · rooms · leaderboard</button>' +
-      // Phase 6B STEP 5 order: campaign roll-up, then what has been earned, then statistics.
-      verifiedHtml + achievementCabinetHTML() + statCards + badgeHtml + levelHtml;
+      '<div class="mp-h">Mastery</div>' + mpFamilySummaryHTML() +
+      '<div class="mp-h">Academy awards</div>' + achievementCabinetHTML() +
+      '<div class="mp-h">Practice on this device</div>' +
+      '<div class="mp-practice">' +
+        '<div class="mp-practice-note">These are local practice figures from this device. They are ' +
+        'not mastery: mastery is the server-verified count above, and only required activities ' +
+        'count toward it.</div>' +
+        statCards + badgeHtml + levelHtml +
+      '</div>' +
+      // Phase 11F: the legacy grid is no longer a hub -- its Competition Rooms and Leaderboard were
+      // the board's own controls, and Events moved to the HUD. What is left there is the level
+      // picker and the checkpoint boss, so the label says that and nothing more.
+      '<button type="button" id="pickLevelOpen" class="mp-secondary">🗺 Level picker &amp; checkpoint boss</button>';
   }
 
   function renderDailyReport() {
@@ -5342,7 +5579,9 @@
     if (!screenArticle.classList.contains("hidden")) return "map";
     return null;
   }
-  const PROFILE_BACK_LABEL = { home: "← Learning", map: "← Map", lesson: "← Lesson" };
+  // Phase 11F: these named surfaces that no longer exist under those names -- "Learning" is the
+  // Academy and "Map" is the World Conquest board. One definition, used by openProfileStats().
+  const PROFILE_BACK_LABEL = { home: "← Academy", map: "← World Conquest", lesson: "← Lesson" };
   function openProfileStats() {
     profileReturnTo = { to: currentSurfaceKey() };
     const b = document.getElementById("backFromStats");
@@ -5353,6 +5592,11 @@
     renderJoinClass();
     showScreen(screenProfileStats);
     loadTerritory(renderProfileStats);   // 抓最新部署狀態，刷新卡片「守在哪」
+    // Phase 11F: this page now reports authoritative mastery, and a learner can arrive here straight
+    // from the board without ever opening the Academy -- so the rows must be fetched here too, the
+    // same way openLearningHome() does. Without it the roll-up read "nothing tracked yet" for a
+    // signed-in student who had simply not visited the Academy this session.
+    refreshLearning(renderProfileStats);
   }
   userChip.addEventListener("click", () => { if (userName) openProfileStats(); });   // 老師(無 userName)點名字不動作
   document.getElementById("backFromStats").addEventListener("click", () => {
@@ -5798,7 +6042,6 @@
         '<span class="lb-score">👥 ' + p.population + ' · 🚩 ' + p.regions + '</span></div>';
     }).join("");
   }
-  document.getElementById("openLeaderBtn").addEventListener("click", openLeaderboard);
   document.getElementById("backFromLeader").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
 
   // ===== 全站事件牆（所有人共見的動態）=====
@@ -5831,8 +6074,9 @@
     if (_evTimer) clearInterval(_evTimer);
     _evTimer = setInterval(fetchEvents, 8000);   // 開著時每 8 秒刷新，讓大家看到最新動態
   }
-  document.getElementById("openEventsBtn").addEventListener("click", openEvents);
-  document.getElementById("openRoomsBtn").addEventListener("click", openRooms);
+  // Phase 11F: #openEventsBtn / #openRoomsBtn / #openLeaderBtn were removed from the legacy
+  // practice grid, so their listeners go with them -- binding to a missing element throws at boot.
+  // Multiplayer and Ranking are HUD controls; Events became one (see the HUD block below).
   document.getElementById("enterWorldBtn").addEventListener("click", enterWorld);
   document.getElementById("createRoomBtn").addEventListener("click", openMyRoom);
   document.getElementById("joinRoomBtn").addEventListener("click", openJoin);
@@ -5840,8 +6084,8 @@
   // the lobby's duplicate links, so their listeners go too -- binding to a removed element throws a
   // TypeError at boot and would take the whole script with it. Nothing is lost: the teacher panel is
   // still reached from the role screen, and the Academy, Ranking and Profile are HUD controls on the
-  // board. The backend event log is untouched; openEvents() itself still exists and is still bound to
-  // #openEventsBtn on the practice grid.
+  // board. The backend event log is untouched. (Phase 11F: openEvents() is now bound to a HUD
+  // control instead -- #openEventsBtn was the last thing keeping the legacy practice grid load-bearing.)
   // 記一筆全站事件（登入才記，fire-and-forget；文字由伺服器依 type 組成）
   function logEvent(type, params) {
     const t = authToken(); if (!t) return;
@@ -7093,6 +7337,10 @@
         // Phase 11B: Multiplayer is reachable from the board, which is the student's home. It opens
         // the existing room-management surface -- no new capability, only a way in.
         HUD.ct.appendChild(icoBtn("\u2694\uFE0F", "Multiplayer \u2014 join or host a game", openRooms));
+        // Phase 11F: the world event log had exactly one entry point in the whole app -- a button on
+        // the legacy practice grid. It is a WORLD feature ("World Events"), so it belongs here with
+        // the other board controls rather than on a screen students no longer visit.
+        HUD.ct.appendChild(icoBtn("\ud83d\udcf0", "World events", openEvents));
       }
 
       // ---------- the selected-territory card ----------
@@ -7508,16 +7756,18 @@
     // Phase 6E: a neutral empty state. Still no locked catalogue and no totals — it states only
     // that nothing has been earned, which is exactly what the ledger says.
     if (!owned.length) {
-      return '<div class="stats-h">\ud83c\udfc5 Achievements</div>' +
-             '<div class="ach-empty">No achievements earned yet.</div>';
+      // Phase 11F: My Progress now has an "Academy awards" section heading directly above this, so
+      // the component emitting its own "Achievements" title printed the same thing twice.
+      return '<div class="ach-empty">No achievements earned yet.</div>';
     }
     const groups = [], byScope = {};
     owned.forEach(g => {
       if (!byScope[g.scope]) { byScope[g.scope] = []; groups.push(g.scope); }
       byScope[g.scope].push(g);
     });
-    return '<div class="stats-h" id="achCabinet">\ud83c\udfc5 Achievements</div>' +
-      groups.map(sc => '<div class="stats-h ach-h" data-ach-scope="' + escapeHtml(sc) + '">' +
+    // Phase 11F: same here -- the section heading owns the title. The per-scope group headings below
+    // stay, because those name WHICH awards these are. (#achCabinet was referenced nowhere.)
+    return groups.map(sc => '<div class="stats-h ach-h" data-ach-scope="' + escapeHtml(sc) + '">' +
         escapeHtml(scopeGroupLabel(sc)) + '</div>' +
         '<div class="ach-grid">' + byScope[sc].map(achievementCardHTML).join("") + '</div>'
       ).join("");
@@ -9641,7 +9891,11 @@
   });
   document.getElementById("teacherRoleBtn").addEventListener("click", openTeacher);
   document.getElementById("backToRole").addEventListener("click", () => showScreen(screenRole));
-  document.getElementById("backFromTeacher").addEventListener("click", () => { if (authToken() && authUser()) openRooms(); else showScreen(screenLanding); });
+  // Phase 11F: this used to drop a teacher into the student Multiplayer lobby. Teacher/parent
+  // accounts arrive from the role menu (Phase 11C's "For teachers & parents"), so that is where
+  // Back belongs -- and it never routes these roles into the student world.
+  document.getElementById("backFromTeacher").addEventListener("click",
+    () => showScreen(screenRole));
   document.getElementById("acctLoginBtn").addEventListener("click", () => acctAuth("login"));
   document.getElementById("acctRegisterBtn").addEventListener("click", () => acctAuth("register"));
   document.getElementById("acctRefreshBtn").addEventListener("click", loadDashboard);
