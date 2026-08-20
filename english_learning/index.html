@@ -3827,6 +3827,24 @@
     for (const aid in acts) if (acts[aid].contentPath === contentPath && acts[aid].scored === "stt") return aid;
     return null;
   }
+  // ===== Phase 12B.1 — a bounded scoring request, and messages that are true =====
+  // Two defects were fixed here, both found in the Phase 12A audit:
+  //
+  //   1. There was NO timeout. Speech inference is serialised on the server, so a slow or wedged
+  //      transcription left the request pending for ever: the panel said "Scoring…" indefinitely
+  //      and Record stayed disabled, with no way back except reloading the page.
+  //   2. Every failure — 503, network, malformed response — printed the same sentence blaming
+  //      "the server (Docker build)" and "GitHub Pages". The browser cannot know that, and on a
+  //      real deployment it is simply false.
+  //
+  // This is a REQUEST budget, not a recording length: recording is bounded by the learner pressing
+  // Stop. Nothing here scores, passes or rewards anything — a timeout produces no attempt at all,
+  // and the authoritative request still carries only audio + activityId + sentenceIndex.
+  const STT_REQUEST_TIMEOUT_MS = 25000;   // generous for CPU int8 inference on one shared model,
+                                          // short enough that a child is never stuck staring at it
+  function sttFailHTML(msg) {
+    return '<div style="font-size:13px;color:#94a3b8">' + escapeHtml(msg) + '</div>';
+  }
   function scorePronunciation(target, blob) {
     isScoring = true;
     recBtn.disabled = true;        // 計分期間鎖住 Record，等分數回來
@@ -3842,8 +3860,25 @@
       ? "/api/stt?activityId=" + encodeURIComponent(aid) + "&sentenceIndex=" + sIdx +
         "&token=" + encodeURIComponent(tok)
       : "/api/stt?text=" + encodeURIComponent(target));
-    fetch(url, { method: "POST", body: blob })
-      .then(r => r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)))
+    const ctl = (typeof AbortController === "function") ? new AbortController() : null;
+    let timedOut = false;
+    const timer = setTimeout(function () {
+      timedOut = true;
+      if (ctl) ctl.abort();       // actually terminates the pending request on the client side
+    }, STT_REQUEST_TIMEOUT_MS);
+    const opts = { method: "POST", body: blob };
+    if (ctl) opts.signal = ctl.signal;
+    fetch(url, opts)
+      .then(r => {
+        if (r.ok) return r.json();
+        // the server's own reason, so the learner is told which failure this is
+        return r.json().catch(() => null).then(j => {
+          const err = new Error("HTTP " + r.status);
+          err.status = r.status;
+          err.reason = (j && j.reason) || "";
+          throw err;
+        });
+      })
       .then(d => {
         if (!d || typeof d.transcript !== "string") throw new Error((d && d.error) || "no transcript");
         if (d.authoritative) {                       // 伺服器已批改並保存 → 用它的分數
@@ -3855,11 +3890,27 @@
           showPron(target, d.transcript, null);      // 非權威(舊模式/roleplay 環境)
         }
       })
-      .catch(() => {
-        pronResult.innerHTML = '<div style="font-size:13px;color:#94a3b8">🎯 Pronunciation score needs the server (Docker build). Not available on GitHub Pages / local file.</div>';
+      .catch(err => {
+        // Truthful, distinct, and free of deployment internals: no model name, no path, no stack.
+        let msg;
+        if (timedOut || (err && err.name === "AbortError")) {
+          msg = "⏱ Speech scoring took too long. Please try again.";
+        } else if (err && err.reason === "stt_busy") {
+          msg = "⏳ Speech scoring is busy right now. Please try again in a moment.";
+        } else if (err && err.reason === "stt_unavailable") {
+          msg = "⚠️ Speech scoring is temporarily unavailable. Please try again.";
+        } else if (err && err.status === 401) {
+          msg = "⚠️ Please log in again to save your read-along score.";
+        } else if (err && err.status) {
+          msg = "⚠️ Speech scoring is temporarily unavailable. Please try again.";
+        } else {
+          msg = "⚠️ Could not reach speech scoring. Check your connection and try again.";
+        }
+        pronResult.innerHTML = sttFailHTML(msg);
         pronResult.classList.remove("hidden");
       })
       .finally(() => {
+        clearTimeout(timer);
         isScoring = false;
         recBtn.disabled = false;            // 計分結束 -> 解鎖 Record
         prevBtn.disabled = idx === 0;       // 依 renderShadow 的規則恢復導覽

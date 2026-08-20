@@ -140,7 +140,49 @@ def list_rooms():
 WHISPER_MODEL = os.environ.get("WHISPER_MODEL", "base.en")
 _model = None
 _model_lock = threading.Lock()
+# Phase 12B.1: inference stays SERIALISED. faster-whisper holds one CTranslate2 model instance here
+# and the server is a ThreadingHTTPServer, so several children pressing Record land in different
+# threads on the same model. There is no evidence in this repository that concurrent transcribe() on
+# a shared instance is safe, so the lock is kept deliberately -- see docs/stt-availability.md. The
+# cost is throughput: read-alongs are graded one at a time.
 _infer_lock = threading.Lock()
+
+# ---- STT readiness (Phase 12B.1) -------------------------------------------------------------
+# TRI-STATE, and the third state matters:
+#   None  -- never probed. The lazy path decides, exactly as before. This is what `import server`
+#            leaves behind, so unit tests that replace transcribe() are completely unaffected and
+#            no test ever loads a multi-hundred-MB model.
+#   True  -- a startup probe loaded the model successfully.
+#   False -- a startup probe RAN and FAILED. Only then does /api/stt refuse up front, which is the
+#            whole point: a broken deployment is discovered at boot, not by the first child to press
+#            Record.
+_stt_ready = None
+_stt_ready_detail = ""
+
+# How many requests may be waiting for the inference lock before the server says "busy". Without a
+# bound, a class pressing Record at once parks one thread per child on _infer_lock, each holding its
+# audio in memory for as long as the queue takes to drain. This does not make inference faster; it
+# stops the queue growing without limit.
+STT_MAX_WAITING = int(os.environ.get("STT_MAX_WAITING", "4"))
+_stt_waiting = 0
+_stt_waiting_lock = threading.Lock()
+
+
+def stt_warmup():
+    """Load the model NOW and record whether it worked. Called from __main__ only, never on import."""
+    global _stt_ready, _stt_ready_detail
+    try:
+        get_model()
+        _stt_ready, _stt_ready_detail = True, ""
+    except Exception as exc:                     # missing package, missing model, bad WHISPER_MODEL
+        _stt_ready, _stt_ready_detail = False, type(exc).__name__
+    return _stt_ready
+
+
+def stt_status():
+    """Readiness for operators. Deliberately free of paths, model names and stack traces."""
+    return {"probed": _stt_ready is not None, "available": _stt_ready is not False,
+            "reason": _stt_ready_detail if _stt_ready is False else ""}
 
 
 def get_model():
@@ -1241,6 +1283,21 @@ class Handler(BaseHTTPRequestHandler):
         elif aid and user is None:
             self._send({"error": "Not logged in"}, 401)
             return
+        # Phase 12B.1: if the startup probe already established that the model cannot load, say so
+        # immediately instead of making every learner wait for the same failure. _stt_ready is None
+        # when nothing probed (tests, and any embedding that skips warm-up), and that path is
+        # unchanged: the transcribe() call below decides.
+        if _stt_ready is False:
+            self._send({"error": "speech recognition unavailable", "reason": "stt_unavailable"}, 503)
+            return
+        # Bounded admission. Inference is serialised, so an unbounded number of waiters is a memory
+        # and thread leak, not a queue. Refusing is honest and leaves the learner able to retry.
+        global _stt_waiting
+        with _stt_waiting_lock:
+            if _stt_waiting >= STT_MAX_WAITING:
+                self._send({"error": "speech scoring is busy", "reason": "stt_busy"}, 503)
+                return
+            _stt_waiting += 1
         try:
             text = transcribe(audio, target)
         except Exception:
@@ -1248,6 +1305,9 @@ class Handler(BaseHTTPRequestHandler):
             # qualification, no reward. Internal detail is not leaked to the client.
             self._send({"error": "speech recognition unavailable", "reason": "stt_unavailable"}, 503)
             return
+        finally:
+            with _stt_waiting_lock:
+                _stt_waiting -= 1
         if not authoritative:
             self._send({"transcript": text, "target": target, "authoritative": False})
             return
@@ -2611,6 +2671,16 @@ if __name__ == "__main__":
             print("  -", _e)
     except Exception as _ex:
         print("[territory-catalog] load skipped:", _ex)
+    # Phase 12B.1 startup policy: PROBE, REPORT, KEEP SERVING. The Academy, the World, every quiz
+    # and every other activity work without speech recognition, so refusing to boot would take the
+    # whole product down over one activity's dependency. A failed probe is loud in the log and makes
+    # /api/stt answer a truthful 503 from the first request onward.
+    print("[stt] warming up model %s ..." % WHISPER_MODEL, flush=True)
+    if stt_warmup():
+        print("[stt] ready", flush=True)
+    else:
+        print("[stt] UNAVAILABLE (%s) -- read-along scoring will answer 503 stt_unavailable; "
+              "the rest of the app is unaffected" % _stt_ready_detail, flush=True)
     ensure_global_room()    # 常駐世界(全域房間)：不存在就建立
     threading.Thread(target=ai_loop, daemon=True).start()   # 電腦 AI 帝國：背景自動擴張/攻擊
     threading.Thread(target=conscript_loop, daemon=True).start()   # 徵兵制：每小時自動買兵
