@@ -659,7 +659,6 @@
   .level-name { text-align: center; font-size: 14px; font-weight: 700; color: #2563eb; margin-bottom: 18px; min-height: 20px; }
 
   /* 整課進度條 */
-  .progress-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
   .progress-track { flex: 1; height: 12px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
   .progress-fill { height: 100%; width: 0; background: linear-gradient(90deg, #22c55e, #16a34a); border-radius: 999px; transition: width .4s ease; }
   .progress-text { font-size: 13px; font-weight: 700; color: #16a34a; white-space: nowrap; }
@@ -1322,6 +1321,155 @@
     .ac-row { padding: 8px 9px; }
     .ac-row .nm { font-size: 13px; }
     .ac-row .st { font-size: 11px; }
+  }
+  /* ================================================================================================
+     Phase 11E -- LESSON SHELL. The Academy reads as part of World Conquest now, but opening a lesson
+     dropped the learner into the old page: numbered "1..10" tabs that said nothing about what the
+     activity was, a local practice counter as the most prominent progress figure, and the
+     authoritative mastery card styled as a grey web panel. Same activities, same graders, same
+     routing -- this is the surface around them, in the Academy's own tokens and calmer than the
+     board. ======================================================================================= */
+  .ls-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
+  .ls-world { padding: 7px 12px; cursor: pointer; border-radius: 12px; font-size: 12px;
+    font-weight: 800; color: #2a1b0d; background: linear-gradient(180deg, #ffd79a, #e8b46a);
+    border: 2px solid #2a1b0d; box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 3px 0 #8a5f2a; }
+  .ls-world:hover { background: linear-gradient(180deg, #ffe6bb, #f2c383); }
+
+  /* B2: Academy > Course/Campaign > lesson. Three levels, in that order, never "Level 7". */
+  .ls-id { margin: 0 0 12px; }
+  .ls-crumb { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 11px;
+    font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: #cbb28a; }
+  .ls-crumb .ls-sep { color: #8a6a3c; }
+  .ls-crumb .ls-kind { padding: 2px 8px; border-radius: 999px; border: 2px solid #2a1b0d;
+    color: #2a1b0d; background: #ffd79a; letter-spacing: .06em; }
+  .ls-crumb .ls-kind.is-campaign { background: #f0b6b0; }
+  .ls-title { font-size: clamp(19px, 3.2vw, 25px); font-weight: 900; color: #f2ddb0;
+    line-height: 1.2; margin-top: 5px; text-shadow: 0 2px 0 rgba(0,0,0,.35); }
+
+  /* B5: the authoritative figure is the headline; the session practice counter is a footnote. */
+  .ls-mastery { margin: 0 0 12px; padding: 12px 15px; border-radius: 15px;
+    background: linear-gradient(180deg, #f7e7c3, #e8d0a2); border: 3px solid #2a1b0d;
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.55), 0 4px 0 #8a6a3c; }
+  .ls-mastery.is-done { background: linear-gradient(180deg, #ecf7d8, #cfe8ae); box-shadow: inset 0 2px 0 rgba(255,255,255,.5), 0 4px 0 #6f8f52; }
+  .ls-m-k { font-size: 10.5px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase;
+    color: #8a5f2a; }
+  .ls-m-v { font-size: 17px; font-weight: 900; color: #2a1b0d; margin-top: 2px; }
+  .ls-m-bar { position: relative; height: 12px; margin: 8px 0 5px; border-radius: 999px;
+    background: #c9ae7d; border: 2px solid #2a1b0d; overflow: hidden; }
+  .ls-m-bar span { position: absolute; inset: 0 auto 0 0;
+    background: linear-gradient(180deg, #7fc94a, #4f9a2a); }
+  .ls-m-sub { font-size: 12px; font-weight: 700; color: #6b4a24; }
+  .ls-m-warn { margin-top: 6px; font-size: 12px; font-weight: 800; color: #9a4a00; }
+  /* the old local counter, demoted to a practice footnote */
+  .ls-practice { margin: 0 0 12px; font-size: 11.5px; font-weight: 700; color: #94a3b8;
+    text-align: center; }
+  .ls-practice .pv { color: #cbb28a; font-weight: 900; }
+
+  /* B3/B4: a stepper that names the activity and says whether it counts */
+  .ls-steps { display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 2px 2px 8px;
+    margin: 0 0 4px; scrollbar-width: thin; }
+  .ls-steps::-webkit-scrollbar { height: 6px; }
+  .ls-steps::-webkit-scrollbar-thumb { background: #6b4a24; border-radius: 999px; }
+  .ls-step { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-start;
+    gap: 3px; min-width: 96px; padding: 8px 11px; cursor: pointer; border-radius: 13px;
+    border: 3px solid #2a1b0d; background: linear-gradient(180deg, #f4e2ba, #e6cfa4);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 3px 0 #8a6a3c; }
+  .ls-step .ls-s-top { display: flex; align-items: center; gap: 6px; }
+  .ls-step .ls-s-em { font-size: 15px; line-height: 1; }
+  .ls-step .ls-s-nm { font-size: 12.5px; font-weight: 900; color: #2a1b0d; white-space: nowrap; }
+  .ls-step .ls-s-tag { font-size: 9.5px; font-weight: 900; letter-spacing: .07em;
+    text-transform: uppercase; color: #6b4a24; }
+  .ls-step.is-required .ls-s-tag { color: #8a2f22; }
+  .ls-step.active { background: linear-gradient(180deg, #ffe6bb, #f2c383); border-color: #8a2f22;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 3px 0 #8a2f22; }
+  .ls-step.done { background: linear-gradient(180deg, #ecf7d8, #cfe8ae); box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 3px 0 #6f8f52; }
+  .ls-step.done .ls-s-nm::after { content: " \2713"; color: #3f7020; }
+  .ls-step.locked { opacity: .45; cursor: not-allowed; }
+  .ls-step.locked .ls-s-nm::after { content: " \1f512"; }
+  .ls-legend { display: flex; gap: 12px; justify-content: center; margin: 0 0 12px;
+    font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+  .ls-legend .rq { color: #e0a89c; }
+  .ls-legend .op { color: #94a3b8; }
+
+  /* B6/B7/B8: the reward moment and what to do next */
+  .ls-feedback { margin: 12px 0; padding: 13px 15px; border-radius: 15px; border: 3px solid #2a1b0d;
+    background: linear-gradient(180deg, #f7e7c3, #e8d0a2);
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.55), 0 4px 0 #8a6a3c; }
+  .ls-feedback.is-pass { background: linear-gradient(180deg, #ecf7d8, #cfe8ae); box-shadow: inset 0 2px 0 rgba(255,255,255,.5), 0 4px 0 #6f8f52; }
+  .ls-feedback.is-fail { background: linear-gradient(180deg, #fbdcd6, #f0b6b0); box-shadow: inset 0 2px 0 rgba(255,255,255,.45), 0 4px 0 #8a2f22; }
+  .ls-fb-k { font-size: 10.5px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase;
+    color: #8a5f2a; }
+  .ls-fb-t { font-size: 16px; font-weight: 900; color: #2a1b0d; margin-top: 2px; }
+  .ls-fb-gold { display: inline-block; margin-top: 7px; padding: 5px 12px; border-radius: 999px;
+    border: 2px solid #2a1b0d; background: #ffd257; font-size: 14px; font-weight: 900;
+    color: #2a1b0d; }
+  .ls-fb-gold.is-zero { background: #e6d7bb; color: #6b4a24; }
+  .ls-fb-note { margin-top: 6px; font-size: 12px; font-weight: 700; color: #6b4a24; }
+  .ls-fb-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 11px; }
+  .ls-fb-acts button { flex: 1 1 auto; min-height: 46px; padding: 0 16px; cursor: pointer;
+    border-radius: 13px; font-size: 14.5px; font-weight: 900; border: 3px solid #2a1b0d; }
+  .ls-fb-next { color: #fff2ea; background: linear-gradient(180deg, #e2503c, #ad2f20);
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.3), 0 4px 0 #6d1a12; }
+  .ls-fb-next:hover { background: linear-gradient(180deg, #ee6450, #c03826); }
+  .ls-fb-alt { color: #2a1b0d; background: linear-gradient(180deg, #ffd79a, #e8b46a);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 4px 0 #8a5f2a; }
+  .ls-fb-alt:hover { background: linear-gradient(180deg, #ffe6bb, #f2c383); }
+  .ls-guest { margin: 0 0 12px; padding: 9px 13px; border-radius: 12px; font-size: 12px;
+    font-weight: 700; color: #f2ddb0; background: rgba(107,74,36,.5); border: 2px solid #2a1b0d; }
+  .ls-guest b { color: #ffd257; }
+
+  /* Review fixes, Phase 11E:
+     1. The "English Reading" h1 sat above the lesson's own ACADEMY crumb, re-inverting the very
+        hierarchy B2 sets -- the same problem the Academy had. It steps aside here too.
+     2. The authoritative mastery card still rendered in the old white/grey web panel styling while
+        everything around it was parchment. The .comp-* markup is shared with other surfaces, so the
+        restyle is SCOPED to #lessonProgress: same renderer, same values, lesson-page skin only.
+     3. "Continue Learning" inside that card duplicated the stepper and the feedback panel's next
+        action -- and pointed at the lesson the learner is already in. Hidden here, kept on the
+        Academy where it is the primary action.
+     4. Nine steps do not fit one desktop row, so the stepper wraps when there is room and scrolls
+        when there is not. */
+  body.lesson-mode > .card > h1 { display: none !important; }
+
+  #lessonProgress .comp-card { border-radius: 15px; border: 3px solid #2a1b0d; padding: 13px 15px;
+    background: linear-gradient(180deg, #f7e7c3, #e8d0a2);
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.55), 0 4px 0 #8a6a3c; }
+  #lessonProgress .comp-card.is-done { background: linear-gradient(180deg, #ecf7d8, #cfe8ae);
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.5), 0 4px 0 #6f8f52; }
+  #lessonProgress .comp-badge { border: 2px solid #2a1b0d; background: #ffd79a; color: #2a1b0d;
+    font-weight: 900; border-radius: 999px; padding: 3px 11px; }
+  #lessonProgress .comp-badge.m-mastered { background: #b7dd97; }
+  #lessonProgress .comp-state { color: #2a1b0d; font-weight: 900; font-size: 15.5px; }
+  #lessonProgress .comp-bar { background: #c9ae7d; border: 2px solid #2a1b0d; border-radius: 999px;
+    overflow: hidden; height: 12px; }
+  #lessonProgress .comp-bar-fill { background: linear-gradient(180deg, #7fc94a, #4f9a2a); }
+  #lessonProgress .comp-next { color: #6b4a24; font-weight: 700; }
+  #lessonProgress .comp-next b { color: #2a1b0d; }
+  #lessonProgress .comp-sec > summary { color: #6b4a24; font-weight: 900; }
+  #lessonProgress .comp-list li, #lessonProgress .comp-row, #lessonProgress .comp-hist li,
+  #lessonProgress .comp-note, #lessonProgress .comp-sub { color: #4a3418; }
+  #lessonProgress .comp-row b { color: #2a1b0d; }
+  #lessonProgress .comp-review { color: #8a2f22; font-weight: 800; }
+  /* the lesson page already has a stepper and a next-action button */
+  #lessonProgress .comp-cont { display: none; }
+
+  .ls-steps { flex-wrap: wrap; }
+  @media (max-width: 700px) { .ls-steps { flex-wrap: nowrap; } }
+
+  @media (max-width: 560px) {
+    body.lesson-mode { padding: 8px; }
+    body.lesson-mode > .card { padding: 12px; }
+    /* the user chip is absolutely positioned in the top-right corner, so at 360px the secondary
+       World control ran underneath it. It takes its own row instead -- the Academy exit alone fits
+       beside the chip. */
+    /* full width on its own row, dropped just far enough to clear the chip's lower edge */
+    .ls-world { flex: 1 1 100%; margin-top: 14px; }
+    .ac-back { font-size: 11.5px; padding: 6px 10px; }
+    .ls-title { font-size: 18px; }
+    .ls-step { min-width: 88px; padding: 7px 9px; border-width: 2px; }
+    .ls-step .ls-s-nm { font-size: 11.5px; }
+    .ls-mastery, .ls-feedback { padding: 11px 12px; border-width: 2px; }
+    .ls-fb-acts button { flex: 1 1 100%; }
   }
   /* ===== 真實地理地圖（各等級不同國家/區域）===== */
   .card.map-wide { max-width: 1100px; }                     /* 地圖畫面在桌機上放寬(手機不受影響) */
@@ -2348,12 +2496,26 @@
 
     <!-- 畫面 3：學習 -->
     <div id="screenLearn" class="hidden">
-      <div class="learn-top">
-        <button class="back-btn" id="backToList">← Lessons</button>
-        <span class="learn-title" id="learnTitle"></span>
+      <!-- Phase 11E: the primary exit is the Academy, named explicitly ("Lessons" described a screen
+           that no longer exists as the learner's home). An authenticated learner also gets a direct
+           route to the board; renderLessonShell() hides it for a guest, who has no world. -->
+      <div class="ls-top">
+        <button class="ac-back" id="backToList">← Academy</button>
+        <button class="ls-world hidden" id="lsWorldBtn">🏰 World Conquest</button>
+      </div>
+      <!-- B2: three levels of identity, in order. The lesson title comes from the authoritative
+           progress row via lessonTitleOf() (Phase 9H), never from navigation state, and no "Level N"
+           appears anywhere. -->
+      <div class="ls-id">
+        <div class="ls-crumb" id="lsCrumb"></div>
+        <div class="ls-title" id="learnTitle"></div>
       </div>
       <!-- Phase 6B STEP 4: the lesson page OWNS progress. Filled by renderLessonProgress(). -->
       <div id="lessonProgress"></div>
+      <!-- B6/B7/B8: the reward moment, the completion state and the next action. Filled from the
+           SERVER's own settlement report by lsShowActivityResult(); empty until an activity is
+           graded, so nothing is ever promised before the server has spoken. -->
+      <div id="lsFeedback"></div>
 
     <!-- ===== 動畫場景（只在 Level 1 顯示，依文章切換） ===== -->
     <div id="sceneStage">
@@ -2363,23 +2525,33 @@
     <div class="scene hidden" id="scene"></div>
     </div><!-- /#sceneStage -->
 
-    <div class="progress-wrap">
-      <div class="progress-track"><div class="progress-fill" id="progFill"></div></div>
-      <span class="progress-text" id="progText">0/0</span>
+    <!-- Phase 11E / B5: this is the SESSION practice counter -- how many activity screens have been
+         played on this device. It is not the authoritative mastery figure (that one lives in
+         #lessonProgress above, from requiredActivityIds/completedActivityIds), so it is kept as a
+         footnote rather than presented as progress. Still updated by updateProgress(). -->
+    <div class="ls-practice">Practised this session · <span class="pv" id="progText">0/0</span> activity screens
+      <span class="progress-track" style="display:none"><span class="progress-fill" id="progFill"></span></span>
     </div>
 
-    <div class="levels">
-      <div class="levelTab active" data-level="1" data-name="Listen 👂"><span class="lvl">1</span><span class="emoji">👂</span></div>
-      <div class="levelTab" data-level="2" data-name="Read Along 🎤"><span class="lvl">2</span><span class="emoji">🎤</span></div>
-      <div class="levelTab" data-level="3" data-name="Quiz ✅"><span class="lvl">3</span><span class="emoji">✅</span></div>
-      <div class="levelTab" data-level="4" data-name="Tricky Quiz 🤔"><span class="lvl">4</span><span class="emoji">🤔</span></div>
-      <div class="levelTab" data-level="5" data-name="Matching 🖼️"><span class="lvl">5</span><span class="emoji">🖼️</span></div>
-      <div class="levelTab hidden" data-level="6" data-name="Reorder 🧩"><span class="lvl">6</span><span class="emoji">🧩</span></div>
-      <div class="levelTab hidden" data-level="7" data-name="WH Questions ❓"><span class="lvl">7</span><span class="emoji">❓</span></div>
-      <div class="levelTab hidden" data-level="8" data-name="Dictation ✍️"><span class="lvl">8</span><span class="emoji">✍️</span></div>
-      <div class="levelTab hidden" data-level="9" data-name="Fill in the Blank 📝"><span class="lvl">9</span><span class="emoji">📝</span></div>
-      <div class="levelTab hidden" data-level="10" data-name="Role-play 🎭"><span class="lvl">10</span><span class="emoji">🎭</span></div>
+    <!-- Phase 11E / B3: the same tabs, the same data-level routing, the same data-name values --
+         only the PRESENTATION changes. The old capsules showed "1".."10", which told the learner
+         nothing about what the activity was and implied a difficulty ladder the curriculum does not
+         have. They now carry the activity's own semantic name, plus a Required/Optional tag written
+         by lsDecorateSteps() from the lesson's requiredActivityIds. `.lvl` is kept in the DOM (and
+         hidden) so nothing that looks for it breaks. -->
+    <div class="levels ls-steps">
+      <div class="levelTab ls-step active" data-level="1" data-name="Listen 👂"><span class="ls-s-top"><span class="ls-s-em">👂</span><span class="ls-s-nm">Listen</span></span><span class="ls-s-tag" data-tag></span><span class="lvl" hidden>1</span></div>
+      <div class="levelTab ls-step" data-level="2" data-name="Read Along 🎤"><span class="ls-s-top"><span class="ls-s-em">🎤</span><span class="ls-s-nm">Read Along</span></span><span class="ls-s-tag" data-tag></span><span class="lvl" hidden>2</span></div>
+      <div class="levelTab ls-step" data-level="3" data-name="Quiz ✅"><span class="ls-s-top"><span class="ls-s-em">✅</span><span class="ls-s-nm">Quiz</span></span><span class="ls-s-tag" data-tag></span><span class="lvl" hidden>3</span></div>
+      <div class="levelTab ls-step" data-level="4" data-name="Tricky Quiz 🤔"><span class="ls-s-top"><span class="ls-s-em">🤔</span><span class="ls-s-nm">Tricky Quiz</span></span><span class="ls-s-tag" data-tag></span><span class="lvl" hidden>4</span></div>
+      <div class="levelTab ls-step" data-level="5" data-name="Matching 🖼️"><span class="ls-s-top"><span class="ls-s-em">🖼️</span><span class="ls-s-nm">Matching</span></span><span class="ls-s-tag" data-tag></span><span class="lvl" hidden>5</span></div>
+      <div class="levelTab ls-step hidden" data-level="6" data-name="Reorder 🧩"><span class="ls-s-top"><span class="ls-s-em">🧩</span><span class="ls-s-nm">Reorder</span></span><span class="ls-s-tag" data-tag></span><span class="lvl" hidden>6</span></div>
+      <div class="levelTab ls-step hidden" data-level="7" data-name="WH Questions ❓"><span class="ls-s-top"><span class="ls-s-em">❓</span><span class="ls-s-nm">WH Questions</span></span><span class="ls-s-tag" data-tag></span><span class="lvl" hidden>7</span></div>
+      <div class="levelTab ls-step hidden" data-level="8" data-name="Dictation ✍️"><span class="ls-s-top"><span class="ls-s-em">✍️</span><span class="ls-s-nm">Dictation</span></span><span class="ls-s-tag" data-tag></span><span class="lvl" hidden>8</span></div>
+      <div class="levelTab ls-step hidden" data-level="9" data-name="Fill in the Blank 📝"><span class="ls-s-top"><span class="ls-s-em">📝</span><span class="ls-s-nm">Fill in the Blank</span></span><span class="ls-s-tag" data-tag></span><span class="lvl" hidden>9</span></div>
+      <div class="levelTab ls-step hidden" data-level="10" data-name="Role-play 🎭"><span class="ls-s-top"><span class="ls-s-em">🎭</span><span class="ls-s-nm">Role-play</span></span><span class="ls-s-tag" data-tag></span><span class="lvl" hidden>10</span></div>
     </div>
+    <div class="ls-legend"><span class="rq">◉ Required for mastery</span><span class="op">○ Optional practice</span></div>
     <div class="level-name" id="levelName"></div>
 
     <!-- ===== Level 1：聽 ===== -->
@@ -2593,7 +2765,38 @@
   let currentClip = null;
   fetch("audio/index.json").then(r => r.ok ? r.json() : {}).then(m => { audioMap = m || {}; }).catch(() => {});
   function clipFile(text, gender) { return audioMap[(gender || "female") + "|" + text]; }
-  function stopAudio() { if (currentClip) { try { currentClip.pause(); } catch (e) {} currentClip = null; } }
+  // ===== Phase 11E / B9 -- the play()/pause() AbortError =====
+  // HTMLMediaElement.play() returns a promise. Chrome REJECTS it with AbortError when pause() (or a
+  // fresh load) interrupts playback before it has started -- which is exactly what happens when the
+  // learner presses Back while a clip is still spinning up, or when the next line of a read-along
+  // supersedes the current one. None of the four play() call sites attached a handler, so every one
+  // of those rejections surfaced as an unhandled promise rejection.
+  //
+  // The fix is to say which interruptions are DELIBERATE. stopAudio() and playMedia() mark the
+  // element before they interrupt it; playMedia() then swallows AbortError on a marked element and
+  // reports everything else. Nothing is globally suppressed: a NotAllowedError (autoplay blocked),
+  // NotSupportedError (bad codec) or decode failure still reaches the console, and any rejection on
+  // an UNMARKED element is still reported even if it is an AbortError, because that one was not ours.
+  function stopMedia(el) {
+    if (!el) return;
+    el._deliberateStop = true;                 // read by playMedia's rejection handler
+    try { el.pause(); } catch (e) {}
+  }
+  function playMedia(el, what) {
+    if (!el) return null;
+    el._deliberateStop = false;                // a fresh attempt: no interruption yet
+    let pr = null;
+    try { pr = el.play(); } catch (e) { pr = Promise.reject(e); }
+    if (pr && typeof pr.catch === "function") {
+      pr.catch(function (err) {
+        const name = err && err.name;
+        if (name === "AbortError" && el._deliberateStop) return;   // we stopped it on purpose
+        console.warn("[audio] " + (what || "clip") + ": " + (name || err));
+      });
+    }
+    return pr;
+  }
+  function stopAudio() { if (currentClip) { stopMedia(currentClip); currentClip = null; } }
   function playClip(text, gender, rate, onend) {
     const f = clipFile(text, gender);
     if (!f) return false;
@@ -2602,7 +2805,7 @@
       currentClip = new Audio("audio/" + f);
       if (rate) currentClip.playbackRate = rate;
       if (onend) currentClip.onended = onend;
-      currentClip.play();
+      playMedia(currentClip, "lesson line");
       return true;
     } catch (e) { currentClip = null; return false; }
   }
@@ -2804,7 +3007,8 @@
     // 隱藏 tab 列、進度條、level 名稱
     levelsBar.style.display = "none";
     levelNameEl.style.display = "none";
-    document.querySelector(".progress-wrap").style.display = "none";
+    document.querySelector(".ls-practice").style.display = "none";
+    document.querySelector(".ls-legend").style.display = "none";
     levelFinish.classList.add("hidden");
     hideLessonSummary();
     // 確保 Level 1 tab 可見（從測驗模式回來時它被隱藏了）
@@ -2874,7 +3078,8 @@
     // 顯示 tab 列、進度條、level 名稱
     levelsBar.style.display = "";
     levelNameEl.style.display = "";
-    document.querySelector(".progress-wrap").style.display = "";
+    document.querySelector(".ls-practice").style.display = "";
+    document.querySelector(".ls-legend").style.display = "";
     startTestWrap.style.display = "none";
     // 隱藏 Level 1 tab，從 Level 2 開始
     const tab1 = document.querySelector('.levelTab[data-level="1"]');
@@ -3283,13 +3488,21 @@
     sceneStage.classList.remove("reading");
     hideBubble();
   }
-  function stopListenL1() { synth.cancel(); stopAudio(); finishL1(); }
+  // Phase 11E: one place that silences EVERY audio source the lesson can start -- the pre-generated
+  // clip, the speech synthesiser and the learner's own recording -- so navigation cannot leave one
+  // of them running. Called by stopListenL1(), which the Back handlers already invoke.
+  function stopAllLessonAudio() {
+    try { synth.cancel(); } catch (e) {}
+    stopAudio();
+    if (typeof stopMyRecording === "function") stopMyRecording();
+  }
+  function stopListenL1() { stopAllLessonAudio(); finishL1(); }
 
   playBtn.addEventListener("click", startL1);
   pauseBtn.addEventListener("click", () => {
     if (currentClip) {
-      if (currentClip.paused) { currentClip.play(); pauseBtn.textContent = "⏸ Pause"; }
-      else { currentClip.pause(); pauseBtn.textContent = "▶ Resume"; }
+      if (currentClip.paused) { playMedia(currentClip, "resume"); pauseBtn.textContent = "⏸ Pause"; }
+      else { stopMedia(currentClip); pauseBtn.textContent = "▶ Resume"; }
     } else if (synth.paused) { synth.resume(); pauseBtn.textContent = "⏸ Pause"; }
     else { synth.pause(); pauseBtn.textContent = "▶ Resume"; }
   });
@@ -3475,11 +3688,14 @@
 
   /* 播放自己的錄音（錄完會自動呼叫，也可手動點播放鈕） */
   let myAudio = null;
+  // Phase 11E: nothing in the navigation stop-bundle touched myAudio, so leaving the lesson while
+  // your own recording was playing left it playing over the next screen.
+  function stopMyRecording() { if (myAudio) { stopMedia(myAudio); myAudio = null; } }
   function playMyRecording() {
     if (!recordings[idx]) return;
-    if (myAudio) { myAudio.pause(); }
+    stopMyRecording();
     myAudio = new Audio(recordings[idx]);
-    myAudio.play();
+    playMedia(myAudio, "your recording");
     statusEl.textContent = "Playing your recording 🔊";
     myAudio.onended = () => statusEl.textContent = "Listen to the model again and compare!";
   }
@@ -3653,7 +3869,7 @@
         try {
           currentClip = new Audio("audio/" + f);
           currentClip.onended = next;
-          currentClip.play();
+          playMedia(currentClip, "role-play line");
           return;
         } catch (e) {}
       }
@@ -4525,6 +4741,9 @@
     // Phase 11D: the Academy names itself, and names English Reading in its own supporting line, so
     // the h1 masthead above it would state the same thing twice and invert the hierarchy.
     document.body.classList.toggle("academy-mode", el === screenHome);
+    // Phase 11E: the lesson page reclaims the phone gutters the same way, so activity content and
+    // input fields get the width they need at 360px.
+    document.body.classList.toggle("lesson-mode", el === screenLearn);
     [screenLanding, screenRole, screenProfile, screenStudentAcct, screenLevel, screenRooms, screenProfileStats, screenHome, screenArticle, screenLearn, screenBattle, screenTeacher, screenAdmin, screenLeader].forEach(s => s.classList.add("hidden"));
     el.classList.remove("hidden");
     const _card = document.querySelector(".card");
@@ -7968,11 +8187,196 @@
     if (e.target && e.target.id === "pickLevelOpen") { renderLevelGrid(); showScreen(screenLevel); }
   });
 
+  // ===== Phase 11E — the lesson shell =====
+  // Presentation only. Every value comes from the authoritative learning payloads or from the
+  // server's own settlement report on an attempt; nothing here grades, rewards or decides mastery.
+  //
+  // B2: identity is ACADEMY > Course/Campaign > lesson. The course comes from the lesson's registry
+  // entry, its Campaign/Course word from the same courseIsCampaign() the Academy uses, and the
+  // lesson title from lessonTitleOf() -- the authoritative row title (Phase 9H). No "Level N".
+  function lsCourseOf(contentPath) {
+    const lid = lessonIdForContent(contentPath);
+    const reg = (learningRegistry.lessons || {})[lid] || {};
+    const cid = reg.courseId || null;
+    if (!cid) return null;
+    const camp = ((learningProgress.campaigns || {})[cid]) || null;
+    const kind = courseKindLabel(cid);
+    // authenticated: the server's campaign title. Guest: the level, which is all the public
+    // registry exposes -- the same rule the Academy's guest cards follow.
+    const lvl = String(reg.contentPath || "").split("/")[0];
+    const name = camp && camp.title ? camp.title : (lvl || String(cid).split(".").pop());
+    return { cid: cid, kind: kind, name: name, level: lvl };
+  }
+  function lsRenderIdentity(contentPath) {
+    const el = document.getElementById("lsCrumb");
+    if (!el) return;
+    const c = lsCourseOf(contentPath);
+    let h = '<span>\ud83c\udf93 Academy</span>';
+    if (c) {
+      h += '<span class="ls-sep">\u203a</span><span>' + escapeHtml(c.name) + '</span>' +
+           '<span class="ls-kind' + (c.kind === "Campaign" ? " is-campaign" : "") + '">' +
+           escapeHtml(c.kind) + '</span>';
+    }
+    el.innerHTML = h;
+  }
+  // B4: which activities count toward mastery. Derived from the lesson's OWN requiredActivityIds
+  // mapped through the existing levelTabForActivity() routing table -- no policy is decided here and
+  // no count is hard-coded, so Pre-A1/Taipei (7 of 7) and A1/A2/B1 (5 of 9) both come out right.
+  function lsRequiredTabs(row) {
+    const out = {};
+    (row && row.requiredActivityIds || []).forEach(function (aid) {
+      const lv = levelTabForActivity(aid);
+      if (lv) out[lv] = aid;
+    });
+    return out;
+  }
+  function lsDecorateSteps(contentPath) {
+    const row = progressForContent(contentPath);
+    const req = lsRequiredTabs(row);
+    const done = {};
+    ((row && row.completedActivityIds) || []).forEach(function (aid) {
+      const lv = levelTabForActivity(aid);
+      if (lv) done[lv] = 1;
+    });
+    document.querySelectorAll(".levelTab").forEach(function (t) {
+      const lv = t.dataset.level;
+      const tag = t.querySelector("[data-tag]");
+      if (!tag) return;
+      const isReq = !!req[lv];
+      t.classList.toggle("is-required", isReq);
+      // Listen maps to no graded activity at all, so it is neither required nor optional practice
+      // that the server scores -- it is just the reading. Say that rather than mislabel it.
+      tag.textContent = isReq ? "\u25c9 Required" : (lv === "1" ? "Read & listen" : "\u25cb Optional");
+      if (done[lv]) t.classList.add("done");
+    });
+  }
+  // B10: an authenticated learner gets a direct route to the board; a guest has no world, so the
+  // control is hidden rather than shown and refused.
+  function lsRenderNav() {
+    const w = document.getElementById("lsWorldBtn");
+    if (w) w.classList.toggle("hidden", !(authToken() && authUser()));
+  }
+  function lsGuestNoteHTML() {
+    if (authToken() && authUser()) return "";
+    return '<div class="ls-guest">Practising as a <b>guest</b> on this device. ' +
+           'This lesson works, but mastery and Gold are only saved with an account.</div>';
+  }
+  function renderLessonShell() {
+    const path = (typeof currentArticleKey === "string" && currentArticleKey) || "";
+    if (!path) return;
+    lsRenderIdentity(path);
+    lsRenderNav();
+    lsDecorateSteps(path);
+  }
+  // ---- B6/B7/B8: the reward moment, from the server's settlement report ----
+  // The ONLY inputs are the fields the server sent back for this attempt:
+  //   passed              did this attempt pass
+  //   rewarded/rewardAmount        the gate's own payout, if any
+  //   lessonRewarded/lessonRewardAmount  the mastery payout, if this attempt completed the lesson
+  // A replay pays nothing, so the server sends no amount and the panel says +0 rather than
+  // repeating the original figure. Nothing is inferred from the score or from the constants.
+  let lsLastResult = null;
+  function lsShowActivityResult(j, activityId) {
+    const el = document.getElementById("lsFeedback");
+    if (!el) return;
+    if (!j || !j.ok) { el.innerHTML = ""; return; }
+    const path = (typeof currentArticleKey === "string" && currentArticleKey) || "";
+    const row = progressForContent(path);
+    const required = !!(row && (row.requiredActivityIds || []).indexOf(activityId) >= 0);
+    const gate = (j.rewarded && j.rewardAmount) ? j.rewardAmount : 0;
+    const mastery = (j.lessonRewarded && j.lessonRewardAmount) ? j.lessonRewardAmount : 0;
+    const gold = gate + mastery;
+    // `row` is the progress row as it stood BEFORE this attempt -- loadLearningProgress() has not
+    // returned yet -- so its missing list still names the activity just completed. The server's own
+    // lessonCompletedNow is the authority on "the lesson is finished now".
+    const justMastered = j.lessonCompletedNow === true;
+    const mastered = justMastered || !!(row && row.activePolicyCompleted === true);
+    lsLastResult = { passed: !!j.passed, gold: gold, required: required, mastered: mastered };
+
+    let cls = "ls-feedback " + (j.passed ? "is-pass" : "is-fail");
+    let kind, title, note = "";
+    if (!j.passed) {
+      kind = "Not yet";
+      title = "Try again";
+      note = "This attempt did not pass, so it earned no Gold and no mastery credit.";
+    } else if (justMastered) {
+      kind = "Mastered";
+      title = "Lesson mastered";
+    } else if (required) {
+      kind = "Completed";
+      title = "Required activity complete";
+    } else {
+      kind = "Completed";
+      title = "Optional practice complete";
+      note = "Optional practice does not change what mastery requires.";
+    }
+    let h = '<div class="' + cls + '"><div class="ls-fb-k">' + kind + '</div>' +
+            '<div class="ls-fb-t">' + escapeHtml(title) + '</div>';
+    if (gold > 0) {
+      h += '<div class="ls-fb-gold">\ud83e\ude99 +' + gold + ' Gold</div>';
+      // the headline already reads "Lesson mastered" in that case, so this note is only added when
+      // it carries something new: the split between the activity's payout and the mastery payout.
+      if (mastery > 0 && gate > 0) {
+        h += '<div class="ls-fb-note">' + gate + ' for the activity + ' + mastery +
+             ' for mastering the lesson</div>';
+      }
+    } else {
+      h += '<div class="ls-fb-gold is-zero">\ud83e\ude99 +0 Gold</div>';
+      if (j.passed && !note) {
+        note = required
+          ? "You have already earned the Gold for this activity — the reward is once per lesson."
+          : note;
+      }
+    }
+    if (note) h += '<div class="ls-fb-note">' + escapeHtml(note) + '</div>';
+
+    // ---- next action. Never auto-redirects: the learner chooses. ----
+    // exclude the activity just submitted: the stale row still lists it as missing
+    const miss = ((row && row.missingActivityIds) || []).filter(function (a) { return a !== activityId; });
+    const nextId = miss[0] || null;
+    h += '<div class="ls-fb-acts">';
+    if (justMastered || (mastered && !miss.length)) {
+      h += '<button type="button" class="ls-fb-next" data-ls-academy>Back to the Academy</button>';
+    } else if (nextId) {
+      h += '<button type="button" class="ls-fb-next" data-ls-next="' + escapeHtml(nextId) +
+           '">Next activity \u00b7 ' + escapeHtml(activityShortLabel(nextId)) + '</button>' +
+           '<button type="button" class="ls-fb-alt" data-ls-academy>Back to the Academy</button>';
+    } else {
+      h += '<button type="button" class="ls-fb-alt" data-ls-academy>Back to the Academy</button>';
+    }
+    h += '</div></div>';
+    el.innerHTML = h;
+  }
+  document.addEventListener("click", function (e) {
+    const t = e.target && e.target.closest && e.target.closest("[data-ls-next]");
+    if (t) {
+      const aid = t.getAttribute("data-ls-next");
+      const lv = levelTabForActivity(aid);
+      const tab = lv && document.querySelector('.levelTab[data-level="' + lv + '"]');
+      const fb = document.getElementById("lsFeedback");
+      if (fb) fb.innerHTML = "";
+      if (tab && !tab.classList.contains("hidden")) tab.click();
+      return;
+    }
+    if (e.target && e.target.closest && e.target.closest("[data-ls-academy]")) {
+      stopAllLessonAudio(); stopRecordingIfAny();
+      const fb = document.getElementById("lsFeedback");
+      if (fb) fb.innerHTML = "";
+      openLearningHome();
+    }
+  });
   function renderLessonProgress() {
     const el = document.getElementById("lessonProgress");
     if (!el) return;
     const path = (typeof currentArticleKey === "string" && currentArticleKey) || "";
-    el.innerHTML = path ? lessonPageCardHTML(path) : "";
+    const card = path ? lessonPageCardHTML(path) : "";
+    // Phase 11E / B14: a guest has no account-scoped progress row, so the authoritative card renders
+    // empty for them. Rather than leave a blank space that implies nothing is being tracked for
+    // anyone, say plainly what a guest does and does not get.
+    el.innerHTML = card || lsGuestNoteHTML();
+    // Phase 11E: the identity crumb, the Required/Optional tags and the World control depend on the
+    // same authoritative row, so they refresh here -- the one place the lesson page re-reads it.
+    renderLessonShell();
   }
   // ===== Phase 5B — actionable progress =====
   // activityId -> which LEVEL TAB renders it. The server has no concept of a tab, so this routing
@@ -8264,6 +8668,17 @@
         // activityScores and the Rule A mean may stay >= 80), so this is checked before the early
         // return below.
         noteLessonCompletion(j);
+        // Phase 11E / B6: the reward moment. Shown for EVERY graded response -- pass, replay,
+        // optional practice and failure alike -- because "+0" is exactly the case the old
+        // pass-only toast never communicated. The figures are the server's own.
+        //
+        // PRESENTATION MUST NOT BREAK AUTHORITY. This sits ahead of the qualification mirror, the
+        // gold sync and the study-return below, and the whole chain ends in .catch(() => {}) -- so
+        // an exception in the panel would silently discard all of them. Contained here instead.
+        if (typeof lsShowActivityResult === "function") {
+          try { lsShowActivityResult(j, aid); }
+          catch (e) { if (typeof console !== "undefined") console.warn("[lesson] reward panel:", e); }
+        }
         if (!j || !j.ok || !j.passed) return;
         (j.qualifications || []).forEach(q => myQualifications.add(q));   // 解鎖(顯示用)；權威仍在後端
         // (the gold balance itself is synced by noteLessonCompletion above, on every path)
@@ -8271,11 +8686,11 @@
         // Phase 7C.2: two independent payouts can land on one submission — the gate activity's small
         // acknowledgement and, if this attempt completed the lesson, the mastery reward. Both flags
         // are the server's; neither is inferred from the amount.
-        // Phase 7C.2a: name the actual figures. Both come from the server's own settlement report.
-        const paid = (j.rewarded && j.rewardAmount ? " 🪙 +" + j.rewardAmount + " gold" : "")
-          + (j.lessonRewarded && j.lessonRewardAmount
-             ? " ⭐ Lesson mastered 🪙 +" + j.lessonRewardAmount + " gold" : "");
-        showLockedMsg("✅ Learned: " + names + paid);
+        // Phase 11E: the amounts moved to the lesson page's reward panel, which states them for
+        // every outcome including +0. Repeating them in a toast said the same thing twice, so the
+        // toast is back to its original job -- announcing a QUALIFICATION -- and only appears when
+        // one was actually granted. Both remain the server's own figures; nothing is inferred.
+        if (names) showLockedMsg("✅ Learned: " + names);
         // Phase 7E.1 navigated straight back to a region the new qualification had just unlocked.
         // DORMANT since Phase 10A.3R: learning unlocks no ground, and no territory on the active map
         // declares a requirement, so territoryRequirements() is empty for every reachable region and
@@ -9036,6 +9451,12 @@
   // other half of the product. This opens the map that actually contains the campaign's territories.
   document.getElementById("backFromHome").addEventListener("click", () => {
     goToGameMap();          // Phase 11B: the Academy returns to the World board
+  });
+  // Phase 11E: a lesson's secondary exit straight to the board. Hidden for guests by lsRenderNav().
+  document.getElementById("lsWorldBtn").addEventListener("click", () => {
+    stopAllLessonAudio(); stopRecordingIfAny();
+    lessonReturnTo = null;
+    goToGameMap();
   });
 
   /* ================= 老師/家長帳號 + 雲端進度後台 ================= */
