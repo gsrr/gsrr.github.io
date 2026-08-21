@@ -1031,6 +1031,125 @@
      third that was behind furniture. On a phone the 100% term wins, so the board is as wide as the
      gutters allow. */
   .hud-mode .geo-svg { max-width: min(100%, 104vh) !important; margin: 0 auto; }
+  /* ===== Phase 12C: MAP VIEWPORT != MAP SIZE =====================================================
+     The board is a fixed, responsive VIEWPORT with an aspect ratio chosen by BREAKPOINT, never by
+     geography. Before this phase the svg was sized from its own viewBox aspect, and entering a
+     continent rewrote that viewBox -- so "go to Oceania" re-proportioned the whole board into a
+     shallow strip. The viewport now owns the shape and the map moves inside it under a camera.
+     `--vp-ratio` is set by drawGeo per breakpoint; nothing derives it from a continent. */
+  /* The ratio must be EXACT, so the height budget caps the WIDTH rather than flattening the box:
+     a `max-height` on an aspect-ratio element silently changes the ratio, which is the very thing
+     this phase exists to stop. Measured at 1440x900 the board is 1049x648 -- ratio 1.62 on the nose,
+     and still the dominant surface. */
+  .geo-holder.geo-viewport { width: min(100%, calc(var(--vp-h, 68vh) * var(--vp-ratio, 1.6)));
+    aspect-ratio: var(--vp-ratio, 1.6); margin: 0 auto; display: block; }
+  @media (max-width: 560px) { .geo-holder.geo-viewport { --vp-h: 54vh; } }
+  /* the svg FILLS the viewport and keeps its own proportions inside it (xMidYMid meet), so no
+     camera move can ever distort the geography */
+  .hud-mode .geo-viewport > .geo-svg, .geo-viewport > .geo-svg {
+    max-width: none !important; width: 100%; height: 100%; margin: 0; display: block; }
+  /* ---- camera controls: zoom and "back to the World". Not navigation -- just the camera. ---- */
+  .geo-cam { position: absolute; left: 8px; bottom: 8px; z-index: 3; display: flex; gap: 6px; }
+  .geo-cam button { width: 34px; height: 34px; border-radius: 10px; cursor: pointer;
+    font-size: 15px; font-weight: 800; line-height: 1; color: #2a1b0d; border: 2px solid #8a5f2a;
+    background: linear-gradient(180deg, #ffe9c2, #edc07f); box-shadow: 0 2px 0 #8a5f2a; }
+  .geo-cam button:hover { background: linear-gradient(180deg, #fff2d6, #f3cd94); }
+  .geo-cam button:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+  @media (max-width: 560px) { .geo-cam { left: 5px; bottom: 5px; } .geo-cam button { width: 40px; height: 40px; } }
+  /* ---- semantic zoom: one map, three densities. Minor scenery steps back at FAR. ---- */
+  .geo-holder[data-zoom="far"] .geo-deco-front, .geo-holder[data-zoom="far"] .geo-deco-rear { opacity: .55; }
+  .geo-holder[data-zoom="far"] .geo-terrain { opacity: .35; }
+  .geo-holder[data-zoom="mid"] .geo-deco-front, .geo-holder[data-zoom="mid"] .geo-deco-rear { opacity: .8; }
+  /* a continent label is a CAMERA SHORTCUT, so unlike a territory label it is clickable */
+  .geo-labels { pointer-events: none; }
+  .geo-lab.cont { pointer-events: auto; cursor: pointer;
+    background: linear-gradient(#3d5a80, #263b57); border-color: rgba(214,235,255,.9);
+    font-size: 14px; letter-spacing: 1px; text-transform: uppercase; }
+  .geo-lab.cont:hover { background: linear-gradient(#4d6f9c, #2f4a6d); }
+  .geo-lab.cont:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+  /* the selected territory: always legible, always obvious */
+  .geo-region.geo-sel { stroke: #fff !important; stroke-width: 2.4 !important;
+    vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 6px rgba(255,255,255,.85)); }
+  /* a valid attack SOURCE, while planning. Visually distinct from the target. */
+  .geo-region.geo-src { stroke: #22d3ee !important; stroke-width: 2.6 !important;
+    vector-effect: non-scaling-stroke; cursor: crosshair;
+    filter: drop-shadow(0 0 7px rgba(34,211,238,.9)); }
+  .geo-region.geo-tgt { stroke: #f87171 !important; stroke-width: 3 !important;
+    vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 8px rgba(248,113,113,.95)); }
+
+  /* ===== Phase 12C: the ACTION TRAY ==============================================================
+     Combat planning used to open a full modal that repeated the territory facts already on screen
+     and hid the board behind them. The tray lives BELOW the viewport instead: the map stays visible
+     and interactive the whole time, which is what makes clicking a source territory possible. */
+  .hud-tray { margin-top: 10px; border-radius: 16px; padding: 12px 14px; color: #fff4dd;
+    background: linear-gradient(180deg, #4a3418 0%, #3b2a17 100%);
+    border: 2px solid rgba(255,236,200,.5); box-shadow: 0 6px 18px rgba(0,0,0,.35); }
+  .hud-tray[hidden] { display: none; }
+  .tray-hd { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+  .tray-hd .th-t { font-size: 16px; font-weight: 900; letter-spacing: .4px; }
+  .tray-hd .th-s { font-size: 12.5px; color: #ffd9a8; }
+  .tray-note { font-size: 12.5px; color: #ffd9a8; margin: 0 0 8px; }
+  .tray-srcs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .tray-src { cursor: pointer; font-size: 12.5px; font-weight: 700; border-radius: 999px;
+    padding: 5px 11px; color: #062a33; border: 2px solid #0e7490; background: #a5f3fc; }
+  .tray-src[aria-pressed="true"] { background: #22d3ee; box-shadow: inset 0 0 0 2px #062a33; }
+  .tray-src:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+  .tray-rows { display: grid; gap: 6px; }
+  .tray-row { display: grid; grid-template-columns: 1fr auto auto auto auto; gap: 8px;
+    align-items: center; font-size: 13.5px; font-weight: 700; }
+  .tray-row .tr-nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tray-row .tr-v { min-width: 3.2em; text-align: right; font-variant-numeric: tabular-nums;
+    font-size: 15px; font-weight: 900; }
+  .tray-row .tr-mx { font-size: 11.5px; color: #ffd9a8; min-width: 3.4em; }
+  .tray-row button { width: 34px; height: 34px; border-radius: 9px; cursor: pointer;
+    font-size: 17px; font-weight: 900; line-height: 1; color: #2a1b0d; border: 2px solid #8a5f2a;
+    background: linear-gradient(180deg, #ffe9c2, #edc07f); }
+  .tray-row button:disabled { opacity: .45; cursor: default; }
+  .tray-row button:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+  .tray-foot { display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    justify-content: space-between; margin-top: 10px; }
+  .tray-sum { font-size: 13px; font-weight: 800; }
+  .tray-sum b { font-size: 16px; font-variant-numeric: tabular-nums; }
+  .tray-btns { display: flex; gap: 8px; }
+  .tray-btns button { cursor: pointer; border-radius: 12px; padding: 10px 16px; font-size: 14px;
+    font-weight: 900; border: 2px solid #8a5f2a; color: #2a1b0d;
+    background: linear-gradient(180deg, #ffe9c2, #edc07f); }
+  .tray-btns .tb-go { border-color: #7f1d1d; color: #fff; background: linear-gradient(180deg, #ef4444, #b91c1c); }
+  .tray-btns .tb-go.tb-peace { border-color: #14532d; background: linear-gradient(180deg, #22c55e, #15803d); }
+  .tray-btns button:disabled { opacity: .5; cursor: default; }
+  .tray-btns button:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+  @media (max-width: 560px) {
+    .tray-row { grid-template-columns: 1fr auto auto auto; }
+    .tray-row .tr-mx { display: none; }
+    .tray-btns { width: 100%; }
+    .tray-btns button { flex: 1; }
+  }
+
+  /* ===== Phase 12C: EMPIRE -- one management destination, three areas ===== */
+  .emp-tabs { display: flex; gap: 6px; margin: 6px 0 10px; flex-wrap: wrap; }
+  .emp-tab { cursor: pointer; border-radius: 999px; padding: 7px 14px; font-size: 13px;
+    font-weight: 800; border: 2px solid #8a5f2a; color: #2a1b0d;
+    background: linear-gradient(180deg, #ffe9c2, #edc07f); }
+  .emp-tab[aria-selected="true"] { background: linear-gradient(180deg, #38bdf8, #0284c7); color: #04212e;
+    border-color: #075985; }
+  .emp-tab:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+  .emp-scroll { overflow-x: auto; }
+  .emp-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .emp-tbl th, .emp-tbl td { padding: 6px 8px; text-align: right; white-space: nowrap; }
+  .emp-tbl th:first-child, .emp-tbl td:first-child { text-align: left; }
+  .emp-tbl thead th { font-size: 11.5px; text-transform: uppercase; letter-spacing: .6px;
+    color: #64748b; border-bottom: 2px solid #cbd5e1; }
+  .emp-tbl tbody tr { border-bottom: 1px solid #e2e8f0; }
+  .emp-tbl tbody tr.emp-home { background: #f1f5f9; font-weight: 800; }
+  .emp-tbl td b { font-variant-numeric: tabular-nums; }
+  .emp-tbl .emp-tot { font-weight: 900; }
+  .emp-tbl tfoot td { border-top: 2px solid #cbd5e1; font-weight: 900; }
+  .emp-act { cursor: pointer; border-radius: 9px; padding: 4px 10px; font-size: 12px; font-weight: 800;
+    border: 2px solid #2563eb; color: #fff; background: #2563eb; }
+  .emp-act:disabled { opacity: .45; cursor: default; border-color: #94a3b8; background: #94a3b8; }
+  .emp-act:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+  .emp-note { font-size: 12px; color: #475569; margin: 8px 0 0; }
+  .emp-none { font-size: 13px; color: #475569; text-align: center; padding: 10px 0; }
   /* ===== Phase 10C.2 — decorative layers =========================================================
      10C.1 reserved these as absolutely-positioned HTML divs over the board. That turned out to be the
      WRONG coordinate space: pan/zoom is a CSS transform on the svg element, so anything in a sibling
@@ -6691,22 +6810,40 @@
     loadEconomy(function () { loadTerritory(renderEmpireModal); });
     renderEmpireModal();   // 先用快取畫
   }
-  function renderEmpireModal() {
+  // ===== Phase 12C: EMPIRE -- ONE management destination ==========================================
+  // Before this phase, empire administration was scattered over four surfaces that all led to the
+  // same two panels: a "Base" HUD icon, a "Recruit" action on every territory, a "Manage" action on
+  // every owned territory, and an Empire list whose rows opened the per-territory modal. Recruiting
+  // four unit types across a dozen territories meant map -> territory -> modal -> building -> unit,
+  // over and over.
+  //
+  // Empire is now the single destination, with three areas: FORCES, BUILDINGS, TECHNOLOGY. The map
+  // keeps what acts on geography (select, occupy, attack, garrison); everything repetitive lives
+  // here. No new server behaviour: every button below calls an endpoint that already existed, with
+  // the same payload, and every number shown is read from the authoritative caches.
+  let empTab = "forces";
+  function empireRows() {
     const me = (authUser() || userName || "").toLowerCase();
-    const e = myEcon || { population: 0, troops: 0, gold: 0, goldIncome: 0 };
-    const mine = [];
+    const rows = [];
     if (territory && territory.holders) Object.keys(territory.holders).forEach(f => {
       const h = territory.holders[f];
       // 只認地圖領地 key：canonical("mapId:code") 或 legacy("file#id")；舊版綁課程的殘留(課程檔名)忽略
       if (f.indexOf(":") < 0 && f.indexOf("#") < 0) return;
-      if (h && h.owner && (h.owner || "").toLowerCase() === me) mine.push({ file: f, h: h });
+      if (h && h.owner && (h.owner || "").toLowerCase() === me) rows.push({ key: f, h: h });
     });
-    let garTotal = 0; mine.forEach(m => garTotal += sumHp(m.h.troops));
+    rows.sort((a, b) => (b.h.pop || 0) - (a.h.pop || 0));
+    return rows;
+  }
+  function renderEmpireModal() {
+    const e = myEcon || { population: 0, troops: 0, gold: 0, goldIncome: 0 };
+    const rows = empireRows();
+    let garTotal = 0; rows.forEach(m => garTotal += sumHp(m.h.troops));
     const gold = (e.gold || 0), goldInc = (e.goldIncome != null) ? e.goldIncome : Math.round(e.population * 0.1);
     const empTip = "🏠 Home base is safe — lose a battle and survivors retreat here. " +
       "👥 Population drives your gold income (bigger cities earn more). " +
       "🪙 Each region remits gold (10% of its people/hr). " +
       "🎖️ Recruiting turns people into troops (1 person = 1 soldier), so it shrinks that place's population.";
+    const TABS = [["forces", "⚔️ Forces"], ["buildings", "🏛️ Buildings"], ["tech", "🏭 Technology"]];
     let html = '<h3 class="modal-title">🏰 My Empire' + helpIco(empTip) + '</h3>' +
       '<div class="emp-stats">' +
       '<div><span>👥</span><b>' + e.population + '</b><small>population</small></div>' +
@@ -6714,33 +6851,142 @@
       '<div><span>🛡️</span><b>' + garTotal + '</b><small>garrisoned</small></div>' +
       '<div><span>🪙</span><b>' + gold + '</b><small>gold (+' + goldInc + '/hr)</small></div>' +
       '</div>' +
-      '<button class="emp-row emp-row-btn" id="empHome"><div class="emp-rg"><b>🏠 Home Base</b>' + techBadge(e.tech) +
-      '<span class="emp-pop">👥 ' + e.population + '</span></div>' +
-      '<div class="emp-gar"><span class="op-card">⚔️ ' + poolBreakdown() + '</span><span class="emp-manage">Manage ▸</span></div></button>';
-    if (!mine.length) {
-      html += '<p class="op-hint" style="text-align:center">No regions yet. Pass a lesson, then occupy its region on the map!</p>';
-    } else {
-      mine.sort((a, b) => (b.h.pop || 0) - (a.h.pop || 0));
-      html += '<div class="stats-h">🚩 Regions (' + mine.length + ') — tap one to manage</div><div class="emp-list">';
-      mine.forEach(m => {
-        const i = levelIdxForKey(m.file), rInc = (m.h.income != null) ? m.h.income : Math.round((m.h.pop || 0) * 0.1);
-        html += '<button class="emp-row emp-row-btn" data-key="' + encodeURIComponent(m.file) + '" data-i="' + i + '" data-pop="' + (m.h.pop || 0) + '">' +
-          '<div class="emp-rg"><b>' + regionDisplayName(m.file) + '</b>' + techBadge(m.h.tech) +
-          '<span class="emp-pop">👥 ' + (m.h.pop || 0) + ' · 🪙 +' + rInc + '/hr</span></div>' +
-          '<div class="emp-gar">' + garrisonHTML(m.h.troops) + '<span class="emp-manage">Manage ▸</span></div></button>';
-      });
-      html += '</div>';
-    }
+      '<div class="emp-tabs" role="tablist">' + TABS.map(t =>
+        '<button type="button" class="emp-tab" role="tab" data-tab="' + t[0] + '" aria-selected="' +
+        (empTab === t[0]) + '">' + t[1] + '</button>').join("") + '</div>' +
+      '<div id="empBody"></div>';
     const ov = openModal(html);
     wireHelp(ov);
-    const homeBtn = ov.querySelector("#empHome");
-    if (homeBtn) homeBtn.addEventListener("click", openHomeBase);
-    ov.querySelectorAll(".emp-row-btn[data-key]").forEach(btn => btn.addEventListener("click", () => {
-      const key = decodeURIComponent(btn.dataset.key);
-      openRegion(key, regionDisplayName(key), parseInt(btn.dataset.pop, 10) || 0, parseInt(btn.dataset.i, 10) || selLevelIdx);
+    const body = ov.querySelector("#empBody");
+    ov.querySelectorAll(".emp-tab").forEach(b => b.addEventListener("click", () => {
+      empTab = b.dataset.tab;
+      ov.querySelectorAll(".emp-tab").forEach(x => x.setAttribute("aria-selected", String(x.dataset.tab === empTab)));
+      paint();
+    }));
+    function reopen() { renderEmpireModal(); }
+    function paint() {
+      if (empTab === "forces") empireForces(body, rows, reopen);
+      else if (empTab === "buildings") empireBuildings(body, rows, reopen);
+      else empireTechnology(body, rows, reopen);
+    }
+    paint();
+  }
+  // ---------- FORCES: every territory's army in one table ----------
+  // Troop MOVEMENT between territories does not exist on the server, so none is offered here. What
+  // exists is recruitment (per territory, needs the right building) and garrison positioning (on the
+  // map, where the geography is). Inventing a transfer control would be a lie about the rules.
+  function empireForces(body, rows, reopen) {
+    const e = myEcon || {};
+    const pool = poolObj();
+    let html = '<div class="emp-scroll"><table class="emp-tbl"><thead><tr><th>Territory</th>' +
+      TROOPS.map(t => '<th>' + troopIcon(t.id) + '</th>').join("") +
+      '<th>Total</th><th>Recruit</th></tr></thead><tbody>';
+    const tot = {}; TROOPS.forEach(t => tot[t.id] = 0);
+    html += '<tr class="emp-home"><td>🏠 Home Base <span class="emp-pop">👥 ' + (e.population || 0) + '</span></td>' +
+      TROOPS.map(t => { tot[t.id] += (pool[t.id] || 0); return '<td><b>' + (pool[t.id] || 0) + '</b></td>'; }).join("") +
+      '<td class="emp-tot">' + poolTotal() + '</td>' +
+      '<td><button type="button" class="emp-act" data-rec="' + HOME_KEY + '">Recruit ▸</button></td></tr>';
+    rows.forEach(m => {
+      const g = squadByType(m.h.troops);
+      html += '<tr><td>🚩 ' + escapeHtml(regionDisplayName(m.key) || m.key) +
+        ' <span class="emp-pop">👥 ' + (m.h.pop || 0) + '</span></td>' +
+        TROOPS.map(t => { tot[t.id] += (g[t.id] || 0); return '<td><b>' + (g[t.id] || 0) + '</b></td>'; }).join("") +
+        '<td class="emp-tot">' + sumHp(m.h.troops) + '</td>' +
+        '<td><button type="button" class="emp-act" data-rec="' + escapeHtml(m.key) + '">Recruit ▸</button></td></tr>';
+    });
+    html += '</tbody><tfoot><tr><td>Empire total</td>' +
+      TROOPS.map(t => '<td>' + tot[t.id] + '</td>').join("") +
+      '<td>' + TROOPS.reduce((a, t) => a + tot[t.id], 0) + '</td><td></td></tr></tfoot></table></div>';
+    if (!rows.length) html += '<p class="emp-none">No territories yet — occupy one on the World map.</p>';
+    html += '<p class="emp-note">🎖️ Recruiting turns that place\'s people into troops and needs the ' +
+      'matching building there. Where a garrison stands is set on the map, on the territory itself — ' +
+      'moving troops between territories is not a rule the game has yet.</p>';
+    body.innerHTML = html;
+    body.querySelectorAll("[data-rec]").forEach(b => b.addEventListener("click", () => {
+      openRecruitFor(b.dataset.rec, reopen);
+    }));
+  }
+  // Recruitment is per-territory and building-gated on the server. This opens the existing
+  // production-building panel for whichever building that territory actually has.
+  function openRecruitFor(key, reopen) {
+    const st = manageState(key);
+    const builds = st.h.buildings || {};
+    const prod = BUILDINGS.filter(b => b.kind === "prod" && builds[b.id]);
+    if (!prod.length) {
+      alert("There is no barracks, archery range or stable here yet.\n\n" +
+            "Build one first in Empire ▸ Buildings — recruitment is tied to the building, on the " +
+            "server, and no client can work around that.");
+      return;
+    }
+    openBuildingDetail(key, prod[0].id, reopen);
+  }
+  // ---------- BUILDINGS: territory-level assets, managed centrally ----------
+  function empireBuildings(body, rows, reopen) {
+    const all = [{ key: HOME_KEY, label: "🏠 Home Base", home: true }]
+      .concat(rows.map(m => ({ key: m.key, label: "🚩 " + (regionDisplayName(m.key) || m.key) })));
+    let html = '<div class="emp-scroll"><table class="emp-tbl"><thead><tr><th>Territory</th>' +
+      BUILDINGS.map(b => '<th>' + b.icon + '</th>').join("") + '<th>Open</th></tr></thead><tbody>';
+    all.forEach(t => {
+      const st = manageState(t.key), builds = st.h.buildings || {};
+      html += '<tr' + (t.home ? ' class="emp-home"' : '') + '><td>' + escapeHtml(t.label) + '</td>' +
+        BUILDINGS.map(b => '<td>' + (builds[b.id] ? "✅" : '<span class="emp-pop">' + BUILD_COST[b.id] + '🪙</span>') + '</td>').join("") +
+        '<td><button type="button" class="emp-act" data-bld="' + escapeHtml(t.key) + '">Manage ▸</button></td></tr>';
+    });
+    html += '</tbody></table></div>' +
+      '<p class="emp-note">Costs and effects are unchanged — this is the same build action, in one ' +
+      'place instead of behind map ▸ territory ▸ modal.</p><div id="empBldPanel"></div>';
+    body.innerHTML = html;
+    body.querySelectorAll("[data-bld]").forEach(b => b.addEventListener("click", () => {
+      const key = b.dataset.bld;
+      const host = body.querySelector("#empBldPanel");
+      host.innerHTML = '<div class="stats-h">' +
+        escapeHtml(key === HOME_KEY ? "🏠 Home Base" : (regionDisplayName(key) || key)) + '</div>';
+      const st = manageState(key);
+      buildingsPanel(host, key, st.h, reopen);
+      host.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }));
+  }
+  // ---------- TECHNOLOGY: shown exactly as the server scopes it ----------
+  // AUDITED, and deliberately NOT changed: technology is stored PER TERRITORY
+  // (store[territoryId].tech), needs an Armory IN THAT TERRITORY, is capped at TECH_MAX, and a
+  // conquered territory inherits nothing -- apply_territorial_attack() rebuilds the target, so its
+  // buildings and tech reset. An empire-global tech model would change what an attack costs and what
+  // a conquest is worth, so it belongs to a game-design phase, not to this IA phase. This screen
+  // therefore GATHERS the per-territory truth in one place and says so.
+  function empireTechnology(body, rows, reopen) {
+    const e = myEcon || {};
+    const all = [{ key: HOME_KEY, label: "🏠 Home Base (buffs the army you attack with)", home: true }]
+      .concat(rows.map(m => ({ key: m.key, label: "🚩 " + (regionDisplayName(m.key) || m.key) })));
+    let html = '<div class="emp-scroll"><table class="emp-tbl"><thead><tr><th>Territory</th>' +
+      '<th>⚔️ Forge</th><th>🛡️ Armour</th><th>🏭 Armory</th><th>Research</th></tr></thead><tbody>';
+    all.forEach(t => {
+      const st = manageState(t.key), tech = st.h.tech || {}, builds = st.h.buildings || {};
+      const armory = !!builds.armory;
+      const lvl = k => (tech[k] || 0);
+      const nextCost = k => (lvl(k) >= TECH_MAX ? null : TECH_COST[k][lvl(k)]);
+      const cell = k => 'Lv' + lvl(k) + (nextCost(k) == null ? ' <span class="emp-pop">max</span>'
+        : ' <span class="emp-pop">next ' + nextCost(k) + '🪙</span>');
+      html += '<tr' + (t.home ? ' class="emp-home"' : '') + '><td>' + escapeHtml(t.label) + '</td>' +
+        '<td>' + cell("atk") + '</td><td>' + cell("def") + '</td>' +
+        '<td>' + (armory ? "✅" : '<span class="emp-pop">needed</span>') + '</td>' +
+        '<td><button type="button" class="emp-act" data-tech="' + escapeHtml(t.key) + '"' +
+        (armory ? '' : ' disabled title="Build an Armory here first"') + '>Research ▸</button></td></tr>';
+    });
+    html += '</tbody></table></div>' +
+      '<p class="emp-note">⚠️ Technology is researched <b>per territory</b> and needs an Armory in ' +
+      'that same territory: the forge of the territory you attack <i>from</i> strengthens your ' +
+      'attack, and the armour of the territory being attacked strengthens its defence. A territory ' +
+      'you conquer arrives with no buildings and no technology. Levels cap at ' + TECH_MAX + '. ' +
+      'These are the current game rules, unchanged by this redesign.</p><div id="empTechPanel"></div>';
+    body.innerHTML = html;
+    body.querySelectorAll("[data-tech]").forEach(b => b.addEventListener("click", () => {
+      openBuildingDetail(b.dataset.tech, "armory", reopen);
     }));
   }
   // 家鄉基地(預設領地)管理：蓋建築、招募進兵力池、研發加成攻擊軍的科技
+  // Phase 12C: no longer a HUD destination of its own -- Empire ▸ Buildings / Forces / Technology
+  // cover the home base alongside every territory. Kept because the panel itself is still the
+  // building/recruit UI those areas open.
   function openHomeBase() {
     if (!authToken()) return;
     const e = myEcon || {};
@@ -7155,6 +7401,9 @@
   let hudSelKey = null;
   let hudRefresh = function () {};   // set by the HUD builder for the current map draw
   let geoSelectedKey = null;        // 目前選取的地區 key（一律顯示其標籤）
+  let geoCam = null;                // Phase 12C: the current board's camera (focusRect/home/zoomBy)
+  let geoFocusKey = null;           // Phase 12C: point the camera at a territory
+  let geoOffScreen = null;          // Phase 12C: is a territory substantially outside the viewport?
   let _geoResel = null;             // 重新配置目前地圖標籤（選取改變時呼叫）
   let _geoRelayout = null;          // 視窗尺寸改變時重新配置
   let _geoResizeHooked = false;
@@ -7190,21 +7439,74 @@
     }).catch(() => { if (cb) cb(false); });
   }
 
-  // 地圖捏合縮放 / 拖曳平移：滾輪(桌機)、雙指捏合(手機)縮放；拖曳平移；雙擊還原。拖曳後吞掉 click 避免誤觸地區。
-  //   onChange(s,tx,ty)：每次縮放/平移就通知(讓標籤重新配置)
+  // ===== Phase 12C: ONE continuous camera over a FIXED viewport =====
+  //
+  // The board is a stable viewport; the World moves inside it. Before this phase the two were
+  // conflated: entering a continent rewrote the SVG's viewBox to that continent's bounding box, and
+  // the board's on-screen size was derived from the viewBox aspect ratio -- so "go to Oceania"
+  // reshaped the entire board into a shallow horizontal strip and Australia came out wrong.
+  //
+  // Now the viewBox is authored geometry and is NEVER rewritten. Navigation is a camera:
+  //
+  //     camera = { s, tx, ty }        translate(tx,ty) scale(s), viewport-relative pixels
+  //     focus(bbox)                   centre + zoom on a region, viewport shape untouched
+  //
+  // Zoom changes information density (see the label bands); it never changes gameplay mode, the
+  // territory set, or what a click means.
+  const CAM_MIN = 1;          // the whole World, with its authored ocean margin
+  const CAM_MAX = 16;         // enough that a single-island territory is a comfortable tap target
+  const CAM_HOME = 1.32;      // the opening view: most of the useful World, and room to explore
+  const CAM_OVERSCROLL = 0.12;  // how much ocean may sit inside the viewport edge
   function attachPanZoom(svg, frame, onChange) {
-    let s = 1, tx = 0, ty = 0, moved = false, start = null, pinch = null;
+    let s = CAM_HOME, tx = 0, ty = 0, moved = false, start = null, pinch = null;
     const pts = new Map();
-    const apply = () => { svg.style.transformOrigin = "0 0"; svg.style.transform = "translate(" + tx + "px," + ty + "px) scale(" + s + ")"; if (onChange) onChange(s, tx, ty); };
+    const vp = () => { const r = frame.getBoundingClientRect(); return { w: r.width || 1, h: r.height || 1 }; };
+    // Keep the map covering the viewport, with a bounded ocean margin, so it can never be dragged
+    // off-screen. At the home zoom the map is larger than the viewport in at least one axis, so
+    // panning is meaningful from the first frame -- the old build allowed none until s > 1.
+    function clamp() {
+      const v = vp(), mw = v.w * s, mh = v.h * s;
+      const slackX = v.w * CAM_OVERSCROLL, slackY = v.h * CAM_OVERSCROLL;
+      if (mw <= v.w) tx = (v.w - mw) / 2;
+      else tx = Math.min(slackX, Math.max(v.w - mw - slackX, tx));
+      if (mh <= v.h) ty = (v.h - mh) / 2;
+      else ty = Math.min(slackY, Math.max(v.h - mh - slackY, ty));
+    }
+    const apply = () => {
+      clamp();
+      svg.style.transformOrigin = "0 0";
+      svg.style.transform = "translate(" + tx + "px," + ty + "px) scale(" + s + ")";
+      if (onChange) onChange(s, tx, ty);
+    };
     const rel = e => { const r = frame.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
-    function zoomAt(px, py, ns) { ns = Math.max(1, Math.min(6, ns)); tx = px - (px - tx) * (ns / s); ty = py - (py - ty) * (ns / s); s = ns; if (s <= 1.001) { s = 1; tx = 0; ty = 0; } apply(); }
-    svg.addEventListener("wheel", e => { e.preventDefault(); const p = rel(e); zoomAt(p.x, p.y, s * (e.deltaY < 0 ? 1.15 : 1 / 1.15)); }, { passive: false });
-    svg.addEventListener("dblclick", e => { e.preventDefault(); s = 1; tx = 0; ty = 0; apply(); });
+    function zoomAt(px, py, ns) {
+      ns = Math.max(CAM_MIN, Math.min(CAM_MAX, ns));
+      tx = px - (px - tx) * (ns / s); ty = py - (py - ty) * (ns / s); s = ns; apply();
+    }
+    // Centre a rectangle given in VIEWPORT-relative units at s=1 (0..w, 0..h). The viewport's own
+    // dimensions are never touched -- only where the camera looks and how far in.
+    function focusRect(x0, y0, x1, y1, opts) {
+      opts = opts || {};
+      const v = vp(), w = Math.max(1e-6, x1 - x0), h = Math.max(1e-6, y1 - y0);
+      const pad = opts.pad == null ? 1.5 : opts.pad;   // >1 leaves surrounding geography visible
+      let ns = Math.min(v.w / (w * pad), v.h / (h * pad));
+      if (opts.minZoom) ns = Math.max(ns, opts.minZoom);
+      if (opts.keepZoom) ns = s;
+      ns = Math.max(CAM_MIN, Math.min(CAM_MAX, ns));
+      const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+      s = ns; tx = v.w / 2 - cx * ns; ty = v.h / 2 - cy * ns; apply();
+    }
+    function home() { const v = vp(); s = CAM_HOME; tx = (v.w - v.w * s) / 2; ty = (v.h - v.h * s) / 2; apply(); }
+    svg.addEventListener("wheel", e => { e.preventDefault(); const p = rel(e); zoomAt(p.x, p.y, s * (e.deltaY < 0 ? 1.18 : 1 / 1.18)); }, { passive: false });
+    // Phase 12C: double-click returns to the World view. It is deliberately NOT "select + zoom":
+    // single tap must mean SELECT at every zoom, and a select-then-zoom double tap would make the
+    // two gestures ambiguous on a touch screen, where the first tap has already selected.
+    svg.addEventListener("dblclick", e => { e.preventDefault(); home(); });
     function onMove(e) {
       if (!pts.has(e.pointerId)) return;
       const cur = rel(e), prev = pts.get(e.pointerId); pts.set(e.pointerId, cur);
       if (pts.size >= 2 && pinch) { const v = [...pts.values()]; const d = Math.hypot(v[0].x - v[1].x, v[0].y - v[1].y) || 1; zoomAt((v[0].x + v[1].x) / 2, (v[0].y + v[1].y) / 2, pinch.s0 * (d / pinch.d)); moved = true; }
-      else if (s > 1) { tx += cur.x - prev.x; ty += cur.y - prev.y; apply(); }
+      else { tx += cur.x - prev.x; ty += cur.y - prev.y; apply(); }
       if (start && Math.hypot(cur.x - start.x, cur.y - start.y) > 5) moved = true;
     }
     function onUp(e) {
@@ -7217,9 +7519,16 @@
       if (pts.size === 2) { const v = [...pts.values()]; pinch = { d: Math.hypot(v[0].x - v[1].x, v[0].y - v[1].y) || 1, s0: s }; }
     });
     svg.addEventListener("click", e => { if (moved) { e.stopPropagation(); e.preventDefault(); } }, true);
+    apply();
+    // the camera API the board uses: nothing else may move the map
+    return { focusRect: focusRect, home: home,
+             zoomBy: k => { const v = vp(); zoomAt(v.w / 2, v.h / 2, s * k); },
+             state: () => ({ s: s, tx: tx, ty: ty }) };
   }
   // 資料驅動的地圖引擎：吃任一張地圖 SVG → 佔領時隨機給課 → 依佔領上色 → 點地區進課/下鑽
-  let curDrawArgs = null;   // 記住目前這張(可能已下鑽到某洲的)畫面，refreshMap 時原地重畫、不跳回頂層
+  // Phase 12C: there is no longer an "altitude" to remember -- one continuous World, one spec. What
+  // this still carries is the spec/back/level triple, so a refresh can redraw the board in place.
+  let curDrawArgs = null;
   function drawGeo(spec, backFn, i, lv) {
     curDrawArgs = [spec, backFn, i, lv];
     const wrap = articleGrid; wrap.className = "geo-wrap"; wrap.removeAttribute("style"); wrap.innerHTML = "";
@@ -7246,19 +7555,36 @@
       svg.removeAttribute("width"); svg.removeAttribute("height");
       if (!svg.getAttribute("viewBox") && spec.viewBox) svg.setAttribute("viewBox", spec.viewBox);
       svg.setAttribute("class", "geo-svg");
-      // 依長寬比限制寬度，讓高瘦的地圖(如台灣)不會在加寬版面下變得太高；寬扁的(世界)則吃滿版面
+      // Phase 12C: the MAP VIEWPORT is a stable, responsive box; the map is what moves inside it.
+      // Previously this sized the board from the viewBox aspect ratio, which meant the continent
+      // drill -- which rewrote the viewBox -- also re-proportioned the board. The viewport now takes
+      // its shape from the layout alone, and the SVG fills it; `preserveAspectRatio` keeps the
+      // geography itself correctly proportioned inside that box, so no continent can distort it.
       const _vb = (svg.getAttribute("viewBox") || "0 0 1000 1000").split(/\s+/).map(Number);
-      svg.style.maxWidth = Math.round(Math.max(320, window.innerHeight * 0.82 * (_vb[2] / (_vb[3] || 1)))) + "px";
-      svg.style.margin = "0 auto";
+      svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+      svg.style.width = "100%"; svg.style.height = "100%";
+      svg.style.maxWidth = "none"; svg.style.margin = "0";
+      holder.classList.add("geo-viewport");
+      // one aspect ratio for the board, chosen by breakpoint and NEVER by geography
+      holder.style.setProperty("--vp-ratio", window.innerWidth <= 560 ? "1.1" : "1.6");
       // 10C.2R: the long form spanned most of a 360px board and sat over a continent label. The
       // phone gets a terse version; the desktop keeps the explanatory text.
       const zh = document.createElement("div"); zh.className = "geo-zoom-hint";
-      zh.textContent = window.innerWidth <= 560 ? "🔍 Pinch / drag"
-                                                : "🔍 scroll / pinch to zoom · drag to pan";
+      zh.textContent = window.innerWidth <= 560 ? "🔍 Pinch / drag · tap a territory"
+                                                : "🔍 scroll / pinch to zoom · drag to pan · click a territory to select it";
       holder.appendChild(zh);
       let labelState = { s: 1, tx: 0, ty: 0 };
       let relayoutLabels = function () {};
-      attachPanZoom(svg, holder, (s, tx, ty) => { labelState = { s: s, tx: tx, ty: ty }; relayoutLabels(s, tx, ty); });
+      // Phase 12C: the camera is the ONLY thing that moves the map. Everything that used to
+      // "navigate" (a continent, a selected territory) now asks the camera to look somewhere.
+      const cam = attachPanZoom(svg, holder, (s, tx, ty) => {
+        labelState = { s: s, tx: tx, ty: ty };
+        // zoom BAND drives information density, in CSS and in the label filter alike. One map,
+        // three presentation densities -- never three maps.
+        holder.dataset.zoom = s < 2 ? "far" : (s < 4.2 ? "mid" : "near");
+        relayoutLabels(s, tx, ty);
+      });
+      geoCam = cam;
       const NSU = "http://www.w3.org/2000/svg";
       svg.querySelectorAll("style").forEach(s => s.remove());
       svg.querySelectorAll("path").forEach(p => { p.style.removeProperty("fill"); p.style.removeProperty("stroke"); p.style.removeProperty("opacity"); p.removeAttribute("fill"); });
@@ -7267,18 +7593,14 @@
       let paths = Array.prototype.filter.call(svg.querySelectorAll("path"), p => isRegion(p.id, p));
       const drill = spec.drill || {};
       const mapId = mapIdForSvg(spec.file);   // canonical 邏輯地圖 id（catalog 沒載到時為 null → 人口退回舊算法）
-      // 世界地圖分洲：contFilter 空 = 頂層(顯示各洲)；有值 = 已點進某洲(縮放到該洲、只留該洲國家可點)
-      const grouped = !!spec.grouped, contFilter = spec.groupFilter || null;
+      // Phase 12C: continents are NOT containers. `grouped` still means "this map has continent
+      // metadata", and that metadata is now used for two things only -- a visual tint and a camera
+      // preset. There is no groupFilter, no territory-set swap and no viewBox rewrite: every
+      // territory on the World is present, coloured by ownership and directly clickable at every
+      // zoom. The old `groupFilter` path is gone rather than left dormant, because a dormant
+      // altitude mode is exactly what made a tap mean two different things.
+      const grouped = !!spec.grouped;
       if (grouped) paths = paths.filter(p => WORLD_CODE_CONT[(p.id || "").toLowerCase()]);   // 只留有分洲的國家(排除背景框與無人島)
-      if (grouped && contFilter) {
-        let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-        paths.forEach(p => {
-          if (worldContinentKey(p.id) === contFilter) { let b = null; try { b = p.getBBox(); } catch (e) {} if (b && b.width) { x0 = Math.min(x0, b.x); y0 = Math.min(y0, b.y); x1 = Math.max(x1, b.x + b.width); y1 = Math.max(y1, b.y + b.height); } }
-          else { p.style.fill = "#e6edf4"; p.style.opacity = ".4"; p.style.pointerEvents = "none"; }   // 其他洲淡出、不可點
-        });
-        if (x1 > x0) { const px = (x1 - x0) * 0.06, py = (y1 - y0) * 0.08; svg.setAttribute("viewBox", (x0 - px) + " " + (y0 - py) + " " + ((x1 - x0) + 2 * px) + " " + ((y1 - y0) + 2 * py)); }
-        paths = paths.filter(p => worldContinentKey(p.id) === contFilter);
-      }
       // ===== Phase 10C: island discoverability (DECORATIVE ONLY) =====
       // Many World territories are single tiny islands that are almost invisible at map scale. This
       // draws a halo BEHIND such a territory so the eye can find it. It adds no hit area: the group
@@ -7328,64 +7650,81 @@
         const cx = bb.x + bb.width / 2, cy = bb.y + bb.height / 2;
         markerSpecs.push(Object.assign({ cx: cx, cy: cy, label: label, extra: extra || "", uw: bb.width }, fields || {}));
       }
-      // 地區不再固定綁課：佔領時才隨機挑一課（全域世界則不分等級）。地圖只顯示地區名稱。
-      if (grouped && !contFilter) {
-        // 頂層：只顯示各大洲一個標籤；點任何國家 → 進入該洲（層層下鑽）
-        const groups = {};
-        paths.forEach(p => {
-          const ck = worldContinentKey(p.id);
-          let b = null; try { b = p.getBBox(); } catch (e) {} if (!b || !b.width) return;
-          const g = groups[ck] || (groups[ck] = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity, paths: [] });
-          g.x0 = Math.min(g.x0, b.x); g.y0 = Math.min(g.y0, b.y); g.x1 = Math.max(g.x1, b.x + b.width); g.y1 = Math.max(g.y1, b.y + b.height); g.paths.push(p);
-          // Phase 10C: tint by continent instead of one flat drill colour (see .geo-cont-* in CSS).
-          p.setAttribute("class", "geo-region geo-drill geo-cont geo-cont-" + ck);
-          p.style.cursor = "pointer";
-          haloIfTiny(p);                       // tiny islands are findable at continent level too
-          addTitle(p, (WORLD_CONT_LABEL[ck] || ck) + " — zoom in ▸");
-          p.addEventListener("click", () => drawGeo(Object.assign({}, spec, { groupFilter: ck }), () => renderGeoMap(i, spec), i, lv));
-        });
-        Object.keys(groups).forEach(ck => {
-          const g = groups[ck], cx = (g.x0 + g.x1) / 2, cy = (g.y0 + g.y1) / 2;
-          const open = () => drawGeo(Object.assign({}, spec, { groupFilter: ck }), () => renderGeoMap(i, spec), i, lv);
-          markerSpecs.push({ cx: cx, cy: cy, label: WORLD_CONT_LABEL[ck] || ck, extra: " geo-marker-drill", uw: (g.x1 - g.x0), drill: true, open: open });
-          regionList.push({ drill: true, name: WORLD_CONT_LABEL[ck] || ck, group: g.paths, open: open });
-        });
-      } else {
-        const seen = {}, partsByKey = {};
-        paths.forEach(p => {
-          const name = regionName(p);
-          if (drill[p.id]) {                       // 可下鑽的容器（點進去看子地區，像台北市那樣）
-            const sub = drill[p.id];
-            p.setAttribute("class", "geo-region geo-drill");
-            addTitle(p, name + " — zoom in ▸");
-            const open = () => drawGeo(sub, () => renderGeoMap(i, spec), i, lv);
-            p.addEventListener("click", open);
-            marker(p, name, " geo-marker-drill", { drill: true, open: open });
-            regionList.push({ p: p, drill: true, name: name, open: open });
-            return;
-          }
-          const key = regionKey(spec, p);
-          const pop = catalogPopulation(mapId, p.id, name);   // 人口一律取 catalog 的 gamePopulation(凍結值)
-          const territoryId = mapId ? canonicalTerritoryId(mapId, p.id) : null;
-          rememberRegion(key, name);   // 記住地區名，供帝國清單等顯示
-          p.setAttribute("class", "geo-region");
-          haloIfTiny(p);                       // Phase 10C: make a tiny island findable
-          addTitle(p, name + " · 👥" + pop);
-          const open = () => openRegion(key, name, pop, i);
-          // Phase 10C.1: clicking still opens the authoritative region panel exactly as before; it
-          // additionally tells the HUD what to describe. Selection grants nothing.
-          p.addEventListener("click", () => { if (window.hudSelect) window.hudSelect(key); });
-          p.addEventListener("click", open);   // 一個邏輯領地的每個 path 都可點、都會上色
-          (partsByKey[key] || (partsByKey[key] = [])).push(p);   // 同一領地的所有 SVG path(多 path 國家)
-          if (!seen[key]) {                    // 標籤/清單一領地只出現一次(如多 path 國家)
-            seen[key] = 1;
-            marker(p, name, "", { key: key, open: open });
-            regionList.push({ p: p, key: key, territoryId: territoryId, name: name, pop: pop, open: open, parts: partsByKey[key] });
-          } else {
-            regionList.push({ p: p, key: key, territoryId: territoryId, name: name, pop: pop, open: open, dup: true });
-          }
-        });
+      // ===== Phase 12C: ONE interaction rule -- a tap on a territory SELECTS that territory =====
+      // There is no second branch and no altitude. At the World view, tapping Australia selects
+      // Australia; zoomed into Europe, tapping France selects France. Nothing "enters" a continent,
+      // because a continent is not a place you can be in.
+      const contBounds = {};      // continent -> bbox, for the camera presets only
+      const seen = {}, partsByKey = {};
+      paths.forEach(p => {
+        const name = regionName(p);
+        if (drill[p.id]) {                       // 可下鑽的容器（點進去看子地區，像台北市那樣）
+          const sub = drill[p.id];
+          p.setAttribute("class", "geo-region geo-drill");
+          addTitle(p, name + " — zoom in ▸");
+          const open = () => drawGeo(sub, () => renderGeoMap(i, spec), i, lv);
+          p.addEventListener("click", open);
+          marker(p, name, " geo-marker-drill", { drill: true, open: open });
+          regionList.push({ p: p, drill: true, name: name, open: open });
+          return;
+        }
+        const key = regionKey(spec, p);
+        const pop = catalogPopulation(mapId, p.id, name);   // 人口一律取 catalog 的 gamePopulation(凍結值)
+        const territoryId = mapId ? canonicalTerritoryId(mapId, p.id) : null;
+        rememberRegion(key, name);   // 記住地區名，供帝國清單等顯示
+        const ck = grouped ? worldContinentKey(p.id) : null;
+        // the continent tint is a BASE fill; colorize() paints ownership over it, so ownership is
+        // now visible at the World view too (it never was, because every path used to be a drill)
+        p.setAttribute("class", "geo-region" + (ck ? " geo-cont geo-cont-" + ck : ""));
+        if (ck) {
+          let b = null; try { b = p.getBBox(); } catch (e) {}
+          // collect member centroids and sizes; the camera preset is derived from the BULK of them
+          // (see the trimmed-box comment below), never from the raw extent
+          if (b && b.width) (contBounds[ck] || (contBounds[ck] = [])).push(
+            { cx: b.x + b.width / 2, cy: b.y + b.height / 2, w: b.width, h: b.height });
+        }
+        haloIfTiny(p);                       // Phase 10C: make a tiny island findable
+        addTitle(p, name + " · 👥" + pop);
+        const open = () => openRegion(key, name, pop, i);
+        // Phase 12C: a single tap SELECTS, and selecting is all it does. It no longer opens a
+        // modal: the HUD card describes the territory and the action tray offers what the server
+        // actually allows. Selection still grants nothing.
+        p.addEventListener("click", () => { if (window.hudSelect) window.hudSelect(key); });
+        (partsByKey[key] || (partsByKey[key] = [])).push(p);   // 同一領地的所有 SVG path(多 path 國家)
+        if (!seen[key]) {                    // 標籤/清單一領地只出現一次(如多 path 國家)
+          seen[key] = 1;
+          marker(p, name, "", { key: key, open: open });
+          regionList.push({ p: p, key: key, territoryId: territoryId, name: name, pop: pop, open: open, parts: partsByKey[key] });
+        } else {
+          regionList.push({ p: p, key: key, territoryId: territoryId, name: name, pop: pop, open: open, dup: true });
+        }
+      });
+      // continent labels: CAMERA SHORTCUTS. They move the camera and nothing else -- no mode, no
+      // eligibility change, no Back stack, no change to what a territory tap means.
+      //
+      // The preset targets the BULK of a continent, not its raw extent. Several continents have
+      // far-flung members -- Europe carries Russia, N. America carries Greenland and the Caribbean,
+      // Oceania carries Heard & McDonald and Pitcairn -- and a raw bounding box over those spans most
+      // of the map, which made "go to Europe" zoom OUT. So the box is trimmed to the 10th-90th
+      // percentile of member centroids and widened by the median member size. The outliers are not
+      // hidden or filtered: they stay clickable territories, reachable by panning like anything else.
+      function pct(arr, q) {
+        if (!arr.length) return 0;
+        const a = arr.slice().sort((x, y) => x - y);
+        return a[Math.min(a.length - 1, Math.max(0, Math.round((a.length - 1) * q)))];
       }
+      Object.keys(contBounds).forEach(ck => {
+        const ms = contBounds[ck];
+        if (!ms.length) return;
+        const xs = ms.map(m => m.cx), ys = ms.map(m => m.cy);
+        const mw = pct(ms.map(m => m.w), 0.5), mh = pct(ms.map(m => m.h), 0.5);
+        const g = { x0: pct(xs, 0.10) - mw, x1: pct(xs, 0.90) + mw,
+                    y0: pct(ys, 0.10) - mh, y1: pct(ys, 0.90) + mh };
+        // the label itself sits at the centre of that trimmed box, i.e. over the bulk of the land
+        markerSpecs.push({ cx: (g.x0 + g.x1) / 2, cy: (g.y0 + g.y1) / 2,
+                          label: WORLD_CONT_LABEL[ck] || ck, extra: " geo-marker-cont",
+                          uw: (g.x1 - g.x0), cont: ck, bounds: g });
+      });
       // ===== DEV-ONLY adjacency debug (?debugAdjacency=1): hover a territory → outline its
       //   catalog neighbours. Reads the same authoritative catalog; does NOT affect gameplay. =====
       if (DEBUG_ADJ) {
@@ -7403,21 +7742,81 @@
       // ===== 縮放式標籤層：常數螢幕大小的 HTML 疊層，用現有投影(viewBox + 平移縮放)換算螢幕座標 =====
       //   標籤只是視覺(pointer-events:none)；點擊仍由底下的地區 path 處理。
       const lay = document.createElement("div"); lay.className = "geo-labels"; holder.appendChild(lay);
-      let offX = 0, offY = 0, w0 = 1, h0 = 1;
       const vx = vb[0], vy = vb[1], vw = vb[2] || 1, vh = vb[3] || 1;
+      // Phase 12C: the board no longer takes its shape from the viewBox, so the geography is
+      // LETTERBOXED inside the viewport (preserveAspectRatio "meet"). The projection therefore needs
+      // the content scale and its centring offset -- the old version divided by the viewBox width
+      // and assumed the two boxes matched, which they no longer do.
+      let PK = 1, POX = 0, POY = 0;
       function captureGeom() {
         const hr = holder.getBoundingClientRect(), sr = svg.getBoundingClientRect();
-        offX = sr.left - hr.left; offY = sr.top - hr.top; w0 = sr.width || 1; h0 = sr.height || 1;
+        const sw = sr.width || 1, sh = sr.height || 1;
+        PK = Math.min(sw / vw, sh / vh);
+        POX = (sr.left - hr.left) + (sw - vw * PK) / 2;
+        POY = (sr.top - hr.top) + (sh - vh * PK) / 2;
       }
       captureGeom();
+      // viewBox units -> viewport px at s=1, which is exactly what cam.focusRect() consumes
+      const toVp = (x, y) => ({ x: POX + (x - vx) * PK, y: POY + (y - vy) * PK });
+      function focusBounds(g, opts) {
+        const a = toVp(g.x0, g.y0), b = toVp(g.x1, g.y1);
+        cam.focusRect(a.x, a.y, b.x, b.y, opts);
+      }
+      geoFocusKey = function (key, opts) {
+        const r = regionList.find(x => x.key === key && x.p);
+        if (!r) return false;
+        let g = null;
+        (r.parts || [r.p]).forEach(pp => {
+          let b = null; try { b = pp.getBBox(); } catch (e) {}
+          if (!b || !b.width) return;
+          g = g || { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+          g.x0 = Math.min(g.x0, b.x); g.y0 = Math.min(g.y0, b.y);
+          g.x1 = Math.max(g.x1, b.x + b.width); g.y1 = Math.max(g.y1, b.y + b.height);
+        });
+        if (!g) return false;
+        focusBounds(g, opts);
+        return true;
+      };
+      // is a territory substantially off-screen right now? used for gentle camera assist only
+      geoOffScreen = function (key) {
+        const r = regionList.find(x => x.key === key && x.p);
+        if (!r) return false;
+        let b = null; try { b = r.p.getBBox(); } catch (e) {}
+        if (!b || !b.width) return false;
+        const st = cam.state(), hr = holder.getBoundingClientRect();
+        const c = toVp(b.x + b.width / 2, b.y + b.height / 2);
+        const sx = st.tx + c.x * st.s, sy = st.ty + c.y * st.s;
+        const mx = hr.width * 0.08, my = hr.height * 0.08;
+        return sx < mx || sy < my || sx > hr.width - mx || sy > hr.height - my;
+      };
       markerSpecs.forEach(L => {
-        const el = document.createElement("div"); el.className = "geo-lab" + (L.drill ? " drill" : "");
+        const el = document.createElement("div");
+        el.className = "geo-lab" + (L.drill ? " drill" : "") + (L.cont ? " cont" : "");
         el.textContent = (L.drill ? "🏙 " : "") + L.label;
         lay.appendChild(el); L.el = el;
-        const restW = (L.uw || 10) / vw * w0;                      // 該區在 s=1 時的螢幕寬(px)
-        L.priority = (L.drill ? 1e6 : 0) + restW;                  // 大區優先；洲/可下鑽最高
-        L.minZoom = L.drill ? 0 : Math.max(0, 44 / Math.max(6, restW));   // 小區要放大到一定程度才出現(縮放分層)
-        L.maxZoom = Infinity;
+        const restW = (L.uw || 10) * PK;                           // 該區在 s=1 時的螢幕寬(px)
+        // ===== Phase 12C semantic zoom =====
+        // FAR  : continent labels + the few territories big enough to read
+        // MID  : more territory labels admitted as they become legible
+        // NEAR : as many names as fit
+        // Continent labels are camera shortcuts, so they lead at FAR and step aside once the player
+        // has zoomed in past MID -- by then the territory names are the useful information.
+        if (L.cont) {
+          L.priority = 1e6 + restW;
+          L.minZoom = 0; L.maxZoom = 4.2;
+          el.setAttribute("role", "button"); el.setAttribute("tabindex", "0");
+          el.title = "Move the camera to " + L.label;
+          el.setAttribute("aria-label", "Move the camera to " + L.label);
+          // pad 1.15 keeps neighbouring geography in frame; minZoom guarantees the shortcut is a
+          // zoom IN even for a continent whose bulk is still very wide (Asia)
+          const go = ev => { ev.preventDefault(); ev.stopPropagation(); focusBounds(L.bounds, { pad: 1.15, minZoom: 2 }); };
+          el.addEventListener("click", go);
+          el.addEventListener("keydown", ev => { if (ev.key === "Enter" || ev.key === " ") go(ev); });
+        } else {
+          L.priority = (L.drill ? 1e6 : 0) + restW;
+          L.minZoom = L.drill ? 0 : Math.max(0, 46 / Math.max(6, restW));
+          L.maxZoom = Infinity;
+        }
       });
       // 依目前縮放/平移，把每個標籤投影到螢幕、量測 box、交給 placeMapLabels 取捨後定位
       relayoutLabels = function (s, tx, ty) {
@@ -7431,8 +7830,8 @@
         // that overlap OTHER labels are dropped by priority, labels outside their zoom band are
         // hidden, and the selected label is always exempt.
         const cands = markerSpecs.map(L => {
-          const fx = offX + tx + ((L.cx - vx) / vw * w0) * s;
-          const fy = offY + ty + ((L.cy - vy) / vh * h0) * s;
+          const fx = POX + tx + (L.cx - vx) * PK * s;
+          const fy = POY + ty + (L.cy - vy) * PK * s;
           const txt = (L.drill ? "🏙 " : "") + L.label;
           const w = txt.length * FS * 0.56 + PADX, h = FS * 1.8;
           return { L: L, fx: fx, fy: fy, priority: L.priority,
@@ -7444,9 +7843,18 @@
         cands.forEach(c => { const el = c.L.el; el.style.left = c.fx + "px"; el.style.top = c.fy + "px"; el.style.display = c.visible ? "" : "none"; el.classList.toggle("sel", c.selected); });
       };
       _geoResel = function () { relayoutLabels(labelState.s, labelState.tx, labelState.ty); };
-      _geoRelayout = function () { if (labelState.s === 1) captureGeom(); _geoResel(); };
-      if (!_geoResizeHooked) { window.addEventListener("resize", () => { if (_geoRelayout) _geoRelayout(); }); _geoResizeHooked = true; }
-      relayoutLabels(1, 0, 0);   // 初次配置
+      // Phase 12C: re-measure whenever the box may have changed, not only at s === 1. The viewport
+      // is responsive and the HUD plaques above it get their height late, so the old
+      // "only when unzoomed" guard left the projection stale after any layout shift.
+      _geoRelayout = function () { captureGeom(); _geoResel(); };
+      if (!_geoResizeHooked) {
+        window.addEventListener("resize", () => {
+          holder.style.setProperty("--vp-ratio", window.innerWidth <= 560 ? "1.1" : "1.6");
+          if (_geoRelayout) _geoRelayout();
+        });
+        _geoResizeHooked = true;
+      }
+      cam.home();                // the opening World camera; also lays the labels out once
       // ===== Phase 10B: the re-entry panel, driven entirely by the server =====
       // The client NEVER decides whether re-entry applies. It asks, and it renders only what comes
       // back. A player who owns ground, or who can still claim a neutral territory, gets `available:
@@ -7578,12 +7986,33 @@
         // ---- bottom-right: who holds what ----
         const pls = hudSlot("hud-players"); br2.appendChild(pls);
 
+        // ---- Phase 12C: the action tray, BELOW the viewport and never over geography ----
+        // Combat and occupation are planned here while the board stays visible and interactive.
+        const tray = document.createElement("div");
+        tray.className = "hud-tray"; tray.id = "hudTray"; tray.hidden = true;
+        tray.setAttribute("role", "group");
+        tray.setAttribute("aria-label", "Territory action");
+        wrap.appendChild(tray);
+
         // reference/secondary rows stay, below the board
         const below = document.createElement("div"); below.className = "hud-below";
         wrap.appendChild(below);
-        return { pl: pl, ti: ti, ct: ct, card: card, acts: acts, pls: pls, below: below };
+        return { pl: pl, ti: ti, ct: ct, card: card, acts: acts, pls: pls, tray: tray, below: below };
       }
       const HUD = buildHud();
+      // camera controls: zoom in / out / back to the World view. These move the CAMERA only --
+      // no mode, no territory set, no eligibility.
+      const camBar = document.createElement("div"); camBar.className = "geo-cam";
+      [["+", "Zoom in", () => cam.zoomBy(1.5)],
+       ["\u2212", "Zoom out", () => cam.zoomBy(1 / 1.5)],
+       ["\u{1F30D}", "Back to the World view", () => cam.home()]].forEach(function (spec) {
+        const b = document.createElement("button");
+        b.type = "button"; b.textContent = spec[0];
+        b.title = spec[1]; b.setAttribute("aria-label", spec[1]);
+        b.addEventListener("click", spec[2]);
+        camBar.appendChild(b);
+      });
+      holder.appendChild(camBar);
 
       function icoBtn(emoji, label, fn) {
         const b = document.createElement("button");
@@ -7644,7 +8073,9 @@
         HUD.ct.appendChild(icoBtn("\u{1F4DA}", "Academy \u2014 learn to earn Gold", openLearningHome));
         if (userName) HUD.ct.appendChild(icoBtn("\u{1F9D1}", "My progress", openProfileStats));
         HUD.ct.appendChild(icoBtn("\u{1F3C6}", "Ranking", openLeaderboard));
-        HUD.ct.appendChild(icoBtn("\u{1F3E0}", "Base \u2014 recruit & build", openHomeBase));
+        // Phase 12C: one management destination. "Base" used to open a second, competing hub that
+        // could only ever manage the home base; Empire covers the home base and every territory.
+        HUD.ct.appendChild(icoBtn("\u{1F3F0}", "Empire \u2014 forces, buildings & technology", openEmpire));
         // Phase 11B: Multiplayer is reachable from the board, which is the student's home. It opens
         // the existing room-management surface -- no new capability, only a way in.
         HUD.ct.appendChild(icoBtn("\u2694\uFE0F", "Multiplayer \u2014 join or host a game", openRooms));
@@ -7716,9 +8147,188 @@
           : '<div class="hpl-none">no territory held yet</div>');
       }
 
+      // ===== Phase 12C: the action tray =====
+      // One renderer for every in-board plan: attack, occupy and garrison redeploy. All three are
+      // "assign troops, then confirm", and all three already had a server endpoint -- the tray
+      // changes only where the planning happens. Nothing here decides authority: the source list
+      // comes from validAttackSources() (catalog adjacency ∩ owned ∩ garrisoned, advisory as
+      // before), and the server still refuses anything it does not allow.
+      let trayMode = null;          // null | "attack" | "occupy" | "garrison"
+      let traySrc = null;           // the chosen attack source territory id
+      let trayAmt = {};             // { troopType: count }
+      function markMap() {
+        // paint selection / target / valid sources on the board itself
+        (regionList || []).forEach(r => {
+          if (!r.p) return;
+          r.p.classList.remove("geo-sel", "geo-src", "geo-tgt");
+        });
+        const paint = (key, cls) => (regionList || []).forEach(r => {
+          if (r.key === key && r.p) r.p.classList.add(cls);
+        });
+        if (hudSelKey) paint(hudSelKey, trayMode === "attack" ? "geo-tgt" : "geo-sel");
+        if (trayMode === "attack") trayValidSources().forEach(sk => paint(sk, "geo-src"));
+      }
+      function trayValidSources() { return hudSelKey ? validAttackSources(hudSelKey) : []; }
+      function trayBudget() {
+        if (trayMode === "attack") {
+          const holders = (territory && territory.holders) || {};
+          return squadByType(((holders[traySrc] || {}).troops) || []);
+        }
+        if (trayMode === "garrison") {
+          const h = (territory && territory.holders && territory.holders[hudSelKey]) || {};
+          return poolPlusGarrison(h.troops);
+        }
+        return poolAvail();                                  // occupy spends from the free pool
+      }
+      function closeTray() {
+        trayMode = null; traySrc = null; trayAmt = {};
+        HUD.tray.hidden = true; HUD.tray.innerHTML = "";
+        markMap();
+      }
+      window.geoTrayClose = closeTray;
+      function openTray(mode) {
+        trayMode = mode;
+        const budget = null;
+        traySrc = null;
+        if (mode === "attack") {
+          const srcs = trayValidSources();
+          traySrc = srcs.length ? srcs[0] : null;
+        }
+        trayAmt = {};
+        const b = trayBudget();
+        if (mode === "garrison") {
+          const h = (territory && territory.holders && territory.holders[hudSelKey]) || {};
+          const cur = squadByType(h.troops);
+          TROOPS.forEach(t => trayAmt[t.id] = Math.min(cur[t.id] || 0, b[t.id] || 0));
+        } else {
+          TROOPS.forEach(t => trayAmt[t.id] = b[t.id] || 0);   // default: commit everything available
+        }
+        renderTray();
+      }
+      function renderTray() {
+        if (!trayMode || !hudSelKey) { closeTray(); return; }
+        const name = regionDisplayName(hudSelKey) || hudSelKey;
+        const holders = (territory && territory.holders) || {};
+        const h = holders[hudSelKey] || null;
+        const budget = trayBudget();
+        const CFG = {
+          attack: { t: "\u2694\uFE0F ATTACK " + name.toUpperCase(), go: "\u2694 ATTACK", peace: false,
+                    note: "You cannot scout an enemy garrison. March from a territory you own next to it." },
+          occupy: { t: "\u{1F6A9} OCCUPY " + name.toUpperCase(), go: "\u{1F6A9} OCCUPY", peace: true,
+                    note: "Unclaimed \u2014 the troops you send become its garrison." },
+          garrison: { t: "\u{1F6E1}\uFE0F GARRISON " + name.toUpperCase(), go: "\u{1F6E1} SET GARRISON", peace: true,
+                    note: "Troops you leave out of the garrison return to your free pool." }
+        }[trayMode];
+        let html = '<div class="tray-hd"><span class="th-t">' + escapeHtml(CFG.t) + '</span>' +
+          (trayMode === "attack" && h && h.owner
+            ? '<span class="th-s">held by ' + escapeHtml((h.avatar || "") + dispName(h.owner)) +
+              techBadge(h.tech) + '</span>'
+            : '<span class="th-s">\u{1F465} ' + ((h && h.pop != null) ? h.pop :
+                (((TERR_CATALOG.terrById || {})[hudSelKey] || {}).gamePopulation || 0)) + '</span>') +
+          '</div><p class="tray-note">' + CFG.note + '</p>';
+        if (trayMode === "attack") {
+          const srcs = trayValidSources();
+          if (!srcs.length) {
+            html += '<p class="tray-note">\u{1F6AB} No adjacent territory of yours has a garrison, ' +
+              'so this attack is not possible yet. Take a neighbouring territory first \u2014 an ' +
+              'island with no land neighbours cannot be reached by land at all.</p>' +
+              '<div class="tray-foot"><span class="tray-sum"></span><div class="tray-btns">' +
+              '<button type="button" class="tb-cancel">Close</button></div></div>';
+            HUD.tray.innerHTML = html; HUD.tray.hidden = false;
+            HUD.tray.querySelector(".tb-cancel").addEventListener("click", closeTray);
+            markMap();
+            return;
+          }
+          html += '<div class="tray-srcs" role="group" aria-label="March from">' +
+            srcs.map(sk => '<button type="button" class="tray-src" data-src="' + escapeHtml(sk) +
+              '" aria-pressed="' + (sk === traySrc) + '">\u{1F6A9} ' +
+              escapeHtml(regionDisplayName(sk) || sk) + ' \u00b7 \u{1F6E1}' +
+              sumHp((holders[sk] || {}).troops) + '</button>').join("") + '</div>';
+        }
+        const types = TROOPS.filter(t => (budget[t.id] || 0) > 0);
+        if (!types.length) {
+          html += '<p class="tray-note">\u26A0\uFE0F No troops available here. Recruit in ' +
+            '\u{1F3F0} Empire \u25B8 Forces first.</p>';
+        }
+        html += '<div class="tray-rows">' + types.map(t =>
+          '<div class="tray-row" data-ty="' + t.id + '">' +
+            '<span class="tr-nm">' + troopIcon(t.id) + ' ' + t.en + '</span>' +
+            '<button type="button" class="tr-dn" aria-label="Fewer ' + t.en + '">\u2212</button>' +
+            '<span class="tr-v" aria-live="off">' + (trayAmt[t.id] || 0) + '</span>' +
+            '<button type="button" class="tr-up" aria-label="More ' + t.en + '">+</button>' +
+            '<span class="tr-mx">/ ' + budget[t.id] + '</span>' +
+          '</div>').join("") + '</div>';
+        const total = TROOPS.reduce((a, t) => a + (trayAmt[t.id] || 0), 0);
+        html += '<div class="tray-foot"><span class="tray-sum">Assigned <b>' + total + '</b></span>' +
+          '<div class="tray-btns"><button type="button" class="tb-cancel">Cancel</button>' +
+          '<button type="button" class="tb-go' + (CFG.peace ? " tb-peace" : "") + '">' +
+          escapeHtml(CFG.go) + '</button></div></div>';
+        HUD.tray.innerHTML = html;
+        HUD.tray.hidden = false;
+        HUD.tray.querySelectorAll(".tray-src").forEach(b => b.addEventListener("click", () => {
+          traySrc = b.dataset.src;
+          const nb = trayBudget();
+          TROOPS.forEach(t => trayAmt[t.id] = nb[t.id] || 0);
+          renderTray();
+        }));
+        HUD.tray.querySelectorAll(".tray-row").forEach(row => {
+          const ty = row.dataset.ty;
+          const step = d => {
+            const max = budget[ty] || 0;
+            trayAmt[ty] = Math.max(0, Math.min(max, (trayAmt[ty] || 0) + d));
+            row.querySelector(".tr-v").textContent = trayAmt[ty];
+            const t2 = TROOPS.reduce((a, t) => a + (trayAmt[t.id] || 0), 0);
+            HUD.tray.querySelector(".tray-sum").innerHTML = "Assigned <b>" + t2 + "</b>";
+            const go = HUD.tray.querySelector(".tb-go");
+            if (go) go.disabled = (trayMode !== "garrison") && t2 <= 0;
+          };
+          row.querySelector(".tr-up").addEventListener("click", () => step(+1));
+          row.querySelector(".tr-dn").addEventListener("click", () => step(-1));
+        });
+        HUD.tray.querySelector(".tb-cancel").addEventListener("click", closeTray);
+        const go = HUD.tray.querySelector(".tb-go");
+        if (go) {
+          go.disabled = (trayMode !== "garrison") && total <= 0;
+          go.addEventListener("click", trayConfirm);
+        }
+        markMap();
+      }
+      function traySquad() {
+        return TROOPS.filter(t => (trayAmt[t.id] || 0) > 0).map(t => ({ type: t.id, hp: trayAmt[t.id] }));
+      }
+      function trayConfirm() {
+        // Capture the WHOLE plan first: closeTray() resets this state, and reading any part of it
+        // afterwards sends a hole to the server. Measured: reading traySrc after the reset posted
+        // sourceTerritoryId:null and the attack was refused `source_not_found`.
+        const key = hudSelKey, mode = trayMode, squad = traySquad(), src = traySrc;
+        if (!key || !mode) return;
+        if (!authToken()) { alert("Log in to command troops."); return; }
+        const ct = (TERR_CATALOG.terrById || {})[key] || {};
+        const name = regionDisplayName(key) || key;
+        const pop = ct.gamePopulation || 0;
+        const done = () => loadEconomy(function () { renderEmpire(); refreshMap(); });
+        if (mode === "attack") {
+          const h = (territory && territory.holders && territory.holders[key]) || {};
+          if (!src) return;
+          closeTray();
+          launchAttack(src, key, name, h, squad);            // unchanged authority path
+          return;
+        }
+        // occupy and garrison are both /api/territory/claim, exactly as before
+        closeTray();
+        claimTroops(key, squad, pop, function () {
+          if (mode === "occupy") logEvent("occupy", { region: name, key: key });
+          done();
+        });
+      }
+
       // ---------- the action bar ----------
       // Every slot is an EXISTING action. There is deliberately no MOVE slot: troop movement does
       // not exist yet, and a disabled "coming later" button would be clutter that teaches nothing.
+      // Phase 12C: the board's action row is COMBAT AND GEOGRAPHY only. Recruit, Buildings,
+      // Technology and the old catch-all "Manage" are gone from here -- repetitive empire
+      // administration belongs to one Empire destination, not to every territory you tap. What is
+      // left acts on the selected geography: occupy it, attack it, or position its garrison.
       function renderHudActions() {
         HUD.acts.innerHTML = "";
         const key = hudSelKey;
@@ -7727,30 +8337,25 @@
         const mine = !!(h && h.owner && (h.owner || "").toLowerCase() === me);
         const enemy = !!(h && h.owner) && !mine;
         const name = key ? (regionDisplayName(key) || key) : "";
-        const openSel = () => {
-          const ct = (TERR_CATALOG.terrById || {})[key] || {};
-          openRegion(key, regionDisplayName(key), ct.gamePopulation || 0, levelIdxForKey(key));
-        };
         if (!key) {
           HUD.acts.appendChild(actBtn("\u{1F5FA}", "Select a territory", null,
             { disabled: true, title: "Tap a territory on the board first" }));
         } else if (enemy) {
-          // the region panel is where the attack actually happens; ATTACK is the dominant action
-          HUD.acts.appendChild(actBtn("\u2694\uFE0F", "Attack", openSel,
-            { primary: true, title: "Attack " + name + " from an adjacent territory you own" }));
+          HUD.acts.appendChild(actBtn("\u2694\uFE0F", "Attack", () => openTray("attack"),
+            { primary: true, title: "Plan an attack on " + name + " from an adjacent territory you own" }));
         } else if (mine) {
-          HUD.acts.appendChild(actBtn("\u{1F6E1}\uFE0F", "Manage", openSel,
-            { title: "Manage " + name + ": garrison, buildings and research" }));
+          HUD.acts.appendChild(actBtn("\u{1F6E1}\uFE0F", "Garrison", () => openTray("garrison"),
+            { title: "Position the garrison of " + name }));
         } else {
-          HUD.acts.appendChild(actBtn("\u{1F6A9}", "Occupy", openSel,
+          HUD.acts.appendChild(actBtn("\u{1F6A9}", "Occupy", () => openTray("occupy"),
             { primary: true, title: "Occupy " + name }));
         }
         if (key) {
-          HUD.acts.appendChild(actBtn("\u{2139}\uFE0F", "Info", openSel,
-            { title: "Open the full panel for " + name }));
+          HUD.acts.appendChild(actBtn("\u{1F3AF}", "Centre", () => { if (geoFocusKey) geoFocusKey(key, { pad: 2.6, minZoom: 2.2 }); },
+            { title: "Point the camera at " + name }));
         }
-        HUD.acts.appendChild(actBtn("\u{1F396}\uFE0F", "Recruit", openHomeBase,
-          { title: "Recruit troops and build at your home base" }));
+        HUD.acts.appendChild(actBtn("\u{1F3F0}", "Empire", openEmpire,
+          { title: "Empire \u2014 forces, buildings and technology" }));
         HUD.acts.appendChild(actBtn("\u{1F4DA}", "Academy", openLearningHome,
           { title: "Academy \u2014 learn and master lessons to earn Gold" }));
         if (!backFn && lv) {
@@ -7777,7 +8382,27 @@
         // different reason from the 10C.1R overlay compensation, which is gone.)
         if (_geoRelayout) _geoRelayout();
       };
-      window.hudSelect = function (key) { hudSelKey = key; renderHudCard(); renderHudActions(); };
+      // Phase 12C: a tap on the board selects -- with one refinement that makes in-board combat
+      // possible. While an attack is being planned, tapping one of the highlighted SOURCE
+      // territories chooses that source instead of retargeting; the target stays the target. Any
+      // other tap changes the selection and closes the plan, because a plan for a territory you are
+      // no longer looking at would be a trap.
+      window.hudSelect = function (key) {
+        if (trayMode === "attack" && key !== hudSelKey && trayValidSources().indexOf(key) >= 0) {
+          traySrc = key;
+          const nb = trayBudget();
+          TROOPS.forEach(t => trayAmt[t.id] = nb[t.id] || 0);
+          renderTray();
+          return;
+        }
+        if (key !== hudSelKey) closeTray();
+        hudSelKey = key;
+        renderHudCard(); renderHudActions();
+        // gentle camera assist: only when the territory is substantially outside the viewport, and
+        // never a zoom change. Selection and zoom stay separate concerns.
+        if (geoOffScreen && geoFocusKey && geoOffScreen(key)) geoFocusKey(key, { keepZoom: true });
+        markMap();
+      };
       hudRefresh();
 
       const legend = document.createElement("div"); legend.className = "geo-legend";
@@ -7971,9 +8596,13 @@
         }
       }
       colorize();
+      // Phase 12C: colorize() rewrites territory classes, so the selection / target / valid-source
+      // overlays are re-applied after every repaint -- otherwise a refresh would silently erase the
+      // highlight the player is aiming with.
+      markMap();
       hudRefresh();                       // Phase 10C.1: HUD reads the same authoritative caches
       // when fresh territory data lands, repaint the board AND the HUD from it -- one source
-      loadTerritory(function () { colorize(); hudRefresh(); });
+      loadTerritory(function () { colorize(); markMap(); hudRefresh(); });
     }
 
     fetchMap(spec.file).then(build)
@@ -9377,6 +10006,10 @@
     const noTroops = '<p class="op-hint">⚠️ No troops right now — win a battle or redeploy a garrison to free some up.</p>';
     if (!authToken()) { terr.innerHTML = '<p class="op-hint">🔒 Log in to raise an army and battle for territory.</p>'; return; }
     if (mine) {
+      // Phase 12C: garrison positioning happens on the MAP, where the geography is (the board's
+      // Garrison tray), and buildings/technology live in Empire. This panel keeps only the
+      // redeployment control, for the paths that still reach it directly; it no longer carries an
+      // empire-management panel that duplicated Empire ▸ Buildings.
       const avail = poolPlusGarrison(h.troops);
       terr.innerHTML = '<p class="op-hint">✅ Yours. Re-deploy garrison (drag each troop type; the rest stays in your pool):</p>';
       deployPanel(terr, avail, { init: h.troops, label: "🚩 Deploy", allowEmpty: true, onGo: g => {
@@ -9388,7 +10021,6 @@
           loadEconomy(function () { closeModal(); renderEmpire(); refreshMap(); });
         });
       } });
-      buildingsPanel(terr, key, h, function () { closeModal(); openRegion(key, name, pop, i); });
       return;
     }
     if (enemy) {

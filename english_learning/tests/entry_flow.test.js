@@ -75,14 +75,26 @@ ok("4b. a stored session and an already-signed-in student both resume the world,
 // ============ 7-11. every secondary destination is reachable from the board ============
 const controls = code.slice(code.indexOf("function renderHudControls"),
                             code.indexOf("function renderHudCard"));
+// Phase 12C retargeted this from "Base" to "Empire". Base was a SECOND management hub that could
+// only reach the home base; Empire reaches the home base and every territory, so the duplicate was
+// retired. The capability is asserted to have survived the move, not merely the label.
 const wanted = { "openLearningHome": "Academy", "openProfileStats": "Profile",
-                 "openLeaderboard": "Ranking", "openHomeBase": "Base", "openRooms": "Multiplayer" };
+                 "openLeaderboard": "Ranking", "openEmpire": "Empire", "openRooms": "Multiplayer" };
 Object.keys(wanted).forEach(fn => {
   assert(controls.indexOf(fn) >= 0, wanted[fn] + " must be reachable from the board HUD (" + fn + ")");
 });
-assert(/Academy/.test(controls) && /Multiplayer/.test(controls) && /Base/.test(controls),
+assert(/Academy/.test(controls) && /Multiplayer/.test(controls) && /Empire/.test(controls),
   "the HUD must use the player-facing vocabulary");
-ok("7-11. Academy, Profile, Ranking, Base and Multiplayer are all reachable from the board HUD");
+// what Base used to do must still be reachable: the home base appears in all three Empire areas,
+// and the same building/recruit panel is what opens for it
+["empireForces", "empireBuildings", "empireTechnology"].forEach(fn => {
+  const body = extractFn(html, fn);
+  assert(body.indexOf("HOME_KEY") >= 0, fn + " must cover the home base");
+});
+assert(/buildingsPanel\(host, HOME_KEY/.test(stripComments(extractFn(html, "openHomeBase"))),
+  "the home-base building panel itself is unchanged");
+ok("7-11. Academy, Profile, Ranking, Empire and Multiplayer are all reachable from the board HUD, " +
+   "and Empire still covers the home base that the retired Base hub used to own");
 
 // ============ 12/13. join and create still exist, with game vocabulary ============
 assert(/id="joinRoomBtn"/.test(html) && /Join Game/.test(html), "Join Game must exist");
