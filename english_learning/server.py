@@ -1110,6 +1110,34 @@ def class_members_of(teacher_account, db=None):
     return sorted(out)
 
 
+# ===== Phase 12B.2 — Read Along input mode =====
+# All 57 lessons require Read Along for mastery, and Read Along is scored from speech. A learner with
+# no microphone, a denied permission, an unsupported device or a speech-recognition accessibility
+# need therefore cannot reach authoritative mastery at all.
+#
+# The accommodation changes the INPUT MODALITY only:
+#
+#     speech : audio -> transcribe() -> stt_scoring.score_sentence -> record_read_along()
+#     typed  : typed text            -> stt_scoring.score_sentence -> record_read_along()
+#
+# Both satisfy the SAME required Read Along activity, through the same scorer, the same 80% mark and
+# the same completion/reward settlement. Nothing about the curriculum changes: no requiredActivityIds
+# edit, no new activity id, no threshold change, no reward change.
+#
+# What is stored is the permitted input mode and who set it -- never a diagnosis, a disability, a
+# medical reason or a justification. The server has no use for any of that.
+READ_ALONG_MODES = ("speech", "typed")
+
+
+def read_along_mode_of(account, db=None):
+    """The permitted Read Along input mode for an account. Absent field == "speech", so every
+    existing account keeps today's behaviour with no migration."""
+    if db is None:
+        db = load_accounts()
+    u = (db.get("users") or {}).get(account) or {}
+    return "typed" if u.get("readAlongMode") == "typed" else "speech"
+
+
 def gen_code(db):
     codes = db.setdefault("codes", {})
     while True:
@@ -1207,6 +1235,9 @@ class Handler(BaseHTTPRequestHandler):
         # the exact stale-tab case Phase 8A.1 introduced this table to stop.
         "/api/territory/reentry",
         "/api/learning/attempt", "/api/learning/matching/attempt",
+        # Phase 12B.2: typed Read Along settles gold exactly like the speech path, so it belongs in
+        # the same room-scoped guard.
+        "/api/learning/read-along/typed",
         "/api/learning/roleplay/respond", "/api/stt",
     })
 
@@ -1306,6 +1337,10 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_economy_set()
         elif path == "/api/learning/attempt":
             self._handle_learning_attempt()
+        elif path == "/api/learning/read-along/typed":
+            self._handle_read_along_typed()
+        elif path == "/api/accommodation/read-along":
+            self._handle_accommodation_read_along()
         elif path == "/api/learning/matching/start":
             self._handle_matching_start()
         elif path == "/api/learning/matching/attempt":
@@ -1399,6 +1434,64 @@ class Handler(BaseHTTPRequestHandler):
                  + clampi(out.get("courseRewardAmount", 0)))
         newgold = econ_add_gold(user, delta) if delta else None
         self._send({"transcript": text, "target": out["target"], "authoritative": True,
+                    "activityId": out["activityId"], "sentenceIndex": out["sentenceIndex"],
+                    "score": out["score"], "improved": out["improved"],
+                    "totalSentences": out["totalSentences"],
+                    "activityPct": out["activityPct"], "activityPassed": out["activityPassed"],
+                    "qualifications": out["granted"], "rewarded": out["rewarded"], "gold": newgold,
+                    "lessonCompletedNow": bool(out.get("lessonCompletedNow")),
+                    **_reward_fields(out)})
+
+    # Phase 12B.2: typed Read Along. This is NOT a second mastery engine -- record_read_along()
+    # already takes a TRANSCRIPT and does everything authoritative itself: it resolves the target
+    # sentence from lesson content, scores it with stt_scoring.score_sentence, keeps best-per-sentence
+    # retry semantics, and on crossing PASS_MARK routes through record_attempt for grants and the
+    # reward policy. So the only difference from speech is where the text came from.
+    #
+    # It is a separate route from /api/stt on purpose: typed mode must never touch the audio path, so
+    # it cannot request a microphone, cannot invoke transcribe(), and cannot depend on faster_whisper
+    # or ffmpeg being installed.
+    def _handle_read_along_typed(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in", "reason": "auth_required"}, 401)
+            return
+        if read_along_mode_of(user) != "typed":
+            # hiding the text box is not security: the endpoint itself refuses
+            self._send({"error": "Typed Read Along is not enabled for this account",
+                        "reason": "typed_not_enabled"}, 403)
+            return
+        d = self._body_json()
+        aid = (d.get("activityId") or "").strip()
+        if not LEARNING.is_read_along(aid):
+            self._send({"error": "not a read-along activity", "reason": "not_scorable"}, 400)
+            return
+        sidx_raw = str(d.get("sentenceIndex", "")).strip()
+        target, _total = LEARNING.read_along_target(aid, sidx_raw)
+        if target is None:
+            self._send({"error": "unknown sentence for this activity",
+                        "reason": "bad_sentence"}, 400)
+            return
+        text = d.get("text")
+        if not isinstance(text, str):
+            self._send({"error": "no text", "reason": "no_text"}, 400)
+            return
+        with acct_lock:
+            p = load_progress(user)
+            learning = p.setdefault("learning", {})
+            # The client's text is EVIDENCE, never a verdict: any score/passed/reward field in the
+            # body is simply not read. The server scores what was typed against its own sentence.
+            _, out = LEARNING.record_read_along(learning, aid, sidx_raw, text[:2000], int(time.time()))
+            if out is None:
+                self._send({"error": "unknown sentence for this activity",
+                            "reason": "bad_sentence"}, 400)
+                return
+            save_progress(user, p)
+        delta = (clampi(out.get("rewardAmount", 0)) + clampi(out.get("lessonRewardAmount", 0))
+                 + clampi(out.get("courseRewardAmount", 0)))
+        newgold = econ_add_gold(user, delta) if delta else None
+        self._send({"transcript": text[:2000], "target": out["target"], "authoritative": True,
+                    "inputMode": "typed",
                     "activityId": out["activityId"], "sentenceIndex": out["sentenceIndex"],
                     "score": out["score"], "improved": out["improved"],
                     "totalSentences": out["totalSentences"],
@@ -1526,6 +1619,41 @@ class Handler(BaseHTTPRequestHandler):
             save_progress(owner, p)
         self._send({"ok": True, "joinedClass": code, "account": user})
 
+    # Phase 12B.2: an educator sets a learner's Read Along input mode. Authorization is the
+    # canonical may_manage() relation and nothing else -- not an account type (none exists), not the
+    # role screen, not a display name, not roster contents, not possession of a class code. A learner
+    # can never reach this for themselves, because may_manage() refuses manager == target.
+    def _handle_accommodation_read_along(self):
+        manager = token_user(self._token())
+        if not manager:
+            self._send({"error": "Not logged in", "reason": "auth_required"}, 401)
+            return
+        d = self._body_json()
+        target = (d.get("account") or "").strip()
+        mode = (d.get("mode") or "").strip()
+        if mode not in READ_ALONG_MODES:
+            self._send({"error": "Unknown mode", "reason": "bad_mode"}, 400)
+            return
+        with acct_lock:
+            db = load_accounts()
+            if target not in (db.get("users") or {}):
+                self._send({"error": "Not allowed", "reason": "not_authorized"}, 403)
+                return
+            if not may_manage(manager, target, db):
+                # deliberately the same answer as an unknown target: a refusal must not confirm
+                # whether an account exists or which class it is in
+                self._send({"error": "Not allowed", "reason": "not_authorized"}, 403)
+                return
+            u = db["users"][target]
+            if mode == "typed":
+                u["readAlongMode"] = "typed"
+            else:
+                u.pop("readAlongMode", None)          # back to the absent-field default
+            u["readAlongModeBy"] = manager            # provenance for audit, not a reason
+            u["readAlongModeAt"] = time.time()
+            save_accounts(db)
+        self._send({"ok": True, "account": target, "readAlongMode": mode})
+
     def _handle_dashboard(self):
         user = token_user(self._token())
         if not user:
@@ -1547,6 +1675,10 @@ class Handler(BaseHTTPRequestHandler):
                 authoritative[acct] = {"account": acct,
                                        "displayName": rec.get("displayName") or acct,
                                        "joinedAt": rec.get("joinedAt"),
+                                       # Phase 12B.2: the mode for members this teacher is actually
+                                       # authorized to manage (class_members_of re-derives that
+                                       # through may_manage), so the control can show real state.
+                                       "readAlongMode": read_along_mode_of(acct, db),
                                        "progress": rec.get("progress") or {}}
         self._send({"code": code, "members": authoritative,
                     "students": p.get("students", {}), "legacyStudents": True})
@@ -2399,7 +2531,12 @@ class Handler(BaseHTTPRequestHandler):
             return
         with acct_lock:
             p = load_progress(user)
-        self._send(LEARNING.state_view(p.get("learning") or {}))
+        view = LEARNING.state_view(p.get("learning") or {})
+        # Phase 12B.2: the learner needs to know which input mode is permitted for them. Only their
+        # OWN mode is exposed here, and there is no reason field to leak because none is stored.
+        if isinstance(view, dict):
+            view["readAlongMode"] = read_along_mode_of(user)
+        self._send(view)
 
     # 唯一權威的「學習完成」路徑。前端只送「身分 + 作答」，其餘一律由 Learning Domain 決定：
     #   activityId(或 3A 舊式 lessonId+activity) → 登錄簿解析 → 權威內容 → grader → 完成 → 資格 → 獎勵政策。

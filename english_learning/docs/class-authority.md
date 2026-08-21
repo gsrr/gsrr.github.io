@@ -234,8 +234,11 @@ create an authoritative member, which is asserted by test.
   about itself. Authoritative learning progress is unaffected — it lives in the learning domain, not
   in this roster.
 
-## What this unblocks
+## What this unblocked
 
-`may_manage()` is now the single, provable authority relation Phase 12B.2 needs. That phase remains
-**not implemented**: no accommodation flag, no typed Read Along, no management endpoint and no
-educator control exists yet.
+`may_manage()` is the single, provable authority relation Phase 12B.2 needed, and that phase is now
+built on it: `POST /api/accommodation/read-along` authorizes **only** through `may_manage()`, so a
+learner cannot accommodate themselves, a classmate cannot, an unrelated teacher cannot, and a legacy
+display-name row cannot be accommodated at all. Because authority is re-derived on every call, a class
+move transfers it in both directions immediately and a stale roster copy restores nothing. See
+[read-along-accommodation.md](read-along-accommodation.md).

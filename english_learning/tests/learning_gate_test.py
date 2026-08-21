@@ -334,9 +334,17 @@ for not_a_key in ("english.prea1.taipei.zoo", LESSON, "english.prea1.taipei"):
 # §8: higher-level blocks are NOT invented. Phase 3D added authoritative LESSON completion, but no
 # production lesson declares a completionPolicy, so the block must stay empty — and unit/course
 # completion still does not exist at all.
+# Phase 12B.2 adds exactly ONE key to this surface: readAlongMode, the input mode the server
+# permits for THIS account. It is here because the learner's own page must know which control to
+# draw. It carries no reason, no actor and no other account's state -- there is nothing else to
+# carry, because nothing else is stored.
 assert set(st) == {"qualifications", "activityCompletions", "lessonCompletions",
                    "lessonCompletionHistory", "sttProgress", "matchingProgress",
-                   "roleplayProgress", "rewardLedger", "activityScores"}, st.keys()
+                   "roleplayProgress", "rewardLedger", "activityScores",
+                   "readAlongMode"}, st.keys()
+assert st["readAlongMode"] == "speech", "an account with no accommodation reads as speech"
+for leak in ("readAlongModeBy", "readAlongModeAt", "reason", "joinedClass", "salt", "hash"):
+    assert leak not in st, "the learning state must not expose " + leak
 # Phase 5E: the ledger mirrors what was actually paid — activity passes only. No lesson or
 # campaign reward exists in production, so nothing else can appear here.
 assert sorted(e["scope"] for e in st["rewardLedger"].values()) == ["activity"], st["rewardLedger"]

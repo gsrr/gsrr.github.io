@@ -194,15 +194,26 @@ no scoring backend at all, the read-along *level tab* still unlocks locally so a
 mid-lesson. That is local display and tab progression only — it never becomes server-side evidence,
 and it never grants lesson mastery or Gold.
 
-## Not in this phase
+## Not in this phase — and what came after it
 
-No accessibility accommodation. A learner with no microphone, a denied permission or a speech
-limitation still cannot reach mastery, because read-along remains required in all 57 lessons. That is
-a real product gap, audited in Phase 12A and deliberately left for Phase 12B.2 — it needs a
-server-owned, non-self-asserted substitute, not an availability fix.
+No accessibility accommodation was built here. A learner with no microphone, a denied permission or a
+speech limitation still could not reach mastery, because read-along is required in all 57 lessons.
+That was a real product gap, audited in Phase 12A: an availability fix cannot close it, because the
+learner is not waiting on a slow model — the only accepted *input* was their voice.
 
-**Phase 12B.2 was started and stopped during its authority audit**, because the server could not
-prove which learner a teacher was entitled to act on. That prerequisite is now repaired — see
-[class-authority.md](class-authority.md) for the authoritative membership model and the canonical
-`may_manage()` relation. The accommodation itself remains **not implemented**: there is no
-accommodation flag, no typed Read Along, no management endpoint and no educator control.
+**Phase 12B.2 was first started and stopped during its authority audit**, because the server could
+not prove which learner a teacher was entitled to act on. That prerequisite was repaired in Phase
+12B.1.2 — see [class-authority.md](class-authority.md) for the authoritative membership model and the
+canonical `may_manage()` relation.
+
+The accommodation itself now exists: an educator may permit a learner to satisfy the **same** required
+Read Along activity by typing the sentence instead of speaking it, scored by the **same**
+`stt_scoring.score_sentence` against the **same** 80% mark, through the **same**
+`record_read_along()` settlement. Nothing on this page changed: the speech path, its client timeout,
+its startup probe, its admission gate and its reconciliation are all untouched, and typed submissions
+never enter the audio path at all — a separate route, no `transcribe()`, no ffmpeg, no reconciliation,
+since there is no slow inference to reconcile. See
+[read-along-accommodation.md](read-along-accommodation.md).
+
+Everything on this page therefore still applies in full to every learner who reads aloud, which
+remains the default for every account.

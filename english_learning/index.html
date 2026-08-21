@@ -770,6 +770,25 @@
   #recBtn    { background: #ef4444; color: #fff; }
   #recBtn.recording { background: #b91c1c; animation: pulse 1s infinite; }
   #myPlayBtn { background: #16a34a; color: #fff; }
+  /* Phase 12B.2 — typed Read Along. Same activity, same sentences, different input. */
+  .typed-read { max-width: 560px; margin: 10px auto 0; text-align: left; }
+  .typed-read-label { display: block; font-size: 14px; font-weight: 700; color: #e2e8f0; margin-bottom: 6px; }
+  .typed-read-hint { font-size: 12px; color: #94a3b8; margin: 0 0 6px; }
+  #typedReadInput {
+    width: 100%; box-sizing: border-box; min-height: 64px; padding: 10px 12px;
+    font: inherit; font-size: 16px; line-height: 1.4; color: #0f172a;
+    background: #fff; border: 2px solid #64748b; border-radius: 10px; resize: vertical;
+  }
+  #typedReadInput:focus-visible, #typedReadInput:focus { outline: 3px solid #38bdf8; outline-offset: 2px; border-color: #38bdf8; }
+  .typed-read-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+  #typedCheckBtn { background: #2563eb; color: #fff; }
+  #typedCheckBtn:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+  /* the educator control on the Teacher / Parent dashboard */
+  .ra-mode { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; font-size: 13px; color: #cbd5e1; cursor: pointer; }
+  .ra-mode input { width: 18px; height: 18px; margin: 1px 0 0; flex: none; }
+  .ra-mode input:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+  .ra-mode-note { display: block; font-size: 12px; color: #94a3b8; margin-top: 2px; }
+  .ra-mode-status { font-size: 12px; margin: 4px 0 0 26px; min-height: 1em; }
   #speedBtn  { background: #f59e0b; color: #fff; min-width: 64px; }
   #checkBtn  { background: #0d9488; color: #fff; }
   .pron-result { text-align: center; margin-top: 10px; font-size: 18px; }
@@ -2777,6 +2796,16 @@
         <button id="recBtn">🎤 Record</button>
         <button id="myPlayBtn" disabled>▶ Play</button>
       </div>
+      <!-- Phase 12B.2: shown ONLY when the server says this account's Read Along input mode is
+           "typed". It replaces the recording controls for the same required activity. -->
+      <div id="typedRead" class="typed-read hidden">
+        <label class="typed-read-label" for="typedReadInput">Read Along — Type what you read</label>
+        <p class="typed-read-hint" id="typedReadHint">Listen to the sentence, read it aloud if you can, then type it here. Press Enter to check.</p>
+        <textarea id="typedReadInput" rows="2" autocomplete="off" autocapitalize="sentences" spellcheck="false" aria-describedby="typedReadHint"></textarea>
+        <div class="typed-read-actions">
+          <button id="typedCheckBtn" type="button">✓ Check reading</button>
+        </div>
+      </div>
       <div class="status" id="status">Tap "Listen" to hear it, then record.</div>
       <div id="pronResult" class="pron-result hidden"></div>
       <!-- 全部句子結束後的選擇 -->
@@ -3719,6 +3748,9 @@
   const shadowActions  = document.querySelector(".shadow-actions");
   const pronResult     = document.getElementById("pronResult");
   const speedBtn       = document.getElementById("speedBtn");
+  const typedRead      = document.getElementById("typedRead");
+  const typedReadInput = document.getElementById("typedReadInput");
+  const typedCheckBtn  = document.getElementById("typedCheckBtn");
 
   // 跟讀播放速度：可循環切換 1× → 0.75× → 0.5×（慢速方便聽清楚）
   const shadowSpeeds = [{ rate: 1, label: "🐢 1×" }, { rate: 0.75, label: "🐢 0.75×" }, { rate: 0.5, label: "🐌 0.5×" }];
@@ -3737,6 +3769,7 @@
   let pronScores = {};   // { 句子index: 該句最佳發音分數 0-100 }
   let isRecording = false;
   let isScoring = false; // 計分中（送後端 Whisper 等回應）：此時不能再按 Record
+  let typedDone = {};    // Phase 12B.2: { 句子index: true } — this sentence has been submitted as text
   let pronRec = null;    // 發音辨識（與錄音同時進行）
 
   function showShadowFinish() {
@@ -3763,6 +3796,23 @@
     shadowWho.textContent = line.who + (line.gender === "male" ? " (boy)" : " (girl)");
     shadowText.textContent = line.text;
     prevBtn.disabled = idx === 0;
+    // Phase 12B.2: an educator-authorized account reads the SAME sentence and types it instead of
+    // recording it. Listen stays — the accommodation is the answer, not the model audio.
+    const typedMode = readAlongTypedAllowed();
+    recBtn.hidden = typedMode;
+    myPlayBtn.hidden = typedMode;
+    typedRead.classList.toggle("hidden", !typedMode);
+    if (typedMode) {
+      const done = !!typedDone[idx];
+      typedReadInput.value = "";
+      typedReadInput.disabled = isScoring;
+      typedCheckBtn.disabled = isScoring;
+      nextBtn.disabled = !done;
+      statusEl.textContent = done
+        ? "Type it again to improve your score, or tap › for the next sentence."
+        : "Listen 🔊, then type this sentence to continue.";
+      return;
+    }
     // 這句是否已有錄音
     const recorded = !!recordings[idx];
     myPlayBtn.disabled = !recorded;
@@ -3788,6 +3838,9 @@
   /* 錄音 */
   recBtn.addEventListener("click", async () => {
     if (isScoring) return;                       // 計分中，先等分數出來
+    // Phase 12B.2: typed mode must never reach the microphone, even if this hidden button is somehow
+    // activated. Hiding a control is presentation; this is the client-side refusal.
+    if (readAlongTypedAllowed()) return;
     if (isRecording) { stopRecording(); return; }
     if (/FBAN|FBAV|FB_IAB|Instagram/i.test(navigator.userAgent || "")) {
       statusEl.textContent = "🎤 Recording needs an external browser (⋯ menu → Open in external browser)."; return;
@@ -4068,6 +4121,84 @@
   }
   myPlayBtn.addEventListener("click", playMyRecording);
 
+  // ===== Phase 12B.2 — submit typed Read Along =====
+  // Deliberately NOT a branch inside scorePronunciation: this path has no blob, no MediaRecorder, no
+  // microphone permission, no /api/stt call and no timeout reconciliation. It only posts text and
+  // reads back the server's verdict. The score, the pass decision and any Gold are decided by the
+  // server through the same record_read_along() the speech path uses; nothing here computes them.
+  function submitTypedReading() {
+    if (isScoring) return;
+    if (!readAlongTypedAllowed()) return;      // the endpoint refuses too; this avoids a pointless call
+    const text = typedReadInput.value;
+    if (!text || !text.trim()) {
+      statusEl.textContent = "Type the sentence first, then tap Check reading.";
+      typedReadInput.focus();
+      return;
+    }
+    const aid = readAlongActivityId(currentArticleKey), tok = authToken(), sIdx = idx;
+    if (!aid || !tok) {
+      pronResult.innerHTML = sttFailHTML("⚠️ Please log in again to save your read-along score.");
+      pronResult.classList.remove("hidden");
+      return;
+    }
+    isScoring = true;
+    typedCheckBtn.disabled = true;
+    typedReadInput.disabled = true;
+    prevBtn.disabled = true;                   // same navigation lock as speech: no cross-sentence scores
+    nextBtn.disabled = true;
+    pronResult.innerHTML = '<div style="font-size:13px;color:#94a3b8">🎯 Checking…</div>';
+    pronResult.classList.remove("hidden");
+    fetch(withRoom("/api/learning/read-along/typed?token=" + encodeURIComponent(tok)),
+          { method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ activityId: aid, sentenceIndex: sIdx, text: text }) })
+      .then(r => {
+        if (r.ok) return r.json();
+        return r.json().catch(() => null).then(j => {
+          const err = new Error("HTTP " + r.status);
+          err.status = r.status;
+          err.reason = (j && j.reason) || "";
+          throw err;
+        });
+      })
+      .then(d => {
+        if (!d || !d.authoritative) throw new Error((d && d.error) || "not scored");
+        typedDone[sIdx] = true;
+        noteLessonCompletion(d);               // typed reading can finish the lesson, exactly as speech can
+        sttAuthPct = d.activityPct;
+        pronScores[sIdx] = d.score;            // display mirror; the server keeps the best per sentence
+        showPron(d.target != null ? d.target : script[sIdx].text, d.transcript, d.score);
+      })
+      .catch(err => {
+        let msg;
+        if (err && err.reason === "typed_not_enabled") {
+          msg = "⚠️ Typed Read Along is not enabled for this account. Ask your teacher.";
+          myReadAlongMode = "speech";          // the server just told us this mirror was stale
+        } else if (err && err.status === 401) {
+          msg = "⚠️ Please log in again to save your read-along score.";
+        } else if (err && err.status) {
+          msg = "⚠️ Could not check your reading just now. Please try again.";
+        } else {
+          msg = "⚠️ Could not reach the server. Check your connection and try again.";
+        }
+        pronResult.innerHTML = sttFailHTML(msg);
+        pronResult.classList.remove("hidden");
+      })
+      .finally(() => {
+        isScoring = false;
+        typedCheckBtn.disabled = false;
+        typedReadInput.disabled = false;
+        prevBtn.disabled = idx === 0;
+        nextBtn.disabled = !typedDone[idx];
+        if (!typedRead.classList.contains("hidden")) typedReadInput.focus();
+      });
+  }
+  typedCheckBtn.addEventListener("click", submitTypedReading);
+  // keyboard submission: Enter checks, Shift+Enter still allows a line break in a longer passage
+  typedReadInput.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitTypedReading(); }
+  });
+
   /* 上一句 / 下一句（< > 箭頭） */
   prevBtn.addEventListener("click", () => { if (idx > 0) { stopRecordingIfAny(); synth.cancel(); idx--; renderShadow(); } });
   nextBtn.addEventListener("click", () => {
@@ -4088,7 +4219,10 @@
       const scoredCount = Object.keys(pronScores).length;
       if (sttAuthPct != null) {
         recordScore(2, sttAuthPct, 100);
-        shadowScore.textContent = "🎤 Pronunciation: " + sttAuthPct + "% (" + scoredCount + "/" +
+        // Phase 12B.2: the number is the same server-verified activity percentage in both modes, but
+        // calling a typed learner's result "Pronunciation" would be untrue.
+        shadowScore.textContent = (readAlongTypedAllowed() ? "⌨ Reading: " : "🎤 Pronunciation: ") +
+          sttAuthPct + "% (" + scoredCount + "/" +
           script.length + " sentences scored · server-verified)";
         shadowScore.classList.remove("hidden");
       } else if (scoredCount > 0) {
@@ -4120,7 +4254,7 @@
 
   /* 重來 */
   shadowRetry.addEventListener("click", () => {
-    idx = 0; recordings = {}; pronScores = {}; sttAuthPct = null;
+    idx = 0; recordings = {}; pronScores = {}; typedDone = {}; sttAuthPct = null;
     renderShadow();
   });
 
@@ -5503,7 +5637,7 @@
     stopRecordingIfAny();
     idx = 0;
     recordings = {};
-    pronScores = {}; sttAuthPct = null;
+    pronScores = {}; typedDone = {}; sttAuthPct = null;
     renderDialogue();
     renderShadow();
     currentScene = article.scene || "park-ball";
@@ -7964,12 +8098,20 @@
         if (cb) cb();
       }).catch(() => { if (cb) cb(); });
   }
+  // Phase 12B.2 — which Read Along INPUT the server permits for this account. The server is the
+  // only source: an educator sets it through may_manage(), the learner cannot, and the typed endpoint
+  // re-checks it on every submission. This mirror decides which controls to draw, nothing more.
+  let myReadAlongMode = "speech";
+  function readAlongTypedAllowed() { return myReadAlongMode === "typed"; }
   function loadLearningState(cb) {
     const t = authToken();
-    if (!t) { myQualifications = new Set(); if (cb) cb(); return; }
+    if (!t) { myQualifications = new Set(); myReadAlongMode = "speech"; if (cb) cb(); return; }
     fetch("/api/learning/state?token=" + encodeURIComponent(t)).then(r => r.ok ? r.json() : null)
       .then(j => {
         myQualifications = new Set(Object.keys((j && j.qualifications) || {}));
+        // anything other than the server's explicit "typed" means speech, so a missing or malformed
+        // response can only ever fall back to today's behaviour
+        myReadAlongMode = (j && j.readAlongMode === "typed") ? "typed" : "speech";
         // Phase 5F: mirror ONLY the cosmetic grants. Amounts, grant keys and timestamps are ledger
         // internals and are deliberately dropped here rather than rendered anywhere.
         myCosmetics = Object.keys((j && j.rewardLedger) || {})
@@ -10034,8 +10176,27 @@
       const avg = pcts.length ? Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length) : null;
       const rd = (st.read && st.read.dates) ? streakFromDates(st.read.dates) : null;
       const streakTxt = rd ? ' · 🔥' + rd.streak + 'd' + (rd.today > 0 ? ' ✅today' : '') : '';
+      // Phase 12B.2: the Read Along input control. `__mode` is set only for AUTHORITATIVE members,
+      // so legacy name-keyed rows and the admin overview never render it -- may_manage() could not
+      // authorize them anyway, and offering a control that must fail would be a lie.
+      let modeHTML = "";
+      if (useLabel && st.__mode) {
+        const on = st.__mode === "typed";
+        const boxId = "raMode_" + key.replace(/[^A-Za-z0-9_]/g, "_");
+        modeHTML =
+          '<label class="ra-mode" for="' + boxId + '">' +
+            '<input type="checkbox" id="' + boxId + '" class="ra-mode-box" data-account="' +
+              escapeHtml(key) + '"' + (on ? ' checked' : '') + '>' +
+            '<span>Allow typed Read Along' +
+              '<span class="ra-mode-note">Lets this learner type the sentence instead of speaking it. ' +
+              'Same sentences, same scoring, same pass mark.</span>' +
+            '</span>' +
+          '</label>' +
+          '<p class="ra-mode-status" id="' + boxId + '_st" role="status"></p>';
+      }
       return '<div class="dash-card"><div class="dash-head">' + (st.avatar || "👦") + ' <b>' + name + '</b>' +
-             (avg != null ? ' · practice avg ' + avg + '%' : '') + streakTxt + '</div><div class="dash-lvs">' + rows + '</div></div>';
+             (avg != null ? ' · practice avg ' + avg + '%' : '') + streakTxt + '</div><div class="dash-lvs">' + rows + '</div>' +
+             modeHTML + '</div>';
     }).join("");
   }
   // Phase 12B.1.2: `members` is the authoritative roster -- each key is a student ACCOUNT whose own
@@ -10054,7 +10215,9 @@
         const m = members[acct] || {};
         // key the card by ACCOUNT so two learners sharing a display name stay distinct
         byName[acct] = Object.assign({}, m.progress || {},
-          { __label: (m.displayName || acct) + " (" + acct + ")" });
+          { __label: (m.displayName || acct) + " (" + acct + ")",
+            // the server reports this per member; an absent/unknown value shows as speech
+            __mode: m.readAlongMode === "typed" ? "typed" : "speech" });
       });
       html += '<div class="tp-h">Class members</div>' + studentCardsHTML(byName, true);
     }
@@ -10064,8 +10227,47 @@
         'were signed in, so they are names rather than accounts. They are kept for reference and ' +
         'confer no management authority.</p>' + studentCardsHTML(legacy);
     }
-    document.getElementById("dashboard").innerHTML = html ||
+    const host = document.getElementById("dashboard");
+    host.innerHTML = html ||
       '<p class="screen-intro">No students yet. Ask your students to sign in and join with your class code.</p>';
+    // Phase 12B.2: the checkbox only REQUESTS the change. The server decides through may_manage(),
+    // and the box is reconciled to whatever the server actually reports back.
+    host.querySelectorAll(".ra-mode-box").forEach(function (box) {
+      box.addEventListener("change", function () {
+        const acct = box.getAttribute("data-account") || "";
+        const want = box.checked ? "typed" : "speech";
+        const note = document.getElementById(box.id + "_st");
+        const say = function (txt, colour) {
+          if (note) { note.textContent = txt; note.style.color = colour; }
+        };
+        box.disabled = true;
+        say("Saving…", "#94a3b8");
+        fetch("/api/accommodation/read-along?token=" + encodeURIComponent(authToken()),
+              { method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ account: acct, mode: want }) })
+          .then(r => r.json().catch(() => null).then(j => ({ ok: r.ok, status: r.status, j: j })))
+          .then(res => {
+            if (res.ok && res.j && res.j.readAlongMode) {
+              box.checked = res.j.readAlongMode === "typed";     // trust the server, not the click
+              say(box.checked
+                    ? "Typed Read Along is on for this learner."
+                    : "Typed Read Along is off — this learner speaks the sentence.", "#4ade80");
+              return;
+            }
+            box.checked = !box.checked;                          // refused: put the control back
+            const reason = res.j && res.j.reason;
+            say(res.status === 401 ? "Please log in again."
+                : reason === "not_authorized" ? "You cannot change this learner's settings."
+                : "Could not save that. Please try again.", "#fca5a5");
+          })
+          .catch(() => {
+            box.checked = !box.checked;
+            say("Could not reach the server. Please try again.", "#fca5a5");
+          })
+          .finally(() => { box.disabled = false; });
+      });
+    });
   }
   // 後台總管：看所有帳號/學生（需 ADMIN_KEY）
   function renderAdmin(data) {
