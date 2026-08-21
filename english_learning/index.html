@@ -1070,11 +1070,15 @@
   /* the selected territory: always legible, always obvious */
   .geo-region.geo-sel { stroke: #fff !important; stroke-width: 2.4 !important;
     vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 6px rgba(255,255,255,.85)); }
-  /* a valid attack SOURCE, while planning. Visually distinct from the target. */
+  /* A valid attack SOURCE and the TARGET must be distinguishable WITHOUT colour, because a colour
+     pair is exactly what a red/green-blind player cannot separate -- and this one decides where an
+     army marches from. The source is DASHED, the target is a solid heavier outline; the ownership
+     fill underneath already carries its own legend swatch. */
   .geo-region.geo-src { stroke: #22d3ee !important; stroke-width: 2.6 !important;
-    vector-effect: non-scaling-stroke; cursor: crosshair;
+    stroke-dasharray: 5 3 !important; vector-effect: non-scaling-stroke; cursor: crosshair;
     filter: drop-shadow(0 0 7px rgba(34,211,238,.9)); }
-  .geo-region.geo-tgt { stroke: #f87171 !important; stroke-width: 3 !important;
+  .geo-region.geo-tgt { stroke: #f87171 !important; stroke-width: 3.4 !important;
+    stroke-dasharray: none !important;
     vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 8px rgba(248,113,113,.95)); }
 
   /* ===== Phase 12C: the ACTION TRAY ==============================================================
@@ -1155,7 +1159,7 @@
      WRONG coordinate space: pan/zoom is a CSS transform on the svg element, so anything in a sibling
      div stays put while the geography moves under it. They are therefore SVG <g> groups INSIDE the
      svg now, authored in the map's own viewBox units, which makes them anchored to geography for
-     free -- pan, zoom and the continent drill all move and clip them with the land. Same class names,
+     free -- the camera moves and clips them with the land. Same class names,
      same documented layer order, same pointer-events:none contract.
      Decoration is never a gameplay object: both layers are pointer-events:none, so a click always
      reaches the territory path underneath. ============================================================ */
@@ -1817,7 +1821,6 @@
     background: linear-gradient(#5b4326, #3e2c17); border: 1.5px solid rgba(255,236,200,.85);
     box-shadow: 0 2px 0 rgba(0,0,0,.35), 0 3px 7px rgba(0,0,0,.3); letter-spacing: .2px;
     paint-order: stroke; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
-  .geo-lab.drill { background: linear-gradient(#7a4bbd, #52308a); border-color: #f4e9ff; font-size: 14px; }
   .geo-lab.sel { background: linear-gradient(#3fae5f, #1d7c3c); border-color: #fff; z-index: 4; }
   .geo-svg { width: 100%; height: auto; display: block; border-radius: 20px; background: transparent; position: relative; z-index: 0;
     /* ONE shadow for the whole land layer: thick EXTERNAL separation from the sea without
@@ -1836,7 +1839,6 @@
   .geo-locked { fill: #8fa1b3 !important; opacity: .4; }   /* 沒對應課、上鎖 */
   .geo-marker-c { fill: rgba(0,0,0,.28); pointer-events: none; }
   .geo-marker-pill { fill: rgba(15,23,42,.72); stroke: rgba(255,255,255,.55); stroke-width: 1; vector-effect: non-scaling-stroke; pointer-events: none; }
-  .geo-marker-pill.geo-marker-drill { fill: rgba(88,28,135,.9); }
   .geo-marker-t { fill: #fff; font-weight: 800; text-anchor: middle; dominant-baseline: central;
     paint-order: stroke; stroke: rgba(0,0,0,.4); stroke-width: 2px; pointer-events: none; }
   /* 10C.2R: below the board these were four separate stacked rows (legend, owners, replay, visitor).
@@ -1910,13 +1912,9 @@
   .geo-boss { text-align: center; margin-top: 14px; }
   .geo-boss-btn { background: #dc2626; color: #fff; font-weight: 800; padding: 12px 24px; border-radius: 14px; font-size: 16px; cursor: pointer; }
   .geo-boss-btn.done { background: #16a34a; }
-  .geo-drill { fill: #7c3aed !important; }                    /* 可下鑽的地區（容器）*/
-  /* Phase 10C: at the WORLD top altitude every country is a continent drill trigger, so .geo-drill
-     painted the entire planet one solid purple slab -- the first screen of the game read as a UI
-     control, not a board. Continents now get their own friendly land tints, the way a board game
-     colours its territory groups. No ownership is rendered at this altitude (colorize() skips drill
-     entries), so these cannot compete with an owner colour. Declared AFTER .geo-drill so the same
-     specificity resolves in source order. */
+  /* Continent tints: a board-game land palette, so the planet reads as terrain rather than as one
+     flat slab. Phase 12D: these are now purely a BASE fill -- colorize() paints ownership over them
+     at every zoom, which it could not do while every territory was a container. */
   .geo-cont-as { fill: #e9c46a !important; }   /* Asia        — warm gold  */
   .geo-cont-eu { fill: #a8c686 !important; }   /* Europe      — soft sage  */
   .geo-cont-af { fill: #e5a173 !important; }   /* Africa      — terracotta */
@@ -1926,7 +1924,6 @@
   .geo-cont-other { fill: #f2ddb0 !important; }
   .geo-cont:hover { filter: brightness(1.12) saturate(1.1) drop-shadow(0 0 6px rgba(255,255,255,.95));
     stroke: #3b2a12; stroke-width: 2; }
-  .geo-marker-drill { fill: rgba(88,28,135,.92); }
   .geo-leader { stroke: rgba(15,23,42,.5); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
   /* the highlighted/selected territory: a hard white ring plus a lift. Deliberately NOT a wide glow,
      which bleached the neighbours in the prototype, and deliberately not colour-only. */
@@ -1947,7 +1944,6 @@
        were labelling. placeMapLabels() still decides WHICH labels survive (it measures from its own
        font constant); this only shrinks what each surviving pill covers. */
     .geo-lab { font-size: 10.5px; padding: 2px 6px; border-radius: 8px; border-width: 1px; }
-    .geo-lab.drill { font-size: 11px; }
     .geo-region:hover { stroke-width: 1.4; }
     .geo-region.geo-hi { stroke-width: 1.8 !important; }
     .geo-isle-ring { stroke-width: 1.4; }
@@ -1961,13 +1957,12 @@
   .geo-idx .gi-no { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center;
     justify-content: center; font-weight: 800; font-size: 12px; color: #fff; background: #64748b; }
   .geo-idx.gi-mine .gi-no { background: #16a34a; } .geo-idx.gi-foe .gi-no { background: #f59e0b; }
-  .geo-idx.gi-open .gi-no { background: #2563eb; } .geo-idx.gi-drill .gi-no { background: #7c3aed; }
+  .geo-idx.gi-open .gi-no { background: #2563eb; }
   .geo-idx .gi-tx { min-width: 0; }
   .geo-idx .gi-rg { font-weight: 700; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .geo-idx .gi-ls { color: #aebacd; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .geo-back { background: #334155; color: #e8edf5; padding: 7px 14px; border-radius: 10px;
     font-size: 13px; font-weight: 700; cursor: pointer; margin-bottom: 10px; }
-  .gl-drill::before { background: #7c3aed; }
   /* 占地盤 */
   .terr-banner { max-width: 360px; margin: 0 auto 10px; padding: 7px 12px; border-radius: 10px; background: #fff7ed; border: 1px solid #fed7aa; font-size: 13px; color: #7c2d12; text-align: center; }
   .terr-link { color: #2563eb; cursor: pointer; font-weight: 700; white-space: nowrap; }
@@ -3696,18 +3691,11 @@
       // authoritative question is "has the learner actually done this lesson?", which is mastery or
       // a currently-satisfied policy. The region panel it returns to decides eligibility itself
       // (and the server decides the claim), so this stays pure navigation.
-      const occupy = pendingOccupy && currentArticle &&
-        pendingOccupy.file === currentArticle.file &&
-        (masteredOf(currentArticle.file) || passingOf(currentArticle.file));
-      if (occupy) {
-        const po = pendingOccupy;
-        synth.cancel(); stopListenL1(); stopRecordingIfAny();
-        hideLessonSummary();
-        selectLevel(selLevelIdx);            // 回到地圖
-        if (po && po.reopen) po.reopen();    // 直接開啟該據點的佔領+部署面板
-        return;                              // 不顯示 levelFinish 按鈕
-      }
-      nextLevelBtn.textContent = "✅ Back to lessons";
+      // Phase 12D: a "pass the lesson, then jump straight back to occupy that territory" hop
+      // used to sit here. Its only setter was the region modal's gated-occupy branch, which was
+      // unreachable (no playable territory declares a requirement), so this could never fire.
+      // Occupation now happens on the board, where the territory is.
+nextLevelBtn.textContent = "✅ Back to lessons";
       nextLevelBtn.dataset.mode = "back";
     }
     levelFinish.classList.remove("hidden");
@@ -5367,6 +5355,15 @@
     // Phase 11F: the same phone-gutter reclaim for My Progress and the management screens.
     document.body.classList.toggle("progress-mode", el === screenProfileStats);
     document.body.classList.toggle("admin-mode", el === screenTeacher || el === screenAdmin);
+    // Phase 12D: leaving the board remembers where the camera was, so coming back lands where
+    // the player left, and CANCELS any half-built attack/occupy plan so no stale source/target id
+    // survives navigation. Both are view concerns; neither touches authority, and the server would
+    // refuse a stale plan anyway -- this is about not offering a button that cannot work. Done here,
+    // the one place navigation is observed, so no caller has to remember.
+    if (el !== screenArticle && !screenArticle.classList.contains("hidden")) {
+      if (typeof geoRememberView === "function") geoRememberView();
+      if (typeof window.geoTrayClose === "function") window.geoTrayClose();
+    }
     [screenLanding, screenRole, screenProfile, screenStudentAcct, screenLevel, screenRooms, screenProfileStats, screenHome, screenArticle, screenLearn, screenBattle, screenTeacher, screenAdmin, screenLeader].forEach(s => s.classList.add("hidden"));
     el.classList.remove("hidden");
     const _card = document.querySelector(".card");
@@ -6030,9 +6027,9 @@
   }
   userChip.addEventListener("click", () => { if (userName) openProfileStats(); });   // 老師(無 userName)點名字不動作
   document.getElementById("backFromStats").addEventListener("click", () => {
-    // Phase 7E.3: return to the surface that opened Profile. The map case restores the exact
-    // altitude the player was on — including a drill-down sub-map — by replaying drawGeo's own
-    // last arguments, so Taipei does not silently become Taiwan.
+    // Phase 7E.3: return to the surface that opened Profile. Phase 12D: there is no longer an
+    // "altitude" to restore -- one continuous World -- so this replays drawGeo's own last arguments
+    // simply to redraw the same board rather than to rebuild a container the player was inside.
     const to = profileReturnTo && profileReturnTo.to;
     profileReturnTo = null;
     if (to === "home") { openLearningHome(); return; }
@@ -6709,7 +6706,13 @@
   // the wrong gold and, because a learning reward credits the CURRENT room's economy, paying a
   // once-only reward into a room the player was not in.
   function setActiveRoom(code) { roomCode = (code || "").toUpperCase(); }
-  function clearActiveRoom() { roomCode = ""; territory = null; myEcon = null; }
+  // Phase 12D: a remembered camera belongs to ONE room's world, so leaving the room forgets it
+  // along with that room's caches. (The restore path also compares the room, so this is belt and
+  // braces -- but a stale position should not outlive the thing it described.)
+  function clearActiveRoom() {
+    roomCode = ""; territory = null; myEcon = null;
+    if (typeof geoForgetView === "function") geoForgetView();
+  }
   // 把目前房間(?room=)接到任何「世界」API 上，讓後端讀到正確的房間世界
   // Phase 8A.1: this ALWAYS names the target room now. Outside a room the player is in the
   // single-player sandbox, whose world has always been the server's default room — so the sandbox
@@ -6807,6 +6810,12 @@
   // 「我的帝國」面板：總人口/兵力/每日產能 + 所有領地與守軍
   function openEmpire() {
     if (!authToken()) return;
+    // Phase 12D: Empire is a modal, so it never passes through showScreen() -- but it still takes the
+    // board away from the player. A half-built attack plan must not survive behind it: the highlights
+    // it is aimed with are hidden, and recruiting or building here is exactly the kind of thing that
+    // changes what the plan was based on. The camera is remembered for the same reason.
+    if (typeof geoRememberView === "function") geoRememberView();
+    if (typeof window.geoTrayClose === "function") window.geoTrayClose();
     loadEconomy(function () { loadTerritory(renderEmpireModal); });
     renderEmpireModal();   // 先用快取畫
   }
@@ -6973,11 +6982,14 @@
         (armory ? '' : ' disabled title="Build an Armory here first"') + '>Research ▸</button></td></tr>';
     });
     html += '</tbody></table></div>' +
-      '<p class="emp-note">⚠️ Technology is researched <b>per territory</b> and needs an Armory in ' +
-      'that same territory: the forge of the territory you attack <i>from</i> strengthens your ' +
-      'attack, and the armour of the territory being attacked strengthens its defence. A territory ' +
-      'you conquer arrives with no buildings and no technology. Levels cap at ' + TECH_MAX + '. ' +
-      'These are the current game rules, unchanged by this redesign.</p><div id="empTechPanel"></div>';
+      '<p class="emp-note">\u2139\ufe0f <b>Managed here, but stored and effective per territory.</b> ' +
+      'This screen gathers your research in one place \u2014 it does not pool it. Each level is ' +
+      'researched for one territory and needs an Armory <b>in that same territory</b>: the forge of ' +
+      'the territory you attack <i>from</i> strengthens your attack, and the armour of the territory ' +
+      'being attacked strengthens its defence. A territory you conquer arrives with no buildings and ' +
+      'no technology, so its research starts again. Levels cap at ' + TECH_MAX + ' and cost ' +
+      TECH_COST.atk.join(' / ') + ' gold. These are the current game rules; this screen only ' +
+      'reorganises where you read and press them.</p><div id="empTechPanel"></div>';
     body.innerHTML = html;
     body.querySelectorAll("[data-tech]").forEach(b => b.addEventListener("click", () => {
       openBuildingDetail(b.dataset.tech, "armory", reopen);
@@ -7043,8 +7055,11 @@
   // GAME_MAPS is the set of PLAYABLE surfaces. There is one: World. Learning is curriculum only and
   // selects no geography, so nothing here is keyed by a course. The Taiwan/China/Taipei datasets stay
   // in world-data as dormant data — there is deliberately no gameplay route into them, and the old
-  // Taiwan->Taipei drill container is gone with the rest.
-  // grouped:true → 分洲兩層下鑽（世界地圖）
+  // Taiwan->Taipei container is gone with the rest.
+  // Phase 12D: `grouped` is NOT an interaction mode. It means "this map has continent metadata", used
+  // for exactly two things: choosing which SVG paths are territories (it excludes the background
+  // frame) and deriving the continent tint plus the camera presets. No spec declares `drill` and the
+  // client no longer implements one.
   const GAME_MAPS = {
     "world":  { file: "maps/world.svg",  label: "World 世界 🗺️", grouped: true }
   };
@@ -7237,15 +7252,15 @@
     if (!spec || spec.file !== "maps/world.svg") return null;      // authored in world coordinates
     const NSU = "http://www.w3.org/2000/svg";
     const lean = window.innerWidth <= 560;    // phone: keep the majors, drop the minor detail
-    // ---- altitude compensation (Phase 10C.2R) ----
-    // Decorations live in map coordinates, which is what anchors them to geography -- and it also
-    // means the continent drill magnifies them by however much it narrows the viewBox (~1.48x for
-    // Europe, ~2.7x for Asia, where mountains started to dominate the political map). Counteract
-    // most of that at BUILD time, from the viewBox alone: the translate is untouched, so anchoring,
-    // pan/zoom and click-through are all unaffected, and a drilled board simply shows slightly
-    // larger scenery instead of hugely larger scenery.
+    // ---- altitude compensation (Phase 10C.2R, now inert) ----
+    // This existed because the continent drill NARROWED the viewBox, magnifying map-coordinate
+    // decoration by up to ~2.7x. Phase 12C removed that rewrite: the viewBox is always the authored
+    // 1010x666, so `alt` is always 1 and the compensation below always resolves to 1. It is kept as a
+    // single honest expression rather than deleted, because a future map with a different authored
+    // viewBox would need exactly this -- and it now costs one division instead of implying a
+    // navigation mode that no longer exists.
     const _vb = (svg.getAttribute("viewBox") || "0 0 1010 666").split(/\s+/).map(Number);
-    const alt = 1010 / Math.max(1, _vb[2] || 1010);     // how much this altitude magnifies the map
+    const alt = 1010 / Math.max(1, _vb[2] || 1010);     // authored-vs-actual map width; 1 on the World
     const DECO_ALT_TARGET = 1.2;                        // desired apparent size vs world altitude
     const comp = alt <= 1.02 ? 1 : Math.min(1, DECO_ALT_TARGET / alt);
     let defs = svg.querySelector("defs.geo-deco-defs");
@@ -7319,7 +7334,6 @@
   // territory look like it required a lesson; the client incremented it from a localStorage average
   // and no server authority ever read it. Legacy `passcnt` still sitting in saved economy files is
   // simply ignored — nothing reads it, and nothing rewrites it.
-  let pendingOccupy = null;   // 上完課要直接跳佔領的據點：{ file, reopen() }（取代舊的小遊戲賺點數升級卡片流程）
   // THE ONE resolver: SVG path -> canonical territory id. Catalog-driven (svgPathKeys index
   // already encodes china multi-path grouping); documented offline fallback strips the china
   // suffix so pLN_1/pLN_2 still collapse to china:pLN even if the catalog didn't load.
@@ -7401,6 +7415,23 @@
   let hudSelKey = null;
   let hudRefresh = function () {};   // set by the HUD builder for the current map draw
   let geoSelectedKey = null;        // 目前選取的地區 key（一律顯示其標籤）
+  // ===== Phase 12D: camera + selection memory, for THIS SESSION ONLY =====
+  // Leaving the board and coming back (Academy, My Progress, Ranking, Multiplayer, Empire, a lesson)
+  // used to drop the player at the home camera with nothing selected, which is punishing when the
+  // thing you were looking at is one territory out of 250.
+  //
+  // This is a VIEW concern and it stays one: it lives in a plain module variable, never in
+  // localStorage and never in authoritative game data, so it cannot be replayed, forged or read by
+  // another player, and it dies with the tab. It grants nothing -- a restored selection is exactly as
+  // powerless as a fresh click, and every action still asks the server.
+  let geoView = null;               // { room, key, s, tx, ty } — remembered board position
+  function geoRememberView() {
+    if (!geoCam) return;
+    const st = geoCam.state();
+    geoView = { room: (typeof roomCode !== "undefined" ? roomCode : ""), key: hudSelKey,
+                s: st.s, tx: st.tx, ty: st.ty };
+  }
+  function geoForgetView() { geoView = null; }
   let geoCam = null;                // Phase 12C: the current board's camera (focusRect/home/zoomBy)
   let geoFocusKey = null;           // Phase 12C: point the camera at a territory
   let geoOffScreen = null;          // Phase 12C: is a territory substantially outside the viewport?
@@ -7521,7 +7552,14 @@
     svg.addEventListener("click", e => { if (moved) { e.stopPropagation(); e.preventDefault(); } }, true);
     apply();
     // the camera API the board uses: nothing else may move the map
-    return { focusRect: focusRect, home: home,
+    // Phase 12D: restore() takes a previously reported state back. It goes through apply(), so the
+    // same clamp bounds a restored position as a dragged one -- a stale value from a differently
+    // sized window cannot leave the map off-screen.
+    function restore(ns, ntx, nty) {
+      s = Math.max(CAM_MIN, Math.min(CAM_MAX, Number(ns) || CAM_HOME));
+      tx = Number(ntx) || 0; ty = Number(nty) || 0; apply();
+    }
+    return { focusRect: focusRect, home: home, restore: restore,
              zoomBy: k => { const v = vp(); zoomAt(v.w / 2, v.h / 2, s * k); },
              state: () => ({ s: s, tx: tx, ty: ty }) };
   }
@@ -7579,6 +7617,8 @@
       // "navigate" (a continent, a selected territory) now asks the camera to look somewhere.
       const cam = attachPanZoom(svg, holder, (s, tx, ty) => {
         labelState = { s: s, tx: tx, ty: ty };
+        geoRememberView();       // Phase 12D: the last position this session was looking at
+
         // zoom BAND drives information density, in CSS and in the label filter alike. One map,
         // three presentation densities -- never three maps.
         holder.dataset.zoom = s < 2 ? "far" : (s < 4.2 ? "mid" : "near");
@@ -7591,7 +7631,6 @@
       const isRegion = spec.region || ((id, p) => !!p.getAttribute("aria-label"));   // 只認有名字的地區
       Array.prototype.filter.call(svg.querySelectorAll("path"), p => !isRegion(p.id, p)).forEach(p => { p.style.fill = "none"; p.style.pointerEvents = "none"; });
       let paths = Array.prototype.filter.call(svg.querySelectorAll("path"), p => isRegion(p.id, p));
-      const drill = spec.drill || {};
       const mapId = mapIdForSvg(spec.file);   // canonical 邏輯地圖 id（catalog 沒載到時為 null → 人口退回舊算法）
       // Phase 12C: continents are NOT containers. `grouped` still means "this map has continent
       // metadata", and that metadata is now used for two things only -- a visual tint and a camera
@@ -7655,19 +7694,15 @@
       // Australia; zoomed into Europe, tapping France selects France. Nothing "enters" a continent,
       // because a continent is not a place you can be in.
       const contBounds = {};      // continent -> bbox, for the camera presets only
+      // Phase 12D: the CONTAINER model is gone from the implementation, not merely unused. The
+      // Taiwan->Taipei sub-map container was retired with the per-level maps in 10A.3, the continent
+      // container in 12C, and `GAME_MAPS` declares exactly one playable surface with no `drill` key --
+      // so this branch could never run. A dormant second interaction architecture is what let one tap
+      // mean two things, so it is removed rather than left dormant. The Taiwan/China/Taipei DATA in
+      // world-data/ is untouched: this was a client spec field, not a parsed one.
       const seen = {}, partsByKey = {};
       paths.forEach(p => {
         const name = regionName(p);
-        if (drill[p.id]) {                       // 可下鑽的容器（點進去看子地區，像台北市那樣）
-          const sub = drill[p.id];
-          p.setAttribute("class", "geo-region geo-drill");
-          addTitle(p, name + " — zoom in ▸");
-          const open = () => drawGeo(sub, () => renderGeoMap(i, spec), i, lv);
-          p.addEventListener("click", open);
-          marker(p, name, " geo-marker-drill", { drill: true, open: open });
-          regionList.push({ p: p, drill: true, name: name, open: open });
-          return;
-        }
         const key = regionKey(spec, p);
         const pop = catalogPopulation(mapId, p.id, name);   // 人口一律取 catalog 的 gamePopulation(凍結值)
         const territoryId = mapId ? canonicalTerritoryId(mapId, p.id) : null;
@@ -7685,18 +7720,17 @@
         }
         haloIfTiny(p);                       // Phase 10C: make a tiny island findable
         addTitle(p, name + " · 👥" + pop);
-        const open = () => openRegion(key, name, pop, i);
-        // Phase 12C: a single tap SELECTS, and selecting is all it does. It no longer opens a
-        // modal: the HUD card describes the territory and the action tray offers what the server
-        // actually allows. Selection still grants nothing.
+        // Phase 12C: a single tap SELECTS, and selecting is all it does. Phase 12D removed the
+        // `open` closure each row used to carry -- it called the retired region modal, and the one
+        // consumer (a Region index row) now selects and points the camera instead.
         p.addEventListener("click", () => { if (window.hudSelect) window.hudSelect(key); });
         (partsByKey[key] || (partsByKey[key] = [])).push(p);   // 同一領地的所有 SVG path(多 path 國家)
         if (!seen[key]) {                    // 標籤/清單一領地只出現一次(如多 path 國家)
           seen[key] = 1;
-          marker(p, name, "", { key: key, open: open });
-          regionList.push({ p: p, key: key, territoryId: territoryId, name: name, pop: pop, open: open, parts: partsByKey[key] });
+          marker(p, name, "", { key: key });
+          regionList.push({ p: p, key: key, territoryId: territoryId, name: name, pop: pop, parts: partsByKey[key] });
         } else {
-          regionList.push({ p: p, key: key, territoryId: territoryId, name: name, pop: pop, open: open, dup: true });
+          regionList.push({ p: p, key: key, territoryId: territoryId, name: name, pop: pop, dup: true });
         }
       });
       // continent labels: CAMERA SHORTCUTS. They move the camera and nothing else -- no mode, no
@@ -7731,7 +7765,7 @@
         const partsByCanon = {};
         regionList.forEach(r => { if (r.key && r.p) (partsByCanon[r.key] || (partsByCanon[r.key] = [])).push(r.p); });
         regionList.forEach(r => {
-          if (r.drill || !r.key || !r.p) return;
+          if (!r.key || !r.p) return;
           const ct = TERR_CATALOG.terrById[r.key];
           const nbrs = (ct && ct.adjacentTerritoryIds) || [];
           const enter = () => { (partsByCanon[r.key] || []).forEach(p => p.classList.add("geo-adj-self")); nbrs.forEach(nb => (partsByCanon[nb] || []).forEach(p => p.classList.add("geo-adj-nbr"))); };
@@ -7791,8 +7825,8 @@
       };
       markerSpecs.forEach(L => {
         const el = document.createElement("div");
-        el.className = "geo-lab" + (L.drill ? " drill" : "") + (L.cont ? " cont" : "");
-        el.textContent = (L.drill ? "🏙 " : "") + L.label;
+        el.className = "geo-lab" + (L.cont ? " cont" : "");
+        el.textContent = L.label;
         lay.appendChild(el); L.el = el;
         const restW = (L.uw || 10) * PK;                           // 該區在 s=1 時的螢幕寬(px)
         // ===== Phase 12C semantic zoom =====
@@ -7804,17 +7838,21 @@
         if (L.cont) {
           L.priority = 1e6 + restW;
           L.minZoom = 0; L.maxZoom = 4.2;
+          // Phase 12D: wording matters here. These are camera presets, not containers, so they say
+          // "jump the camera to X" -- never "enter X" or "open X", and there is no Back-to-continent
+          // affordance anywhere to imply one. `World` is the camera-home button in the control
+          // cluster, which is the same kind of action.
           el.setAttribute("role", "button"); el.setAttribute("tabindex", "0");
-          el.title = "Move the camera to " + L.label;
-          el.setAttribute("aria-label", "Move the camera to " + L.label);
+          el.title = "Jump the camera to " + L.label + " (the territory you tap is still what gets selected)";
+          el.setAttribute("aria-label", "Jump the camera to " + L.label);
           // pad 1.15 keeps neighbouring geography in frame; minZoom guarantees the shortcut is a
           // zoom IN even for a continent whose bulk is still very wide (Asia)
           const go = ev => { ev.preventDefault(); ev.stopPropagation(); focusBounds(L.bounds, { pad: 1.15, minZoom: 2 }); };
           el.addEventListener("click", go);
           el.addEventListener("keydown", ev => { if (ev.key === "Enter" || ev.key === " ") go(ev); });
         } else {
-          L.priority = (L.drill ? 1e6 : 0) + restW;
-          L.minZoom = L.drill ? 0 : Math.max(0, 46 / Math.max(6, restW));
+          L.priority = restW;
+          L.minZoom = Math.max(0, 46 / Math.max(6, restW));
           L.maxZoom = Infinity;
         }
       });
@@ -7832,7 +7870,7 @@
         const cands = markerSpecs.map(L => {
           const fx = POX + tx + (L.cx - vx) * PK * s;
           const fy = POY + ty + (L.cy - vy) * PK * s;
-          const txt = (L.drill ? "🏙 " : "") + L.label;
+          const txt = L.label;
           const w = txt.length * FS * 0.56 + PADX, h = FS * 1.8;
           return { L: L, fx: fx, fy: fy, priority: L.priority,
             minZoom: L.minZoom, maxZoom: L.maxZoom,
@@ -7854,7 +7892,21 @@
         });
         _geoResizeHooked = true;
       }
-      cam.home();                // the opening World camera; also lays the labels out once
+      // Phase 12D: restore the camera and selection this session left behind, but only within the
+      // SAME room -- a different game is a different world, and carrying a position across would put
+      // the player somewhere they never were. Anything unexpected falls back to the home camera.
+      //
+      // Only STATE is set here. The HUD renderers live below and close over `const HUD`, so calling
+      // them from this point reaches into that binding's temporal dead zone and throws -- which is
+      // exactly the bug this comment replaces. hudRefresh() draws every slot a few lines later, from
+      // whatever hudSelKey holds by then.
+      const _room = (typeof roomCode !== "undefined" ? roomCode : "");
+      if (geoView && geoView.room === _room && isFinite(geoView.s) && geoView.s >= CAM_MIN) {
+        cam.restore(geoView.s, geoView.tx, geoView.ty);
+        if (geoView.key) hudSelKey = geoView.key;
+      } else {
+        cam.home();              // the opening World camera; also lays the labels out once
+      }
       // ===== Phase 10B: the re-entry panel, driven entirely by the server =====
       // The client NEVER decides whether re-entry applies. It asks, and it renders only what comes
       // back. A player who owns ground, or who can still claim a neutral territory, gets `available:
@@ -8003,9 +8055,12 @@
       // camera controls: zoom in / out / back to the World view. These move the CAMERA only --
       // no mode, no territory set, no eligibility.
       const camBar = document.createElement("div"); camBar.className = "geo-cam";
+      // Phase 12D: exactly one zoom/navigation mechanism, synced with wheel, pinch and drag because
+      // all four call the same camera. "World" is the camera-home preset, the same kind of action as
+      // a continent shortcut -- not a Back button out of a container.
       [["+", "Zoom in", () => cam.zoomBy(1.5)],
        ["\u2212", "Zoom out", () => cam.zoomBy(1 / 1.5)],
-       ["\u{1F30D}", "Back to the World view", () => cam.home()]].forEach(function (spec) {
+       ["\u{1F30D}", "Jump the camera to the whole World", () => cam.home()]].forEach(function (spec) {
         const b = document.createElement("button");
         b.type = "button"; b.textContent = spec[0];
         b.title = spec[1]; b.setAttribute("aria-label", spec[1]);
@@ -8185,6 +8240,11 @@
         HUD.tray.hidden = true; HUD.tray.innerHTML = "";
         markMap();
       }
+      // Phase 12D: a plan is scoped to LOOKING AT THE BOARD. Anything that takes the player away --
+      // Empire, the Academy, My Progress, Ranking, Multiplayer, a lesson, a logout -- cancels it, so
+      // no stale source/target id can survive navigation and be confirmed against a world that moved
+      // on. Retargeting cancels it too (see hudSelect). The server would refuse a stale plan anyway;
+      // this is about not offering the player a button that cannot work.
       window.geoTrayClose = closeTray;
       function openTray(mode) {
         trayMode = mode;
@@ -8239,7 +8299,10 @@
             markMap();
             return;
           }
-          html += '<div class="tray-srcs" role="group" aria-label="March from">' +
+          // the roles are named in words too, so the map highlight is never the only cue
+          html += '<p class="tray-note">\u{1F3AF} Target: <b>' + escapeHtml(name) +
+            '</b> (solid outline) \u00b7 \u{1F6A9} March from (dashed outline):</p>' +
+            '<div class="tray-srcs" role="group" aria-label="March from">' +
             srcs.map(sk => '<button type="button" class="tray-src" data-src="' + escapeHtml(sk) +
               '" aria-pressed="' + (sk === traySrc) + '">\u{1F6A9} ' +
               escapeHtml(regionDisplayName(sk) || sk) + ' \u00b7 \u{1F6E1}' +
@@ -8398,6 +8461,7 @@
         if (key !== hudSelKey) closeTray();
         hudSelKey = key;
         renderHudCard(); renderHudActions();
+        geoRememberView();
         // gentle camera assist: only when the territory is substantially outside the viewport, and
         // never a zoom change. Selection and zoom stay separate concerns.
         if (geoOffScreen && geoFocusKey && geoOffScreen(key)) geoFocusKey(key, { keepZoom: true });
@@ -8406,24 +8470,37 @@
       hudRefresh();
 
       const legend = document.createElement("div"); legend.className = "geo-legend";
-      legend.innerHTML = '<span class="gl gl-mine">You</span><span class="gl gl-open">Open</span>' +
-        (Object.keys(drill).length ? '<span class="gl gl-drill">Zoom in</span>' : '');
+      legend.innerHTML = '<span class="gl gl-mine">You</span><span class="gl gl-open">Open</span>';
       wrap.appendChild(legend);
       // 誰佔了誰：這張地圖上每位擁有者一列（色塊＋頭像＋名字＋佔幾塊），colorize() 每次刷新
       const owners = document.createElement("div"); owners.className = "geo-owners"; wrap.appendChild(owners);
-      // 對照清單：領地名 + 人口 + 守軍（滑過 highlight，點擊開領地面板）
+      // ===== the Region index: a searchable, keyboard-reachable directory of all 250 territories =====
+      // Phase 12D: this was the ONE surviving route into the retired region modal -- every row's
+      // click still called `r.open`, i.e. openRegion(). A directory row now does exactly what a tap
+      // on the map does, plus what a directory is for: it SELECTS the territory and points the camera
+      // at it. It never opens a modal and it never "enters" anything.
+      //
+      // Hover is presentation only. It used to call hudSelect() and then clear geoSelectedKey on
+      // mouseleave, so brushing the list mutated (and then half-restored) the selection; the HUD card
+      // followed the mouse while the map outline did not. Hover now just highlights the geometry.
       const idx = document.createElement("div"); idx.className = "geo-index";
       regionList.forEach(r => {
         if (r.dup) return;                       // 同一國的多餘 path 不重複列
-        const btn = document.createElement("button"); btn.className = "geo-idx" + (r.drill ? " gi-drill" : "");
-        btn.innerHTML = '<span class="gi-no">' + (r.drill ? "🏙️" : "📍") + '</span>' +
-          '<span class="gi-tx"><span class="gi-rg">' + r.name + '</span>' +
-          '<span class="gi-ls">' + (r.drill ? "zoom in ▸" : ("👥 " + r.pop)) + '</span></span>';
-        btn.addEventListener("click", r.open);
-        const hi = r.group || r.parts || (r.p ? [r.p] : []);   // 洲：整組；多 path 領地：所有 path；否則單塊
-        btn.addEventListener("click", () => { if (r.key && window.hudSelect) window.hudSelect(r.key); });
-        btn.addEventListener("mouseenter", () => { hi.forEach(pp => pp.classList.add("geo-hi")); if (r.key) { geoSelectedKey = r.key; if (_geoResel) _geoResel(); if (window.hudSelect) window.hudSelect(r.key); } });   // 選取 → 該標籤一律顯示
-        btn.addEventListener("mouseleave", () => { hi.forEach(pp => pp.classList.remove("geo-hi")); if (r.key && geoSelectedKey === r.key) { geoSelectedKey = null; if (_geoResel) _geoResel(); } });
+        const btn = document.createElement("button"); btn.className = "geo-idx";
+        btn.type = "button";
+        btn.innerHTML = '<span class="gi-no">📍</span>' +
+          '<span class="gi-tx"><span class="gi-rg">' + escapeHtml(r.name) + '</span>' +
+          '<span class="gi-ls">👥 ' + r.pop + '</span></span>';
+        btn.title = "Select " + r.name + " and point the camera at it";
+        btn.setAttribute("aria-label", btn.title);
+        const hi = r.parts || (r.p ? [r.p] : []);   // 多 path 領地：所有 path；否則單塊
+        btn.addEventListener("click", () => {
+          if (!r.key) return;
+          if (window.hudSelect) window.hudSelect(r.key);
+          if (geoFocusKey) geoFocusKey(r.key, { pad: 3.2, minZoom: 2.2 });
+        });
+        btn.addEventListener("mouseenter", () => hi.forEach(pp => pp.classList.add("geo-hi")));
+        btn.addEventListener("mouseleave", () => hi.forEach(pp => pp.classList.remove("geo-hi")));
         r.idxEl = btn; r.idxLs = btn.querySelector(".gi-ls"); idx.appendChild(btn);
       });
       // reference directory: complete and fully functional, but collapsed so it does not compete
@@ -8458,9 +8535,9 @@
       function fmtWhen(ts) { const d = new Date((ts || 0) * 1000);
         return d.toLocaleDateString() + " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
       function eventRegion(ev) {                       // 把一筆事件對應到這張地圖的某一塊（先用 key，舊事件退回用名字）
-        if (ev.key) { const r = regionList.find(r => !r.drill && r.key === ev.key); if (r) return r; }
+        if (ev.key) { const r = regionList.find(r => r.key === ev.key); if (r) return r; }
         const nm = (ev.region || "").toLowerCase();
-        if (nm) { const r = regionList.find(r => !r.drill && (r.name || "").toLowerCase() === nm); if (r) return r; }
+        if (nm) { const r = regionList.find(r => (r.name || "").toLowerCase() === nm); if (r) return r; }
         return null;
       }
       function buildSteps(events) {                    // 篩出屬於本圖、可定位的事件，依時間排序
@@ -8476,7 +8553,7 @@
         return steps;
       }
       function rpResetMap() {                           // 回到「歷史開始前」：整張圖轉灰
-        regionList.forEach(r => { if (r.drill || !r.p) return;
+        regionList.forEach(r => { if (!r.p) return;
           r.p.classList.remove("geo-mine", "geo-open", "geo-rp-active");
           r.p.style.removeProperty("fill"); r.p.classList.add("geo-rp-neutral"); });
       }
@@ -8555,12 +8632,12 @@
         // 先蒐集這張地圖上所有擁有者 → 配色（同一張地圖上人人不同色）
         const holders = (territory && territory.holders) || {};
         const present = [], seen = {}, stats = {};
-        regionList.forEach(r => { if (r.drill || !r.key || r.dup) return; const h = holders[r.key]; if (!h || !h.owner) return;
+        regionList.forEach(r => { if (!r.key || r.dup) return; const h = holders[r.key]; if (!h || !h.owner) return;
           const low = h.owner.toLowerCase(); if (!seen[low]) { seen[low] = 1; present.push(h.owner); }
           const s = stats[low] || (stats[low] = { name: h.owner, avatar: h.avatar, n: 0 }); s.n++; if (h.avatar) s.avatar = h.avatar; });
         const cmap = ownerColorMap(present, me);
         regionList.forEach(r => {
-          if (r.drill || !r.p) return;
+          if (!r.p) return;
           ["geo-mine", "geo-open"].forEach(c => r.p.classList.remove(c));
           r.p.style.removeProperty("fill");
           const dot = r.idxEl && r.idxEl.querySelector(".gi-no");
@@ -8605,8 +8682,22 @@
       loadTerritory(function () { colorize(); markMap(); hudRefresh(); });
     }
 
-    fetchMap(spec.file).then(build)
-      .catch(() => { wrap.innerHTML = '<p class="op-hint">Could not load map ' + spec.file + '. (Needs the server or GitHub Pages.)</p>'; });
+    // Phase 12D: this used to answer EVERY failure with "could not load the map", including an
+    // exception thrown by build() on a map that was already cached -- so a code bug was reported as a
+    // network problem and its reason was discarded. The two are now told apart, and the real error is
+    // logged instead of swallowed.
+    let _fetched = false;
+    fetchMap(spec.file).then(function (txt) { _fetched = true; return build(txt); })
+      .catch(function (err) {
+        if (!_fetched) {
+          wrap.innerHTML = '<p class="op-hint">Could not load map ' + spec.file +
+            '. (Needs the server or GitHub Pages.)</p>';
+        } else {
+          // the map arrived; drawing it failed. Say so, and keep the reason.
+          wrap.innerHTML = '<p class="op-hint">The map could not be drawn. Please reload the page.</p>';
+        }
+        if (typeof console !== "undefined") console.error("[map] drawGeo failed:", err);
+      });
   }
 
 
@@ -8718,7 +8809,6 @@
   let myCosmetics = [];
   let learningRegistry = { qualifications: {}, activities: {}, lessons: {} };
   let myQualifications = new Set();    // qualification IDs this player has EARNED (server-authoritative mirror)
-  let pendingStudy = null;             // { qualificationIds:[…], label, reopen() } — 學完自動回到觸發的領地
   function loadLearningRegistry(cb) {
     fetch("/api/learning/registry").then(r => r.ok ? r.json() : null)
       .then(j => {
@@ -8904,8 +8994,9 @@
     return '<details class="comp-sec"><summary>Details</summary>' + rows + prov + past + '</details>';
   }
   // ---- COMPACT (outpost): decide whether to study, then leave. Detail lives on the lesson page. ----
-  // `opts.study` swaps the primary Continue for a SECONDARY "Study Lesson" action. Used by the
-  // region panel (Phase 6G), where conquest owns the one primary button and learning is secondary.
+  // Phase 12D: `opts.study` existed for the retired region panel, which needed a SECONDARY study
+  // action because conquest owned its one primary button. No caller passes it now; the parameter is
+  // kept so the compact card keeps one shape, and the branch below is its documented no-op.
   function lessonCompactHTML(contentPath, opts) {
     const row = progressForContent(contentPath);
     if (!row) return "";
@@ -8927,76 +9018,6 @@
     }
     return out + '</div>';
   }
-  // ===== Phase 6G — the region panel's read-only learning section =====
-  // The lesson identity is the STABLE, designer-owned mapping the catalog already carries:
-  //   territory.requirements.attackQualificationIds -> qualification.studyTarget -> contentPath
-  // exactly what renderRequirementPanel() already navigates to. so the
-  // chip does not change between openings.
-  // THE resolver: a territory's attack requirements, in the catalog's own authoritative order,
-  // each paired with the lesson its qualification points at. Never reordered, never invented.
-  // `art` is null when a requirement has no mapped lesson — a configuration error, surfaced rather
-  // than papered over.
-  function regionMappedLessons(targetKey) {
-    return territoryRequirements(targetKey).map(qid => ({ qid: qid, art: studyArticleFor(qid) }));
-  }
-  // Display path (Phase 6G): the distinct lessons this region's requirements point at.
-  function regionLessonPaths(targetKey) {
-    const seen = {}, out = [];
-    regionMappedLessons(targetKey).forEach(m => {
-      if (m.art && m.art.file && !seen[m.art.file]) { seen[m.art.file] = 1; out.push(m.art.file); }
-    });
-    return out;
-  }
-  // ===== Phase 6H — which lesson does 占領 (Occupy) launch? =====
-  // Ungated territory              -> NO lesson at all (Phase 7F.2): it declares no requirement, so
-  //                                   there is nothing to launch and nothing to prove.
-  // Gated, some requirement missing -> the FIRST MISSING requirement's lesson (catalog order).
-  // Gated, all requirements held    -> the FIRST requirement's lesson (deterministic fallback).
-  // A gated territory whose requirement has no mapped lesson is a CONFIG ERROR: it reports the
-  // problem instead of silently falling back to a random lesson.
-  //
-  // This decides selection only. Claim authority and the attack gate are untouched; Phase 7F.2
-  // retired the passCount bootstrap, so a region with no requirements needs no lesson at all.
-  function occupyLessonPlan(targetKey) {
-    const reqs = territoryRequirements(targetKey);
-    if (!reqs.length) return { ungated: true };   // Phase 7F.2: was `random: true`
-    const mapped = regionMappedLessons(targetKey);
-    const unmapped = mapped.filter(m => !m.art || !m.art.file).map(m => m.qid);
-    if (unmapped.length) return { error: unmapped.join(", ") };
-    const missing = mapped.filter(m => !myQualifications.has(m.qid));
-    const pick = missing.length ? missing[0] : mapped[0];
-    return { ungated: false, qid: pick.qid, article: pick.art, missing: missing.length };
-  }
-  // The one entry point used at click time — selection is re-evaluated on click, not at render.
-  // Phase 7F.2 retired the ungated random mode, so this only ever returns a GATED region's mapped
-  // requirement lesson. The old level-index parameter went with it: it existed solely to pick from
-  // randomLesson(i)'s pool, and a mapped requirement is resolved from the territory alone.
-  function selectOccupyLesson(targetKey) {
-    return occupyLessonPlan(targetKey);
-  }
-  function regionLearningHTML(targetKey) {
-    const paths = regionLessonPaths(targetKey);
-    if (!paths.length) return "";                 // ungated region -> no lesson, nothing invented
-    const cards = paths.map(f =>
-      '<div data-comp-for="' + escapeHtml(f) + '" data-comp-mode="region">' +
-      lessonCompactHTML(f, { study: true }) + '</div>').join("");
-    if (!cards.replace(/<div[^>]*><\/div>/g, "").trim()) return "";
-    return '<div class="op-learn" data-region-key="' + escapeHtml(targetKey) + '">' +
-           '<div class="op-learn-h">Learning</div>' + cards + '</div>';
-  }
-  document.addEventListener("click", function (e) {
-    const b = e.target && e.target.closest && e.target.closest("[data-region-study]");
-    if (!b) return;
-    const art = findArticleByFile(b.getAttribute("data-region-study"));
-    if (!art) return;
-    // Phase 7E.1: this Study shortcut was rendered FOR a region, so Back returns to that region
-    // rather than to whatever map selectLevel() happens to draw.
-    const host = b.closest("[data-region-key]");
-    const rkey = host && host.getAttribute("data-region-key");
-    lessonReturnTo = rkey ? { to: "region", key: rkey, reopen: regionReopenFor(rkey) } : null;
-    closeModal();
-    selectArticle(art);
-  });
   // ---- THE LESSON PAGE CARD: primary + secondary. The single owner of lesson detail. ----
   function completionCardHTML(contentPath) {
     const row = progressForContent(contentPath);
@@ -9335,26 +9356,18 @@
     return c;
   }
   // Phase 10A.3: there is one playable map, so a contextual return resolves to it. It keeps the
-  // caller's level context (the checkpoint boss lives on this screen) but no longer drills anywhere.
+  // caller's level context (the checkpoint boss lives on this screen). Retained in 12D as the
+  // contextual deep-link resolver: "put the player on the board that contains this territory".
   function showMapForTerritory(key) {
     renderGeoMap(levelIdxForKey(key), worldMapSpec());
   }
-  // Put the player back exactly where they were: the right map, then the SAME region modal, drawn
-  // by the normal renderer so it shows whatever the requirement state now is.
-  function returnToRegion(ctx) {
-    lessonReturnTo = null;
-    showMapForTerritory(ctx.key);
-    if (typeof ctx.reopen === "function") ctx.reopen();
-  }
-  // ---- challenge-transaction lifetime (Phase 7E.1, simplified in 7F.2) ----
-  // INVARIANT: `pendingOccupy` is pure NAVIGATION state — "which territory sent the player into this
-  // lesson, so a completed lesson can reopen it". It is never authority: eligibility is the
-  // qualification, which the server verifies. An explicit exit from the lesson ends it. Phase 7F.2
-  // removed the counter half of this transaction (`pending`), which was the only authority-shaped
-  // piece and is now provably redundant.
-  function endChallengeIfUnsatisfied() {
-    pendingOccupy = null;
-  }
+  // ---- challenge-transaction lifetime (Phase 7E.1, simplified in 7F.2, emptied in 12D) ----
+  // This cleared `pendingOccupy` -- "which territory sent the player into this lesson, so a completed
+  // lesson can reopen it". That transaction is gone with the region modal, and nothing else has a
+  // lesson-scoped transaction to end. The hook is kept as an explicit no-op because Back and the
+  // lesson exits both call it, and a future lesson-scoped transaction belongs here rather than
+  // scattered across those callers.
+  function endChallengeIfUnsatisfied() { /* no lesson-scoped transaction exists any more */ }
   // `continue` reuses the Phase 5B continueLesson(), so Home lands the player on the NEXT MISSING
   // activity (server order), not merely on the lesson. Tapping a lesson ROW just opens the lesson.
   function openLessonFromHome(lid, andContinue) {
@@ -9782,8 +9795,8 @@
     document.querySelectorAll("[data-comp-for]").forEach(el => {
       const path = el.getAttribute("data-comp-for");
       const mode = el.getAttribute("data-comp-mode");
-      el.innerHTML = mode === "region" ? lessonCompactHTML(path, { study: true })
-        : mode === "compact" ? lessonCompactHTML(path) : completionCardHTML(path);
+      // Phase 12D: the "region" mode is gone with the region modal that rendered it.
+      el.innerHTML = mode === "compact" ? lessonCompactHTML(path) : completionCardHTML(path);
     });
   }
   // Every surface that shows lesson progress, refreshed together. Phase 6B STEP 4: the lesson page is
@@ -9799,6 +9812,9 @@
     return null;
   }
   function qualTitle(qid) { const q = (learningRegistry.qualifications || {})[qid]; return (q && q.title) || qid; }
+  // Phase 12D: studyArticleFor() went with the requirement panel that was its only consumer.
+  // studyTargetFor stays -- it is the registry's own qualification -> lesson mapping, the thing a
+  // future "study for this qualification" surface would read, and it reads nothing else.
   function studyTargetFor(qid) { const q = (learningRegistry.qualifications || {})[qid]; return (q && q.studyTarget) || null; }
   function findArticleByFile(file) {
     if (!manifest) return null;
@@ -9806,52 +9822,6 @@
     return null;
   }
   // 資格 → 可前往的課程文章（完全由 Learning metadata 決定：qualification → studyTarget → contentPath）
-  function studyArticleFor(qid) { const t = studyTargetFor(qid); return t && t.contentPath ? findArticleByFile(t.contentPath) : null; }
-  // A reopen closure for a territory we know only by key (the card link and the requirement panel
-  // do not carry the opener's name/pop). Name and population come from the same catalog openRegion
-  // itself trusts, so the reopened modal is identical to the original.
-  function regionReopenFor(key) {
-    return function () {
-      const ct = TERR_CATALOG.terrById[key] || {};
-      openRegion(key, regionDisplayName(key), ct.gamePopulation || 0, levelIdxForKey(key));
-    };
-  }
-  // Designer-authored requirement metadata from the catalog. Phase 10A.3R: DISPLAY ONLY and empty
-  // for every active-map territory — it is not a gate on either side of the wire.
-  function territoryRequirements(targetKey) {
-    const ct = TERR_CATALOG.terrById[targetKey];
-    return (ct && ct.requirements && ct.requirements.attackQualificationIds) || [];
-  }
-  function missingQualifications(targetKey) { return territoryRequirements(targetKey).filter(q => !myQualifications.has(q)); }
-  // 可重用的「需求清單」renderer：0 個需求 → 回 false(照常顯示攻擊 UI)；1 或多個 → 逐條顯示 ✓/✗ 與各自的學習入口。
-  // Phase 10A.3R：DORMANT。作用中的地圖上沒有任何領地宣告 attackQualificationIds，所以這裡對每個玩家
-  // 到得了的領地都直接回 false；後端也已經不做資格判定。保留(未被觸發)是因為它只是顯示層。
-  function renderRequirementPanel(terr, targetKey, reopen) {
-    const reqs = territoryRequirements(targetKey), missing = missingQualifications(targetKey);
-    if (!reqs.length || !missing.length) return false;
-    terr.innerHTML = '<p class="op-hint">🔒 This region is locked — you need ' +
-      (reqs.length > 1 ? '<b>all</b> of these requirements' : 'this requirement') + ':</p><ul class="op-reqs">' +
-      reqs.map(q => '<li class="' + (myQualifications.has(q) ? "req-ok" : "req-missing") + '">' +
-        (myQualifications.has(q) ? "✓ " : "✗ ") + escapeHtml(qualTitle(q)) + '</li>').join("") + '</ul>';
-    const btns = document.createElement("div"); btns.className = "op-btns";
-    missing.forEach(qid => {                          // 每個缺少的需求各自一個學習入口（不假設只有一個）
-      const art = studyArticleFor(qid);
-      const b = document.createElement("button"); b.className = "dict-play";
-      b.textContent = art ? "📖 Study: " + qualTitle(qid) : "📖 Not available yet: " + qualTitle(qid);
-      if (art) b.addEventListener("click", () => {
-        pendingStudy = { qualificationIds: missing.slice(), label: regionDisplayName(targetKey), reopen: reopen || null };
-        // Phase 7E.1: same contextual return as the neutral path — Back goes to this region.
-        // Both callers of renderAttackPanel() always pass their own reopen closure, so there is no
-        // fallback to invent here; returnToRegion() degrades to "show the right map" without one.
-        lessonReturnTo = { to: "region", key: targetKey, reopen: reopen || null };
-        closeModal(); selectArticle(art);
-      });
-      else b.disabled = true;
-      btns.appendChild(b);
-    });
-    terr.appendChild(btns);
-    return true;
-  }
   // 課程活動作答 → 唯一權威的伺服器批改路徑(/api/learning/attempt)。前端只送 activityId + 作答，
   // 「不」送 passed / score / qualification / gold —— 那些一律由後端決定。
   function maybeSubmitLearningAttempt(contentPath, contentKey, chosen) {
@@ -9889,41 +9859,12 @@
         // toast is back to its original job -- announcing a QUALIFICATION -- and only appears when
         // one was actually granted. Both remain the server's own figures; nothing is inferred.
         if (names) showLockedMsg("✅ Learned: " + names);
-        // Phase 7E.1 navigated straight back to a region the new qualification had just unlocked.
-        // DORMANT since Phase 10A.3R: learning unlocks no ground, and no territory on the active map
-        // declares a requirement, so territoryRequirements() is empty for every reachable region and
-        // this branch cannot be taken. It is left in place, unreached, because it only ever
-        // NAVIGATED — it never authorised anything — and it would become correct again the day a
-        // playable territory declares a requirement. Everything it reads is server state:
-        // `j.qualifications` is the server's own grant list, never inferred from score, pct,
-        // passCount, mastery or reward amount.
-        const rc = returnCtx();
-        if (rc.to === "region" && rc.key && territoryRequirements(rc.key).length
-            && !missingQualifications(rc.key).length) {
-          showLockedMsg("✓ Requirement complete — " + regionDisplayName(rc.key) +
-                        " can now be occupied.");
-          setTimeout(function () { returnToRegion(rc); }, 900);
-          return;
-        }
-        offerStudyReturn();
+        // Phase 12D: the "a qualification just unlocked a region -- go back to it" branch used to sit
+        // here. It has been unreachable since 10A.3R (learning unlocks no ground, and no playable
+        // territory declares a requirement), and it depended on the region modal that is now retired.
+        // Removed rather than left dormant. Nothing about grading, qualifications, rewards or the
+        // authority of `j` changes: this was navigation only.
       }).catch(() => {});
-  }
-  // 學完 → 回到觸發學習的領地（沿用既有 pendingOccupy 風格的輕量 reopen closure，不引入 router）
-  function offerStudyReturn() {
-    if (!pendingStudy || !pendingStudy.reopen) return;
-    if (pendingStudy.qualificationIds.some(q => !myQualifications.has(q))) return;   // 還有其他需求沒完成
-    const btn = document.getElementById("studyReturn") || (function () {
-      const b = document.createElement("button"); b.id = "studyReturn"; b.className = "study-return";
-      document.body.appendChild(b); return b;
-    })();
-    btn.textContent = "⬅️ " + pendingStudy.label + " unlocked — back to the map";
-    btn.classList.remove("hidden");
-    btn.onclick = function () {
-      const ps = pendingStudy; pendingStudy = null; btn.classList.add("hidden");
-      synth.cancel(); stopListenL1(); stopRecordingIfAny();
-      selectLevel(selLevelIdx);                 // 回地圖
-      if (ps && ps.reopen) ps.reopen();         // 重新開啟原本那塊領地的面板（此時已解鎖）
-    };
   }
 
   // ===== Phase 2B — territorial conquest attack (source ↔ target, adjacency-gated) =====
@@ -9957,134 +9898,13 @@
       })
       .catch(function () { alert("Couldn't reach the server."); });
   }
-  // 攻擊面板(target-first UI 最小變動)：先選相鄰的自有來源領地，兵力預算=該來源的駐軍(非全域兵力池)。
-  function renderAttackPanel(terr, targetKey, targetName, h, reopen) {
-    // Phase 3B：學習資格鎖(0/1/多個需求皆由同一個 renderer 處理，ALL 語意)。僅為前端提示；
-    // 真正授權一律由後端 can_attack 判定(改造過的 client 隱藏此鎖也無法攻擊)。
-    if (renderRequirementPanel(terr, targetKey, reopen)) return;
-    const sources = validAttackSources(targetKey);
-    if (!sources.length) {
-      terr.innerHTML = '<p class="op-hint">🚫 You can only attack ' + dispName(h.owner) +
-        ' from an <b>adjacent territory you own</b> (with a garrison). Conquer or occupy a neighbouring region first — isolated/island regions can\'t be reached by land yet.</p>';
-      return;
-    }
-    const holders = (territory && territory.holders) || {};
-    terr.innerHTML = '<p class="op-hint">⚔️ Attack ' + dispName(h.owner) + " — you can't scout their garrison. March from one of your adjacent territories:</p>" +
-      '<div class="op-src">🚩 March from: <select id="atkSrc">' +
-      sources.map(s => '<option value="' + s + '">' + regionDisplayName(s) + ' (🛡️ ' + sumHp((holders[s] || {}).troops) + ')</option>').join("") +
-      '</select></div><div id="atkDeploy"></div>';
-    const srcSel = terr.querySelector("#atkSrc"), deployBox = terr.querySelector("#atkDeploy");
-    function renderDeploy() {
-      const src = srcSel.value;
-      deployBox.innerHTML = "";
-      // 兵力預算 = 選定來源領地的駐軍(分兵種)；出兵順序 = 牌 1→4。
-      deployPanel(deployBox, squadByType((holders[src] || {}).troops), { attack: true, foe: [], label: "⚔️ Attack",
-        onGo: squad => launchAttack(src, targetKey, targetName, h, squad) });
-    }
-    srcSel.addEventListener("change", renderDeploy);
-    renderDeploy();
-  }
-
-  // 領地面板：自己的→重新佈署；別人的→先攻打；無主的→佔領時隨機給一課，過了才出兵。每次都要重新過。
-  function openRegion(key, name, pop, i) {
-    const h = (territory && territory.holders && territory.holders[key]) || null;
-    const me = (authUser() || userName || "").toLowerCase();
-    const mine = !!(h && h.owner && (h.owner || "").toLowerCase() === me);
-    const enemy = !!(h && h.owner) && !mine;
-    const T = poolTotal();
-    const livePop = (mine && h && h.pop != null) ? h.pop : pop;   // 已佔領：顯示伺服器最新人口(徵兵/成長會變)
-    let html = '<h3 class="modal-title">🏰 ' + name + '</h3>' +
-      '<div class="op-pop">👥 Population <b>' + livePop + '</b>' + (mine ? ' (yours · earns gold)' : ' — added to your empire if you take it') + '</div>';
-    if (h && h.owner) html += '<div class="op-def' + (mine ? ' op-mine' : '') + '">Held by ' + (h.avatar || "👦") + ' <b>' + dispName(h.owner) + '</b>' + techBadge(h.tech) + '<br>' + (mine ? garrisonHTML(h.troops) : '<span class="op-card">🛡️ Garrison unknown (enemy)</span>') + '</div>';
-    else html += '<div class="op-def">🏳️ Unclaimed region</div>';
-    // Phase 6G: conquest stays first and owns the primary action; the read-only learning section
-    // renders BELOW it. It changes nothing about occupying or attacking this region.
-    html += '<div class="op-econ">⚔️ Your troops: <b>' + T + '</b></div><div id="opTerr"></div>' +
-            regionLearningHTML(key);
-    const ov = openModal(html);
-    const terr = ov.querySelector("#opTerr");
-    const noTroops = '<p class="op-hint">⚠️ No troops right now — win a battle or redeploy a garrison to free some up.</p>';
-    if (!authToken()) { terr.innerHTML = '<p class="op-hint">🔒 Log in to raise an army and battle for territory.</p>'; return; }
-    if (mine) {
-      // Phase 12C: garrison positioning happens on the MAP, where the geography is (the board's
-      // Garrison tray), and buildings/technology live in Empire. This panel keeps only the
-      // redeployment control, for the paths that still reach it directly; it no longer carries an
-      // empire-management panel that duplicated Empire ▸ Buildings.
-      const avail = poolPlusGarrison(h.troops);
-      terr.innerHTML = '<p class="op-hint">✅ Yours. Re-deploy garrison (drag each troop type; the rest stays in your pool):</p>';
-      deployPanel(terr, avail, { init: h.troops, label: "🚩 Deploy", allowEmpty: true, onGo: g => {
-        const gm = squadByType(g), p = poolObj();
-        TROOPS.forEach(t => { p[t.id] = Math.max(0, (avail[t.id] || 0) - (gm[t.id] || 0)); });   // 沒派出的留在兵力池
-        // Phase 8B.1: the SERVER now owns the pool arithmetic, so refresh AFTER the claim resolves
-        // (success or refusal) and render what the server actually holds — never the requested move.
-        claimTroops(key, g, pop, function () {
-          loadEconomy(function () { closeModal(); renderEmpire(); refreshMap(); });
-        });
-      } });
-      return;
-    }
-    if (enemy) {
-      // Phase 2B：有主敵區 → 從相鄰的自有來源領地出兵攻打(source→target，後端權威判定 + 相鄰檢查)。
-      renderAttackPanel(terr, key, name, h, function () { openRegion(key, name, pop, i); });
-      return;
-    }
-    // 無主：直接出兵佔領(Phase 10A.3R 之後沒有學習門檻)。
-    const plan = occupyLessonPlan(key);
-    // Phase 10A.3R: `gated` is FALSE for every territory the player can reach — no active-map
-    // territory declares attackQualificationIds, and the server enforces no qualification on
-    // /api/territory/claim either. So the only live path below is "occupy directly": choose troops
-    // and let the server authorise. The gated branches are kept but unreached; they would become
-    // correct again only if a playable territory were given a requirement AND the server were given
-    // a gate back, which is deliberately not the case.
-    // Client-side convenience only: the server still decides, and a client that is wrong here simply
-    // gets a truthful refusal from claimTroops().
-    const gated = territoryRequirements(key).length > 0;
-    const canOccupy = !plan.error && (!gated || plan.missing === 0);
-    if (canOccupy) {
-      if (T <= 0) { terr.innerHTML = noTroops; return; }
-      terr.innerHTML = '<p class="op-hint">' + (gated
-          ? '✅ Learning requirement complete. 🚩 Occupy — assign troops by type:'
-          : '🚩 Occupy this region — choose the troops to deploy:') + '</p>';
-      // ONE deployment path, for a gated region whose requirements are met and for an ungated one
-      // alike. Nothing about the claim is rebuilt.
-      // Phase 8B.1: same rule as redeploy — the claim decides, then we render the server's pool.
-      deployPanel(terr, poolAvail(), { label: "🚩 Occupy", onGo: g => { pendingOccupy = null; claimTroops(key, g, pop, function () { logEvent("occupy", { region: name, key: key }); loadEconomy(function () { closeModal(); renderEmpire(); refreshMap(); }); }); } });
-      return;
-    }
-    if (plan.error) {
-      terr.innerHTML = '<p class="op-hint">⚠️ This region\'s learning requirement points at a ' +
-        'qualification with no lesson (' + escapeHtml(plan.error) + '). Occupation is unavailable ' +
-        'until the catalog is fixed.</p>';
-      return;
-    }
-    // Phase 7F.2: only one neutral mode survives — a GATED region naming the lesson that grants
-    // its missing requirement. The ungated "Random Challenge" is retired: it was never a server rule
-    // (docs called it a client-side bootstrap "deliberately not learning-gated"), so presenting it as
-    // a prerequisite told the player something untrue.
-    const planTitle = lessonTitleOf(plan.article.file);
-    terr.innerHTML = '<p class="op-hint">🚩 Pass this lesson to occupy this region.</p>' +
-      '<div class="op-def" style="text-align:center">' +
-        '📖 <b>' + escapeHtml(planTitle) + '</b> · 80%+ to pass</div>' +
-      '<div class="op-btns"><button id="chStudy" class="dict-play">📖 Occupy</button></div>';
-    ov.querySelector("#chStudy").addEventListener("click", () => {
-      const sel = selectOccupyLesson(key);
-      const ch = sel.article;
-      if (!ch) { alert("No lessons available for this map."); return; }
-      const reopen = function () { openRegion(key, name, pop, i); };
-      pendingOccupy = { file: ch.file, reopen: reopen };   // 過關後直接跳回這個據點佔領
-      // Phase 7E.1: remember WHICH region sent the player here, so Back and the unlock moment can
-      // both come home to it. Only a gated region can reach this handler now.
-      lessonReturnTo = { to: "region", key: key, reopen: reopen };
-      closeModal();
-      // Phase 7E.1: a gated region sends the player at the activity that GRANTS its missing
-      // qualification, not at the passive listen screen. The mapping is the registry's own
-      // qualification -> studyTarget, and the landing uses the existing continueLesson machinery.
-      const st = sel.qid ? studyTargetFor(sel.qid) : null;
-      if (st && st.activityId && st.contentPath === ch.file) continueLesson(ch.file, st.activityId);
-      else selectArticle(ch);
-    });
-  }
-
+  // ===== Phase 12D: the region modal is retired =====
+  // It repeated the territory facts the HUD card already shows, hid the board behind itself,
+  // and hosted three flows that now live where the player is actually looking: garrison
+  // redeploy, occupy and attack are board trays, buildings and research are Empire, and a
+  // lesson is reached from the Academy. Its requirement/gated-study half was unreachable by
+  // server rule -- no playable territory declares a requirement and the server enforces none.
+  // Nothing here was authority: the modal only ever navigated and displayed.
   // Phase 9G removed a 167-line unreachable "board map" fallback here. Phase 10A.3 removes the last
   // course->country association: every level opens the SAME single playable map. The level index is
   // still passed because the checkpoint boss is hosted on this screen, not because it picks geography.
@@ -10642,7 +10462,6 @@
     const ctx = returnCtx();
     endChallengeIfUnsatisfied();
     if (ctx.to === "home") { openLearningHome(); return; }
-    if (ctx.to === "region" && ctx.key) { returnToRegion(ctx); return; }
     lessonReturnTo = null;
     selectLevel(selLevelIdx);   // 回課程列表（順便刷新完成度）
   });
@@ -10676,6 +10495,10 @@
     loadLearningState();   // Phase 3A：登入後載入(權威)學習資格，供領地鎖定/解鎖顯示
   }
   function clearAuth() {
+    // Phase 12D: signing out forgets the board position and cancels any half-built plan. A view
+    // memory must never outlive the session it belongs to.
+    if (typeof geoForgetView === "function") geoForgetView();
+    if (typeof window.geoTrayClose === "function") window.geoTrayClose();
     try { ["auth:token", "auth:user", "auth:code"].forEach(k => localStorage.removeItem(k)); } catch (e) {}
     myQualifications = new Set();   // 登出即清空資格顯示鏡像
   }

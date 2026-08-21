@@ -31,9 +31,12 @@ function extractFn(src, sig) {
 // role-play) syncs the balance in ONE place. noteLessonCompletion is therefore no longer a mere
 // display hook that can be stubbed away — it now owns "the balance comes from the server response,
 // never computed" — so the REAL one is extracted and run, with only its collaborators stubbed.
-const FNS = ["renderRequirementPanel", "territoryRequirements", "missingQualifications", "qualTitle",
-  "studyTargetFor", "studyArticleFor", "activityIdForContent", "maybeSubmitLearningAttempt",
-  "offerStudyReturn", "findArticleByFile", "noteLessonCompletion", "returnCtx"]
+// Phase 12D: renderRequirementPanel, territoryRequirements, missingQualifications, studyArticleFor
+// and offerStudyReturn were retired with the region modal. They were already unreachable -- no
+// playable territory declares attackQualificationIds and the server enforces no learning gate -- so
+// what survives here is this suite's real subject: the attempt request and its authority.
+const FNS = ["qualTitle", "studyTargetFor", "activityIdForContent", "maybeSubmitLearningAttempt",
+  "findArticleByFile", "noteLessonCompletion", "returnCtx"]
   .map(n => extractFn(html, "function " + n + "("));
 
 // ---- a minimal DOM good enough for the renderer (element + classList + appendChild) ----
@@ -137,87 +140,37 @@ function ctxFor(requirements, held) {
   return c;
 }
 
-// 1) ZERO requirements -> the renderer declines, so the normal attack UI runs
-[[], null].forEach(reqs => {
-  const c = ctxFor(reqs), terr = el("div");
-  assert.strictEqual(vm.runInContext("renderRequirementPanel", c)(terr, "t:target", null), false,
-    "no requirements must return false (fall through to the attack UI)");
-  assert.strictEqual(terr.innerHTML, "", "the renderer must not touch the panel when it declines");
-});
-// a satisfied requirement also falls through
+// 1-4) RETARGETED in Phase 12D.
+//
+// OLD            : renderRequirementPanel's rendering behaviour -- the lock copy, one ✓/✗ row per
+//                  requirement, one Study entry per MISSING requirement, and metadata-driven
+//                  navigation (studyTarget -> contentPath) with no hardcoded lesson.
+// WHY OBSOLETE   : the panel is gone (12D), and it was already unreachable: 0 of 250 playable
+//                  territories declare attackQualificationIds, and Phase 10A.3R removed the gate from
+//                  /api/territory/claim and /attack, so it could never render.
+// NEW            : assert the property those tests were really protecting -- that requirement
+//                  metadata is READ-ONLY DATA and no client path gates conquest on learning, and that
+//                  the surviving registry readers still hardcode no content.
+// WHY NOT WEAKER : checks 5 and 6 below (the attempt request carries identity + answers ONLY, and the
+//                  endpoint routing) are this suite's authority checks and are untouched. This form
+//                  additionally forbids what the old one could not: a client-side learning gate
+//                  reappearing anywhere on the conquest path.
 {
-  const c = ctxFor(["q.zoo"], ["q.zoo"]), terr = el("div");
-  assert.strictEqual(vm.runInContext("renderRequirementPanel", c)(terr, "t:target", null), false);
+  const conquest = ["trayConfirm", "trayValidSources", "launchAttack", "claimTroops",
+                    "renderHudActions"].map(n => extractFn(html, "function " + n + "("));
+  const gateWords = ["myQualifications", "attackQualificationIds", "qualificationIds",
+                     "missingQualifications", "territoryRequirements", "studyTarget"];
+  conquest.forEach((body, k) => gateWords.forEach(w => assert(body.indexOf(w) === -1,
+    "no conquest path may consult learning state (" + w + " in fn #" + k + ")")));
+  // and the metadata is still only ever READ, never used to refuse an action
+  assert(!/attackQualificationIds[^\n]*(return false|disabled|refus|blocked|locked)/i.test(html),
+    "requirement metadata must not gate anything client-side");
 }
-ok("0 requirements (and fully satisfied requirements) fall through to the normal attack UI");
-
-// 2) ONE requirement -> locked panel, human-readable title, one Study entry point
-{
-  const c = ctxFor(["q.zoo"], []), terr = el("div");
-  assert.strictEqual(vm.runInContext("renderRequirementPanel", c)(terr, "t:target", null), true);
-  assert(/🔒/.test(terr.innerHTML) && /Zoo — Yes\/No/.test(terr.innerHTML), terr.innerHTML);
-  assert(/✗/.test(terr.innerHTML) && /req-missing/.test(terr.innerHTML));
-  // singular copy: no "all of these", no plural noun
-  assert(/you need this requirement:/.test(terr.innerHTML), "singular wording: " + terr.innerHTML);
-  assert(!/all<\/b> of these|requirements:/.test(terr.innerHTML), "no plural/all wording for one requirement");
-  assert(!/q\.zoo/.test(terr.innerHTML), "the raw opaque id must not be shown to a learner");
-  const btns = allButtons(terr);
-  assert.strictEqual(btns.length, 1, "one missing requirement -> one Study button");
-  assert(/Study: Zoo — Yes\/No/.test(btns[0].textContent), btns[0].textContent);
-}
-ok("1 requirement: locked panel shows the human-readable title (never the raw id) + one Study entry");
-
-// 3) MULTIPLE requirements -> every requirement listed independently with its own ✓/✗ and entry point
-{
-  const c = ctxFor(["q.greetings", "q.zoo"], ["q.greetings"]), terr = el("div");
-  assert.strictEqual(vm.runInContext("renderRequirementPanel", c)(terr, "t:target", null), true);
-  const items = terr.innerHTML.match(/<li[^>]*>.*?<\/li>/g) || [];
-  assert.strictEqual(items.length, 2, "one <li> per requirement: " + terr.innerHTML);
-  // plural copy keeps "all of these requirements"
-  assert(/you need <b>all<\/b> of these requirements:/.test(terr.innerHTML),
-    "plural wording: " + terr.innerHTML);
-  assert(/✓ Basic Greetings/.test(items[0]) && /req-ok/.test(items[0]), items[0]);
-  assert(/✗ Zoo — Yes\/No/.test(items[1]) && /req-missing/.test(items[1]), items[1]);
-  const btns = allButtons(terr);
-  assert.strictEqual(btns.length, 1, "only the MISSING requirement gets a Study button");
-  // three requirements, two missing -> two independent Study buttons (no 'only one' assumption)
-  const c3 = ctxFor(["q.greetings", "q.zoo", "q.unknown"], []), terr3 = el("div");
-  vm.runInContext("renderRequirementPanel", c3)(terr3, "t:target", null);
-  assert.strictEqual((terr3.innerHTML.match(/<li/g) || []).length, 3);
-  const b3 = allButtons(terr3);
-  assert.strictEqual(b3.length, 3, "one entry point per missing requirement");
-  const unknown = b3.find(b => /q\.unknown/.test(b.textContent));
-  assert(unknown && unknown.disabled === true, "a requirement with no installed content is disabled, not hidden");
-  assert(/Not available yet/.test(unknown.textContent), unknown.textContent);
-}
-ok("N requirements: each rendered independently with ✓/✗, one entry point per missing one");
-
-// 4) Study navigation comes from Learning METADATA (studyTarget -> contentPath -> article)
-{
-  const c = ctxFor(["q.zoo"], []), terr = el("div");
-  vm.runInContext("renderRequirementPanel", c)(terr, "t:target", function () { c.log.push("reopen"); });
-  allButtons(terr)[0].click();
-  assert.deepStrictEqual(c.log, ["closeModal", "selectArticle:Pre-A1/taipei/zoo"], c.log);
-  assert(c.pendingStudy && c.pendingStudy.qualificationIds.includes("q.zoo"), "return context is captured");
-  assert.strictEqual(c.pendingStudy.label, "Region t:target");
-  // metadata drives it: point the SAME qualification at the other lesson and navigation follows
-  const c2 = makeCtx({
-    learningRegistry: { qualifications: { "q.zoo": { title: "Zoo — Yes/No",
-      studyTarget: { activityId: "a.zoo", lessonId: "l.greet", contentPath: "Pre-A1/basics/greet" } } },
-      activities: REG.activities, lessons: {} },
-    manifest: MANIFEST });
-  c2.TERR_CATALOG.terrById["t:target"] = { requirements: { attackQualificationIds: ["q.zoo"] } };
-  const terr2 = el("div");
-  vm.runInContext("renderRequirementPanel", c2)(terr2, "t:target", null);
-  allButtons(terr2)[0].click();
-  assert.deepStrictEqual(c2.log, ["closeModal", "selectArticle:Pre-A1/basics/greet"],
-    "changing only the metadata changes where Study goes — no hardcoded lesson anywhere");
-}
-// and there is genuinely no hardcoded content branch in the shipped source
 const src = FNS.join("\n");
 [/zoo/i, /taipei/i, /pre-a1/i, /quiz3/, /english\./i].forEach(re =>
-  assert(!re.test(src), "requirement/study code must not hardcode content: " + re));
-ok("Study navigation is metadata-driven (studyTarget -> contentPath); no hardcoded Zoo/lesson logic");
+  assert(!re.test(src), "registry/study code must not hardcode content: " + re));
+ok("1-4 (retargeted): requirement metadata is read-only data — no conquest path consults learning " +
+   "state, and the surviving registry readers hardcode no content");
 
 // 5) the attempt request submits IDENTITY + answers only — never authority
 {
@@ -331,12 +284,10 @@ const settle = () => new Promise(r => setImmediate(r));
     "lessonCompletedNow on a failing attempt is forwarded to the UI hook");
   assert.strictEqual(c1b.myQualifications.size, 0, "…and still grants nothing client-side");
 
-  // a PASSING response is mirrored (display only) and the return-to-territory offer appears.
-  // The fixture carries rewardAmount because a real settling response does: the server publishes the
-  // granted amount alongside the new balance, and sends a balance ONLY when it actually credited.
+  // a PASSING response is mirrored (display only). The fixture carries rewardAmount because a real
+  // settling response does: the server publishes the granted amount alongside the new balance, and
+  // sends a balance ONLY when it actually credited.
   const c2 = makeCtx({ learningRegistry: REG, manifest: MANIFEST });
-  c2.pendingStudy = { qualificationIds: ["q.zoo"], label: "Region t:target",
-    reopen: () => c2.log.push("reopen") };
   c2._fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve(
     { ok: true, passed: true, qualifications: ["q.zoo"], rewarded: true, rewardAmount: 160,
       lessonRewardAmount: 0, gold: 12345 }) });
@@ -347,44 +298,29 @@ const settle = () => new Promise(r => setImmediate(r));
     "Phase 5A: every authoritative response is offered to the completion-banner hook");
   assert.strictEqual(c2.myEcon.gold, 12345, "gold comes from the server response, never computed");
   assert(c2.log.some(l => /^toast:/.test(l) && /Zoo — Yes\/No/.test(l)), c2.log);
-  const btn = c2.document.body.children.find(x => x.id === "studyReturn");
-  assert(btn && /unlocked/.test(btn.textContent), "return-to-territory offer is shown");
-  btn.click();
-  assert(c2.log.includes("selectLevel") && c2.log.includes("reopen"),
-    "clicking it goes back to the map and reopens the originating territory");
-  assert.strictEqual(c2.pendingStudy, null, "the return context is consumed once");
 
-  // Phase 7E.1: when the lesson was opened BY a region and that region's last requirement just
-  // landed, the learner is told the consequence and taken back to that region instead of being
-  // offered the generic study-return button.
-  const cRegionCtx = makeCtx({ learningRegistry: REG, manifest: MANIFEST });
-  cRegionCtx.lessonReturnTo = { to: "region", key: "t:target" };
-  cRegionCtx.TERR_CATALOG.terrById["t:target"] = { requirements: { attackQualificationIds: ["q.zoo"] } };
-  cRegionCtx._fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve(
-    { ok: true, passed: true, qualifications: ["q.zoo"], rewarded: true, rewardAmount: 160,
-      lessonRewardAmount: 0, gold: 660 }) });
-  vm.runInContext("maybeSubmitLearningAttempt", cRegionCtx)("Pre-A1/taipei/zoo", "quiz3", []);
-  await settle();
-  assert(cRegionCtx.log.includes("returnToRegion:t:target"),
-    "a region-opened lesson returns to that region once its requirement is met: " + cRegionCtx.log);
-  assert(cRegionCtx.log.some(l => /^toast:/.test(l) && /Requirement complete/.test(l)),
-    "…and states the conquest consequence: " + cRegionCtx.log);
-  assert(!cRegionCtx.document.body.children.some(x => x.id === "studyReturn"),
-    "…instead of the generic study-return offer");
-
-  // still-missing requirement -> no region return, the ordinary path runs
-  const cPart = makeCtx({ learningRegistry: REG, manifest: MANIFEST });
-  cPart.lessonReturnTo = { to: "region", key: "t:target" };
-  cPart.TERR_CATALOG.terrById["t:target"] =
-    { requirements: { attackQualificationIds: ["q.zoo", "q.greetings"] } };
-  cPart._fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve(
-    { ok: true, passed: true, qualifications: ["q.zoo"], rewarded: true, rewardAmount: 160,
-      lessonRewardAmount: 0, gold: 660 }) });
-  vm.runInContext("maybeSubmitLearningAttempt", cPart)("Pre-A1/taipei/zoo", "quiz3", []);
-  await settle();
-  assert(!cPart.log.some(l => /^returnToRegion/.test(l)),
-    "a region whose OTHER requirement is still missing does not pull the learner away: "
-    + cPart.log);
+  // RETARGETED in Phase 12D.
+  //
+  // OLD            : after a pass, the "#studyReturn — <region> unlocked — back to the map" button is
+  //                  offered, and clicking it returns to and reopens the originating territory; and a
+  //                  region-opened lesson whose last requirement just landed is pulled back to that
+  //                  region with a "Requirement complete" toast.
+  // WHY OBSOLETE   : both behaviours were fed only by state the region modal set (`pendingStudy` from
+  //                  renderRequirementPanel, `lessonReturnTo = {to:"region"}` from the same web).
+  //                  Neither could occur on a real device -- 0 of 250 playable territories declare a
+  //                  requirement and the server enforces no gate -- and 12D removed them.
+  // NEW            : assert that NO orphaned return affordance is offered, and that a pass pulls the
+  //                  learner nowhere. The authority assertions above (mirror, completion hook,
+  //                  server-supplied gold, qualification toast) are kept verbatim.
+  // WHY NOT WEAKER : it replaces "this navigation happens" with "no navigation is invented", which is
+  //                  the stronger claim now that nothing can legitimately set it up -- a reappearing
+  //                  study-return button would be a stale-state bug, and this catches it.
+  assert(!c2.document.body.children.some(x => x.id === "studyReturn"),
+    "no orphaned study-return affordance may be offered");
+  assert(!c2.log.some(l => /^returnToRegion/.test(l) || /^selectLevel/.test(l)),
+    "a graded pass must not navigate the learner anywhere: " + c2.log);
+  assert(!c2.log.some(l => /^toast:/.test(l) && /Requirement complete/.test(l)),
+    "…and must not claim a conquest consequence that no longer exists");
 
   // Phase 7C.2a-fix: the balance is synced on an ECONOMIC SETTLEMENT, identified by the granted
   // amounts — never by `rewarded` alone, and never from a response that reports no settlement.

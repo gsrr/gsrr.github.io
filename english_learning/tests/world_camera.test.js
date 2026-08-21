@@ -36,7 +36,7 @@ function slice(from, to, label) {
   return code.slice(i, j);
 }
 const camera = slice("function attachPanZoom", "\n  let curDrawArgs", "attachPanZoom");
-const drawGeo = slice("function drawGeo", "\n  function openRegion", "drawGeo");
+const drawGeo = slice("function drawGeo", "\n  function selectLevel", "drawGeo");
 const build = slice("function build(svgText)", "\n      function hudSlot", "build()");
 
 // ================= 1. ONE continuous map =================
@@ -61,18 +61,20 @@ ok("1. one continuous World map: no continent filter, no territory-set swap, no 
 // The wiring for a TERRITORY starts after the legacy `spec.drill` sub-map guard. That guard belongs
 // to the old Taiwan->Taipei container, which the playable spec does not declare, so it is unreachable
 // on the World: asserted below rather than assumed.
-const allWiring = build.slice(build.indexOf("paths.forEach(p => {"));
-const clickWiring = allWiring.slice(allWiring.indexOf("const key = regionKey(spec, p);"));
+// Phase 12D: there is no longer a `spec.drill` guard to skip -- the container branch was REMOVED,
+// not left dormant -- so the territory wiring is the whole loop.
+const clickWiring = build.slice(build.indexOf("paths.forEach(p => {"));
 assert(/p\.addEventListener\("click", \(\) => \{ if \(window\.hudSelect\) window\.hudSelect\(key\); \}\);/
   .test(clickWiring), "a territory click must call hudSelect(key)");
 assert(!/p\.addEventListener\("click", open\)/.test(clickWiring),
   "a territory click must no longer open the region modal");
 assert(!/drawGeo\(Object\.assign/.test(build), "no click may re-enter drawGeo with another spec");
-assert(clickWiring.indexOf("geo-drill") === -1,
-  "no territory may be styled or wired as a drill container");
-const worldSpec = slice("function worldMapSpec", "\n  function ", "worldMapSpec");
-assert(worldSpec.indexOf("drill") === -1,
-  "the playable World spec must declare no sub-map container, so that branch is unreachable");
+// Phase 12D: the container model is gone from the implementation, so these are now WHOLE-FILE
+// assertions rather than per-branch ones -- strictly stronger than what 12C could claim.
+assert(!/spec\.drill|drill\[p\.id\]|geo-drill|geo-marker-drill|geo-lab\.drill/.test(code),
+  "no container (drill) implementation may remain anywhere");
+assert(!/\br\.drill\b|\bL\.drill\b/.test(code), "no code may branch on a drill row any more");
+assert(!/\.gi-drill|\.gl-drill/.test(html), "the container affordances must be gone from the CSS too");
 ok("2/3. a territory tap SELECTS at every zoom, and no territory tap drills into a continent");
 
 // ================= 4. continent labels are camera-only =================
@@ -105,8 +107,10 @@ assert(/holder\.dataset\.zoom = s < 2 \? "far" : \(s < 4\.2 \? "mid" : "near"\);
   "zoom bands must be derived from the camera scale");
 assert(/\[data-zoom="far"\]/.test(html) && /\[data-zoom="mid"\]/.test(html),
   "the bands must drive presentation density in CSS");
-assert(/L\.minZoom = L\.drill \? 0 : Math\.max\(0, 46 \/ Math\.max\(6, restW\)\);/.test(labels),
+assert(/L\.minZoom = Math\.max\(0, 46 \/ Math\.max\(6, restW\)\);/.test(labels),
   "territory labels are admitted as they become legible");
+assert(/L\.priority = restW;/.test(labels),
+  "...and are prioritised purely by how much room they have");
 assert(/L\.maxZoom = 4\.2;/.test(contBlock),
   "continent labels step aside once the player is zoomed in");
 const place = slice("function placeMapLabels", "\n  let hudSelKey", "placeMapLabels");
@@ -177,10 +181,18 @@ for (const forbidden of ["Recruit", "openHomeBase", "buildingsPanel", "Research"
 }
 assert(/actBtn\("\\u\{1F3F0\}", "Empire", openEmpire/.test(actions),
   "management must be one link to Empire");
-const region = slice("function openRegion(key, name, pop, i)", "\n  function selectLevel", "openRegion");
-assert(region.indexOf("buildingsPanel") === -1,
-  "the per-territory panel must no longer carry an empire-management panel");
-ok("14. Recruit, Buildings, Research and the catch-all Manage are gone from territory interaction");
+// Phase 12D: the per-territory modal is not merely free of management panels -- it does not exist.
+[["openRegion", "the region modal"], ["renderAttackPanel", "the modal attack panel"],
+ ["renderRequirementPanel", "the requirement panel"], ["regionLearningHTML", "the region learning block"],
+ ["regionReopenFor", "the region reopen closure"], ["returnToRegion", "the region return"],
+ ["offerStudyReturn", "the study-return button"], ["occupyLessonPlan", "the gated-occupy planner"],
+ ["selectOccupyLesson", "the gated-occupy selector"], ["pendingOccupy", "the occupy transaction"],
+ ["pendingStudy", "the study transaction"]].forEach(pair => {
+  assert(!new RegExp("[^a-zA-Z_.$]" + pair[0] + "\\b").test(code),
+    pair[1] + " (" + pair[0] + ") must be gone, not dormant");
+});
+ok("14. Recruit, Buildings, Research and the catch-all Manage are gone from territory interaction, " +
+   "and the region modal they lived in no longer exists at all");
 
 // ================= 15/16/17. Empire provides all three areas =================
 const empire = slice("function renderEmpireModal()", "\n  function empireForces", "renderEmpireModal");
@@ -207,9 +219,19 @@ assert(/TECH_COST\[k\]\[lvl\(k\)\]/.test(tech) && /TECH_MAX/.test(tech),
   "Technology must use the real costs and cap");
 assert(/openBuildingDetail\(b\.dataset\.tech, "armory", reopen\)/.test(tech),
   "Technology must open the existing armory panel");
-assert(/per territory/.test(tech) && /Armory in/.test(tech),
+// Phase 12D sharpened this copy: because Technology now LIVES inside Empire, it has to say in one
+// breath that it is managed centrally and still per-territory in authority, or the location implies
+// pooling. Asserting the specific sentences is stricter than the old substring pair.
+// The copy is built by string concatenation across source lines, so join those seams before matching
+// -- otherwise a purely cosmetic re-wrap would fail an assertion about the WORDS.
+const techText = tech.replace(/'\s*\+\s*\n?\s*'/g, "");
+assert(/per territory/.test(techText) && /Armory <b>in that same territory<\/b>/.test(techText),
   "Technology must state its real, per-territory scope");
-assert(/arrives with no buildings and no technology/.test(tech),
+assert(/Managed here, but stored and effective per territory/.test(techText),
+  "...and must not let its central LOCATION imply central authority");
+assert(/does not pool it/.test(techText), "...saying plainly that research is not pooled");
+assert(/arrives with no buildings and no technology/.test(techText) &&
+       /research starts again/.test(techText),
   "...and that a conquered territory inherits nothing");
 for (const invented of ["upkeep", "tech tax", "era", "research tree", "empire-wide bonus"]) {
   assert(tech.toLowerCase().indexOf(invented) === -1,
@@ -229,6 +251,112 @@ for (const forbidden of ["button", "openEmpire", "openRegion", "buildingsPanel",
 assert(/Holdings<\/div>/.test(holdings) && /hpl-n/.test(holdings),
   "Holdings still shows who holds how much");
 ok("18. Holdings is a read-only summary with no controls — Empire is the only management hub");
+
+// ============================================================================================
+// ============== Phase 12D: legacy cleanup and interaction hardening =========================
+// ============================================================================================
+
+// ---- 19. camera + selection memory, and its boundaries ----
+assert(/let geoView = null;/.test(code) && /function geoRememberView\(\)/.test(code),
+  "the remembered board position must be a named, session-scoped value");
+assert(!/localStorage[^\n]*geoView|geoView[^\n]*localStorage/.test(code),
+  "a camera position must never be persisted — it is a view concern, not saved state");
+assert(!/geoView[^\n]*(fetch|api\/)/.test(code), "...and must never be sent to the server");
+const restoreBlk = slice("if (geoView && geoView.room === _room", "cam.home();", "restore");
+assert(/geoView\.room === _room/.test(restoreBlk),
+  "a remembered position may only be restored in the SAME room");
+assert(/cam\.restore\(geoView\.s, geoView\.tx, geoView\.ty\)/.test(restoreBlk),
+  "restoring must go through the camera, so the same clamp applies");
+const camApi = slice("function restore(ns, ntx, nty)", "return { focusRect", "cam.restore");
+assert(/Math\.max\(CAM_MIN, Math\.min\(CAM_MAX/.test(camApi) && /apply\(\)/.test(camApi),
+  "a restored camera must be clamped and applied like any other move");
+assert(/function clearActiveRoom\(\)[\s\S]{0,260}geoForgetView\(\)/.test(code),
+  "changing room must forget the remembered position");
+assert(/function clearAuth\(\)[\s\S]{0,360}geoForgetView\(\)/.test(code),
+  "signing out must forget the remembered position");
+ok("20. the remembered camera/selection is session-only, room-scoped, clamped on restore, never " +
+   "persisted or sent anywhere, and forgotten on room change and logout");
+
+// ---- 20. selection and camera stay independent ----
+assert(camera.indexOf("hudSelKey") === -1 && camera.indexOf("hudSelect") === -1,
+  "pan/zoom must not touch the selection");
+assert(/geoOffScreen\(key\)\) geoFocusKey\(key, \{ keepZoom: true \}\)/.test(sel),
+  "selecting must not change the zoom");
+assert(contBlock.indexOf("hudSelKey") === -1 && contBlock.indexOf("hudSelect") === -1,
+  "a continent shortcut must not touch the selection");
+ok("21. pan, zoom and continent shortcuts never clear the selection, and selecting never re-zooms");
+
+// ---- 21. the attack-plan lifecycle ----
+const nav = slice('if (el !== screenArticle && !screenArticle.classList.contains("hidden"))',
+                  "].forEach(s => s.classList.add", "showScreen guard");
+assert(/geoRememberView\(\)/.test(nav) && /geoTrayClose\(\)/.test(nav),
+  "leaving the board must remember the camera AND cancel the plan, in one place");
+assert(/if \(key !== hudSelKey\) closeTray\(\);/.test(sel),
+  "retargeting must cancel the previous plan");
+assert(/function clearAuth\(\)[\s\S]{0,360}geoTrayClose\(\)/.test(code),
+  "signing out must cancel the plan");
+assert(/const key = hudSelKey, mode = trayMode, squad = traySquad\(\), src = traySrc;/.test(confirm),
+  "the plan must be captured before teardown (the 12C source_not_found bug)");
+assert(confirm.indexOf("traySrc") === confirm.lastIndexOf("traySrc"), "...and read exactly once");
+ok("22. a plan dies with the board: navigation, retargeting and logout all cancel it, and no stale " +
+   "source/target id can be confirmed");
+
+// ---- 22. the Region index selects; it opens nothing ----
+const rindex = slice('const idx = document.createElement("div"); idx.className = "geo-index";',
+                     "const drawer = document.createElement", "region index");
+assert(/window\.hudSelect\(r\.key\)/.test(rindex) && /geoFocusKey\(r\.key/.test(rindex),
+  "a directory row must select the territory and point the camera at it");
+for (const forbidden of ["r.open", "openRegion", "openModal", "drawGeo", "groupFilter", "drill"]) {
+  assert(rindex.indexOf(forbidden) === -1,
+    "a directory row must not " + forbidden + " — it is a selection shortcut, not a container");
+}
+assert(!/mouseenter[^\n]*hudSelect/.test(rindex),
+  "hovering the directory must not mutate the selection");
+assert(/setAttribute\("aria-label", btn\.title\)/.test(rindex),
+  "every row needs an accessible name saying what it does");
+ok("23. the Region index selects and centres — the one surviving route into the old modal is gone, " +
+   "and hovering no longer mutates the selection");
+
+// ---- 23. camera shortcut and control wording ----
+assert(/Jump the camera to/.test(contBlock), "a continent shortcut must say it moves the camera");
+assert(!/(Enter|Go into|Back to) (Europe|Asia|Africa|Oceania|the continent)/i.test(html),
+  "no container wording may survive");
+const camBar = slice("const camBar = document.createElement", "holder.appendChild(camBar)", "camera controls");
+assert(/Zoom in/.test(camBar) && /Zoom out/.test(camBar) && /whole World/.test(camBar),
+  "the visible controls are zoom in, zoom out and camera-home");
+assert(/setAttribute\("aria-label", spec\[1\]\)/.test(camBar) && /b\.title = spec\[1\]/.test(camBar),
+  "...each with an accessible name");
+assert(/\.geo-cam button:focus-visible/.test(html), "...and a visible focus ring");
+assert(/zoomBy/.test(camBar) && /cam\.home\(\)/.test(camBar),
+  "the controls must drive the SAME camera as wheel/pinch/drag");
+ok("24. one navigation mechanism: zoom in / zoom out / jump-to-World, all on the same camera, all " +
+   "keyboard-reachable with visible focus, and no container wording anywhere");
+
+// ---- 24. highlights do not depend on colour alone ----
+assert(/\.geo-region\.geo-src[^}]*stroke-dasharray: 5 3/.test(html),
+  "a valid attack source must be distinguishable without colour");
+assert(/\.geo-region\.geo-tgt[^}]*stroke-dasharray: none/.test(html),
+  "...and the target must differ from it in that same non-colour channel");
+assert(/solid outline/.test(code) && /dashed outline/.test(code),
+  "the tray must name the two roles in words as well");
+assert(/\.geo-region\.geo-sel[^}]*stroke: #fff/.test(html),
+  "a plain selection still has its own outline");
+ok("25. attack target and source differ by outline STYLE, not only colour, and the tray says which " +
+   "is which in words");
+
+// ---- 25. Empire is the only management hub ----
+const hudCtrls = slice("function renderHudControls", "function renderHudCard", "renderHudControls");
+assert(/openEmpire/.test(hudCtrls), "the HUD must reach Empire");
+for (const gone of ["openHomeBase", "Recruit", "Research", "Manage"]) {
+  assert(hudCtrls.indexOf(gone) === -1, "the HUD must not offer a competing hub: " + gone);
+}
+assert(/function openHomeBase\(\)/.test(code) && /buildingsPanel\(host, HOME_KEY/.test(code),
+  "the home-base PANEL survives, because Empire opens it — only the competing route is gone");
+assert(/function endChallengeIfUnsatisfied\(\) \{/.test(code) &&
+       !/endChallengeIfUnsatisfied\(\) \{[\s\S]{0,80}pendingOccupy/.test(code),
+  "the lesson-scoped transaction hook must be an explicit no-op, not a dangling assignment");
+ok("26. one management hub: Empire. The Base route is gone while the panel it used to own is still " +
+   "the one Empire opens, and no removed identifier is left assigned anywhere");
 
 // ================= extra: nothing authoritative was rewritten =================
 assert(/const TROOPS = \[/.test(code) && /{ id: "cav",/.test(code) && /{ id: "spear",/.test(code),

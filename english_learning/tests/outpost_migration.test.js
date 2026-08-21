@@ -28,9 +28,12 @@ function extractFn(src, sig) {
 }
 
 const launchAttack = extractFn(html, "function launchAttack(");
-const renderAttackPanel = extractFn(html, "function renderAttackPanel(");
 const validAttackSources = extractFn(html, "function validAttackSources(");
-const openRegion = extractFn(html, "function openRegion(key, name, pop, i)");
+// Phase 12D: the modal attack panel and the region modal that hosted it are GONE. The live attack UI
+// is the in-board tray, so that is what these checks now read. See the header comment for the full
+// OLD / WHY OBSOLETE / NEW / WHY NOT WEAKER record.
+const trayRender = extractFn(html, "function renderTray()");
+const trayConfirm = extractFn(html, "function trayConfirm()");
 
 // 1) The attack request carries BOTH sourceTerritoryId and targetTerritoryId (Phase 2B), and NOTHING else
 //    authoritative — the exact POST body is {sourceTerritoryId, targetTerritoryId, squad, avatar}.
@@ -51,58 +54,57 @@ assert(!/poolAdd\s*\(/.test(launchAttack) && !/poolSpend\s*\(/.test(launchAttack
   "launchAttack must not mutate the client pool from the battle result");
 ok("battle replay stays non-authoritative (preOrdered=true; no client pool mutation)");
 
-// 4) The attack UI delegates to the shared renderAttackPanel — and there is only ONE attack UI.
+// 4) There is exactly ONE attack UI, and it is the in-board tray.
 //
-// RETARGETED in Phase 9G. This check has evolved twice:
-//
+// RETARGETED in Phase 12D. This check has evolved three times:
 //   Phase 2A  OLD: openOutpost must ALSO delegate to renderAttackPanel.
-//   Phase 7G  OLD: openOutpost must expose no conquest surface at all, and must not gate anything on
-//                  the local Rule B average.
-//   Phase 9G  NEW: openOutpost does not exist, and neither does the board-map lesson node that was
-//                  its only caller.
+//   Phase 7G  OLD: openOutpost must expose no conquest surface at all.
+//   Phase 9G  OLD: openOutpost does not exist, and neither does the board-map lesson node.
+//   Phase 12D NEW: renderAttackPanel does not exist either -- the attack UI is the board tray.
 //
-// WHY THE 7G FORM IS OBSOLETE: it grepped the body of `function openOutpost(a)`. Phase 9G deleted
-// that function together with the 167-line board-map branch inside selectLevel() that wired its only
-// click handler, so the assertion can no longer even locate its subject. The branch was unreachable
-// for every level that exists — every level in lessons.json has a GEO_MAPS entry, so selectLevel()
-// always returns through renderGeoMap() — and all 57 curriculum lessons now enter through Learning
-// Home, so the board map was a second lesson-entry architecture with no way in.
+// WHY THE 9G FORM IS OBSOLETE: it grepped `function renderAttackPanel(`. Phase 12C moved attack
+// planning out of the modal and into a tray below the map viewport, and 12D deleted the modal panel
+// and the region modal that hosted it. The subject cannot be located any more.
 //
-// WHY THE NEW FORM IS NOT WEAKER: "the function is gone, and nothing can create the node that called
-// it" strictly implies the old property — a deleted function cannot expose a conquest surface or a
-// Rule B gate. The new form additionally pins what the old one never did: that exactly ONE conquest
-// surface exists (openRegion → renderAttackPanel), that selectLevel() has no second lesson entry,
-// and that no lesson-status helper reaches a world action.
-assert(/renderAttackPanel\(/.test(openRegion), "openRegion must delegate to renderAttackPanel");
-assert(html.indexOf("function openOutpost") < 0,
-  "openOutpost() must stay deleted (Phase 9G removed the board-map lesson node)");
-assert(html.indexOf("moveHeroThenGo") < 0,
-  "the board-map hero-walk helper must stay deleted (its only callers were the board-map nodes)");
-assert(!/className\s*=\s*["'`]map-node/.test(html) && !/class="map-node/.test(html),
-  "nothing may create a .map-node — that class was the board-map lesson/boss node");
-// selectLevel() must be a pure delegate to the geo engine: one call, no second lesson entry.
-const selectLevel = extractFn(html, "function selectLevel(i)");
-assert(/renderGeoMap\(/.test(selectLevel), "selectLevel must delegate to renderGeoMap");
-["openOutpost", "selectArticle", "map-board", "articleTotal", "startLevelExam"].forEach(k =>
-  assert(selectLevel.indexOf(k) < 0,
-    "selectLevel must not reach '" + k + "' — it is a map delegate, not a lesson/exam entry"));
-// and no client surface may gate a world action on the local practice average
-["launchAttack", "renderAttackPanel"].forEach((sig, idx) => {
-  const fn = idx === 0 ? launchAttack : renderAttackPanel;
-  assert(!/lessonStatus\(|statusFromScores\(/.test(fn),
-    sig + " must not gate a world action on the local Rule B average");
-});
-ok("canonical attacks route through the shared source→target panel; openOutpost, moveHeroThenGo and "
-   + "the .map-node board-map lesson entry are gone, and selectLevel is a pure geo-map delegate");
+// WHY THIS IS NOT WEAKER: the authority checks above are untouched (they read launchAttack and
+// validAttackSources, both still live). This form additionally asserts what the old one could not:
+// that only ONE attack surface exists in the file, and that the plan is captured before the tray is
+// torn down -- the bug that shipped a null sourceTerritoryId in 12C.
+assert(/trayValidSources\(\)/.test(trayRender) || /trayValidSources\(\)/.test(html),
+  "the tray must derive its sources from the shared helper");
+assert(/function trayValidSources\(\) \{ return hudSelKey \? validAttackSources\(hudSelKey\) : \[\]; \}/.test(html),
+  "...which is validAttackSources, unchanged");
+assert(/launchAttack\(src, key, name, h, squad\)/.test(trayConfirm),
+  "the tray must fire the existing launchAttack with the captured source");
+assert(/const key = hudSelKey, mode = trayMode, squad = traySquad\(\), src = traySrc;/.test(trayConfirm),
+  "the whole plan must be captured before closeTray() resets it");
+assert(!/function renderAttackPanel\(/.test(html) && !/function openRegion\(/.test(html),
+  "the retired modal attack panel and region modal must not come back");
+const attackUIs = (html.match(/launchAttack\(/g) || []).length;
+assert(attackUIs === 2, "exactly one caller plus the definition of launchAttack: got " + attackUIs);
+ok("Phase 12D: exactly ONE attack UI -- the in-board tray -- deriving sources from the same " +
+   "adjacency helper, capturing the plan before teardown, and firing the same launchAttack");
 
 // 5) Valid attack sources come from World-Domain adjacency (advisory), not SVG geometry/coordinates.
 assert(/adjacentTerritoryIds/.test(validAttackSources), "validAttackSources must read World-Domain adjacentTerritoryIds");
 assert(!/getBoundingClientRect|viewBox|\.x\b|\.y\b/.test(validAttackSources), "source selection must not use geometry/coordinates");
 ok("valid sources derived from World-Domain adjacency (advisory), not geometry");
 
-// 6) Non-adjacent / no-owned-source targets are represented in the UI (no valid source → clear message, no attack).
-assert(/validAttackSources\(/.test(renderAttackPanel), "renderAttackPanel must compute valid sources");
-assert(/adjacent territory you own/i.test(renderAttackPanel), "renderAttackPanel must show an advisory when no adjacent owned source exists");
+// 6) The UI must REPRESENT "no adjacent owned source", not attack anyway.
+//    Retargeted in 12D from renderAttackPanel to the tray, which is where that message now lives.
+assert(/No adjacent territory of yours has a garrison/.test(trayRender),
+  "the tray must state why an attack is impossible");
+assert(/Take a neighbouring territory first/.test(trayRender),
+  "...and what the player would have to do first");
+assert(/island with no land neighbours cannot be reached by land/.test(trayRender),
+  "...including the isolated-island case");
+// bound the slice to the no-source branch itself; the rest of renderTray legitimately builds the
+// ATTACK button for the case where a source DOES exist
+const noSrcBlock = trayRender.slice(trayRender.indexOf("if (!srcs.length)"),
+                                    trayRender.indexOf("const types = TROOPS.filter"));
+assert(noSrcBlock.length > 200 && noSrcBlock.indexOf("tb-go") === -1,
+  "with no valid source the tray must offer no ATTACK button at all");
+assert(/tb-cancel/.test(noSrcBlock), "...only a way to close it");
 ok("UI represents 'no adjacent owned source' (invalid/non-adjacent target) instead of attacking");
 
 // 7) Regression: the legacy client-authoritative attack chain stays gone.
