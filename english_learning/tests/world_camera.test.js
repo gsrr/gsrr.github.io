@@ -194,10 +194,23 @@ assert(/actBtn\("\\u\{1F3F0\}", "Empire", openEmpire/.test(actions),
 ok("14. Recruit, Buildings, Research and the catch-all Manage are gone from territory interaction, " +
    "and the region modal they lived in no longer exists at all");
 
-// ================= 15/16/17. Empire provides all three areas =================
-const empire = slice("function renderEmpireModal()", "\n  function empireForces", "renderEmpireModal");
-assert(/\["forces", "⚔️ Forces"\], \["buildings", "🏛️ Buildings"\], \["tech", "🏭 Technology"\]/.test(empire),
-  "Empire must offer exactly Forces, Buildings and Technology");
+// ================= 15/16/17. Empire provides all three management areas =================
+// RETARGETED in Phase 13B.
+//   OLD            : the tab list must be exactly [forces, buildings, tech].
+//   WHY OBSOLETE   : 13B adds a strategic OVERVIEW as Empire's first area, so a management empire of
+//                    50 territories no longer opens on 50 rows of forms. The literal no longer matches.
+//   NEW            : the three management areas must all still be present, Overview must lead, and
+//                    Overview must be the DEFAULT area.
+//   WHY NOT WEAKER : it still pins all three management areas by name, and adds two facts the old
+//                    form could not state -- that an aggregate view exists and that it is what opens.
+const empire = slice("function renderEmpireModal()", "\n  function empireOverview", "renderEmpireModal");
+assert(/\["forces", "⚔️ Forces"\]/.test(empire) && /\["buildings", "🏛️ Buildings"\]/.test(empire) &&
+       /\["tech", "🏭 Technology"\]/.test(empire),
+  "Empire must still offer Forces, Buildings and Technology");
+assert(/\["overview", "🗺️ Overview"\], \["forces"/.test(empire),
+  "...with the strategic Overview leading");
+assert(/let empTab = "overview";/.test(code),
+  "...and Overview must be the area Empire opens on");
 assert(/role="tablist"/.test(empire) && /role="tab"/.test(empire) && /aria-selected/.test(empire),
   "the three areas must be a real tablist");
 const forces = slice("function empireForces", "\n  function openRecruitFor", "empireForces");

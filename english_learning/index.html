@@ -974,6 +974,39 @@
   .hud-card .hc-foe  { background: #f59e0b; color: #2a1b0d; }
   .hud-card .hc-open { background: #f2ddb0; color: #2a1b0d; }
   .hud-card .hc-iso { color: #ffc9c9; font-weight: 700; font-size: 11.5px; }
+  /* Phase 13B: the selected territory's strategic role, in words, next to the facts it follows from */
+  .hud-card .hc-strat { font-size: 11.5px; font-weight: 700; margin-top: 3px; }
+  .hud-card .hc-strat b { font-size: 12.5px; }
+  .hud-card .hc-strat.is-frontier { color: #ffd9a8; }
+  .hud-card .hc-strat.is-interior { color: #b6f5c6; }
+  .hud-card .hc-strat.is-isolated { color: #ffc9c9; }
+
+  /* Phase 13B: Empire's strategic overview -- aggregate first, territories only on drill-down */
+  .emp-strat { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 10px; }
+  .emp-stat { flex: 1 1 110px; border-radius: 12px; padding: 9px 11px; background: #f1f5f9;
+    border: 2px solid #cbd5e1; text-align: center; }
+  .emp-stat b { display: block; font-size: 22px; font-weight: 900; color: #0f172a;
+    font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .emp-stat small { display: block; font-size: 11px; font-weight: 800; letter-spacing: .4px;
+    text-transform: uppercase; color: #64748b; margin-top: 2px; }
+  .emp-stat.is-frontier { background: #fff7ed; border-color: #fdba74; }
+  .emp-stat.is-interior { background: #f0fdf4; border-color: #86efac; }
+  .emp-stat.is-isolated { background: #fef2f2; border-color: #fca5a5; }
+  .emp-group { border: 2px solid #e2e8f0; border-radius: 12px; margin-bottom: 8px; }
+  .emp-group > summary { cursor: pointer; padding: 9px 12px; font-size: 13.5px; font-weight: 800;
+    color: #0f172a; list-style: none; display: flex; gap: 8px; align-items: baseline; }
+  .emp-group > summary::-webkit-details-marker { display: none; }
+  .emp-group > summary::before { content: "\25b8"; color: #64748b; font-weight: 900; }
+  .emp-group[open] > summary::before { content: "\25be"; }
+  .emp-group > summary:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+  .emp-group .eg-n { color: #64748b; font-variant-numeric: tabular-nums; }
+  .emp-group .eg-why { font-size: 11.5px; font-weight: 600; color: #64748b; }
+  .emp-group .eg-body { padding: 0 12px 10px; }
+  .emp-terr { display: flex; flex-wrap: wrap; gap: 6px; }
+  .emp-terr button { cursor: pointer; font-size: 12.5px; font-weight: 700; border-radius: 999px;
+    padding: 5px 11px; color: #0f172a; border: 2px solid #cbd5e1; background: #fff; }
+  .emp-terr button:hover { background: #f1f5f9; }
+  .emp-terr button:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
 
   /* --- bottom-right: players / holdings --- */
   /* Holdings is reference information: quieter than the card and the action bar. */
@@ -1070,6 +1103,28 @@
   /* the selected territory: always legible, always obvious */
   .geo-region.geo-sel { stroke: #fff !important; stroke-width: 2.4 !important;
     vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 6px rgba(255,255,255,.85)); }
+  /* ===== Phase 13B: strategic classification on the board =====================================
+     Ownership already owns FILL, and selection / attack-source / attack-target already own STROKE, so
+     a frontier cue may use neither without destroying something the player needs more. It gets its own
+     channel instead: a TEXTURE overlay in a layer of its own, drawn above the land and below the
+     labels, pointer-events:none so it can never intercept a click.
+       frontier -> diagonal hatch      interior -> nothing at all (the quiet majority)
+       isolated -> dots
+     Texture is not a colour, so this survives colour-blindness and greyscale; the accompanying HUD
+     card states the classification in words as well. Suppressed at FAR zoom, where 250 territories of
+     texture would be noise rather than information. */
+  .geo-strategic { pointer-events: none; }
+  .geo-holder[data-zoom="far"] .geo-strategic { display: none; }
+  /* `.geo-svg path` already sets the land fill AND a land stroke, and its specificity (0,1,1) beats a
+     single class -- so the overlay MUST be selected as `path.geo-strat-*` or it silently renders as a
+     solid land-coloured patch, i.e. a colour-only cue. `stroke: none` matters just as much: inheriting
+     the land stroke would draw a second outline on the map, competing with the selection ring. */
+  .geo-svg path.geo-strat-frontier { fill: url(#stratFrontier); stroke: none; }
+  .geo-svg path.geo-strat-isolated { fill: url(#stratIsolated); stroke: none; }
+  /* the legend entries that explain the texture */
+  .gl-frontier::before { background: repeating-linear-gradient(45deg, #f8fafc 0 2px, #64748b 2px 4px); }
+  .gl-isolated::before { background: radial-gradient(circle at 50% 50%, #64748b 34%, #f8fafc 36%); }
+
   /* A valid attack SOURCE and the TARGET must be distinguishable WITHOUT colour, because a colour
      pair is exactly what a red/green-blind player cannot separate -- and this one decides where an
      army marches from. The source is DASHED, the target is a solid heavier outline; the ownership
@@ -6830,7 +6885,14 @@ nextLevelBtn.textContent = "✅ Back to lessons";
   // keeps what acts on geography (select, occupy, attack, garrison); everything repetitive lives
   // here. No new server behaviour: every button below calls an endpoint that already existed, with
   // the same payload, and every number shown is read from the authoritative caches.
-  let empTab = "forces";
+  // Phase 13B: Empire opens on the STRATEGIC OVERVIEW, not on a management table. A 50-territory
+  // empire used to render 50 rows of forms before the player had decided anything; now it renders four
+  // counts and three collapsed groups, and individual territories are a deliberate drill-down.
+  let empTab = "overview";
+  // Phase 13B: which overview groups the player has expanded. openEmpire() paints once from cache and
+  // again when fresh territory data lands, and without this the second paint collapsed whatever the
+  // player had just opened. A view concern: a plain Set, never stored, gone with the tab.
+  const empOpenGroups = new Set();
   function empireRows() {
     const me = (authUser() || userName || "").toLowerCase();
     const rows = [];
@@ -6852,7 +6914,8 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       "👥 Population drives your gold income (bigger cities earn more). " +
       "🪙 Each region remits gold (10% of its people/hr). " +
       "🎖️ Recruiting turns people into troops (1 person = 1 soldier), so it shrinks that place's population.";
-    const TABS = [["forces", "⚔️ Forces"], ["buildings", "🏛️ Buildings"], ["tech", "🏭 Technology"]];
+    const TABS = [["overview", "🗺️ Overview"], ["forces", "⚔️ Forces"],
+                  ["buildings", "🏛️ Buildings"], ["tech", "🏭 Technology"]];
     let html = '<h3 class="modal-title">🏰 My Empire' + helpIco(empTip) + '</h3>' +
       '<div class="emp-stats">' +
       '<div><span>👥</span><b>' + e.population + '</b><small>population</small></div>' +
@@ -6874,12 +6937,103 @@ nextLevelBtn.textContent = "✅ Back to lessons";
     }));
     function reopen() { renderEmpireModal(); }
     function paint() {
-      if (empTab === "forces") empireForces(body, rows, reopen);
+      if (empTab === "overview") empireOverview(body, rows);
+      else if (empTab === "forces") empireForces(body, rows, reopen);
       else if (empTab === "buildings") empireBuildings(body, rows, reopen);
       else empireTechnology(body, rows, reopen);
     }
     paint();
   }
+  // ---------- OVERVIEW: the strategic shape of the empire, aggregate first ----------
+  // Answers, in one screen: how large is my empire, how much of it is exposed, how much is safely
+  // behind the line, and how much is structurally cut off. Every number is the SERVER's
+  // classification (territory.strategicSummary and holders[].strategic) -- the client counts nothing
+  // and classifies nothing, so Empire and the board can never disagree.
+  //
+  // No "threat level" is shown. The server publishes no enemy strength for territory the player does
+  // not own (fog of war), so any threat figure would be invented.
+  function empireOverview(body, rows) {
+    const sum = (territory && territory.strategicSummary) || null;
+    const holders = (territory && territory.holders) || {};
+    const byClass = { frontier: [], interior: [], isolated: [] };
+    rows.forEach(m => {
+      const c = (holders[m.key] || {}).strategic;
+      if (byClass[c]) byClass[c].push(m);
+    });
+    // The summary is authoritative; these are the rows behind it. If they ever disagreed, the summary
+    // wins on screen and the discrepancy is worth a bug report, so say so rather than papering over it.
+    const n = k => (sum ? sum[k] : byClass[k].length);
+    const total = sum ? sum.total : rows.length;
+    const unclassified = rows.length - (byClass.frontier.length + byClass.interior.length + byClass.isolated.length);
+    let html = '<div class="emp-strat">' +
+      '<div class="emp-stat"><b>' + total + '</b><small>Territories</small></div>' +
+      '<div class="emp-stat is-frontier"><b>' + n("frontier") + '</b><small>Frontier</small></div>' +
+      '<div class="emp-stat is-interior"><b>' + n("interior") + '</b><small>Interior</small></div>' +
+      '<div class="emp-stat is-isolated"><b>' + n("isolated") + '</b><small>Isolated</small></div>' +
+      '</div>';
+    if (!total) {
+      html += '<p class="emp-none">No territories yet — occupy one on the World map.</p>';
+      body.innerHTML = html;
+      return;
+    }
+    const GROUPS = [
+      ["frontier", "⚔️ Frontier", "Borders territory you do not control. This is where pressure matters."],
+      ["interior", "🛡️ Interior", "Every land neighbour is yours. Nothing here needs attention."],
+      ["isolated", "🏝️ Isolated", "No land connection at all — it cannot be attacked over land, and it " +
+                                   "cannot attack out. Sea routes are not modelled yet."]
+    ];
+    GROUPS.forEach(g => {
+      const list = byClass[g[0]];
+      // The chips are NOT built here. A group renders its territories on FIRST OPEN, so a
+      // 100-territory empire puts a hundred buttons in the DOM only if the player asks a group for
+      // them -- "aggregate before listing" is then true of the document, not merely of what is visible.
+      html += '<details class="emp-group" data-group="' + g[0] + '">' +
+        '<summary><span>' + g[1] + '</span><span class="eg-n">' + list.length + '</span>' +
+        '<span class="eg-why">' + escapeHtml(g[2]) + '</span></summary>' +
+        '<div class="eg-body" data-pending="' + g[0] + '"></div></details>';
+    });
+    if (unclassified > 0) {
+      html += '<p class="emp-note">⚠️ ' + unclassified + ' territory row(s) carry no classification — ' +
+        'the board and this summary disagree, which is a bug worth reporting.</p>';
+    }
+    html += '<p class="emp-note">Frontier / interior / isolated is derived by the server from ' +
+      'ownership and the territory catalog. It describes where your empire is exposed; it does not ' +
+      'change what you are allowed to do.</p>';
+    body.innerHTML = html;
+    // a territory chip closes Empire and takes the board to that territory: drill-down, not management
+    function wireChips(host) {
+      host.querySelectorAll("[data-goto]").forEach(b => b.addEventListener("click", () => {
+        const key = b.getAttribute("data-goto");
+        closeModal();
+        if (window.hudSelect) window.hudSelect(key);
+        if (geoFocusKey) geoFocusKey(key, { pad: 3.2, minZoom: 2.2 });
+      }));
+    }
+    function buildGroup(g) {
+      const host = g.querySelector(".eg-body[data-pending]");
+      if (!host) return;                                  // already built
+      const list = byClass[host.getAttribute("data-pending")] || [];
+      host.removeAttribute("data-pending");
+      host.innerHTML = list.length
+        ? '<div class="emp-terr">' + list
+            .sort((a, b) => (b.h.pop || 0) - (a.h.pop || 0))
+            .map(m => '<button type="button" data-goto="' + escapeHtml(m.key) + '">' +
+              escapeHtml(regionDisplayName(m.key) || m.key) + ' <span class="emp-pop">👥 ' +
+              (m.h.pop || 0) + '</span></button>').join("") + '</div>'
+        : '<p class="emp-none">None.</p>';
+      wireChips(host);
+    }
+    body.querySelectorAll(".emp-group").forEach(g => {
+      const key = g.dataset.group;
+      g.addEventListener("toggle", () => {
+        if (g.open) { empOpenGroups.add(key); buildGroup(g); } else { empOpenGroups.delete(key); }
+      });
+      // restore across the cache -> fresh-data re-render, building the contents synchronously so a
+      // player (or a test) that opened a group never sees it snap shut
+      if (empOpenGroups.has(key)) { g.open = true; buildGroup(g); }
+    });
+  }
+
   // ---------- FORCES: every territory's army in one table ----------
   // Troop MOVEMENT between territories does not exist on the server, so none is offered here. What
   // exists is recruitment (per territory, needs the right building) and garrison positioning (on the
@@ -7645,6 +7799,25 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       // draws a halo BEHIND such a territory so the eye can find it. It adds no hit area: the group
       // is pointer-events:none, so the territory's own path stays the only click target and no halo
       // can overlap into another territory's identity. Nothing here reads or implies adjacency.
+      // Phase 13B: the two textures the strategic overlay fills with, defined once per board.
+      // Built with createElementNS, NOT innerHTML: assigning innerHTML on an SVG element runs the HTML
+      // parser, which puts <pattern> in the XHTML namespace, and `fill: url(#...)` then silently falls
+      // back to a solid colour -- turning a texture cue into the colour-only cue this phase forbids.
+      const _defs = document.createElementNS(NSU, "defs");
+      const _mkEl = (tag, attrs) => {
+        const el = document.createElementNS(NSU, tag);
+        Object.keys(attrs).forEach(k => el.setAttribute(k, attrs[k]));
+        return el;
+      };
+      const _pFront = _mkEl("pattern", { id: "stratFrontier", width: 7, height: 7,
+                                         patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" });
+      _pFront.appendChild(_mkEl("line", { x1: 0, y1: 0, x2: 0, y2: 7,
+                                          stroke: "rgba(30,41,59,.55)", "stroke-width": 2.4 }));
+      const _pIso = _mkEl("pattern", { id: "stratIsolated", width: 8, height: 8,
+                                       patternUnits: "userSpaceOnUse" });
+      _pIso.appendChild(_mkEl("circle", { cx: 4, cy: 4, r: 1.6, fill: "rgba(30,41,59,.5)" }));
+      _defs.appendChild(_pFront); _defs.appendChild(_pIso);
+      svg.insertBefore(_defs, svg.firstChild);
       const ig = document.createElementNS(NSU, "g");
       ig.setAttribute("class", "geo-isles"); ig.style.pointerEvents = "none";
       svg.insertBefore(ig, svg.firstChild);
@@ -7670,6 +7843,10 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         svg.insertBefore(_deco.rear, svg.querySelector("path"));
         svg.appendChild(_deco.front);
       }
+      // Phase 13B: the strategic texture layer. Above the land, below markers and labels, so it can
+      // never hide a name or a selection outline, and pointer-events:none so it can never take a click.
+      const sg = document.createElementNS(NSU, "g");
+      sg.setAttribute("class", "geo-strategic"); sg.style.pointerEvents = "none"; svg.appendChild(sg);
       const mg = document.createElementNS(NSU, "g"); mg.setAttribute("class", "geo-markers"); svg.appendChild(mg);
       const tg = spec.grouped ? null : buildTerrainLayer(svg, spec); if (tg) svg.insertBefore(tg, mg);   // 地形風景層(分洲地圖不畫，縮放會跑位)
       const vb = (svg.getAttribute("viewBox") || "0 0 1000 1000").split(/\s+/).map(Number);
@@ -8172,9 +8349,25 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         }
         rows += '<div class="hc-row"><span class="hc-k">Neighbours</span><b>' +
           (ct.adjacentTerritoryIds || []).length + '</b></div>';
+        // Phase 13B: the strategic role of the selected territory, in words, straight from the
+        // server's classification. Shown only for territories the player owns, because the
+        // classification is relative to an owner and the server publishes it for those alone.
+        const STRAT_COPY = {
+          frontier: ["\u2694\uFE0F Frontier", "borders territory you do not control."],
+          interior: ["\u{1F6E1}\uFE0F Interior", "every land neighbour is yours."],
+          isolated: ["\u{1F3DD}\uFE0F Isolated", "no land connection \u2014 sea routes are not modelled yet."]
+        };
+        const sc = mine ? (h || {}).strategic : null;
+        const stratLine = (sc && STRAT_COPY[sc])
+          ? '<div class="hc-strat is-' + sc + '"><b>' + STRAT_COPY[sc][0] + '</b> \u2014 ' +
+            STRAT_COPY[sc][1] + '</div>'
+          : "";
         HUD.card.innerHTML = '<div class="hc-hd">\u{1F3F0} <span class="hc-nm">' +
           escapeHtml(ct.displayName || regionDisplayName(key) || key) + '</span>' + tag + '</div>' + rows +
-          (iso ? '<div class="hc-iso">\u26A0\uFE0F No land neighbours \u2014 safe, but it cannot ' +
+          stratLine +
+          // the pre-existing structural warning stays for territories the player does NOT own, where
+          // no classification is published; for an owned isolated territory the line above says it.
+          ((iso && !sc) ? '<div class="hc-iso">\u26A0\uFE0F No land neighbours \u2014 safe, but it cannot ' +
             'attack out.</div>' : '');
       }
 
@@ -8470,7 +8663,8 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       hudRefresh();
 
       const legend = document.createElement("div"); legend.className = "geo-legend";
-      legend.innerHTML = '<span class="gl gl-mine">You</span><span class="gl gl-open">Open</span>';
+      legend.innerHTML = '<span class="gl gl-mine">You</span><span class="gl gl-open">Open</span>' +
+        '<span class="gl gl-frontier">Frontier</span><span class="gl gl-isolated">Isolated</span>';
       wrap.appendChild(legend);
       // 誰佔了誰：這張地圖上每位擁有者一列（色塊＋頭像＋名字＋佔幾塊），colorize() 每次刷新
       const owners = document.createElement("div"); owners.className = "geo-owners"; wrap.appendChild(owners);
@@ -8672,14 +8866,37 @@ nextLevelBtn.textContent = "✅ Back to lessons";
           const link = banner.querySelector(".terr-link"); if (link) link.addEventListener("click", openLeaderboard);
         }
       }
+      // ===== Phase 13B: paint the strategic texture =====
+      // It reads ONLY what the server published (holders[key].strategic). The client never derives the
+      // classification -- one definition, in game/frontier.py. Cloning the land path is what keeps
+      // ownership fill, selection stroke and attack outlines completely untouched; only the player's
+      // OWN territories are ever cloned, so this is a handful of nodes, not 250.
+      function paintStrategic() {
+        while (sg.firstChild) sg.removeChild(sg.firstChild);
+        const holders = (territory && territory.holders) || {};
+        (regionList || []).forEach(r => {
+          if (!r.key || !r.p || r.dup) return;
+          const cls = (holders[r.key] || {}).strategic;
+          if (cls !== "frontier" && cls !== "isolated") return;   // interior stays quiet
+          (r.parts || [r.p]).forEach(pp => {
+            const d = pp.getAttribute("d");
+            if (!d) return;
+            const clone = document.createElementNS(NSU, "path");
+            clone.setAttribute("d", d);
+            clone.setAttribute("class", "geo-strat-" + cls);
+            sg.appendChild(clone);
+          });
+        });
+      }
       colorize();
+      paintStrategic();
       // Phase 12C: colorize() rewrites territory classes, so the selection / target / valid-source
       // overlays are re-applied after every repaint -- otherwise a refresh would silently erase the
       // highlight the player is aiming with.
       markMap();
       hudRefresh();                       // Phase 10C.1: HUD reads the same authoritative caches
       // when fresh territory data lands, repaint the board AND the HUD from it -- one source
-      loadTerritory(function () { colorize(); markMap(); hudRefresh(); });
+      loadTerritory(function () { colorize(); paintStrategic(); markMap(); hudRefresh(); });
     }
 
     // Phase 12D: this used to answer EVERY failure with "could not load the map", including an

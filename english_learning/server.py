@@ -15,7 +15,8 @@ try:                                   # 正規領地目錄(唯讀權威)：身�
 except Exception:
     terr_catalog = None
 from game import (army as game_army, conquest as game_conquest, config as game_config,   # 核心遊戲領域
-                  economy as game_economy, recruitment as game_recruit, technology as game_tech)
+                  economy as game_economy, recruitment as game_recruit, technology as game_tech,
+                  frontier as game_frontier)
 from learning import api as learning_api                                                   # 學習領域(與遊戲領域分離)
 
 # ---- Phase 10A.3: ONE conquest map ------------------------------------------------------------
@@ -1787,6 +1788,28 @@ class Handler(BaseHTTPRequestHandler):
         ai_names = room_ai_names()
         with terr_lock:
             store = load_territory_store()
+        # ===== Phase 13B: strategic classification, derived here and nowhere else =====
+        # frontier / interior / isolated is computed by game.frontier from the two authoritative facts
+        # this handler already holds -- ownership (this room's store) and adjacency (the catalog) -- and
+        # is published READ-ONLY. It is stored nowhere: a saved classification would be wrong the
+        # moment a neighbour changed hands, and combat changes neighbours.
+        #
+        # FOG OF WAR: it is attached ONLY to the requesting player's own territories, and the summary
+        # counts describe only their own empire. "Is that enemy territory interior?" is a question
+        # about someone else's holdings, and this endpoint does not answer it.
+        #
+        # NO GAMEPLAY EFFECT in 13B: nothing below reads this, and neither does can_attack, claim,
+        # recruit, research, build, income, rewards, re-entry or the AI.
+        def _owner_of(tid):
+            rec = store.get(tid)
+            return rec.get("owner") if isinstance(rec, dict) else None
+
+        def _neighbours_of(tid):
+            return terr_catalog.neighbors(tid) if terr_catalog else ()
+
+        mine_ids = [f for f, h in store.items()
+                    if isinstance(h, dict) and h.get("owner") and h.get("owner") == me]
+        strategic = game_frontier.classify_all(me, mine_ids, _owner_of, _neighbours_of) if me else {}
         holders, counts = {}, {}
         for f, h in store.items():
             if not isinstance(h, dict):
@@ -1799,11 +1822,13 @@ class Handler(BaseHTTPRequestHandler):
                               "troops": h.get("troops") or [], "pop": h.get("pop"),
                               "income": region_gold_income(h),
                               "buildings": h.get("buildings") or {}, "tech": h.get("tech") or {}, "mine": True,
+                              "strategic": strategic.get(f),
                               "conscript": bool(h.get("conscript")), "conscriptBudget": clampi(h.get("conscriptBudget", 0))}
             else:                                   # 別人/AI 的領地：不透露兵力、兵種、科技
                 holders[f] = {"owner": owner, "avatar": h.get("avatar", "👦"),
                               "pop": h.get("pop"), "hidden": True, "ai": owner in ai_names}
-        self._send({"holders": holders, "counts": counts})
+        self._send({"holders": holders, "counts": counts,
+                    "strategicSummary": game_frontier.summarize(strategic)})
 
     # 攻方在前端用兵種打贏（或佔領空據點）後呼叫，存下新的守備軍（pilot：信任前端結果）
     # 後端權威：把 client 傳來的任何識別碼解析成 canonical 領地 id(解析不到回 None)。
