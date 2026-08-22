@@ -16,7 +16,7 @@ except Exception:
     terr_catalog = None
 from game import (army as game_army, conquest as game_conquest, config as game_config,   # 核心遊戲領域
                   economy as game_economy, recruitment as game_recruit, technology as game_tech,
-                  frontier as game_frontier)
+                  frontier as game_frontier, regions as game_regions)
 from learning import api as learning_api                                                   # 學習領域(與遊戲領域分離)
 
 # ---- Phase 10A.3: ONE conquest map ------------------------------------------------------------
@@ -1810,6 +1810,24 @@ class Handler(BaseHTTPRequestHandler):
         mine_ids = [f for f, h in store.items()
                     if isinstance(h, dict) and h.get("owner") and h.get("owner") == me]
         strategic = game_frontier.classify_all(me, mine_ids, _owner_of, _neighbours_of) if me else {}
+        # ===== Phase 13C: region aggregation, over the SAME classifier =====
+        # An AGGREGATION VIEW and nothing more: regions are not an ownership, combat, income, supply,
+        # technology, building or army unit, and nothing below or elsewhere consults this.
+        #
+        # Membership is stable geography from the catalog (metadata.continent); the counts are derived
+        # per request from ownership, exactly like the 13B classification they are built on. Neither is
+        # stored. It is computed over the whole PLAYABLE map, not just the player's holdings, so a
+        # region can honestly report "7 of 18 owned".
+        #
+        # `others` is a count only -- no identity, no strength, no garrison -- and it is derivable from
+        # ownership the board already shows, so it leaks nothing new.
+        def _meta_of(tid):
+            return (terr_catalog.territories.get(tid) if terr_catalog else None) or {}
+
+        # summarize() already treats a falsy player as "no holdings anywhere", so there is no
+        # signed-out special case to branch on here.
+        playable = playable_territory_ids()
+        region_rows = game_regions.summarize(playable, me, _owner_of, _neighbours_of, _meta_of)
         holders, counts = {}, {}
         for f, h in store.items():
             if not isinstance(h, dict):
@@ -1828,7 +1846,12 @@ class Handler(BaseHTTPRequestHandler):
                 holders[f] = {"owner": owner, "avatar": h.get("avatar", "👦"),
                               "pop": h.get("pop"), "hidden": True, "ai": owner in ai_names}
         self._send({"holders": holders, "counts": counts,
-                    "strategicSummary": game_frontier.summarize(strategic)})
+                    "strategicSummary": game_frontier.summarize(strategic),
+                    "regions": region_rows,
+                    # the closed-component caveat 13B surfaced, as a COUNT and nothing else: 13B proved
+                    # `interior` means "every land neighbour is mine", never "connected to a useful
+                    # front" and never "safe supply". Modelling connectivity is a later phase.
+                    "regionNote": game_regions.structural_note(region_rows)})
 
     # 攻方在前端用兵種打贏（或佔領空據點）後呼叫，存下新的守備軍（pilot：信任前端結果）
     # 後端權威：把 client 傳來的任何識別碼解析成 canonical 領地 id(解析不到回 None)。

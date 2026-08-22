@@ -992,6 +992,34 @@
   .emp-stat.is-frontier { background: #fff7ed; border-color: #fdba74; }
   .emp-stat.is-interior { background: #f0fdf4; border-color: #86efac; }
   .emp-stat.is-isolated { background: #fef2f2; border-color: #fca5a5; }
+  /* Phase 13C: the region layer. Compact rows, so six of them cost less vertical space than one
+     territory table -- and no management control appears in any of them. */
+  .emp-sec { font-size: 11px; font-weight: 800; letter-spacing: .7px; text-transform: uppercase;
+    color: #64748b; margin: 12px 0 6px; }
+  .emp-reg { border: 2px solid #e2e8f0; border-radius: 12px; margin-bottom: 6px; }
+  .emp-reg > summary { cursor: pointer; list-style: none; padding: 8px 11px; display: flex;
+    flex-wrap: wrap; gap: 8px; align-items: baseline; font-size: 13.5px; }
+  .emp-reg > summary::-webkit-details-marker { display: none; }
+  .emp-reg > summary::before { content: "\25b8"; color: #64748b; font-weight: 900; }
+  .emp-reg[open] > summary::before { content: "\25be"; }
+  .emp-reg > summary:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+  .emp-reg .er-nm { font-weight: 800; color: #0f172a; }
+  .emp-reg .er-own { color: #475569; font-variant-numeric: tabular-nums; }
+  .emp-reg .er-pips { display: flex; gap: 7px; margin-left: auto; font-size: 12px; font-weight: 800;
+    font-variant-numeric: tabular-nums; }
+  /* the three counts carry a SHAPE as well as a colour, matching the map's texture language */
+  .emp-reg .er-pip { display: inline-flex; align-items: center; gap: 3px; border-radius: 999px;
+    padding: 1px 8px; border: 1.5px solid; }
+  .emp-reg .er-f { color: #9a3412; background: #fff7ed; border-color: #fdba74; }
+  .emp-reg .er-i { color: #166534; background: #f0fdf4; border-color: #86efac; }
+  .emp-reg .er-o { color: #991b1b; background: #fef2f2; border-color: #fca5a5; }
+  .emp-reg .er-none { color: #64748b; font-weight: 700; font-size: 12px; }
+  .emp-reg .er-body { padding: 0 11px 10px; }
+  .emp-reg .er-grp { font-size: 11.5px; font-weight: 800; color: #64748b; margin: 6px 0 4px;
+    text-transform: uppercase; letter-spacing: .5px; }
+  .emp-reg .er-map { cursor: pointer; font-size: 12px; font-weight: 800; border-radius: 9px;
+    padding: 4px 10px; color: #04212e; border: 2px solid #075985; background: #38bdf8; }
+  .emp-reg .er-map:focus-visible { outline: 3px solid #0ea5e9; outline-offset: 2px; }
   .emp-group { border: 2px solid #e2e8f0; border-radius: 12px; margin-bottom: 8px; }
   .emp-group > summary { cursor: pointer; padding: 9px 12px; font-size: 13.5px; font-weight: 800;
     color: #0f172a; list-style: none; display: flex; gap: 8px; align-items: baseline; }
@@ -6893,6 +6921,8 @@ nextLevelBtn.textContent = "✅ Back to lessons";
   // again when fresh territory data lands, and without this the second paint collapsed whatever the
   // player had just opened. A view concern: a plain Set, never stored, gone with the tab.
   const empOpenGroups = new Set();
+  // Phase 13C: the same for region rows -- which the player expanded, remembered for the session only.
+  const empOpenRegions = new Set();
   function empireRows() {
     const me = (authUser() || userName || "").toLowerCase();
     const rows = [];
@@ -6976,6 +7006,37 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       body.innerHTML = html;
       return;
     }
+    // ===== Phase 13C: the region layer, between the empire totals and the territory lists =====
+    // Every figure is the SERVER's own aggregation (territory.regions), computed from ownership and
+    // the same 13B classifier the board uses. The client counts nothing and groups nothing.
+    const regs = (territory && territory.regions) || [];
+    const mineRegs = regs.filter(r => r.owned > 0);
+    html += '<div class="emp-sec">Regions' +
+      (mineRegs.length ? ' \u00b7 ' + mineRegs.length + ' of ' + regs.length + ' with holdings' : '') +
+      '</div>';
+    if (!mineRegs.length) {
+      html += '<p class="emp-none">No region holds any of your territory yet.</p>';
+    }
+    mineRegs.forEach(r => {
+      const pip = (cls, n, label, glyph) => n
+        ? '<span class="er-pip ' + cls + '" title="' + label + '">' + glyph + ' ' + n + '</span>' : '';
+      html += '<details class="emp-reg" data-region="' + escapeHtml(r.region) + '">' +
+        '<summary><span class="er-nm">' + escapeHtml(r.label) + '</span>' +
+        '<span class="er-own">' + r.owned + ' / ' + r.total + ' owned</span>' +
+        '<span class="er-pips">' +
+          pip("er-f", r.frontier, "Frontier", "\u2694") +
+          pip("er-i", r.interior, "Interior", "\u25a0") +
+          pip("er-o", r.isolated, "Isolated", "\u25cf") +
+        '</span></summary>' +
+        '<div class="er-body" data-region-pending="' + escapeHtml(r.region) + '"></div></details>';
+    });
+    const note = (territory && territory.regionNote) || null;
+    if (note && note.isolatedOwned) {
+      html += '<p class="emp-note">\u{1F3DD}\uFE0F ' + note.isolatedOwned + ' of your territories ' +
+        'have no land connection at all. Interior means every land neighbour is yours \u2014 it does ' +
+        'not mean a territory is connected to a front, and sea routes are not modelled yet.</p>';
+    }
+    html += '<div class="emp-sec">All territories</div>';
     const GROUPS = [
       ["frontier", "⚔️ Frontier", "Borders territory you do not control. This is where pressure matters."],
       ["interior", "🛡️ Interior", "Every land neighbour is yours. Nothing here needs attention."],
@@ -7023,6 +7084,57 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         : '<p class="emp-none">None.</p>';
       wireChips(host);
     }
+    // ---- region drill-down: lazy, grouped by strategic class, no management controls ----
+    function buildRegion(g) {
+      const host = g.querySelector(".er-body[data-region-pending]");
+      if (!host) return;                                   // already built
+      const key = host.getAttribute("data-region-pending");
+      host.removeAttribute("data-region-pending");
+      const holders = (territory && territory.holders) || {};
+      const row = regs.find(x => x.region === key) || {};
+      // the region's OWN territories, grouped by the server's classification for each one
+      const mine = rows.filter(m => {
+        const rec = (TERR_CATALOG.terrById || {})[m.key] || {};
+        return ((rec.metadata || {}).continent || null) === key;
+      });
+      const by = { frontier: [], interior: [], isolated: [] };
+      mine.forEach(m => {
+        const c = (holders[m.key] || {}).strategic;
+        if (by[c]) by[c].push(m);
+      });
+      let h = '<button type="button" class="er-map" data-region-map="' + escapeHtml(key) +
+        '">\u{1F5FA} Show on map</button>';
+      [["frontier", "\u2694\uFE0F Frontier"], ["interior", "\u{1F6E1}\uFE0F Interior"],
+       ["isolated", "\u{1F3DD}\uFE0F Isolated"]].forEach(g2 => {
+        const list = by[g2[0]];
+        if (!list.length) return;
+        h += '<div class="er-grp">' + g2[1] + ' \u00b7 ' + list.length + '</div><div class="emp-terr">' +
+          list.sort((a, b) => (b.h.pop || 0) - (a.h.pop || 0))
+            .map(m => '<button type="button" data-goto="' + escapeHtml(m.key) + '">' +
+              escapeHtml(regionDisplayName(m.key) || m.key) + ' <span class="emp-pop">\u{1F465} ' +
+              (m.h.pop || 0) + '</span></button>').join("") + '</div>';
+      });
+      if (!mine.length) h += '<p class="emp-none">You hold nothing here.</p>';
+      // factual only: how much of the region is not yours. No threat, no strength, no identity.
+      h += '<p class="emp-note">' + (row.neutral || 0) + ' unclaimed \u00b7 ' + (row.others || 0) +
+        ' held by others \u00b7 ' + (row.total || 0) + ' in the region.</p>';
+      host.innerHTML = h;
+      wireChips(host);
+      // "Show on map" is NAVIGATION ONLY: it closes Empire and moves the existing camera. It draws no
+      // subset of territories, changes no mode, and adds no region layer to the board.
+      host.querySelectorAll("[data-region-map]").forEach(b => b.addEventListener("click", () => {
+        const rk = b.getAttribute("data-region-map");
+        closeModal();
+        if (geoFocusRegion) geoFocusRegion(rk);
+      }));
+    }
+    body.querySelectorAll(".emp-reg").forEach(g => {
+      const key = g.dataset.region;
+      g.addEventListener("toggle", () => {
+        if (g.open) { empOpenRegions.add(key); buildRegion(g); } else { empOpenRegions.delete(key); }
+      });
+      if (empOpenRegions.has(key)) { g.open = true; buildRegion(g); }
+    });
     body.querySelectorAll(".emp-group").forEach(g => {
       const key = g.dataset.group;
       g.addEventListener("toggle", () => {
@@ -7588,6 +7700,7 @@ nextLevelBtn.textContent = "✅ Back to lessons";
   function geoForgetView() { geoView = null; }
   let geoCam = null;                // Phase 12C: the current board's camera (focusRect/home/zoomBy)
   let geoFocusKey = null;           // Phase 12C: point the camera at a territory
+  let geoFocusRegion = null;        // Phase 13C: point the camera at a strategic region
   let geoOffScreen = null;          // Phase 12C: is a territory substantially outside the viewport?
   let _geoResel = null;             // 重新配置目前地圖標籤（選取改變時呼叫）
   let _geoRelayout = null;          // 視窗尺寸改變時重新配置
@@ -7955,18 +8068,43 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       const lay = document.createElement("div"); lay.className = "geo-labels"; holder.appendChild(lay);
       const vx = vb[0], vy = vb[1], vw = vb[2] || 1, vh = vb[3] || 1;
       // Phase 12C: the board no longer takes its shape from the viewBox, so the geography is
-      // LETTERBOXED inside the viewport (preserveAspectRatio "meet"). The projection therefore needs
-      // the content scale and its centring offset -- the old version divided by the viewBox width
-      // and assumed the two boxes matched, which they no longer do.
+      // LETTERBOXED inside the viewport (preserveAspectRatio "meet"), and the content scale and its
+      // centring offset therefore have to be measured rather than assumed.
+      // Phase 13C: that measurement is no longer what places a label. It is the LAYOUT basis only --
+      // the projection goes through the browser's own matrix, below.
+      // ===== the map's LAYOUT basis: map units -> viewport px at s = 1 =====
+      // This is a measurement of the untransformed box, NOT a camera formula. It is taken from the
+      // holder's CLIENT box (which no CSS transform touches) rather than from
+      // svg.getBoundingClientRect() (which the camera transform scales and translates) -- reading the
+      // transformed box here is precisely what made the labels drift before Phase 13C.
+      //
+      // Two consumers, neither of which is a camera:
+      //   cam.focusRect(), which takes s=1 viewport units and applies the camera itself;
+      //   the label collision boxes and zoom thresholds, which are about apparent size at s=1.
       let PK = 1, POX = 0, POY = 0;
       function captureGeom() {
-        const hr = holder.getBoundingClientRect(), sr = svg.getBoundingClientRect();
-        const sw = sr.width || 1, sh = sr.height || 1;
-        PK = Math.min(sw / vw, sh / vh);
-        POX = (sr.left - hr.left) + (sw - vw * PK) / 2;
-        POY = (sr.top - hr.top) + (sh - vh * PK) / 2;
+        const lw = holder.clientWidth || 1, lh = holder.clientHeight || 1;   // untransformed
+        PK = Math.min(lw / vw, lh / vh);
+        POX = (lw - vw * PK) / 2;                    // preserveAspectRatio="xMidYMid meet" letterbox
+        POY = (lh - vh * PK) / 2;
       }
       captureGeom();
+      // ===== the ONE authoritative camera transform =====
+      // svg.getScreenCTM() is the browser's own matrix from this svg's user space (viewBox units) to
+      // screen pixels, and it already includes the CSS transform the camera applies. Projecting label
+      // anchors through it means geometry and labels cannot disagree: there is no second formula to
+      // drift. Read once per relayout, then applied arithmetically per label.
+      let CTM = null, CTMox = 0, CTMoy = 0;
+      function captureCTM() {
+        const m = svg.getScreenCTM();
+        if (!m) { CTM = null; return; }
+        const hr = holder.getBoundingClientRect();
+        CTM = m; CTMox = hr.left; CTMoy = hr.top;
+      }
+      // map units -> holder-relative px, through the real matrix. `a*x + c*y + e` is the matrix's own
+      // definition, not an approximation of it.
+      const projX = (x, y) => CTM.a * x + CTM.c * y + CTM.e - CTMox;
+      const projY = (x, y) => CTM.b * x + CTM.d * y + CTM.f - CTMoy;
       // viewBox units -> viewport px at s=1, which is exactly what cam.focusRect() consumes
       const toVp = (x, y) => ({ x: POX + (x - vx) * PK, y: POY + (y - vy) * PK });
       function focusBounds(g, opts) {
@@ -7988,15 +8126,43 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         focusBounds(g, opts);
         return true;
       };
+      // Phase 13C: point the camera at a strategic region. NAVIGATION ONLY -- it moves the same
+      // camera the wheel and the continent labels move, and it does not touch the territory set, the
+      // viewBox, the selection or any mode. The continent camera presets built in 12C are keyed by the
+      // very continent codes the catalog uses, so a region normally resolves to a preset; the fallback
+      // computes a focus rectangle from the region's own members, which is still just a camera move.
+      geoFocusRegion = function (regionKey) {
+        const preset = markerSpecs.find(L => L.cont === regionKey && L.bounds);
+        if (preset) { focusBounds(preset.bounds, { pad: 1.15, minZoom: 2 }); return true; }
+        let g = null;
+        (regionList || []).forEach(r => {
+          if (!r.p || r.dup) return;
+          const rec = (TERR_CATALOG.terrById || {})[r.key] || {};
+          if (((rec.metadata || {}).continent || null) !== regionKey) return;
+          let b = null; try { b = r.p.getBBox(); } catch (e) {}
+          if (!b || !b.width) return;
+          g = g || { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+          g.x0 = Math.min(g.x0, b.x); g.y0 = Math.min(g.y0, b.y);
+          g.x1 = Math.max(g.x1, b.x + b.width); g.y1 = Math.max(g.y1, b.y + b.height);
+        });
+        if (!g) return false;
+        focusBounds(g, { pad: 1.2, minZoom: 1.6 });
+        return true;
+      };
       // is a territory substantially off-screen right now? used for gentle camera assist only
       geoOffScreen = function (key) {
         const r = regionList.find(x => x.key === key && x.p);
         if (!r) return false;
         let b = null; try { b = r.p.getBBox(); } catch (e) {}
         if (!b || !b.width) return false;
-        const st = cam.state(), hr = holder.getBoundingClientRect();
-        const c = toVp(b.x + b.width / 2, b.y + b.height / 2);
-        const sx = st.tx + c.x * st.s, sy = st.ty + c.y * st.s;
+        // Phase 13C: the SAME transform the labels and the geography use. This used to re-apply the
+        // camera by hand -- tx + x * s on top of toVp() -- which is a second camera formula that has
+        // to be kept in step with the first one by hand, and silently was not.
+        captureCTM();
+        if (!CTM) return false;
+        const hr = holder.getBoundingClientRect();
+        const sx = projX(b.x + b.width / 2, b.y + b.height / 2);
+        const sy = projY(b.x + b.width / 2, b.y + b.height / 2);
         const mx = hr.width * 0.08, my = hr.height * 0.08;
         return sx < mx || sy < my || sx > hr.width - mx || sy > hr.height - my;
       };
@@ -8044,9 +8210,13 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         // What remains in placeMapLabels() is the pre-existing and still necessary handling: labels
         // that overlap OTHER labels are dropped by priority, labels outside their zoom band are
         // hidden, and the selected label is always exempt.
+        // Phase 13C: one transform. `s`, `tx` and `ty` are no longer used to place a label -- they
+        // arrive only so the ZOOM BAND can decide visibility and density (see placeMapLabels). The
+        // position comes from the same matrix the browser uses to draw the territory itself.
+        captureCTM();
         const cands = markerSpecs.map(L => {
-          const fx = POX + tx + (L.cx - vx) * PK * s;
-          const fy = POY + ty + (L.cy - vy) * PK * s;
+          const fx = CTM ? projX(L.cx, L.cy) : 0;
+          const fy = CTM ? projY(L.cx, L.cy) : 0;
           const txt = L.label;
           const w = txt.length * FS * 0.56 + PADX, h = FS * 1.8;
           return { L: L, fx: fx, fy: fy, priority: L.priority,
@@ -8061,6 +8231,9 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       // Phase 12C: re-measure whenever the box may have changed, not only at s === 1. The viewport
       // is responsive and the HUD plaques above it get their height late, so the old
       // "only when unzoomed" guard left the projection stale after any layout shift.
+      // Phase 13C: captureGeom() now measures only the untransformed layout box, so re-measuring on
+      // a layout shift is safe at any camera position -- which is what 12D wanted and could not have
+      // while the basis was read from the transformed box.
       _geoRelayout = function () { captureGeom(); _geoResel(); };
       if (!_geoResizeHooked) {
         window.addEventListener("resize", () => {
