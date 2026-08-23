@@ -892,7 +892,13 @@
     body.game-mode { padding: 6px; }
     body.game-mode > .card { padding: 8px; }
   }
-  .hud-mode { --hud-gap: 10px; }
+  .hud-mode { --hud-gap: 10px;
+    /* the inspector is bounded on BOTH sides: wide enough for a garrison row and an action, never
+       wide enough to stop the map being the dominant surface */
+    --insp-w: clamp(288px, 23vw, 380px); }
+  /* screen-reader-only, for the selection announcement */
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   .hud-mode .learn-top { display: none; }              /* the plaque row replaces the page header */
   /* CLASS E, retired in HUD mode: #empireBar is now the player plaque (its openEmpire action lives
      on the "My empire" button) and #terrBanner is now the Holdings panel plus the Ranking icon.
@@ -906,19 +912,57 @@
      the map viewport and the HUD occupy separate layout space and no geometric overlap is possible.
      The row is paid for out of the loose controls that used to sprawl below the board, which are now
      one compact line -- so the component is only slightly taller and the board keeps its width. */
-  .hud-grid { display: grid; gap: var(--hud-gap);
-    grid-template-columns: minmax(200px, 1fr) minmax(0, 2.6fr) minmax(200px, 1fr);
-    grid-template-rows: auto auto auto; align-items: start; }
-  .hud-tl { grid-area: 1 / 1 / 2 / 2; } .hud-tc { grid-area: 1 / 2 / 2 / 3; }
-  .hud-tr { grid-area: 1 / 3 / 2 / 4; }
-  .hud-map { grid-area: 2 / 1 / 3 / 4; min-width: 0; position: relative; }
-  /* min-width:0 matters: without it a long territory name makes the card wider than its column. */
-  .hud-bl  { grid-area: 3 / 1 / 4 / 2; min-width: 0; }
-  .hud-bar { grid-area: 3 / 2 / 4 / 3; min-width: 0; }
-  .hud-br  { grid-area: 3 / 3 / 4 / 4; min-width: 0; }
-  .hud-bl > .hud-plaque, .hud-br > .hud-plaque, .hud-bar > .hud-plaque { max-width: 100%; height: 100%; }
-  /* the HUD row still reads as part of the same board component */
-  .hud-bl, .hud-bar, .hud-br { align-self: stretch; }
+  /* ===== Phase 13C.1: the World is an application SHELL, not a page that grows ==============
+     Measured before this phase, the World document overflowed the viewport at EVERY tested size --
+     210 px at 1440x900, 278 px at 1024x768, 131 px at 768x1024, 149 px at 360x780 -- because the
+     territory card, its actions and the Holdings list occupied a third grid row UNDERNEATH the
+     board, with the attack tray underneath that again. At 1024x768 the card and the action bar were
+     both entirely below the fold, so occupying a territory began with a scroll.
+
+     The shell is now two rows: chrome, then a workspace that fills the remaining viewport height.
+     The workspace is map + territory inspector, side by side on a landscape shell and stacked as a
+     bottom sheet otherwise. `--shell-h` is set by fitShell() from the shell's own offset -- a layout
+     measurement, never geography, and never the camera.
+
+     Secondary reference material (the Region index, the legend, the owner list) stays in normal flow
+     BELOW the shell, so its height can never push a primary action off screen. */
+  .hud-grid { display: grid; gap: var(--hud-gap); height: var(--shell-h, auto);
+    grid-template-columns: minmax(0, 1fr) var(--insp-w, clamp(288px, 23vw, 380px));
+    grid-template-rows: auto minmax(0, 1fr); }
+  .hud-chrome { grid-area: 1 / 1 / 2 / 3; display: grid; gap: var(--hud-gap); align-items: start;
+    grid-template-columns: minmax(180px, 1fr) minmax(0, 2.2fr) minmax(180px, 1fr); }
+  .hud-map { grid-area: 2 / 1 / 3 / 2; min-width: 0; min-height: 0; position: relative; }
+  /* min-width:0 keeps a long territory name from widening the inspector column; min-height:0 is the
+     vertical twin -- a grid item defaults to min-height:auto, which would let the inspector's own
+     content dictate the workspace height and bring the whole scroll problem straight back. */
+  .hud-side { grid-area: 2 / 2 / 3 / 3; min-width: 0; min-height: 0; display: flex;
+    flex-direction: column; gap: var(--hud-gap); overflow-y: auto; overscroll-behavior: contain; }
+  .hud-side > .hud-plaque, .hud-side > .hud-tray { max-width: 100%; flex: 0 0 auto; }
+  /* the map fills its cell; the geography keeps its own proportions inside it (xMidYMid meet), so
+     the shell's aspect ratio is never derived from a continent */
+  .hud-mode .hud-map > .geo-holder.geo-viewport { width: 100%; height: 100%;
+    aspect-ratio: auto; margin: 0; }
+  /* ---- stacked shell: a bottom territory sheet, NOT a narrow rail ---- */
+  @media (max-width: 899px) {
+    .hud-grid { grid-template-columns: minmax(0, 1fr);
+      /* the map keeps a FLOOR so a tall sheet can never squeeze it away, and the sheet row is
+         `auto` so the row and the sheet agree on a height -- a percentage cap here shrank the
+         element inside a larger row, which clipped the action buttons and left a 187 px hole. */
+      grid-template-rows: auto minmax(150px, 1fr) auto; }
+    .hud-chrome { grid-area: 1 / 1 / 2 / 2; }
+    .hud-map { grid-area: 2 / 1 / 3 / 2; }
+    /* full width. max-height is a safety valve for an unusually tall plan, not a clipper: it is
+       larger than the sheet's ordinary content, so in normal use nothing is cut off. */
+    .hud-side { grid-area: 3 / 1 / 4 / 2; max-height: 62dvh; }
+    /* the actions read as one row of equal targets in the sheet */
+    .hud-side .hud-actions { justify-content: stretch; }
+    /* Identity, strategic role and ACTIONS always stay visible; only the numeric detail rows get a
+       bounded scroll strip. Nothing is hidden -- the detail simply stops dictating the sheet height. */
+    .hud-side .hud-card .hc-rows { max-height: 56px; overflow-y: auto; overscroll-behavior: contain; }
+    /* Holdings is global reference, not territory information: on a phone it keeps its place at the
+       foot of the sheet but gives up its own padding so the MAP stays the larger surface. */
+    .hud-side .hud-plaque.hud-players { padding: 6px 9px; }
+  }
 
   /* --- the shared plaque look: chunky outline, warm surface, a real bevel --- */
   .hud-plaque { position: relative; border-radius: 16px; padding: 10px 12px; color: #fff4dd;
@@ -1168,6 +1212,9 @@
      Combat planning used to open a full modal that repeated the territory facts already on screen
      and hid the board behind them. The tray lives BELOW the viewport instead: the map stays visible
      and interactive the whole time, which is what makes clicking a source territory possible. */
+  /* 13C.1: the tray is the attack/occupy PLANNER and it now lives inside the inspector, so it no
+     longer adds document height and no longer needs a top margin of its own. */
+  .hud-side > .hud-tray { margin-top: 0; }
   .hud-tray { margin-top: 10px; border-radius: 16px; padding: 12px 14px; color: #fff4dd;
     background: linear-gradient(180deg, #4a3418 0%, #3b2a17 100%);
     border: 2px solid rgba(255,236,200,.5); box-shadow: 0 6px 18px rgba(0,0,0,.35); }
@@ -1182,6 +1229,11 @@
   .tray-src[aria-pressed="true"] { background: #22d3ee; box-shadow: inset 0 0 0 2px #062a33; }
   .tray-src:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
   .tray-rows { display: grid; gap: 6px; }
+  /* 13C.1: inside the inspector the row drops the "max" hint column, exactly as the phone layout
+     already did, so four troop classes still fit a 288px rail without horizontal overflow. */
+  .hud-side .tray-row { grid-template-columns: 1fr auto auto auto; }
+  .hud-side .tray-row .tr-mx { display: none; }
+  .hud-side .tray-hd .th-t { font-size: 14px; }
   .tray-row { display: grid; grid-template-columns: 1fr auto auto auto auto; gap: 8px;
     align-items: center; font-size: 13.5px; font-weight: 700; }
   .tray-row .tr-nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1289,20 +1341,18 @@
        10C.2R: the title column was min-width:0, so with the player and the menu at their natural
        widths it collapsed to nothing and WORLD CONQUEST vanished. It now has a floor and is allowed
        to wrap onto two short lines rather than shrink to illegibility. */
-    .hud-grid { grid-template-columns: auto minmax(104px, 1fr) auto; grid-template-rows: auto; }
-    .hud-tl  { grid-area: 1 / 1 / 2 / 2; }
-    .hud-tc  { grid-area: 1 / 2 / 2 / 3; min-width: 104px; }
-    .hud-tr  { grid-area: 1 / 3 / 2 / 4; }
-    .hud-map { grid-area: 2 / 1 / 3 / 4; }
-    .hud-bl  { grid-area: 3 / 1 / 4 / 4; margin: 0; }
-    .hud-bar { grid-area: 4 / 1 / 5 / 4; margin: 0; }
-    .hud-br  { grid-area: 5 / 1 / 6 / 4; margin: 0; }
+    /* 13C.1: the shell owns the rows now; this block only compacts the CHROME strip, which is
+       still [avatar+Gold] [WORLD CONQUEST] [menu] on one line. */
+    .hud-chrome { grid-template-columns: auto minmax(104px, 1fr) auto; }
+    .hud-tc  { min-width: 104px; }
     /* wrap BETWEEN the two words only -- overflow-wrap:anywhere broke "CONQUEST" into "CONQUES/T" */
     .hud-title .ht-t { white-space: normal; overflow-wrap: normal; word-break: normal;
                        hyphens: none; }
     /* Pin the menu to a 2x2 block. Giving the title column a floor squeezed this one until the four
        icons wrapped one-per-row, making the strip tall and pushing the board down the screen. */
-    .hud-plaque.hud-ctrls { display: grid; grid-template-columns: repeat(2, auto);
+    /* 13C.1: three columns rather than two. Six icons in a 2-wide block wrapped to THREE rows and
+       took 118 px of a 780 px phone away from the map; 3x2 is one row shorter for the same targets. */
+    .hud-plaque.hud-ctrls { display: grid; grid-template-columns: repeat(3, auto);
                             justify-content: end; }
     /* the population stat goes: gold and army are what the player acts on */
     .hud-player .hp-st span:nth-child(3) { display: none; }
@@ -1315,8 +1365,12 @@
     .hud-title .ht-t { font-size: 12px; letter-spacing: 0; line-height: 1.1; }
     .hud-title .ht-s { display: none; }        /* the room code is not useful on a phone */
     .hud-plaque.hud-title { padding: 6px 6px; }
-    .hud-plaque.hud-ctrls { padding: 6px; gap: 5px; }
-    .hud-ico { width: 34px; height: 34px; font-size: 15px; border-width: 2px; border-radius: 10px; }
+    /* 13C.1: at 360px the control cluster's natural width was 3 px wider than the space the strip
+       could give it, which is where the phone's horizontal document overflow came from. The cluster
+       is now allowed to shrink and the icons are sized to fit rather than to overflow. */
+    .hud-plaque.hud-ctrls { padding: 5px; gap: 4px; max-width: 100%; }
+    .hud-tr { min-width: 0; }
+    .hud-ico { width: 32px; height: 32px; font-size: 14px; border-width: 2px; border-radius: 10px; }
     /* the board is the play surface: reclaim the 28px page gutters it was losing on a phone */
     .card.card-hud { padding-left: 8px; padding-right: 8px; }
     .hud-ctrls { justify-content: center; }
@@ -7704,6 +7758,7 @@ nextLevelBtn.textContent = "✅ Back to lessons";
   let geoOffScreen = null;          // Phase 12C: is a territory substantially outside the viewport?
   let _geoResel = null;             // 重新配置目前地圖標籤（選取改變時呼叫）
   let _geoRelayout = null;          // 視窗尺寸改變時重新配置
+  let _geoReshell = null;           // Phase 13C.1: re-fit the shell, then re-clamp the camera
   let _geoResizeHooked = false;
 
   // ===== Phase 1A：正規領地目錄(靜態、唯讀，來自 world-data/) =====
@@ -8234,14 +8289,24 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       // Phase 13C: captureGeom() now measures only the untransformed layout box, so re-measuring on
       // a layout shift is safe at any camera position -- which is what 12D wanted and could not have
       // while the basis was read from the transformed box.
-      _geoRelayout = function () { captureGeom(); _geoResel(); };
+      _geoRelayout = function () { fitShell(); captureGeom(); _geoResel(); };
       if (!_geoResizeHooked) {
         window.addEventListener("resize", () => {
           holder.style.setProperty("--vp-ratio", window.innerWidth <= 560 ? "1.1" : "1.6");
-          if (_geoRelayout) _geoRelayout();
+          if (_geoReshell) _geoReshell();
         });
         _geoResizeHooked = true;
       }
+      // Phase 13C.1: a resize changes the WORKSPACE, so the camera has to be re-clamped against the
+      // new viewport box -- otherwise a position that was legal in a tall window leaves the map
+      // partly off-screen in a short one. It is re-clamped through cam.restore(), i.e. the existing
+      // camera authority: restore() runs apply(), which runs the one clamp() there has ever been.
+      // No second bounds calculation exists.
+      _geoReshell = function () {
+        fitShell();
+        const st = cam.state();
+        cam.restore(st.s, st.tx, st.ty);      // -> apply() -> clamp() -> onChange -> relayoutLabels
+      };
       // Phase 12D: restore the camera and selection this session left behind, but only within the
       // SAME room -- a different game is a different world, and carrying a position across would put
       // the player somewhere they never were. Anything unexpected falls back to the home camera.
@@ -8358,15 +8423,20 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       function buildHud() {
         const scr = document.getElementById("screenArticle");
         if (scr) scr.classList.add("hud-mode");
+        // Phase 13C.1: THREE conceptual layers and no more -- chrome, map workspace, territory
+        // inspector. The inspector is a shell region, not a row of cards below the board, so it
+        // stays on screen while the player pans and zooms.
         const grid = document.createElement("div"); grid.className = "hud-grid";
+        const chrome = document.createElement("div"); chrome.className = "hud-chrome";
         const tl = document.createElement("div"); tl.className = "hud-tl";
         const tc = document.createElement("div"); tc.className = "hud-tc";
         const tr = document.createElement("div"); tr.className = "hud-tr";
+        [tl, tc, tr].forEach(x => chrome.appendChild(x));
         const mapSlot = document.createElement("div"); mapSlot.className = "hud-map";
-        const bl = document.createElement("div"); bl.className = "hud-bl";
-        const bar = document.createElement("div"); bar.className = "hud-bar";
-        const br2 = document.createElement("div"); br2.className = "hud-br";
-        [tl, tc, tr, mapSlot, bl, bar, br2].forEach(x => grid.appendChild(x));
+        const side = document.createElement("div"); side.className = "hud-side";
+        side.setAttribute("role", "complementary");
+        side.setAttribute("aria-label", "Territory inspector");
+        [chrome, mapSlot, side].forEach(x => grid.appendChild(x));
         wrap.insertBefore(grid, wrap.firstChild);
 
         // ---- centre: the board itself, moved in unchanged ----
@@ -8381,27 +8451,52 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         const ti = hudSlot("hud-title"); tc.appendChild(ti);
         // ---- top-right: existing global controls only ----
         const ct = hudSlot("hud-ctrls"); tr.appendChild(ct);
-        // ---- bottom-left: the selected-territory card ----
-        const card = hudSlot("hud-card"); bl.appendChild(card);
-        // ---- bottom-centre: contextual actions ----
-        const acts = hudSlot("hud-actions"); bar.appendChild(acts);
-        // ---- bottom-right: who holds what ----
-        const pls = hudSlot("hud-players"); br2.appendChild(pls);
+        // ---- the INSPECTOR, top to bottom: what is selected, what you can do, the plan ----
+        const card = hudSlot("hud-card"); side.appendChild(card);
+        const acts = hudSlot("hud-actions"); side.appendChild(acts);
 
-        // ---- Phase 12C: the action tray, BELOW the viewport and never over geography ----
-        // Combat and occupation are planned here while the board stays visible and interactive.
+        // ---- Phase 12C: the action tray. Combat and occupation are planned while the board stays
+        // visible and interactive. Phase 13C.1 moves it INSIDE the inspector: on a landscape shell
+        // that makes it an inspector-integrated planning area, and on a stacked shell the bottom
+        // sheet simply transitions from territory summary to planner. Either way it is the ONE
+        // attack surface -- it never appears twice, and it never adds document height.
         const tray = document.createElement("div");
         tray.className = "hud-tray"; tray.id = "hudTray"; tray.hidden = true;
         tray.setAttribute("role", "group");
         tray.setAttribute("aria-label", "Territory action");
-        wrap.appendChild(tray);
+        side.appendChild(tray);
+
+        // ---- who holds what: global reference, so it sits at the foot of the inspector ----
+        const pls = hudSlot("hud-players"); side.appendChild(pls);
+
+        // Selection is announced once, from hudSelect(), and never from the label relayout -- so
+        // panning and zooming stay silent.
+        const say = document.createElement("div");
+        say.className = "sr-only"; say.id = "hudAnnounce";
+        say.setAttribute("role", "status"); say.setAttribute("aria-live", "polite");
+        side.appendChild(say);
 
         // reference/secondary rows stay, below the board
         const below = document.createElement("div"); below.className = "hud-below";
         wrap.appendChild(below);
-        return { pl: pl, ti: ti, ct: ct, card: card, acts: acts, pls: pls, tray: tray, below: below };
+        return { pl: pl, ti: ti, ct: ct, card: card, acts: acts, pls: pls, tray: tray,
+                 below: below, grid: grid, side: side, say: say };
       }
       const HUD = buildHud();
+      // ===== Phase 13C.1: give the shell the height that is actually left on screen =====
+      // This is a LAYOUT measurement of the shell's own offset -- it reads nothing from the camera,
+      // nothing from the geography, and it never touches the projection. The camera adapts because
+      // clamp() re-reads the viewport box on every apply(); the re-clamp below goes through the
+      // existing camera authority rather than recomputing bounds here.
+      function fitShell() {
+        const g = HUD.grid;
+        if (!g) return;
+        const top = g.getBoundingClientRect().top + (window.scrollY || 0);
+        const avail = Math.round(window.innerHeight - top - 12);
+        const floor = window.innerWidth <= 899 ? 430 : 420;
+        g.style.setProperty("--shell-h", Math.max(floor, avail) + "px");
+      }
+      fitShell();
       // camera controls: zoom in / out / back to the World view. These move the CAMERA only --
       // no mode, no territory set, no eligibility.
       const camBar = document.createElement("div"); camBar.className = "geo-cam";
@@ -8432,7 +8527,8 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         b.type = "button";
         b.className = "hud-act" + (opts.primary ? " ha-primary" : "") + (opts.danger ? " ha-danger" : "");
         b.innerHTML = '<span class="ha-ic">' + emoji + '</span>' + escapeHtml(label);
-        b.title = opts.title || label; b.setAttribute("aria-label", opts.title || label);
+        b.title = opts.title || label;
+        b.setAttribute("aria-label", opts.aria || opts.title || label);
         if (opts.disabled) { b.disabled = true; }
         else { b.addEventListener("click", fn); }
         return b;
@@ -8535,8 +8631,12 @@ nextLevelBtn.textContent = "✅ Back to lessons";
           ? '<div class="hc-strat is-' + sc + '"><b>' + STRAT_COPY[sc][0] + '</b> \u2014 ' +
             STRAT_COPY[sc][1] + '</div>'
           : "";
+        // Phase 13C.1: the numeric rows live in their own element so the stacked sheet can bound
+        // THEM rather than the whole card -- the territory's identity, its strategic role and its
+        // actions must never be the thing that gets clipped.
         HUD.card.innerHTML = '<div class="hc-hd">\u{1F3F0} <span class="hc-nm">' +
-          escapeHtml(ct.displayName || regionDisplayName(key) || key) + '</span>' + tag + '</div>' + rows +
+          escapeHtml(ct.displayName || regionDisplayName(key) || key) + '</span>' + tag + '</div>' +
+          '<div class="hc-rows">' + rows + '</div>' +
           stratLine +
           // the pre-existing structural warning stays for territories the player does NOT own, where
           // no classification is published; for an owned isolated territory the line above says it.
@@ -8770,23 +8870,26 @@ nextLevelBtn.textContent = "✅ Back to lessons";
           HUD.acts.appendChild(actBtn("\u{1F5FA}", "Select a territory", null,
             { disabled: true, title: "Tap a territory on the board first" }));
         } else if (enemy) {
+          // Phase 13C.1: the accessible name names the TERRITORY -- "Attack Spain", not "Attack".
           HUD.acts.appendChild(actBtn("\u2694\uFE0F", "Attack", () => openTray("attack"),
-            { primary: true, title: "Plan an attack on " + name + " from an adjacent territory you own" }));
+            { primary: true, aria: "Attack " + name,
+              title: "Plan an attack on " + name + " from an adjacent territory you own" }));
         } else if (mine) {
           HUD.acts.appendChild(actBtn("\u{1F6E1}\uFE0F", "Garrison", () => openTray("garrison"),
-            { title: "Position the garrison of " + name }));
+            { aria: "Set the garrison of " + name, title: "Position the garrison of " + name }));
         } else {
           HUD.acts.appendChild(actBtn("\u{1F6A9}", "Occupy", () => openTray("occupy"),
-            { primary: true, title: "Occupy " + name }));
+            { primary: true, aria: "Occupy " + name, title: "Occupy " + name }));
         }
         if (key) {
           HUD.acts.appendChild(actBtn("\u{1F3AF}", "Centre", () => { if (geoFocusKey) geoFocusKey(key, { pad: 2.6, minZoom: 2.2 }); },
-            { title: "Point the camera at " + name }));
+            { aria: "Point the camera at " + name, title: "Point the camera at " + name }));
         }
-        HUD.acts.appendChild(actBtn("\u{1F3F0}", "Empire", openEmpire,
-          { title: "Empire \u2014 forces, buildings and technology" }));
-        HUD.acts.appendChild(actBtn("\u{1F4DA}", "Academy", openLearningHome,
-          { title: "Academy \u2014 learn and master lessons to earn Gold" }));
+        // Phase 13C.1: Empire and the Academy are NAVIGATION, and the chrome strip's control
+        // cluster already carries both (renderHudControls). They were duplicated here when the
+        // action bar was a full-width row below the board; in a bounded inspector a duplicate costs
+        // the space a territory action needs, so the inspector is territory-scoped only. No
+        // capability is lost -- both remain one click away, always on screen, in the chrome.
         if (!backFn && lv) {
           HUD.acts.appendChild(actBtn("\u{1F409}", examPassed(lv.id) ? "Boss \u2713" : "Boss",
             () => startLevelExam(i), { title: "Level checkpoint battle" }));
@@ -8800,6 +8903,20 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         }
       }
 
+      // Phase 13C.1: one short, factual announcement per SELECTION. It is deliberately not wired
+      // to the label relayout or to hudRefresh, so pan, zoom and the territory poll stay silent.
+      function announceSelection(key) {
+        if (!HUD.say) return;
+        if (!key) { HUD.say.textContent = ""; return; }
+        const ct = (TERR_CATALOG.terrById || {})[key] || {};
+        const h = (territory && territory.holders && territory.holders[key]) || null;
+        const me = (authUser() || userName || "").toLowerCase();
+        const who = !h || !h.owner ? "unclaimed"
+          : ((h.owner || "").toLowerCase() === me ? "yours" : "held by " + dispName(h.owner));
+        const act = HUD.acts.querySelector(".hud-act:not([disabled])");
+        HUD.say.textContent = (ct.displayName || regionDisplayName(key) || key) + ", " + who +
+          (act ? ". " + (act.getAttribute("aria-label") || "") + " available." : ".");
+      }
       // one refresh entry point, so ownership/economy changes redraw every HUD slot from the
       // authoritative caches and never from a local copy
       hudRefresh = function () {
@@ -8827,6 +8944,7 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         if (key !== hudSelKey) closeTray();
         hudSelKey = key;
         renderHudCard(); renderHudActions();
+        announceSelection(key);
         geoRememberView();
         // gentle camera assist: only when the territory is substantially outside the viewport, and
         // never a zoom change. Selection and zoom stay separate concerns.

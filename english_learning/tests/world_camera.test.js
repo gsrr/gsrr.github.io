@@ -154,8 +154,14 @@ assert(!/openRegion/.test(actions), "no territory action may open the region mod
 assert(tray.indexOf("openModal") === -1 && confirm.indexOf("openModal") === -1,
   "attack planning must not open a modal");
 assert(/HUD\.tray\.hidden = false;/.test(tray), "the tray is shown in place");
-assert(/tray\.className = "hud-tray"/.test(code) && /wrap\.appendChild\(tray\)/.test(code),
-  "the tray lives in the board's own container, below the viewport");
+// Phase 13C.1: the tray moved from the board container's foot into the territory inspector, so it
+// no longer adds document height. What this assertion has always been FOR -- the planner is part of
+// the board component and is never a modal over the geography -- is unchanged, and a uniqueness pin
+// is added so a second attack surface cannot appear beside it.
+assert(/tray\.className = "hud-tray"/.test(code) && /side\.appendChild\(tray\)/.test(code),
+  "the tray lives inside the territory inspector: part of the board component, never a modal");
+assert((code.match(/id = "hudTray"/g) || []).length === 1,
+  "there is exactly one attack planner in the whole client");
 assert(/trayValidSources\(\)\.forEach\(sk => paint\(sk, "geo-src"\)\)/.test(drawGeo),
   "valid sources must be highlighted on the map");
 assert(/paint\(hudSelKey, trayMode === "attack" \? "geo-tgt" : "geo-sel"\)/.test(drawGeo),
@@ -179,8 +185,21 @@ for (const forbidden of ["Recruit", "openHomeBase", "buildingsPanel", "Research"
   assert(actions.indexOf(forbidden) === -1,
     "the territory action row must not offer " + forbidden);
 }
-assert(/actBtn\("\\u\{1F3F0\}", "Empire", openEmpire/.test(actions),
-  "management must be one link to Empire");
+// Phase 13C.1: Empire is NAVIGATION, and the chrome control cluster has always carried it too.
+// In a bounded inspector the duplicate cost the space a territory action needs, so the
+// inspector is territory-scoped and Empire is reachable from exactly ONE place on the board.
+// The intent of this assertion -- management is one link, and the action row is not an admin
+// surface -- is unchanged; it is now pinned at the surviving location and the absence of the
+// duplicate is pinned too, which the old single-sided assertion could not do.
+// the end marker must be real CODE: `code` has whole-line // comments stripped out.
+const controls = slice("function renderHudControls()",
+  "\n      function renderHudCard", "renderHudControls");
+assert(actions.indexOf("openEmpire") === -1,
+  "the territory inspector must not duplicate the Empire launcher");
+assert((controls.match(/openEmpire/g) || []).length === 1,
+  "management must be one link to Empire, in the World chrome control cluster");
+assert(/Empire \\u2014 forces, buildings & technology/.test(controls),
+  "the Empire launcher must still say what it is for");
 // Phase 12D: the per-territory modal is not merely free of management panels -- it does not exist.
 [["openRegion", "the region modal"], ["renderAttackPanel", "the modal attack panel"],
  ["renderRequirementPanel", "the requirement panel"], ["regionLearningHTML", "the region learning block"],
