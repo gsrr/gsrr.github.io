@@ -2,7 +2,8 @@
 // Phase 2A/2B — frontend attack-flow guards (source-level, no DOM framework).
 // 2A: both attack UIs route through the server-authoritative /api/territory/attack; runBattle is replay-only.
 // 2B: the request carries sourceTerritoryId + targetTerritoryId (territorial conquest), the client never
-// submits winner/survivors, and valid sources come from World-Domain adjacency (advisory only).
+// submits winner/survivors, and valid sources come from authoritative ownership (Phase 14A: any
+// territory you own with a garrison, wherever it is).
 //
 //     node tests/outpost_migration.test.js
 
@@ -83,21 +84,47 @@ assert(!/function renderAttackPanel\(/.test(html) && !/function openRegion\(/.te
 const attackUIs = (html.match(/launchAttack\(/g) || []).length;
 assert(attackUIs === 2, "exactly one caller plus the definition of launchAttack: got " + attackUIs);
 ok("Phase 12D: exactly ONE attack UI -- the in-board tray -- deriving sources from the same " +
-   "adjacency helper, capturing the plan before teardown, and firing the same launchAttack");
+   "helper, capturing the plan before teardown, and firing the same launchAttack");
 
-// 5) Valid attack sources come from World-Domain adjacency (advisory), not SVG geometry/coordinates.
-assert(/adjacentTerritoryIds/.test(validAttackSources), "validAttackSources must read World-Domain adjacentTerritoryIds");
+// 5) Phase 14A: valid attack sources are the player's OWN GARRISONED territories, wherever they
+//    are. The old assertion pinned that they came from World-Domain adjacentTerritoryIds rather
+//    than from SVG geometry -- the point being "authoritative data, never pixels". That point is
+//    preserved and strengthened: sources now come from the authoritative HOLDERS map, and the
+//    assertion additionally forbids the geometry it always forbade AND the adjacency filter the
+//    Alpha rule retired.
+assert(/territory\.holders/.test(validAttackSources),
+  "validAttackSources must read the authoritative holders map");
+assert(!/adjacentTerritoryIds/.test(validAttackSources),
+  "Alpha rule: sources are no longer filtered by adjacency");
+["getBBox", "getBoundingClientRect", "clientX", "cx", "cy"].forEach(px => {
+  assert(validAttackSources.indexOf(px) === -1,
+    "sources must never come from pixels (" + px + ")");
+});
+assert(/k === targetKey/.test(validAttackSources),
+  "a territory still cannot be its own attack source");
+assert(/sumHp\(h\.troops\) > 0/.test(validAttackSources),
+  "a source still needs a garrison");
 assert(!/getBoundingClientRect|viewBox|\.x\b|\.y\b/.test(validAttackSources), "source selection must not use geometry/coordinates");
-ok("valid sources derived from World-Domain adjacency (advisory), not geometry");
+ok("valid sources derived from AUTHORITATIVE ownership (Alpha rule), never from geometry");
 
-// 6) The UI must REPRESENT "no adjacent owned source", not attack anyway.
-//    Retargeted in 12D from renderAttackPanel to the tray, which is where that message now lives.
-assert(/No adjacent territory of yours has a garrison/.test(trayRender),
+// 6) The UI must REPRESENT "you have no source to march with", not attack anyway.
+//    Retargeted in 12D from renderAttackPanel to the tray, and reworded in 14A: the reason can no
+//    longer be geography, because the Alpha rule has none. The message must still exist and must
+//    still name the REAL obstacle -- a garrison -- so the player is told something actionable.
+assert(/None of your territories has a garrison/.test(trayRender),
   "the tray must state why an attack is impossible");
-assert(/Take a neighbouring territory first/.test(trayRender),
+assert(!/No adjacent territory/.test(trayRender),
+  "and it must not blame adjacency, which no longer blocks anything");
+assert(/[Rr]ecruit/.test(trayRender),
+  "the message must point at the action that fixes it");
+// Phase 14A: the remedy is no longer "take a neighbouring territory" -- geography is not the
+// obstacle. It is "leave a garrison somewhere", which the reworded message states.
+assert(/leave a garrison in it/.test(trayRender),
   "...and what the player would have to do first");
-assert(/island with no land neighbours cannot be reached by land/.test(trayRender),
-  "...including the isolated-island case");
+// Phase 14A: the isolated-island sentence is retired -- an island is reachable now, and saying
+// otherwise would be false. The message must not resurrect that claim.
+assert(!/cannot be reached by land/.test(trayRender),
+  "the tray must not claim an island is unreachable");
 // bound the slice to the no-source branch itself; the rest of renderTray legitimately builds the
 // ATTACK button for the case where a source DOES exist
 const noSrcBlock = trayRender.slice(trayRender.indexOf("if (!srcs.length)"),
@@ -105,7 +132,7 @@ const noSrcBlock = trayRender.slice(trayRender.indexOf("if (!srcs.length)"),
 assert(noSrcBlock.length > 200 && noSrcBlock.indexOf("tb-go") === -1,
   "with no valid source the tray must offer no ATTACK button at all");
 assert(/tb-cancel/.test(noSrcBlock), "...only a way to close it");
-ok("UI represents 'no adjacent owned source' (invalid/non-adjacent target) instead of attacking");
+ok("UI represents 'you have no garrisoned source' instead of attacking anyway");
 
 // 7) Regression: the legacy client-authoritative attack chain stays gone.
 assert(!/runBattle\(squad,\s*\(foe/.test(html), "client-shuffle runBattle(squad,(foe...)) must be gone");

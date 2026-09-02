@@ -191,10 +191,17 @@ assert ids == [Q1, Q2], "raw ids, not titles — the UI resolves display names"
 assert all(isinstance(q, str) for q in ids)
 assert "qualification_required" not in conquest.AttackEligibility.REASONS
 
-STORE["m:a"]["owner"] = "ALICE"                 # m:a neighbours only m:home, so m:b is out of reach
-e_bad = conquest.can_attack("ALICE", "m:a", "m:b", SQUAD, W, STORE)
+# Phase 14A: a NON-ADJACENT attack is allowed now, so the falsy-eligibility example has to be a
+# rule that still refuses. Source ownership is the natural one -- it is structural, non-geographic,
+# and it is what this assertion was really about: that AttackEligibility works in a boolean context.
+e_bad = conquest.can_attack("ALICE", "m:a", "m:b", SQUAD, W, STORE)   # m:a is BOB's
+assert not e_bad and e_bad.allowed is False and e_bad.reason == "source_not_owned", e_bad.reason
+# and the geography that used to refuse it no longer does: whatever this fixture's far pair fails
+# on now, it is NOT distance.
+STORE["m:a"]["owner"] = "ALICE"
+e_far = conquest.can_attack("ALICE", "m:a", "m:b", SQUAD, W, STORE)
 STORE["m:a"]["owner"] = "BOB"
-assert not e_bad and e_bad.allowed is False and e_bad.reason == "not_adjacent", e_bad.reason
+assert e_far.reason != "not_adjacent", "Alpha rule: distance no longer refuses an attack"
 e_good = can("m:c")
 assert bool(e_good) is True and e_good.reason is None
 assert "—" not in repr(e_bad) and "Zoo" not in repr(e_bad),     "no human-readable content text leaks into the domain"

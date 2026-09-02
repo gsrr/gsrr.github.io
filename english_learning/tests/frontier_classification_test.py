@@ -242,14 +242,15 @@ code_attack, out_attack = call("POST", "/api/territory/attack" + R,
                                {"sourceTerritoryId": "world:us", "targetTerritoryId": "world:mx",
                                 "squad": [{"type": "inf", "hp": 5}], "avatar": "X"}, tok=ME)
 assert code_attack == 200 and "attackerWon" in out_attack, (code_attack, out_attack)
-# an attack OUT OF an isolated territory is refused for the pre-existing reason (adjacency), not
-# because of any new classification rule
+# Phase 14A: an attack OUT OF an isolated territory is now ACCEPTED. That is the Alpha rule, not a
+# classification rule -- and it is exactly why 13B's classification must carry no attack authority.
+# The classification itself is asserted unchanged throughout this file.
 code_iso, out_iso = call("POST", "/api/territory/attack" + R,
                          {"sourceTerritoryId": "world:au", "targetTerritoryId": "world:mx",
                           "squad": [{"type": "inf", "hp": 5}], "avatar": "X"}, tok=ME)
-assert code_iso == 400 and out_iso.get("reason") == "not_adjacent", (code_iso, out_iso)
-ok("14. legality is unchanged: an attack from a frontier source resolves, and one from an isolated "
-   "territory is refused `not_adjacent` — the pre-existing adjacency rule, not a new one")
+assert code_iso == 200 and "attackerWon" in out_iso, (code_iso, out_iso)
+ok("14. legality follows the ALPHA rule: an attack from a frontier source resolves, and so does one "
+   "from an ISOLATED source — the classification never granted or withheld attack authority")
 
 # recruit / build / research all behave exactly as before, on an INTERIOR and on an ISOLATED
 # territory alike. What matters is not that they SUCCEED -- gold and prerequisites still apply -- but

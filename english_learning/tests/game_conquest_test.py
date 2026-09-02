@@ -136,17 +136,28 @@ assert server.load_econ_store()["ALICE"]["troops"] == {"cav": 0, "archer": 0, "i
     "the global pool is never touched by an attack"
 ok("2B attack LOSS: owner kept, survivors return to SOURCE, attacker -50 / defender +50, pool untouched")
 
-# INTENDED PHASE 2B GAMEPLAY CHANGE — a NON-ADJACENT attack is now REJECTED (was explicitly ALLOWED in 2A).
+# PHASE 14A (v0.1 ALPHA) INTENDED CHANGE — a NON-ADJACENT attack is ALLOWED again.
+#   2A  allowed it
+#   2B  rejected it with reason "not_adjacent"          <- the assertion this block used to make
+#   14A allows it: for the Alpha, OWNERSHIP decides eligibility and geography decides nothing.
+# The 2B assertion is inverted rather than removed, on the same Russia -> Serbia pair, and the
+# atomicity check becomes a real state-change check.
 set_state({"cav": 0, "archer": 0, "inf": 0, "spear": 0}, 100, {
     "world:ru": {"owner": "ALICE", "troops": [{"type": "cav", "hp": 100}], "pop": 100},
     "world:rs": {"owner": "BOB", "troops": [{"type": "inf", "hp": 1}], "pop": 100},   # Serbia: NOT adjacent to Russia
 })
 code, body = atk("world:ru", "world:rs", [{"type": "cav", "hp": 50}])
-assert code == 400 and body.get("reason") == "not_adjacent", (code, body)
+assert code == 200 and body.get("ok") is True, (code, body)
+assert body.get("sourceTerritoryId") == "world:ru" and body.get("targetTerritoryId") == "world:rs"
 server.set_room(CODE)
 ts = server.load_territory_store()
-assert ts["world:rs"]["owner"] == "BOB" and gsum(ts["world:ru"]["troops"]) == 100, "rejected non-adjacent attack changes NOTHING"
-ok("2B INTENDED CHANGE: non-adjacent attack REJECTED (reason=not_adjacent); atomically no state change")
+# the committed squad always leaves the source, whoever won
+assert gsum(ts["world:ru"]["troops"]) == 50, ("half the garrison marched", ts["world:ru"])
+if body.get("attackerWon"):
+    assert ts["world:rs"]["owner"] == "ALICE", "a won attack transfers the target"
+else:
+    assert ts["world:rs"]["owner"] == "BOB", "a lost attack leaves the target with its owner"
+ok("14A INTENDED CHANGE: a non-adjacent attack is ACCEPTED over HTTP and resolves normally")
 
 # Eligibility over HTTP: source-not-owned → 403; unknown ids → 400; MISSING source → 400 (never inferred)
 set_state({"cav": 0, "archer": 0, "inf": 0, "spear": 0}, 100, {
@@ -321,7 +332,9 @@ assert conquest.can_attack("ALICE", "world:ru", "world:cn", SQ, W, T).allowed, "
 assert conquest.can_attack("ALICE", "world:cn", "world:ru", SQ, W, T).reason == "source_not_owned"
 assert conquest.can_attack("ALICE", "world:ru", "world:ru", SQ, W, T).reason == "same_territory"
 assert conquest.can_attack("ALICE", "world:ru", "world:kz", SQ, W, T).reason == "target_already_owned"
-assert conquest.can_attack("ALICE", "world:ru", "world:rs", SQ, W, T).reason == "not_adjacent"
+# Phase 14A: distance is not a reason any more. Everything else in this table is untouched.
+assert conquest.can_attack("ALICE", "world:ru", "world:rs", SQ, W, T).allowed, \
+    "Alpha rule: a non-adjacent enemy target is attackable"
 assert conquest.can_attack("ALICE", "china:zzz", "world:cn", SQ, W, T).reason == "source_not_found"
 assert conquest.can_attack("ALICE", "world:ru", "china:zzz", SQ, W, T).reason == "target_not_found"
 assert conquest.can_attack("ALICE", "world:ru", "world:cn", [{"type": "cav", "hp": 9999}], W, T).reason == "insufficient_source_garrison"
@@ -353,10 +366,18 @@ assert can("world:ru", "world:cn").allowed, "Russia ↔ China adjacent (long lan
 assert can("world:de", "world:at").allowed, "Germany ↔ Austria adjacent"
 assert can("world:br", "world:bo").allowed, "Brazil ↔ Bolivia adjacent"
 assert can("world:fr", "world:de").allowed, "France ↔ Germany adjacent"
-assert can("world:jp", "world:kr").reason == "not_adjacent", "Japan ↔ South Korea NOT adjacent (sea) — no fake adjacency"
-assert can("world:ag", "world:tr").reason == "not_adjacent", "Antigua and Barbuda ↔ Turkey NOT adjacent (an island, oceans away)"
-assert can("world:gb", "world:fr").reason == "not_adjacent", "UK ↔ France NOT adjacent (channel)"
-assert can("world:au", "world:id").reason == "not_adjacent", "Australia ↔ Indonesia NOT adjacent (sea)"
+# Phase 14A: these four pairs are still NOT adjacent in the catalogue -- that data is unchanged and
+# is asserted directly below -- but under the Alpha rule non-adjacency no longer refuses an attack.
+# The pairs are kept precisely because they are the interesting ones: across a sea, across a
+# channel, and an island oceans away.
+assert can("world:jp", "world:kr").allowed, "Japan -> South Korea: across a sea, and allowed"
+assert can("world:ag", "world:tr").allowed, "Antigua -> Turkey: an island, oceans away, and allowed"
+assert can("world:gb", "world:fr").allowed, "UK -> France: across the channel, and allowed"
+assert can("world:au", "world:id").allowed, "Australia -> Indonesia: across a sea, and allowed"
+# the ADJACENCY DATA itself is untouched: still no fake edges between those pairs
+for a, b in [("world:jp", "world:kr"), ("world:ag", "world:tr"),
+             ("world:gb", "world:fr"), ("world:au", "world:id")]:
+    assert not W.are_adjacent(a, b), ("no fake adjacency was invented", a, b)
 # RETARGETED (Phase 10A.3R).
 #   OLD: an adjacency-OK but learning-gated neighbour returned qualification_required, proving the
 #        learning layer and the adjacency layer were orthogonal.

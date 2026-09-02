@@ -286,11 +286,12 @@ c_atk, out_atk = call("POST", "/api/territory/attack" + Q,
                       {"sourceTerritoryId": "world:us", "targetTerritoryId": "world:mx",
                        "squad": [{"type": "inf", "hp": 3}], "avatar": "X"}, tok=ME)
 assert c_atk == 200 and "attackerWon" in out_atk, (c_atk, out_atk)
-# ...and one from an isolated territory is refused for the pre-existing adjacency reason
+# Phase 14A: ...and one from an ISOLATED territory is now accepted too. Regions still carry no
+# conquest authority, which is what this assertion exists to prove, so it survives as an acceptance.
 c_iso, out_iso = call("POST", "/api/territory/attack" + Q,
                       {"sourceTerritoryId": "world:au", "targetTerritoryId": "world:mx",
                        "squad": [{"type": "inf", "hp": 3}], "avatar": "X"}, tok=ME)
-assert c_iso == 400 and out_iso.get("reason") == "not_adjacent", (c_iso, out_iso)
+assert c_iso == 200 and "attackerWon" in out_iso, (c_iso, out_iso)
 for probe in ({"file": "world:ca", "b": "barracks"},):
     c, j = call("POST", "/api/territory/build" + Q, probe, tok=ME)
     assert c in (200, 400)

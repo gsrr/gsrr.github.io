@@ -406,9 +406,12 @@ assert(/const BUILD_COST = \{ armory: 50, barracks: 60, archery: 80, stable: 120
   "BUILD_COST is untouched");
 assert(/const TECH_COST = \{ atk: \[160, 320, 560\], def: \[160, 320, 560\] \};/.test(code) &&
        /const TECH_MAX = 3;/.test(code), "TECH_COST and TECH_MAX are untouched");
+// Phase 14A: the client no longer derives sources from the catalogue's adjacency, because the
+// server no longer gates on it. What this assertion protected -- that the source list comes from
+// AUTHORITATIVE data rather than from the map's pixels -- is unchanged and still pinned.
 assert(/function validAttackSources\(targetKey\)/.test(code) &&
-       /adjacentTerritoryIds/.test(slice("function validAttackSources", "function launchAttack", "sources")),
-  "attack adjacency still comes from the catalog");
+       /territory\.holders/.test(slice("function validAttackSources", "function launchAttack", "sources")),
+  "attack sources still come from authoritative state, not from geometry");
 assert(/\/api\/territory\/attack/.test(code) && /\/api\/territory\/claim/.test(code) &&
        /\/api\/territory\/reentry/.test(code) && /\/api\/territory\/research/.test(code),
   "every conquest endpoint is still the one the server owns");

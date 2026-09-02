@@ -23,6 +23,9 @@ class AttackEligibility:
     REASONS = (
         "source_not_found", "target_not_found", "same_territory",
         "source_not_owned", "target_already_owned", "target_not_attackable",
+        # "not_adjacent" is retained in this reason set but is UNREACHABLE from Phase 14A on:
+        # the Alpha rule allows conquest regardless of geography. It is kept rather than deleted so
+        # a stricter post-Alpha rule can re-use the same documented reason string.
         "not_adjacent", "invalid_squad", "insufficient_source_garrison",
     )
 
@@ -133,9 +136,20 @@ def can_attack(player_id, source_id, target_id, squad, world, territories,
         return AttackEligibility(False, "target_already_owned")
     if not tgt_owner:                                   # neutral → use the separate claim flow, not attack
         return AttackEligibility(False, "target_not_attackable")
-    # World Domain adjacency (also rejects cross-map: adjacency lists are per-map canonical ids)
-    if not world.are_adjacent(source_id, target_id):
-        return AttackEligibility(False, "not_adjacent")
+    # ===== Phase 14A (v0.1 PLAYABLE ALPHA): geography is INFORMATION, not conquest authority =====
+    # This is where `world.are_adjacent(source_id, target_id)` used to reject a non-adjacent attack
+    # with "not_adjacent". For the Alpha the player is building a WORLD empire, so OWNERSHIP decides
+    # what may be attacked and adjacency decides nothing. Every other condition is unchanged and
+    # still checked -- identity, canonical ids, self-attack, source ownership, target ownership,
+    # squad validity and source garrison, all above and below this comment.
+    #
+    # Deliberately NOT removed: cross-map protection. Adjacency lists are per-map canonical ids, so
+    # are_adjacent() also happened to reject a cross-map pair. That protection now comes from the
+    # caller's own `territory_on_active_map()` checks on BOTH ends (server.py), which is where it
+    # belongs -- one playable surface, checked explicitly, rather than as a side effect of geography.
+    #
+    # This is an ALPHA rule, adopted to get the game in front of players. It may become stricter
+    # again once real play tells us whether unrestricted global conquest is any fun.
     need = _squad_need(squad)
     if not need:
         return AttackEligibility(False, "invalid_squad")

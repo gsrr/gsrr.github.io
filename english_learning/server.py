@@ -2258,7 +2258,7 @@ class Handler(BaseHTTPRequestHandler):
         target = self._canon(d.get("targetTerritoryId") or d.get("target") or d.get("file"))
         # 來源不可由後端臆測：舊 client 只送 target 沒送 source → 明確拒絕(不繞過相鄰規則)。
         if not source:
-            self._send({"error": "sourceTerritoryId is required (attack from an owned adjacent territory)",
+            self._send({"error": "sourceTerritoryId is required (attack from a territory you own)",
                         "reason": "source_not_found"}, 400)
             return
         if not target:

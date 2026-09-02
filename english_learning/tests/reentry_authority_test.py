@@ -328,7 +328,12 @@ far = next(t for t in WORLD if t != TARGET and t not in nbrs)
 st, r2 = api("POST", "/api/territory/attack?room=" + CODE,
              {"sourceTerritoryId": TARGET, "targetTerritoryId": far,
               "squad": [{"type": "cav", "hp": 5}]}, tokA)
-assert st == 400 and r2.get("reason") == "not_adjacent", ("adjacency must bind again at once", st, r2)
+# Phase 14A: the ordinary rules bind again the instant a foothold is taken -- but "the ordinary
+# rules" no longer include adjacency, so a far attack out of the new foothold is ACCEPTED. What this
+# line exists to prove is that re-entry grants no special standing, so it now asserts that the far
+# attack goes through the SAME ordinary path rather than any re-entry shortcut.
+assert st == 200 and r2.get("ok") is True, ("the ordinary Alpha rules apply at once", st, r2)
+assert r2.get("sourceTerritoryId") == TARGET and r2.get("targetTerritoryId") == far, r2
 if nbrs:
     st, r3 = api("POST", "/api/territory/attack?room=" + CODE,
                  {"sourceTerritoryId": TARGET, "targetTerritoryId": nbrs[0],

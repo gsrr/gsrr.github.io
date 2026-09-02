@@ -89,7 +89,12 @@ ok("gate retired: a requirement-carrying target and a requirement-free one behav
 
 # the gate is the LAST check — it never masks (or is masked by) the structural rules
 assert elig("m:gated", None, True, source="m:nope").reason == "source_not_found"
-assert elig("m:far").reason == "not_adjacent", "adjacency is decided before the learning gate"
+# Phase 14A: there is no adjacency check to order against any more -- a far target is simply
+# allowed. What this line existed to prove is that the STRUCTURAL rules are decided before the
+# retired learning gate, so it now uses a structural rule that still refuses.
+assert elig("m:far").allowed is True, "Alpha rule: a non-adjacent target is attackable"
+assert elig("m:gated", None, True, source="m:nope").reason == "source_not_found", \
+    "structural rules are still decided before anything else"
 assert elig("m:gated", None, True, squad=[]).reason == "invalid_squad"
 assert elig("m:gated", None, True, squad=[{"type": "cav", "hp": 9999}]).reason == "insufficient_source_garrison", \
     "an unaffordable squad fails on garrison, not on qualifications"
@@ -98,8 +103,11 @@ ok("gate ordering: source/target/adjacency/squad/garrison all still decided BEFO
 
 # AI policy: require_qualifications=False bypasses ONLY this layer, never the structural rules
 assert elig("m:gated", None, require=False).allowed, "AI bypasses the human-learning gate"
-assert not elig("m:far", None, require=False).allowed, "AI still bound by adjacency"
-assert elig("m:far", None, require=False).reason == "not_adjacent"
+# Phase 14A: the AI is no longer bound by adjacency either -- it shares one can_attack(). What this
+# line proves is that require_qualifications=False bypasses ONLY the retired learning layer and
+# never the structural rules, so it now names a structural rule.
+assert elig("m:far", None, require=False).reason != "not_adjacent",     "Alpha rule: distance does not bind the AI either"
+# (the line that asserted the AI was refused "not_adjacent" here is retired by Phase 14A)
 assert conquest.can_attack("CAROL", "m:home", "m:open", SQUAD, WORLD, STORE,
                            require_qualifications=False).reason == "source_not_owned", \
     "AI bypass never grants ownership"

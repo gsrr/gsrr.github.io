@@ -162,8 +162,17 @@ ok("8. the overview drills down to the map, never into a per-territory managemen
 const card = slice("function renderHudCard()", "\n      function markMap", "renderHudCard");
 assert(/borders territory you do not control/.test(card), "frontier copy");
 assert(/every land neighbour is yours/.test(card), "interior copy");
-assert(/no land connection/.test(card) && /sea routes are not modelled yet/.test(card),
-  "isolated copy must state the structural limitation honestly");
+// Phase 14A: the isolated copy no longer states an attack limitation, because under the Alpha rule
+// there is none -- an island can attack anywhere. It still states the GEOGRAPHIC fact, which is what
+// 13B classifies, and the assertion now also forbids the retired attack-authority claim so the copy
+// cannot drift back to promising something the rules do not do.
+assert(/no land border with anything/.test(card),
+  "isolated copy must still state the geographic fact");
+["cannot attack out", "safe from attack", "cannot be reached"].forEach(stale => {
+  assert(card.indexOf(stale) === -1,
+    "isolated copy must not claim an attack limitation that the Alpha rule does not have (" +
+    stale + ")");
+});
 assert(/const sc = mine \? \(h \|\| \{\}\)\.strategic : null;/.test(card),
   "shown only for territories the player owns, because that is all the server classifies");
 assert(card.indexOf("openModal") === -1 && card.indexOf("openRegion") === -1,

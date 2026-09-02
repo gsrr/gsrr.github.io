@@ -2104,6 +2104,8 @@
     .geo-holder, .geo-holder::after, .geo-svg { border-radius: 14px; }
   }
   .geo-index { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin: 12px 0 2px; }
+  .geo-rules .gr-p { margin: 6px 0; font-size: 12.5px; line-height: 1.5; color: #f3e6cf; }
+  .geo-rules .gr-note { color: #ffd9a8; font-size: 11.5px; font-style: italic; }
   .geo-idx { display: flex; align-items: center; gap: 7px; text-align: left; padding: 7px 9px; border-radius: 10px;
     border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #e8edf5; cursor: pointer;
     font-size: 12px; line-height: 1.2; }
@@ -7112,7 +7114,8 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       ["frontier", "⚔️ Frontier", "Borders territory you do not control. This is where pressure matters."],
       ["interior", "🛡️ Interior", "Every land neighbour is yours. Nothing here needs attention."],
       ["isolated", "🏝️ Isolated", "No land connection at all — it cannot be attacked over land, and it " +
-                                   "cannot attack out. Sea routes are not modelled yet."]
+                                   "no land border with anything. Geography only \u2014 under the "
+                                   + "Alpha rule you can still attack from here."]
     ];
     GROUPS.forEach(g => {
       const list = byClass[g[0]];
@@ -8379,8 +8382,8 @@ nextLevelBtn.textContent = "✅ Back to lessons";
             escapeHtml(c.displayName || c.territoryId) + '</span><span class="rc-ls">\u{1F465} ' +
             (c.population || 0) + ' \u00b7 held by ' + escapeHtml((c.avatar || "") +
             dispName(c.owner || "?")) +
-            (c.isolated ? ' \u00b7 <span class="rc-iso">isolated \u2014 safe, but you cannot ' +
-              'attack out of it</span>' : '') + '</span></span>';
+            (c.isolated ? ' \u00b7 <span class="rc-iso">isolated \u2014 no land border</span>'
+              : '') + '</span></span>';
           b.addEventListener("click", () => openReentry(c, st));
           list.appendChild(b);
         });
@@ -8400,8 +8403,8 @@ nextLevelBtn.textContent = "✅ Back to lessons";
           '</b> \u00b7 \u{1F465} ' + (cand.population || 0) + '</div>' +
           '<div class="op-def">Held by ' + escapeHtml((cand.avatar || "") + dispName(cand.owner || "?")) +
           '<br><span class="op-card">\u{1F6E1}\uFE0F Garrison unknown (enemy)</span></div>' +
-          (cand.isolated ? '<p class="op-hint">\u26A0\uFE0F This territory has no land neighbours. ' +
-            'It is safe from attack, but you will not be able to attack out of it either.</p>' : '') +
+          (cand.isolated ? '<p class="op-hint">\u{1F3DD}\uFE0F This territory has no land ' +
+            'neighbours. Under the Alpha rule that does not limit what you can attack from it.</p>' : '') +
           '<p class="op-hint">This costs \u{1FA99} <b>' + (cost.gold || 0) + ' gold</b> plus the troops ' +
           'you commit, and it is decided by a battle \u2014 if you lose, the territory stays theirs.</p>');
         const host = document.createElement("div"); ov.querySelector(".modal-card").appendChild(host);
@@ -8676,7 +8679,7 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         const STRAT_COPY = {
           frontier: ["\u2694\uFE0F Frontier", "borders territory you do not control."],
           interior: ["\u{1F6E1}\uFE0F Interior", "every land neighbour is yours."],
-          isolated: ["\u{1F3DD}\uFE0F Isolated", "no land connection \u2014 sea routes are not modelled yet."]
+          isolated: ["\u{1F3DD}\uFE0F Isolated", "no land border with anything you or anyone else holds."]
         };
         const sc = mine ? (h || {}).strategic : null;
         const stratLine = (sc && STRAT_COPY[sc])
@@ -8692,8 +8695,8 @@ nextLevelBtn.textContent = "✅ Back to lessons";
           stratLine +
           // the pre-existing structural warning stays for territories the player does NOT own, where
           // no classification is published; for an owned isolated territory the line above says it.
-          ((iso && !sc) ? '<div class="hc-iso">\u26A0\uFE0F No land neighbours \u2014 safe, but it cannot ' +
-            'attack out.</div>' : '');
+          ((iso && !sc) ? '<div class="hc-iso">\u{1F3DD}\uFE0F No land neighbours \u2014 ' +
+            'geography only.</div>' : '');
         HUD.facts.innerHTML = '<div class="hf-t">Territory detail</div>' +
           '<div class="hc-rows">' + rows + '</div>';
       }
@@ -8791,9 +8794,9 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         if (trayMode === "attack") {
           const srcs = trayValidSources();
           if (!srcs.length) {
-            html += '<p class="tray-note">\u{1F6AB} No adjacent territory of yours has a garrison, ' +
-              'so this attack is not possible yet. Take a neighbouring territory first \u2014 an ' +
-              'island with no land neighbours cannot be reached by land at all.</p>' +
+            html += '<p class="tray-note">\u{1F6AB} None of your territories has a garrison to ' +
+              'march with, so this attack is not possible yet. Recruit troops, or take a territory ' +
+              'and leave a garrison in it.</p>' +
               '<div class="tray-foot"><span class="tray-sum"></span><div class="tray-btns">' +
               '<button type="button" class="tb-cancel">Close</button></div></div>';
             HUD.tray.innerHTML = html; HUD.tray.hidden = false;
@@ -8914,7 +8917,7 @@ nextLevelBtn.textContent = "✅ Back to lessons";
           // Phase 13C.1: the accessible name names the TERRITORY -- "Attack Spain", not "Attack".
           HUD.acts.appendChild(actBtn("\u2694\uFE0F", "Attack", () => openTray("attack"),
             { primary: true, aria: "Attack " + name,
-              title: "Plan an attack on " + name + " from an adjacent territory you own" }));
+              title: "Plan an attack on " + name + " from any territory you own" }));
         } else if (mine) {
           HUD.acts.appendChild(actBtn("\u{1F6E1}\uFE0F", "Garrison", () => openTray("garrison"),
             { aria: "Set the garrison of " + name, title: "Position the garrison of " + name }));
@@ -9048,6 +9051,28 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       const dbody = document.createElement("div"); dbody.className = "hd-body";
       dbody.appendChild(idx); drawer.appendChild(dbody);
       HUD.below.appendChild(drawer);
+      // ===== Phase 14A: the Alpha conquest rule, in one collapsed line =====
+      // Secondary by construction -- it lives under the shell with the Region index, so it can
+      // never push a primary action off screen, and it is closed by default. Player words only:
+      // no adjacency, no degree, no components.
+      const rules = document.createElement("details");
+      rules.className = "hd-drawer geo-rules";
+      const rsum = document.createElement("summary");
+      rsum.textContent = "\u{1F4DC} How conquest works";
+      rules.appendChild(rsum);
+      const rbody = document.createElement("div"); rbody.className = "hd-body";
+      rbody.innerHTML =
+        '<p class="gr-p"><b>Alpha rule.</b> You can occupy any unclaimed territory and attack any ' +
+        'enemy territory \u2014 anywhere in the world. You do not need to border it.</p>' +
+        '<p class="gr-p">An attack still marches from a territory you own: pick the source, and its ' +
+        'garrison and technology are what fight. Occupying still costs troops from your pool.</p>' +
+        '<p class="gr-p">Borders are still worth reading \u2014 the map shows which of your ' +
+        'territories touch someone else\u2019s \u2014 but for now they do not decide what you may ' +
+        'attack.</p>' +
+        '<p class="gr-p gr-note">This is a v0.1 Alpha rule while we learn how the game plays. It may ' +
+        'get stricter later.</p>';
+      rules.appendChild(rbody);
+      HUD.below.appendChild(rules);
       // Phase 10A put the CURRICULUM checkpoint here, below the board. Phase 13C.2 moves it into
       // the World chrome (renderHudControls) for two measured reasons: below the shell it needed a
       // document scroll to reach, and a second copy had appeared in the territory inspector, so the
@@ -10419,12 +10444,25 @@ nextLevelBtn.textContent = "✅ Back to lessons";
   // ===== Phase 2B — territorial conquest attack (source ↔ target, adjacency-gated) =====
   // 攻擊必須「從自己的相鄰領地(source)出兵」。source 清單=目標的 World-Domain 相鄰領地中，你擁有且有駐軍者。
   // 這是「建議性」前端過濾(highlight 有效來源)；真正的授權一律由後端 can_attack 判定(section 22)。
+  // Phase 14A (v0.1 ALPHA): every territory you own with a garrison is a valid source, wherever it
+  // is. This used to read the TARGET's adjacentTerritoryIds and keep only the neighbours you held,
+  // which mirrored the server's adjacency gate; that gate is gone, so mirroring it here would leave
+  // the client advertising less than the server allows.
+  //
+  // The SOURCE still matters and is still chosen explicitly: the committed squad leaves that
+  // territory's garrison, and the attacker's technology is the SOURCE territory's technology. Only
+  // the geographic filter is gone.
+  //
+  // Derived on demand -- when a target is selected and when the planner opens -- never per camera
+  // frame, and never as an all-pairs table.
   function validAttackSources(targetKey) {
     const me = (authUser() || userName || "").toLowerCase();
     const holders = (territory && territory.holders) || {};
-    const ct = TERR_CATALOG.terrById[targetKey];              // 只有目錄領地(canonical)才有相鄰資料
-    const nbrs = (ct && ct.adjacentTerritoryIds) || [];       // World-Domain 相鄰(非幾何/座標推導)
-    return nbrs.filter(nb => { const h = holders[nb]; return h && h.owner && (h.owner + "").toLowerCase() === me && sumHp(h.troops) > 0; });
+    return Object.keys(holders).filter(function (k) {
+      if (k === targetKey) return false;                      // a territory cannot attack itself
+      const h = holders[k];
+      return h && h.owner && (h.owner + "").toLowerCase() === me && sumHp(h.troops) > 0;
+    }).sort();
   }
   // 送出攻擊意圖 → 後端權威判定。前端「絕不」送出 winner/survivors；只用回傳的 defenderOrder 重播動畫。
   function launchAttack(source, targetKey, targetName, h, squad) {

@@ -387,4 +387,49 @@ assert(html.indexOf("English Reading") === -1 || !/ht-t/.test(html.slice(html.in
   "the top-level product identity is not renamed back to the old course name");
 ok("21. WORLD CONQUEST keeps a readable line of its own on a phone");
 
+// ==================================================================================================
+// ============================ Phase 14A: global conquest (v0.1 Alpha) =============================
+// ==================================================================================================
+const sources = slice("function validAttackSources(targetKey)", "\n  function launchAttack",
+  "validAttackSources");
+// ---- 22. sources are ownership, not geography ----
+assert(/territory\.holders/.test(sources),
+  "attack sources come from the authoritative holders map");
+assert(sources.indexOf("adjacentTerritoryIds") === -1,
+  "Alpha rule: sources are no longer filtered by adjacency");
+assert(/k === targetKey/.test(sources), "a territory still cannot attack itself");
+assert(/sumHp\(h\.troops\) > 0/.test(sources), "a source still needs a garrison");
+["getBBox", "getBoundingClientRect", "clientX", "elementFromPoint"].forEach(px => {
+  assert(sources.indexOf(px) === -1, "sources must never be derived from pixels (" + px + ")");
+});
+// a degree-0 owned territory is reachable by this rule: nothing consults neighbour counts
+assert(sources.indexOf("adjacent") === -1 && sources.indexOf("degree") === -1,
+  "no geographic term may appear in the source derivation at all");
+ok("22. attack sources are every garrisoned territory you own -- ownership, never geography");
+
+// ---- 23. the copy no longer promises an adjacency rule ----
+["No adjacent territory", "cannot be reached by land", "cannot attack out",
+ "from an adjacent territory you own"].forEach(stale => {
+  assert(code.indexOf(stale) === -1,
+    "retired Alpha-false copy must not return: " + JSON.stringify(stale));
+});
+assert(/from any territory you own/.test(actions),
+  "the Attack action says an attack may march from any territory you own");
+ok("23. no surviving copy tells the player that geography limits conquest");
+
+// ---- 24. the Alpha rule is explained once, in a secondary surface ----
+const rules = slice('rules.className = "hd-drawer geo-rules"', "\n      HUD.below.appendChild(rules)",
+  "rules surface");
+assert(/How conquest works/.test(code), "there is a short rules surface");
+assert(/anywhere in the world/.test(rules), "it states the Alpha rule in player words");
+assert(/v0\.1 Alpha rule/.test(rules), "and says plainly that it is an Alpha rule");
+["adjacency", "degree-0", "connected component", "adjacencyGraph"].forEach(jargon => {
+  assert(rules.indexOf(jargon) === -1,
+    "the rules copy must not expose implementation terminology (" + jargon + ")");
+});
+assert(/HUD\.below\.appendChild\(rules\)/.test(code),
+  "it lives BELOW the shell, so it cannot push a primary action off screen");
+assert(rules.indexOf("openModal") === -1, "and it is not a modal");
+ok("24. one short rules surface explains the Alpha rule, below the shell, in player words");
+
 console.log("\nAll " + passed + " World-interaction-shell checks passed.");
