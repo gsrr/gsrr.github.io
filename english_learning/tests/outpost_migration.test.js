@@ -128,10 +128,14 @@ assert(!/cannot be reached by land/.test(trayRender),
 // bound the slice to the no-source branch itself; the rest of renderTray legitimately builds the
 // ATTACK button for the case where a source DOES exist
 const noSrcBlock = trayRender.slice(trayRender.indexOf("if (!srcs.length)"),
-                                    trayRender.indexOf("const types = TROOPS.filter"));
-assert(noSrcBlock.length > 200 && noSrcBlock.indexOf("tb-go") === -1,
-  "with no valid source the tray must offer no ATTACK button at all");
-assert(/tb-cancel/.test(noSrcBlock), "...only a way to close it");
+                                    trayRender.indexOf("const budget = trayBudget()"));
+// Phase 14A.1 renamed the footer controls tb-go / tb-cancel to af-go / af-cancel when the planner
+// became a modal. The RULE is unchanged: with no valid source there is no commit control at all,
+// only a way to close.
+assert(noSrcBlock.length > 200 && noSrcBlock.indexOf("af-go") === -1 &&
+       noSrcBlock.indexOf("tb-go") === -1,
+  "with no valid source the planner must offer no ATTACK button at all");
+assert(/af-cancel/.test(noSrcBlock), "...only a way to close it");
 ok("UI represents 'you have no garrisoned source' instead of attacking anyway");
 
 // 7) Regression: the legacy client-authoritative attack chain stays gone.

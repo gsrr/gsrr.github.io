@@ -159,8 +159,13 @@ ok("7. no contextmenu, no hover-only and no double-click-only route to a primary
   assert(code.indexOf(dead) === -1, dead + " must not exist");
 });
 assert(actions.indexOf("openModal") === -1, "no territory action may open a modal");
-const trayFn = slice("function renderTray()", "\n      function traySquad", "renderTray");
-assert(trayFn.indexOf("openModal") === -1, "planning must not open a modal");
+// Phase 14A.1: planning IS a modal now -- see the note in world_camera.test.js. The rule that
+// mattered is that no TERRITORY ACTION opens a modal to be discovered (asserted just above, on
+// renderHudActions) and that the retired region modal stays retired.
+const trayFn = slice("function renderTray()", "\n      function trayBindClose", "renderTray");
+assert(/openModal\(html\)/.test(trayFn),
+  "planning opens the shared action modal");
+assert(trayFn.indexOf("openRegion") === -1, "and never the retired region modal");
 ok("8. the retired region modal stays retired — no openRegion, no per-territory modal");
 
 // ============================ 9. no management controls in the inspector ============================
@@ -174,13 +179,21 @@ assert(buildHud.indexOf("Recruit") === -1 && buildHud.indexOf("Buildings") === -
 ok("9. Recruit / Buildings / Technology / transfer are absent from the territory inspector");
 
 // ============================ 10. exactly one attack planner ============================
-assert((code.match(/id = "hudTray"/g) || []).length === 1,
-  "exactly one attack/occupy planner element exists");
-assert(/side\.appendChild\(tray\)/.test(buildHud),
-  "the planner lives inside the inspector, so it adds no document height");
-assert((buildHud.match(/className = "hud-tray"/g) || []).length === 1,
-  "the planner is built once");
-ok("10. one planner, inside the inspector — no duplicate attack UI");
+// Phase 14A.1: the planner is no longer a persistent element inside the inspector -- Alpha play
+// showed a narrow rail is the wrong workspace for a four-class military decision. It is built into
+// the shared action modal on demand. "Exactly one planner" is still the rule and is still pinned;
+// the inspector is additionally pinned to hold NO planner element, which it could not be before.
+assert((code.match(/function renderTray\(\)/g) || []).length === 1,
+  "exactly one planning surface exists");
+assert(buildHud.indexOf("hud-tray") === -1 && buildHud.indexOf("hudTray") === -1,
+  "the inspector holds no planner element at all");
+assert(code.indexOf('id = "hudTray"') === -1,
+  "and no dormant tray element is left anywhere");
+assert(/hudSlot\("hud-card"\)/.test(buildHud) && /hudSlot\("hud-actions"\)/.test(buildHud) &&
+       /hudSlot\("hud-facts"\)/.test(buildHud),
+  "the inspector still owns identity, the action choice and the detail");
+ok("10. one planning surface, in a dedicated action modal — no duplicate attack UI, and no " +
+   "dormant planner left in the inspector");
 
 // ============================ 11. re-entry keeps its confirmation ============================
 // Re-entry's confirmation is not window.confirm(): it is a deliberate TWO-STEP surface, retained

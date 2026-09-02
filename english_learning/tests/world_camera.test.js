@@ -28,6 +28,7 @@ function stripComments(src) {
             .replace(/^[ \t]*\/\/.*$/gm, "");
 }
 const code = stripComments(html);
+const css = (html.match(/<style>([\s\S]*?)<\/style>/) || [, ""])[1];
 function slice(from, to, label) {
   const i = code.indexOf(from);
   assert(i > 0, "not found: " + (label || from));
@@ -151,17 +152,38 @@ const confirm = slice("function trayConfirm()", "\n      function renderHudActio
 const actions = slice("function renderHudActions()", "\n      hudRefresh = function", "renderHudActions");
 assert(/openTray\("attack"\)/.test(actions), "Attack must open the tray");
 assert(!/openRegion/.test(actions), "no territory action may open the region modal");
-assert(tray.indexOf("openModal") === -1 && confirm.indexOf("openModal") === -1,
-  "attack planning must not open a modal");
-assert(/HUD\.tray\.hidden = false;/.test(tray), "the tray is shown in place");
-// Phase 13C.1: the tray moved from the board container's foot into the territory inspector, so it
-// no longer adds document height. What this assertion has always been FOR -- the planner is part of
-// the board component and is never a modal over the geography -- is unchanged, and a uniqueness pin
-// is added so a second attack surface cannot appear beside it.
-assert(/tray\.className = "hud-tray"/.test(code) && /side\.appendChild\(tray\)/.test(code),
-  "the tray lives inside the territory inspector: part of the board component, never a modal");
-assert((code.match(/id = "hudTray"/g) || []).length === 1,
-  "there is exactly one attack planner in the whole client");
+// ===== Phase 14A.1: REVERSED BY PRODUCT DECISION, from observed Alpha play =====
+// 12C moved combat planning out of a modal and into the board, and 12D/13C.1 kept it there. Real
+// Alpha play then found that a four-class military decision does not fit the narrow Territory
+// Inspector: the troop controls and the commit button fell below the rail's own viewport, and the
+// only controls were +1/-1, so deploying 200 troops meant ~200 clicks. Planning is now a dedicated
+// ACTION MODAL.
+// What 12C/12D were really protecting survives and is still pinned below: the retired per-territory
+// REGION modal stays retired, a tap still SELECTS rather than opening anything, and there is
+// exactly ONE planning surface.
+assert(/openModal\(html\)/.test(tray),
+  "planning opens the shared action modal (14A.1)");
+assert(confirm.indexOf("openModal") === -1,
+  "and confirming still opens nothing -- it calls the same authority path");
+assert(!/openRegion/.test(tray) && !/openRegion/.test(confirm),
+  "the retired per-territory region modal stays retired");
+assert((code.match(/function renderTray\(\)/g) || []).length === 1,
+  "there is exactly one planning surface");
+// Phase 14A.1: the persistent tray ELEMENT is gone -- the planner is built into the shared modal
+// on demand, so there is no #hudTray in the inspector to show or hide. UNIQUENESS is what these
+// two assertions were protecting, and it is pinned harder now: one renderTray, one openModal call
+// inside it, and no dormant tray element left behind anywhere.
+assert(code.indexOf('id = "hudTray"') === -1 && code.indexOf('className = "hud-tray"') === -1,
+  "no dormant planner element is left in the inspector");
+// renderTray has two mutually exclusive openModal branches -- the "no source to march with"
+// early return and the full planner -- so what is pinned is that the ACTION-MODAL surface is
+// opened from this one function and nowhere else in the client.
+assert(/openModal\(html\)/.test(tray), "the planner opens the shared modal");
+assert((code.match(/classList\.add\("act-modal"\)/g) || []).length === 2,
+  "the action-modal surface is created only by the planner's two branches");
+assert((code.match(/act-modal/g) || []).length ===
+       (tray.match(/act-modal/g) || []).length + (css.match(/act-modal/g) || []).length,
+  "nothing outside the planner and its stylesheet references the action modal");
 assert(/trayValidSources\(\)\.forEach\(sk => paint\(sk, "geo-src"\)\)/.test(drawGeo),
   "valid sources must be highlighted on the map");
 assert(/paint\(hudSelKey, trayMode === "attack" \? "geo-tgt" : "geo-sel"\)/.test(drawGeo),

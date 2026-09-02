@@ -2135,6 +2135,70 @@
     border: none; border-radius: 999px; background: #f1f5f9; color: #475569; font-size: 18px; line-height: 1; cursor: pointer; z-index: 2; }
   .modal-x:hover { background: #e2e8f0; color: #1e293b; }
   .modal-title { margin: 0 34px 10px 0; font-size: 18px; }
+  /* ===== Phase 14A.1: the conquest ACTION MODAL ==========================================
+     Observed in Alpha play: configuring a military action inside the narrow Territory Inspector
+     pushed the troop controls and the commit button below the rail's viewport, so the player had
+     to scroll a ~300px column to deploy troops -- and the only controls were +1 / -1, so a
+     200-troop deployment meant ~200 clicks.
+     The inspector still inspects and chooses the action; this surface configures and commits it.
+     It is deliberately WIDER than the default 360px card so four troop classes fit two per row on
+     a desktop, and short enough that title, source, all four classes, the totals and the commit
+     button are visible together. */
+  .modal-card.act-modal { max-width: 620px; }
+  .act-sec { font-size: 11px; font-weight: 800; letter-spacing: .7px; text-transform: uppercase;
+    color: #64748b; margin: 12px 0 6px; }
+  .act-sub { font-size: 12.5px; color: #475569; margin: 0 0 2px; }
+  .act-note { font-size: 12.5px; color: #475569; margin: 6px 0; line-height: 1.45; }
+  .act-quick { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .act-quick button { cursor: pointer; font-size: 12px; font-weight: 800; border-radius: 9px;
+    padding: 5px 11px; color: #0f172a; background: #e8eef6; border: 2px solid #b7c6da; }
+  .act-quick button:hover { background: #d8e3f0; }
+  .act-quick button:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+  /* two classes per row on a desktop, one per row when narrow */
+  .act-grid { display: grid; gap: 8px 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 560px) { .act-grid { grid-template-columns: minmax(0, 1fr); } }
+  .act-troop { border: 2px solid #e2e8f0; border-radius: 12px; padding: 7px 9px; }
+  .act-troop .at-hd { display: flex; justify-content: space-between; align-items: baseline;
+    gap: 8px; font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 5px; }
+  .act-troop .at-av { font-size: 11.5px; font-weight: 700; color: #64748b;
+    font-variant-numeric: tabular-nums; }
+  .act-troop .at-row { display: flex; align-items: center; gap: 6px; }
+  .act-troop .at-row button { width: 34px; height: 34px; flex: 0 0 auto; cursor: pointer;
+    border-radius: 9px; font-size: 16px; font-weight: 800; color: #0f172a; background: #f1f5f9;
+    border: 2px solid #b7c6da; }
+  .act-troop .at-row button:hover { background: #e2e8f0; }
+  .act-troop .at-row button:disabled { opacity: .45; cursor: default; }
+  .act-troop .at-row button:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+  .act-troop .at-row .at-max { width: auto; padding: 0 10px; font-size: 11.5px; }
+  /* the numeric field IS the state: typing 200 is one action, not two hundred */
+  .act-troop input.at-n { flex: 1 1 auto; min-width: 0; height: 34px; text-align: center;
+    font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; border-radius: 9px;
+    border: 2px solid #b7c6da; background: #fff; color: #0f172a; }
+  .act-troop input.at-n:focus-visible { outline: 3px solid #38bdf8; outline-offset: 1px; }
+  .act-tot { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 12px 0 4px; font-size: 13px;
+    color: #0f172a; }
+  .act-tot b { font-variant-numeric: tabular-nums; }
+  .act-srcs { display: flex; flex-wrap: wrap; gap: 6px; max-height: 116px; overflow-y: auto; }
+  .act-src { cursor: pointer; font-size: 12.5px; font-weight: 700; border-radius: 10px;
+    padding: 5px 10px; color: #0f172a; background: #f1f5f9; border: 2px solid #b7c6da; }
+  .act-src[aria-pressed="true"] { background: #38bdf8; border-color: #075985; color: #04212e; }
+  .act-src:focus-visible { outline: 3px solid #0ea5e9; outline-offset: 2px; }
+  /* the commit row stays reachable: it sticks to the bottom of the modal body */
+  .act-foot { position: sticky; bottom: -18px; margin: 10px -18px -18px; padding: 12px 18px;
+    background: #fff; border-top: 2px solid #e2e8f0; display: flex; flex-wrap: wrap; gap: 8px;
+    justify-content: flex-end; align-items: center; }
+  .act-foot .af-msg { margin-right: auto; font-size: 12.5px; font-weight: 700; color: #b91c1c; }
+  .act-foot button { cursor: pointer; font-size: 14px; font-weight: 800; border-radius: 12px;
+    padding: 10px 18px; border: 2px solid #2a1b0d; }
+  .act-foot .af-cancel { color: #0f172a; background: #e8eef6; border-color: #b7c6da; }
+  .act-foot .af-go { color: #fff2ea; background: linear-gradient(180deg, #e2503c, #ad2f20); }
+  .act-foot .af-go.af-peace { background: linear-gradient(180deg, #3fae5f, #1d7c3c); }
+  .act-foot button:disabled { opacity: .5; cursor: not-allowed; }
+  .act-foot button:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+  @media (max-width: 560px) {
+    .modal-card.act-modal { max-width: 100%; max-height: 92vh; }
+    .act-foot button { flex: 1 1 40%; }
+  }
   .ev-list { display: flex; flex-direction: column; gap: 6px; max-height: 60vh; overflow-y: auto; margin: 4px 0 6px; }
   .ev-row { display: flex; align-items: baseline; gap: 8px; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; }
   .ev-tx { flex: 1; min-width: 0; font-size: 14px; color: #1e293b; line-height: 1.3; }
@@ -8479,16 +8543,13 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         const acts = hudSlot("hud-actions"); side.appendChild(acts);
         const facts = hudSlot("hud-facts"); side.appendChild(facts);
 
-        // ---- Phase 12C: the action tray. Combat and occupation are planned while the board stays
-        // visible and interactive. Phase 13C.1 moves it INSIDE the inspector: on a landscape shell
-        // that makes it an inspector-integrated planning area, and on a stacked shell the bottom
-        // sheet simply transitions from territory summary to planner. Either way it is the ONE
-        // attack surface -- it never appears twice, and it never adds document height.
-        const tray = document.createElement("div");
-        tray.className = "hud-tray"; tray.id = "hudTray"; tray.hidden = true;
-        tray.setAttribute("role", "group");
-        tray.setAttribute("aria-label", "Territory action");
-        side.appendChild(tray);
+        // Phase 14A.1: the inspector no longer hosts the planner. 13C.1 put the tray in here so
+        // combat could be planned without a modal, and 13C.2 kept it -- but Alpha play showed that
+        // a ~300px rail is the wrong workspace for a four-class military decision: the troop
+        // controls and the commit button fell below the rail's own viewport, and the player had to
+        // scroll a narrow column to deploy. The planner is now an ACTION MODAL (renderTray), and
+        // this element is gone rather than left dormant. The inspector still owns identity,
+        // status, geography and the CHOICE of action, which is what it is good at.
 
         // Phase 13C.2: the Holdings plaque is GONE from here. It listed every player's territory
         // count -- a fact about the board, not about the selected territory -- and `geo-owners`
@@ -8506,7 +8567,7 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         // reference/secondary rows stay, below the board
         const below = document.createElement("div"); below.className = "hud-below";
         wrap.appendChild(below);
-        return { pl: pl, ti: ti, ct: ct, card: card, acts: acts, facts: facts, tray: tray,
+        return { pl: pl, ti: ti, ct: ct, card: card, acts: acts, facts: facts,
                  below: below, grid: grid, side: side, say: say };
       }
       const HUD = buildHud();
@@ -8740,9 +8801,12 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         }
         return poolAvail();                                  // occupy spends from the free pool
       }
+      // Phase 14A.1: closing is the ONE teardown. It clears the proposed plan and then repaints,
+      // and because markMap() derives geo-src / geo-tgt from exactly that state, the planning
+      // markers cannot outlive the modal -- on Cancel, on the X, on a backdrop click or on success.
       function closeTray() {
         trayMode = null; traySrc = null; trayAmt = {};
-        HUD.tray.hidden = true; HUD.tray.innerHTML = "";
+        closeModal();
         markMap();
       }
       // Phase 12D: a plan is scoped to LOOKING AT THE BOARD. Anything that takes the player away --
@@ -8770,97 +8834,205 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         }
         renderTray();
       }
+      // ===== Phase 14A.1: the ACTION MODAL ==================================================
+      // Alpha play found two concrete problems with planning inside the Territory Inspector:
+      // the controls fell below the narrow rail's viewport, and the only controls were +1 / -1, so
+      // deploying 200 troops meant ~200 clicks. This surface fixes both. It configures and commits;
+      // the inspector still inspects and chooses.
+      //
+      // ONE canonical proposed squad: `trayAmt`. The minus button, the numeric field, the plus
+      // button, per-class MAX and the 25/50/75/MAX row all write it through traySet(), and the
+      // totals are read back from it. There is no second copy that could drift.
+      //
+      // Nothing about AUTHORITY moves here: trayBudget, trayValidSources, traySquad, trayConfirm,
+      // claimTroops and the attack launcher are the same functions calling the same endpoints with
+      // the same payloads. (Named without parentheses on purpose: a maintained suite counts call
+      // sites textually, and a comment must not look like one.)
+
+      // clamp to an integer within [0, available] -- the single place a proposed amount is set
+      function traySet(ty, raw) {
+        const max = trayBudget()[ty] || 0;
+        const n = Math.floor(Number(raw));
+        trayAmt[ty] = !isFinite(n) || n < 0 ? 0 : Math.min(max, n);
+        return trayAmt[ty];
+      }
+      function trayTotal() { return TROOPS.reduce((a, t) => a + (trayAmt[t.id] || 0), 0); }
+      // 25 / 50 / 75 / MAX. FLOOR is the rounding rule, applied per class against that class's own
+      // availability, so the result is deterministic and never exceeds what is there.
+      function trayQuick(pct) {
+        const budget = trayBudget();
+        TROOPS.forEach(t => traySet(t.id, Math.floor((budget[t.id] || 0) * pct)));
+      }
+
       function renderTray() {
         if (!trayMode || !hudSelKey) { closeTray(); return; }
         const name = regionDisplayName(hudSelKey) || hudSelKey;
         const holders = (territory && territory.holders) || {};
         const h = holders[hudSelKey] || null;
-        const budget = trayBudget();
+        const ct = (TERR_CATALOG.terrById || {})[hudSelKey] || {};
         const CFG = {
-          attack: { t: "\u2694\uFE0F ATTACK " + name.toUpperCase(), go: "\u2694 ATTACK", peace: false,
-                    note: "You cannot scout an enemy garrison. March from a territory you own next to it." },
-          occupy: { t: "\u{1F6A9} OCCUPY " + name.toUpperCase(), go: "\u{1F6A9} OCCUPY", peace: true,
+          attack: { t: "\u2694\uFE0F ATTACK \u2014 " + name, go: "\u2694\uFE0F ATTACK", peace: false,
+                    sec: "Commit forces",
+                    note: "You cannot scout an enemy garrison. The squad you commit marches from " +
+                          "the territory you pick above, and its technology is that territory's." },
+          occupy: { t: "\u{1F6A9} OCCUPY \u2014 " + name, go: "\u{1F6A9} OCCUPY", peace: true,
+                    sec: "Deploy forces",
                     note: "Unclaimed \u2014 the troops you send become its garrison." },
-          garrison: { t: "\u{1F6E1}\uFE0F GARRISON " + name.toUpperCase(), go: "\u{1F6E1} SET GARRISON", peace: true,
+          garrison: { t: "\u{1F6E1}\uFE0F GARRISON \u2014 " + name, go: "\u{1F6E1} SET GARRISON",
+                    peace: true, sec: "Set garrison",
                     note: "Troops you leave out of the garrison return to your free pool." }
         }[trayMode];
-        let html = '<div class="tray-hd"><span class="th-t">' + escapeHtml(CFG.t) + '</span>' +
-          (trayMode === "attack" && h && h.owner
-            ? '<span class="th-s">held by ' + escapeHtml((h.avatar || "") + dispName(h.owner)) +
-              techBadge(h.tech) + '</span>'
-            : '<span class="th-s">\u{1F465} ' + ((h && h.pop != null) ? h.pop :
-                (((TERR_CATALOG.terrById || {})[hudSelKey] || {}).gamePopulation || 0)) + '</span>') +
-          '</div><p class="tray-note">' + CFG.note + '</p>';
+
+        let html = '<h3 class="modal-title">' + escapeHtml(CFG.t) + '</h3>';
+        // the subject line: who holds it, or how many people live there
+        html += '<p class="act-sub">' + (trayMode === "attack" && h && h.owner
+          ? "Held by " + escapeHtml((h.avatar || "") + dispName(h.owner)) + techBadge(h.tech)
+          : "\u{1F465} Population " + ((h && h.pop != null) ? h.pop : (ct.gamePopulation || 0))) +
+          '</p>';
+
+        // ---- attack: the source is still chosen explicitly (Phase 14A: any owned, garrisoned) ----
+        let srcs = [];
         if (trayMode === "attack") {
-          const srcs = trayValidSources();
+          srcs = trayValidSources();
           if (!srcs.length) {
-            html += '<p class="tray-note">\u{1F6AB} None of your territories has a garrison to ' +
+            html += '<p class="act-note">\u{1F6AB} None of your territories has a garrison to ' +
               'march with, so this attack is not possible yet. Recruit troops, or take a territory ' +
               'and leave a garrison in it.</p>' +
-              '<div class="tray-foot"><span class="tray-sum"></span><div class="tray-btns">' +
-              '<button type="button" class="tb-cancel">Close</button></div></div>';
-            HUD.tray.innerHTML = html; HUD.tray.hidden = false;
-            HUD.tray.querySelector(".tb-cancel").addEventListener("click", closeTray);
+              '<div class="act-foot"><button type="button" class="af-cancel">Close</button></div>';
+            const ov0 = openModal(html);
+            ov0.querySelector(".modal-card").classList.add("act-modal");
+            trayBindClose(ov0);
+            ov0.querySelector(".af-cancel").addEventListener("click", closeTray);
             markMap();
             return;
           }
-          // the roles are named in words too, so the map highlight is never the only cue
-          html += '<p class="tray-note">\u{1F3AF} Target: <b>' + escapeHtml(name) +
-            '</b> (solid outline) \u00b7 \u{1F6A9} March from (dashed outline):</p>' +
-            '<div class="tray-srcs" role="group" aria-label="March from">' +
-            srcs.map(sk => '<button type="button" class="tray-src" data-src="' + escapeHtml(sk) +
+          if (srcs.indexOf(traySrc) < 0) traySrc = srcs[0];
+          html += '<div class="act-sec">From</div>' +
+            '<div class="act-srcs" role="group" aria-label="March from">' +
+            srcs.map(sk => '<button type="button" class="act-src" data-src="' + escapeHtml(sk) +
               '" aria-pressed="' + (sk === traySrc) + '">\u{1F6A9} ' +
               escapeHtml(regionDisplayName(sk) || sk) + ' \u00b7 \u{1F6E1}' +
-              sumHp((holders[sk] || {}).troops) + '</button>').join("") + '</div>';
+              sumHp((holders[sk] || {}).troops) + '</button>').join("") + '</div>' +
+            '<p class="act-note">\u{1F3AF} Target <b>' + escapeHtml(name) +
+            '</b> has a solid outline on the map \u00b7 \u{1F6A9} the territory you march ' +
+            'from has a dashed outline.</p>';
         }
+
+        const budget = trayBudget();
         const types = TROOPS.filter(t => (budget[t.id] || 0) > 0);
+        html += '<div class="act-sec">' + CFG.sec + '</div>';
         if (!types.length) {
-          html += '<p class="tray-note">\u26A0\uFE0F No troops available here. Recruit in ' +
+          html += '<p class="act-note">\u26A0\uFE0F No troops available here. Recruit in ' +
             '\u{1F3F0} Empire \u25B8 Forces first.</p>';
+        } else {
+          html += '<div class="act-quick" role="group" aria-label="Quick deploy">' +
+            '<span class="act-sub">Quick deploy:</span>' +
+            [["25%", 0.25], ["50%", 0.5], ["75%", 0.75]].map(q =>
+              '<button type="button" class="aq" data-pct="' + q[1] + '">' + q[0] + '</button>').join("") +
+            '<button type="button" class="aq" data-pct="1">MAX</button>' +
+            '<button type="button" class="aq" data-pct="0">Clear</button></div>';
+          html += '<div class="act-grid">' + types.map(t =>
+            '<div class="act-troop" data-ty="' + t.id + '">' +
+              '<div class="at-hd"><span>' + troopIcon(t.id) + ' ' + t.en + '</span>' +
+                '<span class="at-av">Available ' + budget[t.id] + '</span></div>' +
+              '<div class="at-row">' +
+                '<button type="button" class="at-dn" aria-label="One fewer ' + t.en + '">\u2212</button>' +
+                '<input class="at-n" type="text" inputmode="numeric" autocomplete="off" ' +
+                  'aria-label="' + t.en + ' to commit, maximum ' + budget[t.id] + '" ' +
+                  'value="' + (trayAmt[t.id] || 0) + '">' +
+                '<button type="button" class="at-up" aria-label="One more ' + t.en + '">+</button>' +
+                '<button type="button" class="at-max" aria-label="All available ' + t.en +
+                  '">MAX</button>' +
+              '</div></div>').join("") + '</div>';
         }
-        html += '<div class="tray-rows">' + types.map(t =>
-          '<div class="tray-row" data-ty="' + t.id + '">' +
-            '<span class="tr-nm">' + troopIcon(t.id) + ' ' + t.en + '</span>' +
-            '<button type="button" class="tr-dn" aria-label="Fewer ' + t.en + '">\u2212</button>' +
-            '<span class="tr-v" aria-live="off">' + (trayAmt[t.id] || 0) + '</span>' +
-            '<button type="button" class="tr-up" aria-label="More ' + t.en + '">+</button>' +
-            '<span class="tr-mx">/ ' + budget[t.id] + '</span>' +
-          '</div>').join("") + '</div>';
-        const total = TROOPS.reduce((a, t) => a + (trayAmt[t.id] || 0), 0);
-        html += '<div class="tray-foot"><span class="tray-sum">Assigned <b>' + total + '</b></span>' +
-          '<div class="tray-btns"><button type="button" class="tb-cancel">Cancel</button>' +
-          '<button type="button" class="tb-go' + (CFG.peace ? " tb-peace" : "") + '">' +
-          escapeHtml(CFG.go) + '</button></div></div>';
-        HUD.tray.innerHTML = html;
-        HUD.tray.hidden = false;
-        HUD.tray.querySelectorAll(".tray-src").forEach(b => b.addEventListener("click", () => {
-          traySrc = b.dataset.src;
+
+        const poolTot = TROOPS.reduce((a, t) => a + (budget[t.id] || 0), 0);
+        html += '<div class="act-tot"><span>Committed <b class="at-sum">' + trayTotal() +
+          '</b></span><span>Remaining <b class="at-rem">' + (poolTot - trayTotal()) +
+          '</b></span></div>';
+        html += '<p class="act-note">' + CFG.note + '</p>';
+        html += '<div class="act-foot"><span class="af-msg" role="status" aria-live="polite"></span>' +
+          '<button type="button" class="af-cancel">Cancel</button>' +
+          '<button type="button" class="af-go' + (CFG.peace ? " af-peace" : "") + '">' +
+          escapeHtml(CFG.go) + '</button></div>';
+
+        const ov = openModal(html);
+        const card = ov.querySelector(".modal-card");
+        card.classList.add("act-modal");
+        trayBindClose(ov);
+
+        const sumEl = ov.querySelector(".at-sum"), remEl = ov.querySelector(".at-rem");
+        const goEl = ov.querySelector(".af-go");
+        // totals and the commit button are the only things a value change touches. No map redraw,
+        // no path rebuild, no camera work -- this is local UI state.
+        function sync() {
+          const tot = trayTotal();
+          if (sumEl) sumEl.textContent = tot;
+          if (remEl) remEl.textContent = poolTot - tot;
+          if (goEl) goEl.disabled = (trayMode !== "garrison") && tot <= 0;
+        }
+        function paintRow(ty) {
+          const row = ov.querySelector('.act-troop[data-ty="' + ty + '"]');
+          if (row) row.querySelector(".at-n").value = trayAmt[ty] || 0;
+        }
+        function paintAll() { TROOPS.forEach(t => paintRow(t.id)); sync(); }
+
+        ov.querySelectorAll(".act-src").forEach(bt => bt.addEventListener("click", () => {
+          traySrc = bt.dataset.src;
+          // a different source is a different garrison, so the proposed squad is re-based on it
           const nb = trayBudget();
           TROOPS.forEach(t => trayAmt[t.id] = nb[t.id] || 0);
-          renderTray();
+          renderTray();                                    // re-render: availability changed
         }));
-        HUD.tray.querySelectorAll(".tray-row").forEach(row => {
+        ov.querySelectorAll(".aq").forEach(bt => bt.addEventListener("click", () => {
+          trayQuick(parseFloat(bt.dataset.pct));
+          paintAll();
+        }));
+        ov.querySelectorAll(".act-troop").forEach(row => {
           const ty = row.dataset.ty;
-          const step = d => {
-            const max = budget[ty] || 0;
-            trayAmt[ty] = Math.max(0, Math.min(max, (trayAmt[ty] || 0) + d));
-            row.querySelector(".tr-v").textContent = trayAmt[ty];
-            const t2 = TROOPS.reduce((a, t) => a + (trayAmt[t.id] || 0), 0);
-            HUD.tray.querySelector(".tray-sum").innerHTML = "Assigned <b>" + t2 + "</b>";
-            const go = HUD.tray.querySelector(".tb-go");
-            if (go) go.disabled = (trayMode !== "garrison") && t2 <= 0;
-          };
-          row.querySelector(".tr-up").addEventListener("click", () => step(+1));
-          row.querySelector(".tr-dn").addEventListener("click", () => step(-1));
+          const inp = row.querySelector(".at-n");
+          row.querySelector(".at-up").addEventListener("click", () => {
+            traySet(ty, (trayAmt[ty] || 0) + 1); paintRow(ty); sync();
+          });
+          row.querySelector(".at-dn").addEventListener("click", () => {
+            traySet(ty, (trayAmt[ty] || 0) - 1); paintRow(ty); sync();
+          });
+          row.querySelector(".at-max").addEventListener("click", () => {
+            traySet(ty, trayBudget()[ty] || 0); paintRow(ty); sync();
+          });
+          // Typing is the point of this phase: 200 is one action. Digits only, so a decimal point,
+          // a minus sign or pasted junk can never reach the payload; an empty field reads as 0
+          // while the player is mid-edit but is not forced back to "0" under the cursor.
+          inp.addEventListener("input", () => {
+            const digits = inp.value.replace(/[^0-9]/g, "").slice(0, 7);
+            if (digits !== inp.value) inp.value = digits;
+            traySet(ty, digits === "" ? 0 : digits);
+            if (digits !== "" && String(trayAmt[ty]) !== digits) inp.value = trayAmt[ty];
+            sync();
+          });
+          inp.addEventListener("blur", () => { inp.value = trayAmt[ty] || 0; });
         });
-        HUD.tray.querySelector(".tb-cancel").addEventListener("click", closeTray);
-        const go = HUD.tray.querySelector(".tb-go");
-        if (go) {
-          go.disabled = (trayMode !== "garrison") && total <= 0;
-          go.addEventListener("click", trayConfirm);
+
+        ov.querySelector(".af-cancel").addEventListener("click", closeTray);
+        if (goEl) {
+          goEl.disabled = (trayMode !== "garrison") && trayTotal() <= 0;
+          goEl.addEventListener("click", () => {
+            if (goEl.disabled) return;
+            goEl.disabled = true;                          // no double submission from a double click
+            trayConfirm();
+          });
         }
         markMap();
       }
+      // The modal's X and its backdrop must go through closeTray(), not the bare closeModal():
+      // otherwise the plan state -- and with it the map's source/target outlines -- would survive a
+      // dismissal that the player reads as "cancel".
+      function trayBindClose(ov) {
+        const x = ov.querySelector(".modal-x");
+        if (x) x.addEventListener("click", closeTray);
+        ov.addEventListener("click", e => { if (e.target === ov) closeTray(); });
+      }
+
       function traySquad() {
         return TROOPS.filter(t => (trayAmt[t.id] || 0) > 0).map(t => ({ type: t.id, hp: trayAmt[t.id] }));
       }
