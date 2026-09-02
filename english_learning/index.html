@@ -1299,6 +1299,36 @@
     border: 2px solid #2563eb; color: #fff; background: #2563eb; }
   .emp-act:disabled { opacity: .45; cursor: default; border-color: #94a3b8; background: #94a3b8; }
   .emp-act:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+  /* ===== 14A.1 addendum B: MY EMPIRE IS A MANAGEMENT WORKSPACE, NOT A DIALOG =====
+     It is the one place repetitive administration happens, and it carries tables that a 360px
+     dialog cannot hold. So Empire -- and only Empire -- gets a workspace width. Nothing else that
+     uses .modal-card changes: the generic dialog is still 360px and the action modal is still
+     620px. Horizontal scrolling to reach a primary management action is the defect being fixed,
+     so `overflow-x: auto` stays on .emp-scroll as a safety valve but must never actually engage
+     at a supported viewport -- which is what the tests measure. */
+  .modal-card.emp-modal { max-width: 1040px; }
+  /* A territory name must never be what forces the table wider than the workspace: the numeric
+     columns stay on one line, the name wraps. Without this a single long name ("United Arab
+     Emirates") reintroduces sideways scrolling on a 50-territory empire. */
+  .emp-tbl th:first-child, .emp-tbl td:first-child { white-space: normal; min-width: 8.5em; }
+  /* Below the width where the widest table (Technology, 764px of unwrappable numbers) can fit,
+     the table STACKS instead of scrolling: one card per territory, its values labelled, and the
+     action a full-width button. Same data, same renderer, same handlers -- a layout change only. */
+  @media (max-width: 860px) {
+    .emp-scroll { overflow-x: visible; }
+    .emp-tbl, .emp-tbl tbody, .emp-tbl tfoot, .emp-tbl tr, .emp-tbl td { display: block; }
+    .emp-tbl thead { display: none; }
+    .emp-tbl tbody tr, .emp-tbl tfoot tr {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(54px, 1fr)); gap: 2px 8px;
+      border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; }
+    .emp-tbl td { padding: 0; text-align: left; white-space: normal; }
+    .emp-tbl td:first-child { grid-column: 1 / -1; margin-bottom: 4px; }
+    .emp-tbl td:last-child { grid-column: 1 / -1; margin-top: 6px; }
+    .emp-tbl td:last-child .emp-act { width: 100%; padding: 9px 10px; font-size: 13px; }
+    .emp-tbl td[data-l]::before { content: attr(data-l); display: block; font-size: 9.5px;
+      text-transform: uppercase; letter-spacing: .4px; color: #64748b; line-height: 1.4; }
+    .emp-tbl tfoot tr { border-top: 2px solid #cbd5e1; }
+  }
   .emp-note { font-size: 12px; color: #475569; margin: 8px 0 0; }
   .emp-none { font-size: 13px; color: #475569; text-align: center; padding: 10px 0; }
   /* ===== Phase 10C.2 — decorative layers =========================================================
@@ -1990,7 +2020,9 @@
   .geo-region { cursor: pointer; }
   .geo-region:hover { filter: brightness(1.1) saturate(1.15) drop-shadow(0 0 5px rgba(255,255,255,.95));
     stroke: #3b2a12; stroke-width: 2; }
-  .geo-mine   { fill: #45c46a !important; }   /* 你佔的 */
+  /* 14A.1 addendum: the same green ownerColor() gives you, so the stylesheet cannot disagree with
+     the inline fill colorize() paints. Ownership colour has ONE authority: ownerColor(). */
+  .geo-mine   { fill: #16a34a !important; }   /* 你佔的 */
   .geo-foe    { fill: #f59e0b !important; }   /* 對手佔的 */
   .geo-open   { fill: #f2ddb0 !important; }   /* 無主：與中性陸地同色，好看但不搶戲 */
   .geo-todo   { fill: #cbd5e1 !important; }   /* 尚未通過 */
@@ -6689,7 +6721,21 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         '<span class="lb-score">👥 ' + p.population + ' · 🚩 ' + p.regions + '</span></div>';
     }).join("");
   }
-  document.getElementById("backFromLeader").addEventListener("click", () => { renderLevelGrid(); showScreen(screenLevel); });
+  // ===== 14A.1 addendum C: Ranking returns to the WORLD =====
+  // Ranking is a World HUD control (and a link on the holdings banner), so Back belongs to the
+  // World board. It used to run `renderLevelGrid(); showScreen(screenLevel)` -- the legacy practice
+  // grid, which the current product reaches only as a fallback for a room with no learning content
+  // and whose first control is the retired "change map / level · rooms · leaderboard" bar. A player
+  // pressing Back on the Ranking screen therefore landed on a page the game no longer navigates to.
+  // goToGameMap() is the canonical current opener -- the same one the Academy's Back uses -- so the
+  // room, the authenticated session and the remembered camera/selection all round-trip through the
+  // existing restore in drawGeo(). No history, no new navigation stack.
+  // A signed-out visitor can reach the Ranking screen but has no World, so they still land on the
+  // landing page rather than an empty board.
+  document.getElementById("backFromLeader").addEventListener("click", () => {
+    if (authToken() && authUser()) { goToGameMap(); return; }
+    showScreen(screenLanding);
+  });
 
   // ===== 全站事件牆（所有人共見的動態）=====
   function escapeHtml(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
@@ -7095,6 +7141,8 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         (empTab === t[0]) + '">' + t[1] + '</button>').join("") + '</div>' +
       '<div id="empBody"></div>';
     const ov = openModal(html);
+    // Empire is the management workspace, not a dialog -- see .emp-modal.
+    ov.querySelector(".modal-card").classList.add("emp-modal");
     wireHelp(ov);
     const body = ov.querySelector("#empBody");
     ov.querySelectorAll(".emp-tab").forEach(b => b.addEventListener("click", () => {
@@ -7296,20 +7344,22 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       '<th>Total</th><th>Recruit</th></tr></thead><tbody>';
     const tot = {}; TROOPS.forEach(t => tot[t.id] = 0);
     html += '<tr class="emp-home"><td>🏠 Home Base <span class="emp-pop">👥 ' + (e.population || 0) + '</span></td>' +
-      TROOPS.map(t => { tot[t.id] += (pool[t.id] || 0); return '<td><b>' + (pool[t.id] || 0) + '</b></td>'; }).join("") +
-      '<td class="emp-tot">' + poolTotal() + '</td>' +
+      TROOPS.map(t => { tot[t.id] += (pool[t.id] || 0);
+        return '<td data-l="' + t.en + '"><b>' + (pool[t.id] || 0) + '</b></td>'; }).join("") +
+      '<td class="emp-tot" data-l="Total">' + poolTotal() + '</td>' +
       '<td><button type="button" class="emp-act" data-rec="' + HOME_KEY + '">Recruit ▸</button></td></tr>';
     rows.forEach(m => {
       const g = squadByType(m.h.troops);
       html += '<tr><td>🚩 ' + escapeHtml(regionDisplayName(m.key) || m.key) +
         ' <span class="emp-pop">👥 ' + (m.h.pop || 0) + '</span></td>' +
-        TROOPS.map(t => { tot[t.id] += (g[t.id] || 0); return '<td><b>' + (g[t.id] || 0) + '</b></td>'; }).join("") +
-        '<td class="emp-tot">' + sumHp(m.h.troops) + '</td>' +
+        TROOPS.map(t => { tot[t.id] += (g[t.id] || 0);
+          return '<td data-l="' + t.en + '"><b>' + (g[t.id] || 0) + '</b></td>'; }).join("") +
+        '<td class="emp-tot" data-l="Total">' + sumHp(m.h.troops) + '</td>' +
         '<td><button type="button" class="emp-act" data-rec="' + escapeHtml(m.key) + '">Recruit ▸</button></td></tr>';
     });
     html += '</tbody><tfoot><tr><td>Empire total</td>' +
-      TROOPS.map(t => '<td>' + tot[t.id] + '</td>').join("") +
-      '<td>' + TROOPS.reduce((a, t) => a + tot[t.id], 0) + '</td><td></td></tr></tfoot></table></div>';
+      TROOPS.map(t => '<td data-l="' + t.en + '">' + tot[t.id] + '</td>').join("") +
+      '<td data-l="Total">' + TROOPS.reduce((a, t) => a + tot[t.id], 0) + '</td><td></td></tr></tfoot></table></div>';
     if (!rows.length) html += '<p class="emp-none">No territories yet — occupy one on the World map.</p>';
     html += '<p class="emp-note">🎖️ Recruiting turns that place\'s people into troops and needs the ' +
       'matching building there. Where a garrison stands is set on the map, on the territory itself — ' +
@@ -7342,7 +7392,8 @@ nextLevelBtn.textContent = "✅ Back to lessons";
     all.forEach(t => {
       const st = manageState(t.key), builds = st.h.buildings || {};
       html += '<tr' + (t.home ? ' class="emp-home"' : '') + '><td>' + escapeHtml(t.label) + '</td>' +
-        BUILDINGS.map(b => '<td>' + (builds[b.id] ? "✅" : '<span class="emp-pop">' + BUILD_COST[b.id] + '🪙</span>') + '</td>').join("") +
+        BUILDINGS.map(b => '<td data-l="' + escapeHtml(b.name) + '">' +
+          (builds[b.id] ? "✅" : '<span class="emp-pop">' + BUILD_COST[b.id] + '🪙</span>') + '</td>').join("") +
         '<td><button type="button" class="emp-act" data-bld="' + escapeHtml(t.key) + '">Manage ▸</button></td></tr>';
     });
     html += '</tbody></table></div>' +
@@ -7380,8 +7431,9 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       const cell = k => 'Lv' + lvl(k) + (nextCost(k) == null ? ' <span class="emp-pop">max</span>'
         : ' <span class="emp-pop">next ' + nextCost(k) + '🪙</span>');
       html += '<tr' + (t.home ? ' class="emp-home"' : '') + '><td>' + escapeHtml(t.label) + '</td>' +
-        '<td>' + cell("atk") + '</td><td>' + cell("def") + '</td>' +
-        '<td>' + (armory ? "✅" : '<span class="emp-pop">needed</span>') + '</td>' +
+        '<td data-l="Forging">' + cell("atk") + '</td>' +
+        '<td data-l="Armour">' + cell("def") + '</td>' +
+        '<td data-l="Armory">' + (armory ? "✅" : '<span class="emp-pop">needed</span>') + '</td>' +
         '<td><button type="button" class="emp-act" data-tech="' + escapeHtml(t.key) + '"' +
         (armory ? '' : ' disabled title="Build an Armory here first"') + '>Research ▸</button></td></tr>';
     });
@@ -9371,7 +9423,17 @@ nextLevelBtn.textContent = "✅ Back to lessons";
             const isMine = (h.owner || "").toLowerCase() === me;
             const col = cmap[(h.owner || "").toLowerCase()];
             if (isMine) { r.p.classList.add("geo-mine"); if (r.idxEl) r.idxEl.classList.add("gi-mine"); if (!r.dup) mine++; }
-            else { r.p.style.setProperty("fill", col, "important"); if (dot) dot.style.background = col; }
+            // ===== 14A.1 addendum: ONE ownership fill path, the player included =====
+            // The player's own fill used to come from the `.geo-mine` CLASS alone. `.geo-mine` and the
+            // continent tints `.geo-cont-*` are both single-class `!important` fills, and the tints are
+            // declared later in the stylesheet, so the tint won the cascade: a territory the player had
+            // just conquered rendered in its continent's tint -- pixel-identical to unowned land in the
+            // same continent, which is exactly "it did not change to my colour". Every other owner was
+            // already correct because this line writes an important INLINE fill, the one author
+            // declaration that outranks both. So the player stops being a special case: one canonical
+            // owner colour (ownerColorMap), one place that paints it.
+            r.p.style.setProperty("fill", col, "important");
+            if (dot) dot.style.background = col;
             // 戰霧：只有自己的領地看得到守軍組成，別人的只顯示擁有者
             const garTxt = isMine ? (" " + aliveTroops(h.troops).map(t => troopIcon(t.type) + t.hp).join(" ")) : " 🛡️❓";
             if (r.idxLs) r.idxLs.innerHTML = "👥 " + r.pop + " · " + (h.avatar || "") + dispName(h.owner) + garTxt;
@@ -11118,6 +11180,26 @@ nextLevelBtn.textContent = "✅ Back to lessons";
     const ov = openModal(html);
     ov.classList.add("bt-modal");   // 戰鬥視窗釘上方，讓底部攻擊動畫不會蓋住它
     const attEl = ov.querySelector("#btAtt"), defEl = ov.querySelector("#btDef"), logEl = ov.querySelector("#btLog");
+    // ===== 14A.1 addendum: leaving this window ALWAYS settles =====
+    // The server has already decided this battle; the window only replays it. Reconciliation used to
+    // hang off the result button alone, so a player who dismissed the window -- with the X, with a
+    // backdrop click, or part-way through the animation -- kept a client that still believed the
+    // defender held the territory. The board then stayed enemy-coloured until some unrelated refresh,
+    // which is the "I won but nothing changed" the Alpha player reported.
+    // settle() takes NO authority from the animation: launchAttack's callback re-reads the
+    // authoritative /api/territory, so settling early cannot invent an outcome -- it can only ask the
+    // server what happened sooner. It runs at most once.
+    let settled = false;
+    function settle(w) {
+      if (settled) return;
+      settled = true;
+      const survivors = att.filter(u => u.hp > 0).map(u => ({ type: u.type, hp: Math.round(u.hp) }));
+      closeModal();
+      if (onResult) onResult(w, survivors);
+    }
+    const bx = ov.querySelector(".modal-x");
+    if (bx) bx.addEventListener("click", () => settle(decideWin()));
+    ov.addEventListener("click", e => { if (e.target === ov) settle(decideWin()); });
     function unitHTML(u, cur) {
       const pct = u.max ? Math.max(0, Math.round(u.hp / u.max * 100)) : 0;
       return '<div class="bt-unit' + (u.hp <= 0 ? " dead" : "") + (cur ? " cur" : "") + '"><div class="bt-emo">' + troopIcon(u.type) + '</div>' +
@@ -11140,7 +11222,9 @@ nextLevelBtn.textContent = "✅ Back to lessons";
     }
     // 一回合一步：算傷害 → 跳出攻擊動畫視窗 → 播完再繼續下一步（用遞迴 setTimeout 取代固定 interval）
     function step() {
-      if (!ov.isConnected) return;                     // 使用者中途關掉戰鬥視窗 → 停止
+      // dismissed mid-animation: stop replaying, but still reconcile with the server (settle() is
+      // idempotent, so the dismissal handler having already run is fine).
+      if (!ov.isConnected) { settle(decideWin()); return; }
       const ai = fa(att, 0), di = fa(def, 0);
       if (ai >= att.length || di >= def.length || round++ > 16) { return end(decideWin(), round > 16 ? "⏱ 時間到！以殘餘兵力定勝負" : null); }
       if (ai === lastAi && di === lastDi) engage++; else { engage = 1; lastAi = ai; lastDi = di; }   // 同一對纏鬥回合數
@@ -11159,7 +11243,7 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         (atkBonus(a.type, d.type) > 1 ? " ✨ You counter!" : (atkBonus(d.type, a.type) > 1 ? " ⚠️ Countered!" : ""));
       // 跳出攻擊動畫視窗（守方 d 先攻、攻方 a 反擊），每個兵種 3 個畫面隨機挑一個
       atkPopup({ dType: d.type, aType: a.type, dmgDA: dmgDA, dmgAD: dmgAD, atkAlive: atkAlive }, () => {
-        if (!ov.isConnected) return;
+        if (!ov.isConnected) { settle(decideWin()); return; }
         render();
         if (fa(att, 0) >= att.length || fa(def, 0) >= def.length) return end(decideWin(), null);
         step();
@@ -11174,11 +11258,7 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         ? (msg ? msg + " " : "") + "🏆 Region conquered — it's yours now, and your survivors garrison it!"
         : (msg || "💀 Defeated — survivors retreat to the territory they marched from.");
       ov.querySelector("#btBtns").innerHTML = '<button id="btDone" class="back-btn">' + (w ? "✅ OK" : "↩ Retreat") + '</button>';
-      ov.querySelector("#btDone").addEventListener("click", () => {
-        const survivors = att.filter(u => u.hp > 0).map(u => ({ type: u.type, hp: Math.round(u.hp) }));
-        closeModal();
-        if (onResult) onResult(w, survivors);
-      });
+      ov.querySelector("#btDone").addEventListener("click", () => settle(w));
     }
   }
 
