@@ -273,16 +273,25 @@ ok("15/16/17. Empire provides Forces, Buildings and Technology, each built on th
    "authority, costs and caps — and Technology states the per-territory truth rather than implying " +
    "an empire-global model the server does not have");
 
-// ================= 18. Holdings stays a summary =================
-const holdings = slice("function renderHudPlayers()", "\n      function markMap", "renderHudPlayers");
+// ================= 18. the board scoreboard stays a summary =================
+// Phase 13C.2: the per-owner scoreboard used to be drawn TWICE -- a Holdings plaque inside the
+// territory inspector and the `geo-owners` row below the board, from the same holders map. It is a
+// fact about the BOARD, not about the selected territory, so the inspector copy was retired and
+// `geo-owners` is now the single scoreboard. This assertion follows it there.
+const holdings = slice("owners.innerHTML = present", "\n        if (banner)", "owner scoreboard");
 for (const forbidden of ["button", "openEmpire", "openRegion", "buildingsPanel", "openTray",
                          "addEventListener"]) {
   assert(holdings.indexOf(forbidden) === -1,
-    "Holdings must stay a read-only summary, not a second hub (" + forbidden + ")");
+    "the scoreboard must stay a read-only summary, not a second hub (" + forbidden + ")");
 }
-assert(/Holdings<\/div>/.test(holdings) && /hpl-n/.test(holdings),
-  "Holdings still shows who holds how much");
-ok("18. Holdings is a read-only summary with no controls — Empire is the only management hub");
+assert(/go-owner/.test(holdings) && /<\/b>/.test(holdings),
+  "the scoreboard still shows who holds how much");
+// and there is exactly ONE of it -- the duplicate that lived in the inspector is gone
+assert(code.indexOf("renderHudPlayers") === -1 && code.indexOf("hud-players") === -1,
+  "the inspector's duplicate Holdings plaque must not come back");
+assert(/<small>Territories<\/small>/.test(code),
+  "Empire Overview still owns the player's own territory total");
+ok("18. one read-only board scoreboard, below the board — Empire is still the only management hub");
 
 // ============================================================================================
 // ============== Phase 12D: legacy cleanup and interaction hardening =========================

@@ -289,3 +289,237 @@ These are extension **points**, not implemented behaviour:
 - **Field armies (13D)** would need a unit surface. The shell has room for it as a fourth region in
   the workspace, but that is a decision for that phase, not a slot reserved here.
 - **A wider inspector on very large screens** is possible: `--insp-w` is a single clamped token.
+
+---
+
+# Phase 13C.2 addendum — chrome & inspector polish
+
+The 13C.1 shell above is unchanged: three layers, one inspector, one planner, one projection
+authority. What 13C.2 changes is **ownership and hierarchy inside it**.
+
+## 1. Control-ownership audit
+
+Every visible World control, classified by its semantic owner before anything moved.
+
+| control | location before | correct owner | action this phase |
+| --- | --- | --- | --- |
+| WORLD CONQUEST title | chrome (centre) | GLOBAL | kept; given a readable line on phones |
+| player identity / avatar | chrome (left) | GLOBAL | unchanged |
+| Gold + income | chrome (left) | GLOBAL | unchanged |
+| troops pool | chrome (left) | GLOBAL | kept on desktop, hidden on phones |
+| population | chrome (left) | GLOBAL | kept on desktop, hidden on phones |
+| **territory count** | *(absent)* | GLOBAL | **added** — one compact figure replacing the Holdings list |
+| Academy | chrome icons | GLOBAL | unchanged |
+| My Progress | chrome icons | GLOBAL | unchanged |
+| Ranking | chrome icons | GLOBAL | unchanged |
+| Empire | chrome icons + player plaque | EMPIRE | unchanged |
+| Multiplayer | chrome icons | GLOBAL | unchanged |
+| World Events | chrome icons | GLOBAL | unchanged |
+| **Boss / checkpoint** | **inspector *and* below the board** | GLOBAL (board/level) | **moved to the chrome identity plaque; the duplicate retired** |
+| camera zoom +/- | map workspace | MAP | unchanged |
+| World / Home | map workspace | MAP | unchanged |
+| continent shortcuts | map labels | MAP | unchanged |
+| selected territory name | inspector | TERRITORY | kept, promoted to identity |
+| ownership badge | inspector | TERRITORY | kept, promoted to identity |
+| strategic role | inspector | TERRITORY | kept with identity, so it survives the compact sheet |
+| population | inspector | TERRITORY | demoted to the facts block |
+| armies / garrison | inspector | TERRITORY | demoted to the facts block |
+| neighbour count | inspector | TERRITORY | demoted to the facts block |
+| Occupy | inspector | TERRITORY | unchanged, now directly under identity |
+| Attack | inspector | TERRITORY | unchanged, now directly under identity |
+| Re-entry / Foothold | inspector to panel | TERRITORY | unchanged |
+| Centre | inspector | MAP | kept, visually demoted |
+| **Holdings (per-owner list)** | **inspector** | GLOBAL | **removed; `geo-owners` and Empire already own it** |
+| Region Index | below the shell | SECONDARY | unchanged |
+| legend | below the shell | SECONDARY | unchanged |
+| owner list (`geo-owners`) | below the shell | SECONDARY | unchanged — now the single scoreboard |
+
+## 2. Boss ownership decision
+
+**Old location:** two controls at once — a `Boss` button in the territory inspector *and* a
+`geo-boss` button below the board.
+
+**Actual semantics, proved before moving anything:**
+
+- `startLevelExam(levelIdx)` takes a **curriculum level index**, not a territory
+- `bossArmyFor(lv.id)` sets its army from the level; the source comment says the total is the
+  course difficulty value and is unrelated to the game map
+- `buildExamPool(lv)` draws its questions from that level
+- `examPassed(lv.id)` reads `exam:<user>:<levelId>`, **local** browser state; `grep -c exam server.py`
+  returns **0**
+- nothing in it reads `hudSelKey`; changing the selected territory changes nothing about it
+
+So it is **not territory-owned** (it leaves the inspector) and **not app-global** either: it belongs
+to the room's curriculum level, of which a World board always has exactly one — `enterRoom()` resolves
+the room's map to a level and calls `selectLevel(idx)`. It is therefore *board-global*, invariant
+under selection, which is what matters for the "must not look territory-owned" requirement.
+
+**New location:** the World chrome **identity plaque**, as a labelled `Level checkpoint` button under
+the product title. Not the destination-icon cluster: a seventh icon there wrapped the cluster to
+three rows and cost 49 px of chrome at 1024x768 (measured), and the checkpoint reads better beside
+the board's own identity than among generic destinations.
+
+**Authority unchanged — placement only:** same `startLevelExam(i)` call, same `if (!backFn && lv)`
+condition, same `examPassed(lv.id)` flag, same army, questions, rewards, progression and (absent)
+endpoint. `tests/boss_challenge.test.js` passes unchanged (11 checks). Exactly one Boss control now
+exists; its accessible name is `Level checkpoint battle for <level>`, which names the level and never
+a territory.
+
+## 3. Final World chrome
+
+**Desktop** — one row: `[player: avatar, Gold+income, troops, territories, population, Empire]`
+`[WORLD CONQUEST + game code + Level checkpoint]` `[6 destination icons]`.
+
+**Mobile (<=560 px)** — two rows: `[player: avatar, Gold, territories] [WORLD CONQUEST + Level
+checkpoint]` then `[6 destination icons on one full-width line]`. Troops and population are hidden;
+they live in Empire.
+
+The phone stat rule is now addressed **by class** (`.hs-troops`, `.hs-pop`). The previous
+`nth-child(3)` rule meant "population" only until a stat was inserted before it — adding the
+territory count silently retargeted it onto the new stat and inflated the plaque to 209 px, which is
+what squeezed the title. Positional CSS was the fragile part and is gone.
+
+## 4. Territory Inspector contract
+
+> What is this territory, and what can I immediately do here?
+
+```
+IDENTITY      name - ownership badge - strategic role in words
+ACTION        Occupy / Attack / Garrison   (+ quiet Centre)
+DETAIL        Owner - Population - Armies - garrison - Neighbours
+[planner]     the one attack/occupy planner, when active
+```
+
+Before, the order was name -> owner -> population -> armies -> garrison -> neighbours -> role ->
+action, so a player scanned six numbers on the way to Occupy. Now the action sits directly under the
+name.
+
+## 5. Field classification
+
+| field | classification | where it lives now |
+| --- | --- | --- |
+| territory name | PRIMARY | identity |
+| ownership badge (Yours / Enemy / Unclaimed) | PRIMARY | identity |
+| strategic role (Frontier / Interior / Isolated) | PRIMARY | identity — kept there so it survives the compact phone sheet |
+| isolated structural warning | PRIMARY | identity |
+| Occupy / Attack / Garrison | PRIMARY | action |
+| Centre | SECONDARY | action row, quiet treatment |
+| owner name | SECONDARY | facts |
+| population | SECONDARY | facts |
+| armies + garrison composition | SECONDARY | facts |
+| neighbour count | SECONDARY | facts |
+| Holdings (per-owner list) | RELOCATED | `geo-owners` below the shell + Empire Overview |
+| Boss / checkpoint | RELOCATED | World chrome identity plaque |
+| Empire launcher | REMOVED (13C.1) | chrome |
+| Academy launcher | REMOVED (13C.1) | chrome |
+
+No authoritative data was deleted — every figure is still served and still displayed somewhere.
+
+## 6. Holdings decision
+
+**B — a global summary.** It listed *every* player's territory count from `territory.holders`, which
+is a fact about the board, not about the selected territory. It was also **already duplicated**:
+`geo-owners` below the shell renders the same per-owner counts, from the same source, with the same
+sort and the same "You" label, and Empire Overview states the player's own total.
+
+So the inspector plaque and its renderer were removed, along with their now-dead CSS. `geo-owners`
+is the single board scoreboard, Empire Overview keeps the detail, and the chrome player plaque gained
+one compact flag count of the player's own territories — the "very compact global holdings count in
+World chrome" the brief allows.
+
+## 7. Garrison decision
+
+Unchanged. The inspector still displays the selected territory's garrison (own territories only — fog
+of war intact) and still offers the existing Garrison action, which positions **that one territory's**
+own troops. It is neither recruitment nor a transfer between territories, so it reads as that
+territory's immediate action.
+
+**Ambiguity recorded for 13D:** if real troop movement arrives, "Garrison" becomes the natural place
+to start a move, and at that point it stops being purely territory-local. That decision belongs to
+the phase that introduces movement, not to this one.
+
+## 8. Centre decision
+
+Retained, camera-only, and visually demoted. It carries a new `.ha-quiet` treatment — smaller,
+lighter, lower contrast — so the only prominent control is the one that changes the world. It
+performs no claim, no attack, no tray, no modal and no region open; it calls `geoFocusKey` and
+nothing else.
+
+## 9. Mobile product identity
+
+| width | before | after |
+| --- | --- | --- |
+| 360 | title column 110 px, two clipped lines | **complete, 2-line lockup, untruncated** |
+| 375 | clipped | **complete, 2-line lockup** |
+| 390 | clipped | **complete, 1 line** |
+| 430 | clipped | **complete** |
+
+The name is never abbreviated, never hidden, and never renamed — the canonical `World Conquest`
+(uppercased by CSS) is what renders. A controlled two-line lockup is the technique used, which the
+brief lists as valid.
+
+## 10. Measurements
+
+| viewport | chrome | map | inspector | shell fits | overflow-X |
+| --- | --- | --- | --- | --- | --- |
+| 1440x900 | 118 px | 1040x733 (**75.3 %**) | 331x733 (24.0 %) | 888/900 yes | 0 |
+| 1024x768 | 117 px | 672x602 (**69.3 %**) | 288x602 (29.7 %) | 756/768 yes | 0 |
+| 768x1024 | 126 px | 738x720 | 738x131 sheet | 1012/1024 yes | 0 |
+| 360x780 | 136 px | 330x**466** | 330x131 sheet | 768/780 yes | 0 |
+| 375x812 | 137 px | 345x497 | 345x131 sheet | 800/812 yes | 0 |
+| 390x844 | 120 px | 360x546 | 360x131 sheet | 832/844 yes | 0 |
+
+Desktop proportions are preserved exactly (75.3 % / 69.3 %). On a phone the chrome grew 82 -> 136 px
+to give the product name a readable line, but the inspector shrank by more, so the **map gained**:
+407 px -> **466 px** at 360x780. That is the trade the brief asks for — identity readable without
+consuming map height.
+
+## 11. Accessibility
+
+- inspector: `role="complementary"`, `aria-label="Territory inspector"`, and the card is a labelled
+  `role="group"` ("Selected territory")
+- action names carry the territory: `Occupy Australia`, `Attack Spain`, `Set the garrison of Andorra`,
+  `Point the camera at Australia` — none generic
+- the checkpoint's accessible name is `Level checkpoint battle for <level>`, naming the **level**, so
+  it cannot read as the selected territory's
+- selection is announced once through a polite live region; pan and zoom do not re-announce
+- the empty state renders **no** disabled placeholder button
+- no contextmenu, no hover-only, no long-press-only, no double-click-only path
+- visible focus retained on the checkpoint and on inspector actions
+- text labels kept — the checkpoint is a labelled button, not a bare icon
+
+## 12. Performance
+
+30 camera operations: **0 fetches**, **0 territory-path rebuilds** (250 intact), the shell, inspector
+and card are the same elements afterwards, average **5.19 ms** per update (worst 11 ms). 12 successive
+selections rebuild 0 paths (~8 ms each). Scrolling the inspector does not move the camera. No polling
+added; `fitShell()` is still called only from build and resize, and no ResizeObserver was introduced,
+so no layout-feedback loop is possible.
+
+## 13. Browser acceptance
+
+Real Chrome, real server, six viewports (1440x900, 1024x768, 768x1024, 360x780, 375x812, 390x844),
+with a real rival player and a deliberately contested border: **259 checks passed, 0 failed**, no page
+errors and no failed requests. Label drift stays 0.00-0.06 px through zoom, drag, continent shortcut
+and every screen round trip.
+
+## 14. Known limitations
+
+- **The checkpoint is board-scoped, not app-global.** It is correct where it is *for a World board*,
+  which always carries one curriculum level. If a future entry point opens the board without a level,
+  it simply does not render — the same condition it has always had.
+- **Phone chrome is 136 px**, up from 82. That buys a readable product name and a net +59 px of map.
+  Reclaiming more would mean shrinking the identity lockup or the destination icons, which is a
+  product-design call rather than a defect.
+- **Troops and population are hidden on phones.** Both remain in Empire and on wider screens.
+- **Re-entry's live panel still cannot be exercised in the browser** — it only appears once the player
+  has lost every territory. Its two-step confirmation is pinned against the shipped source instead.
+- **`geo-owners` and Empire Overview both present holdings.** That is one board scoreboard plus one
+  empire total, not a duplicate of the same view.
+
+## 15. Future extension points
+
+Unchanged from 13C.1, plus: the facts block is the natural home for anything a later phase wants to
+say about a territory without competing with its action, and `.ha-quiet` gives future
+camera/navigation conveniences a ready visual rank below gameplay actions. Neither is implemented
+behaviour.

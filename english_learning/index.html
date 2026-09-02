@@ -938,6 +938,21 @@
   .hud-side { grid-area: 2 / 2 / 3 / 3; min-width: 0; min-height: 0; display: flex;
     flex-direction: column; gap: var(--hud-gap); overflow-y: auto; overscroll-behavior: contain; }
   .hud-side > .hud-plaque, .hud-side > .hud-tray { max-width: 100%; flex: 0 0 auto; }
+  /* ===== Phase 13C.2: hierarchy inside the inspector =====================================
+     The inspector answers one question -- what is this territory, and what can I do here. So it
+     reads identity, then the ACTION, then the numbers. Before this phase the numbers came second
+     and the player scanned owner/population/armies/garrison/neighbours before reaching Occupy. */
+  .hud-facts .hc-row { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px;
+    padding: 2px 0; }
+  .hud-facts .hc-row b { font-variant-numeric: tabular-nums; font-size: 13.5px; }
+  .hud-facts .hc-k { color: #ffd9a8; font-weight: 700; }
+  .hud-facts .hf-t { font-size: 10.5px; font-weight: 800; letter-spacing: .7px; text-transform: uppercase;
+    color: #ffd9a8; opacity: .85; margin-bottom: 3px; }
+  /* camera convenience is not a gameplay action: it stays available but visibly quieter than
+     Occupy / Attack, which are the only things that change the world. */
+  .hud-act.ha-quiet { min-width: 0; padding: 5px 10px; font-size: 11.5px; opacity: .9;
+    background: linear-gradient(180deg, #e8d3ae, #cdb083); }
+  .hud-act.ha-quiet .ha-ic { font-size: 14px; }
   /* the map fills its cell; the geography keeps its own proportions inside it (xMidYMid meet), so
      the shell's aspect ratio is never derived from a continent */
   .hud-mode .hud-map > .geo-holder.geo-viewport { width: 100%; height: 100%;
@@ -959,9 +974,6 @@
     /* Identity, strategic role and ACTIONS always stay visible; only the numeric detail rows get a
        bounded scroll strip. Nothing is hidden -- the detail simply stops dictating the sheet height. */
     .hud-side .hud-card .hc-rows { max-height: 56px; overflow-y: auto; overscroll-behavior: contain; }
-    /* Holdings is global reference, not territory information: on a phone it keeps its place at the
-       foot of the sheet but gives up its own padding so the MAP stays the larger surface. */
-    .hud-side .hud-plaque.hud-players { padding: 6px 9px; }
   }
 
   /* --- the shared plaque look: chunky outline, warm surface, a real bevel --- */
@@ -990,6 +1002,18 @@
     color: #ffe9bd; text-transform: uppercase;
     text-shadow: 0 2px 0 #2a1b0d, 0 4px 10px rgba(0,0,0,.5); }
   .hud-title .ht-s { font-size: 11.5px; font-weight: 700; color: #ffd9a8; margin-top: 2px; }
+
+  /* Phase 13C.2: the curriculum checkpoint, on the board identity plaque. Compact, labelled in
+     words, and visually distinct from both the destination icons and the territory actions. */
+  .hud-title .ht-boss { margin-top: 6px; cursor: pointer; font-size: 12px; font-weight: 800;
+    border-radius: 10px; padding: 4px 12px; color: #fff2ea; border: 2px solid #2a1b0d;
+    background: linear-gradient(180deg, #d9534a, #a32f24); box-shadow: 0 3px 0 #6f1f18; }
+  .hud-title .ht-boss:hover { background: linear-gradient(180deg, #e8655b, #b8382c); }
+  .hud-title .ht-boss.done { background: linear-gradient(180deg, #3f9f5e, #1d7c3c);
+    box-shadow: 0 3px 0 #135227; }
+  .hud-title .ht-boss:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+  @media (max-width: 560px) { .hud-title .ht-boss { margin-top: 4px; padding: 3px 10px;
+    font-size: 11px; } }
 
   /* --- top-right: global controls, icon buttons --- */
   .hud-ctrls { display: flex; flex-wrap: wrap; gap: 7px; justify-content: flex-end; align-items: center; }
@@ -1082,20 +1106,8 @@
 
   /* --- bottom-right: players / holdings --- */
   /* Holdings is reference information: quieter than the card and the action bar. */
-  .hud-plaque.hud-players { padding: 8px 10px; opacity: .93; }
-  .hud-players .hpl-t { font-size: 11px; font-weight: 800; color: #ffd9a8; margin-bottom: 4px;
-    text-transform: uppercase; letter-spacing: .8px; }
-  .hud-players .hpl-r { display: flex; align-items: center; gap: 7px; font-size: 12.5px; padding: 2.5px 0; }
-  .hud-players .hpl-sw { width: 13px; height: 13px; border-radius: 4px; flex: 0 0 auto;
-    border: 2px solid #2a1b0d; }
-  .hud-players .hpl-nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .hud-players .hpl-n { font-weight: 800; font-variant-numeric: tabular-nums; }
-  .hud-players .hpl-me { color: #b6f5c6; }
-  /* a one-line empty state instead of a full plaque saying nothing */
-  .hud-players .hpl-none { font-size: 11.5px; color: #ffd9a8; opacity: .85; }
-  .hud-plaque.hud-players.is-empty { padding: 6px 10px; }
-  .hud-plaque.hud-players.is-empty .hpl-t { margin-bottom: 0; display: inline; margin-right: 6px; }
-  .hud-plaque.hud-players.is-empty .hpl-none { display: inline; }
+  /* (Phase 13C.2 removed the .hud-players plaque and the .geo-boss button: the board
+     scoreboard is `geo-owners`, and the curriculum checkpoint is a World-chrome control.) */
 
   /* --- bottom-centre: the action bar --- */
   .hud-actions { display: flex; gap: 8px; justify-content: center; align-items: flex-end; flex-wrap: wrap; }
@@ -1341,28 +1353,37 @@
        10C.2R: the title column was min-width:0, so with the player and the menu at their natural
        widths it collapsed to nothing and WORLD CONQUEST vanished. It now has a floor and is allowed
        to wrap onto two short lines rather than shrink to illegibility. */
-    /* 13C.1: the shell owns the rows now; this block only compacts the CHROME strip, which is
-       still [avatar+Gold] [WORLD CONQUEST] [menu] on one line. */
-    .hud-chrome { grid-template-columns: auto minmax(104px, 1fr) auto; }
-    .hud-tc  { min-width: 104px; }
+    /* Phase 13C.2: the product identity gets a line of its own.
+       On one line at 360px the title column was floored at 104px and rendered "WORLD CONQUES" --
+       the product name, clipped. The strip now stacks: [avatar + Gold] [WORLD CONQUEST] on the
+       first line, the control cluster full-width on the second, so the title has the whole width
+       and the six destinations sit in one row of icons instead of three stacked pairs. */
+    .hud-chrome { grid-template-columns: auto minmax(0, 1fr); }
+    .hud-tl { grid-column: 1; grid-row: 1; }
+    .hud-tc { grid-column: 2; grid-row: 1; min-width: 0; }
+    .hud-tr { grid-column: 1 / 3; grid-row: 2; }
+    .hud-plaque.hud-ctrls { display: flex; flex-wrap: nowrap; justify-content: space-between; }
     /* wrap BETWEEN the two words only -- overflow-wrap:anywhere broke "CONQUEST" into "CONQUES/T" */
     .hud-title .ht-t { white-space: normal; overflow-wrap: normal; word-break: normal;
                        hyphens: none; }
-    /* Pin the menu to a 2x2 block. Giving the title column a floor squeezed this one until the four
-       icons wrapped one-per-row, making the strip tall and pushing the board down the screen. */
-    /* 13C.1: three columns rather than two. Six icons in a 2-wide block wrapped to THREE rows and
-       took 118 px of a 780 px phone away from the map; 3x2 is one row shorter for the same targets. */
-    .hud-plaque.hud-ctrls { display: grid; grid-template-columns: repeat(3, auto);
-                            justify-content: end; }
-    /* the population stat goes: gold and army are what the player acts on */
-    .hud-player .hp-st span:nth-child(3) { display: none; }
+    /* Phase 13C.2: the cluster now owns a full-width row of its own (see .hud-tr below), so it is
+       a single flex line rather than a 2- or 3-column block. Six 32 px icons plus gaps come to
+       ~212 px, which fits a 360 px phone with room to spare -- and the strip is one row shorter
+       than the 3x2 block it replaces. */
+    .hud-plaque.hud-ctrls { display: flex; flex-wrap: nowrap; gap: 4px;
+                            justify-content: space-between; }
+    /* On a phone the plaque keeps the two figures a player acts on -- Gold and how much of the
+       board is theirs. Troops and population are in Empire. (Phase 13C.2: by class. The old
+       nth-child(3) rule meant "population" only until a stat was inserted before it.) */
+    .hud-player .hp-st .hs-troops, .hud-player .hp-st .hs-pop { display: none; }
     /* the compact top strip: avatar + gold only, no second username, no "My empire" row */
     .hud-plaque.hud-player { padding: 6px 8px; gap: 6px; }
     .hud-player .hp-nm, .hud-player button.hp-more { display: none; }
     .hud-player .hp-av { font-size: 22px; }
     .hud-player .hp-st { margin-top: 0; gap: 7px; font-size: 13px; }
     .hud-player .hp-st i { display: none; }
-    .hud-title .ht-t { font-size: 12px; letter-spacing: 0; line-height: 1.1; }
+    /* with a line of its own the title no longer has to shrink to 12px to survive */
+    .hud-title .ht-t { font-size: clamp(13px, 4.4vw, 17px); letter-spacing: .6px; line-height: 1.1; }
     .hud-title .ht-s { display: none; }        /* the room code is not useful on a phone */
     .hud-plaque.hud-title { padding: 6px 6px; }
     /* 13C.1: at 360px the control cluster's natural width was 3 px wider than the space the strip
@@ -1983,7 +2004,6 @@
      vertical space to the HUD row instead. */
   .hud-mode .geo-legend, .hud-mode .geo-owners { margin: 6px 0 2px; font-size: 11.5px; }
   .hud-mode .geo-replay-btn { margin: 6px auto 0; padding: 5px 14px; font-size: 12px; }
-  .hud-mode .geo-boss { margin-top: 8px; }
   .geo-legend { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 12px 0 2px; font-size: 12px; }
   .geo-legend .gl { display: flex; align-items: center; gap: 5px; color: #cbd5e1; }
   .geo-legend .gl::before { content: ""; width: 12px; height: 12px; border-radius: 3px; display: inline-block;
@@ -2046,9 +2066,6 @@
     .geo-reentry { padding: 11px; }
     .geo-reentry .re-list { grid-template-columns: 1fr; }
   }
-  .geo-boss { text-align: center; margin-top: 14px; }
-  .geo-boss-btn { background: #dc2626; color: #fff; font-weight: 800; padding: 12px 24px; border-radius: 14px; font-size: 16px; cursor: pointer; }
-  .geo-boss-btn.done { background: #16a34a; }
   /* Continent tints: a board-game land palette, so the planet reads as terrain rather than as one
      flat slab. Phase 12D: these are now purely a BASE fill -- colorize() paints ownership over them
      at every zoom, which it could not do while every territory was a container. */
@@ -8451,9 +8468,13 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         const ti = hudSlot("hud-title"); tc.appendChild(ti);
         // ---- top-right: existing global controls only ----
         const ct = hudSlot("hud-ctrls"); tr.appendChild(ct);
-        // ---- the INSPECTOR, top to bottom: what is selected, what you can do, the plan ----
-        const card = hudSlot("hud-card"); side.appendChild(card);
+        // ---- the INSPECTOR, top to bottom: WHAT is selected, WHAT you can do, then the detail --
+        // Phase 13C.2: identity and the action come before the numbers. The heading is a real
+        // heading so the region is navigable by assistive technology.
+        const card = hudSlot("hud-card"); card.setAttribute("role", "group");
+        card.setAttribute("aria-label", "Selected territory"); side.appendChild(card);
         const acts = hudSlot("hud-actions"); side.appendChild(acts);
+        const facts = hudSlot("hud-facts"); side.appendChild(facts);
 
         // ---- Phase 12C: the action tray. Combat and occupation are planned while the board stays
         // visible and interactive. Phase 13C.1 moves it INSIDE the inspector: on a landscape shell
@@ -8466,8 +8487,11 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         tray.setAttribute("aria-label", "Territory action");
         side.appendChild(tray);
 
-        // ---- who holds what: global reference, so it sits at the foot of the inspector ----
-        const pls = hudSlot("hud-players"); side.appendChild(pls);
+        // Phase 13C.2: the Holdings plaque is GONE from here. It listed every player's territory
+        // count -- a fact about the board, not about the selected territory -- and `geo-owners`
+        // below the shell already renders the same per-owner counts from the same source, while
+        // Empire Overview states the player's own total. The chrome player plaque keeps a compact
+        // count of the player's own territories, which is the one figure worth carrying at a glance.
 
         // Selection is announced once, from hudSelect(), and never from the label relayout -- so
         // panning and zooming stay silent.
@@ -8479,7 +8503,7 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         // reference/secondary rows stay, below the board
         const below = document.createElement("div"); below.className = "hud-below";
         wrap.appendChild(below);
-        return { pl: pl, ti: ti, ct: ct, card: card, acts: acts, pls: pls, tray: tray,
+        return { pl: pl, ti: ti, ct: ct, card: card, acts: acts, facts: facts, tray: tray,
                  below: below, grid: grid, side: side, say: say };
       }
       const HUD = buildHud();
@@ -8525,7 +8549,8 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         opts = opts || {};
         const b = document.createElement("button");
         b.type = "button";
-        b.className = "hud-act" + (opts.primary ? " ha-primary" : "") + (opts.danger ? " ha-danger" : "");
+        b.className = "hud-act" + (opts.primary ? " ha-primary" : "") + (opts.danger ? " ha-danger" : "") +
+          (opts.quiet ? " ha-quiet" : "");
         b.innerHTML = '<span class="ha-ic">' + emoji + '</span>' + escapeHtml(label);
         b.title = opts.title || label;
         b.setAttribute("aria-label", opts.aria || opts.title || label);
@@ -8538,12 +8563,21 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       function renderHudPlayer() {
         const e = myEcon || {};
         const nm = userName || authUser() || "Commander";
+        const _me = (authUser() || userName || "").toLowerCase();
+        const _h = (territory && territory.holders) || {};
+        const mineCount = Object.keys(_h).filter(k => ((_h[k] || {}).owner || "").toLowerCase() === _me).length;
         HUD.pl.innerHTML = '<div class="hp-av">' + (userName ? avatarOf(userName) : "\u{1F9B8}") + '</div>' +
           '<div style="min-width:0"><div class="hp-nm">' + escapeHtml(dispName(nm)) + '</div>' +
-          '<div class="hp-st"><span>\u{1FA99} ' + (e.gold || 0) +
+          '<div class="hp-st"><span class="hs-gold">\u{1FA99} ' + (e.gold || 0) +
           ' <i>+' + (e.goldIncome || 0) + '/hr</i></span>' +
-          '<span>\u2694\uFE0F ' + poolTotal() + '</span>' +
-          '<span>\u{1F465} ' + (e.population || 0) + '</span></div></div>';
+          '<span class="hs-troops">\u2694\uFE0F ' + poolTotal() + '</span>' +
+          // Phase 13C.2: the ONE global holdings figure worth carrying at a glance, now that the
+          // per-player Holdings list has left the territory inspector. Counted from the same
+          // authoritative holders map `geo-owners` and Empire read. Each stat carries a CLASS so a
+          // responsive rule can hide a named one -- the positional nth-child rule this replaces
+          // silently switched targets the moment a stat was added.
+          '<span class="hs-terr" title="Territories you hold">\u{1F6A9} ' + mineCount + '</span>' +
+          '<span class="hs-pop">\u{1F465} ' + (e.population || 0) + '</span></div></div>';
         const more = document.createElement("button");
         more.type = "button"; more.className = "hp-more"; more.textContent = "Empire \u25B8";
         more.title = "Empire \u2014 your holdings and economy";
@@ -8553,6 +8587,23 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       }
 
       // ---------- the title plaque ----------
+      // Phase 13C.2: the curriculum checkpoint lives with the BOARD's identity, not with the
+      // selected territory and not as a seventh generic destination icon. Its condition is exactly
+      // the one it has always had -- a curriculum level opened this board -- and it calls exactly
+      // the same startLevelExam(i). Placement only: eligibility, combat, rewards, progression,
+      // state and endpoint are untouched. Its accessible name says LEVEL checkpoint and names the
+      // level, so selecting France can never make it read as France's boss.
+      function renderHudBoss() {
+        if (backFn || !lv) return;
+        const done = examPassed(lv.id);
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "ht-boss" + (done ? " done" : "");
+        b.innerHTML = (done ? "\u{1F3C6} " : "\u{1F409} ") + "Level checkpoint";
+        const nm = "Level checkpoint battle for " + (lv.name || lv.id) + (done ? " \u2014 passed" : "");
+        b.title = nm; b.setAttribute("aria-label", nm);
+        b.addEventListener("click", () => startLevelExam(i));
+        HUD.ti.appendChild(b);
+      }
       function renderHudTitle() {
         // "World Conquest" is the game's name for its own play surface. The subtitle carries only
         // real session facts (the room code, and the course the room was opened with).
@@ -8593,7 +8644,8 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         const key = hudSelKey;
         if (!key) {
           HUD.card.innerHTML = '<div class="hc-hd">\u{1F3F0} No territory selected</div>' +
-            '<div class="hc-empty">Tap a territory on the board to inspect it.</div>';
+            '<div class="hc-empty">Select a territory on the map to inspect it.</div>';
+          HUD.facts.innerHTML = "";
           return;
         }
         const ct = (TERR_CATALOG.terrById || {})[key] || {};
@@ -8631,42 +8683,26 @@ nextLevelBtn.textContent = "✅ Back to lessons";
           ? '<div class="hc-strat is-' + sc + '"><b>' + STRAT_COPY[sc][0] + '</b> \u2014 ' +
             STRAT_COPY[sc][1] + '</div>'
           : "";
-        // Phase 13C.1: the numeric rows live in their own element so the stacked sheet can bound
-        // THEM rather than the whole card -- the territory's identity, its strategic role and its
-        // actions must never be the thing that gets clipped.
+        // Phase 13C.2: the card is IDENTITY -- the name, who holds it, and what kind of position
+        // it is in words. The numbers moved below the action into HUD.facts, so the player is not
+        // reading a population figure on the way to Occupy. Phase 13C.1's `.hc-rows` element keeps
+        // its job of bounding the detail on the stacked sheet, and now lives in the facts block.
         HUD.card.innerHTML = '<div class="hc-hd">\u{1F3F0} <span class="hc-nm">' +
           escapeHtml(ct.displayName || regionDisplayName(key) || key) + '</span>' + tag + '</div>' +
-          '<div class="hc-rows">' + rows + '</div>' +
           stratLine +
           // the pre-existing structural warning stays for territories the player does NOT own, where
           // no classification is published; for an owned isolated territory the line above says it.
           ((iso && !sc) ? '<div class="hc-iso">\u26A0\uFE0F No land neighbours \u2014 safe, but it cannot ' +
             'attack out.</div>' : '');
+        HUD.facts.innerHTML = '<div class="hf-t">Territory detail</div>' +
+          '<div class="hc-rows">' + rows + '</div>';
       }
 
-      // ---------- who holds what: straight from /api/territory ----------
-      function renderHudPlayers() {
-        const holders = (territory && territory.holders) || {};
-        const me = (authUser() || userName || "").toLowerCase();
-        const stats = {}, present = [];
-        Object.keys(holders).forEach(k => {
-          const h = holders[k]; if (!h || !h.owner) return;
-          const low = h.owner.toLowerCase();
-          if (!stats[low]) { stats[low] = { name: h.owner, avatar: h.avatar, n: 0 }; present.push(h.owner); }
-          stats[low].n++; if (h.avatar) stats[low].avatar = h.avatar;
-        });
-        const cmap = ownerColorMap(present, me);
-        const rows = present.map(nm => stats[nm.toLowerCase()])
-          .sort((a, b) => (a.name.toLowerCase() === me ? -1 : b.name.toLowerCase() === me ? 1 : b.n - a.n));
-        HUD.pls.classList.toggle("is-empty", rows.length === 0);
-        HUD.pls.innerHTML = '<div class="hpl-t">Holdings</div>' + (rows.length
-          ? rows.map(s => '<div class="hpl-r"><span class="hpl-sw" style="background:' +
-              cmap[s.name.toLowerCase()] + '"></span><span class="hpl-nm' +
-              (s.name.toLowerCase() === me ? ' hpl-me' : '') + '">' +
-              escapeHtml((s.avatar || "") + (s.name.toLowerCase() === me ? "You" : dispName(s.name))) +
-              '</span><span class="hpl-n">' + s.n + '</span></div>').join("")
-          : '<div class="hpl-none">no territory held yet</div>');
-      }
+      // Phase 13C.2: the Holdings renderer is gone. It drew a per-owner territory scoreboard into
+      // the territory inspector -- a fact about the BOARD, not about the selected territory -- and
+      // `geo-owners` below the shell already renders the same counts from the same holders map,
+      // while Empire Overview states the player's own total. Nothing is lost: the board scoreboard
+      // survives below the shell and the chrome plaque now carries the player's own count.
 
       // ===== Phase 12C: the action tray =====
       // One renderer for every in-board plan: attack, occupy and garrison redeploy. All three are
@@ -8867,9 +8903,14 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         const enemy = !!(h && h.owner) && !mine;
         const name = key ? (regionDisplayName(key) || key) : "";
         if (!key) {
-          HUD.acts.appendChild(actBtn("\u{1F5FA}", "Select a territory", null,
-            { disabled: true, title: "Tap a territory on the board first" }));
-        } else if (enemy) {
+          // Phase 13C.2: no disabled button standing in for an action that does not exist. The card
+          // above already says nothing is selected; a greyed-out control here would only be
+          // furniture keeping the layout symmetrical.
+          HUD.acts.hidden = true;
+          return;
+        }
+        HUD.acts.hidden = false;
+        if (enemy) {
           // Phase 13C.1: the accessible name names the TERRITORY -- "Attack Spain", not "Attack".
           HUD.acts.appendChild(actBtn("\u2694\uFE0F", "Attack", () => openTray("attack"),
             { primary: true, aria: "Attack " + name,
@@ -8882,18 +8923,22 @@ nextLevelBtn.textContent = "✅ Back to lessons";
             { primary: true, aria: "Occupy " + name, title: "Occupy " + name }));
         }
         if (key) {
+          // Phase 13C.2: Centre moves the CAMERA and nothing else, so it is deliberately quieter
+          // than the action that changes the world. It is still a full button with a real name.
           HUD.acts.appendChild(actBtn("\u{1F3AF}", "Centre", () => { if (geoFocusKey) geoFocusKey(key, { pad: 2.6, minZoom: 2.2 }); },
-            { aria: "Point the camera at " + name, title: "Point the camera at " + name }));
+            { quiet: true, aria: "Point the camera at " + name, title: "Point the camera at " + name }));
         }
         // Phase 13C.1: Empire and the Academy are NAVIGATION, and the chrome strip's control
         // cluster already carries both (renderHudControls). They were duplicated here when the
         // action bar was a full-width row below the board; in a bounded inspector a duplicate costs
         // the space a territory action needs, so the inspector is territory-scoped only. No
         // capability is lost -- both remain one click away, always on screen, in the chrome.
-        if (!backFn && lv) {
-          HUD.acts.appendChild(actBtn("\u{1F409}", examPassed(lv.id) ? "Boss \u2713" : "Boss",
-            () => startLevelExam(i), { title: "Level checkpoint battle" }));
-        }
+        // Phase 13C.2: the Boss checkpoint is NOT owned by the selected territory. It is the
+        // room's CURRICULUM level checkpoint -- its army comes from bossArmyFor(lv.id), its
+        // questions from that level, its pass flag is local `exam:<user>:<levelId>` state the
+        // server has never heard of, and none of it changes when the selection changes. Selecting
+        // France must not make it look like France's boss, so it lives in the World chrome with
+        // the other board-global destinations (renderHudControls).
         // the foothold action appears only when the SERVER has said re-entry is available
         if (reWrap && reWrap.style.display !== "none") {
           HUD.acts.appendChild(actBtn("\u{1F3F3}\uFE0F", "Foothold", () => {
@@ -8920,8 +8965,10 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       // one refresh entry point, so ownership/economy changes redraw every HUD slot from the
       // authoritative caches and never from a local copy
       hudRefresh = function () {
-        renderHudPlayer(); renderHudTitle(); renderHudControls();
-        renderHudCard(); renderHudPlayers(); renderHudActions();
+        renderHudPlayer(); renderHudTitle(); renderHudBoss(); renderHudControls();
+        // Phase 13C.2: identity, then the action, then the detail -- and no Holdings plaque, which
+        // belonged to the board rather than to the selected territory.
+        renderHudCard(); renderHudActions();
         // The label layer is placed BEFORE the HUD is populated, and the plaque row ABOVE the board
         // has no height until then -- which moves the board down and invalidates the offsets the
         // label projection captured. Re-measure and re-place once the plaques are real. (This is a
@@ -9001,17 +9048,11 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       const dbody = document.createElement("div"); dbody.className = "hd-body";
       dbody.appendChild(idx); drawer.appendChild(dbody);
       HUD.below.appendChild(drawer);
-      // 只有頂層顯示 Boss。Phase 10A: the boss is a CURRICULUM checkpoint, so it appears only when a
-      // level opened this map (the level grid). The global game map has no course, hence no boss --
-      // the checkpoint stays reachable exactly where it always was, from the level grid.
-      if (!backFn && lv) {
-        const bossWrap = document.createElement("div"); bossWrap.className = "geo-boss";
-        const next = manifest.levels[i + 1], bp = examPassed(lv.id);
-        const bBtn = document.createElement("button"); bBtn.className = "geo-boss-btn" + (bp ? " done" : "");
-        bBtn.innerHTML = (bp ? "🏆 " : "🐉 ") + (next ? "Level Boss" : "Final Boss") + " · quiz battle";
-        bBtn.addEventListener("click", () => startLevelExam(i));
-        bossWrap.appendChild(bBtn); wrap.appendChild(bossWrap);
-      }
+      // Phase 10A put the CURRICULUM checkpoint here, below the board. Phase 13C.2 moves it into
+      // the World chrome (renderHudControls) for two measured reasons: below the shell it needed a
+      // document scroll to reach, and a second copy had appeared in the territory inspector, so the
+      // board carried two Boss controls at once. There is now exactly one, above the fold, and it
+      // still says LEVEL checkpoint rather than implying the selected territory owns it.
       // ====== 地圖事件回放：把這張地圖上發生過的占領/攻擊，依時間在真正的地圖上重播 ======
       const replayBtn = document.createElement("button");
       replayBtn.className = "geo-replay-btn"; replayBtn.innerHTML = "🎬 Replay history";

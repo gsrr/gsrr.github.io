@@ -119,12 +119,18 @@ assert(/const h = key && territory && territory\.holders \? territory\.holders\[
   "the action is chosen from the authoritative holders map, not from local state");
 assert(/openTray\("occupy"\)/.test(actions), "Occupy is offered from the inspector");
 assert(/openTray\("attack"\)/.test(actions), "Attack is offered from the inspector");
-assert(/} else if \(enemy\) \{[\s\S]*openTray\("attack"\)/.test(actions),
+// Phase 13C.2: the empty state returns EARLY and renders no buttons at all, so the ownership
+// branches are no longer an `else if` chain hanging off it. The behaviour pinned is the same --
+// enemy gets Attack, unheld gets Occupy -- and the empty state is now pinned as showing NO action
+// furniture, which is a stronger statement than "a disabled prompt".
+assert(/if \(enemy\) \{[\s\S]*?openTray\("attack"\)/.test(actions),
   "Attack is the action for an ENEMY-held territory");
-assert(/} else \{[\s\S]*openTray\("occupy"\)/.test(actions),
+assert(/} else \{[\s\S]*?openTray\("occupy"\)/.test(actions),
   "Occupy is the action for an unheld territory");
-assert(/if \(!key\) \{[\s\S]*disabled: true/.test(actions),
-  "with nothing selected the inspector offers a disabled prompt, not a fake action");
+assert(/if \(!key\) \{[\s\S]*?HUD\.acts\.hidden = true;[\s\S]*?return;/.test(actions),
+  "with nothing selected the inspector renders NO action buttons, not a disabled placeholder");
+assert(actions.indexOf("disabled: true") === -1,
+  "no disabled placeholder button may be kept merely for layout symmetry");
 ok("4/5. Occupy and Attack are rendered from the selected territory's authoritative ownership");
 
 // ============================ 6. selection mutates nothing ============================
@@ -279,5 +285,106 @@ assert(/empireOverview\(/.test(code) && /empireForces\(/.test(code) &&
   assert(actions.indexOf(fn) === -1, "the territory inspector must not call " + fn);
 });
 ok("16. no phone overflow, and Empire remains the single management destination");
+
+// ==================================================================================================
+// ============================ Phase 13C.2: ownership and hierarchy ================================
+// ==================================================================================================
+const controls2 = slice("function renderHudControls()", "\n      function renderHudCard", "renderHudControls");
+const card2 = slice("function renderHudCard()", "\n      function markMap", "renderHudCard");
+
+// ---- 17. Boss is not owned by the selected territory ----
+// Audited before moving: startLevelExam takes a CURRICULUM level index, its army comes from
+// bossArmyFor(lv.id), its questions from that level, and its pass flag is local
+// `exam:<user>:<levelId>` state the server has never heard of. None of it changes when the
+// selection changes, so it cannot belong to the territory inspector.
+assert(actions.indexOf("startLevelExam") === -1,
+  "the Boss checkpoint must not be a territory action");
+assert(actions.indexOf("examPassed") === -1,
+  "the inspector must not read checkpoint state either");
+// It lives on the BOARD IDENTITY plaque rather than in the destination-icon cluster: a seventh
+// icon there wrapped the cluster to three rows and cost 49 px of chrome at 1024 (measured), and the
+// checkpoint belongs with the board's own identity rather than with the generic destinations.
+const boss2 = slice("function renderHudBoss()", "\n      function renderHudTitle", "renderHudBoss");
+assert(/HUD\.ti\.appendChild/.test(boss2),
+  "the Boss checkpoint is rendered into the World chrome identity plaque");
+assert(boss2.indexOf("HUD.acts") === -1,
+  "and never into the territory action row");
+assert((code.match(/startLevelExam\(i\)/g) || []).length === 1,
+  "exactly ONE Boss control exists on the board");
+assert(code.indexOf("geo-boss-btn") === -1,
+  "the duplicate below-the-board Boss button is retired");
+// placement only: the call, its condition and its state are untouched
+assert(/if \(backFn \|\| !lv\) return;/.test(boss2),
+  "Boss eligibility is unchanged: a curriculum level opened this board");
+assert(/examPassed\(lv\.id\)/.test(boss2), "it still reads the same pass flag");
+assert(/Level checkpoint battle for/.test(boss2),
+  "its accessible name says LEVEL checkpoint and names the LEVEL, never a territory");
+assert(/startLevelExam\(i\)/.test(boss2),
+  "it still calls exactly the same entry point -- placement only");
+assert(controls2.indexOf("startLevelExam") === -1,
+  "it is not duplicated among the destination icons");
+ok("17. Boss is a World-chrome curriculum checkpoint: one control, not a territory action");
+
+// ---- 18. Holdings is not a territory fact ----
+assert(code.indexOf("renderHudPlayers") === -1 && code.indexOf("hud-players") === -1,
+  "the per-owner Holdings plaque must not live in the territory inspector");
+assert(/owners.innerHTML = present/.test(code),
+  "the board scoreboard survives below the board");
+assert(/<small>Territories<\/small>/.test(code),
+  "Empire Overview still owns the player's own territory total");
+assert(/Territories you hold/.test(code),
+  "the World chrome keeps one compact count of the player's own territories");
+ok("18. Holdings is board-global: it left the inspector, the scoreboard and Empire keep it");
+
+// ---- 19. the inspector reads identity, then ACTION, then detail ----
+const buildOrder = buildHud.indexOf('hudSlot("hud-card")') < buildHud.indexOf('hudSlot("hud-actions")') &&
+                   buildHud.indexOf('hudSlot("hud-actions")') < buildHud.indexOf('hudSlot("hud-facts")');
+assert(buildOrder,
+  "the inspector is built identity -> actions -> facts, so the action precedes the numbers");
+assert(/HUD.facts.innerHTML/.test(card2),
+  "the numeric rows are written to the facts block, below the action");
+// The identity card must render only the name, the status badge and the qualitative role; the
+// numeric rows belong to the facts block below the action. Compare the two ASSIGNMENTS rather
+// than the whole function, which legitimately builds the rows string earlier. lastIndexOf skips
+// the empty-state branch, which writes both elements first.
+const cardAssign = card2.slice(card2.lastIndexOf("HUD.card.innerHTML"),
+                               card2.lastIndexOf("HUD.facts.innerHTML"));
+const factsAssign = card2.slice(card2.lastIndexOf("HUD.facts.innerHTML"));
+assert(cardAssign.length > 0 && factsAssign.length > 0, "both inspector blocks are written");
+["Population", "Neighbours", "Armies", "hc-rows"].forEach(numeric => {
+  assert(cardAssign.indexOf(numeric) === -1,
+    numeric + " must not be rendered into the identity card");
+});
+assert(/hc-rows/.test(factsAssign),
+  "the numeric rows are rendered into the facts block, below the action");
+assert(/hc-strat/.test(card2),
+  "the strategic role stays with identity, so it survives on the compact mobile sheet");
+ok("19. identity and the primary action outrank the numeric detail");
+
+// ---- 20. Centre is camera-only, and quieter than a gameplay action ----
+assert(/quiet: true/.test(actions) && /geoFocusKey\(key/.test(actions),
+  "Centre is a camera move, rendered as a quiet action");
+const centre = actions.slice(actions.indexOf('"Centre"'), actions.indexOf('"Centre"') + 400);
+["claimTroops", "launchAttack", "openTray", "openRegion", "openModal"].forEach(bad => {
+  assert(centre.indexOf(bad) === -1, "Centre must not " + bad);
+});
+assert(/ha-quiet/.test(css), "the quiet variant is a real, weaker visual treatment");
+assert(/ha-primary/.test(actions) === false || /primary: true/.test(actions),
+  "only Occupy and Attack carry the primary treatment");
+ok("20. Centre moves the camera only, and is visually subordinate to Occupy/Attack");
+
+// ---- 21. the product identity survives the phone chrome ----
+const phone2 = css.slice(css.indexOf("@media (max-width: 560px)"));
+assert(/WORLD CONQUEST/.test(html), "the product identity is present");
+assert(!/\.ht-t[^{]*\{[^}]*display:\s*none/.test(phone2),
+  "the phone must not hide the product title");
+assert(/\.hud-tr\s*\{[^}]*grid-row:\s*2/.test(phone2),
+  "the control cluster moves to its own line so the title gets the full width");
+assert(/\.hud-title\s\.ht-t\s*\{[^}]*clamp\(/.test(phone2),
+  "the title is responsively sized rather than clipped");
+assert(html.indexOf("English Reading") === -1 || !/ht-t/.test(html.slice(html.indexOf("English Reading") - 200,
+  html.indexOf("English Reading") + 200)),
+  "the top-level product identity is not renamed back to the old course name");
+ok("21. WORLD CONQUEST keeps a readable line of its own on a phone");
 
 console.log("\nAll " + passed + " World-interaction-shell checks passed.");

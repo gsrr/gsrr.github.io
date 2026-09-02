@@ -158,7 +158,8 @@ for (const forbidden of ["buildingsPanel", "openBuildingDetail", "deployPanel", 
 ok("8. the overview drills down to the map, never into a per-territory management form");
 
 // ================= 9. the territory card states the class in words =================
-const card = slice("function renderHudCard()", "\n      function renderHudPlayers", "renderHudCard");
+// Phase 13C.2: renderHudPlayers was retired, so the slice ends at the next real function.
+const card = slice("function renderHudCard()", "\n      function markMap", "renderHudCard");
 assert(/borders territory you do not control/.test(card), "frontier copy");
 assert(/every land neighbour is yours/.test(card), "interior copy");
 assert(/no land connection/.test(card) && /sea routes are not modelled yet/.test(card),
