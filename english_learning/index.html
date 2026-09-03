@@ -6722,30 +6722,26 @@ nextLevelBtn.textContent = "✅ Back to lessons";
     showScreen(screenLeader);
     studentSave(() => {   // 先把自己的最新進度上傳，排行才即時（沒登入也會直接 fetch）
       Promise.all([
-        fetch("/api/leaderboard").then(r => r.json()).catch(() => null),
+        // Phase 14A.5: the Ranking is the CURRENT ROOM's. Without withRoom() this fetch carried no
+        // room, so the server fell back to the default room and ranked a world the player was not in.
+        fetch(withRoom("/api/leaderboard")).then(r => r.json()).catch(() => null),
         fetch(withRoom("/api/territory")).then(r => r.json()).catch(() => null)
-      ]).then(([lb, terr]) => { if (terr && terr.holders) territory = terr; renderLeaderboard(lb, terr); })
+      ]).then(([lb, terr]) => { if (terr && terr.holders) territory = terr; renderLeaderboard(lb); })
         .catch(() => { document.getElementById("leaderBody").innerHTML = '<p class="screen-intro">Server not available (needs the server).</p>'; });
     });
   }
-  function renderLeaderboard(data, terr) {
+  function renderLeaderboard(data) {
     const el = document.getElementById("leaderBody");
     const L = (data && data.leaders) || [];
     if (!L.length) { el.innerHTML = '<p class="screen-intro">No players yet.</p>'; return; }
-    const counts = (terr && terr.counts) || {};
-    const holders = (terr && terr.holders) || {};
-    // 把「持有領地但不在帳號排行(例如🤖電腦AI)」的擁有者也補進排行榜：人口=其領地人口總和
-    const botPop = {}, botAva = {};
-    Object.keys(holders).forEach(f => {
-      const h = holders[f]; if (!h || !h.owner) return;
-      botPop[h.owner] = (botPop[h.owner] || 0) + (h.pop || 0);
-      if (h.avatar) botAva[h.owner] = h.avatar;
-    });
-    Object.keys(counts).forEach(n => {
-      if (!L.some(p => (p.name || "").toLowerCase() === n.toLowerCase()))
-        L.push({ name: n, avatar: botAva[n] || "🤖", population: botPop[n] || 0, regions: counts[n] });
-    });
-    L.forEach(p => { if (p.regions == null) p.regions = counts[p.name] || 0; if (p.population == null) p.population = 100; });
+    // ===== Phase 14A.5: the client no longer invents rows or population =====
+    // It used to append every territory owner missing from the server's list with a population it
+    // computed itself (the sum of that owner's territory pops) and to default a missing population
+    // to a flat 100. That made the Population column mean one thing for an account row and another
+    // for an AI row, and it was a second, client-side population model besides the server's.
+    // /api/leaderboard now publishes every owner in this room -- accounts and AI alike -- with one
+    // empire-wide figure, so this renders exactly what the server ranked and computes nothing.
+    // The sort below is the server's own order restated, kept as a display guarantee only.
     L.sort((a, b) => (b.population - a.population) || (b.regions - a.regions) || a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
     const me = (authUser() || "").toLowerCase();
     el.innerHTML = '<p class="screen-intro" style="margin:0 0 8px">👑 Biggest empire (most population) wins the world!</p>' + L.map((p, i) => {

@@ -166,12 +166,20 @@ assert(!/<p class="screen-intro">Top players by lessons passed/.test(html),
 assert(/<p class="screen-intro">Ranked by 👥 population, then by 🚩 territories held 🏆<\/p>/.test(html),
   "...it describes the real order");
 // and that IS the real order: the client sorts on the same three keys the server does
-const lb = slice("function renderLeaderboard(data, terr) {", 'getElementById("backFromLeader")',
+// Phase 14A.5 dropped the unused `terr` parameter: the renderer no longer reads the territory
+// payload, because the server now publishes every row's population itself.
+const lb = slice("function renderLeaderboard(data) {", 'getElementById("backFromLeader")',
                  "renderLeaderboard");
 assert(/L\.sort\(\(a, b\) => \(b\.population - a\.population\) \|\| \(b\.regions - a\.regions\) \|\| a\.name\.toLowerCase\(\)\.localeCompare\(b\.name\.toLowerCase\(\)\)\);/
   .test(lb), "the sort is population, then regions, then name — and it is unchanged");
-assert(/p\.regions = counts\[p\.name\] \|\| 0/.test(lb),
-  "`regions` is the per-owner TERRITORY count, so 'territories held' is the honest word for it");
+// Phase 14A.5: `regions` used to be back-filled on the client from the territory counts, and this
+// asserted that fallback. The server now publishes it, so the evidence for "territories held" being
+// the honest word moved there — one increment per owned territory in the room's store.
+const server = fs.readFileSync(path.join(__dirname, "..", "server.py"), "utf8");
+assert(/regions\[owner\] \+= 1/.test(server) && /for f, h in tstore\.items\(\):/.test(server),
+  "`regions` is one per TERRITORY owned in the room's store, so 'territories held' is honest");
+assert(/out\.sort\(key=lambda x: \(-x\["population"\], -x\["regions"\], x\["name"\]\.lower\(\)\)\)/.test(server),
+  "...and the server ranks on exactly the three keys the copy names");
 assert(lb.slice(lb.indexOf("L.sort")).indexOf("passed") < 0,
   "the lesson count decides no part of the order");
 ok("8b. the screen is headed Ranking and its copy names the real authority — population, then " +

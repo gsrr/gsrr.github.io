@@ -1755,28 +1755,68 @@ class Handler(BaseHTTPRequestHandler):
                 n += 1
         return n
 
+    # ===== Phase 14A.5: RANKING POPULATION IS THE WHOLE EMPIRE =====
+    # This used to publish `estore[user]["population"]` alone -- the HOME BASE figure -- so a player
+    # who had conquered half a continent ranked on their starting town. Meanwhile the client invented
+    # AI rows whose population was the SUM of their territories, so one column meant two different
+    # things depending on the row.
+    #
+    # The domain already had the answer: game.economy.calculate_passive_gold() earns on
+    # (population + region_pop), i.e. the home base PLUS every owned territory. That is the empire,
+    # and it is what a rank called Population must mean. Home base is a separate economy record, not
+    # an entry in the territory store, so summing both counts it exactly once.
+    #
+    # AI players are built the same way (ai_econ gives them a base population and the same
+    # region_pop gold), so their rows are produced HERE by the same formula instead of being
+    # synthesised on the client. Everything is read from the CURRENT ROOM's stores; the sort keys
+    # are unchanged.
+    def _empire_population(self, name, tstore, estore, is_account):
+        e = estore.get(name) if isinstance(estore, dict) else None
+        if isinstance(e, dict):
+            base = clampi(e.get("population", ECON_START_POP))
+        else:
+            # an account that has never played still shows its starting town; a non-account owner
+            # (an AI that has not been given an economy yet) is credited with no base it does not have
+            base = ECON_START_POP if is_account else 0
+        return base + user_region_pop(tstore, name)
+
     def _handle_leaderboard(self):
         with terr_lock:
             tstore = load_territory_store()
-        regions = {}
+        regions, owners = {}, []
         for f, h in tstore.items():
             if isinstance(h, dict) and h.get("owner"):
-                regions[h["owner"]] = regions.get(h["owner"], 0) + 1
+                owner = h["owner"]
+                if owner not in regions:
+                    regions[owner] = 0
+                    owners.append(owner)                 # first-seen order, so ties stay stable
+                regions[owner] += 1
         with econ_lock:
             estore = load_econ_store()
         with acct_lock:
             db = load_accounts()
             out = []
+            named = set()
             for user in db.get("users", {}):
                 if user == "testaccount":
                     continue
                 prog = load_progress(user)
                 stats = (prog.get("sdata") or {}).get("stats") or {}
-                e = estore.get(user) if isinstance(estore, dict) else None
-                pop = clampi((e or {}).get("population", ECON_START_POP)) if isinstance(e, dict) else ECON_START_POP
+                named.add(user)
                 out.append({"name": user, "avatar": stats.get("avatar", "👦"),
-                            "population": pop, "regions": regions.get(user, 0),
+                            "population": self._empire_population(user, tstore, estore, True),
+                            "regions": regions.get(user, 0),
                             "passed": self._mastered_lesson_count(prog), "level": 1})
+            # every other owner holding ground in THIS room -- the AI empires, and any legacy owner
+            # that is not an account. Same formula, so the Population column means one thing.
+            for owner in owners:
+                if owner in named:
+                    continue
+                h = next((v for v in tstore.values()
+                          if isinstance(v, dict) and v.get("owner") == owner and v.get("avatar")), None)
+                out.append({"name": owner, "avatar": (h or {}).get("avatar") or "🤖",
+                            "population": self._empire_population(owner, tstore, estore, False),
+                            "regions": regions.get(owner, 0), "passed": 0, "level": 1})
         out.sort(key=lambda x: (-x["population"], -x["regions"], x["name"].lower()))
         self._send({"leaders": out[:50]})
 
