@@ -410,11 +410,18 @@ assert nt2["owner"] == "B" and gsum(nt2["troops"], "spear") == 3, "LOSS: owner k
 assert nt2.get("buildings") == {"armory": True} and nt2.get("pop") == 77, "LOSS: target buildings/pop preserved"
 ok("2B apply_territorial_attack: win transfers+garrisons+resets; loss keeps owner, returns survivors to source")
 
-# ============================ Phase 2B — AI obeys the same source + adjacency rule ============================
-# AI must attack only from an AI-owned source adjacent to an enemy target, committing that source's garrison
+# ============================ Phase 2B — AI obeys the same source rule ============================
+# AI must attack only from an AI-owned source it actually holds, committing that source's garrison
 # (no magic/global army, no AI-only bypass, same game.conquest service).
+#
+# Phase 14A.7: the ISOLATION MECHANISM here changed. This used to rely on save_catalog() naming only
+# owned territories, because AI occupation drew its candidates from that learned catalogue. It now
+# draws them from the canonical playable World, so the catalogue no longer suppresses occupation --
+# what does is the AI's economy below: gold 0 and an empty troop pool, so pool_total < 8 and
+# `can_occupy` is False. Attack therefore remains the only legal action, which is what this block is
+# here to exercise.
 server.set_room(CODE)
-server.save_catalog({"world:ru": 100, "world:cn": 100})   # learned catalog = only these → no neutral to occupy
+server.save_catalog({"world:ru": 100, "world:cn": 100})
 server.save_territory_store({
     "world:ru": {"owner": server.AI_OWNER, "avatar": "\U0001F916", "troops": [{"type": "cav", "hp": 80}], "pop": 100},
     "world:cn": {"owner": "BOB", "troops": [{"type": "inf", "hp": 1}], "pop": 100},
@@ -427,21 +434,40 @@ server.save_econ_store(es)
 server.ai_move()                                     # only valid action = attack pHE from adjacent owned pBJ
 server.set_room(CODE)
 ts = server.load_territory_store()
-assert ts["world:cn"]["owner"] == server.AI_OWNER, "AI conquered the adjacent enemy from its owned source"
+assert ts["world:cn"]["owner"] == server.AI_OWNER, "AI conquered the enemy from its owned source"
 assert gsum(ts["world:ru"]["troops"]) < 80, "AI committed troops from its SOURCE garrison (not a global/magic army)"
-ok("2B AI attack: source is AI-owned + adjacent, squad from source garrison, same conquest service (no bypass)")
+ok("2B AI attack: source is AI-owned, squad from source garrison, same conquest service (no bypass)")
 
-# AI on an ISOLATED island (no land neighbours) cannot cross the sea → must not throw, must not attack
+# ===== Phase 14A.7 — REVERSED BY PRODUCT DECISION: the AI plays the Phase 14A rule =====
+# This block used to assert "AI cannot cross a sea gap (island limitation, no bypass)": the AI's
+# target filter required terr_catalog.are_adjacent(source, target), so an AI holding only a degree-0
+# territory could never attack anything. Phase 14A made OWNERSHIP the only conquest authority for
+# humans, and 14A.7 gives the AI the same rule -- 90 of the 250 World territories have no land
+# neighbour, and an AI must not be trapped by geography the human rule ignores.
+#
+# What the block still protects is unchanged and asserted below: the AI attacks only from a source
+# it OWNS and that has a garrison, it commits that source's troops, and it goes through the same
+# game.conquest service. Only the adjacency requirement is gone.
 server.set_room(CODE)
 server.save_catalog({"world:jp": 100, "world:kr": 100})
 server.save_territory_store({
     "world:jp": {"owner": server.AI_OWNER, "avatar": "\U0001F916", "troops": [{"type": "cav", "hp": 50}], "pop": 100},
     "world:kr": {"owner": "BOB", "troops": [{"type": "inf", "hp": 1}], "pop": 100},
 })
-server.ai_move()                                     # jp ↮ kr not adjacent, nothing unowned → AI safely skips
+es = server.load_econ_store()                        # gold 0 + empty pool → occupation impossible,
+es[server.AI_OWNER] = {"population": 100, "gold": 0, "lastGold": now,      # so attack is the only
+                       "troops": {"cav": 0, "archer": 0, "inf": 0, "spear": 0},   # legal action
+                       "buildings": {}, "tech": {}}
+server.save_econ_store(es)
+assert not server.terr_catalog.are_adjacent("world:jp", "world:kr"), "the fixture needs a genuine sea gap"
+server.ai_move()
 server.set_room(CODE)
-assert server.load_territory_store()["world:kr"]["owner"] == "BOB", "AI cannot cross a sea gap (island limitation, no bypass)"
-ok("2B AI isolated: no adjacent source → AI skips attack without error")
+ts2 = server.load_territory_store()
+assert ts2["world:kr"]["owner"] == server.AI_OWNER, \
+    "14A.7: an island AI attacks across the sea gap, exactly as a human may"
+assert gsum(ts2["world:jp"]["troops"]) < 50, "the squad still came from the SOURCE garrison"
+ok("14A.7 AI isolated: a degree-0 source attacks a non-adjacent target under the same Alpha rule, "
+   "still from an owned garrisoned source and still through game.conquest")
 
 srv.shutdown()
 print("\nAll %d conquest tests passed." % passed)

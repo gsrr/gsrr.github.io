@@ -610,8 +610,24 @@ def region_gold_income(h):
 AI_OWNER = "AI Empire"
 AI_OWNER_LEGACY = "電腦 AI 帝國"   # 舊名：讀檔時把既有資料一併改成英文，UI 不會殘留中文
 AI_AVATAR = "🤖"
-AI_TICK_MIN = 20 * 60
-AI_TICK_MAX = 30 * 60
+# ===== Phase 14A.7: ALPHA CADENCE =====
+# These were 60s / 20-30 minutes, which meant a playtester saw at most two AI decision passes in
+# half an hour -- the world looked abandoned. The Alpha defaults below give a pass every minute or
+# two, which is enough to see the map move without turning the AI into a conquest machine: it is
+# still exactly ONE ai_move per AI per pass. All three are environment-configurable so a production
+# deployment can slow them back down without a code change.
+def _ai_secs(name, default, lo, hi):
+    try:
+        return clampi(int(os.environ.get(name) or default), lo, hi)
+    except Exception:
+        return default
+
+
+AI_INITIAL_DELAY = _ai_secs("AI_INITIAL_DELAY", 15, 0, 24 * 60 * 60)
+AI_TICK_MIN = _ai_secs("AI_TICK_MIN", 60, 1, 24 * 60 * 60)
+AI_TICK_MAX = _ai_secs("AI_TICK_MAX", 120, 1, 24 * 60 * 60)
+if AI_TICK_MAX < AI_TICK_MIN:                      # a mis-set pair must not crash randint()
+    AI_TICK_MAX = AI_TICK_MIN
 TROOP_KINDS = ("cav", "archer", "inf", "spear")
 TERR_CATALOG = "/data/territory_catalog.json"   # 從真人佔領學到的 {regionKey: pop}
 # AI 有自己的「家鄉基地」(存在 economy.json 的 AI_OWNER 帳下，off-map、玩家打不到)：
@@ -874,19 +890,45 @@ def ai_move(ai_name=AI_OWNER, difficulty=AI_DIFFICULTY, ai_names=None):
             player_regions = [f for f, h in store.items()      # 只打「非 AI」的領地
                               if isinstance(h, dict) and h.get("owner") and h.get("owner") not in ai_names]
             cat = load_catalog()
-            unowned_known = [k for k in cat.keys() if k not in owned]
+            # ===== Phase 14A.7: THE AI OCCUPIES THE CANONICAL PLAYABLE WORLD =====
+            # This was `[k for k in load_catalog().keys() if k not in owned]` -- the LEARNED
+            # catalogue (populated only when a HUMAN claims a territory) minus every store key. A
+            # learned key is by construction also a store key, so the candidate set was empty in any
+            # single-room world and the AI could never take its first territory: measured, nine
+            # consecutive ai_move() calls on a fresh GLOBAL did nothing. Worse, the learned
+            # catalogue is one global file, so the only way it ever worked was cross-room leakage.
+            #
+            # Candidates are now the playable map minus territories that have a CURRENT OWNER.
+            # `owner: None` is NEUTRAL and stays a candidate -- a store entry existing is not the
+            # same thing as the territory being occupied -- and an untouched territory with no store
+            # entry at all is a candidate too. Population comes from the same canonical source a
+            # human claim uses.
+            occupied = {t for t, h in store.items()
+                        if isinstance(h, dict) and h.get("owner")}
+            neutral_playable = [t for t in playable_territory_ids() if t not in occupied]
 
-            # Phase 2B：AI 攻擊也必須「從相鄰的自有領地(有駐軍)出兵」。來源挑選 = 駐軍最多者(平手取
-            #   canonical id 最小)——最簡單的確定性規則，不做路徑搜尋/策略圖搜尋。占領(neutral)流程不變。
+            def _occupy_pop(tid):
+                p = terr_catalog.game_population(tid) if terr_catalog else None
+                if p is None:                      # fall back to whatever the store/learned cache knows
+                    h = store.get(tid)
+                    p = (h or {}).get("pop") if isinstance(h, dict) else None
+                    p = p if p is not None else cat.get(tid, 100)
+                return clampi(p)
+
+            # Phase 14A.7: the AI plays by the Phase 14A rule, like every human -- OWNERSHIP decides
+            # what may be attacked and adjacency decides nothing. `are_adjacent(source, target)` used
+            # to filter this list, which left the AI strictly more constrained than the shared rule
+            # and trapped an AI holding only degree-0 territories (90 of the 250 World territories
+            # have no land neighbour) with nothing it could ever attack. Source selection keeps its
+            # existing deterministic preference: most garrison first, canonical id as the tie-break.
             def _best_source(tgt):
                 cands = [s for s, sh in ai_owned.items()
-                         if terr_catalog and terr_catalog.are_adjacent(s, tgt)
-                         and game_army.garrison_total(sh.get("troops")) > 0]
+                         if s != tgt and game_army.garrison_total(sh.get("troops")) > 0]
                 cands.sort(key=lambda s: (-game_army.garrison_total(ai_owned[s].get("troops")), s))
                 return cands[0] if cands else None
             attack_targets = [t for t in player_regions if _best_source(t)]
 
-            can_occupy = bool(unowned_known) and pool_total >= 8   # 占領仍用兵力池的軍隊
+            can_occupy = bool(neutral_playable) and pool_total >= 8   # 占領仍用兵力池的軍隊
             can_attack_now = bool(attack_targets)                  # 攻擊改用來源領地駐軍
             if not (can_occupy or can_attack_now):    # 沒有可行動作 → 這回合只補兵、存錢
                 save_econ_store(estore)
@@ -895,9 +937,11 @@ def ai_move(ai_name=AI_OWNER, difficulty=AI_DIFFICULTY, ai_names=None):
                 else ("attack" if can_attack_now else "occupy")
 
             if act == "occupy":
-                key = random.choice(unowned_known)
+                key = random.choice(neutral_playable)
+                keep_meta = {k: v for k, v in (store.get(key) or {}).items()
+                             if k in ("buildings", "tech")} if isinstance(store.get(key), dict) else {}
                 store[key] = {"owner": ai_name, "avatar": AI_AVATAR, "troops": army,
-                              "pop": clampi(cat.get(key, 100))}
+                              "pop": _occupy_pop(key), **keep_meta}
                 ae["troops"] = _norm_troops(0)         # 兵力池派出去當駐軍 → 清空(靠金幣再補)
                 logged = ("occupy", _region_display(key), None, key)
             else:
@@ -938,7 +982,7 @@ def ai_move(ai_name=AI_OWNER, difficulty=AI_DIFFICULTY, ai_names=None):
 
 
 def ai_loop():
-    time.sleep(60)                                 # 開機後稍等，避免和啟動流程搶鎖
+    time.sleep(AI_INITIAL_DELAY)                   # 開機後稍等，避免和啟動流程搶鎖
     while True:
         try:
             for code in list_rooms():              # 每個房間各自跑自己的 AI
