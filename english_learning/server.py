@@ -33,6 +33,55 @@ def allowed_game_maps():
     return {GAME_WORLD_MAP_ID}
 
 
+# ===== Phase 14A.6: the ONE canonical answer to "what does each participant hold here?" =====
+# Ranking's "Territories Held" used to be `+= 1` for every store entry with an owner, which counted
+# things that are not territories of the game being played:
+#
+#   * off-map catalogue territories -- the catalogue holds 318 ids but allowed_game_maps() is
+#     {"world"}, so a `china:pAH` left in an older store counted;
+#   * legacy keys canonize_keys() cannot resolve (a course filename such as "A1/002.json") -- it
+#     deliberately PRESERVES those rather than dropping data, so they counted too.
+#
+# Measured before the fix: a store holding world:ad + china:pAH + "A1/002.json" reported 3.
+# The count and the holdings list are now derived from this ONE helper, so they cannot drift, and
+# the filter is the existing playable-map authority -- no second catalogue.
+def room_holdings(tstore):
+    """{owner: [{"id", "name", "pop"}, ...]} for the CURRENT ROOM's playable World territories only,
+    ordered by player-facing name. Owners with no playable ground do not appear.
+
+    This is the ONE answer to "what does each participant hold in this room", and every World
+    ownership-derived metric is taken from it: Territories Held, the holdings list, the Empire
+    Population territory contribution, and /api/territory's per-owner counts. Deriving them from one
+    set is what stops them disagreeing about which records qualify.
+
+    `pop` is aggregation input, not part of the client contract -- public_holdings() projects it out.
+    """
+    playable = set(playable_territory_ids())
+    out = {}
+    for tid, h in (tstore or {}).items():
+        if not isinstance(h, dict):
+            continue
+        owner = h.get("owner")
+        if not owner or tid not in playable:
+            continue
+        meta = (terr_catalog.territories.get(tid) if terr_catalog else None) or {}
+        out.setdefault(owner, []).append({"id": tid, "name": meta.get("displayName") or tid,
+                                          "pop": clampi(h.get("pop", 0))})
+    for lst in out.values():
+        lst.sort(key=lambda t: (t["name"].lower(), t["id"]))
+    return out
+
+
+def public_holdings(held):
+    """The client contract: identity and a player-facing name, and nothing else."""
+    return [{"id": t["id"], "name": t["name"]} for t in (held or [])]
+
+
+def holdings_population(held):
+    """The territory half of Empire Population, over the SAME records that count as held."""
+    return sum(clampi(t.get("pop", 0)) for t in (held or []))
+
+
 def playable_territory_ids():
     """Every canonical id on the active game map. Phase 10B needs the FULL set, not the store's keys:
     a territory nobody has touched has no store entry, and that absence is precisely what makes it
@@ -1770,7 +1819,12 @@ class Handler(BaseHTTPRequestHandler):
     # region_pop gold), so their rows are produced HERE by the same formula instead of being
     # synthesised on the client. Everything is read from the CURRENT ROOM's stores; the sort keys
     # are unchanged.
-    def _empire_population(self, name, tstore, estore, is_account):
+    # Phase 14A.6: the territory half comes from the SAME playable holdings the count and the list
+    # come from -- not from user_region_pop(), which sums every owned store entry. That helper feeds
+    # passive Gold from 16 other call sites and is deliberately left exactly as it is; see the
+    # report. Off-map catalogue entries and unresolvable legacy keys therefore no longer inflate the
+    # rank, and Home Base -- a separate economy record, never a store entry -- is added exactly once.
+    def _empire_population(self, name, held, estore, is_account):
         e = estore.get(name) if isinstance(estore, dict) else None
         if isinstance(e, dict):
             base = clampi(e.get("population", ECON_START_POP))
@@ -1778,19 +1832,15 @@ class Handler(BaseHTTPRequestHandler):
             # an account that has never played still shows its starting town; a non-account owner
             # (an AI that has not been given an economy yet) is credited with no base it does not have
             base = ECON_START_POP if is_account else 0
-        return base + user_region_pop(tstore, name)
+        return base + holdings_population(held)
 
     def _handle_leaderboard(self):
         with terr_lock:
             tstore = load_territory_store()
-        regions, owners = {}, []
-        for f, h in tstore.items():
-            if isinstance(h, dict) and h.get("owner"):
-                owner = h["owner"]
-                if owner not in regions:
-                    regions[owner] = 0
-                    owners.append(owner)                 # first-seen order, so ties stay stable
-                regions[owner] += 1
+        # ONE ownership answer for this room: the rows, the counts and the lists all come from it,
+        # so there is no second count to drift away from the list.
+        holdings = room_holdings(tstore)
+        owners = list(holdings.keys())
         with econ_lock:
             estore = load_econ_store()
         with acct_lock:
@@ -1803,9 +1853,13 @@ class Handler(BaseHTTPRequestHandler):
                 prog = load_progress(user)
                 stats = (prog.get("sdata") or {}).get("stats") or {}
                 named.add(user)
+                held = holdings.get(user) or []
                 out.append({"name": user, "avatar": stats.get("avatar", "👦"),
-                            "population": self._empire_population(user, tstore, estore, True),
-                            "regions": regions.get(user, 0),
+                            "population": self._empire_population(user, held, estore, True),
+                            # `regions` keeps its name for API compatibility; in leaderboard
+                            # semantics it means TERRITORIES HELD, and it is len(territories) so the
+                            # number and the list can never disagree.
+                            "regions": len(held), "territories": public_holdings(held),
                             "passed": self._mastered_lesson_count(prog), "level": 1})
             # every other owner holding ground in THIS room -- the AI empires, and any legacy owner
             # that is not an account. Same formula, so the Population column means one thing.
@@ -1814,9 +1868,11 @@ class Handler(BaseHTTPRequestHandler):
                     continue
                 h = next((v for v in tstore.values()
                           if isinstance(v, dict) and v.get("owner") == owner and v.get("avatar")), None)
+                held = holdings.get(owner) or []
                 out.append({"name": owner, "avatar": (h or {}).get("avatar") or "🤖",
-                            "population": self._empire_population(owner, tstore, estore, False),
-                            "regions": regions.get(owner, 0), "passed": 0, "level": 1})
+                            "population": self._empire_population(owner, held, estore, False),
+                            "regions": len(held), "territories": public_holdings(held),
+                            "passed": 0, "level": 1})
         out.sort(key=lambda x: (-x["population"], -x["regions"], x["name"].lower()))
         self._send({"leaders": out[:50]})
 
@@ -1868,13 +1924,17 @@ class Handler(BaseHTTPRequestHandler):
         # signed-out special case to branch on here.
         playable = playable_territory_ids()
         region_rows = game_regions.summarize(playable, me, _owner_of, _neighbours_of, _meta_of)
-        holders, counts = {}, {}
+        # Phase 14A.6: `counts` is WORLD HOLDINGS BY OWNER, and it is taken from the same
+        # room_holdings() authority the Ranking uses -- it used to be one increment per owned store
+        # entry, so an off-map catalogue id or an unresolvable legacy key inflated the World banner
+        # exactly as it inflated the rank. `holders` is deliberately NOT filtered: it is the map's
+        # own painting/ownership payload and every other field here is unchanged.
+        counts = {owner: len(held) for owner, held in room_holdings(store).items()}
+        holders = {}
         for f, h in store.items():
             if not isinstance(h, dict):
                 continue
             owner = h.get("owner")
-            if owner:
-                counts[owner] = counts.get(owner, 0) + 1
             if owner and owner == me:               # 自己的領地：完整資訊
                 holders[f] = {"owner": owner, "avatar": h.get("avatar", "👦"),
                               "troops": h.get("troops") or [], "pop": h.get("pop"),

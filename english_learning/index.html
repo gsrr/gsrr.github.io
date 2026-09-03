@@ -833,7 +833,25 @@
   .admin-acct-head { font-size: 15px; margin-bottom: 6px; }
   .acct-code-inline { font-size: 12px; color: #7c3aed; background: #f5f3ff; padding: 1px 7px; border-radius: 6px; margin-left: 6px; }
   .admin-date { font-size: 12px; color: #94a3b8; margin-left: 4px; }
-  .lb-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; margin: 6px 0; background: #fff; }
+  .lb-row { padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; margin: 6px 0; background: #fff; }
+  .lb-top { display: flex; align-items: center; gap: 10px; }
+  /* Phase 14A.6: a read-only disclosure of who holds what. Collapsed by default, wrapping chips
+     when opened, and no control of any kind beyond opening it — Ranking observes, it never manages. */
+  .lb-hold { margin-top: 6px; }
+  .lb-hold > summary { cursor: pointer; font-size: 12.5px; font-weight: 800; color: #475569;
+    list-style: none; padding: 3px 0; min-height: 24px; display: flex; align-items: center; gap: 4px; }
+  .lb-hold > summary::-webkit-details-marker { display: none; }
+  .lb-hold > summary::after { content: "▾"; font-size: 11px; }
+  .lb-hold[open] > summary::after { content: "▴"; }
+  .lb-hold > summary:hover { color: #1e293b; }
+  .lb-hold > summary:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; border-radius: 6px; }
+  .lb-ts { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 0 2px; }
+  .lb-t { font-size: 12px; font-weight: 700; color: #0f172a; background: #f1f5f9;
+    border: 1px solid #cbd5e1; border-radius: 999px; padding: 2px 8px; overflow-wrap: anywhere; }
+  .lb-none { font-size: 12px; font-weight: 700; color: #64748b; padding: 2px 0; }
+  .lb-more { font-size: 12px; font-weight: 800; color: #1d4ed8; background: none; border: none;
+    cursor: pointer; padding: 2px 4px; }
+  .lb-more:hover { text-decoration: underline; }
   .lb-rank { font-size: 19px; width: 36px; text-align: center; font-weight: 800; color: #1e293b; }
   .lb-name { flex: 1; font-size: 16px; font-weight: 700; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .lb-score { font-size: 15px; font-weight: 700; color: #334155; white-space: nowrap; }
@@ -6747,11 +6765,44 @@ nextLevelBtn.textContent = "✅ Back to lessons";
     el.innerHTML = '<p class="screen-intro" style="margin:0 0 8px">👑 Biggest empire (most population) wins the world!</p>' + L.map((p, i) => {
       const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "#" + (i + 1);
       const mine = p.name.toLowerCase() === me ? ' style="background:#eff6ff;border-color:#93c5fd"' : "";
-      return '<div class="lb-row"' + mine + '><span class="lb-rank">' + medal + '</span>' +
+      return '<div class="lb-row"' + mine + '><div class="lb-top">' +
+        '<span class="lb-rank">' + medal + '</span>' +
         '<span class="lb-name">' + (p.avatar || "👦") + ' ' + dispName(p.name) + '</span>' +
-        '<span class="lb-score">👥 ' + p.population + ' · 🚩 ' + p.regions + '</span></div>';
+        '<span class="lb-score">👥 ' + p.population + ' · 🚩 ' + p.regions + '</span></div>' +
+        lbHoldingsHTML(p, i) + '</div>';
     }).join("");
   }
+  // ===== Phase 14A.6: see who holds what, read-only =====
+  // Every name here is the SERVER's: /api/leaderboard publishes each participant's current-room
+  // holdings, and `regions` is the length of that same list, so the number beside a row and the
+  // names inside it cannot disagree. The client derives nothing -- it does not read the map, the
+  // SVG or `territory` to build this. Collapsed by default, and a long empire shows its first
+  // LB_HOLD_SHOWN names with a plain "Show all" for the rest, so a 200-territory owner cannot turn
+  // the Ranking into a wall of text. There is no management control of any kind in here.
+  const LB_HOLD_SHOWN = 24;
+  function lbHoldingsHTML(p, i) {
+    const held = p.territories || [];
+    const chip = t => '<span class="lb-t">' + escapeHtml(t.name || t.id || "") + '</span>';
+    const body = held.length
+      ? '<div class="lb-ts">' + held.slice(0, LB_HOLD_SHOWN).map(chip).join("") +
+        (held.length > LB_HOLD_SHOWN
+          ? '<span class="lb-rest" data-lb-rest="' + i + '" hidden>' +
+            held.slice(LB_HOLD_SHOWN).map(chip).join("") + '</span>' +
+            '<button type="button" class="lb-more" data-lb-all="' + i + '">Show all ' +
+            held.length + '</button>'
+          : "") + '</div>'
+      : '<div class="lb-none">No territories held</div>';
+    return '<details class="lb-hold"><summary>View Territories · ' + held.length +
+      '</summary>' + body + '</details>';
+  }
+  // one delegated handler for the whole board: reveal the remainder, then retire the button
+  document.getElementById("leaderBody").addEventListener("click", function (e) {
+    const b = e.target && e.target.closest && e.target.closest("[data-lb-all]");
+    if (!b) return;
+    const rest = document.querySelector('[data-lb-rest="' + b.dataset.lbAll + '"]');
+    if (rest) rest.hidden = false;
+    b.remove();
+  });
   // ===== 14A.1 addendum C: Ranking returns to the WORLD =====
   // Ranking is a World HUD control (and a link on the holdings banner), so Back belongs to the
   // World board. It used to run `renderLevelGrid(); showScreen(screenLevel)` -- the legacy practice

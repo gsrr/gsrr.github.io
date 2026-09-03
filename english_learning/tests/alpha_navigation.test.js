@@ -176,8 +176,17 @@ assert(/L\.sort\(\(a, b\) => \(b\.population - a\.population\) \|\| \(b\.regions
 // asserted that fallback. The server now publishes it, so the evidence for "territories held" being
 // the honest word moved there — one increment per owned territory in the room's store.
 const server = fs.readFileSync(path.join(__dirname, "..", "server.py"), "utf8");
-assert(/regions\[owner\] \+= 1/.test(server) && /for f, h in tstore\.items\(\):/.test(server),
-  "`regions` is one per TERRITORY owned in the room's store, so 'territories held' is honest");
+// Phase 14A.6 replaced the per-store-entry `regions[owner] += 1` with room_holdings(), which counts
+// only the room's PLAYABLE World territories and publishes the list the count is taken from. The
+// rule this pins is unchanged and now stronger: `regions` is territories held, and it is len(list).
+assert(/def room_holdings\(tstore\):/.test(server),
+  "one canonical holdings helper answers what each participant holds");
+assert(/if not owner or tid not in playable:/.test(server),
+  "...restricted to the playable World, so off-map and legacy keys cannot inflate it");
+assert(/"regions": len\(held\), "territories": public_holdings\(held\)/.test(server),
+  "...and `regions` is len(territories), so 'territories held' is honest and cannot drift");
+assert(/return base \+ holdings_population\(held\)/.test(server),
+  "...with Empire Population taken from those same holdings, so the two figures agree");
 assert(/out\.sort\(key=lambda x: \(-x\["population"\], -x\["regions"\], x\["name"\]\.lower\(\)\)\)/.test(server),
   "...and the server ranks on exactly the three keys the copy names");
 assert(lb.slice(lb.indexOf("L.sort")).indexOf("passed") < 0,
