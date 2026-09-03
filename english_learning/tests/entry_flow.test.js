@@ -78,12 +78,25 @@ const controls = code.slice(code.indexOf("function renderHudControls"),
 // Phase 12C retargeted this from "Base" to "Empire". Base was a SECOND management hub that could
 // only reach the home base; Empire reaches the home base and every territory, so the duplicate was
 // retired. The capability is asserted to have survived the move, not merely the label.
+// ===== Phase 14A.2: MULTIPLAYER IS NO LONGER A PRIMARY DESTINATION (product decision) =====
+// This list used to include "openRooms": "Multiplayer". The Alpha does not want Multiplayer in the
+// primary cluster -- a signed-in player is auto-entered into GLOBAL -- so the ENTRY was removed. The
+// invariant it protected has been replaced, not dropped: the cluster must not offer Multiplayer,
+// and the room/multiplayer capability must still be implemented (asserted immediately below, and in
+// tests/alpha_navigation.test.js).
 const wanted = { "openLearningHome": "Academy", "openProfileStats": "Profile",
-                 "openLeaderboard": "Ranking", "openEmpire": "Empire", "openRooms": "Multiplayer" };
+                 "openLeaderboard": "Ranking", "openEmpire": "Empire" };
 Object.keys(wanted).forEach(fn => {
   assert(controls.indexOf(fn) >= 0, wanted[fn] + " must be reachable from the board HUD (" + fn + ")");
 });
-assert(/Academy/.test(controls) && /Multiplayer/.test(controls) && /Empire/.test(controls),
+assert(controls.indexOf("openRooms") < 0,
+  "standalone Multiplayer must be ABSENT from the primary World navigation");
+for (const fn of ["function openRooms()", "function openJoin()", "function joinByCode()",
+                  "function openMyRoom()", "function enterRoom(", "function enterWorld()",
+                  "function withRoom("]) {
+  assert(code.indexOf(fn) >= 0, "...while room/multiplayer authority remains implemented: " + fn);
+}
+assert(/Academy/.test(controls) && /Empire/.test(controls) && /Ranking/.test(controls),
   "the HUD must use the player-facing vocabulary");
 // what Base used to do must still be reachable: the home base appears in all three Empire areas,
 // and the same building/recruit panel is what opens for it
@@ -93,8 +106,9 @@ assert(/Academy/.test(controls) && /Multiplayer/.test(controls) && /Empire/.test
 });
 assert(/buildingsPanel\(host, HOME_KEY/.test(stripComments(extractFn(html, "openHomeBase"))),
   "the home-base building panel itself is unchanged");
-ok("7-11. Academy, Profile, Ranking, Empire and Multiplayer are all reachable from the board HUD, " +
-   "and Empire still covers the home base that the retired Base hub used to own");
+ok("7-11. Academy, Profile, Ranking and Empire are reachable from the board HUD, standalone " +
+   "Multiplayer is not, the room domain is still implemented, and Empire still covers the home " +
+   "base that the retired Base hub used to own");
 
 // ============ 12/13. join and create still exist, with game vocabulary ============
 assert(/id="joinRoomBtn"/.test(html) && /Join Game/.test(html), "Join Game must exist");

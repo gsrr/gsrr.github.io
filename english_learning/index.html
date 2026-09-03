@@ -900,10 +900,11 @@
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
     clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   .hud-mode .learn-top { display: none; }              /* the plaque row replaces the page header */
-  /* CLASS E, retired in HUD mode: #empireBar is now the player plaque (its openEmpire action lives
-     on the "My empire" button) and #terrBanner is now the Holdings panel plus the Ranking icon.
-     Both are kept in the DOM because other screens still use them; both set an inline display, so
-     the override has to be !important. Nothing is duplicated on screen. */
+  /* CLASS E, retired in HUD mode: #empireBar's numbers are now the player plaque's, and #terrBanner
+     is now the Holdings panel plus the Ranking icon. Both are kept in the DOM because other screens
+     still use them; both set an inline display, so the override has to be !important. Nothing is
+     duplicated on screen -- and since Phase 14A.2 the ONE way into Empire from the World is the
+     destination cluster's castle icon, so #empireBar's own openEmpire handler is unreachable here. */
   .hud-mode #empireBar, .hud-mode #terrBanner { display: none !important; }
   /* THREE rows: plaques, the board, then the HUD. Phase 10C.2R: the territory card, the action bar
      and Holdings used to share the BOARD row and overlay its lower third. That looked like the
@@ -992,9 +993,6 @@
   .hud-player .hp-st { display: flex; gap: 12px; margin-top: 3px; font-size: 15px; font-weight: 800;
     font-variant-numeric: tabular-nums; }
   .hud-player .hp-st i { font-style: normal; font-size: 13px; color: #ffd9a8; font-weight: 700; }
-  .hud-player button.hp-more { margin-top: 6px; font-size: 11.5px; font-weight: 700; cursor: pointer;
-    color: #2a1b0d; background: #ffcf8a; border: 2px solid #2a1b0d; border-radius: 9px; padding: 3px 9px; }
-  .hud-player button.hp-more:hover { background: #ffe0ae; }
 
   /* --- top-centre: the game title plaque --- */
   .hud-title { text-align: center; }
@@ -1406,9 +1404,9 @@
        board is theirs. Troops and population are in Empire. (Phase 13C.2: by class. The old
        nth-child(3) rule meant "population" only until a stat was inserted before it.) */
     .hud-player .hp-st .hs-troops, .hud-player .hp-st .hs-pop { display: none; }
-    /* the compact top strip: avatar + gold only, no second username, no "My empire" row */
+    /* the compact top strip: avatar + gold only, no second username */
     .hud-plaque.hud-player { padding: 6px 8px; gap: 6px; }
-    .hud-player .hp-nm, .hud-player button.hp-more { display: none; }
+    .hud-player .hp-nm { display: none; }
     .hud-player .hp-av { font-size: 22px; }
     .hud-player .hp-st { margin-top: 0; gap: 7px; font-size: 13px; }
     .hud-player .hp-st i { display: none; }
@@ -2946,10 +2944,23 @@
     <!-- 畫面 0e：排行榜（所有使用者） -->
     <div id="screenLeader" class="hidden">
       <div class="learn-top">
-        <button class="back-btn" id="backFromLeader">← Back</button>
-        <span class="learn-title">🏅 Leaderboard</span>
+        <!-- Phase 14A.2: the label names the destination. Ranking is a World HUD control, so the
+             way out is World Conquest, and f216549 already made that the actual destination
+             (goToGameMap). A generic "← Back" on a screen reached from one place only told the
+             player nothing and read as legacy chrome. -->
+        <button class="back-btn" id="backFromLeader">← World Conquest</button>
+        <!-- Phase 14A.2: the heading matches the destination the navigation names. -->
+        <span class="learn-title">🏅 Ranking</span>
       </div>
-      <p class="screen-intro">Top players by lessons passed 🏆</p>
+      <!-- Phase 14A.2: this said "Top players by lessons passed", which named the wrong authority.
+           The order is decided by the server (/api/leaderboard):
+             sort key = (-population, -regions, name)
+           and the client re-sorts on exactly the same three keys. `regions` is one per TERRITORY
+           owned in this game's territory store, so the player-facing word is territories. Lessons
+           are still counted and returned as `passed`, but they decide no part of the order -- which
+           is precisely why the old line was misleading. Presentation only: no formula, no sorting,
+           no server data and no score authority is touched. -->
+      <p class="screen-intro">Ranked by 👥 population, then by 🚩 territories held 🏆</p>
       <div id="leaderBody"></div>
     </div>
 
@@ -5625,6 +5636,13 @@ nextLevelBtn.textContent = "✅ Back to lessons";
     const inApp = [screenLevel, screenRooms, screenProfileStats, screenHome, screenArticle, screenLearn, screenBattle].indexOf(el) !== -1;
     const teacherView = (el === screenTeacher && !!authToken());   // 老師面板也用右上角顯示名字+登出
     topRight.classList.toggle("hidden", !((userName && inApp) || teacherView));
+    // Phase 14A.2: THE CURRENT DESTINATION DOES NOT LINK TO ITSELF.
+    // #userChip is the My Progress entry, so on the My Progress screen it was the page's own name
+    // pointing at the page -- a My Progress -> My Progress loop an Alpha player found. Only that one
+    // item is withdrawn: #logoutChip is a real capability with no equivalent on that screen and
+    // stays visible. Decided here, in the one place navigation is observed, so no screen has to know
+    // about its own chrome and no second navigation model appears.
+    userChip.classList.toggle("hidden", el === screenProfileStats);
   }
 
   // 把 "Tom: Hi, Anna." 這種純文字解析成 { who, gender, text }
@@ -6287,8 +6305,23 @@ nextLevelBtn.textContent = "✅ Back to lessons";
     if (to === "home") { openLearningHome(); return; }
     if (to === "lesson") { showScreen(screenLearn); return; }
     if (to === "map") {
+      // ===== Phase 14A.2: RETURNING TO THE WORLD RESTORES THE WORLD =====
+      // The board's shell -- body.game-mode, .hud-mode, the whole HUD grid -- is built by drawGeo(),
+      // and showScreen() deliberately strips game-mode on the way out of the board. So a return that
+      // shows screenArticle WITHOUT re-running drawGeo leaves the board's DOM on screen with the
+      // app chrome over it: #userChip reappears, and because #userChip IS the My Progress entry the
+      // World then offered My Progress twice -- the same duplication an Alpha player reported.
+      //
+      // The old guard was `curDrawArgs[2] === selLevelIdx`, which compares the index that OPENED the
+      // board with the curriculum level the learner last browsed. A board opened by the game passes
+      // -1 (goToGameMap -> openGameMap -> renderGeoMap(-1, spec)), and selLevelIdx is only ever set
+      // by a course-opened board -- so for every game-opened board the guard was false and the
+      // redraw was skipped. Since Phase 10A there is ONE playable world and that comparison decides
+      // nothing worth deciding: replaying the last board's own arguments is always the right redraw,
+      // and with no arguments yet the canonical opener is.
       showScreen(screenArticle);
-      if (curDrawArgs && curDrawArgs[2] === selLevelIdx) drawGeo.apply(null, curDrawArgs);
+      if (curDrawArgs) drawGeo.apply(null, curDrawArgs);
+      else goToGameMap();
       return;
     }
     renderLevelGrid();                       // opened from the level grid itself (or unknown)
@@ -8694,12 +8727,12 @@ nextLevelBtn.textContent = "✅ Back to lessons";
           // silently switched targets the moment a stat was added.
           '<span class="hs-terr" title="Territories you hold">\u{1F6A9} ' + mineCount + '</span>' +
           '<span class="hs-pop">\u{1F465} ' + (e.population || 0) + '</span></div></div>';
-        const more = document.createElement("button");
-        more.type = "button"; more.className = "hp-more"; more.textContent = "Empire \u25B8";
-        more.title = "Empire \u2014 your holdings and economy";
-        more.setAttribute("aria-label", "Empire: your holdings and economy");
-        more.addEventListener("click", openEmpire);          // the EXISTING empire panel
-        HUD.pl.appendChild(more);
+        // Phase 14A.2: the plaque's own "Empire ▸" button is GONE. Empire was reachable twice from
+        // the World chrome -- here, and as the 🏰 icon in the destination cluster -- and an Alpha
+        // player reported the duplication. The cluster is the canonical primary navigation (Academy,
+        // My progress, Ranking, Empire, World events), so that is the entry that stays; this plaque
+        // is identity and resources again. openEmpire() itself is untouched, and the surviving icon
+        // opens the same responsive Empire workspace.
       }
 
       // ---------- the title plaque ----------
@@ -8744,9 +8777,15 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         // Phase 12C: one management destination. "Base" used to open a second, competing hub that
         // could only ever manage the home base; Empire covers the home base and every territory.
         HUD.ct.appendChild(icoBtn("\u{1F3F0}", "Empire \u2014 forces, buildings & technology", openEmpire));
-        // Phase 11B: Multiplayer is reachable from the board, which is the student's home. It opens
-        // the existing room-management surface -- no new capability, only a way in.
-        HUD.ct.appendChild(icoBtn("\u2694\uFE0F", "Multiplayer \u2014 join or host a game", openRooms));
+        // Phase 14A.2: MULTIPLAYER IS NOT A PRIMARY DESTINATION.
+        // Phase 11B put a Multiplayer icon here, and Alpha play said the Alpha does not want one: a
+        // signed-in player is auto-entered into GLOBAL by enterGameDirect(), so the launcher earned
+        // its place in the cluster only by existing. This removes the ENTRY, not the capability --
+        // screenRooms, openRooms(), openJoin(), joinByCode(), openMyRoom(), enterRoom(),
+        // enterWorld(), GLOBAL, private games, roomCode, withRoom() and every room API are all
+        // untouched and still wired to each other.
+        // BACKLOG, deliberately not built here: room switching / Join Game may later need a
+        // secondary game/session management affordance if human play asks for one.
         // Phase 11F: the world event log had exactly one entry point in the whole app -- a button on
         // the legacy practice grid. It is a WORLD feature ("World Events"), so it belongs here with
         // the other board controls rather than on a screen students no longer visit.

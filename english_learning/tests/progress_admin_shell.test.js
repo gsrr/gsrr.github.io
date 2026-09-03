@@ -124,13 +124,22 @@ assert(!/getElementById\("openLeaderBtn"\)\.addEventListener/.test(code),
 assert(!/getElementById\("openEventsBtn"\)\.addEventListener/.test(code),
   "the removed Events listener must go too");
 // nothing may be orphaned: all three actions keep a home
-assert(/icoBtn\("\\u2694\\uFE0F", "Multiplayer/.test(code) || /"Multiplayer \\u2014 join or host a game", openRooms/.test(code),
-  "Multiplayer must remain a HUD control");
+// ===== Phase 14A.2 (product decision) =====
+// This asserted "Multiplayer must remain a HUD control", which was the right rule when Phase 11F
+// retired the legacy grid's duplicate: the action needed A home. The Alpha has now decided
+// Multiplayer is not a primary destination at all, so the rule becomes: the HUD does not offer it,
+// and the room surface it used to open is still implemented and still reachable in code. Nothing
+// about the legacy-grid cleanup this file exists to protect is weakened.
+assert(!/icoBtn\([^)]*"Multiplayer/.test(code),
+  "standalone Multiplayer must NOT be a primary HUD control (14A.2)");
+assert(/function openRooms\(\)/.test(code) && /showScreen\(screenRooms\)/.test(code),
+  "...but the room surface it opened is still implemented");
 assert(/"Ranking", openLeaderboard/.test(code), "Ranking must remain a HUD control");
 assert(/"World events", openEvents/.test(code),
   "Events had no other route, so it must have been RELOCATED to the HUD, not deleted");
 assert(/function openEvents\(\)/.test(code), "openEvents itself must be untouched");
-ok("8/9. the two duplicates are retired and Events was relocated rather than orphaned");
+ok("8/9. the two duplicates are retired, Events was relocated rather than orphaned, and " +
+   "Multiplayer is deliberately absent from the HUD while its room surface remains implemented");
 
 // ============ 10/11. teacher/parent preserved ============
 for (const id of ["acctUser", "acctPass", "acctLoginBtn", "acctRegisterBtn", "acctRefreshBtn",
