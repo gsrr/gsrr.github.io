@@ -7402,19 +7402,48 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       openRecruitFor(b.dataset.rec, reopen);
     }));
   }
-  // Recruitment is per-territory and building-gated on the server. This opens the existing
-  // production-building panel for whichever building that territory actually has.
+  // ===== Phase 14A.3: FORCES ▸ RECRUIT IS THE TERRITORY'S RECRUITMENT, NOT ONE BUILDING'S =====
+  // This used to call `openBuildingDetail(key, prod[0].id, reopen)` — it opened the FIRST built
+  // production building's own panel. BUILDINGS is ordered armory, barracks, archery, stable, so any
+  // territory holding a Barracks always landed on the Barracks and offered Infantry and Spear only.
+  // A player who had built Barracks + Archery + Stable could not recruit Archers or Cavalry from
+  // Forces at all, even though the server would have accepted both: an Alpha capability blocker,
+  // found in real play.
+  //
+  // Recruit now answers "what can THIS TERRITORY recruit right now" — the union of the troop types
+  // its built production buildings enable, from producibleUnits(), which mirrors the server's
+  // UNIT_BUILDING exactly. No authority moves: each card still posts the same
+  // /api/territory/recruit for one unit, the server still checks that unit's own building on that
+  // territory, and a type with no building never appears here (and would be refused if it did).
+  // Quantity is untouched: one tap is still RECRUIT_BATCH at the server's price.
   function openRecruitFor(key, reopen) {
     const st = manageState(key);
-    const builds = st.h.buildings || {};
-    const prod = BUILDINGS.filter(b => b.kind === "prod" && builds[b.id]);
-    if (!prod.length) {
+    const builds = st.h.buildings || {}, tech = st.h.tech || {};
+    const units = producibleUnits(builds);          // the union, in the catalogue's own order
+    if (!units.length) {
       alert("There is no barracks, archery range or stable here yet.\n\n" +
             "Build one first in Empire ▸ Buildings — recruitment is tied to the building, on the " +
             "server, and no client can work around that.");
       return;
     }
-    openBuildingDetail(key, prod[0].id, reopen);
+    const where = st.home ? "🏠 Home Base" : (regionDisplayName(key) || key);
+    const target = st.home ? "your troop pool" : "this garrison";
+    const tip = "Recruit into " + target + " — costs 🪙 gold. Every troop type this territory has the " +
+      "building for is here; one tap recruits ×" + RECRUIT_BATCH + ". Troops are locked to their type.";
+    let html = '<h3 class="modal-title">🎖️ Recruit — ' + escapeHtml(where) + helpIco(tip) + '</h3>' +
+      '<div class="bld-gold">🪙 <b>' + st.gold + '</b> gold &nbsp; 👥 <b>' + st.pop + '</b> people</div>' +
+      '<div class="bld-grid">' + units.map(u => recruitCardHTML(u, tech, st.gold)).join("") + '</div>' +
+      '<p class="emp-note">' + BUILDINGS.filter(b => b.kind === "prod").map(b =>
+        (builds[b.id] ? "✅ " : "— ") + b.icon + " " + escapeHtml(b.name)).join(" · ") +
+      ' — build more in Empire ▸ Buildings to unlock more troop types.</p>' +
+      '<div class="op-btns"><button id="bdBack" class="back-btn">◀ Back</button></div>';
+    const ov = openModal(html);
+    ov.querySelector(".modal-card").classList.add("emp-modal");
+    wireHelp(ov);
+    ov.querySelector("#bdBack").addEventListener("click", () => { if (reopen) reopen(); });
+    // re-render THIS panel after each recruit, so the gold and what is still affordable stay
+    // truthful without leaving the territory the player is recruiting for
+    bindRecruitCards(ov, key, () => openRecruitFor(key, reopen));
   }
   // ---------- BUILDINGS: territory-level assets, managed centrally ----------
   function empireBuildings(body, rows, reopen) {
@@ -11007,6 +11036,30 @@ nextLevelBtn.textContent = "✅ Back to lessons";
     return { home: false, gold: gold, goldInc: goldInc, pop: h.pop || 0, h: h,
       conscript: !!h.conscript, conscriptBudget: h.conscriptBudget || 0 };
   }
+  // ===== Phase 14A.3: ONE recruitable-unit card, ONE recruit action =====
+  // producibleUnits() below is the client's model of what a territory can build troops from, and it
+  // mirrors the server's UNIT_BUILDING exactly. These two helpers are what render and spend it, so
+  // the Buildings drill-down and the Forces recruit panel cannot drift into two recruit systems.
+  function recruitCardHTML(u, tech, gold) {
+    const aMul = 1 + techAtk(tech), dMul = 1 + techDef(tech);
+    const cost = RECRUIT_BATCH * UNIT_COST[u];
+    const atkE = fmtN(TROOP[u].atk * aMul), defE = fmtN(TROOP[u].def * dMul);
+    const strong = TROOPS.filter(f => atkBonus(u, f.id) > 1).map(f => troopIcon(f.id)).join("");
+    const weak = TROOPS.filter(f => atkBonus(f.id, u) > 1).map(f => troopIcon(f.id)).join("");
+    return '<button class="bld-card built" data-unit="' + u + '"' + (gold >= cost ? "" : " disabled") + '>' +
+      '<span class="bld-ico">' + troopIcon(u) + '</span>' +
+      '<span class="bld-nm2">' + TROOP[u].en + '</span>' +
+      '<span class="bld-sub2">⚔️' + atkE + ' 🛡️' + defE +
+      (strong ? ' <span class="adv-s">▲' + strong + '</span>' : '') +
+      (weak ? ' <span class="adv-w">▼' + weak + '</span>' : '') + '</span>' +
+      '<span class="bld-cost">×' + RECRUIT_BATCH + ' · ' + cost + '🪙</span></button>';
+  }
+  // The ONE recruit call site. Quantity is still RECRUIT_BATCH and the price is still the server's.
+  function bindRecruitCards(ov, key, reopen) {
+    ov.querySelectorAll('[data-unit]').forEach(btn => btn.addEventListener("click", () => {
+      btn.disabled = true; terrRecruit(key, btn.dataset.unit, RECRUIT_BATCH, reopen);
+    }));
+  }
   function producibleUnits(builds) {
     let u = [];
     if (builds.barracks) u = u.concat(["inf", "spear"]);
@@ -11095,23 +11148,10 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       });
       html += '</div>';
     } else {
-      const aMul = 1 + techAtk(tech), dMul = 1 + techDef(tech);
-      html += '<div class="bld-grid">';
-      b.units.forEach(u => {
-        const cost = RECRUIT_BATCH * UNIT_COST[u];
-        const atkE = fmtN(TROOP[u].atk * aMul), defE = fmtN(TROOP[u].def * dMul);
-        const strong = TROOPS.filter(f => atkBonus(u, f.id) > 1).map(f => troopIcon(f.id)).join("");
-        const weak = TROOPS.filter(f => atkBonus(f.id, u) > 1).map(f => troopIcon(f.id)).join("");
-        const can = st.gold >= cost;
-        html += '<button class="bld-card built" data-unit="' + u + '"' + (can ? "" : " disabled") + '>' +
-          '<span class="bld-ico">' + troopIcon(u) + '</span>' +
-          '<span class="bld-nm2">' + TROOP[u].en + '</span>' +
-          '<span class="bld-sub2">⚔️' + atkE + ' 🛡️' + defE +
-          (strong ? ' <span class="adv-s">▲' + strong + '</span>' : '') +
-          (weak ? ' <span class="adv-w">▼' + weak + '</span>' : '') + '</span>' +
-          '<span class="bld-cost">×' + RECRUIT_BATCH + ' · ' + cost + '🪙</span></button>';
-      });
-      html += '</div>';
+      // this building's OWN units — the Buildings drill-down is per building by design. The
+      // territory-wide view is Forces ▸ Recruit (openRecruitFor).
+      html += '<div class="bld-grid">' +
+        b.units.map(u => recruitCardHTML(u, tech, st.gold)).join("") + '</div>';
     }
     html += '<div class="op-btns"><button id="bdBack" class="back-btn">◀ Back</button></div>';
     const ov = openModal(html);
@@ -11120,9 +11160,7 @@ nextLevelBtn.textContent = "✅ Back to lessons";
     ov.querySelectorAll('[data-track]').forEach(btn => btn.addEventListener("click", () => {
       btn.disabled = true; terrResearch(key, btn.dataset.track, reopen);
     }));
-    ov.querySelectorAll('[data-unit]').forEach(btn => btn.addEventListener("click", () => {
-      btn.disabled = true; terrRecruit(key, btn.dataset.unit, RECRUIT_BATCH, reopen);
-    }));
+    bindRecruitCards(ov, key, reopen);
   }
   // 徵兵制視窗：開/關 + 每小時金幣預算。每小時從金幣池+人口自動徵兵(平均分到已蓋兵種)。
   function openConscriptDetail(key, reopenManage) {

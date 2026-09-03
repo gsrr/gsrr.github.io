@@ -48,11 +48,20 @@ ok("1. Empire is the only surface widened — the generic 360px dialog and the 6
 const empModal = slice("function renderEmpireModal() {", "function empireOverview(", "renderEmpireModal");
 assert(/ov\.querySelector\("\.modal-card"\)\.classList\.add\("emp-modal"\);/.test(empModal),
   "renderEmpireModal marks its card as the Empire workspace");
-assert((code.match(/classList\.add\("emp-modal"\)/g) || []).length === 1,
-  "...in exactly one place");
+// Phase 14A.3 widened this from "exactly one place" to "only Empire's own surfaces". Forces ▸
+// Recruit became a territory recruitment panel that belongs to the Empire workspace — it is opened
+// from the Forces table and its Back returns there — so it legitimately carries the same width. The
+// rule this assertion exists for is unchanged and is still checked above: only Empire declares a
+// width, and no GENERIC modal gets one. What is pinned now is which surfaces may claim it.
+const recruitFor = slice("function openRecruitFor(key, reopen) {", "\n  function ", "openRecruitFor");
+assert((code.match(/classList\.add\("emp-modal"\)/g) || []).length === 2,
+  "...applied by exactly two surfaces, both Empire's");
+assert(/ov\.querySelector\("\.modal-card"\)\.classList\.add\("emp-modal"\);/.test(recruitFor),
+  "the second is the Empire Recruit panel, opened from the Forces table");
 assert(empModal.indexOf("openModal(html)") < empModal.indexOf('classList.add("emp-modal")'),
   "the class is applied to the card this render just opened");
-ok("2. the Empire panel is the workspace, applied once, to its own card");
+ok("2. the Empire panel and its Forces Recruit panel are the workspace — applied to their own " +
+   "cards, and to nothing generic");
 
 // ===================== 3. the overflow is fixed, not hidden =====================
 assert(/\.emp-scroll \{ overflow-x: auto; \}/.test(html),
