@@ -221,9 +221,15 @@ assert.ok(/if \(srcs\.indexOf\(traySrc\) < 0\) traySrc = srcs\[0\];/.test(render
   "a source is always explicitly held in state, never inferred at submit time");
 assert.ok(/aria-pressed="' \+ \(sk === traySrc\)/.test(render),
   "and which one is chosen is announced, not just coloured");
-assert.ok(/return squadByType\(\(\(holders\[traySrc\] \|\| \{\}\)\.troops\) \|\| \[\]\);/.test(
+// Phase 14A.9: the ceiling is still the CHOSEN SOURCE's own army -- read through
+// sourceAvail(), which answers the Home Base pool for @home and that territory's garrison
+// otherwise. The picker gained a source kind, not a second budget rule.
+assert.ok(/return sourceAvail\(traySrc\);/.test(
   slice("function trayBudget()", "\n      function closeTray", "trayBudget")),
-  "the picker's ceiling for an attack is the SOURCE garrison");
+  "the picker's ceiling for an attack is the chosen SOURCE's own availability");
+assert.ok(/if \(isHomeSource\(key\)\) return poolAvail\(\);/.test(code) &&
+  /return squadByType\(\(\(holders\[key\] \|\| \{\}\)\.troops\) \|\| \[\]\);/.test(code),
+  "...and sourceAvail resolves that to the Home Base pool or the territory garrison");
 ok("21/22/24/27/28. the source stays explicit, its garrison bounds the picker, and the global " +
    "Alpha source rule is untouched");
 

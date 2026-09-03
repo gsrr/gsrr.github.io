@@ -111,15 +111,21 @@ ok("valid sources derived from AUTHORITATIVE ownership (Alpha rule), never from 
 //    Retargeted in 12D from renderAttackPanel to the tray, and reworded in 14A: the reason can no
 //    longer be geography, because the Alpha rule has none. The message must still exist and must
 //    still name the REAL obstacle -- a garrison -- so the player is told something actionable.
-assert(/None of your territories has a garrison/.test(trayRender),
+// Phase 14A.9: the real obstacle is no longer "no garrisoned territory" -- Home Base is a
+// source too, so the only thing that can block an attack is having NO ARMY AT ALL, and the
+// message must name the place a first army actually comes from.
+assert(/You have no army to march with yet/.test(trayRender),
   "the tray must state why an attack is impossible");
+assert(/Home Base/.test(trayRender) && /do not need to own a territory first/.test(trayRender),
+  "...and must point at Home Base recruitment rather than at owning ground");
 assert(!/No adjacent territory/.test(trayRender),
   "and it must not blame adjacency, which no longer blocks anything");
 assert(/[Rr]ecruit/.test(trayRender),
   "the message must point at the action that fixes it");
 // Phase 14A: the remedy is no longer "take a neighbouring territory" -- geography is not the
-// obstacle. It is "leave a garrison somewhere", which the reworded message states.
-assert(/leave a garrison in it/.test(trayRender),
+// Phase 14A.9: the remedy is no longer "leave a garrison somewhere" either -- the first army
+// is recruited at Home Base, which is itself a valid source, so that is what the message says.
+assert(/Recruit at .{0,12}Home Base in/.test(trayRender),
   "...and what the player would have to do first");
 // Phase 14A: the isolated-island sentence is retired -- an island is reachable now, and saying
 // otherwise would be false. The message must not resurrect that claim.

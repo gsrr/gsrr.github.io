@@ -426,8 +426,9 @@ ok("22. attack sources are every garrisoned territory you own -- ownership, neve
   assert(code.indexOf(stale) === -1,
     "retired Alpha-false copy must not return: " + JSON.stringify(stale));
 });
-assert(/from any territory you own/.test(actions),
-  "the Attack action says an attack may march from any territory you own");
+// Phase 14A.9: an army may also march from HOME BASE, so the copy names both sources.
+assert(/from your Home Base or any territory you own/.test(actions),
+  "the Attack action says an attack may march from Home Base or any territory you own");
 ok("23. no surviving copy tells the player that geography limits conquest");
 
 // ---- 24. the Alpha rule is explained once, in a secondary surface ----

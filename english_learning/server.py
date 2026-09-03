@@ -2398,18 +2398,25 @@ class Handler(BaseHTTPRequestHandler):
             self._send({"error": "Not logged in"}, 401)
             return
         d = self._body_json()
-        source = self._canon(d.get("sourceTerritoryId") or d.get("source"))
+        raw_source = str(d.get("sourceTerritoryId") or d.get("source") or "").strip()
+        # ===== Phase 14A.9: HOME BASE IS A VALID ATTACK SOURCE =====
+        # Matched BEFORE canonicalisation, because @home is deliberately not a catalogue territory:
+        # resolve_any() answers None for it, and it must never be made to answer anything else.
+        from_home = (raw_source == HOME_KEY)
+        source = HOME_KEY if from_home else self._canon(raw_source)
         target = self._canon(d.get("targetTerritoryId") or d.get("target") or d.get("file"))
         # 來源不可由後端臆測：舊 client 只送 target 沒送 source → 明確拒絕(不繞過相鄰規則)。
         if not source:
-            self._send({"error": "sourceTerritoryId is required (attack from a territory you own)",
+            self._send({"error": "sourceTerritoryId is required (attack from a territory you own, or from your Home Base)",
                         "reason": "source_not_found"}, 400)
             return
         if not target:
             self._send({"error": "Unknown target territory", "reason": "target_not_found"}, 400)
             return
-        # Phase 10A.3: both ends of an attack must sit on the active game map.
-        if not territory_on_active_map(source) or not territory_on_active_map(target):
+        # Phase 10A.3: both ends of an attack must sit on the active game map. Phase 14A.9: Home
+        # Base is OFF-MAP by design, so when it is the source only the TARGET end is checked -- the
+        # target is still required to be on the one playable surface.
+        if not territory_on_active_map(target) or (not from_home and not territory_on_active_map(source)):
             self._send({"error": "Territory is not on the active game map",
                         "reason": "inactive_map"}, 400)
             return
@@ -2420,6 +2427,12 @@ class Handler(BaseHTTPRequestHandler):
                 if hp > 0:
                     squad.append({"type": t["type"], "hp": max(0, min(100000, hp))})
         avatar = str(d.get("avatar", "\U0001F466"))[:8]
+        # Phase 14A.9: an attack launched from HOME BASE settles on its own path (below), because
+        # its source is the Home Base troop POOL rather than a World garrison. Everything about the
+        # battle itself is identical -- same engine, same settlement rules, same gold rules.
+        if from_home:
+            self._attack_from_home(user, target, squad, avatar)
+            return
         defender = None
         result = None
         # Phase 10A.3R: attack reads no learning state at all.
@@ -2459,6 +2472,98 @@ class Handler(BaseHTTPRequestHandler):
                     "attackerSurvivors": result["attackerSurvivors"],
                     "defenderSurvivors": result["defenderSurvivors"],
                     "defenderOrder": result["defenderOrder"], "defenderTech": def_tech, "defender": defender})
+
+    # ---- Phase 14A.9: AN ATTACK LAUNCHED FROM HOME BASE ----
+    # Same endpoint, same eligibility order, same battle engine, same settlement semantics and the
+    # same gold rules as an attack out of an owned territory. Exactly two things differ, and both
+    # follow the authorities Home Base ALREADY has:
+    #
+    #   the army  -- debited from the Home Base troop POOL (economy `troops`), which is what
+    #                Home Base recruitment credits and what /claim and re-entry already debit. No
+    #                troops are minted, no second army is stored, nothing is copied to the map.
+    #   the tech  -- Home Base technology (economy `tech`), written by /api/territory/tech for
+    #                HOME_KEY. This is not a new rule: re-entry already attacks with home tech.
+    #
+    # HOME BASE NEVER BECOMES A HOLDING. The territory store is written for the TARGET only, so
+    # playable_territory_ids(), room_holdings(), Territories Held, Strategic Regions, the map and
+    # every population figure are structurally unable to see @home. Losing does not endanger it
+    # either: there is no record to take.
+    def _attack_from_home(self, user, target, squad, avatar):
+        defender = None
+        result = None
+        new_target = None
+        def_tech = {}
+        # Lock order is the established terr -> econ, identical to /claim and re-entry.
+        with terr_lock:
+            store = load_territory_store()
+            with econ_lock:
+                estore = load_econ_store()
+                e = econ_get(estore, user, time.time(), user_region_pop(store, user))
+                pool = {k: clampi(e["troops"].get(k, 0)) for k in TROOP_ALL}
+                elig = game_conquest.can_attack_from_home(user, target, squad, terr_catalog,
+                                                          store, pool)
+                if not elig.allowed:                     # 資格不符 → 一切狀態零變動(原子拒絕)
+                    self._send({"error": "Attack not allowed", "reason": elig.reason},
+                               self._ATTACK_STATUS.get(elig.reason, 400))
+                    return
+                need = {}
+                for u in squad:
+                    need[u["type"]] = need.get(u["type"], 0) + clampi(u["hp"])
+                for k, v in need.items():                # troops MOVE out of the pool, never minted
+                    pool[k] = clampi(pool.get(k, 0) - v)
+                e["troops"] = pool
+                home_tech = e.get("tech") or {}
+                save_econ_store(estore)
+            tgt = store[target]
+            defender = tgt.get("owner")
+            def_tech = tgt.get("tech") or {}
+            # THE CANONICAL BATTLE ENGINE, called exactly as /attack calls it. The synthetic source
+            # carries the committed squad and the home tech; it is a value, never a stored record.
+            result = game_conquest.resolve_attack(squad, tgt.get("troops") or [], home_tech,
+                                                  def_tech, random.Random())
+            synth_source = {"owner": user, "troops": [dict(u) for u in squad], "tech": home_tech}
+            new_source, new_target = game_conquest.apply_territorial_attack(
+                synth_source, tgt, squad, result, user, avatar)
+            if result["attackerWon"] and not clampi(new_target.get("pop", 0)):
+                cpop = terr_catalog.game_population(target) if terr_catalog else None
+                new_target["pop"] = clampi(cpop if cpop is not None else tgt.get("pop", 0))
+            store[target] = new_target                   # ONLY the target. Never store[HOME_KEY].
+            save_territory_store(store)
+            if not result["attackerWon"]:
+                # Canonical LOSS settlement: survivors return to the SOURCE garrison. Home Base's
+                # garrison IS the pool, so they go back to the pool -- only casualties are lost,
+                # exactly as in a failed territory attack. Nothing duplicated, nothing vanished.
+                with econ_lock:
+                    estore = load_econ_store()
+                    e2 = econ_get(estore, user, time.time(), user_region_pop(store, user))
+                    for s in (new_source.get("troops") or []):
+                        if isinstance(s, dict) and s.get("type") in e2["troops"]:
+                            e2["troops"][s["type"]] = clampi(e2["troops"].get(s["type"], 0)) + \
+                                clampi(s.get("hp", 0))
+                    save_econ_store(estore)
+        # 金幣獎懲與 /attack 完全相同(規則不變)：輸 → 攻方 −50、真人守方 +50。在 terr_lock 外呼叫。
+        newgold = None
+        if not result["attackerWon"]:
+            newgold = econ_add_gold(user, -ATTACK_FAIL_GOLD)
+            if defender and defender != user and not is_ai_owner(defender):
+                econ_add_gold(defender, DEFEND_GOLD)
+        with econ_lock:                                  # the authoritative remaining Home Base army
+            estore = load_econ_store()
+            e3 = econ_get(estore, user, time.time(), 0)
+            troops_left = {k: clampi(e3["troops"].get(k, 0)) for k in TROOP_ALL}
+            if newgold is None:
+                newgold = clampi(e3.get("gold", 0))
+            save_econ_store(estore)
+        self._send({"ok": True, "fromHomeBase": True,
+                    "sourceTerritoryId": HOME_KEY, "targetTerritoryId": target,
+                    "attackerWon": result["attackerWon"], "owner": new_target.get("owner"),
+                    "sourceGarrison": [],                # Home Base holds no map garrison
+                    "targetGarrison": new_target.get("troops") or [],
+                    "gold": newgold, "troops": troops_left,
+                    "attackerSurvivors": result["attackerSurvivors"],
+                    "defenderSurvivors": result["defenderSurvivors"],
+                    "defenderOrder": result["defenderOrder"], "defenderTech": def_tech,
+                    "defender": defender})
 
     # ======================= Phase 10B: zero-territory re-entry =======================
     # A player who holds nothing on a fully-claimed map has NO legal conquest action: /claim answers

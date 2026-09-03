@@ -412,7 +412,9 @@ src2 = io.open(os.path.join(ROOT, "server.py"), encoding="utf-8").read()
 calls = [l for l in src2.split("\n")
          if "user_region_pop(" in l and not l.strip().startswith("#")
          and not l.strip().startswith("def user_region_pop")]
-assert len(calls) == 16, "every economy caller of user_region_pop survives (%d)" % len(calls)
+# Phase 14A.9 added TWO more economy callers -- _attack_from_home() reads the same helper for the
+# same reason as /claim: the passive-gold input when it touches the player's economy record.
+assert len(calls) == 18, "every economy caller of user_region_pop survives (%d)" % len(calls)
 assert 'def user_region_pop(tstore, user):\n    return sum(clampi(h.get("pop", 0)) for h in tstore.values()' in src2, \
     "the economy helper itself is unchanged"
 assert not any("user_region_pop" in l for l in

@@ -165,6 +165,40 @@ def can_attack(player_id, source_id, target_id, squad, world, territories,
     return AttackEligibility(True, None)
 
 
+# ===== Phase 14A.9: HOME BASE IS A VALID ATTACK SOURCE =====
+# A player who holds no World territory could recruit an army and then do nothing with it: attacking
+# demands an owned World source, so the very first attack was impossible. For the Playable Alpha the
+# player's Home Base is a first-class attack SOURCE.
+#
+# Home Base is NOT a territory and this rule does not make it one. It has no catalogue id, no map
+# identity and no adjacency, so the identity/ownership checks that only mean something for a holding
+# are simply not applicable to it -- there is nothing to canonicalise and nothing to own. Everything
+# that is about the TARGET is the same rule as can_attack(), checked here in the same order and
+# returning the same reason strings, and the squad is checked against the Home Base troop POOL the
+# caller passes in ({type: hp}) instead of a garrison list.
+#
+# Home Base can therefore SEND an army; it can never RECEIVE one. As a target it is not canonical,
+# so can_attack()/can_attack_from_home() both answer `target_not_found` for it.
+def can_attack_from_home(player_id, target_id, squad, world, territories, home_pool):
+    """Eligibility for an attack launched from the player's Home Base. Pure. Same target rules as
+    can_attack(); the source is the authoritative Home Base troop pool."""
+    if not target_id or not world.is_canonical(target_id):
+        return AttackEligibility(False, "target_not_found")
+    tgt = territories.get(target_id)
+    tgt_owner = tgt.get("owner") if isinstance(tgt, dict) else None
+    if tgt_owner == player_id:
+        return AttackEligibility(False, "target_already_owned")
+    if not tgt_owner:                                   # neutral -> Occupy, exactly as before
+        return AttackEligibility(False, "target_not_attackable")
+    need = _squad_need(squad)
+    if not need:
+        return AttackEligibility(False, "invalid_squad")
+    for ty, n in need.items():
+        if clampi((home_pool or {}).get(ty, 0)) < n:
+            return AttackEligibility(False, "insufficient_source_garrison")
+    return AttackEligibility(True, None)
+
+
 def apply_territorial_attack(source, target, squad, result, attacker, attacker_avatar):
     """Pure state transition for a territorial attack whose battle `result` is already decided.
     Returns (new_source_dict, new_target_dict). The committed squad ALWAYS leaves the source.

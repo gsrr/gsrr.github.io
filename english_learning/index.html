@@ -9019,8 +9019,7 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       function trayValidSources() { return hudSelKey ? validAttackSources(hudSelKey) : []; }
       function trayBudget() {
         if (trayMode === "attack") {
-          const holders = (territory && territory.holders) || {};
-          return squadByType(((holders[traySrc] || {}).troops) || []);
+          return sourceAvail(traySrc);                       // Home Base marches from the free pool
         }
         if (trayMode === "garrison") {
           const h = (territory && territory.holders && territory.holders[hudSelKey]) || {};
@@ -9101,7 +9100,8 @@ nextLevelBtn.textContent = "✅ Back to lessons";
           attack: { t: "\u2694\uFE0F ATTACK \u2014 " + name, go: "\u2694\uFE0F ATTACK", peace: false,
                     sec: "Commit forces",
                     note: "You cannot scout an enemy garrison. The squad you commit marches from " +
-                          "the territory you pick above, and its technology is that territory's." },
+                          "the source you pick above, and it fights with that source's technology " +
+                          "-- a territory's own, or your Home Base's." },
           occupy: { t: "\u{1F6A9} OCCUPY \u2014 " + name, go: "\u{1F6A9} OCCUPY", peace: true,
                     sec: "Deploy forces",
                     note: "Unclaimed \u2014 the troops you send become its garrison." },
@@ -9122,9 +9122,9 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         if (trayMode === "attack") {
           srcs = trayValidSources();
           if (!srcs.length) {
-            html += '<p class="act-note">\u{1F6AB} None of your territories has a garrison to ' +
-              'march with, so this attack is not possible yet. Recruit troops, or take a territory ' +
-              'and leave a garrison in it.</p>' +
+            html += '<p class="act-note">\u{1F6AB} You have no army to march with yet, so this ' +
+              'attack is not possible. Recruit at \u{1F3E0} Home Base in \u{1F3F0} Empire ' +
+              '\u25B8 \u2694\uFE0F Forces \u2014 you do not need to own a territory first.</p>' +
               '<div class="act-foot"><button type="button" class="af-cancel">Close</button></div>';
             const ov0 = openModal(html);
             ov0.querySelector(".modal-card").classList.add("act-modal");
@@ -9137,12 +9137,12 @@ nextLevelBtn.textContent = "✅ Back to lessons";
           html += '<div class="act-sec">From</div>' +
             '<div class="act-srcs" role="group" aria-label="March from">' +
             srcs.map(sk => '<button type="button" class="act-src" data-src="' + escapeHtml(sk) +
-              '" aria-pressed="' + (sk === traySrc) + '">\u{1F6A9} ' +
-              escapeHtml(regionDisplayName(sk) || sk) + ' \u00b7 \u{1F6E1}' +
-              sumHp((holders[sk] || {}).troops) + '</button>').join("") + '</div>' +
+              '" aria-pressed="' + (sk === traySrc) + '">' + sourceLabel(sk) +
+              ' \u00b7 \u{1F6E1}' + sourceStrength(sk) + '</button>').join("") + '</div>' +
             '<p class="act-note">\u{1F3AF} Target <b>' + escapeHtml(name) +
-            '</b> has a solid outline on the map \u00b7 \u{1F6A9} the territory you march ' +
-            'from has a dashed outline.</p>';
+            '</b> has a solid outline on the map' + (isHomeSource(traySrc)
+              ? ' \u00b7 \u{1F3E0} Home Base is off the map, so it has no outline.'
+              : ' \u00b7 \u{1F6A9} the territory you march from has a dashed outline.') + '</p>';
         }
 
         const budget = trayBudget();
@@ -9316,7 +9316,7 @@ nextLevelBtn.textContent = "✅ Back to lessons";
           // Phase 13C.1: the accessible name names the TERRITORY -- "Attack Spain", not "Attack".
           HUD.acts.appendChild(actBtn("\u2694\uFE0F", "Attack", () => openTray("attack"),
             { primary: true, aria: "Attack " + name,
-              title: "Plan an attack on " + name + " from any territory you own" }));
+              title: "Plan an attack on " + name + " from your Home Base or any territory you own" }));
         } else if (mine) {
           HUD.acts.appendChild(actBtn("\u{1F6E1}\uFE0F", "Garrison", () => openTray("garrison"),
             { aria: "Set the garrison of " + name, title: "Position the garrison of " + name }));
@@ -10873,14 +10873,41 @@ nextLevelBtn.textContent = "✅ Back to lessons";
   //
   // Derived on demand -- when a target is selected and when the planner opens -- never per camera
   // frame, and never as an all-pairs table.
+  // Phase 14A.9: HOME BASE IS A FIRST-CLASS SOURCE. A player holding no World territory could
+  // recruit an army and then do nothing with it, because every source was a holding -- so the very
+  // first attack was impossible and the Alpha's opening move was blocked. Home Base is offered
+  // FIRST whenever its pool has troops, and it is never hidden merely because holdings exist: it is
+  // a legitimate source in its own right, and the choice stays explicit (one attack, one source).
+  //
+  // This adds no map identity. HOME_KEY is not a holder key, so it is absent from the board, from
+  // markMap's outlines and from every holdings-derived count -- and the server settles it the same
+  // way, writing only the target. Authority is unchanged: the server decides every attack.
   function validAttackSources(targetKey) {
     const me = (authUser() || userName || "").toLowerCase();
     const holders = (territory && territory.holders) || {};
-    return Object.keys(holders).filter(function (k) {
+    const owned = Object.keys(holders).filter(function (k) {
       if (k === targetKey) return false;                      // a territory cannot attack itself
       const h = holders[k];
       return h && h.owner && (h.owner + "").toLowerCase() === me && sumHp(h.troops) > 0;
     }).sort();
+    return (poolTotal() > 0 ? [HOME_KEY] : []).concat(owned);
+  }
+  function isHomeSource(key) { return key === HOME_KEY; }
+  // What a source can march with: the authoritative Home Base pool, or that territory's garrison.
+  // Both come from the same caches Forces and the HUD already read -- no third copy of the army.
+  function sourceAvail(key) {
+    if (isHomeSource(key)) return poolAvail();
+    const holders = (territory && territory.holders) || {};
+    return squadByType(((holders[key] || {}).troops) || []);
+  }
+  function sourceStrength(key) {
+    const a = sourceAvail(key);
+    return TROOPS.reduce((n, t) => n + (a[t.id] || 0), 0);
+  }
+  // Player-facing name. The canonical identity stays @home and is never shown.
+  function sourceLabel(key) {
+    return isHomeSource(key) ? "\u{1F3E0}" + " Home Base"
+                             : "\u{1F6A9}" + " " + escapeHtml(regionDisplayName(key) || key);
   }
   // 送出攻擊意圖 → 後端權威判定。前端「絕不」送出 winner/survivors；只用回傳的 defenderOrder 重播動畫。
   function launchAttack(source, targetKey, targetName, h, squad) {
