@@ -879,13 +879,15 @@
      WORLD CONQUEST is the page's identity, and the page gutters shrink so the board can use the
      width they were spending. Purely a UI state -- `body.game-mode` is added and removed alongside
      the existing map-wide/card-hud flags, so leaving the board restores the ordinary chrome exactly.
-     No authentication or navigation semantics are touched: #userChip is only HIDDEN, and its
-     openProfileStats action is still reachable from the HUD's own Profile control. */
+     No authentication or navigation semantics are touched: #userChip is only HIDDEN. Since Phase
+     14A.4 the World has no My Progress entry at all -- that destination belongs to the Academy --
+     so the route from here is World -> Academy -> My Progress. */
   body.game-mode { padding: 12px; }
   body.game-mode > .card > h1 { display: none !important; }
-  /* #userChip is the duplicate identity -- the player plaque already names the commander, and the
-     HUD carries its own Profile control. #logoutChip is a REAL capability with no HUD equivalent, so
-     it deliberately stays. (#userChip sits inside #topRight, not directly under .card.) */
+  /* #userChip is the duplicate identity -- the player plaque already names the commander, and since
+     Phase 14A.4 My Progress is deliberately not a World destination, so nothing here should offer
+     it. #logoutChip is a REAL capability with no board equivalent, so it deliberately stays.
+     (#userChip sits inside #topRight, not directly under .card.) */
   body.game-mode #userChip { display: none !important; }
   body.game-mode > .card { padding: 14px; }
   @media (max-width: 900px) {
@@ -8759,7 +8761,7 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         // Phase 14A.2: the plaque's own "Empire ▸" button is GONE. Empire was reachable twice from
         // the World chrome -- here, and as the 🏰 icon in the destination cluster -- and an Alpha
         // player reported the duplication. The cluster is the canonical primary navigation (Academy,
-        // My progress, Ranking, Empire, World events), so that is the entry that stays; this plaque
+        // Ranking, Empire, World events), so that is the entry that stays; this plaque
         // is identity and resources again. openEmpire() itself is untouched, and the surviving icon
         // opens the same responsive Empire workspace.
       }
@@ -8801,7 +8803,13 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       function renderHudControls() {
         HUD.ct.innerHTML = "";
         HUD.ct.appendChild(icoBtn("\u{1F4DA}", "Academy \u2014 learn to earn Gold", openLearningHome));
-        if (userName) HUD.ct.appendChild(icoBtn("\u{1F9D1}", "My progress", openProfileStats));
+        // Phase 14A.4: MY PROGRESS IS NOT A WORLD DESTINATION.
+        // A "My progress" icon stood here. Alpha feedback: learning progression belongs to the
+        // ACADEMY, which already owns it, and it is not closely related to World Conquest -- so the
+        // World cluster is the strategy game's own destinations and nothing else. The ENTRY is what
+        // goes: openProfileStats(), the My Progress screen, progress authority, mastery, class
+        // membership, account identity and Logout are all untouched, and the route is
+        // World -> Academy -> My Progress.
         HUD.ct.appendChild(icoBtn("\u{1F3C6}", "Ranking", openLeaderboard));
         // Phase 12C: one management destination. "Base" used to open a second, competing hub that
         // could only ever manage the home base; Empire covers the home base and every territory.
@@ -10085,8 +10093,17 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       ? owned.map(g => '<div class="ac-ach-li">' + escapeHtml(rewardItemLabel(g.itemId)) +
           (g.count > 1 ? ' \u00d7' + g.count : '') + '</div>').join("")
       : '<div class="ac-ach-none">Nothing earned yet — master a lesson to win your first.</div>';
+    // ===== Phase 14A.4: the Academy's ONE explicit My Progress entry =====
+    // This button was "View Collection", and it was rendered only when the learner already owned an
+    // award. Its destination was always openProfileStats() -- the My Progress screen, which leads
+    // with authoritative mastery and holds the awards collection inside it -- so "View Collection"
+    // was an old LABEL for the Progress destination, not a second destination. With My Progress
+    // gone from the World cluster (this same phase), that conditional label left a fresh learner
+    // with no explicitly-named way in at all. So the two converge rather than duplicate: one
+    // unconditional, plainly-labelled entry, in the Academy section that already owns progress and
+    // awards. Same handler, same screen, no new state and no new request.
     return '<div class="ac-h">Academy awards</div><div class="ac-ach">' + body +
-      (owned.length ? '<button type="button" id="homeCollection">View Collection</button>' : '') +
+      '<button type="button" id="homeProgress">📊 My Progress</button>' +
       '</div>';
   }
   // A guest has no account-scoped progress, so there is no authoritative mastery or Continue target
@@ -10270,7 +10287,7 @@ nextLevelBtn.textContent = "✅ Back to lessons";
     if (c) { openLessonFromHome(c.getAttribute("data-home-continue"), true); return; }
     const r = e.target && e.target.closest && e.target.closest("[data-home-lesson]");
     if (r) { openLessonFromHome(r.getAttribute("data-home-lesson")); return; }
-    if (e.target && e.target.id === "homeCollection") { openProfileStats(); return; }
+    if (e.target && e.target.id === "homeProgress") { openProfileStats(); return; }
     if (e.target && e.target.id === "pickLevelOpen") { renderLevelGrid(); showScreen(screenLevel); }
   });
 

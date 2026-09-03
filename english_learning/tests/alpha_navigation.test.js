@@ -116,6 +116,45 @@ for (const retired of ["openRoomsBtn", "openLeaderBtn", "openEventsBtn", "pickLe
 }
 ok("8. the Ranking screen itself exposes no retired navigation — one return control and the board");
 
+// ============ 4b. WORLD PRIMARY NAVIGATION IS THE GAME'S OWN DESTINATIONS ============
+// Phase 14A.4: My Progress left the cluster. Player feedback was that the Academy already owns
+// learning progression and it is not closely related to World Conquest. So the World offers the
+// strategy game's destinations and nothing else — and the previous invariant ("My Progress
+// reachable from World") is REPLACED by two: absent from the World, reachable through the Academy.
+const clusterCalls = (controls.match(/HUD\.ct\.appendChild\(icoBtn\(/g) || []).length;
+assert(clusterCalls === 4, "the World cluster appends exactly four destinations (" + clusterCalls + ")");
+for (const fn of ["openLearningHome", "openLeaderboard", "openEmpire", "openEvents"])
+  assert(controls.indexOf(fn) >= 0, "the cluster still offers " + fn);
+assert(controls.indexOf("openProfileStats") < 0,
+  "My Progress is NOT a World primary destination");
+assert(controls.indexOf("openRooms") < 0, "...and neither is Multiplayer");
+// removed as an ENTRY, not as a capability
+assert(/function openProfileStats\(\) \{/.test(code), "openProfileStats() itself is untouched");
+assert(/showScreen\(screenProfileStats\);/.test(code), "the My Progress screen still opens");
+assert(/id="screenProfileStats"/.test(html), "...and is still in the document");
+assert(/<span class="brand-t">My Progress<\/span>/.test(html), "...naming itself");
+// and the Academy is where it now lives — ONE explicit, UNCONDITIONAL content entry
+const awards = slice("function acAchievementsHTML() {", "\n  function acGuestFamilies", "acAchievementsHTML");
+assert(/'<button type="button" id="homeProgress">📊 My Progress<\/button>' \+/.test(awards),
+  "the Academy exposes an explicitly-labelled My Progress entry");
+assert(!/owned\.length \?[^:]*homeProgress/.test(awards),
+  "...and it is NOT conditional on owning an award — a fresh learner sees it");
+assert((code.match(/id="homeProgress"/g) || []).length === 1,
+  "...exactly once, so the Academy has no redundant second entry to the same screen");
+assert(!/homeCollection/.test(code),
+  "the old conditional 'View Collection' label is gone — converged, not duplicated");
+assert(/if \(e\.target && e\.target\.id === "homeProgress"\) \{ openProfileStats\(\); return; \}/.test(code),
+  "...and it calls the existing openProfileStats()");
+assert(/userChip\.addEventListener\("click", \(\) => \{ if \(userName\) openProfileStats\(\); \}\)/.test(code),
+  "the shared account chip still works too, as account chrome the Academy shows and the World hides");
+assert(/body\.game-mode #userChip \{ display: none !important; \}/.test(html),
+  "the account chip stays hidden on the board, so the World has no ghost My Progress either");
+assert(!/\.hud-ico[^{]*display: none/.test(html),
+  "the entry was removed by deleting its wiring, not by a broad CSS rule");
+ok("4b. World primary navigation is Academy / Ranking / Empire / World Events — My Progress and " +
+   "Multiplayer are absent as ENTRIES while both remain fully implemented, and My Progress is " +
+   "reached through the Academy");
+
 // ===================== 8b. Ranking says what it is, and how it really ranks =====================
 assert(/<span class="learn-title">🏅 Ranking<\/span>/.test(html),
   "the heading matches the destination the navigation names");

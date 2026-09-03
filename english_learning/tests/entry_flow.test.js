@@ -84,13 +84,32 @@ const controls = code.slice(code.indexOf("function renderHudControls"),
 // invariant it protected has been replaced, not dropped: the cluster must not offer Multiplayer,
 // and the room/multiplayer capability must still be implemented (asserted immediately below, and in
 // tests/alpha_navigation.test.js).
-const wanted = { "openLearningHome": "Academy", "openProfileStats": "Profile",
+// ===== Phase 14A.4: MY PROGRESS IS NO LONGER A WORLD DESTINATION (product decision) =====
+// This list also used to include "openProfileStats": "Profile". Player feedback: learning
+// progression belongs to the ACADEMY, which already owns it, and it is not closely related to World
+// Conquest. So the World ENTRY was removed and the invariant replaced, not dropped: the World
+// cluster must not offer My Progress, and My Progress must remain reachable through the Academy
+// (both asserted immediately below). The screen, openProfileStats() and progress authority are
+// untouched.
+const wanted = { "openLearningHome": "Academy",
                  "openLeaderboard": "Ranking", "openEmpire": "Empire" };
 Object.keys(wanted).forEach(fn => {
   assert(controls.indexOf(fn) >= 0, wanted[fn] + " must be reachable from the board HUD (" + fn + ")");
 });
 assert(controls.indexOf("openRooms") < 0,
   "standalone Multiplayer must be ABSENT from the primary World navigation");
+assert(controls.indexOf("openProfileStats") < 0,
+  "My Progress must be ABSENT from the primary World navigation (14A.4)");
+assert(/function openProfileStats\(\) \{/.test(code) && /showScreen\(screenProfileStats\)/.test(code),
+  "...while the My Progress screen itself remains implemented");
+assert(/userChip\.addEventListener\("click", \(\) => \{ if \(userName\) openProfileStats\(\); \}\)/.test(code),
+  "...and reachable from the account chip, which the Academy shows");
+assert(/if \(e\.target && e\.target\.id === "homeProgress"\) \{ openProfileStats\(\); return; \}/.test(code),
+  "...as well as from the Academy's own explicit My Progress entry");
+assert(/'<button type="button" id="homeProgress">📊 My Progress<\/button>' \+/.test(code),
+  "...which is UNCONDITIONAL — a fresh learner sees it too");
+assert(!/homeCollection/.test(code),
+  "the conditional 'View Collection' label it replaced is gone, not duplicated");
 for (const fn of ["function openRooms()", "function openJoin()", "function joinByCode()",
                   "function openMyRoom()", "function enterRoom(", "function enterWorld()",
                   "function withRoom("]) {
@@ -106,8 +125,8 @@ assert(/Academy/.test(controls) && /Empire/.test(controls) && /Ranking/.test(con
 });
 assert(/buildingsPanel\(host, HOME_KEY/.test(stripComments(extractFn(html, "openHomeBase"))),
   "the home-base building panel itself is unchanged");
-ok("7-11. Academy, Profile, Ranking and Empire are reachable from the board HUD, standalone " +
-   "Multiplayer is not, the room domain is still implemented, and Empire still covers the home " +
+ok("7-11. Academy, Ranking and Empire are reachable from the board HUD, standalone Multiplayer " +
+   "and My Progress are not, both remain implemented and reachable elsewhere, and Empire still covers the home " +
    "base that the retired Base hub used to own");
 
 // ============ 12/13. join and create still exist, with game vocabulary ============
