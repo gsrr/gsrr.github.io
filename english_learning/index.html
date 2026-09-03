@@ -1317,6 +1317,14 @@
     border: 2px solid #2563eb; color: #fff; background: #2563eb; }
   .emp-act:disabled { opacity: .45; cursor: default; border-color: #94a3b8; background: #94a3b8; }
   .emp-act:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+  /* Phase 14A.8: the Buildings row carries the action itself. The cost keeps its existing .emp-pop
+     styling; these only label the state and stack the little Build / Configure controls under it so
+     four of them can share a row without widening the table. */
+  .emp-tbl td .eb-build, .emp-tbl td .eb-cs { display: block; margin: 3px 0 0 auto; }
+  .eb-built { font-weight: 800; color: #15803d; white-space: nowrap; }
+  .eb-need { display: block; font-size: 10px; font-weight: 700; color: #b45309; white-space: nowrap; }
+  .eb-cs-on { font-weight: 800; color: #15803d; white-space: nowrap; }
+  .eb-cs-off { font-weight: 800; color: #64748b; }
   /* ===== 14A.1 addendum B: MY EMPIRE IS A MANAGEMENT WORKSPACE, NOT A DIALOG =====
      It is the one place repetitive administration happens, and it carries tables that a 360px
      dialog cannot hold. So Empire -- and only Empire -- gets a workspace width. Nothing else that
@@ -7495,31 +7503,75 @@ nextLevelBtn.textContent = "✅ Back to lessons";
     bindRecruitCards(ov, key, () => openRecruitFor(key, reopen));
   }
   // ---------- BUILDINGS: territory-level assets, managed centrally ----------
+  // ===== Phase 14A.8: BUILDINGS IS THE MANAGEMENT SURFACE =====
+  // This table already told the player everything a decision needs -- which buildings exist and what
+  // the next one costs -- and then made them press "Manage ▸" to reach the Build action on a second
+  // surface. The action is now on the row itself: Empire ▸ Buildings ▸ Build.
+  //
+  // The audit that preceded this phase found ONE capability behind Manage with no other route in the
+  // product: CONSCRIPTION (auto-recruit on/off plus a gold-per-hour budget, POST
+  // /api/territory/conscript, spent hourly by conscript_tick). Retiring Manage without it would have
+  // deleted a real capability, so it is promoted here instead -- its state is shown on the row and
+  // Configure opens the EXISTING openConscriptDetail modal, which holds the two decisions and is
+  // therefore not a redundant layer.
+  //
+  // What is deliberately NOT copied forward from buildingsPanel(): per-territory gold/income/
+  // population, tech levels and unit lists. None of them is needed to remove the extra click, and
+  // Recruit and Research already have their own destinations (Forces ▸ Recruit, Technology ▸
+  // Research), so a built building is no longer a drill-down from here.
   function empireBuildings(body, rows, reopen) {
     const all = [{ key: HOME_KEY, label: "🏠 Home Base", home: true }]
       .concat(rows.map(m => ({ key: m.key, label: "🚩 " + (regionDisplayName(m.key) || m.key) })));
     let html = '<div class="emp-scroll"><table class="emp-tbl"><thead><tr><th>Territory</th>' +
-      BUILDINGS.map(b => '<th>' + b.icon + '</th>').join("") + '<th>Open</th></tr></thead><tbody>';
+      BUILDINGS.map(b => '<th>' + b.icon + '</th>').join("") +
+      '<th>🎖️ Conscription</th></tr></thead><tbody>';
     all.forEach(t => {
       const st = manageState(t.key), builds = st.h.buildings || {};
       html += '<tr' + (t.home ? ' class="emp-home"' : '') + '><td>' + escapeHtml(t.label) + '</td>' +
-        BUILDINGS.map(b => '<td data-l="' + escapeHtml(b.name) + '">' +
-          (builds[b.id] ? "✅" : '<span class="emp-pop">' + BUILD_COST[b.id] + '🪙</span>') + '</td>').join("") +
-        '<td><button type="button" class="emp-act" data-bld="' + escapeHtml(t.key) + '">Manage ▸</button></td></tr>';
+        BUILDINGS.map(b => {
+          const cost = BUILD_COST[b.id];
+          if (builds[b.id]) {
+            return '<td data-l="' + escapeHtml(b.name) + '"><span class="eb-built">✅ Built</span></td>';
+          }
+          // affordability is presentation only -- the server still decides every build
+          const short = cost - st.gold;
+          return '<td data-l="' + escapeHtml(b.name) + '">' +
+            '<span class="emp-pop">' + cost + '🪙</span>' +
+            '<button type="button" class="emp-act eb-build" data-build="' + escapeHtml(t.key) +
+            '" data-bid="' + b.id + '"' +
+            (short > 0 ? ' disabled title="Need ' + short + ' more gold"' : '') + '>Build</button>' +
+            (short > 0 ? '<span class="eb-need">need ' + short + '🪙</span>' : '') + '</td>';
+        }).join("") +
+        '<td data-l="Conscription">' + empConscriptCell(t.key, st, builds) + '</td></tr>';
     });
     html += '</tbody></table></div>' +
-      '<p class="emp-note">Costs and effects are unchanged — this is the same build action, in one ' +
-      'place instead of behind map ▸ territory ▸ modal.</p><div id="empBldPanel"></div>';
+      '<p class="emp-note">🏗️ Build here directly — costs and effects are unchanged. ' +
+      '🎖️ Conscription spends gold every hour to recruit into that place automatically. ' +
+      'Recruiting by hand is ⚔️ Forces; research is 🏭 Technology.</p>';
     body.innerHTML = html;
-    body.querySelectorAll("[data-bld]").forEach(b => b.addEventListener("click", () => {
-      const key = b.dataset.bld;
-      const host = body.querySelector("#empBldPanel");
-      host.innerHTML = '<div class="stats-h">' +
-        escapeHtml(key === HOME_KEY ? "🏠 Home Base" : (regionDisplayName(key) || key)) + '</div>';
-      const st = manageState(key);
-      buildingsPanel(host, key, st.h, reopen);
-      host.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    // ONE build call site, the existing authoritative one. terrBuild -> POST /api/territory/build,
+    // and terrPost() reloads economy + territory before the callback, so `reopen` repaints this very
+    // surface from server truth. A refused build alerts inside terrPost and changes nothing here.
+    body.querySelectorAll("[data-build]").forEach(b => b.addEventListener("click", () => {
+      b.disabled = true;
+      terrBuild(b.dataset.build, b.dataset.bid, () => { if (reopen) reopen(); });
     }));
+    // the existing Conscription modal, reached in one step instead of two
+    body.querySelectorAll("[data-cs]").forEach(b => b.addEventListener("click", () => {
+      openConscriptDetail(b.dataset.cs, reopen);
+    }));
+  }
+  // The row's Conscription summary, read from the authoritative `conscript` / `conscriptBudget`
+  // /api/territory already publishes. openConscriptDetail() itself refuses a territory with no
+  // production building, so the cell says so rather than offering a control that would bounce.
+  function empConscriptCell(key, st, builds) {
+    if (!producibleUnits(builds).length) {
+      return '<span class="emp-pop">needs a building</span>';
+    }
+    const on = !!st.conscript;
+    return '<span class="' + (on ? "eb-cs-on" : "eb-cs-off") + '">' +
+      (on ? "On · " + st.conscriptBudget + "\u{1FA99}/hr" : "Off") + '</span>' +
+      '<button type="button" class="emp-act eb-cs" data-cs="' + escapeHtml(key) + '">Configure</button>';
   }
   // ---------- TECHNOLOGY: shown exactly as the server scopes it ----------
   // AUDITED, and deliberately NOT changed: technology is stored PER TERRITORY

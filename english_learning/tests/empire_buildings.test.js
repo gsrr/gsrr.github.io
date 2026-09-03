@@ -1,0 +1,225 @@
+// Phase 14A.8 — BUILDINGS IS THE MANAGEMENT SURFACE.
+//
+//   node tests/empire_buildings.test.js
+//
+// Empire ▸ Buildings already told the player which buildings existed and what the next one cost, and
+// then made them press "Manage ▸" to reach Build on a second surface. The action now lives on the
+// row: Empire ▸ Buildings ▸ Build.
+//
+// The audit before this phase found ONE capability behind Manage with no other route anywhere in the
+// product: CONSCRIPTION -- auto-recruit on/off plus a gold-per-hour budget, POST
+// /api/territory/conscript, spent hourly by conscript_tick(). openConscriptDetail() had exactly one
+// call site, inside buildingsPanel(), which itself was only reachable from the Manage handler.
+// Retiring Manage without it would have deleted a real capability, so it is promoted onto the row:
+// its state is shown there and Configure opens that same existing modal, which holds the two real
+// decisions and is therefore not a redundant layer.
+//
+// Deliberately NOT copied forward from buildingsPanel(): per-territory gold/income/population, tech
+// levels and unit lists. None is needed to remove the extra click, and Recruit and Research have
+// their own destinations -- so a built building is no longer a drill-down from Buildings.
+const fs = require("fs");
+const path = require("path");
+
+const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+const code = html.split(/\r?\n/).filter(l => !/^\s*\/\//.test(l)).join("\n");
+
+let passed = 0;
+function assert(c, m) { if (!c) { console.error("  FAIL - " + m); process.exit(1); } }
+function ok(n) { passed++; console.log("  ok -", n); }
+
+function slice(from, to, label) {
+  const a = code.indexOf(from);
+  assert(a >= 0, "cannot find " + label + " start: " + from);
+  const b = code.indexOf(to, a + from.length);
+  assert(b > a, "cannot find " + label + " end: " + to);
+  return code.slice(a, b);
+}
+
+const bld = slice("function empireBuildings(body, rows, reopen) {",
+                  "function empConscriptCell(", "empireBuildings");
+const csCell = slice("function empConscriptCell(key, st, builds) {",
+                     "\n  function ", "empConscriptCell");
+
+// ===================== 1/2/3. the surface opens with state and cost =====================
+assert(/if \(empTab === "buildings"\) empireBuildings\(body, rows, reopen\);/.test(code) ||
+       /else if \(empTab === "buildings"\) empireBuildings\(body, rows, reopen\);/.test(code),
+  "the Buildings tab still renders through empireBuildings");
+assert(/const all = \[\{ key: HOME_KEY, label: "🏠 Home Base", home: true \}\]/.test(bld),
+  "the territory list still starts with Home Base and keeps its organisation");
+assert(/BUILDINGS\.map\(b => '<th>' \+ b\.icon \+ '<\/th>'\)/.test(bld),
+  "one column per building, as before — no territory x building mega-table was invented");
+assert(/<span class="eb-built">✅ Built<\/span>/.test(bld), "a built building reads Built");
+assert(/'<span class="emp-pop">' \+ cost \+ '🪙<\/span>'/.test(bld), "an unbuilt building shows its cost");
+ok("1/2/3. Buildings renders per territory with each building's state and cost visible immediately");
+
+// ===================== 4/11/22. zero Manage, and no new modal =====================
+// the phrase survives only in the comment recording what was retired, so pin the CODE
+assert(!/>Manage\s*(▸|<)/.test(code) && code.indexOf("Manage ▸") < 0,
+  "no Manage CONTROL is emitted anywhere (prose such as \"Managed here\" is not a control)");
+assert(code.indexOf("data-bld") < 0, "the Manage handler and its attribute are gone");
+assert(bld.indexOf("buildingsPanel") < 0, "Buildings no longer renders the old intermediate panel");
+assert(bld.indexOf("empBldPanel") < 0, "...and its host element is gone");
+assert(bld.indexOf("openModal") < 0, "the Buildings surface opens no modal of its own");
+ok("4/11/22. zero player-facing Manage in Buildings, no intermediate panel, and no new modal");
+
+// ===================== 5/6/7/8/13. every unbuilt building has a direct Build =====================
+assert(/class="emp-act eb-build" data-build="' \+ escapeHtml\(t\.key\) \+\s*'" data-bid="' \+ b\.id \+ '"/.test(bld),
+  "the Build button is emitted per building, per territory");
+assert(/if \(builds\[b\.id\]\) \{[\s\S]{0,160}return '<td data-l="' \+ escapeHtml\(b\.name\) \+ '"><span class="eb-built">/.test(bld),
+  "...and only when that building is NOT built");
+// the loop is over BUILDINGS, so all four are covered by construction
+assert(/\{ id: "armory",[^}]*kind: "tech" \}/.test(code) &&
+       /\{ id: "barracks",[^}]*units: \["inf", "spear"\] \}/.test(code) &&
+       /\{ id: "archery",[^}]*units: \["archer"\] \}/.test(code) &&
+       /\{ id: "stable",[^}]*units: \["cav"\] \}/.test(code),
+  "the catalogue still holds armory, barracks, archery and stable");
+assert(/BUILDINGS\.map\(b => \{\s*const cost = BUILD_COST\[b\.id\];/.test(bld),
+  "Build is generated by iterating the building catalogue, so all four are covered");
+ok("5-8/13. an unbuilt Armory, Barracks, Archery or Stable each exposes Build directly, generated " +
+   "from the one building catalogue");
+
+// ===================== 9/10. a built building offers nothing to press =====================
+const builtBranch = bld.slice(bld.indexOf("if (builds[b.id]) {"), bld.indexOf("const short"));
+assert(builtBranch.indexOf("eb-build") < 0 && builtBranch.indexOf("Build") < 0,
+  "a built building has no Build action");
+assert(builtBranch.indexOf("data-bld") < 0 && builtBranch.indexOf("Manage") < 0,
+  "...and no Manage action");
+assert(builtBranch.indexOf("openBuildingDetail") < 0,
+  "...and is not a drill-down from Buildings");
+ok("9/10. a built building shows Built ✓ only — no Build, no Manage, no drill-down");
+
+// ===================== 12/13. the existing authoritative build path =====================
+assert(/terrBuild\(b\.dataset\.build, b\.dataset\.bid, \(\) => \{ if \(reopen\) reopen\(\); \}\)/.test(bld),
+  "Build calls the existing terrBuild()");
+assert((bld.match(/terrBuild\(/g) || []).length === 1, "exactly one build call site on this surface");
+assert(/function terrBuild\(key, building, cb\) \{ terrPost\("\/api\/territory\/build", \{ file: key, building: building \}, cb\); \}/
+  .test(code), "terrBuild and POST /api/territory/build are unchanged");
+assert(bld.indexOf("buildings[") < 0 && !/builds\[[^\]]+\]\s*=/.test(bld),
+  "the client never writes building state itself");
+ok("12/13. Build reuses terrBuild -> POST /api/territory/build, and the client writes no state");
+
+// ===================== 14/15. reconciliation, and no optimistic success =====================
+assert(/loadEconomy\(\(\) => loadTerritory\(\(\) => \{ if \(cb\) cb\(res\.j\); \}\)\);/.test(code),
+  "terrPost reloads economy AND territory before the callback");
+assert(/if \(!res\.ok\) \{ alert\("Failed: "/.test(code),
+  "...and a refused request alerts without invoking the callback");
+assert(/b\.disabled = true;\s*terrBuild\(/.test(bld),
+  "the pressed button disables itself, so one click is one request");
+assert(bld.indexOf("✅ Built'") < 0 || builtBranch.indexOf("builds[b.id]") >= 0,
+  "Built is rendered from server-loaded state, never assumed");
+ok("14/15. success repaints this surface from reloaded server state; a rejection leaves it " +
+   "unchanged — Built is never shown optimistically");
+
+// ===================== 16. affordability is presentation only =====================
+assert(/const short = cost - st\.gold;/.test(bld), "affordability is computed for display");
+assert(/\(short > 0 \? ' disabled title="Need ' \+ short \+ ' more gold"' : ''\)/.test(bld),
+  "an unaffordable Build is disabled with the shortfall named");
+assert(/<span class="eb-need">need ' \+ short \+ '🪙<\/span>/.test(bld), "...and shown on the row");
+assert(/return False, cost, "not_enough_gold"/.test(
+  fs.readFileSync(path.join(__dirname, "..", "game", "recruitment.py"), "utf8")) ||
+  /not enough gold/.test(fs.readFileSync(path.join(__dirname, "..", "server.py"), "utf8")),
+  "...while the server still owns the gold decision");
+ok("16. affordability only disables a button; the server still refuses an unaffordable build");
+
+// ===================== 17. costs stay canonical =====================
+assert(/const BUILD_COST = \{ armory: 50, barracks: 60, archery: 80, stable: 120 \}/.test(code) ||
+       /BUILD_COST\s*=\s*\{[^}]*armory:\s*50[^}]*barracks:\s*60[^}]*archery:\s*80[^}]*stable:\s*120/.test(code),
+  "the client's BUILD_COST projection is unchanged");
+assert(/BUILD_COST = \{"armory": 50, "barracks": 60, "archery": 80, "stable": 120\}/.test(
+  fs.readFileSync(path.join(__dirname, "..", "game", "config.py"), "utf8")),
+  "...and matches the canonical server table");
+assert((bld.match(/BUILD_COST\[b\.id\]/g) || []).length === 1,
+  "the row reads that one table — no second cost table was introduced");
+ok("17. BUILD_COST is unchanged and read from the existing projection only");
+
+// ===================== 18-21. Conscription is on the surface =====================
+assert(/Conscription<\/th>/.test(bld), "the table carries a Conscription column");
+assert(/empConscriptCell\(t\.key, st, builds\)/.test(bld), "...rendered per territory");
+assert(/const on = !!st\.conscript;/.test(csCell), "its state is the authoritative conscript flag");
+assert(/\(on \? "On · " \+ st\.conscriptBudget \+ "\\u\{1FA99\}\/hr" : "Off"\)/.test(csCell),
+  "enabled shows On with the gold-per-hour budget; disabled shows Off");
+assert(/conscript: !!e\.conscript, conscriptBudget: e\.conscriptBudget \|\| 0/.test(code) &&
+       /conscript: bool\(h\.get\("conscript"\)\), "conscriptBudget": clampi\(h\.get\("conscriptBudget", 0\)\)/
+         .test(fs.readFileSync(path.join(__dirname, "..", "server.py"), "utf8")) === false ||
+       /"conscript": bool\(h\.get\("conscript"\)\)/.test(
+         fs.readFileSync(path.join(__dirname, "..", "server.py"), "utf8")),
+  "the state comes from what /api/territory publishes");
+assert(csCell.indexOf("synth") < 0 && !/let\s+csState/.test(code),
+  "no second conscription state is synthesised");
+// the row state is rendered by CLIENT code, so it may only call client helpers: clampi() is a
+// server-side (Python) name and calling it here would empty the whole surface at render time.
+assert(code.indexOf("clampi(") < 0, "the client calls no server-only helper");
+ok("18-21. Conscription appears directly on the Buildings row, Off or On · N🪙/hr, from the " +
+   "authoritative published state");
+
+// ===================== 22/23. Configure reuses the existing modal, in one step =====================
+assert(/openConscriptDetail\(b\.dataset\.cs, reopen\)/.test(bld),
+  "Configure calls the existing openConscriptDetail()");
+assert((code.match(/function openConscriptDetail\(/g) || []).length === 1,
+  "there is exactly one Conscription modal in the client");
+assert(/class="emp-act eb-cs" data-cs="/.test(csCell), "the control is labelled and wired on the row");
+assert(/>Configure</.test(csCell), "...and is called Configure, not Manage");
+assert(bld.indexOf("buildingsPanel") < 0,
+  "Configure does not pass through the retired panel first");
+ok("22/23. Configure opens the existing Conscription modal in ONE step — no buildingsPanel, no " +
+   "second modal");
+
+// ===================== 24/25/26/27/28. the capability itself is untouched =====================
+const cs = slice("function openConscriptDetail(key, reopenManage) {", "\n  function ", "openConscriptDetail");
+assert(/id="csOn"/.test(cs) && /id="csBud"/.test(cs), "on/off and budget are still the two decisions");
+assert(/terrConscript\(key, on, budget, \(\) => openConscriptDetail\(key, reopenManage\)\)/.test(cs),
+  "Save still posts through terrConscript and re-reads the saved values");
+assert(/function terrConscript\(key, on, budget, cb\) \{ terrPost\("\/api\/territory\/conscript", \{ file: key, on: !!on, budget: budget \}, cb\); \}/
+  .test(code), "terrConscript and POST /api/territory/conscript are unchanged");
+assert(/const units = producibleUnits\(st\.h\.buildings \|\| \{\}\);/.test(cs),
+  "the modal still refuses a territory with no production building");
+assert(/if \(!producibleUnits\(builds\)\.length\) \{/.test(csCell),
+  "...and the row says so instead of offering a control that would bounce");
+assert(/ov\.querySelector\("#bdBack"\)\.addEventListener\("click", \(\) => \{ if \(reopenManage\) reopenManage\(\); \}\)/
+  .test(cs), "Back returns to whatever opened it — now the Buildings surface");
+ok("24-28. the Conscription capability is unchanged: same two decisions, same endpoint, same guard, " +
+   "and nothing was lost by retiring Manage");
+
+// ===================== 29-33. route separation =====================
+assert(bld.indexOf("openBuildingDetail") < 0, "Buildings never opens the building detail");
+assert(/openBuildingDetail\(b\.dataset\.tech, "armory", reopen\)/.test(code),
+  "Technology keeps its legitimate Armory research route");
+assert(/data-tech="' \+ escapeHtml\(t\.key\)/.test(code), "...reached from its own Research control");
+assert(/function openRecruitFor\(key, reopen\) \{/.test(code) &&
+       /const units = producibleUnits\(builds\);/.test(code),
+  "Forces ▸ Recruit is untouched and still offers the territory's whole capability");
+assert(/data-rec="' \+ escapeHtml\(m\.key\) \+ '">Recruit/.test(code),
+  "...still launched from the Forces table");
+assert((code.match(/function openBuildingDetail\(/g) || []).length === 1,
+  "openBuildingDetail still exists once, for its remaining caller");
+ok("29-33. Buildings routes no built building through openBuildingDetail; Forces ▸ Recruit and " +
+   "Technology ▸ Research (including its Armory detail) are untouched");
+
+// ===================== 34-37. Home Base =====================
+assert(/\{ key: HOME_KEY, label: "🏠 Home Base", home: true \}/.test(bld),
+  "Home Base is still the first row");
+assert(/const st = manageState\(t\.key\), builds = st\.h\.buildings \|\| \{\};/.test(bld),
+  "its state comes from manageState, which special-cases HOME_KEY");
+assert(/if \(key === HOME_KEY\) \{[\s\S]{0,320}conscript: !!e\.conscript, conscriptBudget: e\.conscriptBudget \|\| 0/
+  .test(code), "...and that includes Home Base's own conscription state");
+assert(/"conscript": conscript, "conscriptBudget": cbudget/.test(
+  fs.readFileSync(path.join(__dirname, "..", "server.py"), "utf8")),
+  "/api/economy publishes it, so the Home Base row can read it");
+assert(bld.indexOf("openHomeBase") < 0, "the dead openHomeBase() is not revived");
+ok("34-37. the Home Base row keeps Build and Conscription through the same direct pattern, from " +
+   "/api/economy's own published state, with no dependency on the dead openHomeBase()");
+
+// ===================== responsive =====================
+assert(/\.emp-tbl td \.eb-build, \.emp-tbl td \.eb-cs \{ display: block; margin: 3px 0 0 auto; \}/.test(html),
+  "the row's controls stack under the cost instead of widening the table");
+assert(/\.modal-card\.emp-modal \{ max-width: 1040px; \}/.test(html),
+  "the Empire workspace width from f216549 is unchanged");
+assert(/@media \(max-width: 860px\) \{[\s\S]{0,900}\.emp-tbl thead \{ display: none; \}/.test(html),
+  "and the stacked narrow layout still applies to this table");
+assert(/\.emp-tbl td\[data-l\]::before \{ content: attr\(data-l\);/.test(html),
+  "...labelling each cell, including the new Conscription cell");
+assert(/data-l="Conscription"/.test(bld), "which the Conscription cell provides");
+ok("responsive: the controls stack rather than widen, and the existing Empire workspace and " +
+   "stacked-narrow behaviour carry the new column unchanged");
+
+console.log("\nAll " + passed + " Empire-Buildings checks passed.");

@@ -266,8 +266,13 @@ assert(/moving troops between territories is not a rule the game has yet/.test(h
 const blds = slice("function empireBuildings", "\n  function empireTechnology", "empireBuildings");
 assert(/BUILD_COST\[b\.id\]/.test(blds) && /BUILDINGS\.map/.test(blds),
   "Buildings must use the real building list and the real costs");
-assert(/buildingsPanel\(host, key, st\.h, reopen\)/.test(blds),
-  "Buildings must reuse the existing panel, not a reimplementation");
+// Phase 14A.8: Buildings IS the management surface, so it no longer renders the intermediate
+// buildingsPanel(). It must still reuse the existing authorities rather than reimplement them:
+// the build endpoint wrapper and the existing Conscription modal.
+assert(/terrBuild\(b\.dataset\.build, b\.dataset\.bid, /.test(blds) &&
+       /openConscriptDetail\(b\.dataset\.cs, reopen\)/.test(blds),
+  "Buildings must act through the existing terrBuild and Conscription modal, not reimplementations");
+assert(!/buildingsPanel/.test(blds), "...and must not route through the retired intermediate panel");
 const tech = slice("function empireTechnology", "\n  function openHomeBase", "empireTechnology");
 assert(/TECH_COST\[k\]\[lvl\(k\)\]/.test(tech) && /TECH_MAX/.test(tech),
   "Technology must use the real costs and cap");
