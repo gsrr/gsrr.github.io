@@ -44,9 +44,11 @@ zoo_key = json.load(open(os.path.join(ROOT, "Pre-A1", "taipei", "zoo.json"),
 ANSWERS = [{"q": i["q"], "answer": i["answer"]} for i in zoo_key]
 
 # ============================== the approved production shape ==============================
-assert GC.PASS_GOLD == 160, GC.PASS_GOLD
-assert GC.MASTERY_GOLD == 640, GC.MASTERY_GOLD
-assert GC.PASS_GOLD + GC.MASTERY_GOLD == 800
+# Phase 14A.10A raised both so that STUDY, not idling, funds an army.
+assert GC.PASS_GOLD == 500, GC.PASS_GOLD
+assert GC.MASTERY_GOLD == 2500, GC.MASTERY_GOLD
+assert GC.PASS_GOLD + GC.MASTERY_GOLD == 3000
+FULL = GC.PASS_GOLD + GC.MASTERY_GOLD
 assert not hasattr(GC, "LESSON_MASTERY_GOLD"), (
     "game/ must not carry learning vocabulary — see the §20 content-independence regression")
 GATES = sorted("english.prea1.taipei.%s.quiz3" % s
@@ -58,12 +60,12 @@ assert gold_bearing == CX.declared_gates(reg), gold_bearing
 CX.assert_reward_model(reg, svc, GC.PASS_GOLD)
 assert {reg.reward_policy_of(a) for a in GATES} == {"standard_activity_pass"}
 for aid in GATES:
-    assert svc.reward_for(aid)["amount"] == 160, aid
+    assert svc.reward_for(aid)["amount"] == GC.PASS_GOLD, aid
 for lid in TAIPEI4:
     ps = reg.lesson_reward_policies_of(lid)
     assert ps == ["lesson_mastery_badge", "lesson_mastery_gold"], (lid, ps)
     econ = [p for p in ps if W.is_economic(p)]
-    assert len(econ) == 1 and W.resolve(econ[0], AMOUNTS)["amount"] == 640, (lid, econ)
+    assert len(econ) == 1 and W.resolve(econ[0], AMOUNTS)["amount"] == GC.MASTERY_GOLD, (lid, econ)
 assert R.validate(R.DATA) == [], R.validate(R.DATA)
 ok("production shape: four gold-bearing gate activities at 160 sharing one policy, four "
    "lessons paying 640 at mastery alongside the cosmetic badge - 800 per lesson, 3200 per "
@@ -118,16 +120,16 @@ def quiz3(state, now=100):
 
 # ============================== A. fresh learner ==============================
 st, o = quiz3({})
-assert o["rewardAmount"] == 160, o["rewardAmount"]
+assert o["rewardAmount"] == GC.PASS_GOLD, o["rewardAmount"]
 assert o["granted"] == ["english.prea1.taipei.zoo"], o["granted"]
 assert o["grantedNow"] == ["english.prea1.taipei.zoo"]
 assert o.get("lessonRewardAmount", 0) == 0, "mastery must not pay at quiz3"
 assert LG.owned_items(st) == [], "no badge yet"
 st, mo = master(st, now=2000)
-assert mo["lessonRewardAmount"] == 640, mo
+assert mo["lessonRewardAmount"] == GC.MASTERY_GOLD, mo
 assert mo["lessonCompletedNow"] is True
 assert LG.owned_items(st) == ["badge.lesson.mastered"], LG.owned_items(st)
-assert LG.total_granted(st, "gold") == 160 + 640 == 800
+assert LG.total_granted(st, "gold") == GC.PASS_GOLD + GC.MASTERY_GOLD == 3000
 ok("A/fresh learner: quiz3 pays 160 and grants the qualification; mastery pays 640 and the badge; "
    "800 total, both recorded in the ledger")
 
@@ -148,7 +150,7 @@ status = svc.lesson_status(ZOO, dip)
 assert status["activePolicyCompleted"] is True, "mastery is an achievement and is never revoked"
 _, dout = master(dip, now=3200)                      # recovery
 assert dout.get("lessonRewardAmount", 0) == 0, "recovering must not pay a second time"
-assert LG.total_granted(dip, "gold") == 800, LG.total_granted(dip, "gold")
+assert LG.total_granted(dip, "gold") == FULL, LG.total_granted(dip, "gold")
 ok("exactly-once: replayed mastery, replayed quiz3, a Needs-Review dip and a recovery all pay 0; "
    "mastery gold is never clawed back")
 
@@ -161,7 +163,7 @@ snap_b = copy.deepcopy(old_b)
 _, ob = quiz3(copy.deepcopy(old_b), now=4000)
 assert ob["rewardAmount"] == 0, "the historical gate payout is never re-paid at the new rate"
 b_state, bm = master(copy.deepcopy(old_b), now=4100)
-assert bm["lessonRewardAmount"] == 640, "a first-ever mastery still pays, at the new rate"
+assert bm["lessonRewardAmount"] == GC.MASTERY_GOLD, "a first-ever mastery still pays, at the new rate"
 assert snap_b["activityCompletions"] == old_b["activityCompletions"], "history was mutated"
 ok("B/old learner with the historical 10000 but no mastery: no clawback, no re-pay of the gate, "
    "and their FIRST mastery pays 640 like anyone else")
@@ -230,9 +232,9 @@ forged = {"activityId": QUIZ3, "rewardAmount": 999999, "rewardType": "gold",
 res, _ = svc.grade_attempt(QUIZ3, ANSWERS)
 assert isinstance(res, dict) and res["passed"] is True
 s, fo = svc.record_attempt({}, QUIZ3, dict(res, **forged), 8000)
-assert fo["rewardAmount"] == 160, fo["rewardAmount"]
+assert fo["rewardAmount"] == GC.PASS_GOLD, fo["rewardAmount"]
 s, fm = master(s, now=8100)
-assert fm["lessonRewardAmount"] == 640, fm["lessonRewardAmount"]
+assert fm["lessonRewardAmount"] == GC.MASTERY_GOLD, fm["lessonRewardAmount"]
 ok("forged reward fields in the graded result are ignored: the server resolves 160 and 640 from "
    "game config through the policy allowlist, never from the payload")
 
@@ -254,7 +256,7 @@ for th in ts:
     th.start()
 for th in ts:
     th.join()
-assert sum(paid) == 160, paid
+assert sum(paid) == GC.PASS_GOLD, paid
 
 mshared, mpaid = {}, []
 
@@ -270,7 +272,7 @@ for th in ts:
     th.start()
 for th in ts:
     th.join()
-assert sum(mpaid) == 640, mpaid
+assert sum(mpaid) == GC.MASTERY_GOLD, mpaid
 ok("concurrency: 8 racing gate settlements total 160 and 8 racing mastery settlements total 640 "
    "under the lock server.py holds")
 

@@ -28,6 +28,7 @@ def ok(name):
 
 
 PASS_GOLD = 10000
+MASTERY_GOLD = 20000        # sentinel, like PASS_GOLD above
 svc = L.LearningService(content_root=ROOT, reward_amounts={"PASS_GOLD": PASS_GOLD})
 ZOO = "english.prea1.taipei.zoo"
 QUIZ3 = ZOO + ".quiz3"
@@ -131,7 +132,7 @@ cand = copy.deepcopy(R.DATA)
 cand["lessons"][ZOO]["completionPolicy"]["rewardPolicy"] = "lesson_mastery_gold"
 assert R.validate(cand) == [], R.validate(cand)
 msvc = L.LearningService(R.Registry(cand), content_root=ROOT,
-                         reward_amounts={"PASS_GOLD": PASS_GOLD, "LESSON_MASTERY_GOLD": 640})
+                         reward_amounts={"PASS_GOLD": PASS_GOLD, "LESSON_MASTERY_GOLD": MASTERY_GOLD})
 SUFFIX = ["read_along", "quiz3", "quiz4", "matching", "wh", "cloze", "roleplay"]
 
 
@@ -154,7 +155,7 @@ def master(state, now=1000):
     return state, out.get("lessonRewardAmount", 0)
 
 ms, paid = master({})
-assert paid == 640, paid
+assert paid == MASTERY_GOLD, paid            # the INJECTED amount, whatever it is
 ms2, again = master(copy.deepcopy(ms), 2000)
 assert again == 0, "mastery gold must not re-pay on a replay"
 ok("hypothetical mastery gold (test-only policy, never activated) pays exactly once and refuses "

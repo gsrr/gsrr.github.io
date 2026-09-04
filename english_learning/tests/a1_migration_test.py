@@ -163,7 +163,7 @@ ok("7. Taipei regression: four v2/7-activity policies, one qualification each, Z
 
 # ============================== 8. content and amounts untouched ==============================
 blob = open(os.path.join(ROOT, "learning", "registry.json"), encoding="utf-8").read()
-for n in ("160", "640", "800"):
+for n in ("500", "2500", "3000"):        # 14A.10A amounts; the registry still names none
     assert n not in blob, "the registry must never state a reward amount: %s" % n
 # Phase 9E: A1 owns 12 lessons x 5 activities. The GLOBAL activity total is not this suite's
 # business — other content families may migrate freely — so assert only A1's own footprint.

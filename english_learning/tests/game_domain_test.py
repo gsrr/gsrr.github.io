@@ -24,8 +24,13 @@ def ok(name):
 import server  # noqa: E402
 assert config.GOLD_RATE == server.GOLD_RATE
 assert config.PASS_GOLD == server.PASS_GOLD and config.DEFEND_GOLD == server.DEFEND_GOLD
-assert config.ATTACK_FAIL_GOLD == server.ATTACK_FAIL_GOLD and config.GROW_SECONDS == server.GROW_SECONDS
-assert config.ECON_MAX_CATCHUP == server.ECON_MAX_CATCHUP
+# Phase 14A.10A: the passive-income period is DAILY and lives in game/config.py; server.py
+# mirrors it, and keeps its OWN hourly GROW_SECONDS for conscription only. The two must not
+# be confused, so this pins the split rather than a single shared number.
+assert config.ATTACK_FAIL_GOLD == server.ATTACK_FAIL_GOLD
+assert config.PASSIVE_PERIOD_SECONDS == server.PASSIVE_PERIOD_SECONDS == 86400
+assert config.PASSIVE_MAX_CATCHUP_DAYS == server.PASSIVE_MAX_CATCHUP_DAYS == 3
+assert server.GROW_SECONDS == 3600 and not hasattr(config, "GROW_SECONDS")
 assert config.UNIT_COST == server.UNIT_COST and config.RECRUIT_BATCH == server.RECRUIT_BATCH
 assert config.UNIT_BUILDING == server.UNIT_BUILDING and config.BUILD_COST == server.BUILD_COST
 assert config.TECH_COST == server.TECH_COST and config.TECH_MAX == server.TECH_MAX
@@ -48,18 +53,21 @@ assert army.merge_into_garrison([{"type": "inf", "hp": 10}], "inf", 5) == [{"typ
 ok("army: normalize/total/add/sub(reject too-many)/invalid-unit/negative/garrison/merge")
 
 # ================= economy =================
-assert economy.calculate_passive_gold(0, 0, 0, 0, 3600) == (0, 3600)          # zero pop → 0 gold, clock advances
-assert economy.calculate_passive_gold(0, 100, 0, 0, 3600) == (10, 3600)        # round(100*0.10)=10
-assert economy.calculate_passive_gold(0, 100, 50, 0, 3600) == (15, 3600)       # (100+50)*0.10=15
+# Phase 14A.10A: the settlement PERIOD is one DAY, so every case is stated in periods.
+DAY = config.PASSIVE_PERIOD_SECONDS
+assert economy.calculate_passive_gold(0, 0, 0, 0, DAY) == (0, DAY)            # zero pop → 0 gold, clock advances
+assert economy.calculate_passive_gold(0, 100, 0, 0, DAY) == (10, DAY)         # round(100*0.10)=10
+assert economy.calculate_passive_gold(0, 100, 50, 0, DAY) == (15, DAY)        # (100+50)*0.10=15
+assert economy.calculate_passive_gold(0, 100, 0, 0, DAY - 1) == (0, 0)        # under one whole period → nothing
 assert economy.calculate_passive_gold(0, 100, 0, 0, 0) == (0, 0)               # zero elapsed → no change
-assert economy.calculate_passive_gold(0, 100, 0, 0, 3 * 3600) == (30, 3 * 3600)  # 3 intervals
+assert economy.calculate_passive_gold(0, 100, 0, 0, 3 * DAY) == (30, 3 * DAY)  # 3 intervals
 # repeated settlement doesn't double count
-g1, l1 = economy.calculate_passive_gold(0, 100, 0, 0, 3600)
-g2, l2 = economy.calculate_passive_gold(g1, 100, 0, l1, 3600)                   # same 'now' → no extra
+g1, l1 = economy.calculate_passive_gold(0, 100, 0, 0, DAY)
+g2, l2 = economy.calculate_passive_gold(g1, 100, 0, l1, DAY)                    # same 'now' → no extra
 assert g2 == g1 and l2 == l1
 # catch-up cap
-gcap, _ = economy.calculate_passive_gold(0, 100, 0, 0, 1000 * 3600)
-assert gcap == config.ECON_MAX_CATCHUP * 10
+gcap, _ = economy.calculate_passive_gold(0, 100, 0, 0, 1000 * DAY)
+assert gcap == config.PASSIVE_MAX_CATCHUP_DAYS * 10
 ok("economy: zero/normal/region/zero-elapsed/multi-interval/no-double-count/catch-up cap")
 
 # ================= recruitment =================

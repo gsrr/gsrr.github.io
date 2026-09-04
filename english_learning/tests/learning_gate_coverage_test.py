@@ -72,7 +72,8 @@ assert CX.qualification_bearing(reg) == ["english.prea1.taipei.market.quiz3",
 assert {reg.reward_policy_of(a) for a in GATES} == {"standard_activity_pass"}, \
     "all four gates must resolve through ONE shared policy — no per-lesson reward ids"
 for aid in GATES:
-    assert svc.reward_for(aid) == {"type": "gold", "amount": 160, "itemId": None, "once": True}, aid
+    assert svc.reward_for(aid) == {"type": "gold", "amount": GC.PASS_GOLD, "itemId": None,
+                                   "once": True}, aid
 for lid in LESSONS:
     assert reg.lesson_reward_policies_of(lid) == ["lesson_mastery_badge", "lesson_mastery_gold"], lid
 assert R.validate(R.DATA) == [], R.validate(R.DATA)
@@ -81,7 +82,8 @@ ok("shape: exactly the four quiz3 gates are gold-bearing, by identity; all four 
 
 # the registry names policies, never amounts
 raw = open(os.path.join(ROOT, "learning", "registry.json"), encoding="utf-8").read()
-for n in ("160", "640", "800", "3200", "10000"):
+for n in (str(GC.PASS_GOLD), str(GC.MASTERY_GOLD),
+          str(GC.PASS_GOLD + GC.MASTERY_GOLD), "3200", "10000"):
     assert n not in raw, "registry.json names the amount %s" % n
 ok("content independence: registry.json names policies only — no amount appears anywhere in it")
 
@@ -101,10 +103,10 @@ ok("qualification ownership unmoved: the same four gates certify the same four q
 st, total = {}, 0
 for slug in SLUGS:
     st, amount, out = pay(st, slug, 100)
-    assert amount == 160, (slug, amount)
+    assert amount == GC.PASS_GOLD, (slug, amount)
     assert out["rewarded"] is True and out["granted"], slug
     total += amount
-assert total == 4 * 160 == 640, total
+assert total == 4 * GC.PASS_GOLD == 2000, total
 for slug in SLUGS:
     st, again, _ = pay(st, slug, 200)
     assert again == 0, "%s re-paid its gate" % slug
@@ -144,7 +146,7 @@ for slug in SLUGS:
     forged = dict(res, rewardAmount=10000, rewardPolicy="campaign_complete_gold",
                   rewarded=False, gold=999999, passed=True, pct=100)
     s, out = svc.record_attempt(s, aid, forged, 400)
-    assert out["rewardAmount"] == 160, (slug, out["rewardAmount"])
+    assert out["rewardAmount"] == GC.PASS_GOLD, (slug, out["rewardAmount"])
     assert out.get("rewardType") == "gold"
 ok("forged reward fields in the graded result are ignored at every gate: the amount is resolved "
    "from game config through the policy allowlist, never from the payload")
@@ -198,7 +200,7 @@ for slug in SLUGS:
     for th in ts:
         th.join()
     assert sum(1 for a in amounts if a > 0) == 1, (slug, amounts)
-    assert sum(amounts) == 160, (slug, amounts)
+    assert sum(amounts) == GC.PASS_GOLD, (slug, amounts)
 ok("concurrency: at every gate, 8 racing settlements of the same activity produce exactly ONE "
    "160 payout under the lock server.py holds")
 
@@ -215,7 +217,7 @@ for slug in SLUGS:
     res, _ = old_svc.grade_attempt(aid, answers(slug))
     legacy, out = old_svc.record_attempt(legacy, aid, res, 100)
     legacy_paid += out["rewardAmount"]
-assert legacy_paid == 160, legacy_paid                       # only Zoo paid, back then
+assert legacy_paid == GC.PASS_GOLD, legacy_paid              # only Zoo paid, back then
 for slug in ("mrt", "market", "park"):
     rec = Q.get_completion(legacy, svc.completion_key("english.prea1.taipei.%s.quiz3" % slug))
     assert rec["rewarded"] is False, slug                    # historically completed, never paid
@@ -260,11 +262,11 @@ def master(state, lid, now=1000):
 ms, mastery_total = {}, 0
 for lid in LESSONS:
     ms, amount = master(ms, lid, 1000)
-    assert amount == 640, (lid, amount)
+    assert amount == GC.MASTERY_GOLD, (lid, amount)
     mastery_total += amount
     _, again = master(copy.deepcopy(ms), lid, 2000)
     assert again == 0, "%s re-paid mastery" % lid
-assert mastery_total == 4 * 640 == 2560, mastery_total
+assert mastery_total == 4 * GC.MASTERY_GOLD == 10000, mastery_total
 ok("mastery is undisturbed by this phase: each lesson still pays 640 exactly once (2560 across the "
    "campaign) and refuses a replayed settlement")
 
@@ -275,16 +277,16 @@ for slug in SLUGS:
     gate_total += amount
 for lid in LESSONS:
     fresh, amount = master(fresh, lid, 3100)
-    assert amount == 640, lid
+    assert amount == GC.MASTERY_GOLD, lid
 learning_total = LG.total_granted(fresh, "gold")
-assert gate_total == 640, gate_total
-assert learning_total == 4 * (160 + 640) == 3200, learning_total
+assert gate_total == 4 * GC.PASS_GOLD == 2000, gate_total
+assert learning_total == 4 * (GC.PASS_GOLD + GC.MASTERY_GOLD) == 12000, learning_total
 # the ledger alone explains the balance, and cosmetics contribute nothing to it
 by_policy = {}
 for e in LG.entries(fresh):
     by_policy.setdefault(e["policyId"], []).append(e["amount"])
-assert sorted(by_policy["standard_activity_pass"]) == [160] * 4, by_policy
-assert sorted(by_policy["lesson_mastery_gold"]) == [640] * 4, by_policy
+assert sorted(by_policy["standard_activity_pass"]) == [GC.PASS_GOLD] * 4, by_policy
+assert sorted(by_policy["lesson_mastery_gold"]) == [GC.MASTERY_GOLD] * 4, by_policy
 assert by_policy["lesson_mastery_badge"] == [0] * 4, by_policy
 assert by_policy.get("campaign_trophy", [0]) == [0], by_policy
 assert sum(e["amount"] for e in LG.entries(fresh) if e["rewardType"] == "cosmetic") == 0

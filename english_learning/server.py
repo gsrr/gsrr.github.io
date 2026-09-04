@@ -423,8 +423,14 @@ def save_territory_store(t):
 # --- 玩家經濟（每位玩家：人口 population + 兵力 troops + 上次成長時間）---
 ECON_FILE = "/data/economy.json"
 econ_lock = threading.Lock()
-GROW_SECONDS = 3600   # 金幣結算間隔：每小時
-ECON_MAX_CATCHUP = 72 # 一次最多補算 72 小時，避免長時間停機後金幣暴衝
+# Phase 14A.10A: this file now holds TWO different periods, so each one states its unit.
+# GROW_SECONDS is the CONSCRIPTION settlement period and conscript_tick() is its only consumer --
+# conscription stays HOURLY and is not part of the 14A.10A change. Passive population income is
+# settled by game.economy.calculate_passive_gold() on the DAILY period mirrored just below; the old
+# server-local ECON_MAX_CATCHUP had no consumer at all and would now have named the wrong unit.
+GROW_SECONDS = 3600                                            # 徵兵制結算間隔：每小時(不受 14A.10A 影響)
+PASSIVE_PERIOD_SECONDS = game_config.PASSIVE_PERIOD_SECONDS    # 被動人口收入結算間隔：每「天」
+PASSIVE_MAX_CATCHUP_DAYS = game_config.PASSIVE_MAX_CATCHUP_DAYS
 ECON_START_POP = 100
 ECON_START_TROOPS = 100
 TROOP_ALL = ("cav", "archer", "inf", "spear")   # 兵力池分兵種保存的順序
@@ -508,8 +514,9 @@ def clampi(v, lo=0, hi=100000000):
     return max(lo, min(hi, v))
 
 
-# 取得（或初始化）玩家經濟，並依「過了幾小時」補算「金幣」產出。
-# 金幣是玩家統一資源：由(家鄉人口 + 該玩家所有領地人口)每小時各生 GOLD_RATE 匯入同一個金幣池。
+# 取得（或初始化）玩家經濟，並依「過了幾天」補算「金幣」產出。
+# 金幣是玩家統一資源：由(家鄉人口 + 該玩家所有領地人口)每「天」各生 GOLD_RATE 匯入同一個金幣池。
+# Phase 14A.10A：結算週期由「每小時」改為「每天」(game.economy 為唯一權威，真人與 AI 共用)。
 # 兵力(troops)不再隨時間自動成長——只透過部署/戰鬥增減。
 def econ_get(store, user, now, region_pop=0):
     e = store.get(user)
@@ -599,7 +606,7 @@ RECRUIT_BATCH = game_config.RECRUIT_BATCH
 HOME_KEY = "@home"
 
 
-# 該領地每小時「上繳」給擁有者的金幣(= 人口 × GOLD_RATE)。領地本身不再存金幣、也不再自動長兵。
+# 該領地每「天」上繳給擁有者的金幣(= 人口 × GOLD_RATE)。領地本身不再存金幣、也不再自動長兵。
 def region_gold_income(h):
     return int(round(clampi(h.get("pop", 0)) * GOLD_RATE))
 
@@ -631,7 +638,7 @@ if AI_TICK_MAX < AI_TICK_MIN:                      # a mis-set pair must not cra
 TROOP_KINDS = ("cav", "archer", "inf", "spear")
 TERR_CATALOG = "/data/territory_catalog.json"   # 從真人佔領學到的 {regionKey: pop}
 # AI 有自己的「家鄉基地」(存在 economy.json 的 AI_OWNER 帳下，off-map、玩家打不到)：
-# 人口→每小時金幣、金幣→自動招募補兵。難度越高，預設人口與金幣越多(→ 收入更高、軍隊更快更大)。
+# 人口→每「天」金幣、金幣→自動招募補兵。難度越高，預設人口與金幣越多(→ 收入更高、軍隊更快更大)。
 AI_DIFFICULTY = os.environ.get("AI_DIFFICULTY", "normal").lower()
 AI_DIFF = {
     "easy":   {"pop": 120,  "gold": 300},
@@ -847,7 +854,8 @@ def _ai_log_event(ai_name, kind, region, victim=None, key=None, atk=0, dfn=0):
         save_events(evs)
 
 
-# AI 家鄉基地經濟：依難度種下人口/金幣，之後跟玩家一樣每小時產金(人口 + AI 領地人口)。
+# AI 家鄉基地經濟：依難度種下人口/金幣，之後跟玩家一樣每「天」產金(人口 + AI 領地人口)。
+# 產金完全走 econ_get -> game.economy.calculate_passive_gold，與真人同一條權威、同一個週期。
 def ai_econ(estore, now, tstore, name, difficulty):
     if not isinstance(estore.get(name), dict):
         diff = AI_DIFF.get(difficulty, AI_DIFF["normal"])
@@ -2801,7 +2809,9 @@ class Handler(BaseHTTPRequestHandler):
             pop, troops, gold = e["population"], e["troops"], e["gold"]
             buildings, tech = e["buildings"], e["tech"]
             conscript, cbudget = bool(e.get("conscript")), clampi(e.get("conscriptBudget", 0))
-        income = int(round((pop + region_pop) * GOLD_RATE))   # 金幣/小時 = (家鄉+領地人口) × 比例
+        # 金幣/天 = (家鄉+領地人口) × 比例。與 game.economy.calculate_passive_gold 同一條規則，
+        # 只是這裡是「顯示用的每日速率」，不是另一份權威。
+        income = int(round((pop + region_pop) * GOLD_RATE))
         # Phase 7E.2：把「學習獎勵金額」唯讀地告訴前端，讓 Learning Home 能顯示真實數字。
         # 這不是新的獎勵、也不是新的權威來源——金額仍然只存在於 game/config.py，由這裡讀出來。
         # 前端永遠不自己算金額(否則就變成第二份經濟真相)，只是把伺服器說的數字顯示出來。

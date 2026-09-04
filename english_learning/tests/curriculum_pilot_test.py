@@ -92,16 +92,16 @@ def master(state, now=2000):
 res, err = svc.grade_attempt(GATE, ANSWERS)
 assert not err and res["passed"] and res["pct"] == 100, (err, res)
 st, gate_out = svc.record_attempt({}, GATE, res, 100)
-assert gate_out["rewardAmount"] == GC.PASS_GOLD == 160, gate_out
+assert gate_out["rewardAmount"] == GC.PASS_GOLD == 500, gate_out
 assert gate_out.get("lessonRewardAmount", 0) == 0, "mastery must not pay at the gate"
 ok("3. the gate grades server-side and pays PASS_GOLD (%d) exactly once" % GC.PASS_GOLD)
 
 st, m = master(st)
 assert m["lessonCompletedNow"] is True, m
-assert m["lessonRewardAmount"] == GC.MASTERY_GOLD == 640, m
-assert LG.total_granted(st, "gold") == GC.PASS_GOLD + GC.MASTERY_GOLD == 800, LG.total_granted(st, "gold")
+assert m["lessonRewardAmount"] == GC.MASTERY_GOLD == 2500, m
+assert LG.total_granted(st, "gold") == GC.PASS_GOLD + GC.MASTERY_GOLD == 3000, LG.total_granted(st, "gold")
 assert LG.owned_items(st) == ["badge.lesson.mastered"], LG.owned_items(st)
-ok("4. mastery completes server-side and pays MASTERY_GOLD (%d); 800 total, same as a Taipei lesson"
+ok("4. mastery completes server-side and pays MASTERY_GOLD (%d); 3000 total, same as a Taipei lesson"
    % GC.MASTERY_GOLD)
 
 # ============================== 5/6/7. exactly once ==============================
@@ -111,8 +111,8 @@ assert again.get("lessonRewardAmount", 0) == 0, "replayed mastery pays nothing"
 res2, _ = svc.grade_attempt(GATE, ANSWERS)
 _, gate2 = svc.record_attempt(copy.deepcopy(base), GATE, res2, 3100)
 assert gate2["rewardAmount"] == 0, "replayed gate pays nothing"
-assert LG.total_granted(base, "gold") == 800, "the ledger total never grows on replay"
-ok("5/6/7. replayed gate and replayed mastery both pay 0; ledger stays at 800")
+assert LG.total_granted(base, "gold") == 3000, "the ledger total never grows on replay"
+ok("5/6/7. replayed gate and replayed mastery both pay 0; ledger stays at 3000")
 
 # ============================== 8/9/10. NO qualification, anywhere ==============================
 assert reg.qualification_ids_for(GATE) == [], "the pilot gate must grant NO qualification"
@@ -210,7 +210,7 @@ assert "amount" not in json.dumps(reg.lesson(PILOT)), "content may never state a
 assert svc.reward_for(GATE)["amount"] == GC.PASS_GOLD, "the amount comes from game config"
 blob = json.dumps({"lesson": reg.lesson(PILOT),
                    "activity": reg.activities[GATE]})
-for n in ("160", "640", "800"):
+for n in ("500", "2500", "3000"):        # 14A.10A amounts; the registry still names none
     assert n not in blob, "the registry must not hardcode reward amounts: %s" % n
 ok("amounts stay server-configured: the pilot's registry entry names policies only, no numbers")
 

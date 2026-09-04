@@ -233,7 +233,8 @@ ok("room isolation: battle gold lands only in the room that hosted the battle")
 # The control region proves the fixture really does conscript, so this cannot pass vacuously.
 server.set_room(CODE)
 server.save_catalog({SRC: 100, TGT: 100})
-long_ago = time.time() - 2 * server.GROW_SECONDS
+# Phase 14A.10A: two PASSIVE periods (days), not two conscription periods (hours).
+long_ago = time.time() - 2 * server.PASSIVE_PERIOD_SECONDS
 conscripting = {"conscript": True, "conscriptBudget": 60, "buildings": {"barracks": True},
                 "lastConscript": long_ago, "pop": 100}
 server.save_territory_store({

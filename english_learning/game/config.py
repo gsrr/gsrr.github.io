@@ -6,17 +6,29 @@ frontend/canonical +10% per level (the backend AI previously used +8%). No other
 """
 
 # --- economy ---
-GOLD_RATE = 0.10
-GROW_SECONDS = 3600
-ECON_MAX_CATCHUP = 72
+# Phase 14A.10A: PASSIVE POPULATION INCOME IS DAILY, NOT HOURLY.
+#
+# 10% of (home base + owned territory) population per HOUR made simply leaving a server running the
+# strongest strategy in the game: the 14A.10 audit measured one normal AI reaching ~2,700 troops by
+# room-hour 50 and ~14,300 by room-hour 120, entirely from legitimately paid-for recruitment, with
+# no troop minting anywhere. The same rate now pays once per DAY, so the passive economy is slow
+# background growth and LEARNING is the strong active earner (see PASS_GOLD / MASTERY_GOLD below).
+#
+# The names carry their unit on purpose. This module's period is the PASSIVE-INCOME period only;
+# conscription keeps its own hourly period in server.py, and the two must never be confused again.
+GOLD_RATE = 0.10                 # of population, per PASSIVE_PERIOD_SECONDS
+PASSIVE_PERIOD_SECONDS = 86400   # one day of elapsed wall-clock time (not a calendar date)
+PASSIVE_MAX_CATCHUP_DAYS = 3     # at most three daily payouts are settled after a long absence
 ECON_START_POP = 100
 ECON_START_TROOPS = 100
 # Phase 7C.2: study payouts are split between the gate and full mastery. Passing the gate proves
-# eligibility and pays a token acknowledgement (20%); completing the whole unit pays the substantial
-# reward (80%). Total study-derived value per newly mastered unit = 800.
+# eligibility and pays an acknowledgement; completing the whole unit pays the substantial reward.
+# Phase 14A.10A raised both (160/640 -> 500/2500) so that STUDY, not idling, is how a player funds
+# an army: one fully passed and mastered unit is now worth 3000 gold, about 285 troops at the
+# unchanged UNIT_COST, against 15 gold a day for a starting home base.
 # Deliberately neutral names: this module knows economic amounts, never what is being studied.
-PASS_GOLD = 160                  # gate task passed: 20% of a unit's study value
-MASTERY_GOLD = 640               # whole unit mastered, once ever: the other 80%
+PASS_GOLD = 500                  # gate task passed
+MASTERY_GOLD = 2500              # whole unit mastered, once ever
 DEFEND_GOLD = 50
 ATTACK_FAIL_GOLD = 50
 
@@ -26,7 +38,7 @@ ATTACK_FAIL_GOLD = 50
 #
 # REENTRY_GOLD_COST is a LEVY, not a purchase: it buys no troops (the foothold force is debited from
 # the player's existing pool, so troops still only ever move) and pays no reward. 120 is ~8 hours of
-# a home base's passive income (population 150 x GOLD_RATE 0.10 = 15/hr), so being wiped out stings
+# a home base's passive income (population 150 x GOLD_RATE 0.10 = 15/day), so being wiped out stings
 # and is still recoverable without any second economy.
 #
 # DELIBERATELY OUTSIDE fingerprint(): that hash is an explicit allowlist of the constants that decide
@@ -94,7 +106,8 @@ def fingerprint():
     import hashlib
     import json
     payload = {
-        "GOLD_RATE": GOLD_RATE, "GROW_SECONDS": GROW_SECONDS, "ECON_MAX_CATCHUP": ECON_MAX_CATCHUP,
+        "GOLD_RATE": GOLD_RATE, "PASSIVE_PERIOD_SECONDS": PASSIVE_PERIOD_SECONDS,
+        "PASSIVE_MAX_CATCHUP_DAYS": PASSIVE_MAX_CATCHUP_DAYS,
         "PASS_GOLD": PASS_GOLD, "MASTERY_GOLD": MASTERY_GOLD,
         "DEFEND_GOLD": DEFEND_GOLD, "ATTACK_FAIL_GOLD": ATTACK_FAIL_GOLD,
         "UNIT_ATK": UNIT_ATK, "UNIT_DEF": UNIT_DEF, "UNIT_COST": UNIT_COST, "RECRUIT_BATCH": RECRUIT_BATCH,

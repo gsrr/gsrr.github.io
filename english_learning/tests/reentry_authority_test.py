@@ -172,9 +172,9 @@ assert game_config.REENTRY_CANDIDATES == 4, game_config.REENTRY_CANDIDATES
 assert game_config.REENTRY_FAIR_POOL == 0.25, game_config.REENTRY_FAIR_POOL
 # re-entry decides neither a battle nor a reward, so it is deliberately outside the fingerprint's
 # explicit allowlist -- which means the published fingerprint must be UNCHANGED by this phase.
-assert game_config.fingerprint() == "736503ae2c4f5fa5", game_config.fingerprint()
+assert game_config.fingerprint() == "28e400e55da22e44", game_config.fingerprint()
 ok("balance: REENTRY_GOLD_COST 120 / REENTRY_CANDIDATES 4 / REENTRY_FAIR_POOL .25, and the published "
-   "game fingerprint 736503ae2c4f5fa5 is unchanged by the phase")
+   "game fingerprint 28e400e55da22e44 (moved by 14A.10A) is unchanged by THIS phase")
 
 # ============================ 2. eligibility matrix ============================
 A, tokA = account("ReA")

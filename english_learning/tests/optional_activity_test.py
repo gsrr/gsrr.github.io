@@ -136,15 +136,16 @@ svc._settle_lesson(st, LID, 2000, m)
 assert g["rewardAmount"] == GC.PASS_GOLD, g
 assert m["lessonRewardAmount"] == GC.MASTERY_GOLD, m
 assert m["lessonCompletedNow"] is True, m
-assert LG.total_granted(st, "gold") == 800, LG.total_granted(st, "gold")
+FULL = GC.PASS_GOLD + GC.MASTERY_GOLD                    # 14A.10A: 500 + 2500 = 3000
+assert LG.total_granted(st, "gold") == FULL == 3000, LG.total_granted(st, "gold")
 assert (st.get("qualifications") or {}) == {}, "an A1 lesson grants no qualification"
 base = copy.deepcopy(st)
 _, again = svc.record_attempt(copy.deepcopy(base), gate, res, 3000)
 r2 = {}
 svc._settle_lesson(copy.deepcopy(base), LID, 3000, r2)
 assert again["rewardAmount"] == 0 and r2.get("lessonRewardAmount", 0) == 0
-assert LG.total_granted(base, "gold") == 800
-ok("5. the five REQUIRED activities still complete the lesson for exactly 800 (160+640), replay pays "
+assert LG.total_granted(base, "gold") == FULL
+ok("5. the five REQUIRED activities still complete the lesson for exactly 3000 (500+2500), replay pays "
    "0, and no qualification is granted")
 
 # ============================== 6. mastery is reachable WITHOUT the optional four ==============================

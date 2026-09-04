@@ -187,7 +187,7 @@ ok("5. validator now discovers EVERY referenced policy per scope: lesson_mastery
 # the payout the validator was blind to is real
 lid = "english.prea1.taipei.zoo"
 assert "lesson_mastery_gold" in reg.lesson_reward_policies_of(lid)
-assert W.resolve("lesson_mastery_gold", AMOUNTS)["amount"] == GC.MASTERY_GOLD == 640
+assert W.resolve("lesson_mastery_gold", AMOUNTS)["amount"] == GC.MASTERY_GOLD == 2500
 assert reg.lesson_reward_policy_of(lid) == "lesson_mastery_badge", \
     "the FIRST policy is cosmetic — precisely why singular discovery hid the gold one"
 ok("lesson_mastery_gold resolves to MASTERY_GOLD (%d); the first-declared policy is the cosmetic "

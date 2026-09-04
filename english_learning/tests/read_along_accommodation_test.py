@@ -368,9 +368,9 @@ for lid in reg.lessons:
         req += 1
     assert len(r_) == (7 if lid.startswith("english.prea1") else 5), (lid, len(r_))
 assert req == 57, req
-assert (PASS_GOLD, MASTERY_GOLD) == (160, 640)
+assert (PASS_GOLD, MASTERY_GOLD) == (500, 2500)
 assert len(reg.qualifications) == 4
 ok("17. unchanged: 57 lessons / 457 activities / 57 read-along required in 57, Pre-A1+Taipei 7 and "
-   "A1/A2/B1 5, PASS_GOLD 160, MASTERY_GOLD 640, 4 qualifications -- Read Along is still REQUIRED")
+   "A1/A2/B1 5, PASS_GOLD 500, MASTERY_GOLD 2500, 4 qualifications -- Read Along is still REQUIRED")
 
 print("\nAll %d read-along accommodation tests passed." % passed)

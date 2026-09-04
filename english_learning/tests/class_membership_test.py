@@ -383,12 +383,14 @@ for lid in reg.lessons:
         req_ok += 1
     assert len(r) == (7 if lid.startswith("english.prea1") else 5), (lid, len(r))
 assert req_ok == 57
-assert (PASS_GOLD, MASTERY_GOLD) == (160, 640)
+assert (PASS_GOLD, MASTERY_GOLD) == (500, 2500)          # Phase 14A.10A raised both
 assert len(reg.qualifications) == 4
-assert fingerprint() == "736503ae2c4f5fa5"
+# Phase 14A.10A: PASS_GOLD, MASTERY_GOLD and the passive period/catch-up keys are all in the
+# fingerprint payload, so this phase MOVES the fingerprint on purpose.
+assert fingerprint() == "28e400e55da22e44"
 assert sorted(server.allowed_game_maps()) == ["world"]
 ok("18. unchanged by this phase: 57 lessons / 457 activities / read-along required 57 of 57, "
    "Pre-A1+Taipei 7 and A1/A2/B1 5, PASS_GOLD 160, MASTERY_GOLD 640, 4 qualifications, "
-   "fingerprint 736503ae2c4f5fa5, allowed_game_maps {'world'}")
+   "fingerprint 28e400e55da22e44, allowed_game_maps {'world'}")
 
 print("\nAll %d class-membership tests passed." % passed)

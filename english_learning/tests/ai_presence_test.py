@@ -209,13 +209,14 @@ ok("13-17. every AI holding ground appears in /api/territory (flagged ai:true), 
 # time -- that is the existing economy, deliberately preserved. Rather than inject troops (which
 # would prove nothing about the real path), roll `lastGold` back so the genuine passive-gold formula
 # pays out and _ai_recruit() buys the next army itself.
-def age_ai(code, name, hours=3):
+def age_ai(code, name, days=3):
     server.set_room(code)
     with server.econ_lock:
         es = server.load_econ_store()
         e = es.get(name)
         if isinstance(e, dict):
-            e["lastGold"] = time.time() - hours * server.game_config.GROW_SECONDS - 1
+            # Phase 14A.10A: passive income settles per DAY, so the harness ages by days.
+            e["lastGold"] = time.time() - days * server.game_config.PASSIVE_PERIOD_SECONDS - 1
             server.save_econ_store(es)
 
 

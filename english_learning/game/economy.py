@@ -5,15 +5,20 @@ from .army import clampi
 
 
 def calculate_passive_gold(gold, population, region_pop, last, now):
-    """Return (new_gold, new_last). Mirrors econ_get:
-       hours = floor((now-last)/GROW_SECONDS)
-       gold += min(hours, ECON_MAX_CATCHUP) * round((population+region_pop)*GOLD_RATE)
-       last += hours*GROW_SECONDS   (advances the clock so repeats don't double-count)"""
+    """Return (new_gold, new_last). THE one passive-income authority, shared by humans and AI:
+       days = floor((now-last)/PASSIVE_PERIOD_SECONDS)          # whole elapsed periods only
+       gold += min(days, PASSIVE_MAX_CATCHUP_DAYS) * round((population+region_pop)*GOLD_RATE)
+       last += days*PASSIVE_PERIOD_SECONDS   (advances the clock so repeats don't double-count)
+
+    Phase 14A.10A changed the PERIOD from an hour to a day and nothing else. The shape is
+    unchanged, and so is its treatment of an existing `last` timestamp: it is read as plain
+    elapsed wall-clock seconds, never as a calendar date, so a record last settled 12 hours ago
+    simply earns nothing yet -- it does not become 12 payouts of either size."""
     gold = clampi(gold)
-    hours = int((now - last) // config.GROW_SECONDS)
-    if hours <= 0:
+    days = int((now - last) // config.PASSIVE_PERIOD_SECONDS)
+    if days <= 0:                                     # under one whole day: no partial payout
         return gold, last
-    per_hour = int(round((clampi(population) + clampi(region_pop)) * config.GOLD_RATE))
-    gold = clampi(gold + min(hours, config.ECON_MAX_CATCHUP) * per_hour)
-    last = last + hours * config.GROW_SECONDS
+    per_day = int(round((clampi(population) + clampi(region_pop)) * config.GOLD_RATE))
+    gold = clampi(gold + min(days, config.PASSIVE_MAX_CATCHUP_DAYS) * per_day)
+    last = last + days * config.PASSIVE_PERIOD_SECONDS
     return gold, last

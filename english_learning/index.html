@@ -7121,7 +7121,7 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       .catch(() => { if (cb) cb(); });
   }
   // ===== 玩家經濟：人口(population) + 兵力(troops，打仗用) + 金幣(gold，統一資源) =====
-  //   兵力不再自動成長；金幣每小時由(家鄉+所有領地人口)統一匯入，用來蓋建築/研發科技。
+  //   兵力不再自動成長；金幣每「天」由(家鄉+所有領地人口)統一匯入，用來蓋建築/研發科技。
   let myEcon = null;   // {population, troops, gold, goldIncome}
   function sumHp(arr) { return (arr || []).reduce((s, t) => s + (t && t.hp > 0 ? t.hp : 0), 0); }
   let roomFull = false;
@@ -7159,7 +7159,7 @@ nextLevelBtn.textContent = "✅ Back to lessons";
     }
     if (!authToken()) { bar.style.display = "none"; return; }
     const e = myEcon || { population: 0, gold: 0, goldIncome: 0 };
-    bar.innerHTML = '🏠 <b>Home base</b> · 👥 Pop <b>' + e.population + '</b> · ⚔️ Troops <b>' + poolTotal() + '</b> <span class="emp-inc">' + poolBreakdown() + '</span> · 🪙 Gold <b>' + (e.gold || 0) + '</b> <span class="emp-inc">(+' + (e.goldIncome || 0) + '/hr)</span> <span class="emp-more">details ▸</span>';
+    bar.innerHTML = '🏠 <b>Home base</b> · 👥 Pop <b>' + e.population + '</b> · ⚔️ Troops <b>' + poolTotal() + '</b> <span class="emp-inc">' + poolBreakdown() + '</span> · 🪙 Gold <b>' + (e.gold || 0) + '</b> <span class="emp-inc">(+' + (e.goldIncome || 0) + '/day)</span> <span class="emp-more">details ▸</span>';
     bar.style.display = "block"; bar.style.cursor = "pointer";
     bar.onclick = openEmpire;
   }
@@ -7215,7 +7215,7 @@ nextLevelBtn.textContent = "✅ Back to lessons";
     const gold = (e.gold || 0), goldInc = (e.goldIncome != null) ? e.goldIncome : Math.round(e.population * 0.1);
     const empTip = "🏠 Home base is safe — lose a battle and survivors retreat here. " +
       "👥 Population drives your gold income (bigger cities earn more). " +
-      "🪙 Each region remits gold (10% of its people/hr). " +
+      "🪙 Each region remits gold (10% of its people per day). " +
       "🎖️ Recruiting turns people into troops (1 person = 1 soldier), so it shrinks that place's population.";
     const TABS = [["overview", "🗺️ Overview"], ["forces", "⚔️ Forces"],
                   ["buildings", "🏛️ Buildings"], ["tech", "🏭 Technology"]];
@@ -7224,7 +7224,7 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       '<div><span>👥</span><b>' + e.population + '</b><small>population</small></div>' +
       '<div><span>⚔️</span><b>' + poolTotal() + '</b><small>free troops</small></div>' +
       '<div><span>🛡️</span><b>' + garTotal + '</b><small>garrisoned</small></div>' +
-      '<div><span>🪙</span><b>' + gold + '</b><small>gold (+' + goldInc + '/hr)</small></div>' +
+      '<div><span>🪙</span><b>' + gold + '</b><small>gold (+' + goldInc + '/day)</small></div>' +
       '</div>' +
       '<div class="emp-tabs" role="tablist">' + TABS.map(t =>
         '<button type="button" class="emp-tab" role="tab" data-tab="' + t[0] + '" aria-selected="' +
@@ -8848,7 +8848,7 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         HUD.pl.innerHTML = '<div class="hp-av">' + (userName ? avatarOf(userName) : "\u{1F9B8}") + '</div>' +
           '<div style="min-width:0"><div class="hp-nm">' + escapeHtml(dispName(nm)) + '</div>' +
           '<div class="hp-st"><span class="hs-gold">\u{1FA99} ' + (e.gold || 0) +
-          ' <i>+' + (e.goldIncome || 0) + '/hr</i></span>' +
+          ' <i>+' + (e.goldIncome || 0) + '/day</i></span>' +
           '<span class="hs-troops">\u2694\uFE0F ' + poolTotal() + '</span>' +
           // Phase 13C.2: the ONE global holdings figure worth carrying at a glance, now that the
           // per-player Holdings list has left the territory inspector. Counted from the same
