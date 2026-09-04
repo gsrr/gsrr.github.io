@@ -8091,8 +8091,21 @@ nextLevelBtn.textContent = "✅ Back to lessons";
   //   規則：先依縮放過濾(選取的一律留)，再依 priority 高→低貪婪擺放，box 與已接受者重疊者隱藏；選取的必顯示。
   //   回傳同一批 cands，並在每個上設 .visible。
   function rectsOverlap(a, b) { return !(a.x1 <= b.x0 || a.x0 >= b.x1 || a.y1 <= b.y0 || a.y0 >= b.y1); }
+  // ===== Phase 14A.11A: the two numbers that decide map density =====
+  // LABEL_MIN_TERR_PX -- how wide a territory must be at s=1 before it names itself. The zoom
+  //   model is unchanged: minZoom = LABEL_MIN_TERR_PX / territoryWidth, so a smaller territory
+  //   simply needs more zoom. There is deliberately NO global cap on how many labels may show;
+  //   the threshold, the fit rule and the pre-existing collision pass are the whole mechanism.
+  // LABEL_FIT_RATIO -- how much wider than its territory a name may be. 1.0 means "must fit".
+  //   Measured against the real map: at the home camera this removes every one of the oversized
+  //   pills the 14A.11 audit found, while the large countries that anchor the world still label.
+  const LABEL_MIN_TERR_PX = 90;
+  const LABEL_FIT_RATIO = 1.0;
   function placeMapLabels(cands, zoom) {
-    const eligible = cands.filter(c => c.selected || (zoom >= c.minZoom && zoom <= c.maxZoom));
+    // The SELECTED territory is exempt from both gates: whatever the player just tapped must be
+    // able to say its own name, however small it is and however long its name is.
+    const eligible = cands.filter(c => c.selected ||
+      (zoom >= c.minZoom && zoom <= c.maxZoom && c.fits !== false));
     const rest = cands.filter(c => eligible.indexOf(c) < 0);
     eligible.sort((a, b) => (b.selected ? 1 : 0) - (a.selected ? 1 : 0) || b.priority - a.priority);
     const placed = [];
@@ -8108,7 +8121,9 @@ nextLevelBtn.textContent = "✅ Back to lessons";
   // territory card renders, and nothing else. It grants nothing, and no server call reads it.
   let hudSelKey = null;
   let hudRefresh = function () {};   // set by the HUD builder for the current map draw
-  let geoSelectedKey = null;        // 目前選取的地區 key（一律顯示其標籤）
+  // Phase 14A.11A: `geoSelectedKey` used to live here and was READ by placeMapLabels but never
+  // assigned, so the documented "the selected label is always shown" rule could never fire. There
+  // is one selection authority -- hudSelKey, just above -- and the label layer now reads it.
   // ===== Phase 12D: camera + selection memory, for THIS SESSION ONLY =====
   // Leaving the board and coming back (Academy, My Progress, Ranking, Multiplayer, Empire, a lesson)
   // used to drop the player at the home camera with nothing selected, which is punishing when the
@@ -8600,6 +8615,11 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         el.className = "geo-lab" + (L.cont ? " cont" : "");
         el.textContent = L.label;
         lay.appendChild(el); L.el = el;
+        // Phase 14A.11A: measure the RENDERED pill once, here, while it is still displayed. Every
+        // later decision -- the collision box and the new fit rule -- uses this one number, so
+        // there is no second geometry system and no character-count proxy. A hidden element
+        // measures 0, which is why this happens at creation and never again.
+        L.w = Math.round(el.getBoundingClientRect().width) || 0;
         const restW = (L.uw || 10) * PK;                           // 該區在 s=1 時的螢幕寬(px)
         // ===== Phase 12C semantic zoom =====
         // FAR  : continent labels + the few territories big enough to read
@@ -8624,8 +8644,14 @@ nextLevelBtn.textContent = "✅ Back to lessons";
           el.addEventListener("keydown", ev => { if (ev.key === "Enter" || ev.key === " ") go(ev); });
         } else {
           L.priority = restW;
-          L.minZoom = Math.max(0, 46 / Math.max(6, restW));
+          // ===== Phase 14A.11A: a stronger admission threshold =====
+          // 46 admitted any territory ~46px wide at s=1, which put 40 name pills on the home
+          // camera -- more contrast than the ownership tint the map exists to show. 90 asks a
+          // territory to be genuinely large before it names itself at overview; everything else
+          // arrives progressively as the player zooms, through the SAME zoom-dependent formula.
+          L.minZoom = Math.max(0, LABEL_MIN_TERR_PX / Math.max(6, restW));
           L.maxZoom = Infinity;
+          L.restW = restW;                    // screen width at s=1, for the fit rule below
         }
       });
       // 依目前縮放/平移，把每個標籤投影到螢幕、量測 box、交給 placeMapLabels 取捨後定位
@@ -8647,10 +8673,18 @@ nextLevelBtn.textContent = "✅ Back to lessons";
           const fx = CTM ? projX(L.cx, L.cy) : 0;
           const fy = CTM ? projY(L.cx, L.cy) : 0;
           const txt = L.label;
-          const w = txt.length * FS * 0.56 + PADX, h = FS * 1.8;
+          // the measured pill, with the old estimate kept only as a fallback for a label that
+          // could not be measured (a hidden ancestor at build time)
+          const w = L.w || (txt.length * FS * 0.56 + PADX), h = FS * 1.8;
+          // ===== Phase 14A.11A: does the name fit the ground it names? =====
+          // The old rule asked only how wide the TERRITORY was and never how wide the LABEL was,
+          // so "Federated States of Micronesia" drew a 222px pill across a 95px island. A
+          // continent label names no territory, so it is not a fit candidate.
+          const terrW = (L.restW || 0) * s;
+          const fits = !!L.cont || terrW <= 0 || w <= terrW * LABEL_FIT_RATIO;
           return { L: L, fx: fx, fy: fy, priority: L.priority,
-            minZoom: L.minZoom, maxZoom: L.maxZoom,
-            selected: !!(L.key && L.key === geoSelectedKey),
+            minZoom: L.minZoom, maxZoom: L.maxZoom, fits: fits,
+            selected: !!(L.key && L.key === hudSelKey),
             box: { x0: fx - w / 2, y0: fy - h / 2, x1: fx + w / 2, y1: fy + h / 2 } };
         });
         placeMapLabels(cands, s);
@@ -9467,6 +9501,10 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         }
         if (key !== hudSelKey) closeTray();
         hudSelKey = key;
+        // Phase 14A.11A: the selected label is exempt from the density rules, so the layer has to
+        // be re-laid out when the selection moves -- otherwise the exemption would follow the
+        // previous territory until the next camera change.
+        if (_geoResel) _geoResel();
         renderHudCard(); renderHudActions();
         announceSelection(key);
         geoRememberView();

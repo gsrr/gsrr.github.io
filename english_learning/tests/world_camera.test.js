@@ -108,16 +108,22 @@ assert(/holder\.dataset\.zoom = s < 2 \? "far" : \(s < 4\.2 \? "mid" : "near"\);
   "zoom bands must be derived from the camera scale");
 assert(/\[data-zoom="far"\]/.test(html) && /\[data-zoom="mid"\]/.test(html),
   "the bands must drive presentation density in CSS");
-assert(/L\.minZoom = Math\.max\(0, 46 \/ Math\.max\(6, restW\)\);/.test(labels),
-  "territory labels are admitted as they become legible");
+// Phase 14A.11A: the zoom model is unchanged -- minZoom is still derived from how much room the
+// territory has -- but the bar it must clear is now a named constant rather than a literal 46,
+// and it is higher, so the World overview names only genuinely large ground.
+assert(/L\.minZoom = Math\.max\(0, LABEL_MIN_TERR_PX \/ Math\.max\(6, restW\)\);/.test(labels),
+  "territory labels are still admitted by how much room they have, through a named threshold");
+assert(/const LABEL_MIN_TERR_PX = 90;/.test(code),
+  "...and that threshold is stronger than the 46 the 14A.11 audit measured as too permissive");
 assert(/L\.priority = restW;/.test(labels),
   "...and are prioritised purely by how much room they have");
 assert(/L\.maxZoom = 4\.2;/.test(contBlock),
   "continent labels step aside once the player is zoomed in");
 const place = slice("function placeMapLabels", "\n  let hudSelKey", "placeMapLabels");
-assert(/c\.selected \|\| \(zoom >= c\.minZoom && zoom <= c\.maxZoom\)/.test(place) &&
+assert(/c\.selected \|\|/.test(place) &&
+       /zoom >= c\.minZoom && zoom <= c\.maxZoom && c\.fits !== false/.test(place) &&
        /if \(c\.selected\) \{ c\.visible = true;/.test(place),
-  "the selected territory's label must always be visible, whatever the zoom");
+  "the selected territory's label is exempt from BOTH gates -- zoom band and fit");
 ok("6/7. one map with three densities; the selected label is always exempt from the zoom filter");
 
 // ================= 8/9. the camera never touches game state =================
