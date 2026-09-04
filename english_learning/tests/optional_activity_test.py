@@ -70,10 +70,10 @@ for lid in A1:
     for suf in A1_OPTIONAL:
         aid = lid + "." + suf
         assert reg.reward_policy_of(aid) == "none", aid
-        assert svc.reward_for(aid)["amount"] == 0, aid
+        assert reg.reward_policy_of(aid) != "standard_activity_pass", aid
         assert reg.qualification_ids_for(aid) == [], aid
     gates = [a for a in reg.activities
-             if reg.activities[a]["lessonId"] == lid and svc.reward_for(a)["amount"] > 0]
+             if reg.activities[a]["lessonId"] == lid and reg.reward_policy_of(a) == "standard_activity_pass"]
     assert gates == [lid + ".quiz3"], (lid, gates)
 ok("2. all 48 optional A1 activities pay 0 and grant nothing; each lesson still has exactly ONE "
    "paying gate (quiz3 at PASS_GOLD)")
@@ -136,8 +136,11 @@ svc._settle_lesson(st, LID, 2000, m)
 assert g["rewardAmount"] == GC.PASS_GOLD, g
 assert m["lessonRewardAmount"] == GC.MASTERY_GOLD, m
 assert m["lessonCompletedNow"] is True, m
-FULL = GC.PASS_GOLD + GC.MASTERY_GOLD                    # 14A.10A: 500 + 2500 = 3000
-assert LG.total_granted(st, "gold") == FULL == 3000, LG.total_granted(st, "gold")
+# Phase 14A.10B: a legitimate NEW pass earns ONE REWARD GAME and pays no gold. PASS_GOLD is
+# 0 and the gate policy resolves inert; the game (and its 3000-6000 prize) is created by the
+# server layer, which tests/reward_games_test.py drives end to end.
+FULL = GC.MASTERY_GOLD                                   # only mastery pays gold now
+assert LG.total_granted(st, "gold") == FULL == 2500, LG.total_granted(st, "gold")
 assert (st.get("qualifications") or {}) == {}, "an A1 lesson grants no qualification"
 base = copy.deepcopy(st)
 _, again = svc.record_attempt(copy.deepcopy(base), gate, res, 3000)
@@ -145,7 +148,7 @@ r2 = {}
 svc._settle_lesson(copy.deepcopy(base), LID, 3000, r2)
 assert again["rewardAmount"] == 0 and r2.get("lessonRewardAmount", 0) == 0
 assert LG.total_granted(base, "gold") == FULL
-ok("5. the five REQUIRED activities still complete the lesson for exactly 3000 (500+2500), replay pays "
+ok("5. the five REQUIRED activities still complete the lesson for exactly 2500 (mastery only), replay pays "
    "0, and no qualification is granted")
 
 # ============================== 6. mastery is reachable WITHOUT the optional four ==============================

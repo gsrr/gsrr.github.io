@@ -179,11 +179,29 @@ assert(code.indexOf('id = "hudTray"') === -1 && code.indexOf('className = "hud-t
 // early return and the full planner -- so what is pinned is that the ACTION-MODAL surface is
 // opened from this one function and nowhere else in the client.
 assert(/openModal\(html\)/.test(tray), "the planner opens the shared modal");
-assert((code.match(/classList\.add\("act-modal"\)/g) || []).length === 2,
-  "the action-modal surface is created only by the planner's two branches");
+assert((tray.match(/classList\.add\("act-modal"\)/g) || []).length === 2,
+  "the planner creates the action-modal surface in exactly its two branches");
+// Phase 14A.10B added a SECOND legitimate family of act-modal users: the four learning reward
+// mini-games. They are not a World surface at all -- they open from the Academy/lesson flow -- so
+// what this pin protects is restated rather than relaxed: every act-modal creator outside the
+// planner must belong to that reward-game family, and that family must do no camera or board work.
+const rg = slice("let rgPrizes = null;", "function launchAttack(", "reward games");
+const outside = (code.match(/classList\.add\("act-modal"\)/g) || []).length -
+  (tray.match(/classList\.add\("act-modal"\)/g) || []).length;
+assert(outside === (rg.match(/classList\.add\("act-modal"\)/g) || []).length,
+  "every other action-modal creator is a learning reward game");
+["geoCam", "drawGeo", "geoFocusKey", "hudSelect", "createElementNS", "getScreenCTM",
+ "viewBox"].forEach(bad => {
+  assert(rg.indexOf(bad) === -1,
+    "a reward game must not touch the World camera or board: " + bad);
+});
+// ...and the whole population of act-modal references is accounted for by exactly three places:
+// the planner, its stylesheet, and the reward-game family classified above. Nothing else may
+// reach the action-modal surface.
 assert((code.match(/act-modal/g) || []).length ===
-       (tray.match(/act-modal/g) || []).length + (css.match(/act-modal/g) || []).length,
-  "nothing outside the planner and its stylesheet references the action modal");
+       (tray.match(/act-modal/g) || []).length + (css.match(/act-modal/g) || []).length +
+       (rg.match(/act-modal/g) || []).length,
+  "nothing outside the planner, its stylesheet and the reward games references the action modal");
 assert(/trayValidSources\(\)\.forEach\(sk => paint\(sk, "geo-src"\)\)/.test(drawGeo),
   "valid sources must be highlighted on the map");
 assert(/paint\(hudSelKey, trayMode === "attack" \? "geo-tgt" : "geo-sel"\)/.test(drawGeo),

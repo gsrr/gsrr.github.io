@@ -107,7 +107,7 @@ for lid in NEW:
     for suf in OPTIONAL4:
         aid = lid + "." + suf
         assert aid in reg.activities, aid
-        assert svc.reward_for(aid)["amount"] == 0, aid          # mints nothing
+        assert reg.reward_policy_of(aid) != "standard_activity_pass", aid          # mints nothing
         assert reg.qualification_ids_for(aid) == [], aid        # unlocks nothing
         assert reg.activities[aid]["grants"] == [], aid
         assert reg.reward_policy_of(aid) == "none", aid
@@ -150,7 +150,10 @@ ok("6. A2/B1 grant no qualification: the Conquest surface is still exactly the f
 raw = io.open("learning/registry.json", encoding="utf-8", newline="").read()
 assert "\r" not in raw, "registry.json must stay LF (Phase 9E.3)"
 for lid in NEW:
-    paying = [s for s in FAMILY9 if svc.reward_for(lid + "." + s)["amount"] > 0]
+    # Phase 14A.10B: a gate is identified by the POLICY it declares -- PASS_GOLD is 0 now, so an
+    # amount test would find nothing. The invariant is unchanged: quiz3 alone is the gate.
+    paying = [s for s in FAMILY9
+              if reg.reward_policy_of(lid + "." + s) == "standard_activity_pass"]
     assert paying == ["quiz3"], (lid, paying)
     assert reg.reward_policy_of(lid + ".quiz3") == CX.GATE_POLICY, lid
     assert svc.reward_for(lid + ".quiz3")["amount"] == GC.PASS_GOLD, lid

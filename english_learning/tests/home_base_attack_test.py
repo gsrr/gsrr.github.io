@@ -340,13 +340,19 @@ ok("AI: no synthetic AI Home Base source was introduced -- ai_move() still attac
    "territory garrisons through can_attack(), exactly as Phase 14A.7 left it")
 
 def _fn(text, name):
-    """One top-level function's own source: from its `def` to the next one (or end of file), with
-    trailing blank lines and the following block's lead-in comments dropped, so a comment added
-    ABOVE the next function is not mistaken for a change inside this one."""
+    """One top-level function's OWN BODY: its `def` line plus every following indented line.
+
+    Bounded by indentation rather than by the next `def`, so neither a comment nor an unrelated
+    module-level statement written after it can read as a change inside it.
+    """
     a = text.index("def %s(" % name)
-    b = text.find("\ndef ", a)
-    body = (text[a:] if b < 0 else text[a:b]).split("\n")
-    while body and (not body[-1].strip() or body[-1].lstrip().startswith("#")):
+    lines = text[a:].split("\n")
+    body = [lines[0]]
+    for line in lines[1:]:
+        if line and not line[0].isspace():
+            break
+        body.append(line)
+    while body and not body[-1].strip():
         body.pop()
     return "\n".join(body)
 

@@ -302,7 +302,11 @@ code, body = attempt(RIGHT)
 assert code == 200 and body["passed"] is True and body["pct"] == 100, (code, body)
 assert body["qualification"] == QID and body["qualifications"] == [QID]
 assert body["grantedNow"] is True and body["grantedNowIds"] == [QID] and body["alreadyCompleted"] is False
-assert body["rewarded"] is True and body["gold"] == g0 + server.PASS_GOLD, (g0, body)
+# Phase 14A.10B: a legitimate NEW pass earns ONE REWARD GAME and pays no gold. PASS_GOLD is
+# 0 and the gate policy resolves inert; the game (and its 3000-6000 prize) is created by the
+# server layer, which tests/reward_games_test.py drives end to end.
+assert body["rewarded"] is False and body["gold"] in (None, g0), (g0, body)
+assert body.get("rewardGame") and body["rewardGame"]["status"] == "pending", body
 assert gold() == g0 + server.PASS_GOLD, "PASS_GOLD amount unchanged, granted on the verified event"
 ok("E2E pass: server re-grades 100%, grants the qualification, pays PASS_GOLD once")
 
@@ -333,7 +337,8 @@ ok("E2E idempotent: replays grant no gold, earnedAt/passedAt frozen at the first
 # --- persistence shape: activity-scoped completion, separate from the qualification ledger ---
 st = call("GET", "/api/learning/state?room=" + CODE, "tALICE")[1]
 rec = st["activityCompletions"][AID]
-assert sorted(rec) == ["passedAt", "pct", "rewarded"] and rec["pct"] == 100 and rec["rewarded"] is True
+# Phase 14A.10B: a gate pays no gold -- it earns a reward game, so `rewarded` stays False.
+assert sorted(rec) == ["passedAt", "pct", "rewarded"] and rec["pct"] == 100 and rec["rewarded"] is False
 assert isinstance(rec["passedAt"], int) and rec["passedAt"] > 0
 assert sorted(st["qualifications"][QID]) == ["earnedAt"]
 for not_a_key in ("english.prea1.taipei.zoo", LESSON, "english.prea1.taipei"):
@@ -355,7 +360,10 @@ for leak in ("readAlongModeBy", "readAlongModeAt", "reason", "joinedClass", "sal
     assert leak not in st, "the learning state must not expose " + leak
 # Phase 5E: the ledger mirrors what was actually paid — activity passes only. No lesson or
 # campaign reward exists in production, so nothing else can appear here.
-assert sorted(e["scope"] for e in st["rewardLedger"].values()) == ["activity"], st["rewardLedger"]
+# Phase 14A.10B made the gate policy INERT (a pass earns a reward game, not gold), so an
+# activity pass records no ledger grant and only a lesson mastery can appear. Nothing
+# outside those two scopes may ever show up.
+assert set(e["scope"] for e in st.get("rewardLedger", {}).values()) <= {"lesson"}, st.get("rewardLedger")
 assert all(e["policyId"] == "standard_activity_pass" and e["itemId"] is None
            for e in st["rewardLedger"].values()), st["rewardLedger"]
 assert "roleplaySessions" not in st, "in-flight Role-play session state is never exposed"

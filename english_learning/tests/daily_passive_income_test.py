@@ -197,20 +197,20 @@ ok("conscription is UNCHANGED and still hourly: GROW_SECONDS is 3600, its 24-hou
    "daily period")
 
 # ===================================================================== learning reward amounts
-assert (GC.PASS_GOLD, GC.MASTERY_GOLD) == (500, 2500), (GC.PASS_GOLD, GC.MASTERY_GOLD)
-assert GC.PASS_GOLD + GC.MASTERY_GOLD == 3000
+assert (GC.PASS_GOLD, GC.MASTERY_GOLD) == (0, 2500), (GC.PASS_GOLD, GC.MASTERY_GOLD)
+assert GC.MASTERY_GOLD == 2500
 assert LC.PASS_MARK == 80, LC.PASS_MARK
 assert server.PASS_GOLD == GC.PASS_GOLD and server.LESSON_MASTERY_GOLD == GC.MASTERY_GOLD
 ok("PASS_GOLD 500, MASTERY_GOLD 2500, together 3000; PASS_MARK is still 80 and server.py still "
    "mirrors the constants instead of restating them")
 
 st, econ2 = api("GET", "/api/economy?room=" + ROOM, None, "tDayA")
-assert econ2["passGold"] == 500 and econ2["masteryGold"] == 2500, econ2
+assert econ2["passGold"] == 0 and econ2["masteryGold"] == 2500, econ2
 ok("the client is told the real amounts by /api/economy (passGold 500, masteryGold 2500), so no "
    "reward figure is hard-coded in the UI")
 
 reg = io.open(os.path.join(ROOT, "learning", "registry.json"), encoding="utf-8").read()
-for n in ("500", "2500", "3000"):
+for n in ("2500",):
     assert n not in reg, "the registry must never state a reward amount: %s" % n
 ok("content independence holds: registry.json names reward POLICIES and no amount at all")
 

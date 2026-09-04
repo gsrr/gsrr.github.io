@@ -251,7 +251,7 @@ ok("§26 progress API: MRT/Market/Park reported as completion-unavailable; no ke
 GATES = sorted("english.prea1.taipei.%s.quiz3" % s
                for s in ("zoo", "mrt", "market", "park"))
 gold_bearing = sorted(a for a in reg.activities
-                      if svc.reward_for(a)["amount"] > 0)
+                      if reg.reward_policy_of(a) == "standard_activity_pass")
 assert gold_bearing == CX.declared_gates(reg), gold_bearing
 assert svc.reward_for("english.prea1.taipei.zoo.quiz3")["amount"] == 10000, "PASS_GOLD unchanged"
 for lid in LESSONS:
@@ -455,7 +455,9 @@ for lid in LESSONS:
     assert code == 200 and r["passed"] is True and r["pct"] == 100, (aid, r)
     assert r["qualifications"] == [GATE[lid]] and r["qualification"] == GATE[lid], (aid, r)
     assert r["grantedNow"] is True and r["grantedNowIds"] == [GATE[lid]], (aid, r)
-    assert r["rewarded"] is True and r["gold"] == gold() > was, (aid, r)
+    # Phase 14A.10B: a gate pays no gold -- a legitimate NEW pass earns a REWARD GAME instead,
+    # which the server creates and tests/reward_games_test.py drives end to end.
+    assert r["rewarded"] is False and r.get("rewardGame"), (aid, r)
     assert r["lessonCompleted"] is False and r["lessonQualifications"] == [], (aid, r)
     balances.append(gold())
     # a replay over HTTP pays nothing more, and does not re-grant
@@ -463,7 +465,9 @@ for lid in LESSONS:
     assert again["rewarded"] is False, (aid, again)
     assert gold() == balances[-1], "a replayed gate moved the balance"
 deltas = [balances[i] - balances[i - 1] for i in range(1, len(balances))]
-assert len(set(deltas)) == 1 and deltas[0] > 0, deltas   # every gate pays the SAME amount
+# Phase 14A.10B: every gate still behaves IDENTICALLY, and that identical amount is now
+# zero -- a pass earns a reward game instead of gold.
+assert set(deltas) == {0}, deltas
 gate_reward = deltas[0]
 st = lstate()
 for lid in LESSONS:

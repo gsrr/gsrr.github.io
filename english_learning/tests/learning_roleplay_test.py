@@ -269,11 +269,11 @@ for slug in SLUGS:
 assert (combined.get("qualifications") or {}) == {}
 GATES = sorted("english.prea1.taipei.%s.quiz3" % s
                for s in ("zoo", "mrt", "market", "park"))
-gold_bearing = sorted(a for a in reg.activities if svc.reward_for(a)["amount"] > 0)
+gold_bearing = sorted(a for a in reg.activities if reg.reward_policy_of(a) == "standard_activity_pass")
 assert gold_bearing == CX.declared_gates(reg), gold_bearing
 CX.assert_reward_model(reg, svc, 10000)   # injected amount, as above
 for aid in AIDS.values():
-    assert svc.reward_for(aid)["amount"] == 0, aid
+    assert reg.reward_policy_of(aid) != "standard_activity_pass", aid
 assert sorted(reg.qualifications) == [
     "english.prea1.taipei.market.quiz3.pass", "english.prea1.taipei.mrt.quiz3.pass",
     "english.prea1.taipei.park.quiz3.pass", "english.prea1.taipei.zoo"], sorted(reg.qualifications)

@@ -170,7 +170,10 @@ ok("6. a failed gate attempt pays +0 and grants no mastery, leaving the balance 
 g0 = gold()
 out = attempt(GATE, RIGHT_GATE)
 assert out["ok"] is True and out["passed"] is True, out
-assert out["rewarded"] is True, out
+# Phase 14A.10B: a legitimate NEW pass earns ONE REWARD GAME and pays no gold. PASS_GOLD is
+# 0 and the gate policy resolves inert; the game (and its 3000-6000 prize) is created by the
+# server layer, which tests/reward_games_test.py drives end to end.
+assert out["rewarded"] is False, out
 assert out["rewardAmount"] == PASS_GOLD, (out["rewardAmount"], PASS_GOLD)
 assert gold() == g0 + PASS_GOLD, (gold(), g0, PASS_GOLD)
 assert out["lessonRewardAmount"] == 0, ("mastery cannot land on the first activity", out)

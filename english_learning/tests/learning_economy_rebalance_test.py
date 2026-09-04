@@ -45,22 +45,24 @@ ANSWERS = [{"q": i["q"], "answer": i["answer"]} for i in zoo_key]
 
 # ============================== the approved production shape ==============================
 # Phase 14A.10A raised both so that STUDY, not idling, funds an army.
-assert GC.PASS_GOLD == 500, GC.PASS_GOLD
+# Phase 14A.10B: a legitimate NEW pass earns ONE REWARD GAME and pays no gold. PASS_GOLD is
+# 0 and the gate policy resolves inert; the game (and its 3000-6000 prize) is created by the
+# server layer, which tests/reward_games_test.py drives end to end.
+assert GC.PASS_GOLD == 0, GC.PASS_GOLD
 assert GC.MASTERY_GOLD == 2500, GC.MASTERY_GOLD
-assert GC.PASS_GOLD + GC.MASTERY_GOLD == 3000
-FULL = GC.PASS_GOLD + GC.MASTERY_GOLD
+FULL = GC.MASTERY_GOLD
 assert not hasattr(GC, "LESSON_MASTERY_GOLD"), (
     "game/ must not carry learning vocabulary — see the §20 content-independence regression")
 GATES = sorted("english.prea1.taipei.%s.quiz3" % s
                for s in ("zoo", "mrt", "market", "park"))
-gold_bearing = sorted(a for a in reg.activities if svc.reward_for(a)["amount"] > 0)
+gold_bearing = sorted(a for a in reg.activities if reg.reward_policy_of(a) == "standard_activity_pass")
 # Phase 9B.1: the paying population is DERIVED from policy declarations, then the reward model is
 # asserted over every member. Migrating curriculum grows the population without editing this test.
 assert gold_bearing == CX.declared_gates(reg), gold_bearing
 CX.assert_reward_model(reg, svc, GC.PASS_GOLD)
 assert {reg.reward_policy_of(a) for a in GATES} == {"standard_activity_pass"}
 for aid in GATES:
-    assert svc.reward_for(aid)["amount"] == GC.PASS_GOLD, aid
+    assert svc.reward_for(aid)["amount"] == 0, aid            # inert: the pass earns a game
 for lid in TAIPEI4:
     ps = reg.lesson_reward_policies_of(lid)
     assert ps == ["lesson_mastery_badge", "lesson_mastery_gold"], (lid, ps)
@@ -120,7 +122,7 @@ def quiz3(state, now=100):
 
 # ============================== A. fresh learner ==============================
 st, o = quiz3({})
-assert o["rewardAmount"] == GC.PASS_GOLD, o["rewardAmount"]
+assert o["rewardAmount"] == 0, o["rewardAmount"]
 assert o["granted"] == ["english.prea1.taipei.zoo"], o["granted"]
 assert o["grantedNow"] == ["english.prea1.taipei.zoo"]
 assert o.get("lessonRewardAmount", 0) == 0, "mastery must not pay at quiz3"
@@ -129,7 +131,7 @@ st, mo = master(st, now=2000)
 assert mo["lessonRewardAmount"] == GC.MASTERY_GOLD, mo
 assert mo["lessonCompletedNow"] is True
 assert LG.owned_items(st) == ["badge.lesson.mastered"], LG.owned_items(st)
-assert LG.total_granted(st, "gold") == GC.PASS_GOLD + GC.MASTERY_GOLD == 3000
+assert LG.total_granted(st, "gold") == GC.MASTERY_GOLD == 2500
 ok("A/fresh learner: quiz3 pays 160 and grants the qualification; mastery pays 640 and the badge; "
    "800 total, both recorded in the ledger")
 
@@ -256,7 +258,7 @@ for th in ts:
     th.start()
 for th in ts:
     th.join()
-assert sum(paid) == GC.PASS_GOLD, paid
+assert sum(paid) == 0, paid
 
 mshared, mpaid = {}, []
 

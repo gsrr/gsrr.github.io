@@ -107,8 +107,14 @@ ok("7/8. mastery uses activePolicyCompleted and the denominator uses requiredAct
 // ============ 9. Gold copy cannot be read as a replay reward ============
 assert(/once per lesson, not per replay/.test(render),
   "the reward line must say the reward is once per lesson");
-assert(/ec\.passGold/.test(render) && /ec\.masteryGold/.test(render),
-  "the amounts must come from the economy payload, not be hard-coded");
+// Phase 14A.10B: a PASS no longer pays gold at all -- it earns a REWARD GAME -- so the copy
+// advertises the game for the pass and the server's own figure for mastery. The invariant that
+// matters is unchanged: no reward AMOUNT is hard-coded in the client.
+assert(/reward game/.test(render), "the pass half of the loop must promise a reward game");
+assert(/ec\.masteryGold/.test(render),
+  "the mastery amount must come from the economy payload, not be hard-coded");
+assert(!/Pass the quiz \+/.test(render) && !/passGold/.test(render),
+  "and no direct pass-gold promise may survive anywhere in the Academy copy");
 assert(!/\b160\b/.test(render) && !/\b640\b/.test(render) && !/\b800\b/.test(render),
   "reward constants must never be hard-coded in the client");
 ok("9. Gold copy is server-sourced and explicitly once-per-lesson, never per replay");

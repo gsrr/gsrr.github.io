@@ -24,10 +24,16 @@ ECON_START_TROOPS = 100
 # Phase 7C.2: study payouts are split between the gate and full mastery. Passing the gate proves
 # eligibility and pays an acknowledgement; completing the whole unit pays the substantial reward.
 # Phase 14A.10A raised both (160/640 -> 500/2500) so that STUDY, not idling, is how a player funds
-# an army: one fully passed and mastered unit is now worth 3000 gold, about 285 troops at the
-# unchanged UNIT_COST, against 15 gold a day for a starting home base.
+# an army, against 15 gold a day for a starting home base. Phase 14A.10B then moved the GATE half
+# out of gold entirely: a first pass earns a reward game paying 3000 gold or 400-670 troops, so the
+# gate reward became bigger and more of an event, while mastery keeps paying its 2500 directly.
 # Deliberately neutral names: this module knows economic amounts, never what is being studied.
-PASS_GOLD = 500                  # gate task passed
+# Phase 14A.10B: PASSING A GATE NO LONGER PAYS GOLD DIRECTLY -- it earns ONE REWARD GAME
+# (game/reward_games.py), whose prize table is worth 3000-6000. PASS_GOLD is therefore 0, which
+# makes `standard_activity_pass` resolve INERT through rewards.resolve() rather than paying a
+# second, hidden reward on top of the game. It is kept as a named constant, not deleted, because
+# the reward policy still names its amountKey and the fingerprint still pins it.
+PASS_GOLD = 0                    # gate task passed -> a reward game, not gold
 MASTERY_GOLD = 2500              # whole unit mastered, once ever
 DEFEND_GOLD = 50
 ATTACK_FAIL_GOLD = 50

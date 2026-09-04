@@ -105,7 +105,7 @@ for lid in A1:
         assert aid in reg.activities, ("9E.2 catalogued this practice activity", aid)
         assert aid not in pol["requiredActivityIds"], ("must stay OPTIONAL for mastery", aid)
         assert reg.reward_policy_of(aid) == "none", aid
-        assert svc.reward_for(aid)["amount"] == 0, aid
+        assert reg.reward_policy_of(aid) != "standard_activity_pass", aid
         assert reg.qualification_ids_for(aid) == [], aid
 ok("3. every A1 lesson requires the 5-activity template at v1/passMark 80 with both mastery "
    "policies, and additionally CATALOGUES quiz4/wh/cloze/roleplay as inert optional practice")
@@ -118,7 +118,7 @@ for lid in A1:
     others = [lid + "." + s for s in TEMPLATE if s != "quiz3"]
     for aid in others:
         assert reg.reward_policy_of(aid) == "none", aid
-        assert svc.reward_for(aid)["amount"] == 0, aid
+        assert reg.reward_policy_of(aid) != "standard_activity_pass", aid
 ok("4. each A1 lesson has exactly ONE paying activity (quiz3 at PASS_GOLD); the other four pay 0")
 
 # ============================== 5. qualification-free, world-free =============================

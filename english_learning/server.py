@@ -16,8 +16,10 @@ except Exception:
     terr_catalog = None
 from game import (army as game_army, conquest as game_conquest, config as game_config,   # 核心遊戲領域
                   economy as game_economy, recruitment as game_recruit, technology as game_tech,
-                  frontier as game_frontier, regions as game_regions)
-from learning import api as learning_api                                                   # 學習領域(與遊戲領域分離)
+                  frontier as game_frontier, regions as game_regions,
+                  reward_games as game_reward_games)
+from learning import api as learning_api
+from learning import reward_games as learning_reward_games                                                   # 學習領域(與遊戲領域分離)
 
 # ---- Phase 10A.3: ONE conquest map ------------------------------------------------------------
 # The game has a single playable surface. This is GAME configuration: it is not derived from a
@@ -563,6 +565,57 @@ def econ_add_gold(user, delta):
         return e["gold"]
 
 
+# ===== Phase 14A.10B: EXACTLY-ONCE REWARD PAYMENT =====
+# The entitlement (progress file) and the balance (economy file) are two independently written JSON
+# documents, so no amount of ordering between them can be a transaction. What CAN be made exact is
+# the half that moves money: the payment marker is written into THE SAME RECORD as the balance it
+# changes, in the SAME save_econ_store() call. One write therefore carries both "you now have the
+# gold" and "this reward has been paid", and they can never disagree.
+#
+# The payment id is the entitlement id, which is the activity id -- stable, server-derived, and
+# already unique per player per pass. So the protocol is:
+#
+#   1. draw the prize and persist it on the entitlement   (progress file)
+#   2. apply it here, keyed by that id                    (economy file, atomic with the balance)
+#   3. note the confirmation back on the entitlement      (progress file, reporting only)
+#
+# A crash after 1 leaves a fixed prize that a retry pays exactly once. A crash after 2 leaves the
+# marker present, so a retry pays nothing further. A crash after 3 changes nothing. There is no
+# window in which a prize is rerolled, and none in which one is paid twice.
+REWARD_PAID_KEY = "rewardPaid"
+
+
+def econ_apply_reward_once(user, payment_id, prize):
+    """Apply a drawn prize to the player's economy AT MOST ONCE. Returns (applied, gold, troops).
+
+    `applied` is False when this payment id was already recorded -- the balances returned are then
+    simply the current ones, unchanged.
+    """
+    if not user or not payment_id or not isinstance(prize, dict):
+        return False, None, None
+    with terr_lock:
+        rp = user_region_pop(load_territory_store(), user)
+    with econ_lock:
+        store = load_econ_store()
+        e = econ_get(store, user, time.time(), rp)
+        paid = e.get(REWARD_PAID_KEY)
+        if not isinstance(paid, dict):
+            paid = {}
+            e[REWARD_PAID_KEY] = paid
+        if payment_id in paid:                       # already applied: nothing moves
+            return False, clampi(e.get("gold", 0)), dict(e["troops"])
+        if prize.get("kind") == "gold":
+            e["gold"] = clampi(e.get("gold", 0) + clampi(prize.get("amount", 0)))
+        elif prize.get("kind") == "troops" and prize.get("unit") in TROOP_ALL:
+            u, n = prize["unit"], clampi(prize.get("count", 0))
+            e["troops"][u] = clampi(e["troops"].get(u, 0) + n)
+        else:
+            return False, clampi(e.get("gold", 0)), dict(e["troops"])
+        paid[payment_id] = prize.get("id")
+        save_econ_store(store)                       # ONE write: the balance AND the marker
+        return True, clampi(e.get("gold", 0)), dict(e["troops"])
+
+
 # 某玩家名下所有領地的人口總和（給金幣收入計算用）
 def user_region_pop(tstore, user):
     return sum(clampi(h.get("pop", 0)) for h in tstore.values()
@@ -572,7 +625,19 @@ def user_region_pop(tstore, user):
 # ---- 領地建設：兵工廠(armory) + 科技樹(鍛造+攻 / 鎧甲+防)，用「金幣」研發 ----
 # 金幣：每塊領地依人口每小時產金，累積在該區(h["gold"])。研發即時完成、只惠及該區守軍。
 GOLD_RATE = 0.10                                   # 每小時金幣 = round(pop * GOLD_RATE)
-PASS_GOLD = game_config.PASS_GOLD                   # Phase 7C.2: 關卡活動(quiz3) 的小額確認獎勵
+PASS_GOLD = game_config.PASS_GOLD                   # Phase 14A.10B: 0 —— 過關改為獲得「獎勵遊戲」
+
+
+# Phase 14A.10B: the two random draws are reached through these seams so a test can force one of
+# the four mini-games or one of the four prizes deterministically, without seeding a global RNG and
+# without introducing a second reward table. Production keeps the module defaults.
+def REWARD_GAME_PICKER():
+    return game_reward_games.assign_game(random.Random())
+
+
+def REWARD_PRIZE_RNG():
+    return random.Random()
+
 # 遊戲設定只認中性的經濟金額(MASTERY_GOLD)；「整課精通」這個學習概念只存在於這一行的對應關係，
 # 由 server.py 把它餵給 Learning Domain 的 amountKey。game/ 永遠不認識課程詞彙。
 LESSON_MASTERY_GOLD = game_config.MASTERY_GOLD      # 整課精通(Rule A)的主要獎勵
@@ -1388,6 +1453,8 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_learning_registry()
         elif path == "/api/learning/state":
             self._handle_learning_state()
+        elif path == "/api/learning/rewards":
+            self._handle_reward_games()
         elif path == "/api/learning/progress":
             self._handle_learning_progress()
         else:
@@ -1437,6 +1504,8 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_territory_conscript()
         elif path == "/api/economy/set":
             self._handle_economy_set()
+        elif path == "/api/learning/rewards/play":
+            self._handle_reward_game_play()
         elif path == "/api/learning/attempt":
             self._handle_learning_attempt()
         elif path == "/api/learning/read-along/typed":
@@ -2866,10 +2935,22 @@ class Handler(BaseHTTPRequestHandler):
         if reason:
             self._send({"error": "cannot grade this attempt", "reason": reason}, 400)
             return
+        # ===== Phase 14A.10B: a legitimate FIRST pass earns ONE REWARD GAME =====
+        # The trigger is `passed and not alreadyCompleted` -- the existing first-pass authority,
+        # read from the completion record the learner already has. Two consequences fall out of
+        # that and both are wanted: a replay never earns a second game, and a lesson passed BEFORE
+        # this feature existed is already `alreadyCompleted`, so deployment hands out nothing
+        # retroactively and no migration is required.
+        # The mini-game is chosen HERE, by the server, and stored -- a refresh reveals the same one.
+        game_now = None
         with acct_lock:
             p = load_progress(user)
             learning = p.setdefault("learning", {})
             _, out = LEARNING.record_attempt(learning, aid, result, int(time.time()))
+            if out["passed"] and not out["alreadyCompleted"]:
+                learning, game_now = learning_reward_games.create(
+                    learning, aid, REWARD_GAME_PICKER(), int(time.time()))
+                p["learning"] = learning
             save_progress(user, p)
         # 獎勵金額來自遊戲設定(LEARNING 建構時注入)，內容包無法指定金額。在 acct_lock 外呼叫避免巢狀鎖。
         # Phase 3D：活動獎勵與「整課完成」獎勵是分開的政策，一次結算。
@@ -2893,7 +2974,83 @@ class Handler(BaseHTTPRequestHandler):
                     "lessonCompletedNow": out["lessonCompletedNow"],
                     "lessonQualifications": out["lessonQualifications"],
                     "lessonRewarded": out["lessonRewarded"],
+                    # Phase 14A.10B: present only when THIS request earned a game, so the client
+                    # can open it immediately. It carries no prize -- the prize is drawn when the
+                    # learner actually plays.
+                    "rewardGame": game_now,
                     **_reward_fields(out), **_lesson_status_fields(out)})
+
+    # ===================== Phase 14A.10B: LEARNING REWARD GAMES =====================
+    # Two routes, and deliberately no more: one to discover what is owed, one to play it. There is
+    # no route that CREATES an entitlement (only a legitimate pass does), none that names a prize,
+    # none that names a mini-game and none that rerolls. The client may send an entitlement id and
+    # presentation-only interaction data (which chest was tapped); everything that decides what the
+    # player receives is decided here.
+    def _handle_reward_games(self):
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        with acct_lock:
+            learning = (load_progress(user).get("learning") or {})
+        pend = learning_reward_games.pending(learning)
+        self._send({"pending": pend, "count": len(pend),
+                    "next": pend[0] if pend else None,           # oldest first
+                    "prizes": game_reward_games.public_table()})
+
+    def _handle_reward_game_play(self):
+        """Resolve ONE entitlement, atomically and exactly once.
+
+        The draw and the status transition happen together under acct_lock, so a double click, two
+        tabs or a retried POST cannot both draw: the second sees RESOLVED and is answered with the
+        prize the first one stored. Only the call that actually made the transition moves the
+        economy, and that happens outside the lock -- the established ordering for lesson gold."""
+        user = token_user(self._token())
+        if not user:
+            self._send({"error": "Not logged in"}, 401)
+            return
+        d = self._body_json()
+        eid = str(d.get("id") or d.get("entitlementId") or "").strip()
+        if not eid:
+            self._send({"error": "Which reward game?", "reason": "reward_game_required"}, 400)
+            return
+        # STEP 1 -- fix the prize. draw_prize() is called only to have a candidate; award() keeps
+        # whatever is ALREADY stored, so a retry of any kind cannot reroll, and a concurrent second
+        # request discards its own draw.
+        with acct_lock:
+            p = load_progress(user)
+            learning = p.setdefault("learning", {})
+            rec = learning_reward_games.get(learning, eid)
+            if rec is None:
+                self._send({"error": "No such reward game", "reason": "reward_game_not_found"}, 404)
+                return
+            game_id = rec["game"]
+            candidate = (game_reward_games.draw_prize(REWARD_PRIZE_RNG())
+                         if not rec.get("prizeId") else None)
+            learning, prize_id, drew = learning_reward_games.award(
+                learning, eid, candidate["id"] if candidate else None, int(time.time()))
+            if drew:
+                p["learning"] = learning
+                save_progress(user, p)
+        prize = game_reward_games.prize(prize_id)
+        if prize is None:
+            self._send({"error": "Reward game could not be resolved",
+                        "reason": "reward_unavailable"}, 500)
+            return
+        # STEP 2 -- apply it, keyed by this entitlement, atomically with the balance it moves.
+        newly, gold, troops = econ_apply_reward_once(user, eid, prize)
+        # STEP 3 -- note the confirmation. Reporting only; step 2 is the authority.
+        with acct_lock:
+            p = load_progress(user)
+            learning = p.setdefault("learning", {})
+            learning, _ = learning_reward_games.mark_paid(learning, eid, int(time.time()))
+            p["learning"] = learning
+            save_progress(user, p)
+            pend = learning_reward_games.pending(learning)
+        self._send({"ok": True, "id": eid, "game": game_id, "status": "resolved",
+                    "newly": bool(newly), "prize": prize,
+                    "gold": gold, "troops": troops,
+                    "pending": pend, "count": len(pend)})
 
     # Phase 3E2：配對(Level 5)改為「伺服器擁有回合」。抽樣、正確配對、first-try 狀態全在後端；
     #   client 只拿到可顯示的單字與圖片(不含對應關係)，並把每次點擊送回來由後端判定。

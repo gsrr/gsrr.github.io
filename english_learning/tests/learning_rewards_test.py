@@ -37,7 +37,7 @@ ZOO = "english.prea1.taipei.zoo"
 # Phase 7C.2a: every Taipei gate activity pays, through the ONE shared policy.
 GATES = sorted("english.prea1.taipei.%s.quiz3" % s
                for s in ("zoo", "mrt", "market", "park"))
-gold_bearing = sorted(a for a in reg.activities if svc.reward_for(a)["amount"] > 0)
+gold_bearing = sorted(a for a in reg.activities if reg.reward_policy_of(a) == "standard_activity_pass")
 assert gold_bearing == CX.declared_gates(reg), gold_bearing
 CX.assert_reward_model(reg, svc, 10000)   # this suite INJECTS 10000 to prove amounts are not in content
 assert {reg.reward_policy_of(a) for a in GATES} == {"standard_activity_pass"}, \

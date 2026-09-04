@@ -198,10 +198,14 @@ g_now = gold()
 # Phase 9B: two gates pay now — the Zoo gate and the A1/001 pilot gate — so the expected total is
 # derived from PAYING rather than hardcoded to one. Every OTHER activity must still pay exactly 0,
 # which is the property this section exists to protect.
+# Phase 14A.10B: a gate pays no gold at all -- a legitimate NEW pass earns a REWARD GAME instead,
+# so PASS_GOLD is 0 and no activity pass moves the balance. The property this section protects is
+# unchanged and is now absolute: no activity pass mints gold.
 EXPECT_PAID = len(PAYING) * server.PASS_GOLD
+assert EXPECT_PAID == 0, EXPECT_PAID
 for aid in PAYING:
-    assert results[aid]["rewarded"] is True, aid
-    assert results[aid]["gold"] is not None, aid
+    assert results[aid]["rewarded"] is False, aid
+    assert results[aid].get("rewardGame"), aid          # it earned a reward game instead
 for aid in NO_REWARD:
     assert results[aid]["rewarded"] is False and results[aid]["gold"] is None, aid
 assert g_now - G0 == EXPECT_PAID, \
@@ -334,7 +338,7 @@ first = {a: stb["activityCompletions"][a]["passedAt"] for a in stb["activityComp
 first_earned = stb["qualifications"][QID]["earnedAt"]
 bob_gold_after_first = None
 server.set_room(CODE)
-bob_gold_after_first = server.load_econ_store()["BOB"]["gold"]
+bob_gold_after_first = server.clampi((server.load_econ_store().get("BOB") or {}).get("gold", 0))
 # pass again with a WORSE (but still passing) score where possible, then a failing one
 worse = [{"q": i["q"], "answer": i["a"]} for i in ZOO["wh"]]
 worse[-1] = {"q": ZOO["wh"][-1]["q"], "answer": (ZOO["wh"][-1].get("wrong") or ["x"])[0]}
@@ -349,7 +353,7 @@ for a, t in first.items():
     assert stb2["activityCompletions"][a]["passedAt"] == t, "first passedAt preserved for " + a
 assert stb2["qualifications"][QID]["earnedAt"] == first_earned, "earnedAt preserved"
 server.set_room(CODE)
-assert server.load_econ_store()["BOB"]["gold"] == bob_gold_after_first, "no second payout on retry"
+assert server.clampi((server.load_econ_store().get("BOB") or {}).get("gold", 0)) == bob_gold_after_first, "no second payout on retry"
 # documented pct semantics: the record carries the LATEST PASSING pct (a later failure does not lower it)
 wh_rec = stb2["activityCompletions"]["english.prea1.taipei.zoo.wh"]
 assert wh_rec["pct"] == 80, "latest PASSING pct is stored (80 from the 'worse' pass): %s" % wh_rec

@@ -1662,6 +1662,81 @@
   .ac-ach button { margin-top: 9px; min-height: 38px; padding: 0 14px; cursor: pointer;
     border-radius: 10px; font-size: 13px; font-weight: 800; color: #2a1b0d;
     background: #ffd79a; border: 2px solid #2a1b0d; }
+  /* ===== Phase 14A.10B: LEARNING REWARD GAMES =====
+     One shell for all four mini-games -- same title, same result, same footer -- so the only thing
+     that differs is the central interaction. Board-game colours, big targets, no hover-only and no
+     browser-default controls. */
+  .rg-card { text-align: center; }
+  .rg-kicker { font-size: 12px; font-weight: 900; letter-spacing: .16em; color: #b45309; }
+  .rg-title { margin: 2px 0 10px; font-size: 22px; font-weight: 900; color: #1f2937; }
+  .rg-sub { margin: 0 0 12px; font-size: 13px; font-weight: 700; color: #475569; }
+  .rg-stage { display: flex; align-items: center; justify-content: center; min-height: 210px;
+    padding: 8px 0 4px; }
+  .rg-go { display: block; margin: 12px auto 0; padding: 14px 34px; border: 0; border-radius: 999px;
+    background: linear-gradient(180deg, #f59e0b, #d97706); color: #fff; font-size: 18px;
+    font-weight: 900; letter-spacing: .06em; cursor: pointer; box-shadow: 0 4px 0 #b45309; }
+  .rg-go:active { transform: translateY(2px); box-shadow: 0 2px 0 #b45309; }
+  .rg-go:disabled { opacity: .55; cursor: default; box-shadow: 0 4px 0 #94a3b8;
+    background: #94a3b8; }
+  .rg-go:focus-visible { outline: 3px solid #38bdf8; outline-offset: 3px; }
+  /* the wheel */
+  .rg-wheel-wrap { position: relative; width: 208px; height: 208px; }
+  .rg-wheel { width: 208px; height: 208px; border-radius: 50%; border: 6px solid #92400e;
+    box-shadow: 0 6px 16px rgba(0,0,0,.25); transition: transform 3s cubic-bezier(.17,.67,.2,1); }
+  .rg-needle { position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+    font-size: 26px; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
+  .rg-legend { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin: 12px auto 0;
+    max-width: 340px; }
+  .rg-leg { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 9px;
+    font-size: 12.5px; font-weight: 800; color: #1f2937; }
+  /* the chests */
+  .rg-chests { display: flex; gap: 14px; justify-content: center; }
+  .rg-chest { width: 96px; height: 96px; border: 0; border-radius: 16px; cursor: pointer;
+    background: linear-gradient(180deg, #fcd34d, #b45309); font-size: 44px; line-height: 1;
+    box-shadow: 0 5px 0 #7c2d12; transition: transform .12s ease; }
+  .rg-chest:active { transform: translateY(3px); }
+  .rg-chest:disabled { cursor: default; }
+  .rg-chest.rg-open { background: linear-gradient(180deg, #fde68a, #f59e0b); transform: scale(1.06); }
+  .rg-chest.rg-dim { opacity: .45; }
+  .rg-chest:focus-visible { outline: 3px solid #38bdf8; outline-offset: 3px; }
+  /* the target */
+  .rg-target { position: relative; width: 210px; height: 118px; border-radius: 14px;
+    background: repeating-linear-gradient(90deg, #fee2e2 0 42px, #fecaca 42px 84px);
+    border: 4px solid #7f1d1d; overflow: hidden; }
+  .rg-bull { position: absolute; inset: 0; margin: auto; width: 54px; height: 54px;
+    border-radius: 50%; background: #dc2626; border: 5px solid #fff; box-shadow: 0 0 0 5px #dc2626; }
+  .rg-aim { position: absolute; top: 4px; bottom: 4px; width: 6px; border-radius: 3px;
+    background: #1d4ed8; box-shadow: 0 0 8px #1d4ed8; left: 0; }
+  .rg-hit { position: absolute; font-size: 26px; transform: translate(-50%, -50%); }
+  /* the die */
+  .rg-die { width: 120px; height: 120px; border-radius: 22px; background: #fff7ed;
+    border: 5px solid #92400e; box-shadow: 0 6px 0 #7c2d12; font-size: 62px; line-height: 112px;
+    text-align: center; }
+  .rg-die.rg-tumble { animation: rgTumble .55s linear infinite; }
+  @keyframes rgTumble { 0% { transform: rotate(0) translateY(0); }
+    25% { transform: rotate(90deg) translateY(-14px); } 50% { transform: rotate(180deg); }
+    75% { transform: rotate(270deg) translateY(-9px); } 100% { transform: rotate(360deg); } }
+  /* the result */
+  .rg-won { font-size: 15px; font-weight: 900; letter-spacing: .18em; color: #b45309; }
+  .rg-prize { margin: 6px 0 2px; font-size: 30px; font-weight: 900; color: #15803d; }
+  .rg-prize-ic { font-size: 46px; }
+  .rg-dest { margin: 2px 0 0; font-size: 13.5px; font-weight: 800; color: #475569; }
+  .rg-foot { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+  .rg-foot button { padding: 12px 20px; border-radius: 12px; border: 2px solid #2563eb;
+    background: #2563eb; color: #fff; font-size: 14.5px; font-weight: 900; cursor: pointer; }
+  .rg-foot button.rg-alt { background: #fff; color: #1d4ed8; }
+  .rg-foot button:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+  /* the Academy banner */
+  .ac-rg { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;
+    margin: 0 0 14px; padding: 12px 14px; border-radius: 14px; font-size: 14px; font-weight: 900;
+    color: #1f2937; background: linear-gradient(180deg, #fde68a, #fbbf24); border: 2px solid #b45309; }
+  .ac-rg button { padding: 10px 20px; border: 0; border-radius: 999px; background: #b45309;
+    color: #fff; font-size: 14px; font-weight: 900; cursor: pointer; }
+  .ac-rg button:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+  @media (max-width: 560px) {
+    .rg-chest { width: 78px; height: 78px; font-size: 36px; }
+    .rg-wheel, .rg-wheel-wrap { width: 176px; height: 176px; }
+  }
   .ac-note { margin: 0 0 14px; padding: 10px 13px; border-radius: 12px; font-size: 12.5px;
     font-weight: 700; line-height: 1.5; color: #f2ddb0; background: rgba(107,74,36,.5);
     border: 2px solid #2a1b0d; }
@@ -10244,10 +10319,34 @@ nextLevelBtn.textContent = "✅ Back to lessons";
     });
     return { tracked: true, fams: acSortFamilies(fams) };
   }
+  // Phase 14A.10B: paint the Academy's reward banner from the SERVER's pending list. It is a
+  // read: it never creates an entitlement and never decides a prize.
+  function acRewardSync() {
+    const box = document.getElementById("acRewardReady");
+    if (!box) return;
+    const t = authToken(); if (!t) return;
+    fetch(withRoom("/api/learning/rewards?token=" + encodeURIComponent(t)))
+      .then(r => r.json()).then(j => {
+        const n = (j.pending || []).length;
+        const box2 = document.getElementById("acRewardReady");
+        if (!box2) return;
+        box2.hidden = n < 1;
+        const lab = document.getElementById("acRewardN");
+        if (lab) lab.textContent = n > 1 ? ("Rewards ready: " + n) : "Reward ready";
+        const btn = document.getElementById("acRewardPlay");
+        if (btn && !btn.dataset.wired) {
+          btn.dataset.wired = "1";
+          btn.addEventListener("click", function () { rgOpenNextPending(function () {}); });
+        }
+      }).catch(() => {});
+  }
+
   function renderLearningHome() {
     const el = document.getElementById("homeBody");
     if (!el) return;
     const back = document.getElementById("backFromHome");
+    // filled in after the body is written, from /api/learning/rewards (see acRewardSync below)
+    setTimeout(function () { if (typeof acRewardSync === "function") acRewardSync(); }, 0);
     const F = acFamilies();
     const tracked = F.tracked;
     // B16: a guest cannot enter the world, so the Academy must not offer to take them there.
@@ -10267,17 +10366,24 @@ nextLevelBtn.textContent = "✅ Back to lessons";
           (ec.gold || 0) + '</span> Gold</span>' +
         '<span class="ac-loop-arrow">\u2192</span>' +
         '<span class="ac-loop-step">\ud83c\udff0 Spend it in World Conquest</span>' +
-        ((ec.passGold || ec.masteryGold)
-          // "once per lesson" is the point: the reward is first-time only, so a replay earns
-          // nothing further and the copy must not suggest otherwise.
-          ? '<span class="ac-rw">Pass the quiz +' + (ec.passGold || 0) + ' \u00b7 master the lesson +' +
-            (ec.masteryGold || 0) + ' \u00b7 once per lesson, not per replay</span>'
-          : '') + '</div>';
+        // Phase 14A.10B: passing a quiz no longer pays gold -- it earns a REWARD GAME whose
+        // prizes are gold or troops. Mastery still pays its own gold, and both are still
+        // first-time only, so the copy states exactly that.
+        '<span class="ac-rw">Pass a quiz \u2192 \u{1F381} reward game' +
+        (ec.masteryGold ? ' \u00b7 master the lesson +' + ec.masteryGold + ' Gold' : '') +
+        ' \u00b7 once per lesson, not per replay</span></div>';
     } else {
       out += '<div class="ac-note">You are practising as a <b>guest</b> on this device. ' +
              'Lessons work, but progress, mastery and Gold need an account.</div>';
     }
     // ---- ONE primary next action, from the authoritative resolver ----
+    // Phase 14A.10B: an unplayed reward game must never be lost behind navigation. The banner is
+    // rendered from the server's own pending list and opens the OLDEST one first.
+    if (tracked) {
+      out += '<div class="ac-rg" id="acRewardReady" hidden>' +
+        '<span>\u{1F381} <b id="acRewardN">Reward ready</b></span>' +
+        '<button type="button" id="acRewardPlay">PLAY NOW</button></div>';
+    }
     const next = tracked ? homeContinueTarget() : null;
     const allMastered = tracked &&
       F.fams.every(f => f.list.every(x => x.row.activePolicyCompleted === true));
@@ -10839,6 +10945,13 @@ nextLevelBtn.textContent = "✅ Back to lessons";
           try { lsShowActivityResult(j, aid); }
           catch (e) { if (typeof console !== "undefined") console.warn("[lesson] reward panel:", e); }
         }
+        // Phase 14A.10B: a legitimate FIRST pass earns a reward game, and the celebration happens
+        // right here in the learning flow -- the player never has to go looking for it. `j.rewardGame`
+        // is present only when the server actually created one on THIS request.
+        if (j && j.rewardGame && typeof openRewardGame === "function") {
+          try { openRewardGame(j.rewardGame); }
+          catch (e) { if (typeof console !== "undefined") console.warn("[reward] game:", e); }
+        }
         if (!j || !j.ok || !j.passed) return;
         (j.qualifications || []).forEach(q => myQualifications.add(q));   // 解鎖(顯示用)；權威仍在後端
         // (the gold balance itself is synced by noteLessonCompletion above, on every path)
@@ -10858,6 +10971,239 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         // authority of `j` changes: this was navigation only.
       }).catch(() => {});
   }
+
+  // ======================= Phase 14A.10B: LEARNING REWARD GAMES =======================
+  // Passing a lesson gate used to pay gold straight into the balance. It now earns ONE reward
+  // game, and this is the whole client half of it: a shell, four different central interactions,
+  // and a result footer. Everything that decides an outcome is the SERVER's:
+  //
+  //   which mini-game  -- assigned when the entitlement was created, stored, replayed on refresh
+  //   which prize      -- drawn by POST /api/learning/rewards/play, never by anything below
+  //
+  // So the wheel does not decide where it stops: it is TOLD, and then it spins to that segment.
+  // The same is true of the chest that opens, the arrow that lands and the face the die shows.
+  // Nothing here may compute, name or send a prize; the only thing this code sends is the
+  // entitlement id (plus, for the chests, which one was tapped -- presentation data).
+  let rgPrizes = null;               // the display table, from the server
+  let rgBusy = false;                // one resolution at a time, whatever the player clicks
+
+  function rgIcon(p) { return p && p.icon ? p.icon : "\u{1F381}"; }
+  function rgLabel(p) { return p && p.label ? p.label : "a reward"; }
+  const RG_TINT = ["#fde68a", "#bbf7d0", "#bfdbfe", "#fecaca"];
+
+  function rgLoadPrizes(cb) {
+    if (rgPrizes) { cb(rgPrizes); return; }
+    const t = authToken(); if (!t) { cb([]); return; }
+    fetch(withRoom("/api/learning/rewards?token=" + encodeURIComponent(t)))
+      .then(r => r.json()).then(j => { rgPrizes = j.prizes || []; cb(rgPrizes); })
+      .catch(() => cb([]));
+  }
+
+  // the shell every game shares
+  function rgShell(game, bodyHtml, subtitle) {
+    const T = { lucky_wheel: "\u{1F3A1} Lucky Wheel", treasure_chests: "\u{1F4E6} Treasure Chests",
+                target_shot: "\u{1F3AF} Target Shot", dice_roll: "\u{1F3B2} Dice Roll" };
+    return '<div class="rg-card"><div class="rg-kicker">LESSON PASSED \u00b7 REWARD GAME</div>' +
+      '<h3 class="rg-title">' + escapeHtml(T[game] || "Reward Game") + '</h3>' +
+      '<p class="rg-sub">' + escapeHtml(subtitle) + '</p>' + bodyHtml + '</div>';
+  }
+
+  function rgLegend(prizes) {
+    return '<div class="rg-legend">' + prizes.map((p, i) =>
+      '<span class="rg-leg" style="background:' + RG_TINT[i % 4] + '">' + rgIcon(p) + ' ' +
+      escapeHtml(rgLabel(p)) + '</span>').join("") + '</div>';
+  }
+
+  // POST the play. `extra` is presentation-only interaction data (e.g. which chest).
+  function rgPlay(id, extra, cb) {
+    const t = authToken(); if (!t) { alert("Log in to open your reward."); return; }
+    if (rgBusy) return;
+    rgBusy = true;
+    const body = Object.assign({ id: id }, extra || {});
+    fetch(withRoom("/api/learning/rewards/play?token=" + encodeURIComponent(t)),
+      { method: "POST", body: JSON.stringify(body) })
+      .then(r => r.json().catch(() => ({})).then(j => ({ ok: r.ok, j: j })))
+      .then(o => {
+        rgBusy = false;
+        if (!o.ok || !o.j.ok) { alert("Could not open the reward: " +
+          ((o.j && o.j.error) || "unknown")); return; }
+        // the balances the server just published -- never computed here
+        if (myEcon) {
+          if (o.j.gold != null) myEcon.gold = o.j.gold;
+          if (o.j.troops) myEcon.troops = o.j.troops;
+        }
+        cb(o.j);
+      })
+      .catch(() => { rgBusy = false; alert("Couldn't reach the server."); });
+  }
+
+  function rgResult(res) {
+    const p = res.prize || {};
+    const home = p.kind === "troops";
+    const html = '<div class="rg-card"><div class="rg-won">\u2B50 YOU WON! \u2B50</div>' +
+      '<div class="rg-prize-ic">' + rgIcon(p) + '</div>' +
+      '<div class="rg-prize">+' + escapeHtml(rgLabel(p)) + '</div>' +
+      (home ? '<p class="rg-dest">Added to \u{1F3E0} Home Base \u2014 ready to march</p>'
+            : '<p class="rg-dest">Added to your gold</p>') +
+      '<div class="rg-foot">' +
+        '<button type="button" class="rg-alt" id="rgMore">\u{1F4DA} CONTINUE LEARNING</button>' +
+        '<button type="button" id="rgWorld">\u{1F5FA}\u{FE0F} GO TO WORLD</button>' +
+      '</div></div>';
+    const ov = openModal(html);
+    ov.querySelector("#rgMore").addEventListener("click", () => {
+      closeModal();
+      // another game may already be waiting -- claiming this one must never discard it
+      rgOpenNextPending(function (opened) { if (!opened) openLearningHome(); });
+    });
+    ov.querySelector("#rgWorld").addEventListener("click", () => {
+      closeModal();
+      loadEconomy(function () { loadTerritory(function () { renderEmpire(); refreshMap(); }); });
+      goToGameMap();
+    });
+  }
+
+  // ---------- 1. LUCKY WHEEL: press SPIN, then the wheel turns to the server's segment ----------
+  function rgWheel(ent, prizes) {
+    const seg = 360 / prizes.length;
+    const grad = prizes.map((p, i) =>
+      RG_TINT[i % 4] + " " + (i * seg) + "deg " + ((i + 1) * seg) + "deg").join(", ");
+    const ov = openModal(rgShell("lucky_wheel",
+      '<div class="rg-stage"><div class="rg-wheel-wrap">' +
+      '<div class="rg-needle">\u{1F53B}</div>' +
+      '<div class="rg-wheel" id="rgW" style="background: conic-gradient(' + grad + ')"></div>' +
+      '</div></div>' + rgLegend(prizes) +
+      '<button type="button" class="rg-go" id="rgSpin">SPIN!</button>',
+      "Every segment is a prize. Give it a spin!"));
+    ov.querySelector(".modal-card").classList.add("act-modal");
+    const w = ov.querySelector("#rgW"), go = ov.querySelector("#rgSpin");
+    go.addEventListener("click", () => {
+      go.disabled = true;
+      rgPlay(ent.id, null, function (res) {
+        const idx = Math.max(0, prizes.findIndex(p => p.id === (res.prize || {}).id));
+        // the ANIMATION follows the result; it never produces it
+        const target = 360 * 5 - (idx * seg + seg / 2);
+        w.style.transform = "rotate(" + target + "deg)";
+        setTimeout(() => rgResult(res), 3100);
+      });
+    });
+  }
+
+  // ---------- 2. TREASURE CHESTS: choose one of three; it opens on the server's prize ----------
+  function rgChests(ent, prizes) {
+    const ov = openModal(rgShell("treasure_chests",
+      '<div class="rg-stage"><div class="rg-chests">' +
+      [0, 1, 2].map(i => '<button type="button" class="rg-chest" data-chest="' + i +
+        '" aria-label="Open treasure chest ' + (i + 1) + '">\u{1F4E6}</button>').join("") +
+      '</div></div>' + rgLegend(prizes),
+      "CHOOSE YOUR TREASURE! Every chest holds a prize."));
+    ov.querySelector(".modal-card").classList.add("act-modal");
+    ov.querySelectorAll("[data-chest]").forEach(bt => bt.addEventListener("click", () => {
+      ov.querySelectorAll("[data-chest]").forEach(x => { x.disabled = true; });
+      // the tapped chest is the ONLY thing sent -- it selects nothing, it is where the reveal shows
+      rgPlay(ent.id, { chestIndex: parseInt(bt.dataset.chest, 10) }, function (res) {
+        ov.querySelectorAll("[data-chest]").forEach(x => {
+          if (x !== bt) x.classList.add("rg-dim");
+        });
+        bt.classList.add("rg-open");
+        bt.textContent = rgIcon(res.prize);
+        setTimeout(() => rgResult(res), 1100);
+      });
+    }));
+  }
+
+  // ---------- 3. TARGET SHOT: a moving aim, press SHOOT ----------
+  // The shot is TIMING, not accuracy: where it lands is cosmetic, and the copy never claims it
+  // changed the prize, because in this Alpha it does not.
+  function rgTarget(ent, prizes) {
+    const ov = openModal(rgShell("target_shot",
+      '<div class="rg-stage"><div class="rg-target" id="rgT">' +
+      '<div class="rg-bull"></div><div class="rg-aim" id="rgAim"></div></div></div>' +
+      rgLegend(prizes) +
+      '<button type="button" class="rg-go" id="rgShoot">SHOOT!</button>',
+      "Time your shot \u2014 every shot wins a prize."));
+    ov.querySelector(".modal-card").classList.add("act-modal");
+    const aim = ov.querySelector("#rgAim"), t = ov.querySelector("#rgT"),
+      go = ov.querySelector("#rgShoot");
+    let x = 0, dir = 1, timer = setInterval(() => {
+      x += dir * 4; if (x >= 96) dir = -1; if (x <= 0) dir = 1;
+      aim.style.left = x + "%";
+    }, 24);
+    const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
+    ov.addEventListener("click", e => { if (e.target === ov) stop(); });
+    const xEl = ov.querySelector(".modal-x"); if (xEl) xEl.addEventListener("click", stop);
+    go.addEventListener("click", () => {
+      go.disabled = true;
+      stop();
+      const at = x;
+      rgPlay(ent.id, null, function (res) {
+        const hit = document.createElement("div");
+        hit.className = "rg-hit";
+        hit.textContent = "\u{1F3AF}";
+        hit.style.left = at + "%";
+        hit.style.top = "50%";
+        t.appendChild(hit);
+        const near = Math.abs(at - 48);
+        const words = near < 8 ? "BULLSEYE!" : (near < 22 ? "GREAT SHOT!" : "GOOD SHOT!");
+        ov.querySelector(".rg-sub").textContent = words;
+        setTimeout(() => rgResult(res), 1200);
+      });
+    });
+  }
+
+  // ---------- 4. DICE ROLL: press ROLL, the die tumbles ----------
+  // The face it stops on is decoration. There is no 6-means-cavalry mapping, and the copy does not
+  // imply one.
+  function rgDice(ent, prizes) {
+    const FACES = ["\u2680", "\u2681", "\u2682", "\u2683", "\u2684", "\u2685"];
+    const ov = openModal(rgShell("dice_roll",
+      '<div class="rg-stage"><div class="rg-die" id="rgD">' + FACES[0] + '</div></div>' +
+      rgLegend(prizes) +
+      '<button type="button" class="rg-go" id="rgRoll">ROLL</button>',
+      "Roll the war die \u2014 every roll wins a prize."));
+    ov.querySelector(".modal-card").classList.add("act-modal");
+    const die = ov.querySelector("#rgD"), go = ov.querySelector("#rgRoll");
+    go.addEventListener("click", () => {
+      go.disabled = true;
+      die.classList.add("rg-tumble");
+      let n = 0;
+      const spin = setInterval(() => { die.textContent = FACES[(n++) % 6]; }, 90);
+      rgPlay(ent.id, null, function (res) {
+        setTimeout(() => {
+          clearInterval(spin);
+          die.classList.remove("rg-tumble");
+          die.textContent = FACES[Math.floor(Math.random() * 6)];      // cosmetic only
+          setTimeout(() => rgResult(res), 700);
+        }, 1400);
+      });
+    });
+  }
+
+  const RG_GAMES = { lucky_wheel: rgWheel, treasure_chests: rgChests,
+                     target_shot: rgTarget, dice_roll: rgDice };
+
+  // open the game the SERVER assigned to this entitlement
+  function openRewardGame(ent) {
+    if (!ent || !ent.id || !ent.game) return;
+    rgLoadPrizes(function (prizes) {
+      const fn = RG_GAMES[ent.game];
+      if (!fn || !prizes.length) return;      // an unknown game is never guessed at
+      fn(ent, prizes);
+    });
+  }
+  window.openRewardGame = openRewardGame;
+
+  // the oldest unresolved entitlement, if any. Used by CONTINUE LEARNING and by the Academy.
+  function rgOpenNextPending(cb) {
+    const t = authToken(); if (!t) { if (cb) cb(false); return; }
+    fetch(withRoom("/api/learning/rewards?token=" + encodeURIComponent(t)))
+      .then(r => r.json()).then(j => {
+        rgPrizes = j.prizes || rgPrizes;
+        if (j.next) { openRewardGame(j.next); if (cb) cb(true); }
+        else if (cb) cb(false);
+      })
+      .catch(() => { if (cb) cb(false); });
+  }
+  window.rgOpenNextPending = rgOpenNextPending;
 
   // ===== Phase 2B — territorial conquest attack (source ↔ target, adjacency-gated) =====
   // 攻擊必須「從自己的相鄰領地(source)出兵」。source 清單=目標的 World-Domain 相鄰領地中，你擁有且有駐軍者。

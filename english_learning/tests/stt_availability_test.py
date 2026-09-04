@@ -292,10 +292,10 @@ for lid in reg.lessons:
     want = 7 if lid.startswith("english.prea1") else 5
     assert len(req) == want, (lid, len(req), want)
 assert req_count == 57, req_count
-assert (PASS_GOLD, MASTERY_GOLD) == (500, 2500), (PASS_GOLD, MASTERY_GOLD)
+assert (PASS_GOLD, MASTERY_GOLD) == (0, 2500), (PASS_GOLD, MASTERY_GOLD)
 assert len(reg.qualifications) == 4
 ok("10. unchanged by this phase: 57 lessons, 457 activities, read-along required in all 57, "
-   "Pre-A1/Taipei 7 and A1/A2/B1 5 required, PASS_GOLD 500, MASTERY_GOLD 2500, 4 qualifications")
+   "Pre-A1/Taipei 7 and A1/A2/B1 5 required, PASS_GOLD 0 (a reward game), MASTERY_GOLD 2500, 4 qualifications")
 
 server.transcribe = _real_transcribe
 print("\nAll %d STT-availability tests passed." % passed)

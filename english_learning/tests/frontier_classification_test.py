@@ -334,8 +334,8 @@ ok("18. adjacency is untouched — 900 edge-ends, 0 cross-map, components [135, 
    "isolated")
 
 # ============================ 19. frozen anchors ============================
-assert fingerprint() == "28e400e55da22e44", fingerprint()   # Phase 14A.10A: reward + period change
-assert (PASS_GOLD, MASTERY_GOLD) == (500, 2500)
+assert fingerprint() == "2bd163c8793335b7", fingerprint()   # Phase 14A.10A: reward + period change
+assert (PASS_GOLD, MASTERY_GOLD) == (0, 2500)
 assert TECH_COST == {"atk": [160, 320, 560], "def": [160, 320, 560]} and TECH_MAX == 3
 assert BUILD_COST == {"armory": 50, "barracks": 60, "archery": 80, "stable": 120}
 assert sorted(server.allowed_game_maps()) == ["world"]

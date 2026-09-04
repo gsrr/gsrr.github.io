@@ -110,17 +110,32 @@ def assert_reward_model(reg, svc, pass_gold):
     curriculum cannot quietly change WHAT paying means — only how many things pay.
     """
     gates = declared_gates(reg)
-    paying = sorted(a for a in reg.activities if svc.reward_for(a)["amount"] > 0)
+    paying = sorted(a for a in reg.activities if reg.reward_policy_of(a) == "standard_activity_pass")
     # 1. paying == declaring. Nothing pays without naming the policy, and naming it always pays.
     assert paying == gates, (paying, gates)
-    # 2. every gate pays exactly PASS_GOLD through the one shared policy — no per-lesson amounts
+    # 2. every gate resolves the ONE shared policy to the SAME descriptor -- no per-lesson amounts.
+    #    Phase 14A.10B: with PASS_GOLD 0 that descriptor is the inert one, because a pass now earns a
+    #    REWARD GAME instead of gold. The shape is still asserted from the caller's `pass_gold`, so
+    #    this holds whatever the amount is.
+    expect = ({"type": "gold", "amount": pass_gold, "itemId": None, "once": True} if pass_gold > 0
+              else {"type": "none", "amount": 0, "itemId": None, "once": True})
     for aid in gates:
-        r = svc.reward_for(aid)
-        assert r == {"type": "gold", "amount": pass_gold, "itemId": None, "once": True}, (aid, r)
-    # 3. every non-gate activity pays nothing at all
+        assert svc.reward_for(aid) == expect, (aid, svc.reward_for(aid))
+    # 3. every non-gate activity declares no gate policy...
     for aid in reg.activities:
         if aid not in gates:
-            assert svc.reward_for(aid)["amount"] == 0, aid
+            assert reg.reward_policy_of(aid) != "standard_activity_pass", aid
+    # 3b. ...and NO activity may declare a policy that is not valid at activity scope. Phase
+    #     14A.10B: this is the guard that used to be carried by "a gate pays PASS_GOLD" -- with
+    #     PASS_GOLD 0 an amount can no longer tell a mis-scoped policy from a gate one, but the
+    #     policy's own declared scopes still can. A lesson-scope policy (lesson_mastery_gold) on an
+    #     ACTIVITY would pay lesson money for one pass, and must be rejected.
+    from learning import rewards as _rewards
+    for aid in reg.activities:
+        pid = reg.reward_policy_of(aid)
+        spec = _rewards.POLICIES.get(pid)
+        assert spec is not None, (aid, pid)
+        assert "activity" in spec["scopes"], (aid, pid, spec["scopes"])
     # 4. a paying gate must belong to a lesson that can actually be completed — a gate on a
     #    non-completable lesson would pay for progress toward nothing
     completable = set(completable_lessons(reg))
