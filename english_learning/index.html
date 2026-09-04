@@ -1197,8 +1197,13 @@
   .geo-holder[data-zoom="mid"] .geo-deco-front, .geo-holder[data-zoom="mid"] .geo-deco-rear { opacity: .8; }
   /* a continent label is a CAMERA SHORTCUT, so unlike a territory label it is clickable */
   .geo-labels { pointer-events: none; }
-  .geo-lab.cont { pointer-events: auto; cursor: pointer;
-    background: linear-gradient(#3d5a80, #263b57); border-color: rgba(214,235,255,.9);
+  /* Phase 14A.11B: a continent label is a camera BUTTON, so it keeps the pill the territory
+     labels gave up -- restated here in full because the base rule no longer carries one. */
+  .geo-lab.cont { pointer-events: auto; cursor: pointer; color: #fff6e2;
+    padding: 3px 8px; border-radius: 11px;
+    background: linear-gradient(#3d5a80, #263b57); border: 1.5px solid rgba(214,235,255,.9);
+    box-shadow: 0 2px 0 rgba(0,0,0,.35), 0 3px 7px rgba(0,0,0,.3);
+    text-shadow: 0 1px 2px rgba(0,0,0,.6);
     font-size: 14px; letter-spacing: 1px; text-transform: uppercase; }
   .geo-lab.cont:hover { background: linear-gradient(#4d6f9c, #2f4a6d); }
   .geo-lab.cont:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
@@ -2104,13 +2109,29 @@
     color: #e8edf5; background: rgba(15,23,42,.6); border-radius: 8px; padding: 3px 8px; pointer-events: none; }
   /* 縮放式標籤層：常數螢幕大小、只顯示不接收點擊(點擊由底下地區處理) */
   .geo-labels { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
-  /* labels: wooden board-game pills */
+  /* ===== Phase 14A.11B: a country name is PRINTED ON the map, not floating above it =====
+     14A.11A fixed how MANY names show (40 -> 11 at the overview). What was left was their weight:
+     a dark filled pill with a border and two shadows is the highest-contrast object a board can
+     have, so the eye read the words before the ownership colour the map exists to communicate.
+     A normal territory label is now cartographic ink -- the same brown the pill used to be filled
+     with, over a cream halo that keeps it legible on pale sand AND on an owner's fill -- with no
+     box of its own. The size and weight are unchanged, because this is a children's map and the
+     goal was never to make the names harder to read.
+     The pill is not gone: it now means something. It marks the SELECTED territory (below) and it
+     marks the continent shortcuts, which really are buttons. */
   .geo-lab { position: absolute; transform: translate(-50%, -50%); white-space: nowrap; pointer-events: none;
-    font-size: 13px; font-weight: 800; line-height: 1; color: #fff6e2; padding: 3px 8px; border-radius: 11px;
-    background: linear-gradient(#5b4326, #3e2c17); border: 1.5px solid rgba(255,236,200,.85);
-    box-shadow: 0 2px 0 rgba(0,0,0,.35), 0 3px 7px rgba(0,0,0,.3); letter-spacing: .2px;
-    paint-order: stroke; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
-  .geo-lab.sel { background: linear-gradient(#3fae5f, #1d7c3c); border-color: #fff; z-index: 4; }
+    font-size: 13px; font-weight: 800; line-height: 1; letter-spacing: .2px;
+    color: #3b2a15; padding: 0 2px; background: none; border: 0; border-radius: 0; box-shadow: none;
+    /* a four-way cream halo: the only thing standing between the ink and a busy map */
+    text-shadow: 0 0 3px #fff6e2, 1px 1px 0 #fff6e2, -1px 1px 0 #fff6e2, 1px -1px 0 #fff6e2,
+      -1px -1px 0 #fff6e2, 0 1px 0 #fff6e2, 0 -1px 0 #fff6e2, 1px 0 0 #fff6e2, -1px 0 0 #fff6e2; }
+  /* the SELECTED territory keeps the board-game pill -- one label on the map is a UI object, and
+     it is the one the player just tapped. This is what makes "which did I pick?" answerable at a
+     glance now that the others are quiet. */
+  .geo-lab.sel { color: #fff6e2; padding: 3px 9px; border-radius: 11px;
+    background: linear-gradient(#3fae5f, #1d7c3c); border: 1.5px solid #fff; z-index: 4;
+    box-shadow: 0 2px 0 rgba(0,0,0,.35), 0 3px 7px rgba(0,0,0,.3);
+    text-shadow: 0 1px 2px rgba(0,0,0,.6); }
   .geo-svg { width: 100%; height: auto; display: block; border-radius: 20px; background: transparent; position: relative; z-index: 0;
     /* ONE shadow for the whole land layer: thick EXTERNAL separation from the sea without
        thickening a single internal border. */
@@ -2230,7 +2251,9 @@
     /* the world is only ~250px across on a phone, where full-size label pills covered the land they
        were labelling. placeMapLabels() still decides WHICH labels survive (it measures from its own
        font constant); this only shrinks what each surviving pill covers. */
-    .geo-lab { font-size: 10.5px; padding: 2px 6px; border-radius: 8px; border-width: 1px; }
+    /* Phase 14A.11B: only the two treatments that still HAVE a box need one shrinking. */
+    .geo-lab { font-size: 10.5px; }
+    .geo-lab.sel, .geo-lab.cont { padding: 2px 6px; border-radius: 8px; border-width: 1px; }
     .geo-region:hover { stroke-width: 1.4; }
     .geo-region.geo-hi { stroke-width: 1.8 !important; }
     .geo-isle-ring { stroke-width: 1.4; }
@@ -8101,6 +8124,10 @@ nextLevelBtn.textContent = "✅ Back to lessons";
   //   pills the 14A.11 audit found, while the large countries that anchor the world still label.
   const LABEL_MIN_TERR_PX = 90;
   const LABEL_FIT_RATIO = 1.0;
+  // Phase 14A.11B: the air a bare map label needs around its text, in px. It is exactly the
+  // horizontal chrome the 14A.11A pill carried (8px padding + 1.5px border, both sides), so the
+  // measured geometry -- and therefore the label density 14A.11A measured -- survives the restyle.
+  const LABEL_PAD_PX = 19;
   function placeMapLabels(cands, zoom) {
     // The SELECTED territory is exempt from both gates: whatever the player just tapped must be
     // able to say its own name, however small it is and however long its name is.
@@ -8615,11 +8642,17 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         el.className = "geo-lab" + (L.cont ? " cont" : "");
         el.textContent = L.label;
         lay.appendChild(el); L.el = el;
-        // Phase 14A.11A: measure the RENDERED pill once, here, while it is still displayed. Every
-        // later decision -- the collision box and the new fit rule -- uses this one number, so
-        // there is no second geometry system and no character-count proxy. A hidden element
-        // measures 0, which is why this happens at creation and never again.
-        L.w = Math.round(el.getBoundingClientRect().width) || 0;
+        // Phase 14A.11A: measure the RENDERED label once, here, while it is still displayed. Every
+        // later decision -- the collision box and the fit rule -- uses this one number, so there is
+        // no second geometry system and no character-count proxy. A hidden element measures 0,
+        // which is why this happens at creation and never again.
+        //
+        // Phase 14A.11B: a normal label lost its pill, and with it ~19px of box. Measured width is
+        // therefore no longer the space the name NEEDS -- a name printed edge to edge across a
+        // territory is unreadable even though it technically "fits". LABEL_PAD_PX restores exactly
+        // the breathing room the pill used to provide, so the admission geometry 14A.11A tuned is
+        // unchanged by a change of paint. Continent labels keep their own padding, so they add none.
+        L.w = (Math.round(el.getBoundingClientRect().width) || 0) + (L.cont ? 0 : LABEL_PAD_PX);
         const restW = (L.uw || 10) * PK;                           // 該區在 s=1 時的螢幕寬(px)
         // ===== Phase 12C semantic zoom =====
         // FAR  : continent labels + the few territories big enough to read
