@@ -735,6 +735,7 @@
   /* 對話 */
   .dialogue { display: flex; flex-direction: column; gap: 10px; }
   .line { display: flex; gap: 10px; padding: 12px 14px; border-radius: 14px; font-size: 19px; line-height: 1.5; transition: background .2s, transform .2s; }
+  #dialogue .line { cursor: pointer; }          /* 點句子可重聽該句發音 */
   .line .who { font-weight: 700; min-width: 52px; }
   .line.male   { background: #eff6ff; }
   .line.female { background: #fdf2f8; align-self: flex-end; flex-direction: row-reverse; text-align: right; }
@@ -2614,6 +2615,9 @@
     display: flex; align-items: center; justify-content: center;
   }
   .mword .wword { flex: 1; }
+  /* 點單字可聽發音（配對答案仍由伺服器判定，這裡只發音） */
+  .mword { cursor: pointer; }
+  .mword:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
   .mword.current { border-color: #2563eb; background: #eff6ff; }
   .mword.current .num { background: #2563eb; color: #fff; }
   .mword.done { border-color: #16a34a; background: #dcfce7; color: #15803d; }
@@ -2774,6 +2778,7 @@
   /* free-conversation role-play (RP.Engine) */
   .rp-b { max-width: 84%; padding: 9px 13px; border-radius: 14px; line-height: 1.5; font-size: 15px; animation: rpPop .18s ease; }
   .rp-b .rp-who { display: block; font-size: 11px; opacity: .7; margin-bottom: 2px; }
+  #rpConvo .rp-b { cursor: pointer; }           /* 點對話泡泡可重聽該句（錄音中不發音） */
   .rp-b.npc { align-self: flex-start; background: #eef2ff; border: 1px solid #e0e7ff; color: #1e293b; }
   .rp-b.npc.hint { background: #fff7ed; border-color: #fed7aa; }
   .rp-b.npc.active { box-shadow: 0 0 0 2px #c7d2fe; }
@@ -4161,6 +4166,10 @@ nextLevelBtn.textContent = "✅ Back to lessons";
     lineEls = script.map(l => {
       const div = document.createElement("div");
       div.className = "line " + l.gender;
+      // Tapping a line replays just that sentence (shared click-to-speak reads `.say`, never the
+      // `.who` speaker label). Silent while Level 1 is auto-playing or Level 2 is recording, so it
+      // can neither break the playback chain nor talk over the microphone — see speechBusyElsewhere.
+      div.title = "Tap to hear this line";
       div.innerHTML = `<span class="who">${l.who}</span><span class="say">${l.text}</span>`;
       dialogueEl.appendChild(div);
       return div;
@@ -4885,6 +4894,141 @@ nextLevelBtn.textContent = "✅ Back to lessons";
   function speakQuestion(text) { speakSeq([{ text: text, gender: "female" }]); }
   function speakSequence(texts) { speakSeq(texts.map(t => ({ text: t, gender: "female" }))); }
 
+  /* ================= 點擊即發音（Click-to-speak）：全站唯一入口 =================
+   * Learner-visible English pronounces itself when tapped. There is ONE speech path — speakSeq()
+   * above — so this layer adds no second TTS implementation: it decides *what text* a click means
+   * and hands that text to the existing clip-first / TTS-fallback pipeline (en-US, existing voice
+   * and cancellation policy included).
+   *
+   * WHY A DELEGATED LISTENER, not a handler per element: makeReorder re-creates every chip on each
+   * place/unplace, and makeQuiz/makeWh/makeCloze re-render a fresh card per question. Binding per
+   * element would re-bind on every render and risk duplicate handlers (and therefore double
+   * answers). One document-level listener in the BUBBLE phase cannot do either: the element's own
+   * click handler has already run and graded by the time speech starts, so speech can never delay,
+   * block or duplicate a learning action.
+   *
+   * OPT-IN, never "every button": only the selectors in SPEAK_HOSTS speak. Application chrome
+   * (Next / Back / Check / Send / 🔄 Try Again / login / room / avatar / speed) is untouched — the
+   * purpose is pronunciation practice, not narrating the app.
+   */
+  // Learning-content hosts. `.opt` covers Yes/No, WH, cloze and the boss-exam choices; `.chip` the
+  // reorder tokens; `.mword` the matching vocabulary column; `.line` a read-along dialogue line;
+  // `.rp-b` a role-play bubble. Deliberately ABSENT: `.mpic` (see makeMatch) and every `.dict-*`
+  // control (see makeDictation).
+  // `.line` and `.rp-b` are scoped to their own containers so a future element reusing either
+  // class name elsewhere in the app cannot silently start talking.
+  const SPEAK_HOSTS = ".opt, .chip, .mword, #dialogue .line, #rpConvo .rp-b";
+  // Children that are decoration, not language: the matching index number and ✓/✗ mark, the
+  // speaker label on a dialogue/role-play line, and the 🔊 button baked into a question row.
+  const SPEAK_DECOR = /(?:^|\s)(?:num|quiz-mark|rp-who|who|speak-q|icon|badge|sr-only)(?:\s|$)/;
+  // Children that ARE the language, when present — used in preference to walking the whole subtree.
+  const SPEAK_SEMANTIC = ".wword, .say";
+  // Symbols/emoji/marks that must never be pronounced. Explicit ranges rather than \p{...}: a
+  // SyntaxError here would kill the entire lesson script on an older in-app browser. Curly quotes
+  // (U+2018-201F) sit below this range on purpose, so "don’t" keeps its apostrophe.
+  const SPEAK_STRIP = new RegExp(
+    "[\\u2190-\\u21FF\\u2300-\\u23FF\\u2460-\\u24FF\\u25A0-\\u27BF\\u2B00-\\u2BFF\\uFE0F\\u200D]" +
+    "|[\\uD83C-\\uDBFF][\\uDC00-\\uDFFF]", "g");
+
+  // Text of `el` with decoration children skipped. Falls back to textContent for a leaf.
+  function speechSubtreeText(el) {
+    if (!el) return "";
+    const kids = el.childNodes;
+    if (!kids || !kids.length) return el.textContent || "";
+    let out = "";
+    for (let i = 0; i < kids.length; i++) {
+      const n = kids[i];
+      if (n.nodeType === 3) { out += n.nodeValue || ""; continue; }   // text node
+      if (n.nodeType !== 1) continue;
+      const cls = " " + (typeof n.className === "string" ? n.className : "") + " ";
+      if (SPEAK_DECOR.test(cls)) continue;
+      if ((n.id || "").indexOf("wmark-") === 0) continue;             // matching ✓/✗ slot
+      out += speechSubtreeText(n);
+    }
+    return out;
+  }
+
+  // Normalise a candidate into something worth pronouncing, or "" for nothing.
+  // Handles null / undefined / "" / whitespace, strips decoration symbols, drops the "1. " that
+  // makeWh prefixes onto a visible option, and refuses anything with no letter or digit left (so a
+  // punctuation-only reorder token such as "?" stays silent).
+  function speakableText(raw) {
+    let s = raw == null ? "" : String(raw);
+    s = s.replace(SPEAK_STRIP, " ");
+    s = s.replace(/^\s*\d+\s*[.)]\s*/, "");        // "1. The zoo is…" -> "The zoo is…"
+    s = s.replace(/\s+/g, " ").trim();
+    if (!s) return "";
+    if (!/[A-Za-z0-9]/.test(s)) return "";         // punctuation / symbols only -> nothing to say
+    return s;
+  }
+
+  // The semantic English a clicked learning element represents.
+  //   data-speak="off"  -> this element handles its own speech (or must stay silent)
+  //   data-speak="…"    -> speak exactly this
+  //   data-val          -> makeWh already stores the undecorated choice there (and grades on it)
+  //   .wword / .say     -> the language half of a decorated row
+  //   otherwise         -> the subtree minus decoration
+  function speechTextFor(el) {
+    if (!el) return "";
+    const ds = el.dataset || {};
+    if (ds.speak === "off") return "";
+    if (ds.speak) return speakableText(ds.speak);
+    if (ds.val) return speakableText(ds.val);
+    const semantic = el.querySelector ? el.querySelector(SPEAK_SEMANTIC) : null;
+    if (semantic) return speakableText(speechSubtreeText(semantic));
+    return speakableText(speechSubtreeText(el));
+  }
+
+  // THE helper. Speak one piece of learner-visible English; blank/undefined says nothing.
+  // Cancellation policy is speakSeq's, which the lesson already used everywhere: a new utterance
+  // cancels the one in flight, so click A → click B speaks B instead of queueing A behind it.
+  function speakEnglish(text) {
+    const s = speakableText(text);
+    if (!s) return false;
+    try { speakQuestion(s); return true; } catch (e) { return false; }   // never break a lesson
+  }
+  // Ordered variant for the two activities that answer with a follow-up line (WH, cloze).
+  function speakEnglishSeq(texts) {
+    const list = (texts || []).map(speakableText).filter(Boolean);
+    if (!list.length) return false;
+    try { speakSequence(list); return true; } catch (e) { return false; }
+  }
+
+  // Is some other audio owner mid-flight? Speech must never fight the microphone or hijack the
+  // read-along chain, so a click during either is silent rather than disruptive.
+  function speechBusyElsewhere() {
+    try {
+      if (typeof isRecording !== "undefined" && isRecording) return true;    // read-along recording
+      if (typeof rpRecording !== "undefined" && rpRecording) return true;    // role-play recording
+      if (typeof isPlaying !== "undefined" && isPlaying) return true;        // Level 1 auto-playback
+    } catch (e) {}
+    return false;
+  }
+
+  // One listener for the whole app. `click` (not mousedown) so mouse, touch and the native
+  // keyboard activation of a <button> all route through the same path.
+  document.addEventListener("click", function (ev) {
+    try {
+      const t = ev.target;
+      const host = t && t.closest ? t.closest(SPEAK_HOSTS) : null;
+      if (!host || speechBusyElsewhere()) return;
+      speakEnglish(speechTextFor(host));
+    } catch (e) { /* presentation only: a speech failure must never surface to the learner */ }
+  });
+  // `.mword` is a <div>, so it has no native keyboard activation. renderColumns marks it
+  // role="button" tabindex="0"; honour Enter/Space here so the vocabulary column is reachable
+  // without a pointer. Buttons are untouched — they already emit a click.
+  document.addEventListener("keydown", function (ev) {
+    try {
+      if (ev.key !== "Enter" && ev.key !== " " && ev.key !== "Spacebar") return;
+      const t = ev.target;
+      if (!t || !t.classList || !t.classList.contains("mword")) return;
+      ev.preventDefault();
+      if (speechBusyElsewhere()) return;
+      speakEnglish(speechTextFor(t));
+    } catch (e) {}
+  });
+
   // 測驗控制器：一次只顯示一題，答完按「下一題」，最後算總分
   function makeQuiz(listEl, scoreEl, resetEl, level) {
     let data = [], shuffled = [], idx = 0, correct = 0, answered = false, timer = null;
@@ -5030,6 +5174,14 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         const w = document.createElement("div");
         w.className = "mword" + (i === 0 ? " current" : "");
         w.id = "mword-" + i;
+        // Tapping a word pronounces it (shared click-to-speak; the `.num` index and the `wmark-*`
+        // ✓/✗ slot are decoration and are skipped). This reveals nothing: the learner can already
+        // read every word, and the word→picture mapping stays server-side. A <div> has no native
+        // keyboard activation, so it is made focusable and the shared keydown handler answers
+        // Enter/Space.
+        w.setAttribute("role", "button");
+        w.setAttribute("tabindex", "0");
+        w.title = "Tap to hear this word";
         w.innerHTML = `<span class="num">${i + 1}</span>` +
                       `<span class="wword">${escapeHtml(item.word)}</span>` +
                       `<span id="wmark-${i}"></span>`;
@@ -5039,6 +5191,11 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         const b = document.createElement("button");
         b.className = "mpic";
         b.type = "button";
+        // DELIBERATELY NOT a click-to-speak host (`.mpic` is absent from SPEAK_HOSTS). Its label is
+        // a picture/emoji, so there is no English to pronounce, and the word it stands for is the
+        // answer being tested: in server mode the client is not even told the mapping
+        // (matching.public_view withholds it), and in the legacy local mode speaking `c.word` would
+        // hand the learner the answer. Silence here is what keeps matching a test.
         b.textContent = c.pic;
         b.addEventListener("click", () => onPick(c, b));
         picsEl.appendChild(b);
@@ -5287,6 +5444,9 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         const btn = document.createElement("button");
         btn.className = "opt";
         btn.dataset.val = choice;
+        // answer() speaks the clicked choice FIRST and then the correct sentence, as one ordered
+        // sequence, so the shared click-to-speak layer must not also fire and cancel it.
+        btn.dataset.speak = "off";
         btn.textContent = (i + 1) + ". " + choice;
         btn.addEventListener("click", () => answer(choice, btn, opts, mark, it));
         opts.appendChild(btn);
@@ -5309,7 +5469,10 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       });
       if (choice === it.a) { mark.textContent = " ✅"; correct++; playDing(); }
       else { btn.classList.add("wrong"); mark.textContent = " ❌"; }
-      speakQuestion(it.a);   // 朗讀正確的完整句答案
+      // 先念自己點的選項（發音練習），再念正確的完整句答案（原本的行為）。
+      // The clicked choice is the primary speech target; the correct sentence still follows, as one
+      // sequence rather than two competing utterances. A correct pick is not read twice.
+      speakEnglishSeq(choice === it.a ? [it.a] : [choice, it.a]);
       clearTimeout(timer);
       timer = setTimeout(goNext, choice === it.a ? 1400 : 2000);
     }
@@ -5524,6 +5687,9 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       choices.forEach(choice => {
         const btn = document.createElement("button");
         btn.className = "opt";
+        // answer() speaks the candidate FIRST and then the completed sentence, as one ordered
+        // sequence, so the shared click-to-speak layer must not also fire and cancel it.
+        btn.dataset.speak = "off";
         btn.textContent = choice;
         btn.addEventListener("click", () => answer(choice, btn, opts, blank, it));
         opts.appendChild(btn);
@@ -5546,7 +5712,10 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       blank.classList.add("filled");
       if (choice === it.answer) { correct++; playDing(); }
       else { btn.classList.add("wrong"); }
-      speakQuestion(it.text.replace("___", it.answer));   // 念出完整句子
+      // 先念點到的候選字（發音練習），再念補完的整句（原本的行為）。
+      // The clicked candidate is the primary speech target; the completed sentence, which was
+      // already the intended cloze UX, follows it in the same sequence.
+      speakEnglishSeq([choice, it.text.replace("___", it.answer)]);   // 念出完整句子
       clearTimeout(timer);
       timer = setTimeout(goNext, choice === it.answer ? 1300 : 1900);
     }
