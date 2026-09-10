@@ -4183,7 +4183,8 @@
         : "\u{1F381} Play Mini-game";
       finishGameBtn.classList.remove("hidden");
       finishGameBtn.onclick = function () {
-        if (typeof openRewardGame === "function") openRewardGame(ent);
+        // "lesson": the lesson is still on screen behind the modal, so its result is dismiss-only
+        if (typeof openRewardGame === "function") openRewardGame(ent, "lesson");
       };
     };
     paint();
@@ -11003,7 +11004,7 @@
         g.textContent = settled ? "\u{1F3B0} Play again (no extra reward)" : "\u{1F381} Open your reward game";
         g.addEventListener("click", function (ev) {
           ev.stopPropagation();
-          if (typeof openRewardGame === "function") openRewardGame(ent);
+          if (typeof openRewardGame === "function") openRewardGame(ent, "lesson");
         });
         extra.appendChild(g);
         list.appendChild(extra);
@@ -11479,7 +11480,7 @@
         // right here in the learning flow -- the player never has to go looking for it. `j.rewardGame`
         // is present only when the server actually created one on THIS request.
         if (j && j.rewardGame && typeof openRewardGame === "function") {
-          try { openRewardGame(j.rewardGame); }
+          try { openRewardGame(j.rewardGame, "lesson"); }
           catch (e) { if (typeof console !== "undefined") console.warn("[reward] game:", e); }
         }
         if (!j || !j.ok || !j.passed) return;
@@ -11516,6 +11517,11 @@
   // entitlement id (plus, for the chests, which one was tapped -- presentation data).
   let rgPrizes = null;               // the display table, from the server
   let rgBusy = false;                // one resolution at a time, whatever the player clicks
+  // WHERE the current game was opened from, which decides only whether the result screen offers
+  // exits (see rgResult). Module-level like rgBusy/rgPrizes because openModal() shows exactly one
+  // modal at a time, so there is only ever one game in flight to describe. Defaults to "academy":
+  // a caller that does not say it is inside a lesson keeps the exits it has always had.
+  let rgFrom = "academy";
 
   function rgIcon(p) { return p && p.icon ? p.icon : "\u{1F381}"; }
   function rgLabel(p) { return p && p.label ? p.label : "a reward"; }
@@ -11567,19 +11573,35 @@
       .catch(() => { rgBusy = false; alert("Couldn't reach the server."); });
   }
 
+  // The result screen. Its EXITS depend on where the game was opened from, which is the only thing
+  // rgFrom carries -- the prize, the balances and the wording are identical either way, and none of
+  // them is decided here.
+  //
+  //   "lesson"  a stage mini-game. The lesson (with its persistent stage selector) is still on
+  //             screen behind the modal, so the modal is DISMISS-ONLY: the \u2715 that openModal()
+  //             already draws closes it and the learner is exactly where they were, free to pick
+  //             the next activity from the selector. "Continue Learning" would duplicate the
+  //             selector and "Go to World" would take them somewhere they did not ask to go.
+  //   "academy" the Academy's reward banner (and any other standalone entry). There is no lesson
+  //             underneath to return to, so both exits stay: they are the only way onward.
   function rgResult(res) {
     const p = res.prize || {};
     const home = p.kind === "troops";
+    const inLesson = rgFrom === "lesson";
     const html = '<div class="rg-card"><div class="rg-won">\u2B50 YOU WON! \u2B50</div>' +
       '<div class="rg-prize-ic">' + rgIcon(p) + '</div>' +
       '<div class="rg-prize">+' + escapeHtml(rgLabel(p)) + '</div>' +
       (home ? '<p class="rg-dest">Added to \u{1F3E0} Home Base \u2014 ready to march</p>'
             : '<p class="rg-dest">Added to your gold</p>') +
-      '<div class="rg-foot">' +
-        '<button type="button" class="rg-alt" id="rgMore">\u{1F4DA} CONTINUE LEARNING</button>' +
-        '<button type="button" id="rgWorld">\u{1F5FA}\u{FE0F} GO TO WORLD</button>' +
-      '</div></div>';
+      (inLesson ? '' :
+        '<div class="rg-foot">' +
+          '<button type="button" class="rg-alt" id="rgMore">\u{1F4DA} CONTINUE LEARNING</button>' +
+          '<button type="button" id="rgWorld">\u{1F5FA}\u{FE0F} GO TO WORLD</button>' +
+        '</div>') +
+      '</div>';
     const ov = openModal(html);
+    // Nothing to wire: the only control is the \u2715 that openModal() already drew and bound.
+    if (inLesson) return;
     ov.querySelector("#rgMore").addEventListener("click", () => {
       closeModal();
       // another game may already be waiting -- claiming this one must never discard it
@@ -11712,8 +11734,10 @@
                      target_shot: rgTarget, dice_roll: rgDice };
 
   // open the game the SERVER assigned to this entitlement
-  function openRewardGame(ent) {
+  // `from` is "lesson" when a stage mini-game opened this, else the Academy/standalone default.
+  function openRewardGame(ent, from) {
     if (!ent || !ent.id || !ent.game) return;
+    rgFrom = from === "lesson" ? "lesson" : "academy";
     rgLoadPrizes(function (prizes) {
       const fn = RG_GAMES[ent.game];
       if (!fn || !prizes.length) return;      // an unknown game is never guessed at
@@ -11722,7 +11746,7 @@
   }
   window.openRewardGame = openRewardGame;
 
-  // the oldest unresolved entitlement, if any. Used by CONTINUE LEARNING and by the Academy.
+  // the oldest unresolved entitlement, if any. Used by the Academy reward banner.
   function rgOpenNextPending(cb) {
     const t = authToken(); if (!t) { if (cb) cb(false); return; }
     fetch(withRoom("/api/learning/rewards?token=" + encodeURIComponent(t)))

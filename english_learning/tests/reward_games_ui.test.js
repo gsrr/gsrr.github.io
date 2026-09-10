@@ -108,14 +108,24 @@ ok("every game wins: no empty chest, no miss, no blank segment, no bad roll -- a
 assert(/Added to \\u\{1F3E0\} Home Base/.test(result), "a troop prize says where it went");
 assert(/id="rgMore">\\u\{1F4DA\} CONTINUE LEARNING/.test(result) &&
        /id="rgWorld">\\u\{1F5FA\}\\u\{FE0F\} GO TO WORLD/.test(result), "both exits are offered");
+// ...but ONLY where there is nothing underneath to go back to. A stage mini-game is played with the
+// lesson and its persistent stage selector still on screen, so that result is dismiss-only: the
+// exits are gated on the context the CALL SITE passed, and the wiring is skipped with them.
+// tests/lesson_reward_modal.test.js executes both paths; this pins the shape here.
+assert(/const inLesson = rgFrom === "lesson";/.test(result),
+  "the result screen must read the context, not guess it");
+assert(/\(inLesson \? '' :/.test(result), "the exits footer must be conditional on the context");
+assert(/if \(inLesson\) return;/.test(result),
+  "the exit wiring must be skipped when there are no exits to wire");
 assert(/rgOpenNextPending\(function \(opened\) \{ if \(!opened\) openLearningHome\(\); \}\);/.test(result),
   "CONTINUE LEARNING opens the NEXT pending game if there is one, so claiming one never " +
   "discards another");
 assert(/goToGameMap\(\);/.test(result), "GO TO WORLD uses the existing World route");
 assert(/loadEconomy\(function \(\) \{ loadTerritory\(function \(\) \{ renderEmpire\(\); refreshMap\(\); \}\); \}\);/
   .test(result), "...after reconciling the caches, so won troops are on screen immediately");
-ok("the result screen names the prize, says troops went to Home Base, and both exits work -- " +
-   "Continue Learning even picks up a second pending game");
+ok("the result screen names the prize, says troops went to Home Base, and both exits work on the " +
+   "Academy path -- Continue Learning even picks up a second pending game -- while a lesson stage " +
+   "game gets the same prize with no exits at all");
 
 // ===================== auto-open and Academy re-entry =====================
 assert(/if \(j && j\.rewardGame && typeof openRewardGame === "function"\) \{/.test(code),
