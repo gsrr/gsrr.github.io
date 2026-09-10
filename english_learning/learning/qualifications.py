@@ -122,19 +122,26 @@ def completions_state(state, keys):
     return status
 
 
-def _dict_slot(state, key):
+def dict_slot(state, key):
     """The dict stored at `key`, creating it when absent.
 
     Returns None when the slot holds something that is NOT a dict. Phase 7C.1: a clobbered container
     must neither crash the writer nor be silently replaced — replacing it would destroy the very
     evidence an operator needs, and crashing would turn a damaged file into a denial of service.
     The caller skips the write and the damaged bytes stay exactly where they are.
+
+    Public because it is THE guard for this shape: every writer that reaches for a nested container
+    in stored learning state goes through it rather than `state.setdefault(key, {})`, which returns
+    whatever malformed value is already there.
     """
     cur = state.get(key)
     if cur is None:
         cur = {}
         state[key] = cur
     return cur if isinstance(cur, dict) else None
+
+
+_dict_slot = dict_slot          # the historical private name, kept for this module's own callers
 
 
 def get_completion(state, key):

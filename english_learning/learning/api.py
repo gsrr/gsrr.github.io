@@ -16,6 +16,40 @@ REASON_BAD_ANSWERS = "bad_answers"
 REASON_CONTENT_UNAVAILABLE = "content_unavailable"
 
 
+class CorruptLearningState(Exception):
+    """A stored learning container is not the type it must be, so the write is REFUSED.
+
+    The tolerant reads in this module normalise a damaged container to "no evidence", which is right
+    for display. A WRITE cannot do that: `state.setdefault("sttProgress", {})` hands back whatever
+    malformed value is already stored, and the next `.get()` or `.items()` on it raised
+    AttributeError straight out of the request -- which, before the HTTP boundary existed, dropped
+    the connection.
+
+    Refusing instead keeps all three promises at once: the damaged bytes stay exactly where they are
+    (nothing is repaired or replaced), nothing is written, and the request gets one controlled
+    answer. Raised rather than returned because there is no sensible partial result -- the caller
+    cannot proceed -- and because the HTTP layer already has a single boundary for it.
+    """
+
+    def __init__(self, slot, found):
+        self.slot = slot
+        self.found = type(found).__name__
+        Exception.__init__(self, "learning state %r is %s, expected object" % (slot, self.found))
+
+
+def _writable_slot(state, key):
+    """The nested dict at `key`, ready to write. Raises CorruptLearningState if it is not a dict.
+
+    Replaces `state.setdefault(key, {})` at every write site below: setdefault returns the malformed
+    value when one is already stored, which is how a damaged progress file used to crash a request
+    instead of refusing it.
+    """
+    slot = qualifications.dict_slot(state, key)
+    if slot is None:
+        raise CorruptLearningState(key, state.get(key))
+    return slot
+
+
 def _stored(state, table, key):
     """One record out of a per-account progress table, tolerating corrupt stored state.
 
@@ -240,9 +274,18 @@ class LearningService:
         if not isinstance(state, dict):
             state = {}
         res = stt_scoring.score_sentence(target, transcript)
-        table = state.setdefault("sttProgress", {})
+        table = _writable_slot(state, "sttProgress")
+        # A malformed per-activity record used to be coerced to {} and written straight back, which
+        # erased the learner's best-per-sentence history -- the evidence Rule A averages. Refuse
+        # instead, and check the nested `sentences` container here too, so the pure scorer below can
+        # keep assuming the shape it documents.
         prog = table.get(activity_id)
-        prog = prog if isinstance(prog, dict) else {}
+        if prog is None:
+            prog = {}
+        elif not isinstance(prog, dict):
+            raise CorruptLearningState("sttProgress[%s]" % activity_id, prog)
+        if prog.get("sentences") is not None and not isinstance(prog.get("sentences"), dict):
+            raise CorruptLearningState("sttProgress[%s].sentences" % activity_id, prog["sentences"])
         prog, improved = stt_scoring.apply_sentence_score(
             prog, int(sentence_index), res["pct"], total, now)
         table[activity_id] = prog
@@ -388,7 +431,7 @@ class LearningService:
         res = roleplay.result_of(session)
         out = {"granted": [], "grantedNow": [], "rewardAmount": 0, "rewarded": False}
         if res["turns"] > 0:
-            prog = state.setdefault("roleplayProgress", {})
+            prog = _writable_slot(state, "roleplayProgress")
             prog[activity_id] = {"passes": res["passes"], "turns": res["turns"], "pct": res["pct"],
                                  "sessionId": session_id, "updatedAt": now}
         state["roleplaySessions"] = roleplay.prune_sessions(state.get("roleplaySessions"), now)
@@ -425,7 +468,7 @@ class LearningService:
             return state, None
         if not isinstance(state, dict):
             state = {}
-        rounds = state.setdefault("matchingRounds", {})
+        rounds = _writable_slot(state, "matchingRounds")
         for rid in [r for r, v in rounds.items()
                     if (v or {}).get("activityId") == activity_id or matching.is_expired(v, now)]:
             rounds.pop(rid, None)
@@ -466,8 +509,8 @@ class LearningService:
             return state, out
         # Round finished: compact it into evidence and run it through the normal activity machinery.
         res = matching.result_of(rs)
-        state["matchingRounds"].pop(round_id, None)
-        prog = state.setdefault("matchingProgress", {})
+        rounds.pop(round_id, None)          # `rounds` was type-checked above
+        prog = _writable_slot(state, "matchingProgress")
         prog[activity_id] = {"latestRoundId": round_id, "correct": res["correct"],
                              "total": res["total"], "pct": res["pct"], "updatedAt": now}
         out["result"] = res
@@ -737,5 +780,5 @@ class LearningService:
         return qualifications.earned_qualification_ids(state)
 
 
-__all__ = ["LearningService", "identity", "REASON_NOT_GRADABLE", "REASON_BAD_ANSWERS",
-           "REASON_CONTENT_UNAVAILABLE"]
+__all__ = ["LearningService", "identity", "CorruptLearningState", "REASON_NOT_GRADABLE",
+           "REASON_BAD_ANSWERS", "REASON_CONTENT_UNAVAILABLE"]

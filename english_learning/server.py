@@ -7,7 +7,7 @@
    計數存於 /data/visits.json（docker volume）。
    STT 用 faster-whisper（開源、免費、CPU 可跑）；缺套件/ffmpeg 時回傳錯誤、不影響計數。
 """
-import json, os, threading, tempfile, subprocess, hashlib, secrets, time, random
+import json, os, re, threading, tempfile, subprocess, hashlib, secrets, time, random, traceback
 from urllib.parse import urlparse, parse_qs
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 try:                                   # 正規領地目錄(唯讀權威)：身分/人口解析
@@ -279,11 +279,10 @@ def read_count():
 
 
 def write_count(n):
-    os.makedirs(os.path.dirname(DATA), exist_ok=True)
-    tmp = DATA + ".tmp"
-    with open(tmp, "w") as f:
-        json.dump({"count": n}, f)
-    os.replace(tmp, DATA)
+    # The visitor counter is NOT authoritative evidence -- read_count() stays tolerant on purpose,
+    # since a lost count is a cosmetic number and never a payment. It shares the durable writer only
+    # so there is exactly one atomic-write implementation in this file.
+    save_json_state(DATA, {"count": n})
 
 
 # ---- 帳號 + 雲端進度（拆檔） ----
@@ -330,24 +329,176 @@ def token_user(tok):
         return rec["user"]
 
 
+# ===== Authoritative persisted state: corruption is NEVER laundered into "fresh" =====
+#
+# The files below are EVIDENCE, not a cache. A learner's progress file carries the record of what
+# was already paid (`activityCompletions[...].rewarded`, `rewardLedger`, `lessonCompletionHistory`,
+# `rewardGames`); economy.json carries the balance AND the reward payment markers; accounts.json
+# carries credentials and class codes.
+#
+# Each of these loaders used to be `except Exception: return {}`. That single line defeated the whole
+# fail-closed design in learning/ (qualifications.completions_state, reward_ledger.is_corrupt,
+# completion.history_is_corrupt): those guards distinguish CORRUPT from ABSENT and refuse to pay when
+# they cannot tell, but they never saw corruption, because it was converted to a pristine empty state
+# one layer below them. The next ordinary write then made the loss permanent -- and, because the
+# `rewarded` flags were gone with it, every previously-paid activity became payable again.
+#
+# So: a MISSING file is first-run and yields empty state; anything else that stops us reading the
+# file raises CorruptState, the bytes are left exactly as found, and the path is remembered so an
+# ordinary request cannot overwrite it. The HTTP boundary turns that into one controlled response.
+class CorruptState(Exception):
+    """A persisted authoritative file exists but cannot be trusted. The caller must NOT proceed."""
+
+    def __init__(self, path, detail):
+        self.path = path
+        self.detail = detail
+        Exception.__init__(self, "%s: %s" % (path, detail))
+
+
+class BadRequest(Exception):
+    """Malformed input from the client. The HTTP boundary turns this into a 400, never a crash.
+
+    `reason` is a stable machine string for the client; the message stays human-readable and carries
+    no internal detail, since it is sent over the wire.
+    """
+
+    def __init__(self, message, reason="bad_request"):
+        self.reason = reason
+        Exception.__init__(self, message)
+
+
+# Paths found corrupt during this process's lifetime. A save refuses to touch one, so no normal
+# request can destroy the evidence. A successful load CLEARS the mark, so repairing the file by hand
+# is enough to bring it back -- there is no separate repair tool to run.
+_corrupt_paths = set()
+_corrupt_lock = threading.Lock()
+
+
+def _mark_corrupt(path):
+    with _corrupt_lock:
+        _corrupt_paths.add(os.path.abspath(path))
+
+
+def _clear_corrupt(path):
+    with _corrupt_lock:
+        _corrupt_paths.discard(os.path.abspath(path))
+
+
+def state_is_corrupt(path):
+    with _corrupt_lock:
+        return os.path.abspath(path) in _corrupt_paths
+
+
+def load_json_state(path, want=dict):
+    """Parsed JSON from `path`, or None when the file does not exist (legitimate first run).
+
+    Raises CorruptState for every other failure -- unreadable bytes, invalid UTF-8, invalid JSON, or
+    a top-level value of the wrong type. Deliberately NOT a broad `except Exception: {}`: "there is
+    no file yet" and "the file is damaged" are different facts and only one of them means the learner
+    has no history.
+    """
+    try:
+        with open(path, "rb") as f:
+            raw = f.read()
+    except FileNotFoundError:
+        _clear_corrupt(path)
+        return None
+    except OSError as e:                        # permissions, I/O error, a directory in the way
+        _mark_corrupt(path)
+        raise CorruptState(path, "unreadable (%s)" % e.__class__.__name__)
+    try:
+        data = json.loads(raw.decode("utf-8"))  # JSONDecodeError is a ValueError subclass
+    except (UnicodeDecodeError, ValueError) as e:
+        _mark_corrupt(path)
+        raise CorruptState(path, "not valid JSON (%s)" % e.__class__.__name__)
+    if not isinstance(data, want):
+        _mark_corrupt(path)
+        raise CorruptState(path, "top level is %s, expected %s"
+                           % (type(data).__name__, want.__name__))
+    _clear_corrupt(path)                        # a repaired file becomes writable again
+    return data
+
+
+def require_dict_slot(path, data, key):
+    """Ensure `data[key]` is a dict, creating it when absent. Raises CorruptState if it is not.
+
+    The top-level type check is not enough on its own: `{"users": []}` parses fine and then breaks
+    every `.get()` below it. Refusing here keeps a damaged sub-container from being silently replaced
+    (which would erase the evidence) or crashing a request (which would turn damage into an outage).
+    """
+    cur = data.get(key)
+    if cur is None:
+        data[key] = {}
+        return data[key]
+    if not isinstance(cur, dict):
+        _mark_corrupt(path)
+        raise CorruptState(path, "%r is %s, expected object" % (key, type(cur).__name__))
+    return cur
+
+
+def _fsync_dir(d):
+    """Best-effort durability for the directory entry itself. POSIX only; a no-op elsewhere.
+
+    Windows cannot open a directory for fsync, so this is deliberately tolerant: the file CONTENTS
+    are always flushed and fsynced before the replace, which is the guarantee that matters.
+    """
+    try:
+        fd = os.open(d, os.O_RDONLY)
+    except (OSError, AttributeError):
+        return
+    try:
+        os.fsync(fd)
+    except OSError:
+        pass
+    finally:
+        os.close(fd)
+
+
+def save_json_state(path, obj):
+    """Durably replace `path` with `obj`: serialise, write a temp file, flush, fsync, then rename.
+
+    Refuses outright when the path is already known to be corrupt, so a normal request can never
+    overwrite evidence. On any failure the ORIGINAL file is left untouched, the temp file is removed,
+    and the error propagates rather than being masked.
+    """
+    if state_is_corrupt(path):
+        raise CorruptState(path, "refusing to overwrite a file already detected as corrupt")
+    body = json.dumps(obj).encode("utf-8")      # serialise FIRST: a bad object writes no temp file
+    d = os.path.dirname(path) or "."
+    os.makedirs(d, exist_ok=True)
+    tmp = path + ".tmp"
+    try:
+        with open(tmp, "wb") as f:
+            f.write(body)
+            f.flush()
+            os.fsync(f.fileno())                # the contents are on disk before the rename
+        os.replace(tmp, path)                   # atomic swap
+    except Exception:
+        try:
+            os.unlink(tmp)                      # never leave a half-written temp behind
+        except OSError:
+            pass
+        raise                                   # a write failure is never swallowed
+    _fsync_dir(d)
+
+
 # --- accounts.json（帳密 + 碼）---
 def load_accounts():
-    try:
-        with open(ACCT) as f:
-            db = json.load(f)
-    except Exception:
+    """The account database. Raises CorruptState rather than reporting "no accounts exist".
+
+    Reporting empty here would let the very next register/save write a one-user file over everyone
+    else's credentials and class codes.
+    """
+    db = load_json_state(ACCT)
+    if db is None:
         db = {}
-    db.setdefault("users", {})
-    db.setdefault("codes", {})
+    require_dict_slot(ACCT, db, "users")
+    require_dict_slot(ACCT, db, "codes")
     return db
 
 
 def save_accounts(db):
-    os.makedirs(os.path.dirname(ACCT), exist_ok=True)
-    tmp = ACCT + ".tmp"
-    with open(tmp, "w") as f:
-        json.dump(db, f)
-    os.replace(tmp, ACCT)
+    save_json_state(ACCT, db)
 
 
 # --- 玩家目前所在的房間(單一)：存在帳號上，一次只在一個房間裡活動 ---
@@ -375,23 +526,25 @@ def _prog_path(user):
 
 
 def load_progress(user):
-    try:
-        with open(_prog_path(user)) as f:
-            p = json.load(f)
-    except Exception:
+    """One learner's progress. Raises CorruptState rather than pretending they are new.
+
+    `learning` is validated alongside the two legacy containers because it is the root of every
+    reward record this system has: if it were a list, `setdefault` would hand the list straight to
+    the domain layer, and "no evidence of payment" would read as "never paid".
+    """
+    path = _prog_path(user)
+    p = load_json_state(path)
+    if p is None:
         p = {}
-    p.setdefault("students", {})
-    p.setdefault("sdata", {})
+    require_dict_slot(path, p, "students")
+    require_dict_slot(path, p, "sdata")
+    if p.get("learning") is not None:
+        require_dict_slot(path, p, "learning")
     return p
 
 
 def save_progress(user, p):
-    os.makedirs(PROG_DIR, exist_ok=True)
-    path = _prog_path(user)
-    tmp = path + ".tmp"
-    with open(tmp, "w") as f:
-        json.dump(p, f)
-    os.replace(tmp, path)
+    save_json_state(_prog_path(user), p)
 
 
 # --- 占地盤（全站共用一檔）：{file: {owner, avatar, card:{emoji,name,atk,def,luck}}} ---
@@ -414,12 +567,7 @@ def load_territory_store():
 
 
 def save_territory_store(t):
-    p = room_path("territory.json")
-    os.makedirs(os.path.dirname(p), exist_ok=True)
-    tmp = p + ".tmp"
-    with open(tmp, "w") as f:
-        json.dump(t, f)
-    os.replace(tmp, p)
+    save_json_state(room_path("territory.json"), t)
 
 
 # --- 玩家經濟（每位玩家：人口 population + 兵力 troops + 上次成長時間）---
@@ -454,21 +602,18 @@ def troops_total(t):
 
 
 def load_econ_store():
-    try:
-        with open(room_path("economy.json")) as f:
-            e = json.load(f)
-            return e if isinstance(e, dict) else {}
-    except Exception:
-        return {}
+    """The room's economy. Raises CorruptState rather than reporting an empty economy.
+
+    This file holds the gold balance AND the reward payment markers that econ_apply_reward_once()
+    writes in the same operation as the balance. Reading it as empty would drop those markers, which
+    is precisely how an already-settled reward becomes payable a second time.
+    """
+    e = load_json_state(room_path("economy.json"))
+    return {} if e is None else e
 
 
 def save_econ_store(e):
-    p = room_path("economy.json")
-    os.makedirs(os.path.dirname(p), exist_ok=True)
-    tmp = p + ".tmp"
-    with open(tmp, "w") as f:
-        json.dump(e, f)
-    os.replace(tmp, p)
+    save_json_state(room_path("economy.json"), e)
 
 
 # --- 全站事件牆（所有人共見）：[{ts, user, text}]，只留最近 EVENTS_MAX 筆 ---
@@ -495,12 +640,7 @@ def load_events():
 
 
 def save_events(e):
-    p = room_path("events.json")
-    os.makedirs(os.path.dirname(p), exist_ok=True)
-    tmp = p + ".tmp"
-    with open(tmp, "w") as f:
-        json.dump(e, f)
-    os.replace(tmp, p)
+    save_json_state(room_path("events.json"), e)
 
 
 def clean_txt(s, n=40):
@@ -763,12 +903,7 @@ def load_room(code=None):
 
 
 def save_room(r, code=None):
-    p = room_path("room.json", code)
-    os.makedirs(os.path.dirname(p), exist_ok=True)
-    tmp = p + ".tmp"
-    with open(tmp, "w") as f:
-        json.dump(r, f)
-    os.replace(tmp, p)
+    save_json_state(room_path("room.json", code), r)
 
 
 def gen_room_code():
@@ -864,11 +999,7 @@ def load_catalog():
 
 
 def save_catalog(c):
-    os.makedirs(os.path.dirname(TERR_CATALOG), exist_ok=True)
-    tmp = TERR_CATALOG + ".tmp"
-    with open(tmp, "w") as f:
-        json.dump(c, f)
-    os.replace(tmp, TERR_CATALOG)
+    save_json_state(TERR_CATALOG, c)
 
 
 # NOTE (Phase 2A): the legacy aggregate "_force_power / _mix / _alive" AI battle formula was
@@ -1365,14 +1496,89 @@ def _reward_fields(out):
     return {k: out[k] for k in _REWARD_FIELDS if k in out}
 
 
+# The largest request body the server will read. Bodies are read with rfile.read(n) straight from a
+# client-declared length, so a bound is part of parsing safely rather than a size *policy*: the
+# biggest legitimate body is a Read-Along audio clip, and 32 MiB is far above any of those while
+# still refusing an absurd declaration outright.
+MAX_BODY_BYTES = 32 * 1024 * 1024
+_CONTENT_LENGTH_RE = re.compile(r"^[0-9]+$")
+
+
 class Handler(BaseHTTPRequestHandler):
     def _send(self, obj, code=200):
         body = json.dumps(obj).encode()
+        self._sent = True                  # read by _fail(): never send a second response
         self.send_response(code)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    # ---- H3: malformed framing/input is an HTTP answer, never a dropped connection ----
+    def _content_length(self):
+        """The declared body length, or 0 when absent. Raises BadRequest for anything malformed.
+
+        `int(header)` used to sit OUTSIDE the try that was meant to protect body parsing, so
+        `Content-Length: abc` raised ValueError out of the handler, http.server closed the socket,
+        and the client saw a reset with no response at all.
+        """
+        raw = self.headers.get("Content-Length")
+        if raw is None:
+            return 0
+        s = str(raw).strip()
+        if not _CONTENT_LENGTH_RE.match(s):        # "abc", "-1", "1.5", "+1", "", "1 2"
+            raise BadRequest("malformed Content-Length", "bad_content_length")
+        n = int(s)
+        if n > MAX_BODY_BYTES:
+            raise BadRequest("request body too large", "body_too_large")
+        return n
+
+    def _fail(self, code, reason, message):
+        """Send a controlled error, unless a response already went out for this request."""
+        if getattr(self, "_sent", False):
+            return
+        try:
+            self._send({"error": message, "reason": reason}, code)
+        except Exception:                          # the socket is already gone; nothing to salvage
+            pass
+
+    def _guard(self, route):
+        """The one error boundary for every request.
+
+        Without this, any unexpected exception propagated into http.server, which logs and closes the
+        connection -- so the client got a reset instead of a status, and (with log_message silenced)
+        the traceback went nowhere. Now: malformed input -> 400, untrustworthy stored state -> 500
+        with nothing mutated, anything unforeseen -> generic 500. The client never receives internal
+        detail; the server always logs enough to diagnose.
+        """
+        self._sent = False
+        try:
+            route()
+        except BadRequest as e:
+            self._fail(400, e.reason, str(e))
+        except learning_api.CorruptLearningState as e:
+            # A nested container inside an otherwise-readable progress file is the wrong type. The
+            # write was refused before anything was persisted (every handler loads, mutates, then
+            # saves -- the raise happens before the save), so the damaged bytes are untouched.
+            print("[state] CORRUPT learning slot %s %s -> %s"
+                  % (self.command, self.path.split("?")[0], e), flush=True)
+            self._fail(500, "corrupt_state",
+                       "Stored progress for this account could not be updated safely. "
+                       "It has been left untouched and nothing was changed.")
+        except CorruptState as e:
+            # Nothing has been written: every writer loads first, so the raise happens before any
+            # mutation, and save_json_state() would refuse this path anyway.
+            print("[state] CORRUPT %s %s -> %s" % (self.command, self.path.split("?")[0], e),
+                  flush=True)
+            self._fail(500, "corrupt_state",
+                       "Stored data for this account could not be read safely. "
+                       "It has been left untouched and nothing was changed.")
+        except (BrokenPipeError, ConnectionResetError):
+            pass                                   # the client hung up; not our failure to report
+        except Exception:
+            print("[error] %s %s\n%s" % (self.command, self.path.split("?")[0],
+                                         traceback.format_exc()), flush=True)
+            self._fail(500, "server_error", "Unexpected server error.")
 
     # ---- Phase 8A.1 — room-scoped MUTATIONS must name their room --------------
     # Every path below writes room-scoped world state: territory, room economy, or
@@ -1425,6 +1631,12 @@ class Handler(BaseHTTPRequestHandler):
         return False
 
     def do_GET(self):
+        self._guard(self._route_get)
+
+    def do_POST(self):
+        self._guard(self._route_post)
+
+    def _route_get(self):
         path = self.path.split("?")[0]
         set_request_room(request_room_param(self.path))
         if path == "/api/count":
@@ -1460,7 +1672,7 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self._send({"error": "not found"}, 404)
 
-    def do_POST(self):
+    def _route_post(self):
         path = self.path.split("?")[0]
         set_request_room(request_room_param(self.path))
         if path in self.ROOM_MUTATIONS and not self._require_room():
@@ -1544,7 +1756,7 @@ class Handler(BaseHTTPRequestHandler):
         client_text = (qs.get("text", [""]) or [""])[0]
         aid = (qs.get("activityId", [""]) or [""])[0].strip()
         sidx_raw = (qs.get("sentenceIndex", [""]) or [""])[0].strip()
-        length = int(self.headers.get("Content-Length") or 0)
+        length = self._content_length()          # malformed header -> BadRequest -> 400
         if length <= 0:
             self._send({"error": "no audio"}, 400)
             return
@@ -1673,7 +1885,13 @@ class Handler(BaseHTTPRequestHandler):
 
     # ---- 帳號 / 雲端進度 ----
     def _body_json(self):
-        length = int(self.headers.get("Content-Length") or 0)
+        """The request body as a dict. A malformed Content-Length raises BadRequest (-> 400).
+
+        An unparseable BODY still yields {} -- unchanged, deliberately: every handler already
+        validates the fields it needs and answers its own 400, and tightening that here would change
+        behaviour well beyond this fix.
+        """
+        length = self._content_length()
         if length <= 0:
             return {}
         try:
