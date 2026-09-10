@@ -2994,8 +2994,14 @@ class Handler(BaseHTTPRequestHandler):
         with acct_lock:
             learning = (load_progress(user).get("learning") or {})
         pend = learning_reward_games.pending(learning)
+        # `resolved` is the already-settled history: {id, game, prizeId, resolvedAt}. It is REPORTING
+        # only, and it is what lets the lesson offer "play that mini-game again" as practice -- the
+        # replay goes through the same POST /api/learning/rewards/play, which returns the prize it
+        # already stored and moves no economy (econ_apply_reward_once has the payment marker). No new
+        # entitlement, prize or payout can come from reading this.
         self._send({"pending": pend, "count": len(pend),
                     "next": pend[0] if pend else None,           # oldest first
+                    "resolved": learning_reward_games.resolved(learning),
                     "prizes": game_reward_games.public_table()})
 
     def _handle_reward_game_play(self):
