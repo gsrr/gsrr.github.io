@@ -127,8 +127,8 @@ function makeEnv(opts) {
   });
   const ids = {};
   function need(id) { if (!ids[id]) { const e = el("div"); e.id = id; ids[id] = e; } return ids[id]; }
-  need("lsStages"); need("lsStageList"); need("lsStagesSub"); need("lsStagesBtn");
-  ids.lsStagesBtn.classList.add("hidden");
+  need("lsStages"); need("lsStageList"); need("lsStagesSub");
+  need("finishGameBtn").classList.add("hidden");
 
   const calls = { tabClicks: [], listen: 0, rewardGames: [], fetches: [] };
   tabs.forEach(t => t.addEventListener("click", () => calls.tabClicks.push(t.dataset.level)));
@@ -192,7 +192,10 @@ function makeEnv(opts) {
     extractFn(html, "function progressForContent(") + "\n" +
     extractFn(html, "function lessonIdForContent(") + "\n" +
     extractFn(html, "function refreshLockedTabs(") + "\n" +
-    STAGE_SRC + "\n" + SPEAK_SRC, sandbox);
+    STAGE_SRC + "\n" + SPEAK_SRC + "\n" +
+    // the post-activity mini-game action lives beside showNextLevel, outside STAGE_SRC
+    "const finishGameBtn = document.getElementById('finishGameBtn');\n" +
+    extractFn(html, "function lsFinishGameFor("), sandbox);
   return { sandbox, tabs, ids, calls, spoken, need,
     rows() { return ids.lsStageList.querySelectorAll(".ls-stage"); },
     click(node) {
@@ -327,33 +330,35 @@ function progressRow(opts) {
   ok("required/optional/reading labels and the summary line all come from the server's row");
 }
 
-/* ============================================================ 6. navigation in and out of a stage */
+/* ============================================================ 6. the selector is PERMANENT */
 {
   const env = makeEnv({ progress: progressRow() });
   env.sandbox.lsShowStages();
   assert(!env.ids.lsStages.classList.contains("hidden"), "the list must be visible");
-  assert(env.ids.lsStagesBtn.classList.contains("hidden"), "no jump-to-list button while ON the list");
-  assert.strictEqual(env.sandbox.levelsBar.style.display, "none", "the strip is not the list");
-  // opening a stage hides the list and restores the in-activity chrome
+  assert.strictEqual(env.sandbox.levelsBar.style.display, "none",
+    "the tab strip must not be a second navigation surface");
+  // opening a stage leaves the list ON SCREEN -- that is what makes Back/Next unnecessary
   env.sandbox.lsOpenStage("6");
-  assert(env.ids.lsStages.classList.contains("hidden"), "the list must close");
-  assert(!env.ids.lsStagesBtn.classList.contains("hidden"), "the way back must appear");
-  assert.strictEqual(env.sandbox.levelsBar.style.display, "");
+  assert(!env.ids.lsStages.classList.contains("hidden"),
+    "the stage list must stay visible while an activity is open");
+  assert.strictEqual(env.sandbox.levelsBar.style.display, "none", "the strip stays hidden");
   assert.deepStrictEqual(env.calls.tabClicks, ["6"]);
-  // and back again
-  env.sandbox.lsShowStages();
-  assert(!env.ids.lsStages.classList.contains("hidden"));
-  assert(env.ids.lsStagesBtn.classList.contains("hidden"));
-  ok("selector → activity → selector round-trips, and the jump-back control appears only inside an activity");
+  // and it is still usable: another activity can be chosen straight away, with no "back" step
+  env.sandbox.lsRenderStages();
+  env.rows().filter(r => r.dataset.level === "9")[0]._on.click.forEach(f => f());
+  assert.deepStrictEqual(env.calls.tabClicks, ["6", "9"],
+    "the visible list must remain usable with an activity open");
+  ok("the selector stays visible AND usable while an activity is open, so no in-activity " +
+     "'back to lesson' control is needed");
 
   // Listen has its own screen, so it routes through enterListenMode(), not through a tab
   const env2 = makeEnv({ progress: progressRow() });
   env2.sandbox.lsOpenStage("1");
   assert.strictEqual(env2.calls.listen, 1, "Listen must reuse enterListenMode()");
   assert.deepStrictEqual(env2.calls.tabClicks, [], "Listen is not a tab click");
-  assert(!env2.ids.lsStagesBtn.classList.contains("hidden"),
-    "coming from the list, the way back must stay available in the reading view");
-  ok("choosing Listen opens the reading view and keeps the route back to the list");
+  assert(!env2.ids.lsStages.classList.contains("hidden"),
+    "the reading view keeps the list above it too");
+  ok("choosing Listen opens the reading view with the list still above it");
 
   // opening an unknown level cannot strand the learner
   const env3 = makeEnv({ progress: progressRow() });
@@ -373,16 +378,44 @@ function progressRow(opts) {
 
 /* ============================================================ 7. the shipped wiring (real source) */
 {
-  // Next is no longer mandatory: an always-present Back to Lesson sits beside it, and the
-  // below-PASS_MARK branch that used to HIDE Next and declare the next level locked is gone.
-  assert(/id="backToStagesBtn"/.test(html), "the finish panel needs a Back to Lesson button");
-  assert(/id="lsStagesBtn"/.test(html), "an in-activity route back to the list must exist");
+  // COMPLETING AN ACTIVITY MUST RENDER NEITHER "Back to Lesson" NOR "Next".
+  // Both controls, and every reference to them, are gone from the page -- not merely hidden.
+  ["nextLevelBtn", "backToStagesBtn", "shadowNextLevel", "lsStagesBtn"].forEach(function (id) {
+    assert(html.indexOf(id) < 0, id + " still exists in the page");
+  });
+  // Labels are checked against the page with COMMENTS STRIPPED: the removal is deliberately
+  // explained in prose where the buttons used to be, and prose is not a rendered control.
+  const bare = html.replace(/<!--[\s\S]*?-->/g, "")
+                   .replace(/\/\*[\s\S]*?\*\//g, "")
+                   .replace(/^\s*\/\/[^\n]*$/gm, "");
+  ["Back to Lesson", "Back to lessons", "Next Level"].forEach(function (label) {
+    assert(bare.indexOf(label) < 0, "the label '" + label + "' survives in the page");
+  });
+  // the finish panel now offers exactly Try Again + the mini-game action
+  const finishPanel = region(html, 'id="levelFinish"', "</div>\n    </div>");
+  const finishBtns = (finishPanel.match(/<button[^>]*id="([^"]+)"/g) || [])
+    .map(function (m) { return /id="([^"]+)"/.exec(m)[1]; });
+  assert.deepStrictEqual(finishBtns, ["finishRetry", "finishGameBtn"], finishBtns.join(","));
+  // the read-along finish panel likewise keeps only Try Again
+  const shadowPanel = region(html, 'id="shadowFinish"', "</div>\n    </div>");
+  const shadowBtns = (shadowPanel.match(/<button[^>]*id="([^"]+)"/g) || [])
+    .map(function (m) { return /id="([^"]+)"/.exec(m)[1]; });
+  assert.deepStrictEqual(shadowBtns, ["shadowRetry"], shadowBtns.join(","));
+  // and showNextLevel neither advances nor leaves the lesson
   const nextFn = extractFn(html, "function showNextLevel(");
-  assert(!/nextLevelBtn\.classList\.add\("hidden"\)/.test(nextFn),
-    "showNextLevel must no longer hide Next on a low score");
-  assert(!/Try again to unlock the next level/.test(nextFn), "the unlock message must be gone");
-  assert(/nextLevelBtn\.classList\.remove\("hidden"\)/.test(nextFn), "Next stays available");
-  ok("Next is optional: Back to Lesson always present, and the low-score lockout branch is removed");
+  assert(!/\.click\(\)/.test(nextFn), "completing an activity must not open another one");
+  assert(!/selectLevel\(/.test(nextFn), "completing an activity must not leave the lesson");
+  assert(/lsFinishGameFor\(/.test(nextFn), "the mini-game action must be offered");
+  assert(/lsRenderStages\(\)/.test(nextFn), "the selector must be repainted on completion");
+  ok("activity completion renders NEITHER 'Back to Lesson' NOR 'Next': both finish panels hold " +
+     "only [Try Again] + [mini-game], and showNextLevel neither advances nor navigates away");
+
+  // Back/Next elsewhere in the app are untouched
+  ["backToList", "backToLevels", "battleBack", "backToRole", "backFromTeacher", "backFromAdmin"]
+    .forEach(function (id) {
+      assert(html.indexOf('id="' + id + '"') >= 0, "unrelated control " + id + " was removed");
+    });
+  ok("unrelated Back controls (Academy, Levels, Boss battle, role/teacher/admin screens) remain");
 
   // the score gate is gone from the tab handler, and no unlock helper survives.
   // Comments are stripped first: this is an assertion about CODE, and the removal is deliberately
@@ -512,6 +545,40 @@ function progressRow(opts) {
   env2.sandbox.lsRenderStages();
   assert.strictEqual(env2.ids.lsStageList.querySelectorAll(".ls-stage-game").length, 0);
   ok("a guest sees no reward-game rows and triggers no reward request");
+
+  // ---- the ONE post-activity action: the mini-game this activity earned ----
+  // pending -> "Play Mini-game"; already settled -> "Play again (no extra reward)"; none -> hidden.
+  const envG = makeEnv({
+    progress: progressRow({ completedActivityIds: [LESSON + ".quiz3"] }),
+    rewards: {
+      pending: [{ id: LESSON + ".wh", game: "dice_roll", createdAt: 2 }],
+      resolved: [{ id: LESSON + ".quiz3", game: "lucky_wheel", prizeId: "gold_3000", resolvedAt: 1 }],
+      prizes: [],
+    },
+  });
+  const gameBtn = envG.ids.finishGameBtn;
+  // level 7 = wh, whose entitlement is still waiting to be played
+  envG.sandbox.lsFinishGameFor("7");
+  await new Promise(res => setTimeout(res, 0));
+  assert(!gameBtn.classList.contains("hidden"), "a pending entitlement must offer its game");
+  assert(/Play Mini-game/.test(gameBtn.textContent), gameBtn.textContent);
+  gameBtn.onclick();
+  assert.strictEqual(envG.calls.rewardGames[0].id, LESSON + ".wh",
+    "the button must open the game belonging to the activity that just finished");
+  // level 3 = quiz3, already settled -> replay for practice, stated as paying nothing
+  envG.sandbox.lsFinishGameFor("3");
+  await new Promise(res => setTimeout(res, 0));
+  assert(!gameBtn.classList.contains("hidden"));
+  assert(/Play again \(no extra reward\)/.test(gameBtn.textContent), gameBtn.textContent);
+  gameBtn.onclick();
+  assert.strictEqual(envG.calls.rewardGames[1].id, LESSON + ".quiz3");
+  // level 6 = reorder, which earned nothing -> no action at all
+  envG.sandbox.lsFinishGameFor("6");
+  await new Promise(res => setTimeout(res, 0));
+  assert(gameBtn.classList.contains("hidden"),
+    "an activity with no entitlement must offer no post-activity action");
+  ok("the post-activity panel offers exactly one action, the mini-game for THIS activity: " +
+     "'Play Mini-game' when pending, 'Play again (no extra reward)' when settled, nothing otherwise");
 
   // the module contains no economic reasoning of its own
   const bare = STAGE_SRC.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");

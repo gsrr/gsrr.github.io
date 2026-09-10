@@ -683,7 +683,6 @@
 
   /* 完成後的「Try Again / Next Level」區塊（與 Level 2 一致） */
   .nextlevel-wrap { text-align: center; margin-top: 22px; }
-  #nextLevelBtn { background: #16a34a; color: #fff; }
   #finishRetry { background: #e2e8f0; color: #334155; }
 
   /* 整課總結卡片 */
@@ -1849,6 +1848,9 @@
   .ls-stage:focus-visible { outline: 3px solid #ffd257; outline-offset: 2px; }
   .ls-stage.is-done { background: linear-gradient(180deg, #ecf7d8, #cfe8ae);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 3px 0 #6f8f52; }
+  /* the activity currently on screen below the list */
+  .ls-stage.is-open { border-color: #8a2f22; }
+  .ls-stage.is-open .ls-stage-go { background: #f2c383; }
   .ls-stage-ico { flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%; display: flex;
     align-items: center; justify-content: center; font-size: 14px; font-weight: 900;
     border: 2px solid #2a1b0d; background: #fff7e4; color: #6b4a24; }
@@ -2559,7 +2561,6 @@
   .shadow-finish-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
   .shadow-finish-btns button { font-size: 16px; padding: 10px 22px; }
   #shadowRetry { background: #e2e8f0; color: #334155; }
-  #shadowNextLevel { background: #16a34a; color: #fff; }
   .status { text-align: center; min-height: 22px; color: #64748b; font-size: 14px; margin-top: 6px; }
 
   /* Level 3 問答 */
@@ -3254,10 +3255,6 @@
            route to the board; renderLessonShell() hides it for a guest, who has no world. -->
       <div class="ls-top">
         <button class="ac-back" id="backToList">← Academy</button>
-        <!-- Always-available route back to this lesson's activity list while an activity is open,
-             so the learner is never obliged to finish one to choose another. Hidden while the list
-             itself is showing. -->
-        <button class="ac-back hidden" id="lsStagesBtn">📋 Activities</button>
         <button class="ls-world hidden" id="lsWorldBtn">🏰 World Conquest</button>
       </div>
       <!-- B2: three levels of identity, in order. The lesson title comes from the authoritative
@@ -3374,9 +3371,9 @@
       <div id="shadowFinish" class="shadow-finish hidden">
         <p>🎉 You read all the sentences!</p>
         <p id="shadowScore" class="shadow-score hidden"></p>
+        <!-- Same rule as #levelFinish: no Next. The stage selector above is the navigation. -->
         <div class="shadow-finish-btns">
           <button id="shadowRetry">🔄 Try Again</button>
-          <button id="shadowNextLevel">Next Level ➡</button>
         </div>
       </div>
     </div>
@@ -3451,13 +3448,14 @@
 
     <div id="lessonSummary" class="lesson-summary hidden"></div>
 
+    <!-- Finishing an activity does NOT navigate. The stage selector above stays visible and is the
+         only way between activities, so "Back to Lesson" would point at something already on
+         screen and "Next" would make a choice the learner should make. What remains is about THIS
+         activity: try it again if it was not passed, and play the mini-game it earned. -->
     <div class="shadow-finish hidden" id="levelFinish">
       <div class="shadow-finish-btns">
         <button id="finishRetry">🔄 Try Again</button>
-        <!-- Always offered, whatever the score: the learner can go back and pick something else.
-             `Next` beside it is a convenience, never the only way out. -->
-        <button id="backToStagesBtn" class="ls-back-btn">📋 Back to Lesson</button>
-        <button id="nextLevelBtn">Next Level ➡</button>
+        <button id="finishGameBtn" class="ls-stage-game hidden"></button>
       </div>
     </div>
 
@@ -3630,7 +3628,7 @@
   const level8El = document.getElementById("level8");
   const level9El = document.getElementById("level9");
   const level10El = document.getElementById("level10");
-  const nextLevelBtn = document.getElementById("nextLevelBtn");
+  const finishGameBtn = document.getElementById("finishGameBtn");
   const levelFinish = document.getElementById("levelFinish");
   const finishRetry = document.getElementById("finishRetry");
   // 「Try Again」：重玩目前這一關（依關卡呼叫對應控制器的 restart）
@@ -3679,14 +3677,14 @@
     // the gatekeeper of what a learner may practise. Choice is the point of the stage selector, and
     // mastery is still decided by the server's completion policy, which this never fed.
     //
-    // Opening an activity always closes the stage list, whatever opened it -- a row on the list,
-    // the optional Next button, or a "continue where you left off" deep link from the Academy. One
-    // place, so no future caller can leave the list sitting on top of a running activity.
-    if (typeof lsHideStages === "function") lsHideStages();
     tabs.forEach(t => t.classList.remove("active"));
     tab.classList.add("active");
     scrollTabIntoView(tab);
     levelNameEl.textContent = tab.dataset.name || "";
+    // The stage list stays on screen above the activity and is re-rendered here -- AFTER `active`
+    // is set, so the row for the activity now open is the one marked. One place, so every route in
+    // (a row on the list, an Academy "continue" deep link) keeps the list correct.
+    if (typeof lsHideStages === "function") lsHideStages();
     const lv = tab.dataset.level;
     // 切換時停止所有聲音 / 錄音
     synth.cancel();
@@ -3800,14 +3798,11 @@
 
   function enterListenMode() {
     listenMode = true;
-    // The reading is its own screen, so neither the stage list nor the jump back to it belongs here.
-    // Reaching the list still costs one Start Test (energy), exactly as before -- lsOpenStage("1")
-    // re-shows the jump button afterwards, because a learner who came FROM the list has already
-    // paid and must be able to get back.
+    // The first reading of a lesson happens before the practice session is paid for, so the stage
+    // list is not on screen yet; lsOpenStage("1") re-shows it when the reading is chosen FROM the
+    // list. Reaching the list still costs one Start Test (energy), exactly as before.
     const _st = document.getElementById("lsStages");
     if (_st) _st.classList.add("hidden");
-    const _sb = document.getElementById("lsStagesBtn");
-    if (_sb) _sb.classList.add("hidden");
     // 隱藏 tab 列、進度條、level 名稱
     levelsBar.style.display = "none";
     levelNameEl.style.display = "none";
@@ -4134,6 +4129,9 @@
     const active = document.querySelector(".levelTab.active");
     if (active && active.dataset.level === String(level)) showNextLevel();
   }
+  // An activity has finished. This NO LONGER NAVIGATES: the stage selector above stays on screen,
+  // so the learner picks what is next themselves and nothing advances automatically. What is left is
+  // about this activity alone -- Try Again when it was not passed, and the mini-game it earned.
   function showNextLevel() {
     const active = document.querySelector(".levelTab.active");
     if (!active) return;
@@ -4143,13 +4141,9 @@
     const passed = levelPassed(active.dataset.level);
     // 通關(≥80)就不顯示 Try Again；沒過才留著讓學生重做
     finishRetry.classList.toggle("hidden", passed);
-    // A below-PASS_MARK attempt used to HIDE `Next` and say the next level was locked. Nothing is
-    // locked now, so the score decides only whether Try Again is worth offering -- the learner
-    // always keeps both Next and Back to Lesson, and picks for themselves.
-    nextLevelBtn.classList.remove("hidden");
+    lsRenderStages();                  // the row for this activity now shows its ✓ / Replay
+    lsFinishGameFor(active.dataset.level);
     if (!isLast) {
-      nextLevelBtn.textContent = "Next ➡";
-      nextLevelBtn.dataset.mode = "next";
       hideLessonSummary();
     } else {
       renderLessonSummary();   // 先結算整課總分（含通過計數 +1）
@@ -4162,35 +4156,39 @@
       // used to sit here. Its only setter was the region modal's gated-occupy branch, which was
       // unreachable (no playable territory declares a requirement), so this could never fire.
       // Occupation now happens on the board, where the territory is.
-nextLevelBtn.textContent = "✅ Back to lessons";
-      nextLevelBtn.dataset.mode = "back";
     }
     levelFinish.classList.remove("hidden");
   }
-  nextLevelBtn.addEventListener("click", () => {
-    levelFinish.classList.add("hidden");
-    if (nextLevelBtn.dataset.mode === "back") {
-      synth.cancel(); stopListenL1(); stopRecordingIfAny();
-      selectLevel(selLevelIdx);   // 回課程列表
-      return;
-    }
-    const active = document.querySelector(".levelTab.active");
-    const visible = Array.from(tabs).filter(t => !t.classList.contains("hidden"));
-    const i = visible.indexOf(active);
-    if (i >= 0 && i < visible.length - 1) visible[i + 1].click();
-  });
-  // Back to Lesson: return to THIS lesson's stage list, never to the lesson index or the world map.
-  // The list is painted at once from what the page already knows (the `.done` marks the attempt just
-  // set), then repainted from the server's own progress so an authoritative tick or ★ that only the
-  // backend can know about appears without the learner doing anything.
-  const backToStagesBtn = document.getElementById("backToStagesBtn");
-  if (backToStagesBtn) backToStagesBtn.addEventListener("click", () => {
-    levelFinish.classList.add("hidden");
-    lsShowStages();
-    try {
-      loadLearningState(function () { loadLearningProgress(lsRenderStages); });
-    } catch (e) { /* offline / guest: the local marks already shown stay correct */ }
-  });
+
+  // The mini-game this activity earned, offered as the ONE post-activity action. The entitlement is
+  // looked up by ACTIVITY ID from the server's own list, so it can never belong to a different
+  // activity; a settled one replays for practice and pays nothing (the play endpoint returns the
+  // prize it already stored, and econ_apply_reward_once refuses a second credit). Refreshed from the
+  // server on every completion, which also repaints the selector's stars.
+  function lsFinishGameFor(level) {
+    if (!finishGameBtn) return;
+    finishGameBtn.classList.add("hidden");
+    const paint = function () {
+      const path = (typeof currentArticleKey === "string" && currentArticleKey) || "";
+      const stage = lsLessonStages(path).filter(function (x) {
+        return x.level === String(level);
+      })[0];
+      const aid = stage && stage.activityId;
+      if (!aid) return;
+      const settled = lsRewardsByActivity.resolved[aid];
+      const ent = lsRewardsByActivity.pending[aid] || settled || null;
+      if (!ent || !ent.game) return;
+      finishGameBtn.textContent = settled
+        ? "\u{1F3B0} Play again (no extra reward)"
+        : "\u{1F381} Play Mini-game";
+      finishGameBtn.classList.remove("hidden");
+      finishGameBtn.onclick = function () {
+        if (typeof openRewardGame === "function") openRewardGame(ent);
+      };
+    };
+    paint();
+    lsSyncRewards(function () { lsRenderStages(); paint(); });
+  }
   function restoreProgress() {
     tabs.forEach(t => t.classList.remove("done"));
     hideLessonSummary();
@@ -4333,7 +4331,6 @@ nextLevelBtn.textContent = "✅ Back to lessons";
   const shadowFinish   = document.getElementById("shadowFinish");
   const shadowScore    = document.getElementById("shadowScore");
   const shadowRetry    = document.getElementById("shadowRetry");
-  const shadowNextLevel = document.getElementById("shadowNextLevel");
   const shadowNavWrap  = document.querySelector(".shadow-nav-wrap");
   const shadowActions  = document.querySelector(".shadow-actions");
   const pronResult     = document.getElementById("pronResult");
@@ -4828,14 +4825,11 @@ nextLevelBtn.textContent = "✅ Back to lessons";
         recordScore(2, script.length, script.length);   // 無發音評分環境：完成即滿分(非權威)
         shadowScore.classList.add("hidden");
       }
-      // 通關(≥80)只顯示 Next、藏 Try Again；沒過則相反並提示要重做
-      if (levelPassed("2")) {
-        shadowNextLevel.classList.remove("hidden");
-        shadowRetry.classList.add("hidden");
-      } else {
-        shadowNextLevel.classList.add("hidden");
-        shadowRetry.classList.remove("hidden");
-        shadowScore.textContent += "  —  Score " + PASS_MARK + "%+ to unlock the next level.";
+      // 通關(≥80)就藏 Try Again；沒過才留著讓學生重做。
+      // 下一個活動一律由上方的 stage selector 選，這裡不再提供 Next。
+      shadowRetry.classList.toggle("hidden", levelPassed("2"));
+      if (!levelPassed("2")) {
+        shadowScore.textContent += "  —  Score " + PASS_MARK + "%+ to pass this activity.";
         shadowScore.classList.remove("hidden");
       }
       showShadowFinish();
@@ -4846,14 +4840,6 @@ nextLevelBtn.textContent = "✅ Back to lessons";
   shadowRetry.addEventListener("click", () => {
     idx = 0; recordings = {}; pronScores = {}; typedDone = {}; sttAuthPct = null;
     renderShadow();
-  });
-
-  /* 下一個 level */
-  shadowNextLevel.addEventListener("click", () => {
-    const visible = Array.from(tabs).filter(t => !t.classList.contains("hidden"));
-    const active = document.querySelector(".levelTab.active");
-    const i = visible.indexOf(active);
-    if (i >= 0 && i < visible.length - 1) visible[i + 1].click();
   });
 
   /* 🎯 發音檢查（免費 Web Speech：辨識 → 比對字詞命中率） */
@@ -10964,7 +10950,9 @@ nextLevelBtn.textContent = "✅ Back to lessons";
       // NOTE the class names: nothing here is `.opt` / `.chip` / `.mword`, so the shared
       // click-to-speak layer does not treat a stage row as learner English to pronounce. These are
       // navigation controls; the app must not read them aloud.
-      btn.className = "ls-stage" + (done ? " is-done" : "") + (isReq ? " is-required" : "");
+      const isOpen = s.tab.classList.contains("active") && !s.tab.classList.contains("hidden");
+      btn.className = "ls-stage" + (done ? " is-done" : "") + (isReq ? " is-required" : "")
+                    + (isOpen ? " is-open" : "");
       btn.dataset.level = s.level;
       if (s.activityId) btn.dataset.activityId = s.activityId;
       btn.setAttribute("aria-label",
@@ -10996,7 +10984,7 @@ nextLevelBtn.textContent = "✅ Back to lessons";
 
       const go = document.createElement("span");
       go.className = "ls-stage-go";
-      go.textContent = done ? "Replay" : "Start";
+      go.textContent = isOpen ? "Open" : (done ? "Replay" : "Start");
 
       btn.appendChild(ico); btn.appendChild(body); btn.appendChild(go);
       btn.addEventListener("click", function () { lsOpenStage(s.level); });
@@ -11030,6 +11018,18 @@ nextLevelBtn.textContent = "✅ Back to lessons";
     }
   }
 
+  // The selector is PERMANENTLY on screen for the whole practice session -- above the activity
+  // while one is open, and alone when none is. That is what lets the post-activity panel drop
+  // "Back to Lesson" (it would point at something already visible) and "Next" (it would choose for
+  // the learner). The horizontal tab strip stays hidden throughout: it was a second, competing
+  // navigation surface, and it is now only the internal routing mechanism that lsOpenStage() uses.
+  function lsStagesShow() {
+    const el = document.getElementById("lsStages");
+    if (el) el.classList.remove("hidden");
+    levelsBar.style.display = "none";
+    lsRenderStages();
+  }
+  // Land on the list with NO activity open: the practice session's entry screen.
   function lsShowStages() {
     const el = document.getElementById("lsStages");
     if (!el) return;
@@ -11040,50 +11040,34 @@ nextLevelBtn.textContent = "✅ Back to lessons";
      level10El].forEach(function (x) { if (x) x.classList.add("hidden"); });
     levelFinish.classList.add("hidden");
     startTestWrap.style.display = "none";
-    levelsBar.style.display = "none";          // the strip is the in-activity switcher, not this list
     levelNameEl.style.display = "none";
     onLevel1 = false;
     updateScene();
-    el.classList.remove("hidden");
-    const jump = document.getElementById("lsStagesBtn");
-    if (jump) jump.classList.add("hidden");    // we ARE the list
-    lsRenderStages();
+    lsStagesShow();
     lsSyncRewards(lsRenderStages);             // then repaint with ★ / reward-game rows
   }
+  // Called when an activity opens. The list is NOT hidden any more -- it is re-rendered so the row
+  // for the activity now on screen is marked, and the activity's own heading comes back.
   function lsHideStages() {
-    const el = document.getElementById("lsStages");
-    if (el) el.classList.add("hidden");
-    levelsBar.style.display = "";
     levelNameEl.style.display = "";
-    const jump = document.getElementById("lsStagesBtn");
-    if (jump) jump.classList.remove("hidden");
+    lsStagesShow();
   }
   // Open one activity. Routing goes through the existing tab click, so grading, the controllers,
   // click-to-speak and every authority behave exactly as they always did -- this only decides WHICH
   // activity, never what it is worth. Level 1 has its own presentation (the reading), so it reuses
   // enterListenMode() rather than a tab.
   function lsOpenStage(level) {
-    lsHideStages();
     if (String(level) === "1") {
       enterListenMode();
-      // came from the list, so the way back to it stays available
-      const jump = document.getElementById("lsStagesBtn");
-      if (jump) jump.classList.remove("hidden");
+      lsStagesShow();                         // the reading shows the list above it too
       return;
     }
     const tab = document.querySelector('.levelTab[data-level="' + level + '"]');
     if (!tab) { lsShowStages(); return; }
     tab.classList.remove("hidden");           // test mode hides Listen, never the rest
-    tab.click();
+    tab.click();                              // the click handler calls lsHideStages() -> re-render
   }
   window.lsShowStages = lsShowStages;
-  {
-    const jump = document.getElementById("lsStagesBtn");
-    if (jump) jump.addEventListener("click", function () {
-      lsShowStages();
-      try { loadLearningState(function () { loadLearningProgress(lsRenderStages); }); } catch (e) {}
-    });
-  }
 
   function lsDecorateSteps(contentPath) {
     const row = progressForContent(contentPath);
