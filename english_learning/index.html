@@ -1738,6 +1738,9 @@
   .ac-rg button { padding: 10px 20px; border: 0; border-radius: 999px; background: #b45309;
     color: #fff; font-size: 14px; font-weight: 900; cursor: pointer; }
   .ac-rg button:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+  /* .ac-rg's own `display: flex` outranks the UA stylesheet's `[hidden] { display: none }`, so
+     without this the banner stayed on screen with nothing pending and PLAY NOW did nothing. */
+  .ac-rg[hidden] { display: none; }
   @media (max-width: 560px) {
     .rg-chest { width: 78px; height: 78px; font-size: 36px; }
     .rg-wheel, .rg-wheel-wrap { width: 176px; height: 176px; }
